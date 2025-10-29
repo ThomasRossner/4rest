@@ -65,6 +65,33 @@ See `docs/README.md` for details on viewing the diagrams.
 - Frontend runs on `http://localhost:3000`
 - Backend API runs on `http://localhost:5000`
 
+## Testing
+
+```bash
+# Run all tests
+npm run test
+
+# Frontend tests
+cd frontend && npm run test
+
+# Backend tests
+cd backend && npm run test
+
+# E2E tests
+npm run test:e2e
+```
+
+## Deployment
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instructions.
+
+Key steps:
+1. Set up production environment variables
+2. Run database migrations
+3. Build production images
+4. Deploy using Docker or cloud platform
+5. Verify deployment and monitoring
+
 ## License
 
 Proprietary - Hotel Luise Project
