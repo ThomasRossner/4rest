@@ -7,24 +7,24 @@ start
 :View Dashboard;
 :Browse Available Tasks;
 note right
-  - Video tasks
-  - QR code challenges
-  - Photo tasks
+  Video tasks
+  QR code challenges
+  Photo tasks
 end note
 
 |#LightBlue|Task Execution|
 :Select Task;
-alt Video Task
+if (Video Task?) then (yes)
   :Watch Video;
   :Answer Quiz Questions;
   :Submit Answers;
-else QR Code Task
+elseif (QR Code Task?) then (yes)
   :Scan QR Code at Location;
   :Code Verified;
-else Photo Task
+else (Photo Task)
   :Upload Photo as Proof;
   :Submit Photo;
-end
+endif
 
 |#LightGreen|Reward System|
 :Points Awarded;
@@ -41,7 +41,7 @@ stop
 
 |#Yellow|Employee User|
 start
-:Login (HotelKit Sync);
+:Login HotelKit Sync;
 :View Employee Tasks;
 :Complete Sustainability Task;
 :HotelKit Sync Updates;

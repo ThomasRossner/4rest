@@ -1,4 +1,5 @@
 @startuml Roots of Impact - Deployment Diagram
+allowmixing
 skinparam backgroundColor #FFFFFF
 
 cloud "CDN" {
