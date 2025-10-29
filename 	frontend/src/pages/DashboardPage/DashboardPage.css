@@ -1,0 +1,79 @@
+.dashboard-page {
+  padding: var(--spacing-lg) 0;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.dashboard-stat-card {
+  background: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.dashboard-stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.dashboard-stat-label {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.dashboard-section {
+  margin-top: var(--spacing-xl);
+}
+
+.dashboard-section h2 {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.dashboard-tasks {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.dashboard-task-card {
+  background: white;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-task-card h3 {
+  font-size: 1.1rem;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.dashboard-task-card p {
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-sm);
+}
+
+.dashboard-task-points {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-accent);
+  color: white;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+}

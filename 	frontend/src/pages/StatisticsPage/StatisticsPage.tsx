@@ -1,0 +1,99 @@
+import { useQuery } from 'react-query';
+import { api } from '../../services/api';
+import './StatisticsPage.css';
+
+function StatisticsPage() {
+  const { data: stats, isLoading } = useQuery('statistics', () => api.getStatistics(), {
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+  });
+
+  if (isLoading) {
+    return <div className="statistics-loading">Loading statistics...</div>;
+  }
+
+  return (
+    <div className="statistics-page">
+      <h1 className="statistics-title">Statistics & Impact</h1>
+      
+      <div className="statistics-grid">
+        <div className="statistics-card">
+          <div className="statistics-icon">🌍</div>
+          <div className="statistics-value">{stats?.totalCo2Saved?.toFixed(2) || 0} kg</div>
+          <div className="statistics-label">CO₂ Saved</div>
+          <div className="statistics-sublabel">
+            {stats?.co2SavedPerTask ? `~${stats.co2SavedPerTask.toFixed(2)} kg per task` : ''}
+          </div>
+        </div>
+        <div className="statistics-card">
+          <div className="statistics-icon">🌲</div>
+          <div className="statistics-value">{stats?.totalTrees || 0}</div>
+          <div className="statistics-label">Total Trees</div>
+        </div>
+        <div className="statistics-card">
+          <div className="statistics-icon">👥</div>
+          <div className="statistics-value">{stats?.activeUsers || 0}</div>
+          <div className="statistics-label">Active Users</div>
+          <div className="statistics-sublabel">Last 30 days</div>
+        </div>
+        <div className="statistics-card">
+          <div className="statistics-icon">✅</div>
+          <div className="statistics-value">{stats?.tasksCompleted || 0}</div>
+          <div className="statistics-label">Tasks Completed</div>
+        </div>
+        <div className="statistics-card">
+          <div className="statistics-icon">⭐</div>
+          <div className="statistics-value">{stats?.averagePointsPerUser?.toFixed(0) || 0}</div>
+          <div className="statistics-label">Avg Points/User</div>
+        </div>
+      </div>
+
+      {stats?.dailyStats && stats.dailyStats.length > 0 && (
+        <div className="statistics-section">
+          <h2>Daily Progress (Last 30 Days)</h2>
+          <div className="daily-stats-chart">
+            {stats.dailyStats.slice(0, 7).map((day: any) => (
+              <div key={day.date} className="daily-stat-bar">
+                <div className="daily-stat-date">
+                  {new Date(day.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </div>
+                <div className="daily-stat-value">
+                  <div className="daily-stat-tasks">{day.tasksCompleted}</div>
+                  <div className="daily-stat-co2">{day.co2Saved?.toFixed(1) || 0} kg</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {stats?.teamProgress && stats.teamProgress.length > 0 && (
+        <div className="statistics-section">
+          <h2>Team Leaderboard</h2>
+          <div className="statistics-team">
+            <div className="leaderboard">
+              {stats.teamProgress.map((member: any, index: number) => (
+                <div key={member.id} className="leaderboard-item">
+                  <div className="leaderboard-rank">#{index + 1}</div>
+                  <div className="leaderboard-info">
+                    <div className="leaderboard-name">{member.name}</div>
+                    <div className="leaderboard-stats">
+                      {member.tasks_completed} tasks • {member.total_points} pts
+                    </div>
+                  </div>
+                  <div className="leaderboard-co2">
+                    {member.co2_saved?.toFixed(1) || 0} kg CO₂
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default StatisticsPage;
