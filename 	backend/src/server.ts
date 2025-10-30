@@ -1,4 +1,6 @@
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
@@ -25,6 +27,17 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api', setupRoutes());
+
+// Static serving for uploaded files
+const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn('Could not ensure upload directory exists:', e);
+}
+app.use('/uploads', express.static(uploadDir));
 
 // Error handler
 app.use(errorHandler);

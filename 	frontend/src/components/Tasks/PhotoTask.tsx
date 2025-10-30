@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useAuthStore } from '../../stores/authStore';
 import { useMutation, useQueryClient } from 'react-query';
 import { api } from '../../services/api';
 import './TaskComponents.css';
@@ -14,6 +15,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const token = useAuthStore((s) => s.token);
 
   const completeMutation = useMutation(
     async (photoUrl: string) => {
@@ -60,9 +62,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       // Upload photo to backend
       const uploadResponse = await fetch('/api/tasks/upload', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth-storage')}`,
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: formData,
       });
 

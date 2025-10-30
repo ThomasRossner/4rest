@@ -52,6 +52,16 @@ else
   exit 1
 fi
 
+echo "\n==> Seeding example photo task into Postgres (container: ${PG_CONTAINER})"
+
+if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_example_photo_task.sql" >/dev/null; then
+  echo "   - example photo task seeded (or already exists)"
+else
+  echo "ERROR: Failed to seed example photo task. Is the Postgres container running?"
+  echo "       Start DBs with: docker-compose -f docker-compose.dev.yml up -d"
+  exit 1
+fi
+
 echo "\n==> Seeding example reward into Postgres (container: ${PG_CONTAINER})"
 
 if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_example_reward.sql" >/dev/null; then
