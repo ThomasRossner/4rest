@@ -72,6 +72,16 @@ else
   exit 1
 fi
 
+echo "\n==> Seeding extra example rewards into Postgres (container: ${PG_CONTAINER})"
+
+if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_example_rewards_extra.sql" >/dev/null; then
+  echo "   - extra rewards seeded (or already exist)"
+else
+  echo "ERROR: Failed to seed extra rewards. Is the Postgres container running?"
+  echo "       Start DBs with: docker-compose -f docker-compose.dev.yml up -d"
+  exit 1
+fi
+
 echo "\n✅ Seeding complete."
 echo "Users (password for all): Test123!"
 echo " - test@example.com (guest)"
