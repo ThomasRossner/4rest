@@ -4,7 +4,8 @@ import { ConsentManager } from '../../components/GDPR/ConsentManager';
 import './ProfilePage.css';
 
 function ProfilePage() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const points = useAuthStore((s) => s.user?.points || 0);
   const [showConsent, setShowConsent] = useState(false);
 
   return (
@@ -21,9 +22,9 @@ function ProfilePage() {
             <span className="profile-role">{user?.role || 'guest'}</span>
           </div>
         </div>
-        <div className="profile-stats">
+          <div className="profile-stats">
           <div className="profile-stat">
-            <span className="profile-stat-value">{user?.points || 0}</span>
+            <span className="profile-stat-value">{points}</span>
             <span className="profile-stat-label">Total Points</span>
           </div>
           <div className="profile-stat">

@@ -4,7 +4,9 @@ import './Navigation.css';
 
 function Navigation() {
   const location = useLocation();
-  const { user, logout } = useAuthStore();
+  const userName = useAuthStore((s) => s.user?.name || 'User');
+  const points = useAuthStore((s) => s.user?.points || 0);
+  const logout = useAuthStore((s) => s.logout);
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -37,8 +39,8 @@ function Navigation() {
         </div>
         <div className="navigation-user">
           <Link to="/profile" className="navigation-user-link">
-            <span className="navigation-user-name">{user?.name || 'User'}</span>
-            <span className="navigation-user-points">{user?.points || 0} pts</span>
+            <span className="navigation-user-name">{userName}</span>
+            <span className="navigation-user-points">{points} pts</span>
           </Link>
           <button onClick={logout} className="navigation-logout">
             Logout

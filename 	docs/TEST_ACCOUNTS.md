@@ -78,3 +78,18 @@ To create all test users at once, you can create a simple script or use the regi
 # In WSL
 wsl bash -c "cd /mnt/c/Users/werner/Documents/roots-of-impact && docker exec -it roots-postgres psql -U roots_user -d roots_of_impact -f database/migrations/001_initial_schema.sql"
 ```
+
+## Seeding an Example Task
+
+Add a ready-to-complete QR task to the database:
+
+```bash
+# In WSL (from project root)
+wsl bash -c "cd /mnt/c/Users/werner/Documents/roots-of-impact && docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/seed_example_task.sql"
+```
+
+This creates a task:
+- **title**: Bring your reusable bottle
+- **type**: qr
+- **points**: 20
+- **qr_code**: QR-LOBBY-WATER-001

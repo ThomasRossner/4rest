@@ -4,18 +4,19 @@ import { api } from '../../services/api';
 import './DashboardPage.css';
 
 function DashboardPage() {
-  const { user } = useAuthStore();
+  const userId = useAuthStore((s) => s.user?.id);
+  const userPoints = useAuthStore((s) => s.user?.points || 0);
 
   const { data: progress } = useQuery(
-    ['userProgress', user?.id],
-    () => api.getUserProgress(user!.id),
-    { enabled: !!user }
+    ['userProgress', userId],
+    () => api.getUserProgress(userId as string),
+    { enabled: !!userId }
   );
 
   const { data: tasks } = useQuery(
     ['recentTasks'],
     () => api.getTasks({ limit: 5 }),
-    { enabled: !!user }
+    { enabled: !!userId }
   );
 
   return (
@@ -24,7 +25,7 @@ function DashboardPage() {
       <div className="dashboard-content">
         <div className="dashboard-stats">
           <div className="dashboard-stat-card">
-            <div className="dashboard-stat-value">{user?.points || 0}</div>
+            <div className="dashboard-stat-value">{userPoints}</div>
             <div className="dashboard-stat-label">Total Points</div>
           </div>
           <div className="dashboard-stat-card">

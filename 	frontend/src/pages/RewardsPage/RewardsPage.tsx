@@ -4,13 +4,14 @@ import { api } from '../../services/api';
 import './RewardsPage.css';
 
 function RewardsPage() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const points = useAuthStore((s) => s.user?.points || 0);
   const { data: rewards } = useQuery('rewards', () => api.getRewards());
 
   const handleRedeem = async (rewardId: string, cost: number) => {
     if (user && user.points >= cost) {
       try {
-        await api.redeemReward(rewardId);
+        await api.redeemReward(rewardId, cost);
         alert('Reward redeemed successfully!');
       } catch (error) {
         alert('Failed to redeem reward');
@@ -25,7 +26,7 @@ function RewardsPage() {
       <h1 className="rewards-title">Rewards Marketplace</h1>
       <div className="rewards-balance">
         <span className="rewards-balance-label">Your Points:</span>
-        <span className="rewards-balance-value">{user?.points || 0}</span>
+        <span className="rewards-balance-value">{points}</span>
       </div>
       <div className="rewards-grid">
         {rewards?.map((reward: any) => (

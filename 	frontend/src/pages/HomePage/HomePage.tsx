@@ -3,7 +3,8 @@ import { useAuthStore } from '../../stores/authStore';
 import './HomePage.css';
 
 function HomePage() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const points = useAuthStore((s) => s.user?.points || 0);
 
   return (
     <div className="home-page">
@@ -15,7 +16,7 @@ function HomePage() {
         {user && (
           <div className="home-stats">
             <div className="home-stat">
-              <span className="home-stat-value">{user.points}</span>
+              <span className="home-stat-value">{points}</span>
               <span className="home-stat-label">Points</span>
             </div>
             <div className="home-stat">
