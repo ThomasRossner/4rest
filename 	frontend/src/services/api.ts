@@ -53,6 +53,12 @@ export const api = {
       }
     } catch (_) {}
   },
+
+  // GDPR
+  async deleteMyAccount(userId: string) {
+    const res = await apiClient.delete(`/gdpr/delete/${userId}`);
+    return res.data;
+  },
   // Auth
   async login(email: string, password: string) {
     const response = await apiClient.post('/auth/login', { email, password });

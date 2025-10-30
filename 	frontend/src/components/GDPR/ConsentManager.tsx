@@ -30,11 +30,12 @@ export function ConsentManager() {
 
   const handleSave = async () => {
     try {
+      const token = useAuthStore.getState().token;
       await fetch('/api/gdpr/consent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth-token')}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(consent),
       });
@@ -47,9 +48,10 @@ export function ConsentManager() {
 
   const handleExportData = async () => {
     try {
+      const token = useAuthStore.getState().token;
       const response = await fetch(`/api/gdpr/export/${user?.id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth-token')}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
       const data = await response.json();
@@ -71,14 +73,11 @@ export function ConsentManager() {
     }
 
     try {
-      await fetch(`/api/gdpr/delete/${user?.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth-token')}`,
-        },
-      });
+      if (!user?.id) throw new Error('Missing user');
+      await api.deleteMyAccount(user.id);
       alert('Your data has been deleted. You will be logged out.');
-      // Logout user
+      // Clear auth store and redirect
+      useAuthStore.getState().logout();
       window.location.href = '/login';
     } catch (error) {
       alert('Failed to delete data');

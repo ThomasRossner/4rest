@@ -45,7 +45,7 @@ export async function deleteUserData(req: Request, res: Response, next: NextFunc
 
     // Soft delete: anonymize user data instead of hard delete
     // This preserves statistics while removing personal identifiers
-    await db.query(
+    const result = await db.query(
       `UPDATE users 
        SET email = CONCAT('deleted_', id, '@deleted.local'),
            name = 'Deleted User',
@@ -56,15 +56,11 @@ export async function deleteUserData(req: Request, res: Response, next: NextFunc
       [userId]
     );
 
-    // Anonymize forest trees (keep aggregate data)
-    await db.query(
-      `UPDATE forest_trees 
-       SET user_id = NULL 
-       WHERE user_id = $1`,
-      [userId]
-    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    res.json({ message: 'User data deleted successfully' });
+    res.json({ message: 'User data deleted successfully', affected: result.rowCount });
   } catch (error: any) {
     next(error);
   }

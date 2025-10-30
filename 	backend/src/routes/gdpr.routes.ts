@@ -10,9 +10,8 @@ const router = Router();
 router.get('/export/:userId', authenticate, exportUserData);
 
 // Delete user data (GDPR right to deletion)
-router.delete('/delete/:userId', authenticate, async (req: AuthRequest, res: Response) => {
-  await deleteUserData(req, res, () => {});
-});
+// Call middleware directly so errors propagate to the global handler
+router.delete('/delete/:userId', authenticate, deleteUserData);
 
 // Update consent preferences
 router.post('/consent', authenticate, async (req: AuthRequest, res: Response) => {
