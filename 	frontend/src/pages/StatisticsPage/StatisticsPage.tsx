@@ -18,10 +18,10 @@ function StatisticsPage() {
       <div className="statistics-grid">
         <div className="statistics-card">
           <div className="statistics-icon">🌍</div>
-          <div className="statistics-value">{stats?.totalCo2Saved?.toFixed(2) || 0} kg</div>
+          <div className="statistics-value">{stats ? Number(stats.totalCo2Saved ?? 0).toFixed(2) : 0} kg</div>
           <div className="statistics-label">CO₂ Saved</div>
           <div className="statistics-sublabel">
-            {stats?.co2SavedPerTask ? `~${stats.co2SavedPerTask.toFixed(2)} kg per task` : ''}
+            {stats?.co2SavedPerTask !== undefined ? `~${Number(stats.co2SavedPerTask).toFixed(2)} kg per task` : ''}
           </div>
         </div>
         <div className="statistics-card">
@@ -42,7 +42,7 @@ function StatisticsPage() {
         </div>
         <div className="statistics-card">
           <div className="statistics-icon">⭐</div>
-          <div className="statistics-value">{stats?.averagePointsPerUser?.toFixed(0) || 0}</div>
+          <div className="statistics-value">{stats ? Number(stats.averagePointsPerUser ?? 0).toFixed(0) : 0}</div>
           <div className="statistics-label">Avg Points/User</div>
         </div>
       </div>
@@ -51,8 +51,8 @@ function StatisticsPage() {
         <div className="statistics-section">
           <h2>Daily Progress (Last 30 Days)</h2>
           <div className="daily-stats-chart">
-            {stats.dailyStats.slice(0, 7).map((day: any) => (
-              <div key={day.date} className="daily-stat-bar">
+            {stats.dailyStats.slice(0, 7).map((day: any, idx: number) => (
+              <div key={day.date || idx} className="daily-stat-bar">
                 <div className="daily-stat-date">
                   {new Date(day.date).toLocaleDateString('en-US', {
                     month: 'short',
@@ -61,7 +61,7 @@ function StatisticsPage() {
                 </div>
                 <div className="daily-stat-value">
                   <div className="daily-stat-tasks">{day.tasksCompleted}</div>
-                  <div className="daily-stat-co2">{day.co2Saved?.toFixed(1) || 0} kg</div>
+                  <div className="daily-stat-co2">{Number(day.co2Saved ?? 0).toFixed(1)} kg</div>
                 </div>
               </div>
             ))}
@@ -80,11 +80,11 @@ function StatisticsPage() {
                   <div className="leaderboard-info">
                     <div className="leaderboard-name">{member.name}</div>
                     <div className="leaderboard-stats">
-                      {member.tasks_completed} tasks • {member.total_points} pts
+                      {Number(member.tasks_completed ?? 0)} tasks • {Number(member.total_points ?? 0)} pts
                     </div>
                   </div>
                   <div className="leaderboard-co2">
-                    {member.co2_saved?.toFixed(1) || 0} kg CO₂
+                    {Number(member.co2_saved ?? 0).toFixed(1)} kg CO₂
                   </div>
                 </div>
               ))}
