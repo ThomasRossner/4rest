@@ -6,14 +6,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build
-RUN npm run build
-
 EXPOSE 5000
 
-CMD ["npm", "start"]
+# Use development mode (no build needed, tsx handles it)
+CMD ["npm", "run", "dev"]
