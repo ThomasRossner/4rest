@@ -6,6 +6,7 @@ import { QRCodeTask } from '../../components/Tasks/QRCodeTask';
 import { PhotoTask } from '../../components/Tasks/PhotoTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
+import { FilterDropdown } from '../../components/Filters/FilterDropdown';
 import './TasksPage.css';
 
 function TasksPage() {
@@ -98,62 +99,36 @@ function TasksPage() {
     <div className="tasks-page">
       <h1 className="tasks-title">Available Tasks</h1>
       
-      <div className="tasks-filters">
-        <div className="tasks-filter-group">
-          <label className="tasks-filter-label">Type:</label>
-          <div className="tasks-filter-buttons">
-            {(['all', 'video', 'qr', 'photo'] as const).map((type) => (
-              <button
-                key={type}
-                className={`tasks-filter-btn ${typeFilter === type ? 'active' : ''}`}
-                onClick={() => setTypeFilter(type)}
-                aria-pressed={typeFilter === type}
-              >
-                {type === 'all' ? 'All' : type === 'video' ? '🎥 Video' : type === 'qr' ? '📱 QR' : '📷 Photo'}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        <div className="tasks-filter-group">
-          <label className="tasks-filter-label">Status:</label>
-          <div className="tasks-filter-buttons">
-            <button
-              className={`tasks-filter-btn ${completionFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setCompletionFilter('all')}
-              aria-pressed={completionFilter === 'all'}
-            >
-              All
-            </button>
-            <button
-              className={`tasks-filter-btn ${completionFilter === 'not_completed' ? 'active' : ''}`}
-              onClick={() => setCompletionFilter('not_completed')}
-              aria-pressed={completionFilter === 'not_completed'}
-            >
-              Not Completed
-            </button>
-          </div>
-        </div>
-        
-        <div className="tasks-filter-group">
-          <label className="tasks-filter-label">Time:</label>
-          <div className="tasks-filter-buttons">
-            <button
-              className={`tasks-filter-btn ${timeFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setTimeFilter('all')}
-              aria-pressed={timeFilter === 'all'}
-            >
-              All
-            </button>
-            <button
-              className={`tasks-filter-btn ${timeFilter === 'recent' ? 'active' : ''}`}
-              onClick={() => setTimeFilter('recent')}
-              aria-pressed={timeFilter === 'recent'}
-            >
-              Recent
-            </button>
-          </div>
-        </div>
+      <div className="tasks-filters-row">
+        <FilterDropdown
+          label="Type"
+          value={typeFilter}
+          onChange={(value) => setTypeFilter(value as typeof typeFilter)}
+          options={[
+            { value: 'all', label: 'All Types' },
+            { value: 'video', label: 'Video', icon: '🎥' },
+            { value: 'qr', label: 'QR Code', icon: '📱' },
+            { value: 'photo', label: 'Photo', icon: '📷' },
+          ]}
+        />
+        <FilterDropdown
+          label="Status"
+          value={completionFilter}
+          onChange={(value) => setCompletionFilter(value as typeof completionFilter)}
+          options={[
+            { value: 'all', label: 'All Tasks' },
+            { value: 'not_completed', label: 'Not Completed' },
+          ]}
+        />
+        <FilterDropdown
+          label="Time"
+          value={timeFilter}
+          onChange={(value) => setTimeFilter(value as typeof timeFilter)}
+          options={[
+            { value: 'all', label: 'All Time' },
+            { value: 'recent', label: 'Recent (7 days)' },
+          ]}
+        />
       </div>
 
       {filteredTasks.length === 0 ? (
