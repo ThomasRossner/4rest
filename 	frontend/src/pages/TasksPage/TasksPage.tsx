@@ -8,18 +8,20 @@ import './TasksPage.css';
 
 function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const { data: tasks, isLoading } = useQuery('tasks', () => api.getTasks());
+  const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
 
   if (isLoading) {
     return <div>Loading tasks...</div>;
   }
 
   const handleTaskClick = (task: any) => {
+    if (task.completed) return;
     setSelectedTask(task.id);
   };
 
-  const handleTaskComplete = () => {
+  const handleTaskComplete = async () => {
     setSelectedTask(null);
+    try { await refetch(); } catch (_) {}
   };
 
   if (selectedTask) {
@@ -60,8 +62,9 @@ function TasksPage() {
             <button
               className="task-button"
               onClick={() => handleTaskClick(task)}
+              disabled={!!task.completed}
             >
-              Start Task
+              {task.completed ? 'Completed' : 'Start Task'}
             </button>
           </div>
         ))}

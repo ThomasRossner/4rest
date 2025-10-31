@@ -15,18 +15,31 @@ export interface Task {
   external_id?: string;
 }
 
-export async function getAllTasks(filters?: { limit?: number; offset?: number; type?: string }) {
+export async function getAllTasks(
+  filters?: { limit?: number; offset?: number; type?: string },
+  userId?: string
+) {
   const db = getPool();
-  let query = 'SELECT * FROM tasks WHERE active = TRUE';
   const params: any[] = [];
   let paramIndex = 1;
 
+  // Select completed flag if userId provided
+  let select = 't.*';
+  let from = ' FROM tasks t';
+  if (userId) {
+    select += `, (ut.user_id IS NOT NULL) AS completed`;
+    from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex++}`;
+    params.push(userId);
+  }
+
+  let query = `SELECT ${select}${from} WHERE t.active = TRUE`;
+
   if (filters?.type) {
-    query += ` AND type = $${paramIndex++}`;
+    query += ` AND t.type = $${paramIndex++}`;
     params.push(filters.type);
   }
 
-  query += ' ORDER BY created_at DESC';
+  query += ' ORDER BY t.created_at DESC';
 
   if (filters?.limit) {
     query += ` LIMIT $${paramIndex++}`;

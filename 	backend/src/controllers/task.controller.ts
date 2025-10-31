@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
 import {
   getAllTasks,
@@ -10,14 +10,14 @@ import {
   uploadPhoto as uploadPhotoService,
 } from '../services/task.service.js';
 
-export async function getTasks(req: Request, res: Response) {
+export async function getTasks(req: AuthRequest, res: Response) {
   try {
     const { limit, offset, type } = req.query;
     const tasks = await getAllTasks({
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined,
       type: type as string,
-    });
+    }, req.user?.id);
     res.json(tasks);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

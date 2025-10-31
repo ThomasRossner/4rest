@@ -36,7 +36,7 @@ const upload = multer({
 
 const router = Router();
 
-router.get('/', getTasks);
+router.get('/', authenticate, getTasks);
 router.get('/:id', getTask);
 router.post('/', authenticate, createTask);
 router.put('/:id', authenticate, updateTask);
