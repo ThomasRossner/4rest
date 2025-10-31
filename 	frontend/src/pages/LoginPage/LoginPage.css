@@ -93,12 +93,46 @@
 }
 
 .login-footer {
-  margin-top: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
   text-align: center;
   color: var(--color-text-light);
   font-size: 0.9rem;
 }
 
-.login-footer a {
+.login-footer p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.link-button {
+  background: none;
+  border: none;
   color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+  font-family: inherit;
+  min-height: auto;
+}
+
+.link-button:hover {
+  color: var(--color-primary-light);
+  text-decoration-thickness: 2px;
+}
+
+.link-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+  text-decoration: none;
 }
