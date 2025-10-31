@@ -32,7 +32,7 @@
   display: none;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .navigation-logo-text {
     display: inline;
   }
@@ -42,7 +42,7 @@
   display: flex;
   gap: var(--spacing-sm);
   flex: 1;
-  overflow-x: auto;
+  overflow: hidden; /* prevent horizontal scrollbar */
 }
 
 .navigation-item {
@@ -74,9 +74,22 @@
   display: none;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .navigation-item-label {
     display: inline;
+  }
+}
+
+/* Compact icon-only nav on small screens */
+@media (max-width: 1024px) {
+  .navigation-items {
+    gap: var(--spacing-xs);
+  }
+  .navigation-item {
+    padding: 8px; /* smaller padding to fit icons */
+  }
+  .navigation-item-label {
+    display: none; /* ensure labels hidden on small screens */
   }
 }
 
@@ -121,7 +134,46 @@
     flex-wrap: wrap;
   }
   
+  /* Compact user info on mobile */
   .navigation-user-link {
-    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .navigation-user-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .navigation-user-points {
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .navigation-logout {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* On very small screens, show name with ellipsis if needed */
+@media (max-width: 480px) {
+  .navigation-user-name {
+    max-width: 60px;
+    font-size: 0.8rem;
+  }
+  
+  .navigation-user-points {
+    font-size: 0.75rem;
+  }
+  
+  .navigation-user-link {
+    gap: 4px;
   }
 }
