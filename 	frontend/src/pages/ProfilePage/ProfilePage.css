@@ -1,0 +1,101 @@
+.profile-page {
+  padding: var(--spacing-lg) 0;
+}
+
+.profile-title {
+  font-size: 2rem;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.profile-card {
+  background: white;
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.profile-info h2 {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.profile-info p {
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-sm);
+}
+
+.profile-role {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.profile-stats {
+  display: flex;
+  gap: var(--spacing-xl);
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.profile-stat-label {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.profile-actions {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.privacy-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.privacy-button:hover {
+  background-color: var(--color-border);
+}
+
+.consent-section-wrapper {
+  margin-top: var(--spacing-xl);
+}

@@ -1,0 +1,99 @@
+.consent-manager {
+  background: white;
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.consent-manager h2 {
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.consent-section {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.consent-section h3 {
+  font-size: 1.25rem;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-md);
+}
+
+.consent-item {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--border-radius);
+}
+
+.consent-item label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.consent-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.consent-description {
+  margin-top: var(--spacing-xs);
+  margin-left: 28px;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.save-consent-button {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 500;
+}
+
+.save-consent-button:hover {
+  background-color: var(--color-primary-light);
+}
+
+.gdpr-actions h3 {
+  font-size: 1.25rem;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-md);
+}
+
+.gdpr-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.export-button {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 500;
+}
+
+.export-button:hover {
+  background-color: var(--color-primary-light);
+}
+
+.delete-button {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--color-error);
+  color: white;
+  font-weight: 500;
+}
+
+.delete-button:hover {
+  background-color: #d32f2f;
+}
