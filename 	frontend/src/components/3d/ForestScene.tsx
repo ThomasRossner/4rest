@@ -13,7 +13,7 @@ function ForestScene() {
   const gridSize = 10;
   const treePositions: Array<[number, number, number]> = [];
 
-  for (let i = 0; i < Math.min(trees.length || 5, 50); i++) {
+  for (let i = 0; i < Math.min(trees.length || 0, 50); i++) {
     const x = (Math.random() - 0.5) * gridSize;
     const z = (Math.random() - 0.5) * gridSize;
     treePositions.push([x, 0, z]);
