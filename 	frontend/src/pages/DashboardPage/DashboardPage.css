@@ -144,12 +144,129 @@
   line-height: 1.6;
 }
 
+/* Mobile optimizations - fit everything on screen without scrolling */
 @media (max-width: 768px) {
-  .dashboard-title {
-    font-size: 2rem;
+  .dashboard-page {
+    padding: var(--spacing-xs) 0;
   }
-  
+
+  .dashboard-hero {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .dashboard-title {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.2;
+  }
+
+  .dashboard-subtitle {
+    font-size: 0.85rem;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.3;
+  }
+
+  .dashboard-content {
+    padding: 0 var(--spacing-xs);
+  }
+
+  .dashboard-section {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .dashboard-section-header {
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .dashboard-section-title {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+  }
+
+  .dashboard-section-subtitle {
+    display: none; /* Hide subtitles on mobile to save space */
+  }
+
+  .dashboard-section-actions {
+    padding-top: var(--spacing-sm);
+    border-top-width: 1px;
+    margin-top: var(--spacing-xs);
+  }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .dashboard-stat-card {
+    padding: var(--spacing-sm);
+    min-height: auto;
+  }
+
+  .dashboard-stat-value {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+    line-height: 1.2;
+  }
+
+  .dashboard-stat-label {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
+
   .dashboard-actions {
     grid-template-columns: 1fr;
+    gap: var(--spacing-xs);
+  }
+
+  .dashboard-action-card {
+    padding: var(--spacing-sm);
+    border-width: 1px;
+  }
+
+  .dashboard-action-icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .dashboard-action-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .dashboard-action-card p {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    margin: 0;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .dashboard-title {
+    font-size: 1.25rem;
+  }
+
+  .dashboard-section-title {
+    font-size: 1rem;
+  }
+
+  .dashboard-stat-value {
+    font-size: 1.1rem;
+  }
+
+  .dashboard-stat-label {
+    font-size: 0.65rem;
+  }
+
+  .dashboard-action-card h3 {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-action-card p {
+    font-size: 0.7rem;
   }
 }
