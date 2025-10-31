@@ -2,9 +2,20 @@
   padding: var(--spacing-lg) 0;
 }
 
+.dashboard-hero {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
 .dashboard-title {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.dashboard-subtitle {
+  font-size: 1.2rem;
+  color: var(--color-text-light);
   margin-bottom: var(--spacing-lg);
 }
 
@@ -35,45 +46,52 @@
   color: var(--color-text-light);
 }
 
-.dashboard-section {
+.dashboard-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
   margin-top: var(--spacing-xl);
 }
 
-.dashboard-section h2 {
-  font-size: 1.5rem;
-  color: var(--color-primary);
+.dashboard-action-card {
+  padding: var(--spacing-xl);
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+}
+
+.dashboard-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.dashboard-action-icon {
+  font-size: 3rem;
+  display: block;
   margin-bottom: var(--spacing-md);
 }
 
-.dashboard-tasks {
-  display: grid;
-  gap: var(--spacing-md);
-}
-
-.dashboard-task-card {
-  background: white;
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-}
-
-.dashboard-task-card h3 {
-  font-size: 1.1rem;
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.dashboard-task-card p {
-  color: var(--color-text-light);
+.dashboard-action-card h3 {
+  font-size: 1.5rem;
   margin-bottom: var(--spacing-sm);
+  color: var(--color-primary);
 }
 
-.dashboard-task-points {
-  display: inline-block;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--color-accent);
-  color: white;
-  border-radius: var(--border-radius);
-  font-size: 0.9rem;
-  font-weight: 500;
+.dashboard-action-card p {
+  color: var(--color-text-light);
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .dashboard-title {
+    font-size: 2rem;
+  }
+  
+  .dashboard-actions {
+    grid-template-columns: 1fr;
+  }
 }

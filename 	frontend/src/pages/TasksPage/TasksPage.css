@@ -102,3 +102,77 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+.tasks-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.tasks-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.tasks-filter-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-light);
+  margin-bottom: 4px;
+}
+
+.tasks-filter-buttons {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.tasks-filter-btn {
+  padding: 8px 16px;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  background: white;
+  color: var(--color-text);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.tasks-filter-btn:hover {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+.tasks-filter-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.tasks-filter-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .tasks-filters {
+    padding: var(--spacing-sm);
+  }
+  
+  .tasks-filter-buttons {
+    gap: 6px;
+  }
+  
+  .tasks-filter-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+}

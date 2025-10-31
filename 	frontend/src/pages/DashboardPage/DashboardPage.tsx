@@ -1,8 +1,8 @@
+import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
-import { EmptyState } from '../../components/Feedback/EmptyState';
 import './DashboardPage.css';
 
 function DashboardPage() {
@@ -15,16 +15,12 @@ function DashboardPage() {
     { enabled: !!userId }
   );
 
-  const { data: tasks, isLoading: tasksLoading } = useQuery(
-    ['recentTasks'],
-    () => api.getTasks({ limit: 5 }),
-    { enabled: !!userId }
-  );
-
   if (progressLoading && !progress) {
     return (
       <div className="dashboard-page">
-        <h1 className="dashboard-title">Dashboard</h1>
+        <div className="dashboard-hero">
+          <h1 className="dashboard-title">Welcome to Roots of Impact</h1>
+        </div>
         <LoadingSkeleton lines={8} />
       </div>
     );
@@ -32,7 +28,13 @@ function DashboardPage() {
 
   return (
     <div className="dashboard-page">
-      <h1 className="dashboard-title">Dashboard</h1>
+      <div className="dashboard-hero">
+        <h1 className="dashboard-title">Welcome to Roots of Impact</h1>
+        <p className="dashboard-subtitle">
+          Grow your virtual forest through sustainable actions
+        </p>
+      </div>
+      
       <div className="dashboard-content">
         <div className="dashboard-stats">
           <div className="dashboard-stat-card">
@@ -52,23 +54,23 @@ function DashboardPage() {
             <div className="dashboard-stat-label">CO₂ Saved</div>
           </div>
         </div>
-        <div className="dashboard-section">
-          <h2>Recent Tasks</h2>
-          {tasksLoading ? (
-            <LoadingSkeleton lines={3} />
-          ) : tasks && tasks.length > 0 ? (
-            <div className="dashboard-tasks">
-              {tasks.map((task: any) => (
-                <div key={task.id} className="dashboard-task-card">
-                  <h3>{task.title}</h3>
-                  <p>{task.description}</p>
-                  <span className="dashboard-task-points">+{task.points} points</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState title="No recent tasks" description="Complete some tasks to see them here." />
-          )}
+        
+        <div className="dashboard-actions">
+          <Link to="/tasks" className="dashboard-action-card">
+            <span className="dashboard-action-icon">✅</span>
+            <h3>Complete Tasks</h3>
+            <p>Earn points by completing sustainability challenges</p>
+          </Link>
+          <Link to="/forest" className="dashboard-action-card">
+            <span className="dashboard-action-icon">🌲</span>
+            <h3>Visit Forest</h3>
+            <p>Watch your trees grow in the virtual forest</p>
+          </Link>
+          <Link to="/rewards" className="dashboard-action-card">
+            <span className="dashboard-action-icon">🎁</span>
+            <h3>Redeem Rewards</h3>
+            <p>Exchange points for discounts and benefits</p>
+          </Link>
         </div>
       </div>
     </div>

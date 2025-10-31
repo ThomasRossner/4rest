@@ -9,7 +9,6 @@ function Navigation() {
   const logout = useAuthStore((s) => s.logout);
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/tasks', label: 'Tasks', icon: '✅' },
     { path: '/forest', label: 'Forest', icon: '🌲' },
     { path: '/rewards', label: 'Rewards', icon: '🎁' },
@@ -19,7 +18,10 @@ function Navigation() {
   return (
     <nav className="navigation">
       <div className="navigation-container">
-        <Link to="/" className="navigation-logo">
+        <Link 
+          to="/" 
+          className={`navigation-logo ${location.pathname === '/' ? 'active' : ''}`}
+        >
           <span className="navigation-logo-icon">🌳</span>
           <span className="navigation-logo-text">Roots of Impact</span>
         </Link>

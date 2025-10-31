@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import Layout from './components/Layout/Layout';
-import HomePage from './pages/HomePage/HomePage';
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import TasksPage from './pages/TasksPage/TasksPage';
 import ForestPage from './pages/ForestPage/ForestPage';
@@ -28,8 +27,8 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<HomePage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<Navigate to="/" replace />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="forest" element={<ForestPage />} />
           <Route path="rewards" element={<RewardsPage />} />
