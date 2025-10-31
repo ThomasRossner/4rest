@@ -4,6 +4,8 @@ import { api } from '../../services/api';
 import { VideoTask } from '../../components/Tasks/VideoTask';
 import { QRCodeTask } from '../../components/Tasks/QRCodeTask';
 import { PhotoTask } from '../../components/Tasks/PhotoTask';
+import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
+import { EmptyState } from '../../components/Feedback/EmptyState';
 import './TasksPage.css';
 
 function TasksPage() {
@@ -11,7 +13,12 @@ function TasksPage() {
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
 
   if (isLoading) {
-    return <div>Loading tasks...</div>;
+    return (
+      <div className="tasks-page">
+        <h1 className="tasks-title">Available Tasks</h1>
+        <LoadingSkeleton lines={6} />
+      </div>
+    );
   }
 
   const handleTaskClick = (task: any) => {
@@ -45,17 +52,29 @@ function TasksPage() {
     }
   }
 
+  if (!tasks || tasks.length === 0) {
+    return (
+      <div className="tasks-page">
+        <h1 className="tasks-title">Available Tasks</h1>
+        <EmptyState title="No tasks available" description="Check back later for new sustainability tasks." />
+      </div>
+    );
+  }
+
   return (
     <div className="tasks-page">
       <h1 className="tasks-title">Available Tasks</h1>
       <div className="tasks-grid">
-        {tasks?.map((task: any) => (
-          <div key={task.id} className="task-card">
+        {tasks.map((task: any) => (
+          <div key={task.id} className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
             <div className="task-header">
               <span className="task-icon">
                 {task.type === 'video' ? '🎥' : task.type === 'qr' ? '📱' : '📷'}
               </span>
               <span className="task-points">+{task.points} pts</span>
+              {task.completed && (
+                <span className="task-completed-badge" title="Task completed">✓</span>
+              )}
             </div>
             <h3 className="task-title">{task.title}</h3>
             <p className="task-description">{task.description}</p>

@@ -8,6 +8,7 @@
   --color-primary: #2d5016;
   --color-primary-light: #3f6f20;
   --color-primary-dark: #1f360f;
+  --color-primary-ghost: rgba(45, 80, 22, 0.1);
   --color-secondary: #5a8c3a;
   --color-accent: #7fb347;
   --color-text: #1a1a1a;
@@ -65,4 +66,53 @@ a {
 
 a:hover {
   color: var(--color-primary-light);
+}
+
+/* Accessibility improvements */
+button, a, input, textarea, select {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Improve color contrast for better readability */
+:focus {
+  outline-color: var(--color-primary);
+}
+
+/* Ensure interactive elements have sufficient touch targets on mobile */
+@media (max-width: 768px) {
+  button, a {
+    min-height: 48px;
+  }
+}
+
+/* Loading skeleton pulse animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }

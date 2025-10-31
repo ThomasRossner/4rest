@@ -1,5 +1,7 @@
 import { useQuery } from 'react-query';
 import { api } from '../../services/api';
+import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
+import { EmptyState } from '../../components/Feedback/EmptyState';
 import './StatisticsPage.css';
 
 function StatisticsPage() {
@@ -8,7 +10,21 @@ function StatisticsPage() {
   });
 
   if (isLoading) {
-    return <div className="statistics-loading">Loading statistics...</div>;
+    return (
+      <div className="statistics-page">
+        <h1 className="statistics-title">Statistics & Impact</h1>
+        <LoadingSkeleton lines={10} />
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="statistics-page">
+        <h1 className="statistics-title">Statistics & Impact</h1>
+        <EmptyState title="No statistics available" description="Statistics will appear here once tasks are completed." />
+      </div>
+    );
   }
 
   return (
