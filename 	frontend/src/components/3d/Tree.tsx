@@ -1,5 +1,4 @@
 import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
 import { Mesh } from 'three';
 
 interface TreeProps {
@@ -14,12 +13,12 @@ export function Tree({ position }: TreeProps) {
   return (
     <group position={position}>
       {/* Trunk */}
-      <mesh ref={trunkRef} castShadow position={[0, 1, 0]}>
+      <mesh ref={trunkRef} castShadow receiveShadow position={[0, 1, 0]}>
         <cylinderGeometry args={[0.1, 0.1, 2]} />
         <meshStandardMaterial color="#8b4513" />
       </mesh>
       {/* Leaves */}
-      <mesh ref={leavesRef} castShadow position={[0, 2.5, 0]}>
+      <mesh ref={leavesRef} castShadow receiveShadow position={[0, 2.5, 0]}>
         <coneGeometry args={[0.8, 1.5, 8]} />
         <meshStandardMaterial color="#2d5016" />
       </mesh>

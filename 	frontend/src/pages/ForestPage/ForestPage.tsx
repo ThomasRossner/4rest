@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Sky, PerspectiveCamera } from '@react-three/drei';
+import { Sky, PerspectiveCamera } from '@react-three/drei';
 import ForestScene from '../../components/3d/ForestScene';
 import './ForestPage.css';
 
@@ -18,16 +18,22 @@ function ForestPage() {
           >
             <PerspectiveCamera makeDefault position={[10, 10, 10]} />
             <ambientLight intensity={0.5} />
-            <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
+            <directionalLight
+              position={[30, 40, 20]}
+              intensity={1.1}
+              castShadow
+              shadow-mapSize-width={2048}
+              shadow-mapSize-height={2048}
+              shadow-camera-near={1}
+              shadow-camera-far={200}
+              shadow-camera-left={-120}
+              shadow-camera-right={120}
+              shadow-camera-top={120}
+              shadow-camera-bottom={-120}
+              shadow-bias={-0.0005}
+            />
             <Sky sunPosition={[100, 20, 100]} />
             <ForestScene />
-            <OrbitControls
-              enablePan
-              enableZoom
-              enableRotate
-              minDistance={5}
-              maxDistance={50}
-            />
           </Canvas>
         </Suspense>
       </div>
