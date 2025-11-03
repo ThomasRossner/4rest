@@ -4,7 +4,7 @@ import { api } from '../../services/api';
 import { Tree } from './Tree';
 import { Html, OrbitControls } from '@react-three/drei';
 import { useAuthStore } from '../../stores/authStore';
-import { useThree } from '@react-three/fiber';
+import { useThree, useFrame } from '@react-three/fiber';
 
 function ForestScene() {
   const { data: forest } = useQuery('forest', () => api.getForest());
@@ -31,6 +31,17 @@ function ForestScene() {
       controlsRef.current.update();
     }
   }, [myOrigin, camera]);
+
+  // Clamp camera position to prevent going below ground surface
+  useFrame(() => {
+    const minY = 0.5; // Minimum height above ground
+    if (camera.position.y < minY) {
+      camera.position.y = minY;
+      if (controlsRef.current) {
+        controlsRef.current.update();
+      }
+    }
+  });
 
   return (
     <>
@@ -106,6 +117,8 @@ function ForestScene() {
         enableRotate
         minDistance={5}
         maxDistance={50}
+        maxPolarAngle={Math.PI / 2}
+        minPolarAngle={0}
       />
     </>
   );
