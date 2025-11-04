@@ -101,7 +101,6 @@ function TasksPage() {
       
       <div className="tasks-filters-row">
         <FilterDropdown
-          label="Type"
           value={typeFilter}
           onChange={(value) => setTypeFilter(value as typeof typeFilter)}
           options={[
@@ -112,7 +111,6 @@ function TasksPage() {
           ]}
         />
         <FilterDropdown
-          label="Status"
           value={completionFilter}
           onChange={(value) => setCompletionFilter(value as typeof completionFilter)}
           options={[
@@ -121,7 +119,6 @@ function TasksPage() {
           ]}
         />
         <FilterDropdown
-          label="Time"
           value={timeFilter}
           onChange={(value) => setTimeFilter(value as typeof timeFilter)}
           options={[

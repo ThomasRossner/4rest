@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { api } from '../../services/api';
 import './TaskComponents.css';
 
@@ -13,6 +13,12 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const [scannedCode, setScannedCode] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const queryClient = useQueryClient();
+
+  const { data: task, isLoading } = useQuery(
+    ['task', taskId],
+    () => api.getTask(taskId),
+    { enabled: !!taskId }
+  );
 
   const completeMutation = useMutation(
     () => api.completeTask(taskId, {}),
@@ -49,12 +55,20 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
       .catch(() => setHasCamera(false));
   }, []);
 
+  if (isLoading) return <div>Loading task...</div>;
+  if (!task) return <div>Task not found</div>;
+
   return (
     <div className="task-container">
       <div className="task-header">
-        <h2>QR Code Challenge</h2>
-        <p>Scan the QR code at the location to complete this task</p>
+        <h2>{task.title}</h2>
+        <span className="task-points">+{task.points} points</span>
       </div>
+      {task.description && (
+        <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-text-light)' }}>
+          {task.description}
+        </p>
+      )}
 
       <div className="qr-container">
         <div className="qr-scanner-area">

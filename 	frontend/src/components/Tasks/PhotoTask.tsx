@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { api } from '../../services/api';
 import './TaskComponents.css';
 
@@ -16,6 +16,12 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
+
+  const { data: task, isLoading } = useQuery(
+    ['task', taskId],
+    () => api.getTask(taskId),
+    { enabled: !!taskId }
+  );
 
   const completeMutation = useMutation(
     async (photoUrl: string) => {
@@ -79,12 +85,20 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
     }
   };
 
+  if (isLoading) return <div>Loading task...</div>;
+  if (!task) return <div>Task not found</div>;
+
   return (
     <div className="task-container">
       <div className="task-header">
-        <h2>Photo Challenge</h2>
-        <p>Upload a photo as proof of completing this task</p>
+        <h2>{task.title}</h2>
+        <span className="task-points">+{task.points} points</span>
       </div>
+      {task.description && (
+        <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-text-light)' }}>
+          {task.description}
+        </p>
+      )}
 
       <div className="photo-upload-container">
         {preview ? (

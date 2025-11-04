@@ -8,7 +8,7 @@ type FilterOption = {
 };
 
 type FilterDropdownProps = {
-  label: string;
+  label?: string;
   value: string;
   options: FilterOption[];
   onChange: (value: string) => void;
@@ -16,7 +16,9 @@ type FilterDropdownProps = {
 
 export function FilterDropdown({ label, value, options, onChange }: FilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -25,12 +27,31 @@ export function FilterDropdown({ label, value, options, onChange }: FilterDropdo
       }
     }
 
+    function updateMenuPosition() {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setMenuStyle({
+          position: 'fixed',
+          left: `${rect.left}px`,
+          top: `${rect.bottom + 8}px`,
+          width: `${rect.width}px`,
+          maxWidth: `${rect.width}px`,
+          zIndex: 99999,
+        });
+      } else {
+        setMenuStyle({});
+      }
+    }
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('resize', updateMenuPosition);
+      updateMenuPosition();
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', updateMenuPosition);
     };
   }, [isOpen]);
 
@@ -38,8 +59,9 @@ export function FilterDropdown({ label, value, options, onChange }: FilterDropdo
 
   return (
     <div className="filter-dropdown" ref={dropdownRef}>
-      <label className="filter-dropdown-label">{label}</label>
+      {label && <label className="filter-dropdown-label">{label}</label>}
       <button
+        ref={buttonRef}
         className="filter-dropdown-button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
@@ -52,7 +74,7 @@ export function FilterDropdown({ label, value, options, onChange }: FilterDropdo
         <span className={`filter-dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
       </button>
       {isOpen && (
-        <div className="filter-dropdown-menu" role="listbox">
+        <div className="filter-dropdown-menu" role="listbox" style={menuStyle}>
           {options.map((option) => (
             <button
               key={option.value}
