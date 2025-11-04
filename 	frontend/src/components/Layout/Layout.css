@@ -15,7 +15,7 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .layout-main {
     padding: var(--spacing-xs);
     padding-top: calc(var(--spacing-xs) + 70px); /* Space for top nav */

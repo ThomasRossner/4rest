@@ -378,7 +378,7 @@
 }
 
 /* Mobile Navigation - Split into top and bottom bars */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   /* Top navigation - only logo and avatar */
   .navigation-top {
     padding: var(--spacing-sm) 0;
