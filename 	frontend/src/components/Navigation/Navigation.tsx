@@ -1,39 +1,71 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import './Navigation.css';
 
 function Navigation() {
   const location = useLocation();
+  const navigate = useNavigate();
   const userName = useAuthStore((s) => s.user?.name || 'User');
   const points = useAuthStore((s) => s.user?.points || 0);
   const logout = useAuthStore((s) => s.logout);
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
-  const [isVerySmallScreen, setIsVerySmallScreen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const userButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Generate user initials
+  const getUserInitials = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Handle click outside and update menu position
   useEffect(() => {
-    const mediaQuery1024 = window.matchMedia('(max-width: 1024px)');
-    const mediaQuery480 = window.matchMedia('(max-width: 480px)');
-    
-    setIsSmallScreen(mediaQuery1024.matches);
-    setIsVerySmallScreen(mediaQuery480.matches);
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
 
-    const handleChange1024 = (e: MediaQueryListEvent) => {
-      setIsSmallScreen(e.matches);
-    };
-    
-    const handleChange480 = (e: MediaQueryListEvent) => {
-      setIsVerySmallScreen(e.matches);
-    };
+    function updateMenuPosition() {
+      if (userButtonRef.current) {
+        const rect = userButtonRef.current.getBoundingClientRect();
+        setMenuStyle({
+          position: 'fixed',
+          right: `${window.innerWidth - rect.right}px`,
+          top: `${rect.bottom + 8}px`,
+          zIndex: 99999,
+        });
+      } else {
+        setMenuStyle({});
+      }
+    }
 
-    mediaQuery1024.addEventListener('change', handleChange1024);
-    mediaQuery480.addEventListener('change', handleChange480);
-    
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('resize', updateMenuPosition);
+      updateMenuPosition();
+    }
+
     return () => {
-      mediaQuery1024.removeEventListener('change', handleChange1024);
-      mediaQuery480.removeEventListener('change', handleChange480);
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', updateMenuPosition);
     };
-  }, []);
+  }, [isUserMenuOpen]);
+
+  const handleLogout = () => {
+    setIsUserMenuOpen(false);
+    logout();
+  };
+
+  const handleProfileClick = () => {
+    setIsUserMenuOpen(false);
+    navigate('/profile');
+  };
 
   const navItems = [
     { path: '/tasks', label: 'Tasks', icon: '✅' },
@@ -43,16 +75,66 @@ function Navigation() {
   ];
 
   return (
-    <nav className="navigation">
-      <div className="navigation-container">
-        <Link 
-          to="/" 
-          className={`navigation-logo ${location.pathname === '/' ? 'active' : ''}`}
-          title={isSmallScreen ? 'Roots of Impact' : undefined}
-        >
-          <span className="navigation-logo-icon">🌳</span>
-          <span className="navigation-logo-text">Roots of Impact</span>
-        </Link>
+    <>
+      <nav className="navigation navigation-top">
+        <div className="navigation-container">
+          <Link 
+            to="/" 
+            className={`navigation-logo ${location.pathname === '/' ? 'active' : ''}`}
+          >
+            <span className="navigation-logo-icon">🌳</span>
+            <span className="navigation-logo-text">Roots of Impact</span>
+          </Link>
+          <div className="navigation-items navigation-items-top">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`navigation-item ${
+                  location.pathname === item.path ? 'active' : ''
+                }`}
+              >
+                <span className="navigation-item-icon">{item.icon}</span>
+                <span className="navigation-item-label">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+          <div className="navigation-user" ref={userMenuRef}>
+            <button
+              ref={userButtonRef}
+              className="navigation-user-button"
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              title={userName}
+              aria-expanded={isUserMenuOpen}
+              aria-haspopup="menu"
+            >
+              <div className="navigation-user-avatar">
+                <span className="navigation-user-initials">{getUserInitials(userName)}</span>
+              </div>
+              <span className="navigation-user-points">{points} Points</span>
+            </button>
+            {isUserMenuOpen && (
+              <div className="navigation-user-menu" style={menuStyle}>
+                <button
+                  className="navigation-user-menu-item"
+                  onClick={handleProfileClick}
+                >
+                  <span className="navigation-user-menu-icon">👤</span>
+                  <span>Profile</span>
+                </button>
+                <button
+                  className="navigation-user-menu-item navigation-user-menu-item-logout"
+                  onClick={handleLogout}
+                >
+                  <span className="navigation-user-menu-icon">🚪</span>
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+      <nav className="navigation navigation-bottom">
         <div className="navigation-items">
           {navItems.map((item) => (
             <Link
@@ -61,32 +143,14 @@ function Navigation() {
               className={`navigation-item ${
                 location.pathname === item.path ? 'active' : ''
               }`}
-              title={isSmallScreen ? item.label : undefined}
             >
               <span className="navigation-item-icon">{item.icon}</span>
               <span className="navigation-item-label">{item.label}</span>
             </Link>
           ))}
         </div>
-        <div className="navigation-user">
-          <Link 
-            to="/profile" 
-            className="navigation-user-link"
-            title={isVerySmallScreen ? userName : undefined}
-          >
-            <span className="navigation-user-name">{userName}</span>
-            <span className="navigation-user-points">{points} pts</span>
-          </Link>
-          <button 
-            onClick={logout} 
-            className="navigation-logout"
-            title={isSmallScreen ? 'Logout' : undefined}
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
 

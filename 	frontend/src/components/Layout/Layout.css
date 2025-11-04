@@ -7,6 +7,7 @@
 .layout-main {
   flex: 1;
   padding: var(--spacing-md);
+  padding-top: calc(var(--spacing-md) + 80px); /* Add space for fixed top nav */
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -17,5 +18,7 @@
 @media (max-width: 768px) {
   .layout-main {
     padding: var(--spacing-xs);
+    padding-top: calc(var(--spacing-xs) + 70px); /* Space for top nav */
+    padding-bottom: calc(var(--spacing-xs) + 80px); /* Space for bottom nav */
   }
 }
