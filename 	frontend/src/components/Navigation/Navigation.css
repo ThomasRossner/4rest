@@ -82,14 +82,100 @@
 
 /* Compact icon-only nav on small screens */
 @media (max-width: 1024px) {
+  .navigation {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
   .navigation-items {
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
+    justify-content: center;
   }
+  
   .navigation-item {
-    padding: 8px; /* smaller padding to fit icons */
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-width: 48px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
+  
+  .navigation-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .navigation-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .navigation-item:hover::before {
+    opacity: 1;
+  }
+  
+  .navigation-item.active {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  }
+  
+  .navigation-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #10b981 100%);
+    border-radius: 0 0 12px 12px;
+  }
+  
   .navigation-item-label {
     display: none; /* ensure labels hidden on small screens */
+  }
+  
+  .navigation-item-icon {
+    font-size: 1.6rem; /* larger icons when labels are hidden */
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .navigation-item:hover .navigation-item-icon {
+    transform: scale(1.15);
+  }
+  
+  .navigation-item.active .navigation-item-icon {
+    transform: scale(1.1);
+    filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+  }
+  
+  .navigation-logo-icon {
+    font-size: 1.8rem; /* larger logo icon when text is hidden */
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease;
+  }
+  
+  .navigation-logo:hover .navigation-logo-icon {
+    transform: scale(1.1) rotate(5deg);
   }
 }
 
@@ -159,6 +245,17 @@
   .navigation-logout {
     padding: 8px 12px;
     font-size: 0.85rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.15) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .navigation-logout:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
   }
 }
 
