@@ -59,7 +59,7 @@ function RewardsPage() {
         <span className="rewards-balance-value">{points}</span>
       </div>
       {uiPolish && (
-        <div style={{ display: 'flex', gap: 8, margin: '0 0 16px' }}>
+        <div className="rewards-filter-container">
           {(['all', 'discount', 'benefit', 'team_event'] as const).map((t) => (
             <button
               key={t}
@@ -67,7 +67,7 @@ function RewardsPage() {
               className={`reward-filter-btn ${typeFilter === t ? 'active' : ''}`}
               aria-pressed={typeFilter === t}
             >
-              {t === 'all' ? 'All' : t}
+              {t === 'all' ? 'All' : t === 'discount' ? '🏷️ Discounts' : t === 'benefit' ? '✨ Benefits' : '🤝 Team Events'}
             </button>
           ))}
         </div>
@@ -79,23 +79,31 @@ function RewardsPage() {
       )}
 
       {uiPolish && lastReceipt && (
-        <div style={{
-          background: 'white',
-          borderRadius: 'var(--border-radius)',
-          boxShadow: 'var(--shadow-sm)',
-          padding: '12px 14px',
-          margin: '0 0 16px'
-        }}>
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>Redemption receipt</div>
-          {lastReceipt.voucherCode && (
-            <div style={{ marginBottom: 4 }}>Code: <code>{String(lastReceipt.voucherCode)}</code></div>
-          )}
-          {lastReceipt.expiresAt && (
-            <div style={{ marginBottom: 4 }}>Expires: {new Date(lastReceipt.expiresAt).toLocaleString()}</div>
-          )}
-          {lastReceipt.title && (
-            <div style={{ color: '#666' }}>{lastReceipt.title}</div>
-          )}
+        <div className="rewards-receipt">
+          <div className="rewards-receipt-header">
+            <span className="rewards-receipt-icon">🎫</span>
+            <span className="rewards-receipt-title">Redemption Receipt</span>
+          </div>
+          <div className="rewards-receipt-content">
+            {lastReceipt.voucherCode && (
+              <div className="rewards-receipt-field">
+                <span className="rewards-receipt-label">Voucher Code:</span>
+                <code className="rewards-receipt-code">{String(lastReceipt.voucherCode)}</code>
+              </div>
+            )}
+            {lastReceipt.expiresAt && (
+              <div className="rewards-receipt-field">
+                <span className="rewards-receipt-label">Expires:</span>
+                <span className="rewards-receipt-value">{new Date(lastReceipt.expiresAt).toLocaleString()}</span>
+              </div>
+            )}
+            {lastReceipt.title && (
+              <div className="rewards-receipt-field">
+                <span className="rewards-receipt-label">Reward:</span>
+                <span className="rewards-receipt-value">{lastReceipt.title}</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
