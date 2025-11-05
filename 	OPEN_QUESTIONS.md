@@ -1,280 +1,128 @@
-# Open Questions for Client Clarification
+# Offene Fragen zur Klärung mit dem Kunden
 
-This document lists questions that need to be answered to ensure accurate implementation of the Roots of Impact platform.
+Dieses Dokument listet Fragen auf, die beantwortet werden müssen, um eine genaue Implementierung der Roots of Impact Plattform sicherzustellen.
 
-## 1. Authentication & User Management
+## Fragenübersicht
 
-### User Registration
-- **Q1.1**: How should users initially register? 
-  - Self-registration via email/password?
-  - Invitation-only system?
-  - Integration with existing hotel guest management system?
-- **Q1.2**: Do guests need to provide booking confirmation or room number to verify they're hotel guests?
-- **Q1.3**: How are employees identified and added to the system?
-  - Manual addition by admin?
-  - Automatic sync from HotelKit?
-  - Employee self-registration with verification?
+| Frage ID | Kategorie | Unterkategorie | Frage | Details/Optionen |
+|----------|-----------|----------------|-------|------------------|
+| Q1.1 | 1. Authentifizierung & Benutzerverwaltung | Benutzerregistrierung | Wie sollen sich Benutzer zunächst registrieren? | • Selbstregistrierung per E-Mail/Passwort<br>• Einladungssystem<br>• Integration mit bestehendem Hotel-Gästeverwaltungssystem |
+| Q1.2 | 1. Authentifizierung & Benutzerverwaltung | Benutzerregistrierung | Müssen Gäste eine Buchungsbestätigung oder Zimmernummer angeben, um zu verifizieren, dass sie Hotelgäste sind? | |
+| Q1.3 | 1. Authentifizierung & Benutzerverwaltung | Benutzerregistrierung | Wie werden Mitarbeiter identifiziert und zum System hinzugefügt? | • Manuelles Hinzufügen durch Admin<br>• Automatische Synchronisation von HotelKit<br>• Selbstregistrierung von Mitarbeitern mit Verifizierung |
+| Q1.4 | 1. Authentifizierung & Benutzerverwaltung | Social Login | Welche Social-Login-Anbieter sollen unterstützt werden? | Google, Facebook, Apple, etc. |
+| Q1.5 | 1. Authentifizierung & Benutzerverwaltung | Social Login | Ist Social Login obligatorisch oder optional neben E-Mail/Passwort? | |
+| Q1.6 | 1. Authentifizierung & Benutzerverwaltung | Rollenverwaltung | Können Benutzer mehrere Rollen haben? | z.B. ein Gast, der auch Stakeholder wird |
+| Q1.7 | 1. Authentifizierung & Benutzerverwaltung | Rollenverwaltung | Wie sollen Stakeholder-Konten erstellt werden? Ist eine Verifizierung erforderlich? | |
+| Q2.1 | 2. Video-Inhalte & Hosting | Videoproduktion | Wer wird die Video-Inhalte erstellen? | • Hotel-Personal<br>• Externe Agentur (Beyond Content GmbH erwähnt)<br>• Mischung aus beidem |
+| Q2.2 | 2. Video-Inhalte & Hosting | Videoproduktion | Was ist das erwartete Volumen an Videos? | Anzahl der Videos, gesamter Speicherbedarf |
+| Q2.3 | 2. Video-Inhalte & Hosting | Video-Hosting | Wo sollen Videos gehostet werden? | • AWS S3 mit CloudFront<br>• Vimeo/Youtube-Einbettung<br>• Selbst gehostete Lösung |
+| Q2.4 | 2. Video-Inhalte & Hosting | Video-Hosting | Was sind die Videoformat-Anforderungen? | Auflösung, Dauer-Limits, Dateigröße |
+| Q2.5 | 2. Video-Inhalte & Hosting | Video-Hosting | Sollen Videos herunterladbar sein oder nur Streaming? | |
+| Q2.6 | 2. Video-Inhalte & Hosting | Video-Inhaltsverwaltung | Wer genehmigt/verwaltet Video-Inhalte? Ist ein Admin-Panel erforderlich? | |
+| Q2.7 | 2. Video-Inhalte & Hosting | Video-Inhaltsverwaltung | Sollen Videos Untertitel/Beschriftungen für Barrierefreiheit unterstützen? | |
+| Q2.8 | 2. Video-Inhalte & Hosting | Video-Inhaltsverwaltung | Benötigen Videos mehrsprachige Versionen oder nur Deutsch? | |
+| Q3.1 | 3. QR-Code-System | QR-Code-Generierung | Wie werden QR-Codes generiert und verteilt? | • Automatisch generiert pro Aufgabe<br>• Vorab gedruckte QR-Codes, die an physischen Standorten platziert werden<br>• Hybrid-Ansatz |
+| Q3.2 | 3. QR-Code-System | QR-Code-Generierung | Sollen QR-Codes eindeutig pro Benutzer oder pro Aufgabe/Standort sein? | |
+| Q3.3 | 3. QR-Code-System | QR-Code-Generierung | Was passiert, wenn ein QR-Code mehrfach vom gleichen Benutzer gescannt wird? | |
+| Q3.4 | 3. QR-Code-System | QR-Code-Generierung | Wie sind QR-Codes vor Missbrauch geschützt? | Ablauf, einmalige Nutzung, etc. |
+| Q3.5 | 3. QR-Code-System | QR-Code-Platzierung | Wo werden QR-Codes physisch im Hotel platziert? | • Rezeption, Zimmer, Spa, Restaurant<br>• Mehrere Standorte pro Aufgabentyp |
+| Q3.6 | 3. QR-Code-System | QR-Code-Platzierung | Wie sollen QR-Codes gestaltet/gedruckt werden? | Größe, Stil, Branding |
+| Q4.1 | 4. Belohnungen & Gutschein-System | Belohnungstypen | Welche spezifischen Arten von Belohnungen werden angeboten? | • Rabattprozentsätze? (z.B. 10% Rabatt auf Spa)<br>• Festbetrags-Gutscheine?<br>• Kostenlose Dienstleistungen/Produkte?<br>• Urlaubstage für Mitarbeiter?<br>• Team-Events? |
+| Q4.2 | 4. Belohnungen & Gutschein-System | Belohnungstypen | Wie ist die Punkte-zu-Belohnung-Umrechnungsrate? | z.B. 100 Punkte = 5€ Rabatt |
+| Q4.3 | 4. Belohnungen & Gutschein-System | Belohnungstypen | Sollte es verschiedene Belohnungsstufen basierend auf gesammelten Punkten geben? | |
+| Q4.4 | 4. Belohnungen & Gutschein-System | Gutschein-Integration | Welche externen Gutschein-/Anbieter müssen integriert werden? | • Bestehendes POS-System des Hotels<br>• Drittanbieter-Gutschein-Plattformen<br>• Nur benutzerdefinierte Gutschein-Generierung |
+| Q4.5 | 4. Belohnungen & Gutschein-System | Gutschein-Integration | Welche Gutschein-Informationen müssen erfasst werden? | Ablauf, Nutzung, Rückerstattungen? |
+| Q4.6 | 4. Belohnungen & Gutschein-System | Gutschein-Integration | Wie sollen Gutscheine an Benutzer geliefert werden? | E-Mail, In-App-Anzeige, druckbar? |
+| Q4.7 | 4. Belohnungen & Gutschein-System | Belohnungslimits | Gibt es Limits für die Belohnungseinlösung? | täglich, monatlich, pro Benutzer |
+| Q4.8 | 4. Belohnungen & Gutschein-System | Belohnungslimits | Können Belohnungen zwischen Benutzern übertragen werden oder sind sie nicht übertragbar? | |
+| Q5.1 | 5. HotelKit-Integration | API-Details | Was ist die genaue HotelKit-API-Dokumentation/Endpunkte, mit der wir uns integrieren müssen? | |
+| Q5.2 | 5. HotelKit-Integration | API-Details | Welche Authentifizierungsmethode verwendet HotelKit? | API-Schlüssel, OAuth, etc. |
+| Q5.3 | 5. HotelKit-Integration | API-Details | Was ist die HotelKit-Basis-URL und API-Version? | |
+| Q5.4 | 5. HotelKit-Integration | API-Details | Welche HotelKit-Entitäten müssen synchronisiert werden? | Aufgaben, Mitarbeiter, Abschlüsse |
+| Q5.5 | 5. HotelKit-Integration | Synchronisationsverhalten | Wie häufig sollte die HotelKit-Synchronisation erfolgen? | Echtzeit, stündlich, täglich |
+| Q5.6 | 5. HotelKit-Integration | Synchronisationsverhalten | Sollen HotelKit-Aufgabenabschlüsse automatisch Roots of Impact-Aufgaben abschließen? | |
+| Q5.7 | 5. HotelKit-Integration | Synchronisationsverhalten | Sollen Roots of Impact-Aufgabenabschlüsse zurück zu HotelKit synchronisiert werden? | |
+| Q6.1 | 6. Aufgaben-System | Aufgaben-Erstellung & -Verwaltung | Wer erstellt und verwaltet Aufgaben? | • Hotel-Administratoren<br>• Ist ein Admin-Dashboard/Panel erforderlich? |
+| Q6.2 | 6. Aufgaben-System | Aufgaben-Erstellung & -Verwaltung | Sollen Aufgaben geplant werden? | nur zu bestimmten Zeiten verfügbar |
+| Q6.3 | 6. Aufgaben-System | Aufgaben-Erstellung & -Verwaltung | Können Aufgaben standortspezifisch sein? | nur verfügbar, wenn Benutzer im Hotel ist |
+| Q6.4 | 6. Aufgaben-System | Aufgaben-Erstellung & -Verwaltung | Sollten Aufgaben Kategorien/Tags für die Filterung haben? | |
+| Q6.5 | 6. Aufgaben-System | Quiz-System | Wie ist die Mindestbestehensnote für Video-Quizzes? | aktuell auf 70% gesetzt |
+| Q6.6 | 6. Aufgaben-System | Quiz-System | Sollen Benutzer Quizze wiederholen können, wenn sie nicht bestehen? | |
+| Q6.7 | 6. Aufgaben-System | Quiz-System | Wie viele Fragen pro Quiz werden erwartet? | aktuell unterstützt 2-3 |
+| Q6.8 | 6. Aufgaben-System | Foto-Aufgaben | Wer moderiert/genehmigt Foto-Einreichungen? | • Automatische Genehmigung<br>• Manuelle Überprüfung erforderlich |
+| Q6.9 | 6. Aufgaben-System | Foto-Aufgaben | Was passiert, wenn unangemessene Inhalte hochgeladen werden? | |
+| Q6.10 | 6. Aufgaben-System | Foto-Aufgaben | Sollen Fotos öffentlich sichtbar oder nur privat für den Benutzer sein? | |
+| Q7.1 | 7. Virtueller Wald | Wald-Visualisierung | Wie viele Bäume sollten im kollektiven Wald sichtbar sein? | aktuell auf 1000 begrenzt |
+| Q7.2 | 7. Virtueller Wald | Wald-Visualisierung | Sollten Bäume verschiedene Typen/Modelle basierend auf Aufgabentyp oder verdienten Punkten haben? | |
+| Q7.3 | 7. Virtueller Wald | Wald-Visualisierung | Sollte der Wald Zoomen/Pan-Grenzen unterstützen? Wie groß ist die Welt? | |
+| Q7.4 | 7. Virtueller Wald | Wald-Visualisierung | Tragen Stakeholder zum selben Wald bei oder separate Wälder pro Organisation? | |
+| Q7.5 | 7. Virtueller Wald | Baum-Platzierung | Sollte die Baum-Platzierung zufällig sein oder einem spezifischen Muster/Algorithmus folgen? | |
+| Q7.6 | 7. Virtueller Wald | Baum-Platzierung | Können Benutzer Bäume sehen, die von anderen gepflanzt wurden, oder nur anonymisierte Ansicht? | |
+| Q7.7 | 7. Virtueller Wald | Baum-Platzierung | Sollte es spezielle/seltene Bäume für große Erfolge geben? | |
+| Q8.1 | 8. Statistiken & Berichterstattung | Metriken & KPIs | Welche spezifischen KPIs müssen erfasst und berichtet werden? | |
+| Q8.2 | 8. Statistiken & Berichterstattung | Metriken & KPIs | Wer sollte Zugriff auf Statistiken haben? | Admins, Mitarbeiter, Gäste, öffentlich? |
+| Q8.3 | 8. Statistiken & Berichterstattung | Metriken & KPIs | Gibt es spezifische Berichtsperioden erforderlich? | tägliche, wöchentliche, monatliche Berichte |
+| Q8.4 | 8. Statistiken & Berichterstattung | Metriken & KPIs | Müssen CO₂-Berechnungen von externen Prüfern verifiziert/zertifiziert werden? | |
+| Q8.5 | 8. Statistiken & Berichterstattung | Dashboard-Anforderungen | Ist ein Admin-Dashboard für die Verwaltung der Plattform erforderlich? | |
+| Q8.6 | 8. Statistiken & Berichterstattung | Dashboard-Anforderungen | Welche Art von Analysen/Berichten werden für das Management benötigt? | |
+| Q8.7 | 8. Statistiken & Berichterstattung | Dashboard-Anforderungen | Sollen Statistiken exportierbar sein? | CSV, PDF, Excel |
+| Q9.1 | 9. Team-Funktionen | Team-Struktur | Wie sollen Teams organisiert werden? | • Abteilungsbasiert? (Housekeeping, Rezeption, etc.)<br>• Selbst gebildete Teams<br>• Hotelweite Teams |
+| Q9.2 | 9. Team-Funktionen | Team-Struktur | Können Gäste Teams beitreten oder nur Mitarbeiter? | |
+| Q9.3 | 9. Team-Funktionen | Team-Struktur | Welche Team-Funktionen werden benötigt? | Bestenlisten, Team-Herausforderungen, gemeinsame Belohnungen? |
+| Q9.4 | 9. Team-Funktionen | Wettbewerb | Sollte es Wettbewerbe/Herausforderungen zwischen Teams geben? | |
+| Q9.5 | 9. Team-Funktionen | Wettbewerb | Wie lange dauern Wettbewerbe? | wöchentlich, monatlich, vierteljährlich? |
+| Q9.6 | 9. Team-Funktionen | Wettbewerb | Welche Belohnungen werden für Team-Erfolge vergeben? | |
+| Q10.1 | 10. Benachrichtigungen & Kommunikation | Benachrichtigungseinstellungen | Welche Arten von Benachrichtigungen werden benötigt? | • Aufgaben-Erinnerungen<br>• Belohnungs-Verfügbarkeit<br>• Erfolgs-Meilensteine<br>• Team-Updates |
+| Q10.2 | 10. Benachrichtigungen & Kommunikation | Benachrichtigungseinstellungen | Bevorzugte Benachrichtigungskanäle? | • Nur In-App<br>• E-Mail-Benachrichtigungen<br>• Push-Benachrichtigungen (mobil)<br>• SMS |
+| Q10.3 | 10. Benachrichtigungen & Kommunikation | E-Mail-System | Sollte es E-Mail-Funktionen geben? | Willkommens-E-Mails, Belohnungen, Berichte |
+| Q10.4 | 10. Benachrichtigungen & Kommunikation | E-Mail-System | Welcher E-Mail-Service sollte verwendet werden? | SendGrid, AWS SES, benutzerdefiniertes SMTP? |
+| Q11.1 | 11. Mehrsprachige Unterstützung | Sprachanforderungen | Welche Sprachen müssen zunächst unterstützt werden? | • Deutsch (als primär erwähnt)<br>• Englisch<br>• Andere |
+| Q11.2 | 11. Mehrsprachige Unterstützung | Sprachanforderungen | Sollte die Benutzeroberfläche Sprachumschaltung unterstützen oder eine Sprache pro Bereitstellung? | |
+| Q11.3 | 11. Mehrsprachige Unterstützung | Sprachanforderungen | Wird der Inhalt (Aufgaben, Videos) übersetzt oder nur die Benutzeroberfläche? | |
+| Q12.1 | 12. Inhalts-Moderation & Sicherheit | Moderation | Wer moderiert benutzergenerierte Inhalte? | Fotos, Kommentare falls vorhanden |
+| Q12.2 | 12. Inhalts-Moderation & Sicherheit | Moderation | Welche Moderations-Tools werden benötigt? | Melden, Berichten, Auto-Erkennung? |
+| Q12.3 | 12. Inhalts-Moderation & Sicherheit | Moderation | Wie ist die Reaktionszeit für Moderations-Aktionen? | |
+| Q13.1 | 13. Bereitstellung & Infrastruktur | Hosting-Umgebung | Wo soll die Anwendung gehostet werden? | AWS, Azure, DigitalOcean, On-Premise? |
+| Q13.2 | 13. Bereitstellung & Infrastruktur | Hosting-Umgebung | Was ist die erwartete Benutzer-Skala? | Anzahl gleichzeitiger Benutzer, Gesamtbenutzer |
+| Q13.3 | 13. Bereitstellung & Infrastruktur | Hosting-Umgebung | Gibt es spezifische Compliance-Anforderungen für das Hosting? | Datenresidenz, Zertifizierungen |
+| Q13.4 | 13. Bereitstellung & Infrastruktur | Domain & Branding | Wie wird der Produktions-Domainname sein? | |
+| Q13.5 | 13. Bereitstellung & Infrastruktur | Domain & Branding | Gibt es spezifische Branding-Richtlinien? | Farben, Logos, Schriften, Styling |
+| Q13.6 | 13. Bereitstellung & Infrastruktur | Backups & Disaster Recovery | Was sind die Backup-Anforderungen? | Häufigkeit, Aufbewahrungsdauer |
+| Q13.7 | 13. Bereitstellung & Infrastruktur | Backups & Disaster Recovery | Was ist die akzeptable Ausfallzeit/RTO/RPO? | |
+| Q14.1 | 14. Integration & Drittanbieter-Services | Analytics | Sollte Google Analytics oder ähnliches integriert werden? | |
+| Q14.2 | 14. Integration & Drittanbieter-Services | Analytics | Welche Analytics-Ereignisse müssen erfasst werden? | |
+| Q14.3 | 14. Integration & Drittanbieter-Services | Zahlungsabwicklung | Ist Zahlungsabwicklung für bestimmte Funktionen erforderlich? | Premium-Belohnungen, etc. |
+| Q14.4 | 14. Integration & Drittanbieter-Services | Andere Integrationen | Gibt es andere Hotel-Systeme, die integriert werden müssen? | PMS, POS, Buchungssysteme? |
+| Q15.1 | 15. Mobile App | Native App | Ist eine native mobile App erforderlich oder reicht die PWA aus? | |
+| Q15.2 | 15. Mobile App | Native App | Falls native App, welche Plattformen? | iOS, Android, beide |
+| Q15.3 | 15. Mobile App | App Store | Sollte die App im App Store/Play Store veröffentlicht werden oder Enterprise-Verteilung? | |
+| Q16.1 | 16. Erweiterte Funktionen | NFT-Integration | Ist NFT-Integration tatsächlich erforderlich oder war dies optional/Zukunfts-Funktion? | |
+| Q16.2 | 16. Erweiterte Funktionen | NFT-Integration | Falls ja, welche Blockchain? Welche NFT-Standards? Kosten? | |
+| Q16.3 | 16. Erweiterte Funktionen | Soziale Funktionen | Sollen Benutzer den Fortschritt/Erfolge anderer Benutzer sehen können? | |
+| Q16.4 | 16. Erweiterte Funktionen | Soziale Funktionen | Sollte es Social Sharing geben? | Erfolge in sozialen Medien teilen |
+| Q16.5 | 16. Erweiterte Funktionen | Soziale Funktionen | Sind Kommentare, Likes oder andere soziale Interaktionen erforderlich? | |
+| Q17.1 | 17. Rechtliches & Compliance | Allgemeine Geschäftsbedingungen | Gibt es spezifische Nutzungsbedingungen und Datenschutzerklärung, die integriert werden müssen? | |
+| Q17.2 | 17. Rechtliches & Compliance | Allgemeine Geschäftsbedingungen | Sollen Benutzer die Bedingungen während der Registrierung akzeptieren? | |
+| Q17.3 | 17. Rechtliches & Compliance | Datenaufbewahrung | Was sind die Datenaufbewahrungsrichtlinien? | wie lange Benutzerdaten, abgeschlossene Aufgaben aufbewahren |
+| Q18.1 | 18. Testing & Launch | Pilot-Phase | Wann ist der Start der Pilot-Phase geplant? | |
+| Q18.2 | 18. Testing & Launch | Pilot-Phase | Wie viele Benutzer werden an der Pilot-Phase teilnehmen? | |
+| Q18.3 | 18. Testing & Launch | Pilot-Phase | Wie ist der Zeitplan für die vollständige Einführung? | |
+| Q18.4 | 18. Testing & Launch | Testing | Wer wird am User Acceptance Testing (UAT) beteiligt sein? | |
+| Q18.5 | 18. Testing & Launch | Testing | Gibt es spezifische Anwendungsfälle/Szenarien, die getestet werden müssen? | |
 
-### Social Login
-- **Q1.4**: Which social login providers should be supported? (Google, Facebook, Apple, etc.)
-- **Q1.5**: Is social login mandatory or optional alongside email/password?
+## Prioritätsfragen
 
-### Role Management
-- **Q1.6**: Can users have multiple roles? (e.g., a guest who also becomes a stakeholder)
-- **Q1.7**: How should stakeholder accounts be created? Any verification required?
+**Diese sollten zuerst beantwortet werden, da sie die Kernarchitektur beeinflussen:**
 
-## 2. Video Content & Hosting
-
-### Video Creation
-- **Q2.1**: Who will create the video content?
-  - Hotel staff?
-  - External agency (Beyond Content GmbH mentioned)?
-  - Mix of both?
-- **Q2.2**: What is the expected volume of videos? (number of videos, total storage needs)
-
-### Video Hosting
-- **Q2.3**: Where should videos be hosted?
-  - AWS S3 with CloudFront?
-  - Vimeo/Youtube embedding?
-  - Self-hosted solution?
-- **Q2.4**: What are the video format requirements? (resolution, duration limits, file size)
-- **Q2.5**: Should videos be downloadable or streaming-only?
-
-### Video Content Management
-- **Q2.6**: Who approves/manages video content? Is an admin panel needed?
-- **Q2.7**: Should videos support subtitles/captions for accessibility?
-- **Q2.8**: Do videos need multi-language versions or just German?
-
-## 3. QR Code System
-
-### QR Code Generation
-- **Q3.1**: How are QR codes generated and distributed?
-  - Automatically generated per task?
-  - Pre-printed QR codes placed at physical locations?
-  - Hybrid approach?
-- **Q3.2**: Should QR codes be unique per user or per task/location?
-- **Q3.3**: What happens if a QR code is scanned multiple times by the same user?
-- **Q3.4**: How are QR codes protected against misuse? (expiration, one-time use, etc.)
-
-### QR Code Placement
-- **Q3.5**: Where will QR codes be physically placed in the hotel?
-  - Reception, rooms, spa, restaurant?
-  - Multiple locations per task type?
-- **Q3.6**: How should QR codes be designed/printed? (size, style, branding)
-
-## 4. Rewards & Voucher System
-
-### Reward Types
-- **Q4.1**: What specific types of rewards will be offered?
-  - Discount percentages? (e.g., 10% off spa)
-  - Fixed amount vouchers?
-  - Free services/products?
-  - Vacation days for employees?
-  - Team events?
-- **Q4.2**: What is the points-to-reward conversion rate? (e.g., 100 points = 5€ discount)
-- **Q4.3**: Should there be different reward tiers based on points collected?
-
-### Voucher Integration
-- **Q4.4**: Which external voucher/providers need to be integrated?
-  - Hotel's existing POS system?
-  - Third-party voucher platforms?
-  - Custom voucher generation only?
-- **Q4.5**: What voucher information needs to be tracked? (expiration, usage, refunds?)
-- **Q4.6**: How should vouchers be delivered to users? (Email, in-app display, printable?)
-
-### Reward Limits
-- **Q4.7**: Are there limits on reward redemption? (daily, monthly, per user)
-- **Q4.8**: Can rewards be transferred between users or are they non-transferable?
-
-## 5. HotelKit Integration
-
-### API Details
-- **Q5.1**: What is the exact HotelKit API documentation/endpoints we need to integrate with?
-- **Q5.2**: What authentication method does HotelKit use? (API key, OAuth, etc.)
-- **Q5.3**: What is the HotelKit base URL and API version?
-- **Q5.4**: Which HotelKit entities need to be synced? (tasks, employees, completions)
-
-### Sync Behavior
-- **Q5.5**: How frequently should HotelKit sync occur? (real-time, hourly, daily)
-- **Q5.6**: Should HotelKit task completions automatically complete Roots of Impact tasks?
-- **Q5.7**: Should Roots of Impact task completions sync back to HotelKit?
-
-## 6. Task System
-
-### Task Creation & Management
-- **Q6.1**: Who creates and manages tasks? 
-  - Hotel administrators?
-  - Need for admin dashboard/panel?
-- **Q6.2**: Should tasks be scheduled (available only at certain times)?
-- **Q6.3**: Can tasks be location-specific? (only available when user is at hotel)
-- **Q6.4**: Should tasks have categories/tags for filtering?
-
-### Quiz System
-- **Q6.5**: For video quizzes, what's the minimum passing score? (currently set to 70%)
-- **Q6.6**: Should users be able to retake quizzes if they fail?
-- **Q6.7**: How many questions per quiz are expected? (currently supports 2-3)
-
-### Photo Tasks
-- **Q6.8**: Who moderates/approves photo submissions?
-  - Automatic approval?
-  - Manual review required?
-- **Q6.9**: What happens if inappropriate content is uploaded?
-- **Q6.10**: Should photos be publicly visible or private to user only?
-
-## 7. Virtual Forest
-
-### Forest Visualization
-- **Q7.1**: How many trees should be visible in the collective forest? (currently limited to 1000)
-- **Q7.2**: Should trees have different types/models based on task type or points earned?
-- **Q7.3**: Should the forest support zooming/panning boundaries? What's the world size?
-- **Q7.4**: Do stakeholders contribute to the same forest or separate forests per organization?
-
-### Tree Placement
-- **Q7.5**: Should tree placement be random or follow a specific pattern/algorithm?
-- **Q7.6**: Can users see trees planted by others or only anonymized view?
-- **Q7.7**: Should there be special/rare trees for major achievements?
-
-## 8. Statistics & Reporting
-
-### Metrics & KPIs
-- **Q8.1**: What specific KPIs need to be tracked and reported?
-- **Q8.2**: Who should have access to statistics? (admins, employees, guests, public?)
-- **Q8.3**: Are there specific reporting periods required? (daily, weekly, monthly reports)
-- **Q8.4**: Do CO₂ calculations need to be verified/certified by external auditors?
-
-### Dashboard Requirements
-- **Q8.5**: Is an admin dashboard needed for managing the platform?
-- **Q8.6**: What kind of analytics/reports are needed for management?
-- **Q8.7**: Should statistics be exportable? (CSV, PDF, Excel)
-
-## 9. Team Features
-
-### Team Structure
-- **Q9.1**: How should teams be organized?
-  - Department-based? (Housekeeping, Reception, etc.)
-  - Self-formed teams?
-  - Hotel-wide teams?
-- **Q9.2**: Can guests join teams or only employees?
-- **Q9.3**: What team features are needed? (leaderboards, team challenges, shared rewards?)
-
-### Competition
-- **Q9.4**: Should there be competitions/challenges between teams?
-- **Q9.5**: How long do competitions last? (weekly, monthly, quarterly?)
-- **Q9.6**: What rewards are given for team achievements?
-
-## 10. Notifications & Communications
-
-### Notification Preferences
-- **Q10.1**: What types of notifications are needed?
-  - Task reminders?
-  - Reward availability?
-  - Achievement milestones?
-  - Team updates?
-- **Q10.2**: Preferred notification channels?
-  - In-app only?
-  - Email notifications?
-  - Push notifications (mobile)?
-  - SMS?
-
-### Email System
-- **Q10.3**: Should there be email capabilities? (welcome emails, rewards, reports)
-- **Q10.4**: What email service should be used? (SendGrid, AWS SES, custom SMTP?)
-
-## 11. Multi-language Support
-
-### Language Requirements
-- **Q11.1**: Which languages need to be supported initially?
-  - German (mentioned as primary)
-  - English?
-  - Others?
-- **Q11.2**: Should the UI support language switching, or one language per deployment?
-- **Q11.3**: Will content (tasks, videos) be translated or only the UI?
-
-## 12. Content Moderation & Safety
-
-### Moderation
-- **Q12.1**: Who moderates user-generated content? (photos, comments if any)
-- **Q12.2**: What moderation tools are needed? (flagging, reporting, auto-detection?)
-- **Q12.3**: What's the response time for moderation actions?
-
-## 13. Deployment & Infrastructure
-
-### Hosting Environment
-- **Q13.1**: Where should the application be hosted? (AWS, Azure, DigitalOcean, on-premise?)
-- **Q13.2**: What's the expected user scale? (number of concurrent users, total users)
-- **Q13.3**: Are there specific compliance requirements for hosting? (data residency, certifications)
-
-### Domain & Branding
-- **Q13.4**: What will be the production domain name?
-- **Q13.5**: Are there specific branding guidelines? (colors, logos, fonts, styling)
-
-### Backups & Disaster Recovery
-- **Q13.6**: What are the backup requirements? (frequency, retention period)
-- **Q13.7**: What's the acceptable downtime/RTO/RPO?
-
-## 14. Integration & Third-Party Services
-
-### Analytics
-- **Q14.1**: Should Google Analytics or similar be integrated?
-- **Q14.2**: What analytics events need to be tracked?
-
-### Payment Processing
-- **Q14.3**: Is payment processing needed for any features? (premium rewards, etc.)
-
-### Other Integrations
-- **Q14.4**: Are there other hotel systems that need integration? (PMS, POS, booking systems?)
-
-## 15. Mobile App
-
-### Native App
-- **Q15.1**: Is a native mobile app required, or is the PWA sufficient?
-- **Q15.2**: If native app, which platforms? (iOS, Android, both)
-
-### App Store
-- **Q15.3**: Should the app be published to App Store/Play Store or enterprise distribution?
-
-## 16. Advanced Features
-
-### NFT Integration
-- **Q16.1**: Is NFT integration actually needed, or was this optional/future feature?
-- **Q16.2**: If yes, which blockchain? What NFT standards? Costs?
-
-### Social Features
-- **Q16.3**: Should users be able to see other users' progress/achievements?
-- **Q16.4**: Should there be social sharing? (share achievements on social media)
-- **Q16.5**: Comments, likes, or other social interactions needed?
-
-## 17. Legal & Compliance
-
-### Terms & Conditions
-- **Q17.1**: Are there specific Terms of Service and Privacy Policy that need to be integrated?
-- **Q17.2**: Should users accept terms during registration?
-
-### Data Retention
-- **Q17.3**: What are the data retention policies? (how long to keep user data, completed tasks)
-
-## 18. Testing & Launch
-
-### Pilot Phase
-- **Q18.1**: When is the pilot phase planned to start?
-- **Q18.2**: How many users will participate in the pilot?
-- **Q18.3**: What's the timeline for full rollout?
-
-### Testing
-- **Q18.4**: Who will be involved in user acceptance testing (UAT)?
-- **Q18.5**: Are there specific use cases/scenarios that must be tested?
-
-## Priority Questions
-
-**These should be answered first as they impact core architecture:**
-
-1. **Q1.1-Q1.3**: User registration and management flow
-2. **Q2.3-Q2.4**: Video hosting solution (affects infrastructure)
-3. **Q5.1-Q5.4**: HotelKit API details (critical for integration)
-4. **Q4.1-Q4.3**: Reward system specifics (affects database and business logic)
-5. **Q13.1-Q13.2**: Hosting and scale (affects deployment approach)
-6. **Q6.1**: Admin panel requirement (affects scope and timeline)
+| Priorität | Frage IDs | Thema | Begründung |
+|-----------|-----------|-------|------------|
+| 1 | Q1.1-Q1.3 | Benutzerregistrierung und Verwaltungsablauf | Grundlegende Benutzerverwaltung |
+| 2 | Q2.3-Q2.4 | Video-Hosting-Lösung | Beeinflusst Infrastruktur |
+| 3 | Q5.1-Q5.4 | HotelKit-API-Details | Kritisch für Integration |
+| 4 | Q4.1-Q4.3 | Belohnungssystem-Spezifika | Beeinflusst Datenbank und Geschäftslogik |
+| 5 | Q13.1-Q13.2 | Hosting und Skalierung | Beeinflusst Bereitstellungsansatz |
+| 6 | Q6.1 | Admin-Panel-Anforderung | Beeinflusst Umfang und Zeitplan |
 
 ---
 
-**Note**: Please prioritize answering questions marked as "Priority Questions" to proceed with core development decisions.
+**Hinweis**: Bitte priorisieren Sie die Beantwortung der als "Prioritätsfragen" markierten Fragen, um mit Kern-Entwicklungsentscheidungen fortzufahren.
