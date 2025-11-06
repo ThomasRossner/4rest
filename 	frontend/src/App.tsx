@@ -8,6 +8,7 @@ import RewardsPage from './pages/RewardsPage/RewardsPage';
 import StatisticsPage from './pages/StatisticsPage/StatisticsPage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
+import AuthCallbackPage from './pages/AuthCallbackPage/AuthCallbackPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -19,6 +20,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route
           path="/"
           element={

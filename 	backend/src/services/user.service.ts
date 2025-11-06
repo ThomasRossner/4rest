@@ -2,23 +2,73 @@ import { getPool } from '../database/connection.js';
 
 export interface User {
   id: string;
-  email: string;
-  password_hash: string;
+  email: string | null;
+  password_hash: string | null;
   name: string;
   role: string;
   points: number;
-  avatar_url?: string;
+  avatar_url?: string | null;
+  oauth_provider?: string | null;
+  oauth_id?: string | null;
+  oauth_email?: string | null;
 }
 
-export async function createUser(data: Omit<User, 'id'>): Promise<User> {
+export interface CreateUserData {
+  email?: string | null;
+  password_hash?: string | null;
+  name: string;
+  role?: string;
+  points?: number;
+  avatar_url?: string | null;
+  oauth_provider?: string | null;
+  oauth_id?: string | null;
+  oauth_email?: string | null;
+}
+
+export async function createUser(data: CreateUserData): Promise<User> {
   const db = getPool();
-  const result = await db.query(
-    `INSERT INTO users (email, password_hash, name, role, points)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING *`,
-    [data.email, data.password_hash, data.name, data.role || 'guest', data.points || 0]
-  );
-  return result.rows[0];
+  try {
+    const values = [
+      data.email || null,
+      data.password_hash || null,
+      data.name,
+      data.role || 'guest',
+      data.points || 0,
+      data.avatar_url || null,
+      data.oauth_provider || null,
+      data.oauth_id || null,
+      data.oauth_email || null,
+    ];
+    
+    console.log('Creating user with values:', {
+      email: values[0],
+      hasPassword: !!values[1],
+      name: values[2],
+      role: values[3],
+      oauth_provider: values[6],
+      oauth_id: values[7],
+    });
+    
+    const result = await db.query(
+      `INSERT INTO users (email, password_hash, name, role, points, avatar_url, oauth_provider, oauth_id, oauth_email)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      values
+    );
+    
+    if (!result.rows[0]) {
+      throw new Error('User creation returned no rows');
+    }
+    
+    console.log('User created successfully:', result.rows[0].id);
+    return result.rows[0];
+  } catch (error: any) {
+    console.error('Error in createUser:', error);
+    console.error('Error code:', error.code);
+    console.error('Error detail:', error.detail);
+    console.error('Error constraint:', error.constraint);
+    throw error;
+  }
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
@@ -31,6 +81,72 @@ export async function getUserById(id: string): Promise<User | null> {
   const db = getPool();
   const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);
   return result.rows[0] || null;
+}
+
+export async function getUserByOAuth(provider: string, oauthId: string): Promise<User | null> {
+  const db = getPool();
+  const result = await db.query(
+    'SELECT * FROM users WHERE oauth_provider = $1 AND oauth_id = $2',
+    [provider, oauthId]
+  );
+  return result.rows[0] || null;
+}
+
+export async function createOrUpdateOAuthUser(data: {
+  userId?: string;
+  oauthProvider: string;
+  oauthId: string;
+  email?: string | null;
+  oauthEmail?: string | null;
+  name: string;
+  role?: string;
+  avatarUrl?: string | null;
+}): Promise<User> {
+  const db = getPool();
+
+  if (data.userId) {
+    // Update existing user
+    try {
+      const result = await db.query(
+        `UPDATE users 
+         SET oauth_provider = $1, oauth_id = $2, oauth_email = $3, 
+             name = COALESCE($4, name), avatar_url = COALESCE($5, avatar_url),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $6
+         RETURNING *`,
+        [data.oauthProvider, data.oauthId, data.oauthEmail || null, data.name, data.avatarUrl || null, data.userId]
+      );
+      if (!result.rows[0]) {
+        throw new Error(`User with ID ${data.userId} not found for OAuth update`);
+      }
+      return result.rows[0];
+    } catch (error: any) {
+      console.error('Error updating OAuth user:', error);
+      throw error;
+    }
+  }
+
+  // Create new user
+  try {
+    const userData = {
+      email: data.email || data.oauthEmail || null,
+      oauth_provider: data.oauthProvider,
+      oauth_id: data.oauthId,
+      oauth_email: data.oauthEmail || null,
+      name: data.name,
+      role: data.role || 'guest',
+      points: 0,
+      avatar_url: data.avatarUrl || null,
+    };
+    console.log('Creating OAuth user with data:', JSON.stringify(userData, null, 2));
+    const user = await createUser(userData);
+    console.log('OAuth user created successfully:', user.id);
+    return user;
+  } catch (error: any) {
+    console.error('Error creating OAuth user:', error);
+    console.error('Error details:', error.message, error.code, error.detail);
+    throw error;
+  }
 }
 
 export async function getUserProgressService(userId: string) {
@@ -65,13 +181,46 @@ export async function getUserProgressService(userId: string) {
   };
 }
 
+export async function getMeService(userId: string) {
+  const db = getPool();
+  const result = await db.query(
+    'SELECT id, email, oauth_email, name, role, points, avatar_url FROM users WHERE id = $1',
+    [userId]
+  );
+  if (!result.rows[0]) {
+    return null;
+  }
+  const user = result.rows[0];
+  // Return email || oauth_email for OAuth users
+  return {
+    id: user.id,
+    email: user.email || user.oauth_email || null,
+    name: user.name,
+    role: user.role,
+    points: user.points || 0,
+    avatar: user.avatar_url || null,
+  };
+}
+
 export async function getUserProfileService(userId: string) {
   const db = getPool();
   const result = await db.query(
-    'SELECT id, email, name, role, points, avatar_url FROM users WHERE id = $1',
+    'SELECT id, email, oauth_email, name, role, points, avatar_url FROM users WHERE id = $1',
     [userId]
   );
-  return result.rows[0] || null;
+  if (!result.rows[0]) {
+    return null;
+  }
+  const user = result.rows[0];
+  // Return email || oauth_email for OAuth users
+  return {
+    id: user.id,
+    email: user.email || user.oauth_email || null,
+    name: user.name,
+    role: user.role,
+    points: user.points || 0,
+    avatar_url: user.avatar_url || null,
+  };
 }
 
 export async function updateUserProfileService(userId: string, data: Partial<User>) {

@@ -1,6 +1,21 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
-import { getUserProgressService, getUserProfileService, updateUserProfileService } from '../services/user.service.js';
+import { getUserProgressService, getUserProfileService, updateUserProfileService, getMeService } from '../services/user.service.js';
+
+export async function getMe(req: AuthRequest, res: Response) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = await getMeService(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}
 
 export async function getUserProgress(req: AuthRequest, res: Response) {
   try {

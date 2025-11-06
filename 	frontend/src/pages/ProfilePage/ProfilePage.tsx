@@ -18,7 +18,7 @@ function ProfilePage() {
           </div>
           <div className="profile-info">
             <h2>{user?.name || 'User'}</h2>
-            <p>{user?.email}</p>
+            <p>{user?.email || 'No email provided'}</p>
             <span className="profile-role">{user?.role || 'guest'}</span>
           </div>
         </div>

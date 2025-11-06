@@ -3,13 +3,17 @@ import path from 'path';
 import fs from 'fs';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import session from 'express-session';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { setupRoutes } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { initializeDatabase } from './database/connection.js';
 
+// Load environment variables BEFORE importing passport config
 dotenv.config();
+
+import passport from './config/passport.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +23,20 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware for Passport (OAuth flows)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
+  })
+);
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Health check
 app.get('/health', (req, res) => {

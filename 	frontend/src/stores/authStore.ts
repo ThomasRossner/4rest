@@ -6,7 +6,7 @@ export type UserRole = 'guest' | 'employee' | 'stakeholder';
 
 export interface User {
   id: string;
-  email: string;
+  email: string | null;
   name: string;
   role: UserRole;
   points: number;

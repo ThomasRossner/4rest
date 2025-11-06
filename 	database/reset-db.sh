@@ -26,5 +26,6 @@ EOF
 echo "Running migrations..."
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/001_initial_schema.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/002_gdpr_consent.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/003_oauth_support.sql
 
 echo "✅ Database reset complete!"

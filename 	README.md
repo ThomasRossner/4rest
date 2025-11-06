@@ -31,9 +31,38 @@ npm run install:all
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 
+# Run database migrations
+cd backend && npm run migrate
+
 # Start development servers
 npm run dev
 ```
+
+### GitHub OAuth Setup
+
+To enable GitHub social login:
+
+1. Create a GitHub OAuth App:
+   - Go to GitHub Settings → Developer settings → OAuth Apps
+   - Click "New OAuth App"
+   - Set Authorization callback URL to: `http://localhost:5000/api/auth/github/callback` (development)
+   - For production, use your production backend URL
+
+2. Add environment variables to `backend/.env`:
+   ```env
+   GITHUB_CLIENT_ID=your_github_client_id
+   GITHUB_CLIENT_SECRET=your_github_client_secret
+   GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
+   FRONTEND_URL=http://localhost:3000
+   SESSION_SECRET=your_session_secret_key
+   ```
+
+3. Run the database migration to add OAuth support (if not already done):
+   ```bash
+   cd backend && npm run migrate
+   ```
+
+For detailed setup instructions, see [docs/GITHUB_OAUTH_SETUP.md](docs/GITHUB_OAUTH_SETUP.md).
 
 ### Project Structure
 
