@@ -12,7 +12,6 @@ interface QRCodeTaskProps {
 
 export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const [scannedCode, setScannedCode] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -35,21 +34,6 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
       },
     }
   );
-
-  // Simulate QR code scanning
-  const handleScan = () => {
-    setIsScanning(true);
-    // In a real implementation, this would use a QR scanner library
-    // For now, we'll simulate with the provided QR code
-    setTimeout(() => {
-      setScannedCode(qrCode);
-      setIsScanning(false);
-      // Auto-complete when QR code matches
-      if (qrCode) {
-        completeMutation.mutate();
-      }
-    }, 1000);
-  };
 
   // Check if device has camera (for real QR scanning)
   const [hasCamera, setHasCamera] = useState(false);
@@ -191,7 +175,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               }
 
               // Fallback to jsQR if BarcodeDetector didn't find anything
-              if (!decodedValue) {
+              if (!decodedValue && ctx && canvas) {
                 try {
                   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                   const code = jsQR(imageData.data, imageData.width, imageData.height, {
@@ -306,17 +290,15 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 </div>
               )}
               {decodeError && (
-                <div style={{ position: 'absolute', bottom: 56, left: 12, right: 12, background: 'rgba(255,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12 }}>
+                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(255,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12 }}>
                   {decodeError}
                 </div>
               )}
-              <button
-                onClick={handleScan}
-                disabled={isScanning || completeMutation.isLoading}
-                className="scan-button"
-              >
-                {isScanning ? 'Scanning...' : 'Simulate Scan'}
-              </button>
+              {completeMutation.isLoading && (
+                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, textAlign: 'center' }}>
+                  Completing task...
+                </div>
+              )}
             </div>
           ) : (
             <div className="qr-manual">
