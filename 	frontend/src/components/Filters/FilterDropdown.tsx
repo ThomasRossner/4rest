@@ -4,7 +4,7 @@ import './FilterDropdown.css';
 type FilterOption = {
   value: string;
   label: string;
-  icon?: string;
+  icon?: string | React.ReactNode;
 };
 
 type FilterDropdownProps = {
@@ -68,7 +68,11 @@ export function FilterDropdown({ label, value, options, onChange }: FilterDropdo
         aria-haspopup="listbox"
       >
         <span className="filter-dropdown-button-content">
-          {selectedOption.icon && <span className="filter-dropdown-icon">{selectedOption.icon}</span>}
+          {selectedOption.icon && (
+            <span className="filter-dropdown-icon">
+              {typeof selectedOption.icon === 'string' ? selectedOption.icon : selectedOption.icon}
+            </span>
+          )}
           <span>{selectedOption.label}</span>
         </span>
         <span className={`filter-dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
@@ -86,7 +90,11 @@ export function FilterDropdown({ label, value, options, onChange }: FilterDropdo
               role="option"
               aria-selected={value === option.value}
             >
-              {option.icon && <span className="filter-dropdown-item-icon">{option.icon}</span>}
+              {option.icon && (
+                <span className="filter-dropdown-item-icon">
+                  {typeof option.icon === 'string' ? option.icon : option.icon}
+                </span>
+              )}
               <span>{option.label}</span>
               {value === option.value && <span className="filter-dropdown-check">✓</span>}
             </button>

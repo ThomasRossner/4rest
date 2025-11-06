@@ -74,6 +74,9 @@
 
 .filter-dropdown-icon {
   font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filter-dropdown-arrow {
@@ -180,6 +183,9 @@
 .filter-dropdown-item-icon {
   font-size: 1.1rem;
   margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filter-dropdown-check {

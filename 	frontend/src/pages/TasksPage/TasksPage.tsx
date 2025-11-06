@@ -7,6 +7,7 @@ import { PhotoTask } from '../../components/Tasks/PhotoTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
+import { QRCodeIcon } from '../../components/Icons/QRCodeIcon';
 import './TasksPage.css';
 
 function TasksPage() {
@@ -106,7 +107,7 @@ function TasksPage() {
           options={[
             { value: 'all', label: 'All Types' },
             { value: 'video', label: 'Video', icon: '🎥' },
-            { value: 'qr', label: 'QR Code', icon: '📱' },
+            { value: 'qr', label: 'QR Code', icon: <QRCodeIcon size={20} /> },
             { value: 'photo', label: 'Photo', icon: '📷' },
           ]}
         />
@@ -136,7 +137,7 @@ function TasksPage() {
             <div key={task.id} className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
             <div className="task-header">
               <span className="task-icon">
-                {task.type === 'video' ? '🎥' : task.type === 'qr' ? '📱' : '📷'}
+                {task.type === 'video' ? '🎥' : task.type === 'qr' ? <QRCodeIcon size={48} /> : '📷'}
               </span>
               <span className="task-points">+{task.points} pts</span>
               {task.completed && (

@@ -84,6 +84,13 @@
   transition: transform 0.3s ease;
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-icon svg {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
 .task-card:hover .task-icon {
