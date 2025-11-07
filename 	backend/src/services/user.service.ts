@@ -36,7 +36,7 @@ export async function createUser(data: CreateUserData): Promise<User> {
       data.email || null,
       data.password_hash || null,
       data.name,
-      data.role || 'guest',
+      data.role || 'stakeholder',
       data.points ?? 0,
       data.avatar_url || null,
       data.oauth_provider || null,
@@ -140,7 +140,7 @@ export async function createOrUpdateOAuthUser(data: {
       oauth_id: data.oauthId,
       oauth_email: data.oauthEmail || null,
       name: data.name,
-      role: data.role || 'guest',
+      role: data.role || 'stakeholder',
       points: 0,
       avatar_url: data.avatarUrl || null,
     };
