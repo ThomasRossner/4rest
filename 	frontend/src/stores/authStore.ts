@@ -54,8 +54,20 @@ function handleSihotMessage(event: MessageEvent) {
       return;
     }
 
-    void api.refreshMe().catch((error) => {
-      console.warn('[SIHOT] Failed to refresh user data after realtime update:', error);
+    useAuthStore.setState((current) => {
+      if (!current.user) {
+        return current;
+      }
+
+      const updated: User = {
+        ...current.user,
+        role: payload.role ?? current.user.role,
+        sihotGuestId: payload.payload?.guest?.guestId ?? current.user.sihotGuestId ?? null,
+        sihotGuest: payload.payload?.guest ?? current.user.sihotGuest ?? null,
+        sihotReservations: payload.payload?.reservations ?? current.user.sihotReservations ?? [],
+      };
+
+      return { ...current, user: updated };
     });
   } catch (error) {
     console.warn('[SIHOT] Failed to process realtime message:', error);

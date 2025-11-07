@@ -29,6 +29,8 @@ For local development, it's often easier to run the backend and frontend directl
    # Optional: adjust PMS sync behaviour (defaults shown)
    SIHOT_TIMEOUT_MS=15000
    SIHOT_SYNC_INTERVAL_MS=900000
+   # Optional: specify hotel property ID for role mapping
+   SIHOT_PROPERTY_ID=ROI-BER
    ```
    
    Create `frontend/.env`:
@@ -108,3 +110,4 @@ npm run migrate
 - Redis: localhost:6379
 - SIHOT mock API: http://localhost:5000/api/sihot
 - SIHOT sync interval: configurable via `SIHOT_SYNC_INTERVAL_MS` (defaults to 15 minutes)
+- SIHOT property: configure `SIHOT_PROPERTY_ID` to match the hotel being synced

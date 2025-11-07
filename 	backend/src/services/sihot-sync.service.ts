@@ -28,7 +28,6 @@ async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): P
     const guest = await sihot.getGuest(row.sihot_guest_id);
 
     if (!guest) {
-      // Guest no longer exists; clear stored data.
       await pool.query(
         `UPDATE users
          SET sihot_guest_data = NULL,
@@ -36,11 +35,35 @@ async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): P
          WHERE id = $1`,
         [row.id]
       );
-      broadcastSihotUpdate({ userId: row.id, payload: null });
+      broadcastSihotUpdate({ userId: row.id, payload: null, role: 'stakeholder' });
       return;
     }
 
     const reservations = await sihot.getReservationsByGuest(guest.guestId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const hotelPropertyId = process.env.SIHOT_PROPERTY_ID;
+
+    const isCheckedIn = Boolean(
+      hotelPropertyId &&
+      reservations.some((reservation) => {
+        if (reservation.propertyId !== hotelPropertyId) {
+          return false;
+        }
+        if (reservation.status !== 'checked_in') {
+          return false;
+        }
+
+        const arrivalDate = new Date(reservation.arrivalDate);
+        const departureDate = new Date(reservation.departureDate);
+        arrivalDate.setHours(0, 0, 0, 0);
+        departureDate.setHours(0, 0, 0, 0);
+
+        return arrivalDate <= today && today <= departureDate;
+      })
+    );
+
+    const desiredRole = isCheckedIn ? 'guest' : 'stakeholder';
 
     const payload = {
       guest: {
@@ -72,12 +95,13 @@ async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): P
       `UPDATE users
        SET sihot_guest_data = $1::jsonb,
            name = COALESCE($2, name),
+           role = $3,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3`,
-      [JSON.stringify(payload), combinedName || null, row.id]
+       WHERE id = $4`,
+      [JSON.stringify(payload), combinedName || null, desiredRole, row.id]
     );
 
-    broadcastSihotUpdate({ userId: row.id, payload });
+    broadcastSihotUpdate({ userId: row.id, payload, role: desiredRole });
   } catch (error) {
     console.warn('[SIHOT] Failed to refresh data for user', row.id, error);
   }
