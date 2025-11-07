@@ -22,6 +22,10 @@ For local development, it's often easier to run the backend and frontend directl
    REDIS_URL=redis://localhost:6379
    JWT_SECRET=development-secret-change-in-production
    CORS_ORIGIN=http://localhost:3000
+   SIHOT_USE_MOCK=true
+   # Optional: point to a real SIHOT endpoint when available
+   # SIHOT_API_URL=https://sihot.example.com/api
+   # SIHOT_API_KEY=replace-with-api-key
    ```
    
    Create `frontend/.env`:
@@ -99,3 +103,4 @@ npm run migrate
 - Backend API: http://localhost:5000
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
+- SIHOT mock API: http://localhost:5000/api/sihot

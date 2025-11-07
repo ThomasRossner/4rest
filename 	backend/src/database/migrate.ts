@@ -29,6 +29,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration4 = readFileSync(
+      join(__dirname, '../../../database/migrations/004_sihot_integration.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -80,6 +85,17 @@ async function runMigrations() {
       console.log('✓ Migration 003 completed');
     } else {
       console.log('✓ Migration 003 already executed');
+    }
+    
+    if (!executed.has('004_sihot_integration')) {
+      console.log('Running migration: 004_sihot_integration.sql');
+      await pool.query(migration4);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('004_sihot_integration') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 004 completed');
+    } else {
+      console.log('✓ Migration 004 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

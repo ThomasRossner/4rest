@@ -8,6 +8,18 @@ function ProfilePage() {
   const points = useAuthStore((s) => s.user?.points || 0);
   const [showConsent, setShowConsent] = useState(false);
 
+  const sihotGuest = user?.sihotGuest;
+  const sihotReservations = user?.sihotReservations ?? [];
+
+  const formatDate = (value: string) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleDateString();
+  };
+
   return (
     <div className="profile-page">
       <h1 className="profile-title">Profile</h1>
@@ -46,6 +58,89 @@ function ProfilePage() {
         <div className="consent-section-wrapper">
           <ConsentManager />
         </div>
+      )}
+
+      {sihotGuest && (
+        <section className="profile-sihot-card">
+          <div className="profile-sihot-header">
+            <h2>SIHOT Guest Profile</h2>
+            {user?.sihotGuestId && (
+              <span className="profile-sihot-badge">Guest ID: {user.sihotGuestId}</span>
+            )}
+          </div>
+
+          <dl className="profile-sihot-grid">
+            <div>
+              <dt>Name</dt>
+              <dd>
+                {sihotGuest.firstName} {sihotGuest.lastName}
+              </dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd>{sihotGuest.email || user?.email || '—'}</dd>
+            </div>
+            <div>
+              <dt>Phone</dt>
+              <dd>{sihotGuest.phone || '—'}</dd>
+            </div>
+            <div>
+              <dt>Loyalty Level</dt>
+              <dd>{sihotGuest.loyaltyLevel || '—'}</dd>
+            </div>
+            <div>
+              <dt>Preferred Language</dt>
+              <dd>{sihotGuest.language || '—'}</dd>
+            </div>
+            <div>
+              <dt>Preferences</dt>
+              <dd>
+                {sihotGuest.preferences?.length
+                  ? sihotGuest.preferences.join(', ')
+                  : '—'}
+              </dd>
+            </div>
+          </dl>
+
+          {sihotGuest.notes && (
+            <div className="profile-sihot-notes">
+              <h3>Notes</h3>
+              <p>{sihotGuest.notes}</p>
+            </div>
+          )}
+
+          {sihotReservations.length > 0 && (
+            <div className="profile-sihot-reservations">
+              <h3>Recent Reservations</h3>
+              <ul>
+                {sihotReservations.map((reservation) => (
+                  <li key={reservation.reservationId}>
+                    <div className="reservation-row">
+                      <div>
+                        <strong>{reservation.propertyId}</strong>
+                        <span className="reservation-room">Room {reservation.roomNumber}</span>
+                      </div>
+                      <div className="reservation-meta">
+                        <span>{formatDate(reservation.arrivalDate)} → {formatDate(reservation.departureDate)}</span>
+                        <span className={`reservation-status status-${reservation.status}`}>
+                          {reservation.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <div className="reservation-footer">
+                        <span className="reservation-confirmation">
+                          Confirmation: {reservation.confirmationNumber}
+                        </span>
+                        <span className="reservation-balance">
+                          Balance: {reservation.balance.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

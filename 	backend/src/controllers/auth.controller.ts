@@ -4,6 +4,8 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import passport from 'passport';
 import { createUser, getUserByEmail } from '../services/user.service.js';
 import { AuthRequest } from '../middleware/authenticate.js';
+import { sihot } from '../integrations/sihot.js';
+import type { SihotGuest, SihotReservation } from '../integrations/sihot.js';
 
 function getJwtSecret(): Secret {
   const secret = process.env.JWT_SECRET;
@@ -52,6 +54,9 @@ export async function login(req: Request, res: Response) {
         name: user.name,
         role: user.role,
         points: user.points || 0,
+        sihotGuestId: user.sihot_guest_id || null,
+        sihotGuest: user.sihot_guest_data?.guest ?? null,
+        sihotReservations: user.sihot_guest_data?.reservations ?? [],
       },
     });
   } catch (error: any) {
@@ -69,7 +74,20 @@ export async function register(req: Request, res: Response) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await createUser({ email, password_hash: passwordHash, name, role });
+
+    const { combinedName, sihotGuestPayload, sihotGuest } = await enrichWithSihotData(
+      email,
+      name
+    );
+
+    const user = await createUser({
+      email,
+      password_hash: passwordHash,
+      name: combinedName,
+      role,
+      sihot_guest_id: sihotGuest?.guestId || null,
+      sihot_guest_data: sihotGuestPayload,
+    });
 
     const emailAddress = user.email ?? '';
     const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
@@ -82,10 +100,74 @@ export async function register(req: Request, res: Response) {
         name: user.name,
         role: user.role,
         points: 0,
+        sihotGuestId: user.sihot_guest_id || null,
+        sihotGuest: user.sihot_guest_data?.guest ?? null,
+        sihotReservations: user.sihot_guest_data?.reservations ?? [],
       },
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+}
+
+async function enrichWithSihotData(email: string, fallbackName: string): Promise<{
+  combinedName: string;
+  sihotGuestPayload: Record<string, any> | null;
+  sihotGuest?: SihotGuest;
+}> {
+  if (!email) {
+    return { combinedName: fallbackName, sihotGuestPayload: null };
+  }
+
+  try {
+    const guest = await sihot.findGuestByEmail(email);
+    if (!guest) {
+      return { combinedName: fallbackName, sihotGuestPayload: null };
+    }
+
+    let reservations: SihotReservation[] = [];
+    try {
+      reservations = await sihot.getReservationsByGuest(guest.guestId);
+    } catch (reservationError) {
+      console.warn('[SIHOT] Failed to fetch reservations for guest', guest.guestId, reservationError);
+    }
+
+    const normalizedReservations = reservations.map((reservation) => ({
+      reservationId: reservation.reservationId,
+      confirmationNumber: reservation.confirmationNumber,
+      propertyId: reservation.propertyId,
+      roomNumber: reservation.roomNumber,
+      status: reservation.status,
+      arrivalDate: reservation.arrivalDate,
+      departureDate: reservation.departureDate,
+      balance: reservation.balance,
+    }));
+
+    const combinedName = `${guest.firstName} ${guest.lastName}`.trim() || fallbackName;
+
+    const payload = {
+      guest: {
+        guestId: guest.guestId,
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+        email: guest.email ?? email,
+        phone: guest.phone ?? null,
+        loyaltyLevel: guest.loyaltyLevel ?? null,
+        preferences: guest.preferences ?? [],
+        language: guest.language ?? null,
+        notes: guest.notes ?? null,
+      },
+      reservations: normalizedReservations,
+    };
+
+    return {
+      combinedName,
+      sihotGuestPayload: payload,
+      sihotGuest: guest,
+    };
+  } catch (error) {
+    console.warn('[SIHOT] Guest lookup failed during registration:', error);
+    return { combinedName: fallbackName, sihotGuestPayload: null };
   }
 }
 

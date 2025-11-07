@@ -18,10 +18,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_oauth
 CREATE INDEX IF NOT EXISTS idx_users_oauth_email ON users(oauth_email);
 
 -- Add constraint: either password_hash or oauth_provider must be present
-ALTER TABLE users 
-  ADD CONSTRAINT check_auth_method 
-  CHECK (
-    (password_hash IS NOT NULL) OR 
-    (oauth_provider IS NOT NULL AND oauth_id IS NOT NULL)
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'check_auth_method'
+      AND conrelid = 'users'::regclass
+  ) THEN
+    ALTER TABLE users
+      ADD CONSTRAINT check_auth_method
+      CHECK (
+        (password_hash IS NOT NULL) OR
+        (oauth_provider IS NOT NULL AND oauth_id IS NOT NULL)
+      );
+  END IF;
+END $$;
 

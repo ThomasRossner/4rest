@@ -4,6 +4,29 @@ import { api } from '../services/api';
 
 export type UserRole = 'guest' | 'employee' | 'stakeholder';
 
+export interface SihotGuestProfile {
+  guestId: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  loyaltyLevel: string | null;
+  preferences: string[];
+  language: string | null;
+  notes: string | null;
+}
+
+export interface SihotReservationSummary {
+  reservationId: string;
+  confirmationNumber: string;
+  propertyId: string;
+  roomNumber: string;
+  status: string;
+  arrivalDate: string;
+  departureDate: string;
+  balance: number;
+}
+
 export interface User {
   id: string;
   email: string | null;
@@ -11,6 +34,9 @@ export interface User {
   role: UserRole;
   points: number;
   avatar?: string;
+  sihotGuestId?: string | null;
+  sihotGuest?: SihotGuestProfile | null;
+  sihotReservations?: SihotReservationSummary[];
 }
 
 interface AuthState {

@@ -346,6 +346,24 @@ export class SihotMockService {
     return this.guests.get(guestId);
   }
 
+  public async findGuestByEmail(email: string): Promise<SihotGuest | undefined> {
+    await this.delay();
+    const normalized = email.trim().toLowerCase();
+    for (const guest of this.guests.values()) {
+      if (guest.email && guest.email.toLowerCase() === normalized) {
+        return guest;
+      }
+    }
+    return undefined;
+  }
+
+  public async getReservationsByGuest(guestId: string): Promise<SihotReservation[]> {
+    await this.delay();
+    return Array.from(this.reservations.values()).filter(
+      (reservation) => reservation.primaryGuestId === guestId
+    );
+  }
+
   public async reset(seed?: SeedData): Promise<void> {
     this.properties.clear();
     this.guests.clear();

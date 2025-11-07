@@ -11,6 +11,8 @@ export interface User {
   oauth_provider?: string | null;
   oauth_id?: string | null;
   oauth_email?: string | null;
+  sihot_guest_id?: string | null;
+  sihot_guest_data?: Record<string, any> | null;
 }
 
 export interface CreateUserData {
@@ -23,6 +25,8 @@ export interface CreateUserData {
   oauth_provider?: string | null;
   oauth_id?: string | null;
   oauth_email?: string | null;
+  sihot_guest_id?: string | null;
+  sihot_guest_data?: Record<string, any> | null;
 }
 
 export async function createUser(data: CreateUserData): Promise<User> {
@@ -33,11 +37,13 @@ export async function createUser(data: CreateUserData): Promise<User> {
       data.password_hash || null,
       data.name,
       data.role || 'guest',
-      data.points || 0,
+      data.points ?? 0,
       data.avatar_url || null,
       data.oauth_provider || null,
       data.oauth_id || null,
       data.oauth_email || null,
+      data.sihot_guest_id || null,
+      data.sihot_guest_data ? JSON.stringify(data.sihot_guest_data) : null,
     ];
     
     console.log('Creating user with values:', {
@@ -50,8 +56,8 @@ export async function createUser(data: CreateUserData): Promise<User> {
     });
     
     const result = await db.query(
-      `INSERT INTO users (email, password_hash, name, role, points, avatar_url, oauth_provider, oauth_id, oauth_email)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO users (email, password_hash, name, role, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, ($11)::jsonb)
        RETURNING *`,
       values
     );
@@ -184,7 +190,8 @@ export async function getUserProgressService(userId: string) {
 export async function getMeService(userId: string) {
   const db = getPool();
   const result = await db.query(
-    'SELECT id, email, oauth_email, name, role, points, avatar_url FROM users WHERE id = $1',
+    `SELECT id, email, oauth_email, name, role, points, avatar_url, sihot_guest_id, sihot_guest_data
+     FROM users WHERE id = $1`,
     [userId]
   );
   if (!result.rows[0]) {
@@ -199,13 +206,17 @@ export async function getMeService(userId: string) {
     role: user.role,
     points: user.points || 0,
     avatar: user.avatar_url || null,
+    sihotGuestId: user.sihot_guest_id || null,
+    sihotGuest: user.sihot_guest_data?.guest ?? null,
+    sihotReservations: user.sihot_guest_data?.reservations ?? [],
   };
 }
 
 export async function getUserProfileService(userId: string) {
   const db = getPool();
   const result = await db.query(
-    'SELECT id, email, oauth_email, name, role, points, avatar_url FROM users WHERE id = $1',
+    `SELECT id, email, oauth_email, name, role, points, avatar_url, sihot_guest_id, sihot_guest_data
+     FROM users WHERE id = $1`,
     [userId]
   );
   if (!result.rows[0]) {
@@ -220,6 +231,9 @@ export async function getUserProfileService(userId: string) {
     role: user.role,
     points: user.points || 0,
     avatar_url: user.avatar_url || null,
+    sihotGuestId: user.sihot_guest_id || null,
+    sihotGuest: user.sihot_guest_data?.guest ?? null,
+    sihotReservations: user.sihot_guest_data?.reservations ?? [],
   };
 }
 
