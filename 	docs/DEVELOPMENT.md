@@ -26,6 +26,9 @@ For local development, it's often easier to run the backend and frontend directl
    # Optional: point to a real SIHOT endpoint when available
    # SIHOT_API_URL=https://sihot.example.com/api
    # SIHOT_API_KEY=replace-with-api-key
+   # Optional: adjust PMS sync behaviour (defaults shown)
+   SIHOT_TIMEOUT_MS=15000
+   SIHOT_SYNC_INTERVAL_MS=900000
    ```
    
    Create `frontend/.env`:
@@ -104,3 +107,4 @@ npm run migrate
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
 - SIHOT mock API: http://localhost:5000/api/sihot
+- SIHOT sync interval: configurable via `SIHOT_SYNC_INTERVAL_MS` (defaults to 15 minutes)

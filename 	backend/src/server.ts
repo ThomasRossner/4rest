@@ -9,6 +9,7 @@ import { WebSocketServer } from 'ws';
 import { setupRoutes } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { initializeDatabase } from './database/connection.js';
+import { startSihotSyncScheduler } from './services/sihot-sync.service.js';
 
 // Load environment variables BEFORE importing passport config
 dotenv.config();
@@ -88,6 +89,7 @@ async function start() {
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      startSihotSyncScheduler();
     });
   } catch (error) {
     console.error('Failed to start server:', error);
