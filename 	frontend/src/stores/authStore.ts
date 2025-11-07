@@ -2,6 +2,118 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
 
+const WS_RECONNECT_DELAY = 5000;
+let sihotSocket: WebSocket | null = null;
+let reconnectTimer: number | null = null;
+
+function deriveWebSocketUrl(): string {
+  const explicit = import.meta.env.VITE_WS_URL as string | undefined;
+  if (explicit) {
+    return explicit;
+  }
+
+  const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
+  if (apiUrl) {
+    try {
+      const url = new URL(apiUrl, window.location.origin);
+      url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+      url.pathname = '/ws';
+      url.search = '';
+      return url.toString();
+    } catch (error) {
+      console.warn('[SIHOT] Failed to derive WebSocket URL from VITE_API_URL:', error);
+    }
+  }
+
+  return 'ws://localhost:5000/ws';
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer || typeof window === 'undefined') {
+    return;
+  }
+  reconnectTimer = window.setTimeout(() => {
+    reconnectTimer = null;
+    startSihotSocket();
+  }, WS_RECONNECT_DELAY);
+}
+
+function handleSihotMessage(event: MessageEvent) {
+  if (!event.data) {
+    return;
+  }
+
+  try {
+    const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+    if (!payload || payload.type !== 'sihot:update') {
+      return;
+    }
+
+    const state = useAuthStore.getState();
+    if (!state.user || state.user.id !== payload.userId) {
+      return;
+    }
+
+    void api.refreshMe().catch((error) => {
+      console.warn('[SIHOT] Failed to refresh user data after realtime update:', error);
+    });
+  } catch (error) {
+    console.warn('[SIHOT] Failed to process realtime message:', error);
+  }
+}
+
+function startSihotSocket() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (sihotSocket || !useAuthStore.getState().token) {
+    return;
+  }
+
+  const url = deriveWebSocketUrl();
+
+  try {
+    sihotSocket = new WebSocket(url);
+  } catch (error) {
+    console.warn('[SIHOT] Failed to establish WebSocket connection:', error);
+    scheduleReconnect();
+    return;
+  }
+
+  sihotSocket.onopen = () => {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+  };
+
+  sihotSocket.onmessage = handleSihotMessage;
+
+  sihotSocket.onerror = (error) => {
+    console.warn('[SIHOT] WebSocket error:', error);
+  };
+
+  sihotSocket.onclose = () => {
+    sihotSocket = null;
+    scheduleReconnect();
+  };
+}
+
+function stopSihotSocket() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  if (sihotSocket) {
+    try {
+      sihotSocket.close();
+    } catch (error) {
+      console.warn('[SIHOT] Error while closing WebSocket:', error);
+    }
+    sihotSocket = null;
+  }
+}
+
 export type UserRole = 'guest' | 'employee' | 'stakeholder';
 
 export interface SihotGuestProfile {
@@ -63,6 +175,7 @@ export const useAuthStore = create<AuthState>()(
           throw new Error('Invalid credentials');
         }
         set({ user: data.user, token: data.token, isAuthenticated: true });
+        startSihotSocket();
       },
       register: async (email: string, password: string, name: string, role: UserRole = 'guest') => {
         const data = await api.register(email, password, name, role);
@@ -70,12 +183,17 @@ export const useAuthStore = create<AuthState>()(
           throw new Error('Registration failed');
         }
         set({ user: data.user, token: data.token, isAuthenticated: true });
+        startSihotSocket();
       },
       logout: () => {
+        stopSihotSocket();
         set({ user: null, token: null, isAuthenticated: false });
       },
       setUser: (user: User) => set({ user }),
-      setToken: (token: string) => set({ token, isAuthenticated: true }),
+      setToken: (token: string) => {
+        set({ token, isAuthenticated: true });
+        startSihotSocket();
+      },
       incrementPoints: (delta: number) =>
         set((state) => {
           if (!state.user) return state;
@@ -84,6 +202,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) {
+          startSihotSocket();
+        }
+      },
     }
   )
 );

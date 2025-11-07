@@ -10,6 +10,7 @@ import { setupRoutes } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { initializeDatabase } from './database/connection.js';
 import { startSihotSyncScheduler } from './services/sihot-sync.service.js';
+import { registerWebSocketServer } from './ws/socketRegistry.js';
 
 // Load environment variables BEFORE importing passport config
 dotenv.config();
@@ -66,6 +67,7 @@ const server = createServer(app);
 
 // WebSocket server for real-time updates
 const wss = new WebSocketServer({ server, path: '/ws' });
+registerWebSocketServer(wss);
 
 wss.on('connection', (ws) => {
   console.log('WebSocket client connected');

@@ -1,5 +1,7 @@
 import { getPool } from '../database/connection.js';
 import { sihot } from '../integrations/sihot.js';
+// @ts-ignore -- NodeNext runtime resolves .js extension to compiled TypeScript
+import { broadcastSihotUpdate } from '../ws/sihot-broadcast.js';
 
 interface UserRow {
   id: string;
@@ -21,6 +23,66 @@ function resolveSyncInterval(): number {
   return DEFAULT_SYNC_INTERVAL;
 }
 
+async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): Promise<void> {
+  try {
+    const guest = await sihot.getGuest(row.sihot_guest_id);
+
+    if (!guest) {
+      // Guest no longer exists; clear stored data.
+      await pool.query(
+        `UPDATE users
+         SET sihot_guest_data = NULL,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [row.id]
+      );
+      broadcastSihotUpdate({ userId: row.id, payload: null });
+      return;
+    }
+
+    const reservations = await sihot.getReservationsByGuest(guest.guestId);
+
+    const payload = {
+      guest: {
+        guestId: guest.guestId,
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+        email: guest.email ?? null,
+        phone: guest.phone ?? null,
+        loyaltyLevel: guest.loyaltyLevel ?? null,
+        preferences: guest.preferences ?? [],
+        language: guest.language ?? null,
+        notes: guest.notes ?? null,
+      },
+      reservations: reservations.map((reservation) => ({
+        reservationId: reservation.reservationId,
+        confirmationNumber: reservation.confirmationNumber,
+        propertyId: reservation.propertyId,
+        roomNumber: reservation.roomNumber,
+        status: reservation.status,
+        arrivalDate: reservation.arrivalDate,
+        departureDate: reservation.departureDate,
+        balance: reservation.balance,
+      })),
+    };
+
+    const combinedName = `${guest.firstName} ${guest.lastName}`.trim();
+
+    await pool.query(
+      `UPDATE users
+       SET sihot_guest_data = $1::jsonb,
+           name = COALESCE($2, name),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [JSON.stringify(payload), combinedName || null, row.id]
+    );
+
+    broadcastSihotUpdate({ userId: row.id, payload });
+  } catch (error) {
+    console.warn('[SIHOT] Failed to refresh data for user', row.id, error);
+  }
+}
+
 export async function syncSihotGuests(): Promise<void> {
   const pool = getPool();
   const { rows } = await pool.query<UserRow>(
@@ -34,61 +96,24 @@ export async function syncSihotGuests(): Promise<void> {
   }
 
   for (const row of rows) {
-    try {
-      const guest = await sihot.getGuest(row.sihot_guest_id);
-
-      if (!guest) {
-        // Guest no longer exists; clear stored data.
-        await pool.query(
-          `UPDATE users
-           SET sihot_guest_data = NULL,
-               updated_at = CURRENT_TIMESTAMP
-           WHERE id = $1`,
-          [row.id]
-        );
-        continue;
-      }
-
-      const reservations = await sihot.getReservationsByGuest(guest.guestId);
-
-      const payload = {
-        guest: {
-          guestId: guest.guestId,
-          firstName: guest.firstName,
-          lastName: guest.lastName,
-          email: guest.email ?? null,
-          phone: guest.phone ?? null,
-          loyaltyLevel: guest.loyaltyLevel ?? null,
-          preferences: guest.preferences ?? [],
-          language: guest.language ?? null,
-          notes: guest.notes ?? null,
-        },
-        reservations: reservations.map((reservation) => ({
-          reservationId: reservation.reservationId,
-          confirmationNumber: reservation.confirmationNumber,
-          propertyId: reservation.propertyId,
-          roomNumber: reservation.roomNumber,
-          status: reservation.status,
-          arrivalDate: reservation.arrivalDate,
-          departureDate: reservation.departureDate,
-          balance: reservation.balance,
-        })),
-      };
-
-      const combinedName = `${guest.firstName} ${guest.lastName}`.trim();
-
-      await pool.query(
-        `UPDATE users
-         SET sihot_guest_data = $1::jsonb,
-             name = COALESCE($2, name),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = $3`,
-        [JSON.stringify(payload), combinedName || null, row.id]
-      );
-    } catch (error) {
-      console.warn('[SIHOT] Failed to refresh data for user', row.id, error);
-    }
+    await processUserRow(pool, row);
   }
+}
+
+export async function syncSihotGuestByUserId(userId: string): Promise<void> {
+  const pool = getPool();
+  const { rows } = await pool.query<UserRow>(
+    `SELECT id, name, sihot_guest_id
+     FROM users
+     WHERE id = $1 AND sihot_guest_id IS NOT NULL`,
+    [userId]
+  );
+
+  if (!rows[0]) {
+    return;
+  }
+
+  await processUserRow(pool, rows[0]);
 }
 
 async function runSync(): Promise<void> {
