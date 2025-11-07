@@ -20,7 +20,7 @@ interface HotelKitTask {
 
 class HotelKitIntegration {
   private config: HotelKitConfig;
-  private client: ReturnType<typeof axios.create>;
+  private client?: ReturnType<typeof axios.create>;
   private isEnabled: boolean;
 
   constructor() {
@@ -52,7 +52,7 @@ class HotelKitIntegration {
    * Sync employee tasks from HotelKit
    */
   async syncEmployeeTasks(): Promise<{ synced: number; errors: number }> {
-    if (!this.isEnabled) {
+    if (!this.isEnabled || !this.client) {
       console.log('HotelKit integration is disabled');
       return { synced: 0, errors: 0 };
     }
@@ -115,7 +115,7 @@ class HotelKitIntegration {
    * Mark task as completed in HotelKit
    */
   async markTaskCompleted(taskId: string, employeeId: string): Promise<boolean> {
-    if (!this.isEnabled) {
+    if (!this.isEnabled || !this.client) {
       return false;
     }
 
@@ -149,7 +149,7 @@ class HotelKitIntegration {
    * Get employee information from HotelKit
    */
   async getEmployee(employeeId: string): Promise<any> {
-    if (!this.isEnabled) {
+    if (!this.isEnabled || !this.client) {
       return null;
     }
 
@@ -223,7 +223,7 @@ class HotelKitIntegration {
    * Setup webhook for HotelKit events
    */
   async setupWebhook(webhookUrl: string): Promise<boolean> {
-    if (!this.isEnabled) {
+    if (!this.isEnabled || !this.client) {
       return false;
     }
 

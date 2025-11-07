@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { RequestHandler } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
 import {
   getStatisticsService,
@@ -7,12 +7,12 @@ import {
   calculateCO2Savings,
 } from '../services/statistics.service.js';
 
-export async function getStatistics(req: AuthRequest, res: Response) {
+export const getStatistics: RequestHandler = async (req, res) => {
   try {
     const { startDate, endDate, useCache } = req.query;
 
     // Use cached statistics if requested and available
-    if (useCache === 'true') {
+    if (typeof useCache === 'string' && useCache === 'true') {
       const { getCachedStatistics } = await import('../services/statistics-cache.service.js');
       const cached = await getCachedStatistics();
       return res.json(cached);
@@ -33,27 +33,28 @@ export async function getStatistics(req: AuthRequest, res: Response) {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function getUserStats(req: AuthRequest, res: Response) {
+export const getUserStats: RequestHandler = async (req, res) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const userId = req.params.userId || req.user.id;
+    const userId = req.params.userId || authReq.user.id;
     const stats = await getUserStatistics(userId);
     res.json(stats);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function getTaskCO2(req: AuthRequest, res: Response) {
+export const getTaskCO2: RequestHandler = async (req, res) => {
   try {
     const co2 = await calculateCO2Savings(req.params.taskId);
     res.json({ taskId: req.params.taskId, co2Saved: co2 });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};

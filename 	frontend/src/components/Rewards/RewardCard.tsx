@@ -1,5 +1,3 @@
-import React from 'react';
-
 type Reward = {
   id: string;
   title: string;

@@ -1,20 +1,20 @@
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { AuthRequest } from '../middleware/authenticate.js';
-import { Response } from 'express';
 import { hotelKit } from '../integrations/hotelkit.js';
 
 const router = Router();
 
 // Sync tasks from HotelKit (requires employee role)
-router.post('/sync', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/sync', authenticate, async (req, res) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Only employees can trigger sync
-    if (req.user.role !== 'employee') {
+    if (authReq.user.role !== 'employee') {
       return res.status(403).json({ error: 'Only employees can sync tasks' });
     }
 
@@ -30,7 +30,7 @@ router.post('/sync', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 // Get HotelKit employee info
-router.get('/employees/:employeeId', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/employees/:employeeId', authenticate, async (req, res) => {
   try {
     const employee = await hotelKit.getEmployee(req.params.employeeId);
     if (!employee) {

@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { exportUserData, deleteUserData, updateConsent } from '../middleware/gdpr.js';
 import { AuthRequest } from '../middleware/authenticate.js';
-import { Response } from 'express';
 
 const router = Router();
 
@@ -14,12 +13,13 @@ router.get('/export/:userId', authenticate, exportUserData);
 router.delete('/delete/:userId', authenticate, deleteUserData);
 
 // Update consent preferences
-router.post('/consent', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/consent', authenticate, async (req, res) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    await updateConsent(req.user.id, req.body);
+    await updateConsent(authReq.user.id, req.body);
     res.json({ message: 'Consent preferences updated' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

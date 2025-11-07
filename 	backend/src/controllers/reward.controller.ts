@@ -1,24 +1,25 @@
-import { Response } from 'express';
+import { RequestHandler } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
 import { getRewardsService, redeemRewardService } from '../services/reward.service.js';
 
-export async function getRewards(req: Request, res: Response) {
+export const getRewards: RequestHandler = async (_req, res) => {
   try {
     const rewards = await getRewardsService();
     res.json(rewards);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function redeemReward(req: AuthRequest, res: Response) {
+export const redeemReward: RequestHandler = async (req, res) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const result = await redeemRewardService(req.params.id, req.user.id);
+    const result = await redeemRewardService(req.params.id, authReq.user.id);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};

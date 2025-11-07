@@ -1,13 +1,14 @@
-import { Response } from 'express';
+import { RequestHandler } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
 import { getUserProgressService, getUserProfileService, updateUserProfileService, getMeService } from '../services/user.service.js';
 
-export async function getMe(req: AuthRequest, res: Response) {
+export const getMe: RequestHandler = async (req, res) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const user = await getMeService(req.user.id);
+    const user = await getMeService(authReq.user.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -15,11 +16,12 @@ export async function getMe(req: AuthRequest, res: Response) {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function getUserProgress(req: AuthRequest, res: Response) {
+export const getUserProgress: RequestHandler = async (req, res) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const progress = await getUserProgressService(req.params.id);
@@ -27,9 +29,9 @@ export async function getUserProgress(req: AuthRequest, res: Response) {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function getUserProfile(req: AuthRequest, res: Response) {
+export const getUserProfile: RequestHandler = async (req, res) => {
   try {
     const profile = await getUserProfileService(req.params.id);
     if (!profile) {
@@ -39,11 +41,12 @@ export async function getUserProfile(req: AuthRequest, res: Response) {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function updateUserProfile(req: AuthRequest, res: Response) {
+export const updateUserProfile: RequestHandler = async (req, res) => {
   try {
-    if (!req.user || req.user.id !== req.params.id) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user || authReq.user.id !== req.params.id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     const profile = await updateUserProfileService(req.params.id, req.body);
@@ -51,4 +54,4 @@ export async function updateUserProfile(req: AuthRequest, res: Response) {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};

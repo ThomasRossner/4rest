@@ -1,9 +1,27 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import passport from 'passport';
 import { createUser, getUserByEmail } from '../services/user.service.js';
 import { AuthRequest } from '../middleware/authenticate.js';
+
+function getJwtSecret(): Secret {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return secret as Secret;
+}
+
+function getJwtOptions(): SignOptions {
+  const options: SignOptions = {};
+  options.expiresIn = (process.env.JWT_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'];
+  return options;
+}
+
+function signUserToken(payload: { id: string; email: string; role: string }) {
+  return jwt.sign(payload, getJwtSecret(), getJwtOptions());
+}
 
 export async function login(req: Request, res: Response) {
   try {
@@ -24,11 +42,7 @@ export async function login(req: Request, res: Response) {
     }
 
     const userEmail = user.email || user.oauth_email || '';
-    const token = jwt.sign(
-      { id: user.id, email: userEmail, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
 
     res.json({
       token,
@@ -57,17 +71,14 @@ export async function register(req: Request, res: Response) {
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({ email, password_hash: passwordHash, name, role });
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const emailAddress = user.email ?? '';
+    const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
 
     res.status(201).json({
       token,
       user: {
         id: user.id,
-        email: user.email,
+        email: emailAddress,
         name: user.name,
         role: user.role,
         points: 0,
@@ -85,11 +96,11 @@ export async function refreshToken(req: Request, res: Response) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const token = jwt.sign(
-      { id: authReq.user.id, email: authReq.user.email, role: authReq.user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const token = signUserToken({
+      id: authReq.user.id,
+      email: authReq.user.email,
+      role: authReq.user.role,
+    });
 
     res.json({ token });
   } catch (error: any) {
@@ -135,11 +146,7 @@ export async function githubCallback(req: Request, res: Response, next: any) {
       console.log('GitHub OAuth callback: User authenticated, generating token for user:', user.id);
       // Generate JWT token
       const userEmail = user.email || user.oauth_email || '';
-      const token = jwt.sign(
-        { id: user.id, email: userEmail, role: user.role },
-        process.env.JWT_SECRET!,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-      );
+      const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
 
       console.log('GitHub OAuth: Token generated, redirecting to frontend');
       // Redirect to frontend with token

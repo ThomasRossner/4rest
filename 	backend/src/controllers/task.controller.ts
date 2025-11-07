@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { RequestHandler } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
 import {
   getAllTasks,
@@ -10,21 +10,21 @@ import {
   uploadPhoto as uploadPhotoService,
 } from '../services/task.service.js';
 
-export async function getTasks(req: AuthRequest, res: Response) {
+export const getTasks: RequestHandler = async (req, res) => {
   try {
     const { limit, offset, type } = req.query;
     const tasks = await getAllTasks({
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined,
       type: type as string,
-    }, req.user?.id);
+    }, (req as AuthRequest).user?.id);
     res.json(tasks);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function getTask(req: Request, res: Response) {
+export const getTask: RequestHandler = async (req, res) => {
   try {
     const task = await getTaskById(req.params.id);
     if (!task) {
@@ -34,18 +34,18 @@ export async function getTask(req: Request, res: Response) {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function createTask(req: AuthRequest, res: Response) {
+export const createTask: RequestHandler = async (req, res) => {
   try {
     const task = await createTaskService(req.body);
     res.status(201).json(task);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function updateTask(req: AuthRequest, res: Response) {
+export const updateTask: RequestHandler = async (req, res) => {
   try {
     const task = await updateTaskService(req.params.id, req.body);
     if (!task) {
@@ -55,37 +55,39 @@ export async function updateTask(req: AuthRequest, res: Response) {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function deleteTask(req: AuthRequest, res: Response) {
+export const deleteTask: RequestHandler = async (req, res) => {
   try {
     await deleteTaskService(req.params.id);
     res.status(204).send();
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function completeTask(req: AuthRequest, res: Response) {
+export const completeTask: RequestHandler = async (req, res) => {
   try {
-    if (!req.user) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const result = await completeTaskService(req.params.id, req.user.id, req.body);
+    const result = await completeTaskService(req.params.id, authReq.user.id, req.body);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-export async function uploadPhoto(req: AuthRequest, res: Response) {
+export const uploadPhoto: RequestHandler = async (req, res) => {
   try {
-    if (!req.file) {
+    const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
+    if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    const photoUrl = await uploadPhotoService(req.file);
+    const photoUrl = await uploadPhotoService(file);
     res.json({ photo_url: photoUrl });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-}
+};
