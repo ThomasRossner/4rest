@@ -2,12 +2,48 @@ import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 
-export async function getRewardsService() {
+export async function getRewardsService(userId: string) {
   const db = getPool();
-  const result = await db.query(
-    'SELECT * FROM rewards WHERE active = TRUE ORDER BY points_cost ASC'
-  );
-  return result.rows.map((row) => ({
+  const user = await getUserById(userId);
+  const role = user?.role ?? null;
+  const userType = (user as any)?.user_type ?? null;
+  const hotelId = process.env.HOTEL_ID ?? null;
+
+  const params: any[] = [];
+  let paramIndex = 1;
+
+  let query = 'SELECT * FROM rewards WHERE active = TRUE';
+
+  if (role) {
+    query += ` AND (allowed_roles IS NULL OR COALESCE(array_length(allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(allowed_roles))`;
+    params.push(role);
+  } else {
+    query += ' AND (allowed_roles IS NULL OR COALESCE(array_length(allowed_roles, 1), 0) = 0)';
+  }
+
+  if (userType) {
+    query += ` AND (allowed_user_types IS NULL OR COALESCE(array_length(allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(allowed_user_types))`;
+    params.push(userType);
+  } else {
+    query += ' AND (allowed_user_types IS NULL OR COALESCE(array_length(allowed_user_types, 1), 0) = 0)';
+  }
+
+  if (hotelId) {
+    query += ` AND (allowed_hotel_ids IS NULL OR COALESCE(array_length(allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(allowed_hotel_ids))`;
+    params.push(hotelId);
+  } else {
+    query += ' AND (allowed_hotel_ids IS NULL OR COALESCE(array_length(allowed_hotel_ids, 1), 0) = 0)';
+  }
+
+  query += ' ORDER BY points_cost ASC';
+
+  const result = await db.query(query, params);
+  const unique = new Map<string, any>();
+  for (const row of result.rows) {
+    unique.set(row.id, row);
+  }
+
+  return Array.from(unique.values()).map((row) => ({
     id: row.id,
     title: row.title,
     description: row.description,

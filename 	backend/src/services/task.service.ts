@@ -13,6 +13,9 @@ export interface Task {
   photo_required?: boolean;
   co2_savings_kg?: number;
   external_id?: string;
+  allowed_roles?: string[];
+  allowed_user_types?: string[];
+  allowed_hotel_ids?: string[];
 }
 
 export async function getAllTasks(
@@ -20,11 +23,26 @@ export async function getAllTasks(
   userId?: string
 ) {
   const db = getPool();
+  let userRole: string | null = null;
+  let userType: string | null = null;
   const params: any[] = [];
   let paramIndex = 1;
 
+  if (userId) {
+    const userResult = await db.query(
+      'SELECT role, user_type FROM users WHERE id = $1',
+      [userId]
+    );
+    if (userResult.rows[0]) {
+      userRole = userResult.rows[0].role;
+      userType = userResult.rows[0].user_type;
+    }
+  }
+
+  const hotelId = process.env.HOTEL_ID ?? null;
+
   // Select completed flag if userId provided
-  let select = 't.*';
+  let select = 'DISTINCT ON (t.id) t.*';
   let from = ' FROM tasks t';
   if (userId) {
     select += `, (ut.user_id IS NOT NULL) AS completed`;
@@ -34,12 +52,33 @@ export async function getAllTasks(
 
   let query = `SELECT ${select}${from} WHERE t.active = TRUE`;
 
+  if (userRole) {
+    query += ` AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_roles))`;
+    params.push(userRole);
+  } else {
+    query += ' AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0)';
+  }
+
+  if (userType) {
+    query += ` AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_user_types))`;
+    params.push(userType);
+  } else {
+    query += ' AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0)';
+  }
+
+  if (hotelId) {
+    query += ` AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_hotel_ids))`;
+    params.push(hotelId);
+  } else {
+    query += ' AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0)';
+  }
+
   if (filters?.type) {
     query += ` AND t.type = $${paramIndex++}`;
     params.push(filters.type);
   }
 
-  query += ' ORDER BY t.created_at DESC';
+  query += ' ORDER BY t.id, t.created_at DESC';
 
   if (filters?.limit) {
     query += ` LIMIT $${paramIndex++}`;
@@ -52,7 +91,11 @@ export async function getAllTasks(
   }
 
   const result = await db.query(query, params);
-  return result.rows;
+  const unique = new Map<string, any>();
+  for (const row of result.rows) {
+    unique.set(row.id, row);
+  }
+  return Array.from(unique.values());
 }
 
 export async function getTaskById(id: string): Promise<Task | null> {
@@ -64,8 +107,22 @@ export async function getTaskById(id: string): Promise<Task | null> {
 export async function createTask(data: Partial<Task>): Promise<Task> {
   const db = getPool();
   const result = await db.query(
-    `INSERT INTO tasks (title, description, type, points, video_url, quiz_questions, qr_code, photo_required, co2_savings_kg, external_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO tasks (
+       title,
+       description,
+       type,
+       points,
+       video_url,
+       quiz_questions,
+       qr_code,
+       photo_required,
+       co2_savings_kg,
+       external_id,
+       allowed_roles,
+       allowed_user_types,
+       allowed_hotel_ids
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
     [
       data.title,
@@ -78,6 +135,9 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.photo_required || false,
       data.co2_savings_kg || 0,
       (data as any).external_id || null,
+      (data as any).allowed_roles || [],
+      (data as any).allowed_user_types || [],
+      (data as any).allowed_hotel_ids || [],
     ]
   );
   return result.rows[0];

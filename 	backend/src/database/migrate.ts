@@ -44,6 +44,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration7 = readFileSync(
+      join(__dirname, '../../../database/migrations/007_tasks_rewards_audience.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -128,6 +133,17 @@ async function runMigrations() {
       console.log('✓ Migration 006 completed');
     } else {
       console.log('✓ Migration 006 already executed');
+    }
+    
+    if (!executed.has('007_tasks_rewards_audience')) {
+      console.log('Running migration: 007_tasks_rewards_audience.sql');
+      await pool.query(migration7);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('007_tasks_rewards_audience') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 007 completed');
+    } else {
+      console.log('✓ Migration 007 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

@@ -54,6 +54,7 @@ export async function login(req: Request, res: Response) {
         name: user.name,
         role: user.role,
         points: user.points || 0,
+        userType: user.user_type || 'explorer',
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],

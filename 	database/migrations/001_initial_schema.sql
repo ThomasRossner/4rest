@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS tasks (
     co2_savings_kg DECIMAL(10, 2) DEFAULT 0,
     external_id VARCHAR(255), -- For HotelKit and other integrations
     active BOOLEAN DEFAULT TRUE,
+    allowed_roles TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    allowed_user_types TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    allowed_hotel_ids TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -52,6 +55,9 @@ CREATE TABLE IF NOT EXISTS rewards (
     voucher_code VARCHAR(255),
     external_api_id VARCHAR(255),
     active BOOLEAN DEFAULT TRUE,
+    allowed_roles TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    allowed_user_types TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    allowed_hotel_ids TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
