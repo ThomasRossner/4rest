@@ -1,6 +1,7 @@
 import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
+import { USER_ROLES, USER_TYPES, HOTEL_IDS, UserRole, UserType, HotelId } from '../constants/enums.js';
 
 interface RewardTemplate {
   id: string;
@@ -11,17 +12,48 @@ interface RewardTemplate {
   reward_type: string;
   voucher_code?: string | null;
   external_api_id?: string | null;
-  allowed_roles?: string[] | null;
-  allowed_user_types?: string[] | null;
-  allowed_hotel_ids?: string[] | null;
+  allowed_roles?: UserRole[] | null;
+  allowed_user_types?: UserType[] | null;
+  allowed_hotel_ids?: HotelId[] | null;
+}
+
+function validateRoleArray(values?: string[] | null): UserRole[] {
+  if (!values) return [];
+  const invalid = values.filter((value) => !(USER_ROLES as readonly string[]).includes(value));
+  if (invalid.length) {
+    throw new Error(`Invalid roles: ${invalid.join(', ')}`);
+  }
+  return values as UserRole[];
+}
+
+function validateUserTypeArray(values?: string[] | null): UserType[] {
+  if (!values) return [];
+  const invalid = values.filter((value) => !(USER_TYPES as readonly string[]).includes(value));
+  if (invalid.length) {
+    throw new Error(`Invalid user types: ${invalid.join(', ')}`);
+  }
+  return values as UserType[];
+}
+
+function validateHotelIdArray(values?: string[] | null): HotelId[] {
+  if (!values) return [];
+  const invalid = values.filter((value) => !(HOTEL_IDS as readonly string[]).includes(value));
+  if (invalid.length) {
+    throw new Error(`Invalid hotel IDs: ${invalid.join(', ')}`);
+  }
+  return values as HotelId[];
 }
 
 export async function getRewardsService(userId: string) {
   const db = getPool();
   const user = await getUserById(userId);
-  const role = user?.role ?? null;
-  const userType = (user as any)?.user_type ?? null;
-  const hotelId = process.env.HOTEL_ID ?? null;
+  const role: UserRole | null = user?.role ?? null;
+  const userType: UserType | null = user?.user_type ?? null;
+  const configuredHotelId = process.env.HOTEL_ID;
+  const hotelId: HotelId | null =
+    configuredHotelId && (HOTEL_IDS as readonly string[]).includes(configuredHotelId)
+      ? (configuredHotelId as HotelId)
+      : null;
 
   const params: any[] = [];
   let paramIndex = 1;
@@ -117,9 +149,13 @@ export async function createRewardFromTemplate(
     reward_type: overrides.rewardType ?? template.reward_type,
     voucher_code: overrides.voucherCode ?? template.voucher_code ?? null,
     external_api_id: overrides.externalApiId ?? template.external_api_id ?? null,
-    allowed_roles: overrides.allowed_roles ?? template.allowed_roles ?? [],
-    allowed_user_types: overrides.allowed_user_types ?? template.allowed_user_types ?? [],
-    allowed_hotel_ids: overrides.allowed_hotel_ids ?? template.allowed_hotel_ids ?? [],
+    allowed_roles: validateRoleArray(overrides.allowed_roles ?? template.allowed_roles ?? []),
+    allowed_user_types: validateUserTypeArray(
+      overrides.allowed_user_types ?? template.allowed_user_types ?? []
+    ),
+    allowed_hotel_ids: validateHotelIdArray(
+      overrides.allowed_hotel_ids ?? template.allowed_hotel_ids ?? []
+    ),
   };
 
   const result = await db.query(

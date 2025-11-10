@@ -1,13 +1,14 @@
 import { getPool } from '../database/connection.js';
+import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums.js';
 
 export interface User {
   id: string;
   email: string | null;
   password_hash: string | null;
   name: string;
-  role: string;
+  role: UserRole;
   points: number;
-  user_type: string;
+  user_type: UserType;
   avatar_url?: string | null;
   oauth_provider?: string | null;
   oauth_id?: string | null;
@@ -20,8 +21,8 @@ export interface CreateUserData {
   email?: string | null;
   password_hash?: string | null;
   name: string;
-  role?: string;
-  user_type?: string;
+  role?: UserRole;
+  user_type?: UserType;
   points?: number;
   avatar_url?: string | null;
   oauth_provider?: string | null;
@@ -31,15 +32,32 @@ export interface CreateUserData {
   sihot_guest_data?: Record<string, any> | null;
 }
 
+function ensureRole(value: unknown): UserRole {
+  if (typeof value === 'string' && (USER_ROLES as readonly string[]).includes(value)) {
+    return value as UserRole;
+  }
+  return 'stakeholder';
+}
+
+function ensureUserType(value: unknown): UserType {
+  if (typeof value === 'string' && (USER_TYPES as readonly string[]).includes(value)) {
+    return value as UserType;
+  }
+  return 'explorer';
+}
+
 export async function createUser(data: CreateUserData): Promise<User> {
   const db = getPool();
   try {
+    const resolvedRole = ensureRole(data.role);
+    const resolvedUserType = ensureUserType(data.user_type);
+
     const values = [
       data.email || null,
       data.password_hash || null,
       data.name,
-      data.role || 'stakeholder',
-      data.user_type || 'explorer',
+      resolvedRole,
+      resolvedUserType,
       data.points ?? 0,
       data.avatar_url || null,
       data.oauth_provider || null,
@@ -108,8 +126,8 @@ export async function createOrUpdateOAuthUser(data: {
   email?: string | null;
   oauthEmail?: string | null;
   name: string;
-  role?: string;
-  userType?: string;
+  role?: UserRole;
+  userType?: UserType;
   avatarUrl?: string | null;
 }): Promise<User> {
   const db = getPool();
@@ -144,8 +162,8 @@ export async function createOrUpdateOAuthUser(data: {
       oauth_id: data.oauthId,
       oauth_email: data.oauthEmail || null,
       name: data.name,
-      role: data.role || 'stakeholder',
-      user_type: data.userType || 'explorer',
+      role: ensureRole(data.role),
+      user_type: ensureUserType(data.userType),
       points: 0,
       avatar_url: data.avatarUrl || null,
     };
@@ -257,6 +275,14 @@ export async function updateUserProfileService(userId: string, data: Partial<Use
   if (data.avatar_url !== undefined) {
     updates.push(`avatar_url = $${paramIndex++}`);
     values.push(data.avatar_url);
+  }
+  if (data.role) {
+    updates.push(`role = $${paramIndex++}`);
+    values.push(ensureRole(data.role));
+  }
+  if (data.user_type) {
+    updates.push(`user_type = $${paramIndex++}`);
+    values.push(ensureUserType(data.user_type));
   }
 
   if (updates.length === 0) {

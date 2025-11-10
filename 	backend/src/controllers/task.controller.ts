@@ -9,6 +9,7 @@ import {
   completeTask as completeTaskService,
   uploadPhoto as uploadPhotoService,
 } from '../services/task.service.js';
+import { USER_ROLES, USER_TYPES, HOTEL_IDS } from '../constants/enums.js';
 
 export const getTasks: RequestHandler = async (req, res) => {
   try {
@@ -68,9 +69,33 @@ export const createTask: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: 'allowed_hotel_ids must be an array of strings' });
     }
 
+    const invalidRoles = (payload.allowed_roles || []).filter(
+      (role: string) => !(USER_ROLES as readonly string[]).includes(role)
+    );
+    if (invalidRoles.length > 0) {
+      return res.status(400).json({ error: `Invalid roles: ${invalidRoles.join(', ')}` });
+    }
+
+    const invalidUserTypes = (payload.allowed_user_types || []).filter(
+      (userType: string) => !(USER_TYPES as readonly string[]).includes(userType)
+    );
+    if (invalidUserTypes.length > 0) {
+      return res.status(400).json({ error: `Invalid user types: ${invalidUserTypes.join(', ')}` });
+    }
+
+    const invalidHotelIds = (payload.allowed_hotel_ids || []).filter(
+      (hotelId: string) => !(HOTEL_IDS as readonly string[]).includes(hotelId)
+    );
+    if (invalidHotelIds.length > 0) {
+      return res.status(400).json({ error: `Invalid hotel IDs: ${invalidHotelIds.join(', ')}` });
+    }
+
     const task = await createTaskService(payload);
     return res.status(201).json(task);
   } catch (error: any) {
+    if (error instanceof Error && error.message.startsWith('Invalid')) {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 };

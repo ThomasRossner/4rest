@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { USER_ROLES, UserRole } from '../constants/enums.js';
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role: string;
+    role: UserRole;
   };
 }
 
@@ -30,7 +31,12 @@ export const authenticate: RequestHandler = (req: Request, res: Response, next: 
       role?: string;
     };
 
-    if (!decoded || typeof decoded.id !== 'string' || typeof decoded.role !== 'string') {
+    if (
+      !decoded ||
+      typeof decoded.id !== 'string' ||
+      typeof decoded.role !== 'string' ||
+      !(USER_ROLES as readonly string[]).includes(decoded.role)
+    ) {
       return res.status(401).json({ error: 'Invalid token payload' });
     }
 
@@ -38,7 +44,7 @@ export const authenticate: RequestHandler = (req: Request, res: Response, next: 
     authReq.user = {
       id: decoded.id,
       email: typeof decoded.email === 'string' ? decoded.email : '',
-      role: decoded.role,
+      role: decoded.role as UserRole,
     };
 
     next();

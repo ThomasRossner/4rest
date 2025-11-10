@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
+import { UserRole, UserType } from '../constants/enums';
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 
@@ -25,8 +26,8 @@ export const api = {
     email: string,
     password: string,
     name: string,
-    role: 'guest' | 'employee' | 'stakeholder' | 'administrator' = 'stakeholder',
-    userType = 'explorer'
+    role: UserRole = 'stakeholder',
+    userType: UserType = 'explorer'
   ) {
     const res = await apiClient.post('/auth/register', { email, password, name, role, userType });
     return res.data;

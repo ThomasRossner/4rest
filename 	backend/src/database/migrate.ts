@@ -59,6 +59,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration10 = readFileSync(
+      join(__dirname, '../../../database/migrations/010_enum_user_fields.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -176,6 +181,17 @@ async function runMigrations() {
       console.log('✓ Migration 009 completed');
     } else {
       console.log('✓ Migration 009 already executed');
+    }
+
+    if (!executed.has('010_enum_user_fields')) {
+      console.log('Running migration: 010_enum_user_fields.sql');
+      await pool.query(migration10);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('010_enum_user_fields') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 010 completed');
+    } else {
+      console.log('✓ Migration 010 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

@@ -1,5 +1,6 @@
 import { getPool } from '../database/connection.js';
 import { addUserPoints, plantTree } from './gamification.service.js';
+import { UserRole, UserType, HotelId, HOTEL_IDS } from '../constants/enums.js';
 
 export interface Task {
   id: string;
@@ -13,9 +14,9 @@ export interface Task {
   photo_required?: boolean;
   co2_savings_kg?: number;
   external_id?: string;
-  allowed_roles?: string[];
-  allowed_user_types?: string[];
-  allowed_hotel_ids?: string[];
+  allowed_roles?: UserRole[];
+  allowed_user_types?: UserType[];
+  allowed_hotel_ids?: HotelId[];
 }
 
 export async function getAllTasks(
@@ -24,8 +25,8 @@ export async function getAllTasks(
   options?: { includeAll?: boolean }
 ) {
   const db = getPool();
-  let userRole: string | null = null;
-  let userType: string | null = null;
+  let userRole: UserRole | null = null;
+  let userType: UserType | null = null;
   const params: any[] = [];
   let paramIndex = 1;
 
@@ -34,15 +35,19 @@ export async function getAllTasks(
   if (userId) {
     const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
     if (userResult.rows[0]) {
-      userRole = userResult.rows[0].role;
-      userType = userResult.rows[0].user_type;
+      userRole = userResult.rows[0].role as UserRole;
+      userType = userResult.rows[0].user_type as UserType;
       if (userRole === 'administrator') {
         applyAudienceFilters = false;
       }
     }
   }
 
-  const hotelId = process.env.HOTEL_ID ?? null;
+  const configuredHotelId = process.env.HOTEL_ID;
+  const hotelId: HotelId | null =
+    configuredHotelId && (HOTEL_IDS as readonly string[]).includes(configuredHotelId)
+      ? (configuredHotelId as HotelId)
+      : null;
 
   let select = 'DISTINCT ON (t.id) t.*';
   let from = ' FROM tasks t';
@@ -145,9 +150,9 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.photo_required ?? false,
       data.co2_savings_kg ?? 0,
       (data as any).external_id ?? null,
-      (data.allowed_roles ?? []) as string[],
-      (data.allowed_user_types ?? []) as string[],
-      (data.allowed_hotel_ids ?? []) as string[],
+      (data.allowed_roles ?? []) as UserRole[],
+      (data.allowed_user_types ?? []) as UserType[],
+      (data.allowed_hotel_ids ?? []) as HotelId[],
     ]
   );
   return result.rows[0];

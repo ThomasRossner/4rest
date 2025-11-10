@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
+import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums';
+
+export type { UserRole, UserType } from '../constants/enums';
 
 const WS_RECONNECT_DELAY = 5000;
 let sihotSocket: WebSocket | null = null;
@@ -61,7 +64,12 @@ function handleSihotMessage(event: MessageEvent) {
 
       const updated: User = {
         ...current.user,
-        role: payload.role ?? current.user.role,
+        role: (payload.role && USER_ROLES.includes(payload.role as UserRole)
+          ? (payload.role as UserRole)
+          : current.user.role),
+        userType: (payload.userType && USER_TYPES.includes(payload.userType as UserType)
+          ? (payload.userType as UserType)
+          : current.user.userType),
         sihotGuestId: payload.payload?.guest?.guestId ?? current.user.sihotGuestId ?? null,
         sihotGuest: payload.payload?.guest ?? current.user.sihotGuest ?? null,
         sihotReservations: payload.payload?.reservations ?? current.user.sihotReservations ?? [],
@@ -126,8 +134,6 @@ function stopSihotSocket() {
   }
 }
 
-export type UserRole = 'guest' | 'employee' | 'stakeholder' | 'administrator';
-
 export interface SihotGuestProfile {
   guestId: string;
   firstName: string;
@@ -157,7 +163,7 @@ export interface User {
   name: string;
   role: UserRole;
   points: number;
-  userType: string;
+  userType: UserType;
   avatar?: string;
   sihotGuestId?: string | null;
   sihotGuest?: SihotGuestProfile | null;
@@ -169,10 +175,10 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role?: UserRole) => Promise<void>;
+  register: (email: string, password: string, name: string, role?: UserRole, userType?: UserType) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
-  setToken: (token: string) => void;
+  setToken: (token: string, user?: User | null) => void;
   incrementPoints: (delta: number) => void;
 }
 
@@ -185,9 +191,25 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string) => {
         const data = await api.login(email, password);
         if (!data || !data.token || !data.user) {
-          throw new Error('Invalid credentials');
+          return;
         }
-        set({ user: data.user, token: data.token, isAuthenticated: true });
+
+        const normalizedRole: UserRole = USER_ROLES.includes(data.user.role as UserRole)
+          ? (data.user.role as UserRole)
+          : 'stakeholder';
+        const normalizedUserType: UserType = USER_TYPES.includes(data.user.userType as UserType)
+          ? (data.user.userType as UserType)
+          : 'explorer';
+
+        useAuthStore.setState({
+          token: data.token,
+          user: {
+            ...data.user,
+            role: normalizedRole,
+            userType: normalizedUserType,
+          },
+          isAuthenticated: true,
+        });
         startSihotSocket();
       },
       register: async (
@@ -195,23 +217,52 @@ export const useAuthStore = create<AuthState>()(
         password: string,
         name: string,
         role: UserRole = 'stakeholder',
-        userType = 'explorer'
+        userType: UserType = 'explorer'
       ) => {
         const data = await api.register(email, password, name, role, userType);
         if (!data || !data.token || !data.user) {
           throw new Error('Registration failed');
         }
-        set({ user: data.user, token: data.token, isAuthenticated: true });
+        const normalizedRole: UserRole = USER_ROLES.includes(data.user.role as UserRole)
+          ? (data.user.role as UserRole)
+          : 'stakeholder';
+        const normalizedUserType: UserType = USER_TYPES.includes(data.user.userType as UserType)
+          ? (data.user.userType as UserType)
+          : 'explorer';
+        set({
+          user: { ...data.user, role: normalizedRole, userType: normalizedUserType },
+          token: data.token,
+          isAuthenticated: true,
+        });
         startSihotSocket();
       },
       logout: () => {
         stopSihotSocket();
         set({ user: null, token: null, isAuthenticated: false });
       },
-      setUser: (user: User) => set({ user }),
-      setToken: (token: string) => {
-        set({ token, isAuthenticated: true });
+      setUser: (user: User) => {
+        const normalizedRole: UserRole = USER_ROLES.includes(user.role) ? user.role : 'stakeholder';
+        const normalizedUserType: UserType = USER_TYPES.includes(user.userType) ? user.userType : 'explorer';
+        set({ user: { ...user, role: normalizedRole, userType: normalizedUserType }, isAuthenticated: true });
         startSihotSocket();
+      },
+      setToken: (token: string, user?: User | null) => {
+        if (user) {
+          const normalizedRole: UserRole = USER_ROLES.includes(user.role)
+            ? user.role
+            : 'stakeholder';
+          const normalizedUserType: UserType = USER_TYPES.includes(user.userType)
+            ? user.userType
+            : 'explorer';
+          useAuthStore.setState({
+            token,
+            user: { ...user, role: normalizedRole, userType: normalizedUserType },
+            isAuthenticated: true,
+          });
+          startSihotSocket();
+        } else {
+          useAuthStore.setState({ token, isAuthenticated: true });
+        }
       },
       incrementPoints: (delta: number) =>
         set((state) => {
@@ -221,8 +272,23 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      onRehydrateStorage: () => (state) => {
-        if (state?.token) {
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.warn('[AuthStore] rehydrate error', error);
+          return;
+        }
+        if (state?.user) {
+          const normalizedRole: UserRole = USER_ROLES.includes(state.user.role)
+            ? state.user.role
+            : 'stakeholder';
+          const normalizedUserType: UserType = USER_TYPES.includes(state.user.userType)
+            ? state.user.userType
+            : 'explorer';
+
+          useAuthStore.setState({
+            ...state,
+            user: { ...state.user, role: normalizedRole, userType: normalizedUserType },
+          });
           startSihotSocket();
         }
       },

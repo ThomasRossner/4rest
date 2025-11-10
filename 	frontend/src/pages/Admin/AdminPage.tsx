@@ -3,6 +3,7 @@ import { useQuery, useMutation } from 'react-query';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 import './AdminPage.css';
+import { USER_ROLES, USER_TYPES, HOTEL_IDS, UserRole, UserType, HotelId } from '../../constants/enums';
 
 type AdminMode = 'task' | 'reward' | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
@@ -18,9 +19,9 @@ type AdminTaskTemplate = {
   qr_code?: string | null;
   photo_required?: boolean;
   co2_savings_kg?: number | null;
-  allowed_roles?: string[] | null;
-  allowed_user_types?: string[] | null;
-  allowed_hotel_ids?: string[] | null;
+  allowed_roles?: UserRole[] | null;
+  allowed_user_types?: UserType[] | null;
+  allowed_hotel_ids?: HotelId[] | null;
 };
 
 type RewardTemplate = {
@@ -42,27 +43,57 @@ type TaskFormState = {
   qr_code: string;
   photo_required: boolean;
   co2_savings_kg: number;
-  allowedRoles: string;
-  allowedUserTypes: string;
-  allowedHotelIds: string;
+  allowedRoles: string[];
+  allowedUserTypes: string[];
+  allowedHotelIds: string[];
 };
 
-const parseList = (value: string) =>
-  value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-const stringifyList = (list?: string[] | null) => (list && list.length ? list.join(', ') : '');
-
-const parseQuizText = (text: string) => {
-  if (!text.trim()) return [];
-  const parsed = JSON.parse(text);
-  if (!Array.isArray(parsed)) {
-    throw new Error('Quiz JSON must be an array.');
+const normalizeEnumArray = (value: unknown): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
   }
-  return parsed;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const withoutBraces = trimmed.startsWith('{') && trimmed.endsWith('}')
+      ? trimmed.slice(1, -1)
+      : trimmed;
+    if (!withoutBraces) return [];
+    return withoutBraces
+      .split(',')
+      .map((part) => part.replace(/^"|"$/g, '').trim())
+      .filter(Boolean);
+  }
+  return [];
 };
+
+const ensureRoleList = (input: string[]): UserRole[] => {
+  const invalid = input.filter((value) => !(USER_ROLES as readonly string[]).includes(value));
+  if (invalid.length) {
+    throw new Error(`Invalid roles: ${invalid.join(', ')}`);
+  }
+  return input as UserRole[];
+};
+
+const ensureUserTypeList = (input: string[]): UserType[] => {
+  const invalid = input.filter((value) => !(USER_TYPES as readonly string[]).includes(value));
+  if (invalid.length) {
+    throw new Error(`Invalid user types: ${invalid.join(', ')}`);
+  }
+  return input as UserType[];
+};
+
+const ensureHotelIdList = (input: string[]): HotelId[] => {
+  const invalid = input.filter((value) => !(HOTEL_IDS as readonly string[]).includes(value));
+  if (invalid.length) {
+    throw new Error(`Invalid hotel IDs: ${invalid.join(', ')}`);
+  }
+  return input as HotelId[];
+};
+
+const ROLE_OPTIONS = USER_ROLES.map((role) => ({ value: role, label: role }));
+const USER_TYPE_OPTIONS = USER_TYPES.map((type) => ({ value: type, label: type }));
+const HOTEL_OPTIONS = HOTEL_IDS.map((id) => ({ value: id, label: id }));
 
 const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   title: '',
@@ -74,10 +105,19 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   qr_code: type === 'qr' ? '' : '',
   photo_required: type === 'photo',
   co2_savings_kg: 0,
-  allowedRoles: '',
-  allowedUserTypes: '',
-  allowedHotelIds: '',
+  allowedRoles: [],
+  allowedUserTypes: [],
+  allowedHotelIds: [],
 });
+
+const parseQuizText = (text: string) => {
+  if (!text.trim()) return [];
+  const parsed = JSON.parse(text);
+  if (!Array.isArray(parsed)) {
+    throw new Error('Quiz JSON must be an array.');
+  }
+  return parsed;
+};
 
 function AdminPage() {
   const user = useAuthStore((s) => s.user);
@@ -189,9 +229,9 @@ function AdminPage() {
       qr_code: template.qr_code ?? '',
       photo_required: Boolean(template.photo_required),
       co2_savings_kg: template.co2_savings_kg ?? 0,
-      allowedRoles: stringifyList(template.allowed_roles),
-      allowedUserTypes: stringifyList(template.allowed_user_types),
-      allowedHotelIds: stringifyList(template.allowed_hotel_ids),
+      allowedRoles: normalizeEnumArray(template.allowed_roles),
+      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
+      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates]);
 
@@ -221,9 +261,9 @@ function AdminPage() {
           type: template.type,
           points: Number(taskForm.points) || 0,
           co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-          allowed_roles: parseList(taskForm.allowedRoles),
-          allowed_user_types: parseList(taskForm.allowedUserTypes),
-          allowed_hotel_ids: parseList(taskForm.allowedHotelIds),
+          allowed_roles: ensureRoleList(taskForm.allowedRoles),
+          allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
+          allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
         };
 
         if (template.type === 'video') {
@@ -257,9 +297,9 @@ function AdminPage() {
         type: taskForm.type,
         points: Number(taskForm.points) || 0,
         co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-        allowed_roles: parseList(taskForm.allowedRoles),
-        allowed_user_types: parseList(taskForm.allowedUserTypes),
-        allowed_hotel_ids: parseList(taskForm.allowedHotelIds),
+        allowed_roles: ensureRoleList(taskForm.allowedRoles),
+        allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
+        allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
       };
 
       if (taskSource === 'video') {
@@ -487,39 +527,57 @@ function AdminPage() {
                 </label>
 
                 <label className="admin-field">
-                  <span>Allowed roles (comma separated)</span>
-                  <input
-                    type="text"
+                  <span>Allowed roles</span>
+                  <select
+                    multiple
                     value={taskForm.allowedRoles}
-                    onChange={(event) =>
-                      setTaskForm((prev) => ({ ...prev, allowedRoles: event.target.value }))
-                    }
-                    placeholder="e.g. guest,employee"
-                  />
+                    onChange={(event) => {
+                      const selected = Array.from(event.target.selectedOptions).map((opt) => opt.value);
+                      setTaskForm((prev) => ({ ...prev, allowedRoles: selected }));
+                    }}
+                  >
+                    {ROLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label className="admin-field">
-                  <span>Allowed user types (comma separated)</span>
-                  <input
-                    type="text"
+                  <span>Allowed user types</span>
+                  <select
+                    multiple
                     value={taskForm.allowedUserTypes}
-                    onChange={(event) =>
-                      setTaskForm((prev) => ({ ...prev, allowedUserTypes: event.target.value }))
-                    }
-                    placeholder="e.g. explorer,advocate"
-                  />
+                    onChange={(event) => {
+                      const selected = Array.from(event.target.selectedOptions).map((opt) => opt.value);
+                      setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }));
+                    }}
+                  >
+                    {USER_TYPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label className="admin-field">
-                  <span>Allowed hotel IDs (comma separated)</span>
-                  <input
-                    type="text"
+                  <span>Allowed hotel IDs</span>
+                  <select
+                    multiple
                     value={taskForm.allowedHotelIds}
-                    onChange={(event) =>
-                      setTaskForm((prev) => ({ ...prev, allowedHotelIds: event.target.value }))
-                    }
-                    placeholder="e.g. ROI-BER,ROI-VIE"
-                  />
+                    onChange={(event) => {
+                      const selected = Array.from(event.target.selectedOptions).map((opt) => opt.value);
+                      setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }));
+                    }}
+                  >
+                    {HOTEL_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 {taskMessage && (

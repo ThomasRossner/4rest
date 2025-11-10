@@ -29,6 +29,9 @@ export const createReward: RequestHandler = async (req, res) => {
     const reward = await createRewardFromTemplate(templateId, overrides || {});
     res.status(201).json(reward);
   } catch (error: any) {
+    if (error instanceof Error && error.message.startsWith('Invalid')) {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 };

@@ -6,6 +6,7 @@ import { createUser, getUserByEmail } from '../services/user.service.js';
 import { AuthRequest } from '../middleware/authenticate.js';
 import { sihot } from '../integrations/sihot.js';
 import type { SihotGuest, SihotReservation } from '../integrations/sihot.js';
+import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums.js';
 
 function getJwtSecret(): Secret {
   const secret = process.env.JWT_SECRET;
@@ -21,8 +22,22 @@ function getJwtOptions(): SignOptions {
   return options;
 }
 
-function signUserToken(payload: { id: string; email: string; role: string }) {
+function signUserToken(payload: { id: string; email: string; role: UserRole }) {
   return jwt.sign(payload, getJwtSecret(), getJwtOptions());
+}
+
+function normalizeRole(role: unknown): UserRole {
+  if (typeof role === 'string' && (USER_ROLES as readonly string[]).includes(role)) {
+    return role as UserRole;
+  }
+  return 'stakeholder';
+}
+
+function normalizeUserType(userType: unknown): UserType {
+  if (typeof userType === 'string' && (USER_TYPES as readonly string[]).includes(userType)) {
+    return userType as UserType;
+  }
+  return 'explorer';
 }
 
 export async function login(req: Request, res: Response) {
@@ -54,7 +69,7 @@ export async function login(req: Request, res: Response) {
         name: user.name,
         role: user.role,
         points: user.points || 0,
-        userType: user.user_type || 'explorer',
+        userType: user.user_type,
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
@@ -81,12 +96,15 @@ export async function register(req: Request, res: Response) {
       name
     );
 
+    const normalizedRole = normalizeRole(role);
+    const normalizedUserType = normalizeUserType(userType);
+
     const user = await createUser({
       email,
       password_hash: passwordHash,
       name: combinedName,
-      role,
-      user_type: userType,
+      role: normalizedRole,
+      user_type: normalizedUserType,
       sihot_guest_id: sihotGuest?.guestId || null,
       sihot_guest_data: sihotGuestPayload,
     });
@@ -102,7 +120,7 @@ export async function register(req: Request, res: Response) {
         name: user.name,
         role: user.role,
         points: 0,
-        userType: user.user_type || 'explorer',
+        userType: user.user_type,
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],

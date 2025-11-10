@@ -65,6 +65,12 @@ For local development, it's often easier to run the backend and frontend directl
 - `stakeholder@example.com` (stakeholder)
 - `admin@example.com` (**administrator** — access the `/admin` dashboard to publish tasks/rewards)
 
+### Reference Values (enforced in Postgres)
+
+- **User roles:** `guest`, `employee`, `stakeholder`, `administrator`
+- **User types:** `explorer`, `guest_in_house`, `observer`, `advocate`
+- **Hotel IDs:** `ROI-BER`, `ROI-VIE`
+
 ### Option 2: Full Docker (All Services)
 
 If you want to run everything in Docker:
