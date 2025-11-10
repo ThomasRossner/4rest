@@ -66,7 +66,7 @@ export async function login(req: Request, res: Response) {
 
 export async function register(req: Request, res: Response) {
   try {
-    const { email, password, name, role = 'stakeholder' } = req.body;
+    const { email, password, name, role = 'stakeholder', userType = 'explorer' } = req.body;
 
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
@@ -85,6 +85,7 @@ export async function register(req: Request, res: Response) {
       password_hash: passwordHash,
       name: combinedName,
       role,
+      user_type: userType,
       sihot_guest_id: sihotGuest?.guestId || null,
       sihot_guest_data: sihotGuestPayload,
     });
@@ -100,6 +101,7 @@ export async function register(req: Request, res: Response) {
         name: user.name,
         role: user.role,
         points: 0,
+        userType: user.user_type || 'explorer',
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],

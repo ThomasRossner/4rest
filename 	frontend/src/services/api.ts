@@ -21,8 +21,14 @@ apiClient.interceptors.request.use((config) => {
 
 export const api = {
   // User
-  async register(email: string, password: string, name: string, role: 'guest' | 'employee' | 'stakeholder' = 'stakeholder') {
-    const res = await apiClient.post('/auth/register', { email, password, name, role });
+  async register(
+    email: string,
+    password: string,
+    name: string,
+    role: 'guest' | 'employee' | 'stakeholder' = 'stakeholder',
+    userType = 'explorer'
+  ) {
+    const res = await apiClient.post('/auth/register', { email, password, name, role, userType });
     return res.data;
   },
 

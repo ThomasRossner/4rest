@@ -7,6 +7,7 @@ export interface User {
   name: string;
   role: string;
   points: number;
+  user_type: string;
   avatar_url?: string | null;
   oauth_provider?: string | null;
   oauth_id?: string | null;
@@ -20,6 +21,7 @@ export interface CreateUserData {
   password_hash?: string | null;
   name: string;
   role?: string;
+  user_type?: string;
   points?: number;
   avatar_url?: string | null;
   oauth_provider?: string | null;
@@ -37,6 +39,7 @@ export async function createUser(data: CreateUserData): Promise<User> {
       data.password_hash || null,
       data.name,
       data.role || 'stakeholder',
+      data.user_type || 'explorer',
       data.points ?? 0,
       data.avatar_url || null,
       data.oauth_provider || null,
@@ -56,8 +59,8 @@ export async function createUser(data: CreateUserData): Promise<User> {
     });
     
     const result = await db.query(
-      `INSERT INTO users (email, password_hash, name, role, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, ($11)::jsonb)
+      `INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb)
        RETURNING *`,
       values
     );
@@ -106,6 +109,7 @@ export async function createOrUpdateOAuthUser(data: {
   oauthEmail?: string | null;
   name: string;
   role?: string;
+  userType?: string;
   avatarUrl?: string | null;
 }): Promise<User> {
   const db = getPool();
@@ -141,6 +145,7 @@ export async function createOrUpdateOAuthUser(data: {
       oauth_email: data.oauthEmail || null,
       name: data.name,
       role: data.role || 'stakeholder',
+      user_type: data.userType || 'explorer',
       points: 0,
       avatar_url: data.avatarUrl || null,
     };
@@ -190,7 +195,7 @@ export async function getUserProgressService(userId: string) {
 export async function getMeService(userId: string) {
   const db = getPool();
   const result = await db.query(
-    `SELECT id, email, oauth_email, name, role, points, avatar_url, sihot_guest_id, sihot_guest_data
+    `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -204,6 +209,7 @@ export async function getMeService(userId: string) {
     email: user.email || user.oauth_email || null,
     name: user.name,
     role: user.role,
+    userType: user.user_type,
     points: user.points || 0,
     avatar: user.avatar_url || null,
     sihotGuestId: user.sihot_guest_id || null,
@@ -215,7 +221,7 @@ export async function getMeService(userId: string) {
 export async function getUserProfileService(userId: string) {
   const db = getPool();
   const result = await db.query(
-    `SELECT id, email, oauth_email, name, role, points, avatar_url, sihot_guest_id, sihot_guest_data
+    `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -229,6 +235,7 @@ export async function getUserProfileService(userId: string) {
     email: user.email || user.oauth_email || null,
     name: user.name,
     role: user.role,
+    userType: user.user_type,
     points: user.points || 0,
     avatar_url: user.avatar_url || null,
     sihotGuestId: user.sihot_guest_id || null,

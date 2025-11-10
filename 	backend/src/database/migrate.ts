@@ -39,6 +39,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration6 = readFileSync(
+      join(__dirname, '../../../database/migrations/006_user_type.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -112,6 +117,17 @@ async function runMigrations() {
       console.log('✓ Migration 005 completed');
     } else {
       console.log('✓ Migration 005 already executed');
+    }
+    
+    if (!executed.has('006_user_type')) {
+      console.log('Running migration: 006_user_type.sql');
+      await pool.query(migration6);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('006_user_type') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 006 completed');
+    } else {
+      console.log('✓ Migration 006 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');
