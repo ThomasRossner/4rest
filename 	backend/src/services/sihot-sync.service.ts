@@ -6,6 +6,7 @@ import { broadcastSihotUpdate } from '../ws/sihot-broadcast.js';
 interface UserRow {
   id: string;
   name: string;
+  role: string;
   sihot_guest_id: string;
 }
 
@@ -25,6 +26,14 @@ function resolveSyncInterval(): number {
 
 async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): Promise<void> {
   try {
+    if (row.role === 'administrator') {
+      return;
+    }
+
+    if (row.role === 'administrator') {
+      return;
+    }
+
     const guest = await sihot.getGuest(row.sihot_guest_id);
 
     if (!guest) {
@@ -110,7 +119,7 @@ async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): P
 export async function syncSihotGuests(): Promise<void> {
   const pool = getPool();
   const { rows } = await pool.query<UserRow>(
-    `SELECT id, name, sihot_guest_id
+    `SELECT id, name, role, sihot_guest_id
      FROM users
      WHERE sihot_guest_id IS NOT NULL`
   );
@@ -127,7 +136,7 @@ export async function syncSihotGuests(): Promise<void> {
 export async function syncSihotGuestByUserId(userId: string): Promise<void> {
   const pool = getPool();
   const { rows } = await pool.query<UserRow>(
-    `SELECT id, name, sihot_guest_id
+    `SELECT id, name, role, sihot_guest_id
      FROM users
      WHERE id = $1 AND sihot_guest_id IS NOT NULL`,
     [userId]

@@ -49,6 +49,16 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration8 = readFileSync(
+      join(__dirname, '../../../database/migrations/008_task_reward_templates.sql'),
+      'utf-8'
+    );
+    
+    const migration9 = readFileSync(
+      join(__dirname, '../../../database/migrations/009_drop_task_templates.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -144,6 +154,28 @@ async function runMigrations() {
       console.log('✓ Migration 007 completed');
     } else {
       console.log('✓ Migration 007 already executed');
+    }
+    
+    if (!executed.has('008_task_reward_templates')) {
+      console.log('Running migration: 008_task_reward_templates.sql');
+      await pool.query(migration8);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('008_task_reward_templates') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 008 completed');
+    } else {
+      console.log('✓ Migration 008 already executed');
+    }
+
+    if (!executed.has('009_drop_task_templates')) {
+      console.log('Running migration: 009_drop_task_templates.sql');
+      await pool.query(migration9);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('009_drop_task_templates') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 009 completed');
+    } else {
+      console.log('✓ Migration 009 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

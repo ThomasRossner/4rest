@@ -12,12 +12,18 @@ import {
 
 export const getTasks: RequestHandler = async (req, res) => {
   try {
-    const { limit, offset, type } = req.query;
-    const tasks = await getAllTasks({
-      limit: limit ? parseInt(limit as string) : undefined,
-      offset: offset ? parseInt(offset as string) : undefined,
-      type: type as string,
-    }, (req as AuthRequest).user?.id);
+    const { limit, offset, type, includeAll } = req.query;
+    const authReq = req as AuthRequest;
+    const isAdmin = authReq.user?.role === 'administrator';
+    const tasks = await getAllTasks(
+      {
+        limit: limit ? parseInt(limit as string, 10) : undefined,
+        offset: offset ? parseInt(offset as string, 10) : undefined,
+        type: type as string,
+      },
+      authReq.user?.id,
+      { includeAll: isAdmin && includeAll === 'true' }
+    );
     res.json(tasks);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -38,8 +44,32 @@ export const getTask: RequestHandler = async (req, res) => {
 
 export const createTask: RequestHandler = async (req, res) => {
   try {
-    const task = await createTaskService(req.body);
-    res.status(201).json(task);
+    const { templateId, ...payload } = req.body;
+
+    if (templateId) {
+      return res.status(400).json({ error: 'Task templates are no longer supported.' });
+    }
+
+    if (!payload?.type) {
+      return res.status(400).json({ error: 'Task type is required' });
+    }
+
+    if (!payload?.title) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
+
+    if (payload.allowed_roles && !Array.isArray(payload.allowed_roles)) {
+      return res.status(400).json({ error: 'allowed_roles must be an array of strings' });
+    }
+    if (payload.allowed_user_types && !Array.isArray(payload.allowed_user_types)) {
+      return res.status(400).json({ error: 'allowed_user_types must be an array of strings' });
+    }
+    if (payload.allowed_hotel_ids && !Array.isArray(payload.allowed_hotel_ids)) {
+      return res.status(400).json({ error: 'allowed_hotel_ids must be an array of strings' });
+    }
+
+    const task = await createTaskService(payload);
+    return res.status(201).json(task);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

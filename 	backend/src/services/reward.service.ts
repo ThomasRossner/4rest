@@ -2,6 +2,20 @@ import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 
+interface RewardTemplate {
+  id: string;
+  name: string;
+  title: string;
+  description?: string | null;
+  points_cost: number;
+  reward_type: string;
+  voucher_code?: string | null;
+  external_api_id?: string | null;
+  allowed_roles?: string[] | null;
+  allowed_user_types?: string[] | null;
+  allowed_hotel_ids?: string[] | null;
+}
+
 export async function getRewardsService(userId: string) {
   const db = getPool();
   const user = await getUserById(userId);
@@ -62,6 +76,80 @@ function getRewardIcon(type: string): string {
     vacation_day: '🏖️',
   };
   return icons[type] || '🎁';
+}
+
+export async function listRewardTemplates(): Promise<RewardTemplate[]> {
+  const db = getPool();
+  const result = await db.query('SELECT * FROM reward_templates ORDER BY name ASC');
+  return result.rows;
+}
+
+async function getRewardTemplate(templateId: string): Promise<RewardTemplate | null> {
+  const db = getPool();
+  const result = await db.query('SELECT * FROM reward_templates WHERE id = $1', [templateId]);
+  return result.rows[0] || null;
+}
+
+export async function createRewardFromTemplate(
+  templateId: string,
+  overrides: Partial<{
+    title: string;
+    description: string;
+    pointsCost: number;
+    rewardType: string;
+    voucherCode?: string;
+    externalApiId?: string;
+    allowed_roles?: string[];
+    allowed_user_types?: string[];
+    allowed_hotel_ids?: string[];
+  }> = {}
+) {
+  const template = await getRewardTemplate(templateId);
+  if (!template) {
+    throw new Error('Reward template not found');
+  }
+
+  const db = getPool();
+  const payload = {
+    title: overrides.title ?? template.title,
+    description: overrides.description ?? template.description,
+    points_cost: overrides.pointsCost ?? template.points_cost,
+    reward_type: overrides.rewardType ?? template.reward_type,
+    voucher_code: overrides.voucherCode ?? template.voucher_code ?? null,
+    external_api_id: overrides.externalApiId ?? template.external_api_id ?? null,
+    allowed_roles: overrides.allowed_roles ?? template.allowed_roles ?? [],
+    allowed_user_types: overrides.allowed_user_types ?? template.allowed_user_types ?? [],
+    allowed_hotel_ids: overrides.allowed_hotel_ids ?? template.allowed_hotel_ids ?? [],
+  };
+
+  const result = await db.query(
+    `INSERT INTO rewards (
+       title,
+       description,
+       points_cost,
+       reward_type,
+       voucher_code,
+       external_api_id,
+       allowed_roles,
+       allowed_user_types,
+       allowed_hotel_ids
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING *`,
+    [
+      payload.title,
+      payload.description,
+      payload.points_cost,
+      payload.reward_type,
+      payload.voucher_code,
+      payload.external_api_id,
+      payload.allowed_roles,
+      payload.allowed_user_types,
+      payload.allowed_hotel_ids,
+    ]
+  );
+
+  return result.rows[0];
 }
 
 export async function redeemRewardService(rewardId: string, userId: string) {

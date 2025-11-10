@@ -71,7 +71,7 @@ class HotelKitIntegration {
       let errors = 0;
 
       // Get existing tasks to avoid duplicates
-      const existingTasks = await getAllTasks();
+      const existingTasks = await getAllTasks(undefined, undefined, { includeAll: true });
       const existingExternalIds = new Set(
         existingTasks
           .filter((t: any) => t.external_id)

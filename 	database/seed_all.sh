@@ -31,6 +31,7 @@ fi
 create_user "test@example.com" "Test User" "guest"
 create_user "employee@example.com" "Test Employee" "employee"
 create_user "stakeholder@example.com" "Test Stakeholder" "stakeholder"
+create_user "admin@example.com" "Admin User" "administrator"
 
 echo "\n==> Seeding example task into Postgres (container: ${PG_CONTAINER})"
 

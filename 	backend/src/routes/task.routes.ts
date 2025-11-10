@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { authenticate } from '../middleware/authenticate.js';
+import { requireRole } from '../middleware/requireRole.js';
 import {
   getTasks,
   getTask,
@@ -38,9 +39,9 @@ const router = Router();
 
 router.get('/', authenticate, getTasks);
 router.get('/:id', getTask);
-router.post('/', authenticate, createTask);
-router.put('/:id', authenticate, updateTask);
-router.delete('/:id', authenticate, deleteTask);
+router.post('/', authenticate, requireRole('administrator'), createTask);
+router.put('/:id', authenticate, requireRole('administrator'), updateTask);
+router.delete('/:id', authenticate, requireRole('administrator'), deleteTask);
 router.post('/:id/complete', authenticate, completeTask);
 router.post('/upload', authenticate, upload.single('photo'), uploadPhoto);
 

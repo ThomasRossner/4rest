@@ -25,7 +25,7 @@ export const api = {
     email: string,
     password: string,
     name: string,
-    role: 'guest' | 'employee' | 'stakeholder' = 'stakeholder',
+    role: 'guest' | 'employee' | 'stakeholder' | 'administrator' = 'stakeholder',
     userType = 'explorer'
   ) {
     const res = await apiClient.post('/auth/register', { email, password, name, role, userType });
@@ -72,7 +72,7 @@ export const api = {
   },
 
   // Tasks
-  async getTasks(params?: { limit?: number; offset?: number; type?: string }) {
+  async getTasks(params?: { limit?: number; offset?: number; type?: string; includeAll?: boolean }) {
     const response = await apiClient.get('/tasks', { params });
     return response.data;
   },
@@ -169,6 +169,23 @@ export const api = {
 
   async getUserStatistics(userId: string) {
     const response = await apiClient.get(`/statistics/users/${userId}`);
+    return response.data;
+  },
+
+  // Admin - Tasks
+  async createCustomTask(payload: any) {
+    const response = await apiClient.post('/tasks', payload);
+    return response.data;
+  },
+
+  // Admin - Rewards
+  async getRewardTemplates() {
+    const response = await apiClient.get('/rewards/templates');
+    return response.data;
+  },
+
+  async createRewardFromTemplate(templateId: string, overrides?: any) {
+    const response = await apiClient.post('/rewards', { templateId, overrides });
     return response.data;
   },
 

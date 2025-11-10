@@ -56,6 +56,15 @@ For local development, it's often easier to run the backend and frontend directl
    npm run dev
    ```
 
+### Seeded Accounts
+
+`database/seed_all.sh` creates the following logins (password `Test123!`):
+
+- `test@example.com` (guest)
+- `employee@example.com` (employee)
+- `stakeholder@example.com` (stakeholder)
+- `admin@example.com` (**administrator** — access the `/admin` dashboard to publish tasks/rewards)
+
 ### Option 2: Full Docker (All Services)
 
 If you want to run everything in Docker:
@@ -111,3 +120,5 @@ npm run migrate
 - SIHOT mock API: http://localhost:5000/api/sihot
 - SIHOT sync interval: configurable via `SIHOT_SYNC_INTERVAL_MS` (defaults to 15 minutes)
 - SIHOT property: configure `HOTEL_ID` to match the hotel being synced
+- Administrators can create tasks/rewards only via predefined templates (`/api/tasks/templates`, `/api/rewards/templates`)
+- Suggested user types: explorer (default), guest_in_house, observer, advocate — adjust to fit product needs

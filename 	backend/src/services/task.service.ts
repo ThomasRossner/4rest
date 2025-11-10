@@ -20,7 +20,8 @@ export interface Task {
 
 export async function getAllTasks(
   filters?: { limit?: number; offset?: number; type?: string },
-  userId?: string
+  userId?: string,
+  options?: { includeAll?: boolean }
 ) {
   const db = getPool();
   let userRole: string | null = null;
@@ -28,20 +29,21 @@ export async function getAllTasks(
   const params: any[] = [];
   let paramIndex = 1;
 
+  let applyAudienceFilters = !(options?.includeAll ?? false);
+
   if (userId) {
-    const userResult = await db.query(
-      'SELECT role, user_type FROM users WHERE id = $1',
-      [userId]
-    );
+    const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
     if (userResult.rows[0]) {
       userRole = userResult.rows[0].role;
       userType = userResult.rows[0].user_type;
+      if (userRole === 'administrator') {
+        applyAudienceFilters = false;
+      }
     }
   }
 
   const hotelId = process.env.HOTEL_ID ?? null;
 
-  // Select completed flag if userId provided
   let select = 'DISTINCT ON (t.id) t.*';
   let from = ' FROM tasks t';
   if (userId) {
@@ -52,25 +54,27 @@ export async function getAllTasks(
 
   let query = `SELECT ${select}${from} WHERE t.active = TRUE`;
 
-  if (userRole) {
-    query += ` AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_roles))`;
-    params.push(userRole);
-  } else {
-    query += ' AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0)';
-  }
+  if (applyAudienceFilters) {
+    if (userRole) {
+      query += ` AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_roles))`;
+      params.push(userRole);
+    } else {
+      query += ' AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0)';
+    }
 
-  if (userType) {
-    query += ` AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_user_types))`;
-    params.push(userType);
-  } else {
-    query += ' AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0)';
-  }
+    if (userType) {
+      query += ` AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_user_types))`;
+      params.push(userType);
+    } else {
+      query += ' AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0)';
+    }
 
-  if (hotelId) {
-    query += ` AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_hotel_ids))`;
-    params.push(hotelId);
-  } else {
-    query += ' AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0)';
+    if (hotelId) {
+      query += ` AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_hotel_ids))`;
+      params.push(hotelId);
+    } else {
+      query += ' AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0)';
+    }
   }
 
   if (filters?.type) {
@@ -106,6 +110,12 @@ export async function getTaskById(id: string): Promise<Task | null> {
 
 export async function createTask(data: Partial<Task>): Promise<Task> {
   const db = getPool();
+  const quizPayload = data.quiz_questions
+    ? typeof data.quiz_questions === 'string'
+      ? data.quiz_questions
+      : JSON.stringify(data.quiz_questions)
+    : null;
+
   const result = await db.query(
     `INSERT INTO tasks (
        title,
@@ -126,18 +136,18 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
      RETURNING *`,
     [
       data.title,
-      data.description,
+      data.description ?? null,
       data.type,
-      data.points || 0,
-      data.video_url,
-      data.quiz_questions ? JSON.stringify(data.quiz_questions) : null,
-      data.qr_code,
-      data.photo_required || false,
-      data.co2_savings_kg || 0,
-      (data as any).external_id || null,
-      (data as any).allowed_roles || [],
-      (data as any).allowed_user_types || [],
-      (data as any).allowed_hotel_ids || [],
+      data.points ?? 0,
+      data.video_url ?? null,
+      quizPayload,
+      data.qr_code ?? null,
+      data.photo_required ?? false,
+      data.co2_savings_kg ?? 0,
+      (data as any).external_id ?? null,
+      (data.allowed_roles ?? []) as string[],
+      (data.allowed_user_types ?? []) as string[],
+      (data.allowed_hotel_ids ?? []) as string[],
     ]
   );
   return result.rows[0];

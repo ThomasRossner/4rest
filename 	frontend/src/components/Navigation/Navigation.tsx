@@ -8,6 +8,7 @@ function Navigation() {
   const navigate = useNavigate();
   const userName = useAuthStore((s) => s.user?.name || 'User');
   const points = useAuthStore((s) => s.user?.points || 0);
+  const userRole = useAuthStore((s) => s.user?.role);
   const logout = useAuthStore((s) => s.logout);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
@@ -67,12 +68,15 @@ function Navigation() {
     navigate('/profile');
   };
 
-  const navItems = [
+  const baseNavItems = [
     { path: '/tasks', label: 'Tasks', icon: '✅' },
     { path: '/forest', label: 'Forest', icon: '🌲' },
     { path: '/rewards', label: 'Rewards', icon: '🎁' },
     { path: '/statistics', label: 'Statistics', icon: '📈' },
   ];
+  const navItems = userRole === 'administrator'
+    ? [...baseNavItems, { path: '/admin', label: 'Admin', icon: '🛠️' }]
+    : baseNavItems;
 
   return (
     <>

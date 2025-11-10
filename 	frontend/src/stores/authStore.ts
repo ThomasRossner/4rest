@@ -126,7 +126,7 @@ function stopSihotSocket() {
   }
 }
 
-export type UserRole = 'guest' | 'employee' | 'stakeholder';
+export type UserRole = 'guest' | 'employee' | 'stakeholder' | 'administrator';
 
 export interface SihotGuestProfile {
   guestId: string;
