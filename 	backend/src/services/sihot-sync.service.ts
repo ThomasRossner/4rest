@@ -42,7 +42,7 @@ async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): P
     const reservations = await sihot.getReservationsByGuest(guest.guestId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const hotelPropertyId = process.env.SIHOT_PROPERTY_ID;
+    const hotelPropertyId = process.env.HOTEL_ID;
 
     const isCheckedIn = Boolean(
       hotelPropertyId &&
