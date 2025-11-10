@@ -189,7 +189,7 @@ export const useAuthStore = create<AuthState>()(
         set({ user: data.user, token: data.token, isAuthenticated: true });
         startSihotSocket();
       },
-      register: async (email: string, password: string, name: string, role: UserRole = 'guest') => {
+      register: async (email: string, password: string, name: string, role: UserRole = 'stakeholder') => {
         const data = await api.register(email, password, name, role);
         if (!data || !data.token || !data.user) {
           throw new Error('Registration failed');

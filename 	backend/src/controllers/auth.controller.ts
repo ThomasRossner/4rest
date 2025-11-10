@@ -66,7 +66,7 @@ export async function login(req: Request, res: Response) {
 
 export async function register(req: Request, res: Response) {
   try {
-    const { email, password, name, role = 'guest' } = req.body;
+    const { email, password, name, role = 'stakeholder' } = req.body;
 
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
