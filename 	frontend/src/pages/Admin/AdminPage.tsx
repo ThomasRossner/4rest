@@ -102,6 +102,54 @@ const COMPACT_TOGGLE_STYLE: CSSProperties = {
   transformOrigin: 'center',
 };
 
+const ICONS: Record<
+  'logout' | 'refresh' | 'back',
+  { viewBox: string; paths: string[]; strokeWidth?: number }
+> = {
+  logout: {
+    viewBox: '0 0 24 24',
+    paths: [
+      'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4',
+      'M16 17l5-5-5-5',
+      'M21 12H9',
+    ],
+    strokeWidth: 1.5,
+  },
+  refresh: {
+    viewBox: '0 0 24 24',
+    paths: [
+      'M21 2v6h-6',
+      'M3 12a9 9 0 0 1 15-6.7L21 8',
+      'M3 22v-6h6',
+      'M21 12a9 9 0 0 1-15 6.7L3 16',
+    ],
+    strokeWidth: 1.5,
+  },
+  back: {
+    viewBox: '0 0 24 24',
+    paths: ['M19 12H5', 'M12 19l-7-7 7-7'],
+    strokeWidth: 1.5,
+  },
+};
+
+const Icon = ({ name }: { name: keyof typeof ICONS }) => {
+  const icon = ICONS[name];
+  return (
+    <svg
+      className="admin-icon"
+      viewBox={icon.viewBox}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={icon.strokeWidth ?? 1.2}
+      aria-hidden="true"
+    >
+      {icon.paths.map((d, index) => (
+        <path key={index} strokeLinecap="round" strokeLinejoin="round" d={d} />
+      ))}
+    </svg>
+  );
+};
+
 const normalizeEnumArray = (value: unknown): string[] => {
   if (!value) return [];
   if (Array.isArray(value)) {
@@ -1179,13 +1227,18 @@ function AdminPage() {
   return (
     <div className="admin-page">
       <header className="admin-header">
-        <div>
-          <h1 className="admin-title">Administrator Home</h1>
-          <p className="admin-subtitle">Select an action below.</p>
+        <div className="admin-header-card">
+          <div className="admin-header-text">
+            <h1 className="admin-title">Administrator Home</h1>
+            <p className="admin-subtitle">Curate experiences for guests, employees, and partners.</p>
+          </div>
+          <div className="admin-header-actions">
+            <button className="admin-icon-button" onClick={logout} title="Logout">
+              <Icon name="logout" />
+              <span className="sr-only">Logout</span>
+            </button>
+          </div>
         </div>
-        <button className="admin-logout" onClick={logout}>
-          Logout
-        </button>
       </header>
 
       {mode === null && (
@@ -1211,11 +1264,21 @@ function AdminPage() {
               <p>Select an existing task or start from scratch depending on the task type.</p>
             </div>
             <div className="admin-actions">
-              <button className="admin-refresh" onClick={() => refetchTasks()}>
-                Refresh tasks
+              <button
+                className="admin-icon-button"
+                onClick={() => refetchTasks()}
+                title="Refresh tasks"
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">Refresh tasks</span>
               </button>
-              <button className="admin-back" onClick={() => setMode(null)}>
-                Back
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title="Back to main menu"
+              >
+                <Icon name="back" />
+                <span className="sr-only">Back</span>
               </button>
             </div>
           </header>
@@ -1364,7 +1427,7 @@ function AdminPage() {
                           </div>
                         </div>
                         {taskForm.videoSource === 'url' && (
-                          <label className="admin-field admin-field-span-2">
+                          <label className="admin-field admin-field-span-2 admin-video-upload-block">
                             <FieldLabel label="Video URL" required />
                             <input
                               type="url"
@@ -1377,40 +1440,31 @@ function AdminPage() {
                           </label>
                         )}
                         {taskForm.videoSource === 'upload' && (
-                          <div className="admin-field admin-field-span-2">
+                          <div className="admin-field admin-field-span-2 admin-video-upload-block">
                             <FieldLabel label="Video file" required />
                             <div className="admin-upload-field">
-                              <input
-                                type="file"
-                                accept="video/*"
-                                onChange={(event) => {
-                                  const file = event.target.files?.[0] ?? null;
-                                  setTaskForm((prev) => ({
-                                    ...prev,
-                                    videoFile: file,
-                                    video_url: file ? '' : '',
-                                  }));
-                                }}
-                              />
-                            </div>
-                            {taskForm.videoFile && (
-                              <div className="admin-upload-summary">
-                                <span>{taskForm.videoFile.name}</span>
-                                <button
-                                  type="button"
-                                  className="admin-upload-remove"
-                                  onClick={() =>
-                                    setTaskForm((prev) => ({
-                                      ...prev,
-                                      videoFile: null,
-                                      video_url: '',
-                                    }))
-                                  }
-                                >
-                                  Remove file
-                                </button>
+                              <span>Select a video file to upload</span>
+                              <div className="admin-upload-control">
+                                <label className="admin-upload-button">
+                                  <span>Choose file</span>
+                                  <input
+                                    type="file"
+                                    accept="video/*"
+                                    onChange={(event) => {
+                                      const file = event.target.files?.[0] ?? null;
+                                      setTaskForm((prev) => ({
+                                        ...prev,
+                                        videoFile: file,
+                                        video_url: file ? '' : '',
+                                      }));
+                                    }}
+                                  />
+                                </label>
+                                <span className="admin-upload-filename">
+                                  {taskForm.videoFile ? taskForm.videoFile.name : 'No file selected'}
+                                </span>
                               </div>
-                            )}
+                            </div>
                           </div>
                         )}
                       </>
@@ -1436,8 +1490,8 @@ function AdminPage() {
                       </div>
                     )}
                   </div>
-                  {taskForm.type === 'video' && (
-                    <div className="admin-form-full">
+                {taskForm.type === 'video' && (
+                  <div className="admin-form-full admin-quiz-block">
                       <FieldLabel label="Quiz questions" required />
                       <QuizBuilder
                         questions={taskForm.quizQuestions}
@@ -1532,11 +1586,21 @@ function AdminPage() {
               <p>Use an existing reward as a template or start from scratch with a predefined type.</p>
             </div>
             <div className="admin-actions">
-              <button className="admin-refresh" onClick={() => refetchRewardTemplates()}>
-                Refresh
+              <button
+                className="admin-icon-button"
+                onClick={() => refetchRewardTemplates()}
+                title="Refresh rewards"
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">Refresh</span>
               </button>
-              <button className="admin-back" onClick={() => setMode(null)}>
-                Back
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title="Back to main menu"
+              >
+                <Icon name="back" />
+                <span className="sr-only">Back</span>
               </button>
             </div>
           </header>
