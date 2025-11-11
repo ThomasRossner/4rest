@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useQuery, useMutation } from 'react-query';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
@@ -33,12 +33,16 @@ type RewardTemplate = {
   points_cost: number;
 };
 
+type VideoSourceOption = 'url' | 'upload';
+
 type TaskFormState = {
   title: string;
   description: string;
   type: string;
   points: number;
   video_url: string;
+  videoSource: VideoSourceOption;
+  videoFile: File | null;
   quizQuestions: QuizQuestionDraft[];
   qr_code: string;
   photo_required: boolean;
@@ -64,6 +68,11 @@ type QuizQuestionDraft = {
 type Option = {
   value: string;
   label: string;
+};
+
+const COMPACT_TOGGLE_STYLE: CSSProperties = {
+  transform: 'scale(0.6)',
+  transformOrigin: 'center',
 };
 
 const normalizeEnumArray = (value: unknown): string[] => {
@@ -144,6 +153,8 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   type,
   points: 0,
   video_url: '',
+  videoSource: 'url',
+  videoFile: null,
   quizQuestions: type === 'video' ? [createEmptyQuestion(1)] : [],
   qr_code: type === 'qr' ? '' : '',
   photo_required: type === 'photo',
@@ -318,8 +329,14 @@ const validateTaskFormState = ({
   }
 
   if (taskForm.type === 'video') {
-    if (!taskForm.video_url.trim()) {
-      return { isValid: false, message: 'Video URL is required for video tasks.' };
+    if (taskForm.videoSource === 'url') {
+      if (!taskForm.video_url.trim()) {
+        return { isValid: false, message: 'Video URL is required for video tasks.' };
+      }
+    } else {
+      if (!taskForm.videoFile) {
+        return { isValid: false, message: 'Upload a video file for video tasks.' };
+      }
     }
     try {
       buildQuizPayload(taskForm.quizQuestions);
@@ -401,7 +418,7 @@ const MultiSelectDropdown = ({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
       >
-        <span className="admin-multi-select-label">{buttonLabel}</span>
+        {buttonLabel && <span className="admin-multi-select-label">{buttonLabel}</span>}
         <span className="admin-multi-select-value">{selectedSummary}</span>
         <span className="admin-multi-select-icon" aria-hidden="true">
           {isOpen ? '▲' : '▼'}
@@ -421,6 +438,8 @@ const MultiSelectDropdown = ({
                 <label key={option.value} className="admin-multi-select-option">
                   <input
                     type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
                     checked={checked}
                     onChange={() => toggleValue(option.value)}
                   />
@@ -639,6 +658,8 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                     <label className="admin-quiz-answer-select">
                       <input
                         type="radio"
+                        className="admin-radio"
+                        style={COMPACT_TOGGLE_STYLE}
                         name={answerGroupName}
                         checked={question.correctAnswerId === answer.id}
                         onChange={() => selectCorrectAnswer(question.id, answer.id)}
@@ -712,6 +733,7 @@ function AdminPage() {
     null
   );
   const [hasAttemptedPublish, setHasAttemptedPublish] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   const validation = useMemo(
     () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm }),
@@ -788,11 +810,12 @@ function AdminPage() {
     }
   );
 
-  const isPublishDisabled = publishTaskMutation.isLoading || !validation.isValid;
+  const isPublishDisabled = publishTaskMutation.isLoading || isUploadingVideo || !validation.isValid;
 
   useEffect(() => {
     setTaskMessage(null);
     setHasAttemptedPublish(false);
+    setIsUploadingVideo(false);
     if (taskSource === 'existing') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
@@ -813,6 +836,8 @@ function AdminPage() {
       type: template.type,
       points: template.points ?? 0,
       video_url: template.video_url ?? '',
+      videoSource: 'url',
+      videoFile: null,
     quizQuestions:
       template.type === 'video'
         ? normalizeQuizQuestions(template.quiz_questions ?? [])
@@ -826,7 +851,7 @@ function AdminPage() {
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates]);
 
-  const handlePublishTask = () => {
+  const handlePublishTask = async () => {
     try {
       setTaskMessage(null);
       setHasAttemptedPublish(true);
@@ -839,12 +864,44 @@ function AdminPage() {
         return;
       }
 
+      const prepareVideoData = async (taskType: string) => {
+        if (taskType !== 'video') {
+          return { videoUrl: undefined as string | undefined, quizPayload: undefined as any };
+        }
+
+        let videoUrl = taskForm.video_url.trim();
+
+        if (taskForm.videoSource === 'upload') {
+          const file = taskForm.videoFile;
+          if (!file) {
+            throw new Error('Upload a video file for video tasks.');
+          }
+          setIsUploadingVideo(true);
+          try {
+            const uploadResponse = await api.uploadTaskVideo(file);
+            const uploadedUrl = uploadResponse?.video_url || uploadResponse?.url;
+            if (!uploadedUrl || typeof uploadedUrl !== 'string') {
+              throw new Error('Video upload failed.');
+            }
+            videoUrl = uploadedUrl;
+            setTaskForm((prev) => ({ ...prev, video_url: uploadedUrl }));
+          } finally {
+            setIsUploadingVideo(false);
+          }
+        }
+
+        const quizPayload = buildQuizPayload(taskForm.quizQuestions);
+        return { videoUrl, quizPayload };
+      };
+
       if (taskSource === 'existing') {
         const template = existingTemplates.find((task) => task.id === selectedExistingTaskId);
         if (!template) {
           setTaskMessage({ type: 'error', text: 'Selected task not found.' });
           return;
         }
+
+        const { videoUrl, quizPayload } = await prepareVideoData(template.type);
 
         const payload: any = {
           title: taskForm.title,
@@ -858,8 +915,11 @@ function AdminPage() {
         };
 
         if (template.type === 'video') {
-          payload.video_url = taskForm.video_url.trim();
-          payload.quiz_questions = buildQuizPayload(taskForm.quizQuestions);
+          if (!videoUrl) {
+            throw new Error('Video URL is required for video tasks.');
+          }
+          payload.video_url = videoUrl;
+          payload.quiz_questions = quizPayload;
         }
         if (template.type === 'qr') {
           payload.qr_code = taskForm.qr_code.trim();
@@ -868,13 +928,15 @@ function AdminPage() {
           payload.photo_required = true;
         }
 
-        publishTaskMutation.mutate(payload);
+        await publishTaskMutation.mutateAsync(payload);
         return;
       }
 
       if (!taskSource) {
         return;
       }
+
+      const { videoUrl, quizPayload } = await prepareVideoData(taskForm.type);
 
       const payload: any = {
         title: taskForm.title,
@@ -888,8 +950,11 @@ function AdminPage() {
       };
 
       if (taskSource === 'video') {
-        payload.video_url = taskForm.video_url.trim();
-        payload.quiz_questions = buildQuizPayload(taskForm.quizQuestions);
+        if (!videoUrl) {
+          throw new Error('Video URL is required for video tasks.');
+        }
+        payload.video_url = videoUrl;
+        payload.quiz_questions = quizPayload;
       }
       if (taskSource === 'qr') {
         payload.qr_code = taskForm.qr_code.trim();
@@ -898,8 +963,9 @@ function AdminPage() {
         payload.photo_required = true;
       }
 
-      publishTaskMutation.mutate(payload);
+      await publishTaskMutation.mutateAsync(payload);
     } catch (error: any) {
+      setIsUploadingVideo(false);
       setTaskMessage({ type: 'error', text: error?.message || 'Failed to prepare payload.' });
     }
   };
@@ -1058,17 +1124,99 @@ function AdminPage() {
                       />
                     </label>
                     {taskForm.type === 'video' && (
-                      <label className="admin-field admin-field-span-2">
-                        <FieldLabel label="Video URL" required />
-                        <input
-                          type="url"
-                          value={taskForm.video_url}
-                          onChange={(event) =>
-                            setTaskForm((prev) => ({ ...prev, video_url: event.target.value }))
-                          }
-                          placeholder="https://example.com/video"
-                        />
-                      </label>
+                      <>
+                        <div className="admin-field admin-field-span-2">
+                          <FieldLabel label="Video source" required />
+                          <div className="admin-video-source">
+                            <label className="admin-video-option">
+                              <input
+                                type="radio"
+                                className="admin-radio"
+                                style={COMPACT_TOGGLE_STYLE}
+                                name="video-source"
+                                value="url"
+                                checked={taskForm.videoSource === 'url'}
+                                onChange={() =>
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    videoSource: 'url',
+                                    videoFile: null,
+                                  }))
+                                }
+                              />
+                              <span>Use external video URL</span>
+                            </label>
+                            <label className="admin-video-option">
+                              <input
+                                type="radio"
+                                className="admin-radio"
+                                style={COMPACT_TOGGLE_STYLE}
+                                name="video-source"
+                                value="upload"
+                                checked={taskForm.videoSource === 'upload'}
+                                onChange={() =>
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    videoSource: 'upload',
+                                    video_url: '',
+                                  }))
+                                }
+                              />
+                              <span>Upload video file</span>
+                            </label>
+                          </div>
+                        </div>
+                        {taskForm.videoSource === 'url' && (
+                          <label className="admin-field admin-field-span-2">
+                            <FieldLabel label="Video URL" required />
+                            <input
+                              type="url"
+                              value={taskForm.video_url}
+                              onChange={(event) =>
+                                setTaskForm((prev) => ({ ...prev, video_url: event.target.value }))
+                              }
+                              placeholder="https://example.com/video.mp4"
+                            />
+                          </label>
+                        )}
+                        {taskForm.videoSource === 'upload' && (
+                          <div className="admin-field admin-field-span-2">
+                            <FieldLabel label="Video file" required />
+                            <div className="admin-upload-field">
+                              <input
+                                type="file"
+                                accept="video/*"
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0] ?? null;
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    videoFile: file,
+                                    video_url: file ? '' : '',
+                                  }));
+                                }}
+                              />
+                            </div>
+                            {taskForm.videoFile && (
+                              <div className="admin-upload-summary">
+                                <span>{taskForm.videoFile.name}</span>
+                                <button
+                                  type="button"
+                                  className="admin-upload-remove"
+                                  onClick={() =>
+                                    setTaskForm((prev) => ({
+                                      ...prev,
+                                      videoFile: null,
+                                      video_url: '',
+                                    }))
+                                  }
+                                >
+                                  Remove file
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
                     )}
                     {taskForm.type === 'qr' && (
                       <label className="admin-field admin-field-span-2">
@@ -1120,7 +1268,6 @@ function AdminPage() {
                         onChange={(selected) =>
                           setTaskForm((prev) => ({ ...prev, allowedRoles: selected }))
                         }
-                        buttonLabel="Select roles"
                         placeholder="All roles"
                       />
                     </div>
@@ -1132,7 +1279,6 @@ function AdminPage() {
                         onChange={(selected) =>
                           setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }))
                         }
-                        buttonLabel="Select user types"
                         placeholder="All user types"
                       />
                     </div>
@@ -1144,7 +1290,6 @@ function AdminPage() {
                         onChange={(selected) =>
                           setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }))
                         }
-                        buttonLabel="Select hotel IDs"
                         placeholder="All hotels"
                       />
                     </div>
@@ -1156,6 +1301,8 @@ function AdminPage() {
                       <p className={taskMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
                         {taskMessage.text}
                       </p>
+                    ) : isUploadingVideo ? (
+                      <p className="admin-publish-hint">Uploading video file…</p>
                     ) : !validation.isValid ? (
                       <p className="admin-publish-hint">
                         {hasAttemptedPublish && validation.message

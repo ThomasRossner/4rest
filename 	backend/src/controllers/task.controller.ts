@@ -8,6 +8,7 @@ import {
   deleteTask as deleteTaskService,
   completeTask as completeTaskService,
   uploadPhoto as uploadPhotoService,
+  uploadVideo as uploadVideoService,
 } from '../services/task.service.js';
 import { USER_ROLES, USER_TYPES, HOTEL_IDS } from '../constants/enums.js';
 
@@ -142,6 +143,19 @@ export const uploadPhoto: RequestHandler = async (req, res) => {
     }
     const photoUrl = await uploadPhotoService(file);
     res.json({ photo_url: photoUrl });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const uploadVideo: RequestHandler = async (req, res) => {
+  try {
+    const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const videoUrl = await uploadVideoService(file);
+    res.json({ video_url: videoUrl });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

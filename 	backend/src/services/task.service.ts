@@ -266,3 +266,8 @@ export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
   const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
   return `${baseUrl}/uploads/${file.filename}`;
 }
+
+export async function uploadVideo(file: Express.Multer.File): Promise<string> {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+  return `${baseUrl}/uploads/${file.filename}`;
+}

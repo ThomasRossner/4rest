@@ -179,6 +179,15 @@ export const api = {
     return response.data;
   },
 
+  async uploadTaskVideo(file: File) {
+    const formData = new FormData();
+    formData.append('video', file);
+    const response = await apiClient.post('/tasks/upload/video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   // Admin - Rewards
   async getRewardTemplates() {
     const response = await apiClient.get('/rewards/templates');
