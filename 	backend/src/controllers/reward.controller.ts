@@ -3,9 +3,8 @@ import { AuthRequest } from '../middleware/authenticate.js';
 import {
   getRewardsService,
   redeemRewardService,
-  createRewardFromTemplate,
   createCustomReward,
-  listRewardTemplates,
+  listRewardsForAdmin,
 } from '../services/reward.service.js';
 
 export const getRewards: RequestHandler = async (req, res) => {
@@ -23,27 +22,18 @@ export const getRewards: RequestHandler = async (req, res) => {
 
 export const createReward: RequestHandler = async (req, res) => {
   try {
-    const { templateId, overrides, ...customPayload } = req.body;
-
-    if (templateId) {
-      if (typeof templateId !== 'string') {
-        return res.status(400).json({ error: 'templateId must be a string' });
-      }
-      const reward = await createRewardFromTemplate(templateId, overrides || {});
-      res.status(201).json(reward);
-      return;
-    }
+    const payload = req.body ?? {};
 
     const reward = await createCustomReward({
-      title: customPayload.title,
-      description: customPayload.description,
-      pointsCost: customPayload.pointsCost ?? customPayload.points_cost,
-      rewardType: customPayload.rewardType ?? customPayload.reward_type,
-      voucherCode: customPayload.voucherCode ?? customPayload.voucher_code,
-      externalApiId: customPayload.externalApiId ?? customPayload.external_api_id,
-      allowed_roles: customPayload.allowed_roles ?? customPayload.allowedRoles ?? [],
-      allowed_user_types: customPayload.allowed_user_types ?? customPayload.allowedUserTypes ?? [],
-      allowed_hotel_ids: customPayload.allowed_hotel_ids ?? customPayload.allowedHotelIds ?? [],
+      title: payload.title,
+      description: payload.description,
+      pointsCost: payload.pointsCost ?? payload.points_cost,
+      rewardType: payload.rewardType ?? payload.reward_type,
+      voucherCode: payload.voucherCode ?? payload.voucher_code,
+      externalApiId: payload.externalApiId ?? payload.external_api_id,
+      allowed_roles: payload.allowed_roles ?? payload.allowedRoles ?? [],
+      allowed_user_types: payload.allowed_user_types ?? payload.allowedUserTypes ?? [],
+      allowed_hotel_ids: payload.allowed_hotel_ids ?? payload.allowedHotelIds ?? [],
     });
 
     res.status(201).json(reward);
@@ -70,8 +60,8 @@ export const redeemReward: RequestHandler = async (req, res) => {
 
 export const getRewardTemplates: RequestHandler = async (_req, res) => {
   try {
-    const templates = await listRewardTemplates();
-    res.json(templates);
+    const rewards = await listRewardsForAdmin();
+    res.json(rewards);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

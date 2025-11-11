@@ -35,16 +35,16 @@ type AdminTaskTemplate = {
 
 type RewardTemplate = {
   id: string;
-  name: string;
   title: string;
   description?: string | null;
   reward_type: string;
   points_cost: number;
   voucher_code?: string | null;
   external_api_id?: string | null;
-  allowed_roles?: UserRole[] | null;
-  allowed_user_types?: UserType[] | null;
-  allowed_hotel_ids?: HotelId[] | null;
+  allowed_roles?: string[] | null;
+  allowed_user_types?: string[] | null;
+  allowed_hotel_ids?: string[] | null;
+  created_at?: string | null;
 };
 
 type VideoSourceOption = 'url' | 'upload';
@@ -862,9 +862,9 @@ function AdminPage() {
   const normalizedRewardTemplates = useMemo(() => {
     return rewardTemplates.map((template) => ({
       ...template,
-      allowed_roles: normalizeEnumArray(template.allowed_roles) as UserRole[],
-      allowed_user_types: normalizeEnumArray(template.allowed_user_types) as UserType[],
-      allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids) as HotelId[],
+      allowed_roles: normalizeEnumArray(template.allowed_roles),
+      allowed_user_types: normalizeEnumArray(template.allowed_user_types),
+      allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
     }));
   }, [rewardTemplates]);
 
@@ -1156,18 +1156,6 @@ function AdminPage() {
       }
       if (rewardForm.externalApiId.trim()) {
         basePayload.externalApiId = rewardForm.externalApiId.trim();
-      }
-
-      if (rewardSource === 'existing') {
-        if (!selectedRewardTemplate) {
-          setRewardMessage({ type: 'error', text: 'Select an existing reward template.' });
-          return;
-        }
-        await createRewardMutation.mutateAsync({
-          templateId: selectedRewardTemplate,
-          overrides: basePayload,
-        });
-        return;
       }
 
       await createRewardMutation.mutateAsync(basePayload);
@@ -1583,18 +1571,21 @@ function AdminPage() {
                   onChange={(event) => setSelectedRewardTemplate(event.target.value)}
                 >
                   <option value="">Select reward</option>
-                  {normalizedRewardTemplates.length === 0 && (
-                    <option value="" disabled>
-                      No templates available
-                    </option>
-                  )}
                   {normalizedRewardTemplates.map((template) => (
                     <option key={template.id} value={template.id}>
-                      {template.name} — {template.title}
+                      {template.title} ({formatRewardType(template.reward_type as RewardType)})
                     </option>
                   ))}
                 </select>
               </label>
+            )}
+
+            {rewardSource === 'existing' &&
+              !rewardTemplatesLoading &&
+              normalizedRewardTemplates.length === 0 && (
+                <p className="admin-field-note">
+                  No existing rewards available yet. Create one from scratch first.
+                </p>
             )}
 
             {rewardSource && (rewardSource !== 'existing' || selectedRewardTemplate) && (

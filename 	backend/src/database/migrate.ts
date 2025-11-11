@@ -64,6 +64,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration11 = readFileSync(
+      join(__dirname, '../../../database/migrations/011_drop_reward_templates.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -192,6 +197,17 @@ async function runMigrations() {
       console.log('✓ Migration 010 completed');
     } else {
       console.log('✓ Migration 010 already executed');
+    }
+    
+    if (!executed.has('011_drop_reward_templates')) {
+      console.log('Running migration: 011_drop_reward_templates.sql');
+      await pool.query(migration11);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('011_drop_reward_templates') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 011 completed');
+    } else {
+      console.log('✓ Migration 011 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

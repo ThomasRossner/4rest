@@ -34,5 +34,6 @@ docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/m
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/008_task_reward_templates.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/009_drop_task_templates.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/010_enum_user_fields.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/011_drop_reward_templates.sql
 
 echo "✅ Database reset complete!"
