@@ -146,7 +146,7 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   video_url: '',
   quizQuestions: type === 'video' ? [createEmptyQuestion(1)] : [],
   qr_code: type === 'qr' ? '' : '',
-  photo_required: true,
+  photo_required: type === 'photo',
   co2_savings_kg: 0,
   allowedRoles: [],
   allowedUserTypes: [],
@@ -277,6 +277,63 @@ const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
   });
 };
 
+type TaskFormValidation = {
+  isValid: boolean;
+  message: string | null;
+};
+
+type ValidateTaskFormParams = {
+  taskSource: TaskSource;
+  selectedExistingTaskId: string;
+  taskForm: TaskFormState;
+};
+
+const validateTaskFormState = ({
+  taskSource,
+  selectedExistingTaskId,
+  taskForm,
+}: ValidateTaskFormParams): TaskFormValidation => {
+  if (!taskSource) {
+    return { isValid: false, message: 'Choose how you want to start creating your task.' };
+  }
+
+  if (taskSource === 'existing' && !selectedExistingTaskId) {
+    return { isValid: false, message: 'Select an existing task to continue.' };
+  }
+
+  if (!taskForm.title.trim()) {
+    return { isValid: false, message: 'Title is required.' };
+  }
+
+  if (!Number.isFinite(taskForm.points) || Number.isNaN(taskForm.points)) {
+    return { isValid: false, message: 'Points must be zero or greater.' };
+  }
+
+  if (taskForm.points < 0) {
+    return { isValid: false, message: 'Points must be zero or greater.' };
+  }
+
+  if (taskForm.type === 'video') {
+    if (!taskForm.video_url.trim()) {
+      return { isValid: false, message: 'Video URL is required for video tasks.' };
+    }
+    try {
+      buildQuizPayload(taskForm.quizQuestions);
+    } catch (error: any) {
+      return {
+        isValid: false,
+        message: error?.message ?? 'Check the quiz questions for missing details.',
+      };
+    }
+  }
+
+  if (taskForm.type === 'qr' && !taskForm.qr_code.trim()) {
+    return { isValid: false, message: 'Enter the QR code value for QR tasks.' };
+  }
+
+  return { isValid: true, message: null };
+};
+
 type MultiSelectDropdownProps = {
   options: Option[];
   selectedValues: string[];
@@ -373,6 +430,24 @@ const MultiSelectDropdown = ({
     </div>
   );
 };
+
+type FieldLabelProps = {
+  label: string;
+  required?: boolean;
+  readOnly?: boolean;
+};
+
+const FieldLabel = ({ label, required, readOnly }: FieldLabelProps) => (
+  <span className="admin-field-label">
+    <span>{label}</span>
+    {required && (
+      <span className="admin-field-required" aria-hidden="true" title="Required field">
+        *
+      </span>
+    )}
+    {readOnly && <span className="admin-field-readonly">Read only</span>}
+  </span>
+);
 
 const moveItem = <T,>(items: T[], index: number, offset: number): T[] => {
   const newIndex = index + offset;
@@ -632,6 +707,12 @@ function AdminPage() {
   const [taskMessage, setTaskMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
     null
   );
+  const [hasAttemptedPublish, setHasAttemptedPublish] = useState(false);
+
+  const validation = useMemo(
+    () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm }),
+    [taskSource, selectedExistingTaskId, taskForm]
+  );
 
   const {
     data: adminTasks,
@@ -680,6 +761,7 @@ function AdminPage() {
       setTaskSource('');
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
+      setHasAttemptedPublish(false);
       void refetchTasks();
     },
     onError: (error: any) => {
@@ -702,8 +784,11 @@ function AdminPage() {
     }
   );
 
+  const isPublishDisabled = publishTaskMutation.isLoading || !validation.isValid;
+
   useEffect(() => {
     setTaskMessage(null);
+    setHasAttemptedPublish(false);
     if (taskSource === 'existing') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
@@ -717,6 +802,7 @@ function AdminPage() {
     if (taskSource !== 'existing') return;
     const template = existingTemplates.find((task) => task.id === selectedExistingTaskId);
     if (!template) return;
+    setHasAttemptedPublish(false);
     setTaskForm({
       title: template.title ?? '',
       description: template.description ?? '',
@@ -728,7 +814,7 @@ function AdminPage() {
         ? normalizeQuizQuestions(template.quiz_questions ?? [])
         : [],
       qr_code: template.qr_code ?? '',
-    photo_required: true,
+    photo_required: template.type === 'photo',
       co2_savings_kg: template.co2_savings_kg ?? 0,
       allowedRoles: normalizeEnumArray(template.allowed_roles),
       allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
@@ -739,17 +825,17 @@ function AdminPage() {
   const handlePublishTask = () => {
     try {
       setTaskMessage(null);
+      setHasAttemptedPublish(true);
+
+      if (!validation.isValid) {
+        setTaskMessage({
+          type: 'error',
+          text: validation.message ?? 'Please complete the required fields.',
+        });
+        return;
+      }
 
       if (taskSource === 'existing') {
-        if (!selectedExistingTaskId) {
-          setTaskMessage({ type: 'error', text: 'Please select an existing task.' });
-          return;
-        }
-        if (!taskForm.title.trim()) {
-          setTaskMessage({ type: 'error', text: 'Title is required.' });
-          return;
-        }
-
         const template = existingTemplates.find((task) => task.id === selectedExistingTaskId);
         if (!template) {
           setTaskMessage({ type: 'error', text: 'Selected task not found.' });
@@ -768,11 +854,11 @@ function AdminPage() {
         };
 
         if (template.type === 'video') {
-          payload.video_url = taskForm.video_url;
+          payload.video_url = taskForm.video_url.trim();
           payload.quiz_questions = buildQuizPayload(taskForm.quizQuestions);
         }
         if (template.type === 'qr') {
-          payload.qr_code = taskForm.qr_code;
+          payload.qr_code = taskForm.qr_code.trim();
         }
         if (template.type === 'photo') {
           payload.photo_required = true;
@@ -782,13 +868,7 @@ function AdminPage() {
         return;
       }
 
-      if (taskSource === '' || taskSource === undefined) {
-        setTaskMessage({ type: 'error', text: 'Please choose how to start.' });
-        return;
-      }
-
-      if (!taskForm.title.trim()) {
-        setTaskMessage({ type: 'error', text: 'Title is required.' });
+      if (!taskSource) {
         return;
       }
 
@@ -804,15 +884,11 @@ function AdminPage() {
       };
 
       if (taskSource === 'video') {
-        payload.video_url = taskForm.video_url;
+        payload.video_url = taskForm.video_url.trim();
         payload.quiz_questions = buildQuizPayload(taskForm.quizQuestions);
       }
       if (taskSource === 'qr') {
-        if (!taskForm.qr_code.trim()) {
-          setTaskMessage({ type: 'error', text: 'QR code value is required.' });
-          return;
-        }
-        payload.qr_code = taskForm.qr_code;
+        payload.qr_code = taskForm.qr_code.trim();
       }
       if (taskSource === 'photo') {
         payload.photo_required = true;
@@ -913,161 +989,188 @@ function AdminPage() {
             )}
 
             {taskSource && (taskSource !== 'existing' || selectedExistingTaskId) && (
-              <>
-                <label className="admin-field">
-                  <span>Task type</span>
-                  <input type="text" value={taskForm.type} readOnly />
-                </label>
-
-                <label className="admin-field">
-                  <span>Title</span>
-                  <input
-                    type="text"
-                    value={taskForm.title}
-                    onChange={(event) =>
-                      setTaskForm((prev) => ({ ...prev, title: event.target.value }))
-                    }
-                  />
-                </label>
-
-                <label className="admin-field">
-                  <span>Description</span>
-                  <textarea
-                    value={taskForm.description}
-                    onChange={(event) =>
-                      setTaskForm((prev) => ({ ...prev, description: event.target.value }))
-                    }
-                    rows={3}
-                  />
-                </label>
-
-                <label className="admin-field">
-                  <span>Points</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={taskForm.points}
-                    onChange={(event) =>
-                      setTaskForm((prev) => ({
-                        ...prev,
-                        points: Number.parseInt(event.target.value || '0', 10),
-                      }))
-                    }
-                  />
-                </label>
-
-                {taskForm.type === 'video' && (
-                  <>
+              <div className="admin-form-layout">
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Task basics</h3>
+                    <p>Provide the essential details for this task.</p>
+                  </div>
+                  <div className="admin-form-grid">
                     <label className="admin-field">
-                      <span>Video URL</span>
+                      <FieldLabel label="Task type" readOnly />
                       <input
                         type="text"
-                        value={taskForm.video_url}
+                        value={taskForm.type}
+                        readOnly
+                        className="admin-input-readonly"
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="Title" required />
+                      <input
+                        type="text"
+                        value={taskForm.title}
                         onChange={(event) =>
-                          setTaskForm((prev) => ({ ...prev, video_url: event.target.value }))
+                          setTaskForm((prev) => ({ ...prev, title: event.target.value }))
                         }
                       />
                     </label>
-                    <QuizBuilder
-                      questions={taskForm.quizQuestions}
-                      onChange={(questions) =>
-                        setTaskForm((prev) => ({
-                          ...prev,
-                          quizQuestions: questions,
-                        }))
-                      }
-                    />
-                  </>
-                )}
-
-                {taskForm.type === 'qr' && (
-                  <label className="admin-field">
-                    <span>QR code value</span>
-                    <input
-                      type="text"
-                      value={taskForm.qr_code}
-                      onChange={(event) =>
-                        setTaskForm((prev) => ({ ...prev, qr_code: event.target.value }))
-                      }
-                    />
-                  </label>
-                )}
-
-                {taskForm.type === 'photo' && (
-                  <p className="admin-field-note">A photo is always required for this task type.</p>
-                )}
-
-                <label className="admin-field">
-                  <span>CO₂ savings (kg)</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={taskForm.co2_savings_kg}
-                    onChange={(event) =>
-                      setTaskForm((prev) => ({
-                        ...prev,
-                        co2_savings_kg: Number.parseFloat(event.target.value || '0'),
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className="admin-field">
-                  <span>Allowed roles</span>
-                  <MultiSelectDropdown
-                    options={ROLE_OPTIONS}
-                    selectedValues={taskForm.allowedRoles}
-                    onChange={(selected) =>
-                      setTaskForm((prev) => ({ ...prev, allowedRoles: selected }))
-                    }
-                    buttonLabel="Select roles"
-                    placeholder="All roles"
-                  />
-                </label>
-
-                <label className="admin-field">
-                  <span>Allowed user types</span>
-                  <MultiSelectDropdown
-                    options={USER_TYPE_OPTIONS}
-                    selectedValues={taskForm.allowedUserTypes}
-                    onChange={(selected) =>
-                      setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }))
-                    }
-                    buttonLabel="Select user types"
-                    placeholder="All user types"
-                  />
-                </label>
-
-                <label className="admin-field">
-                  <span>Allowed hotel IDs</span>
-                  <MultiSelectDropdown
-                    options={HOTEL_OPTIONS}
-                    selectedValues={taskForm.allowedHotelIds}
-                    onChange={(selected) =>
-                      setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }))
-                    }
-                    buttonLabel="Select hotel IDs"
-                    placeholder="All hotels"
-                  />
-                </label>
-
-                {taskMessage && (
-                  <p className={taskMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
-                    {taskMessage.text}
-                  </p>
-                )}
-
-                <button
-                  className="admin-submit"
-                  onClick={handlePublishTask}
-                  disabled={
-                    publishTaskMutation.isLoading ||
-                    (taskSource === 'existing' && !selectedExistingTaskId)
-                  }
-                >
-                  {publishTaskMutation.isLoading ? 'Publishing…' : 'Publish Task'}
-                </button>
-              </>
+                    <label className="admin-field admin-field-span-2">
+                      <FieldLabel label="Description" />
+                      <textarea
+                        value={taskForm.description}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({ ...prev, description: event.target.value }))
+                        }
+                        rows={3}
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="Points" required />
+                      <input
+                        type="number"
+                        min={0}
+                        value={Number.isNaN(taskForm.points) ? '' : taskForm.points}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            points: Number.parseInt(event.target.value || '0', 10),
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="CO₂ savings (kg)" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={taskForm.co2_savings_kg}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            co2_savings_kg: Number.parseFloat(event.target.value || '0'),
+                          }))
+                        }
+                      />
+                    </label>
+                    {taskForm.type === 'video' && (
+                      <label className="admin-field admin-field-span-2">
+                        <FieldLabel label="Video URL" required />
+                        <input
+                          type="url"
+                          value={taskForm.video_url}
+                          onChange={(event) =>
+                            setTaskForm((prev) => ({ ...prev, video_url: event.target.value }))
+                          }
+                          placeholder="https://example.com/video"
+                        />
+                      </label>
+                    )}
+                    {taskForm.type === 'qr' && (
+                      <label className="admin-field admin-field-span-2">
+                        <FieldLabel label="QR code value" required />
+                        <input
+                          type="text"
+                          value={taskForm.qr_code}
+                          onChange={(event) =>
+                            setTaskForm((prev) => ({ ...prev, qr_code: event.target.value }))
+                          }
+                        />
+                      </label>
+                    )}
+                    {taskForm.type === 'photo' && (
+                      <div className="admin-form-full">
+                        <FieldLabel label="Photo requirement" readOnly />
+                        <p className="admin-field-note">
+                          A photo is always required for this task type.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {taskForm.type === 'video' && (
+                    <div className="admin-form-full">
+                      <FieldLabel label="Quiz questions" required />
+                      <QuizBuilder
+                        questions={taskForm.quizQuestions}
+                        onChange={(questions) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            quizQuestions: questions,
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
+                </section>
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Audience & access</h3>
+                    <p>Restrict visibility to specific roles, user types, or hotels.</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field">
+                      <FieldLabel label="Allowed roles" />
+                      <MultiSelectDropdown
+                        options={ROLE_OPTIONS}
+                        selectedValues={taskForm.allowedRoles}
+                        onChange={(selected) =>
+                          setTaskForm((prev) => ({ ...prev, allowedRoles: selected }))
+                        }
+                        buttonLabel="Select roles"
+                        placeholder="All roles"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Allowed user types" />
+                      <MultiSelectDropdown
+                        options={USER_TYPE_OPTIONS}
+                        selectedValues={taskForm.allowedUserTypes}
+                        onChange={(selected) =>
+                          setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }))
+                        }
+                        buttonLabel="Select user types"
+                        placeholder="All user types"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Allowed hotel IDs" />
+                      <MultiSelectDropdown
+                        options={HOTEL_OPTIONS}
+                        selectedValues={taskForm.allowedHotelIds}
+                        onChange={(selected) =>
+                          setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }))
+                        }
+                        buttonLabel="Select hotel IDs"
+                        placeholder="All hotels"
+                      />
+                    </div>
+                  </div>
+                </section>
+                <div className="admin-form-actions">
+                  <div className="admin-form-feedback">
+                    {taskMessage ? (
+                      <p className={taskMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
+                        {taskMessage.text}
+                      </p>
+                    ) : !validation.isValid ? (
+                      <p className="admin-publish-hint">
+                        {hasAttemptedPublish && validation.message
+                          ? validation.message
+                          : 'Complete required fields to enable publish.'}
+                      </p>
+                    ) : (
+                      <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                    )}
+                  </div>
+                  <button
+                    className="admin-submit"
+                    onClick={handlePublishTask}
+                    disabled={isPublishDisabled}
+                  >
+                    {publishTaskMutation.isLoading ? 'Publishing…' : 'Publish Task'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </section>

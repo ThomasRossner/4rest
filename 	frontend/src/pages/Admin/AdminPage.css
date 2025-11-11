@@ -113,11 +113,150 @@
 
 .admin-field input,
 .admin-field select,
+.admin-field textarea,
 .admin-field .admin-multi-select-toggle {
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 1rem;
+}
+
+.admin-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.admin-field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.admin-field-required {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.admin-field-readonly {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  background: var(--color-border);
+  color: var(--color-text-light);
+  border-radius: 999px;
+}
+
+.admin-field input[readonly],
+.admin-field textarea[readonly],
+.admin-input-readonly {
+  background: var(--color-surface);
+  border-style: dashed;
+  color: var(--color-text-light);
+  cursor: not-allowed;
+}
+
+.admin-field-note {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+}
+
+.admin-form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.admin-form-section {
+  position: relative;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 255, 0.98));
+  border: 1px solid rgba(62, 90, 166, 0.08);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-form-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(62, 90, 166, 0.12), transparent 55%);
+  opacity: 0.55;
+}
+
+.admin-form-section-header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xxs);
+  margin-bottom: var(--spacing-md);
+  z-index: 1;
+}
+
+.admin-form-section-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--color-primary);
+}
+
+.admin-form-section-header p {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+}
+
+.admin-form-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.admin-field-span-2 {
+  grid-column: span 2;
+}
+
+.admin-form-full {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  background: white;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-form-feedback {
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-form-feedback p {
+  margin: 0;
+}
+
+.admin-publish-hint {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
 }
 
 .admin-quiz-builder {
@@ -342,12 +481,6 @@
   cursor: not-allowed;
 }
 
-.admin-field-note {
-  margin: 0;
-  color: var(--color-text-light);
-  font-size: 0.95rem;
-}
-
 .admin-template-list {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
@@ -391,6 +524,15 @@
   .admin-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .admin-form-section {
+    padding: var(--spacing-lg);
+  }
+  .admin-form-actions {
+    padding: var(--spacing-md);
+  }
+  .admin-field-span-2 {
+    grid-column: span 1;
   }
 }
 
