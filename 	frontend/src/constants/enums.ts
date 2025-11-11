@@ -6,3 +6,6 @@ export type UserType = (typeof USER_TYPES)[number];
 
 export const HOTEL_IDS = ['ROI-BER', 'ROI-VIE'] as const;
 export type HotelId = (typeof HOTEL_IDS)[number];
+
+export const REWARD_TYPES = ['discount', 'voucher', 'benefit', 'team_event'] as const;
+export type RewardType = (typeof REWARD_TYPES)[number];

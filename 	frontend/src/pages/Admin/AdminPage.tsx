@@ -3,7 +3,16 @@ import { useQuery, useMutation } from 'react-query';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 import './AdminPage.css';
-import { USER_ROLES, USER_TYPES, HOTEL_IDS, UserRole, UserType, HotelId } from '../../constants/enums';
+import {
+  USER_ROLES,
+  USER_TYPES,
+  HOTEL_IDS,
+  REWARD_TYPES,
+  UserRole,
+  UserType,
+  HotelId,
+  RewardType,
+} from '../../constants/enums';
 
 type AdminMode = 'task' | 'reward' | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
@@ -31,9 +40,15 @@ type RewardTemplate = {
   description?: string | null;
   reward_type: string;
   points_cost: number;
+  voucher_code?: string | null;
+  external_api_id?: string | null;
+  allowed_roles?: UserRole[] | null;
+  allowed_user_types?: UserType[] | null;
+  allowed_hotel_ids?: HotelId[] | null;
 };
 
 type VideoSourceOption = 'url' | 'upload';
+type RewardSource = '' | 'existing' | RewardType;
 
 type TaskFormState = {
   title: string;
@@ -47,6 +62,18 @@ type TaskFormState = {
   qr_code: string;
   photo_required: boolean;
   co2_savings_kg: number;
+  allowedRoles: string[];
+  allowedUserTypes: string[];
+  allowedHotelIds: string[];
+};
+
+type RewardFormState = {
+  title: string;
+  description: string;
+  type: RewardType;
+  pointsCost: number;
+  voucherCode: string;
+  externalApiId: string;
   allowedRoles: string[];
   allowedUserTypes: string[];
   allowedHotelIds: string[];
@@ -146,6 +173,12 @@ const reindexQuestions = (questions: QuizQuestionDraft[]): QuizQuestionDraft[] =
 const ROLE_OPTIONS = USER_ROLES.map((role) => ({ value: role, label: role }));
 const USER_TYPE_OPTIONS = USER_TYPES.map((type) => ({ value: type, label: type }));
 const HOTEL_OPTIONS = HOTEL_IDS.map((id) => ({ value: id, label: id }));
+const formatRewardType = (type: RewardType) =>
+  type.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
+  value: type,
+  label: formatRewardType(type),
+}));
 
 const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   title: '',
@@ -159,6 +192,18 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   qr_code: type === 'qr' ? '' : '',
   photo_required: type === 'photo',
   co2_savings_kg: 0,
+  allowedRoles: [],
+  allowedUserTypes: [],
+  allowedHotelIds: [],
+});
+
+const defaultRewardForm = (type: RewardType): RewardFormState => ({
+  title: '',
+  description: '',
+  type,
+  pointsCost: 0,
+  voucherCode: '',
+  externalApiId: '',
   allowedRoles: [],
   allowedUserTypes: [],
   allowedHotelIds: [],
@@ -288,7 +333,7 @@ const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
   });
 };
 
-type TaskFormValidation = {
+type ValidationResult = {
   isValid: boolean;
   message: string | null;
 };
@@ -299,11 +344,17 @@ type ValidateTaskFormParams = {
   taskForm: TaskFormState;
 };
 
+type ValidateRewardFormParams = {
+  rewardSource: RewardSource;
+  selectedRewardTemplate: string;
+  rewardForm: RewardFormState;
+};
+
 const validateTaskFormState = ({
   taskSource,
   selectedExistingTaskId,
   taskForm,
-}: ValidateTaskFormParams): TaskFormValidation => {
+}: ValidateTaskFormParams): ValidationResult => {
   if (!taskSource) {
     return { isValid: false, message: 'Choose how you want to start creating your task.' };
   }
@@ -350,6 +401,38 @@ const validateTaskFormState = ({
 
   if (taskForm.type === 'qr' && !taskForm.qr_code.trim()) {
     return { isValid: false, message: 'Enter the QR code value for QR tasks.' };
+  }
+
+  return { isValid: true, message: null };
+};
+
+const validateRewardFormState = ({
+  rewardSource,
+  selectedRewardTemplate,
+  rewardForm,
+}: ValidateRewardFormParams): ValidationResult => {
+  if (!rewardSource) {
+    return { isValid: false, message: 'Choose how you want to start creating your reward.' };
+  }
+
+  if (rewardSource === 'existing' && !selectedRewardTemplate) {
+    return { isValid: false, message: 'Select an existing reward template.' };
+  }
+
+  if (!rewardForm.title.trim()) {
+    return { isValid: false, message: 'Title is required.' };
+  }
+
+  if (!rewardForm.type || !(REWARD_TYPES as readonly string[]).includes(rewardForm.type)) {
+    return { isValid: false, message: 'Select a valid reward type.' };
+  }
+
+  if (!Number.isFinite(rewardForm.pointsCost) || Number.isNaN(rewardForm.pointsCost)) {
+    return { isValid: false, message: 'Points cost must be zero or greater.' };
+  }
+
+  if (rewardForm.pointsCost < 0) {
+    return { isValid: false, message: 'Points cost must be zero or greater.' };
   }
 
   return { isValid: true, message: null };
@@ -735,7 +818,7 @@ function AdminPage() {
   const [hasAttemptedPublish, setHasAttemptedPublish] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
-  const validation = useMemo(
+  const taskValidation = useMemo(
     () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm }),
     [taskSource, selectedExistingTaskId, taskForm]
   );
@@ -776,10 +859,27 @@ function AdminPage() {
   });
 
   const rewardTemplates = rewardTemplatesData ?? [];
+  const normalizedRewardTemplates = useMemo(() => {
+    return rewardTemplates.map((template) => ({
+      ...template,
+      allowed_roles: normalizeEnumArray(template.allowed_roles) as UserRole[],
+      allowed_user_types: normalizeEnumArray(template.allowed_user_types) as UserType[],
+      allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids) as HotelId[],
+    }));
+  }, [rewardTemplates]);
 
+  const [rewardSource, setRewardSource] = useState<RewardSource>('');
   const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
-  const [rewardTitleOverride, setRewardTitleOverride] = useState('');
-  const [rewardPointsOverride, setRewardPointsOverride] = useState<number | undefined>(undefined);
+  const [rewardForm, setRewardForm] = useState<RewardFormState>(() => defaultRewardForm('discount'));
+  const [rewardMessage, setRewardMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
+    null
+  );
+  const [hasAttemptedRewardPublish, setHasAttemptedRewardPublish] = useState(false);
+
+  const rewardValidation = useMemo(
+    () => validateRewardFormState({ rewardSource, selectedRewardTemplate, rewardForm }),
+    [rewardSource, selectedRewardTemplate, rewardForm]
+  );
 
   const publishTaskMutation = useMutation((payload: any) => api.createCustomTask(payload), {
     onSuccess: () => {
@@ -795,22 +895,23 @@ function AdminPage() {
     },
   });
 
-  const createRewardMutation = useMutation(
-    () =>
-      api.createRewardFromTemplate(selectedRewardTemplate, {
-        ...(rewardTitleOverride ? { title: rewardTitleOverride } : {}),
-        ...(typeof rewardPointsOverride === 'number' ? { pointsCost: rewardPointsOverride } : {}),
-      }),
-    {
-      onSuccess: () => {
-        setRewardTitleOverride('');
-        setRewardPointsOverride(undefined);
-        void refetchRewardTemplates();
-      },
-    }
-  );
+  const createRewardMutation = useMutation((payload: any) => api.createReward(payload), {
+    onSuccess: () => {
+      setRewardMessage({ type: 'success', text: 'Reward published successfully.' });
+      setHasAttemptedRewardPublish(false);
+      setRewardSource('');
+      setSelectedRewardTemplate('');
+      setRewardForm(defaultRewardForm('discount'));
+      void refetchRewardTemplates();
+    },
+    onError: (error: any) => {
+      setRewardMessage({ type: 'error', text: error?.message || 'Failed to publish reward.' });
+    },
+  });
 
-  const isPublishDisabled = publishTaskMutation.isLoading || isUploadingVideo || !validation.isValid;
+  const isPublishDisabled =
+    publishTaskMutation.isLoading || isUploadingVideo || !taskValidation.isValid;
+  const isRewardPublishDisabled = createRewardMutation.isLoading || !rewardValidation.isValid;
 
   useEffect(() => {
     setTaskMessage(null);
@@ -851,15 +952,67 @@ function AdminPage() {
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates]);
 
+  useEffect(() => {
+    if (!rewardSource) {
+      setHasAttemptedRewardPublish(false);
+      setSelectedRewardTemplate('');
+      setRewardForm(defaultRewardForm('discount'));
+      return;
+    }
+    setRewardMessage(null);
+    if (rewardSource === 'existing') {
+      setSelectedRewardTemplate('');
+      setRewardForm(defaultRewardForm('discount'));
+    } else {
+      setSelectedRewardTemplate('');
+      setRewardForm(defaultRewardForm(rewardSource));
+    }
+  }, [rewardSource]);
+
+  useEffect(() => {
+    if (rewardSource !== 'existing') {
+      return;
+    }
+    setRewardMessage(null);
+    setHasAttemptedRewardPublish(false);
+    if (!selectedRewardTemplate) {
+      setRewardForm(defaultRewardForm('discount'));
+      return;
+    }
+    const template = normalizedRewardTemplates.find((item) => item.id === selectedRewardTemplate);
+    if (!template) {
+      return;
+    }
+    const templateType = (REWARD_TYPES as readonly string[]).includes(template.reward_type)
+      ? (template.reward_type as RewardType)
+      : 'discount';
+    const pointsCostRaw =
+      template.points_cost !== undefined && template.points_cost !== null
+        ? Number(template.points_cost)
+        : 0;
+    const normalizedPointsCost = Number.isNaN(pointsCostRaw) ? 0 : pointsCostRaw;
+    setRewardForm({
+      title: template.title ?? '',
+      description: template.description ?? '',
+      type: templateType,
+      pointsCost: normalizedPointsCost,
+      voucherCode: template.voucher_code ?? '',
+      externalApiId: template.external_api_id ?? '',
+      allowedRoles: normalizeEnumArray(template.allowed_roles),
+      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
+      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+    });
+  }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates]);
+
   const handlePublishTask = async () => {
     try {
       setTaskMessage(null);
       setHasAttemptedPublish(true);
 
-      if (!validation.isValid) {
+      if (!taskValidation.isValid) {
         setTaskMessage({
           type: 'error',
-          text: validation.message ?? 'Please complete the required fields.',
+          text: taskValidation.message ?? 'Please complete the required fields.',
         });
         return;
       }
@@ -967,6 +1120,62 @@ function AdminPage() {
     } catch (error: any) {
       setIsUploadingVideo(false);
       setTaskMessage({ type: 'error', text: error?.message || 'Failed to prepare payload.' });
+    }
+  };
+
+  const handlePublishReward = async () => {
+    try {
+      setRewardMessage(null);
+      setHasAttemptedRewardPublish(true);
+
+      if (!rewardValidation.isValid) {
+        setRewardMessage({
+          type: 'error',
+          text: rewardValidation.message ?? 'Please complete the required fields.',
+        });
+        return;
+      }
+
+      const allowedRoles = ensureRoleList(rewardForm.allowedRoles);
+      const allowedUserTypes = ensureUserTypeList(rewardForm.allowedUserTypes);
+      const allowedHotelIds = ensureHotelIdList(rewardForm.allowedHotelIds);
+      const pointsCost = Number(rewardForm.pointsCost) || 0;
+
+      const basePayload: any = {
+        title: rewardForm.title,
+        description: rewardForm.description,
+        pointsCost,
+        rewardType: rewardForm.type,
+        allowed_roles: allowedRoles,
+        allowed_user_types: allowedUserTypes,
+        allowed_hotel_ids: allowedHotelIds,
+      };
+
+      if (rewardForm.voucherCode.trim()) {
+        basePayload.voucherCode = rewardForm.voucherCode.trim();
+      }
+      if (rewardForm.externalApiId.trim()) {
+        basePayload.externalApiId = rewardForm.externalApiId.trim();
+      }
+
+      if (rewardSource === 'existing') {
+        if (!selectedRewardTemplate) {
+          setRewardMessage({ type: 'error', text: 'Select an existing reward template.' });
+          return;
+        }
+        await createRewardMutation.mutateAsync({
+          templateId: selectedRewardTemplate,
+          overrides: basePayload,
+        });
+        return;
+      }
+
+      await createRewardMutation.mutateAsync(basePayload);
+    } catch (error: any) {
+      setRewardMessage({
+        type: 'error',
+        text: error?.message || 'Failed to prepare reward payload.',
+      });
     }
   };
 
@@ -1303,10 +1512,10 @@ function AdminPage() {
                       </p>
                     ) : isUploadingVideo ? (
                       <p className="admin-publish-hint">Uploading video file…</p>
-                    ) : !validation.isValid ? (
+                    ) : !taskValidation.isValid ? (
                       <p className="admin-publish-hint">
-                        {hasAttemptedPublish && validation.message
-                          ? validation.message
+                        {hasAttemptedPublish && taskValidation.message
+                          ? taskValidation.message
                           : 'Complete required fields to enable publish.'}
                       </p>
                     ) : (
@@ -1332,7 +1541,7 @@ function AdminPage() {
           <header className="admin-section-header">
             <div>
               <h2>Publish Reward</h2>
-              <p>Select a template and optionally override the title or point cost.</p>
+              <p>Use an existing reward as a template or start from scratch with a predefined type.</p>
             </div>
             <div className="admin-actions">
               <button className="admin-refresh" onClick={() => refetchRewardTemplates()}>
@@ -1349,68 +1558,185 @@ function AdminPage() {
             <p className="admin-error">Failed to load reward templates.</p>
           )}
 
-          {rewardTemplates && rewardTemplates.length > 0 ? (
-            <div className="admin-grid">
-              <div className="admin-form-card">
-                <label className="admin-field">
-                  <span>Template</span>
-                  <select
-                    value={selectedRewardTemplate}
-                    onChange={(event) => setSelectedRewardTemplate(event.target.value)}
-                  >
-                    <option value="">Select template</option>
-                    {rewardTemplates.map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.name} — {template.title}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+          <div className="admin-form-card">
+            <label className="admin-field">
+              <span>Create from</span>
+              <select
+                value={rewardSource}
+                onChange={(event) => setRewardSource(event.target.value as RewardSource)}
+              >
+                <option value="">Select option</option>
+                <option value="existing">Existing reward</option>
+                {REWARD_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {`Start from scratch – ${option.label}`}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-                <label className="admin-field">
-                  <span>Title override</span>
-                  <input
-                    type="text"
-                    value={rewardTitleOverride}
-                    onChange={(event) => setRewardTitleOverride(event.target.value)}
-                    placeholder="(optional)"
-                  />
-                </label>
-
-                <label className="admin-field">
-                  <span>Points override</span>
-                  <input
-                    type="number"
-                    value={typeof rewardPointsOverride === 'number' ? rewardPointsOverride : ''}
-                    onChange={(event) =>
-                      setRewardPointsOverride(
-                        event.target.value ? Number.parseInt(event.target.value, 10) : undefined
-                      )
-                    }
-                    placeholder="(optional)"
-                    min={0}
-                  />
-                </label>
-
-                <button
-                  className="admin-submit"
-                  disabled={!selectedRewardTemplate || createRewardMutation.isLoading}
-                  onClick={() => createRewardMutation.mutate()}
+            {rewardSource === 'existing' && (
+              <label className="admin-field">
+                <span>Select existing reward</span>
+                <select
+                  value={selectedRewardTemplate}
+                  onChange={(event) => setSelectedRewardTemplate(event.target.value)}
                 >
-                  {createRewardMutation.isLoading ? 'Publishing…' : 'Publish Reward'}
-                </button>
+                  <option value="">Select reward</option>
+                  {normalizedRewardTemplates.length === 0 && (
+                    <option value="" disabled>
+                      No templates available
+                    </option>
+                  )}
+                  {normalizedRewardTemplates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} — {template.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
-                {createRewardMutation.isError && (
-                  <p className="admin-error">Failed to publish reward. Please try again.</p>
-                )}
-                {createRewardMutation.isSuccess && (
-                  <p className="admin-success">Reward published successfully.</p>
-                )}
+            {rewardSource && (rewardSource !== 'existing' || selectedRewardTemplate) && (
+              <div className="admin-form-layout">
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Reward details</h3>
+                    <p>Define the reward content and optional integrations.</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <label className="admin-field">
+                      <FieldLabel label="Reward type" readOnly />
+                      <input type="text" value={formatRewardType(rewardForm.type)} readOnly />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="Title" required />
+                      <input
+                        type="text"
+                        value={rewardForm.title}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({ ...prev, title: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="admin-field admin-field-span-2">
+                      <FieldLabel label="Description" />
+                      <textarea
+                        value={rewardForm.description}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({ ...prev, description: event.target.value }))
+                        }
+                        rows={3}
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="Points cost" required />
+                      <input
+                        type="number"
+                        min={0}
+                        value={Number.isNaN(rewardForm.pointsCost) ? '' : rewardForm.pointsCost}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            pointsCost: Number.parseInt(event.target.value || '0', 10),
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="Voucher code" />
+                      <input
+                        type="text"
+                        value={rewardForm.voucherCode}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({ ...prev, voucherCode: event.target.value }))
+                        }
+                        placeholder="Optional code for voucher-based rewards"
+                      />
+                    </label>
+                    <label className="admin-field admin-field-span-2">
+                      <FieldLabel label="External API ID" />
+                      <input
+                        type="text"
+                        value={rewardForm.externalApiId}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({ ...prev, externalApiId: event.target.value }))
+                        }
+                        placeholder="Optional identifier for external integrations"
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Audience & access</h3>
+                    <p>Limit the reward visibility to certain roles, user types, or hotels.</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field">
+                      <FieldLabel label="Allowed roles" />
+                      <MultiSelectDropdown
+                        options={ROLE_OPTIONS}
+                        selectedValues={rewardForm.allowedRoles}
+                        onChange={(selected) =>
+                          setRewardForm((prev) => ({ ...prev, allowedRoles: selected }))
+                        }
+                        placeholder="All roles"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Allowed user types" />
+                      <MultiSelectDropdown
+                        options={USER_TYPE_OPTIONS}
+                        selectedValues={rewardForm.allowedUserTypes}
+                        onChange={(selected) =>
+                          setRewardForm((prev) => ({ ...prev, allowedUserTypes: selected }))
+                        }
+                        placeholder="All user types"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Allowed hotel IDs" />
+                      <MultiSelectDropdown
+                        options={HOTEL_OPTIONS}
+                        selectedValues={rewardForm.allowedHotelIds}
+                        onChange={(selected) =>
+                          setRewardForm((prev) => ({ ...prev, allowedHotelIds: selected }))
+                        }
+                        placeholder="All hotels"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="admin-form-actions">
+                  <div className="admin-form-feedback">
+                    {rewardMessage ? (
+                      <p className={rewardMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
+                        {rewardMessage.text}
+                      </p>
+                    ) : !rewardValidation.isValid ? (
+                      <p className="admin-publish-hint">
+                        {hasAttemptedRewardPublish && rewardValidation.message
+                          ? rewardValidation.message
+                          : 'Complete required fields to enable publish.'}
+                      </p>
+                    ) : (
+                      <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                    )}
+                  </div>
+                  <button
+                    className="admin-submit"
+                    onClick={handlePublishReward}
+                    disabled={isRewardPublishDisabled}
+                  >
+                    {createRewardMutation.isLoading ? 'Publishing…' : 'Publish Reward'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            !rewardTemplatesLoading && <p>No templates found.</p>
-          )}
+            )}
+          </div>
         </section>
       )}
     </div>

@@ -1,7 +1,16 @@
 import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
-import { USER_ROLES, USER_TYPES, HOTEL_IDS, UserRole, UserType, HotelId } from '../constants/enums.js';
+import {
+  USER_ROLES,
+  USER_TYPES,
+  HOTEL_IDS,
+  REWARD_TYPES,
+  UserRole,
+  UserType,
+  HotelId,
+  RewardType,
+} from '../constants/enums.js';
 
 interface RewardTemplate {
   id: string;
@@ -42,6 +51,28 @@ function validateHotelIdArray(values?: string[] | null): HotelId[] {
     throw new Error(`Invalid hotel IDs: ${invalid.join(', ')}`);
   }
   return values as HotelId[];
+}
+
+function validateRewardType(value?: string | null): RewardType {
+  if (!value) {
+    throw new Error('Reward type is required.');
+  }
+  if (!(REWARD_TYPES as readonly string[]).includes(value)) {
+    throw new Error(`Invalid reward type: ${value}`);
+  }
+  return value as RewardType;
+}
+
+function normalizePointsCost(value: unknown): number {
+  if (value === undefined || value === null || value === '') {
+    throw new Error('pointsCost must be zero or greater.');
+  }
+  const parsed =
+    typeof value === 'string' ? Number.parseFloat(value) : typeof value === 'number' ? value : NaN;
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error('pointsCost must be zero or greater.');
+  }
+  return parsed;
 }
 
 export async function getRewardsService(userId: string) {
@@ -142,11 +173,13 @@ export async function createRewardFromTemplate(
   }
 
   const db = getPool();
+  const rewardType = validateRewardType(overrides.rewardType ?? template.reward_type);
+  const pointsCost = normalizePointsCost(overrides.pointsCost ?? template.points_cost);
   const payload = {
     title: overrides.title ?? template.title,
     description: overrides.description ?? template.description,
-    points_cost: overrides.pointsCost ?? template.points_cost,
-    reward_type: overrides.rewardType ?? template.reward_type,
+    points_cost: pointsCost,
+    reward_type: rewardType,
     voucher_code: overrides.voucherCode ?? template.voucher_code ?? null,
     external_api_id: overrides.externalApiId ?? template.external_api_id ?? null,
     allowed_roles: validateRoleArray(overrides.allowed_roles ?? template.allowed_roles ?? []),
@@ -182,6 +215,57 @@ export async function createRewardFromTemplate(
       payload.allowed_roles,
       payload.allowed_user_types,
       payload.allowed_hotel_ids,
+    ]
+  );
+
+  return result.rows[0];
+}
+
+interface CreateCustomRewardInput {
+  title?: string;
+  description?: string | null;
+  pointsCost?: number | string;
+  rewardType?: string;
+  voucherCode?: string | null;
+  externalApiId?: string | null;
+  allowed_roles?: string[];
+  allowed_user_types?: string[];
+  allowed_hotel_ids?: string[];
+}
+
+export async function createCustomReward(data: CreateCustomRewardInput) {
+  const db = getPool();
+  const title = data.title?.trim();
+  if (!title) {
+    throw new Error('Title is required.');
+  }
+  const rewardType = validateRewardType(data.rewardType);
+  const pointsCost = normalizePointsCost(data.pointsCost);
+
+  const result = await db.query(
+    `INSERT INTO rewards (
+       title,
+       description,
+       points_cost,
+       reward_type,
+       voucher_code,
+       external_api_id,
+       allowed_roles,
+       allowed_user_types,
+       allowed_hotel_ids
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING *`,
+    [
+      title,
+      data.description ?? null,
+      pointsCost,
+      rewardType,
+      data.voucherCode ?? null,
+      data.externalApiId ?? null,
+      validateRoleArray(data.allowed_roles ?? []),
+      validateUserTypeArray(data.allowed_user_types ?? []),
+      validateHotelIdArray(data.allowed_hotel_ids ?? []),
     ]
   );
 

@@ -199,6 +199,11 @@ export const api = {
     return response.data;
   },
 
+  async createReward(payload: any) {
+    const response = await apiClient.post('/rewards', payload);
+    return response.data;
+  },
+
   // HotelKit
   async syncHotelKitTasks() {
     const response = await apiClient.post('/hotelkit/sync');
