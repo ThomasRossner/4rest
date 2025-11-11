@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation } from 'react-query';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
@@ -39,13 +39,31 @@ type TaskFormState = {
   type: string;
   points: number;
   video_url: string;
-  quizQuestionsText: string;
+  quizQuestions: QuizQuestionDraft[];
   qr_code: string;
   photo_required: boolean;
   co2_savings_kg: number;
   allowedRoles: string[];
   allowedUserTypes: string[];
   allowedHotelIds: string[];
+};
+
+type QuizAnswerDraft = {
+  id: string;
+  text: string;
+};
+
+type QuizQuestionDraft = {
+  id: string;
+  prompt: string;
+  answers: QuizAnswerDraft[];
+  correctAnswerId: string | null;
+  order: number;
+};
+
+type Option = {
+  value: string;
+  label: string;
 };
 
 const normalizeEnumArray = (value: unknown): string[] => {
@@ -91,6 +109,31 @@ const ensureHotelIdList = (input: string[]): HotelId[] => {
   return input as HotelId[];
 };
 
+const generateId = () => Math.random().toString(36).slice(2, 10);
+
+const createEmptyAnswer = (): QuizAnswerDraft => ({
+  id: generateId(),
+  text: '',
+});
+
+const createEmptyQuestion = (order = 1): QuizQuestionDraft => {
+  const first = createEmptyAnswer();
+  const second = createEmptyAnswer();
+  return {
+    id: generateId(),
+    prompt: '',
+    answers: [first, second],
+    correctAnswerId: first.id,
+    order,
+  };
+};
+
+const reindexQuestions = (questions: QuizQuestionDraft[]): QuizQuestionDraft[] =>
+  questions.map((question, index) => ({
+    ...question,
+    order: index + 1,
+  }));
+
 const ROLE_OPTIONS = USER_ROLES.map((role) => ({ value: role, label: role }));
 const USER_TYPE_OPTIONS = USER_TYPES.map((type) => ({ value: type, label: type }));
 const HOTEL_OPTIONS = HOTEL_IDS.map((id) => ({ value: id, label: id }));
@@ -101,22 +144,480 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   type,
   points: 0,
   video_url: '',
-  quizQuestionsText: type === 'video' ? '[]' : '',
+  quizQuestions: type === 'video' ? [createEmptyQuestion(1)] : [],
   qr_code: type === 'qr' ? '' : '',
-  photo_required: type === 'photo',
+  photo_required: true,
   co2_savings_kg: 0,
   allowedRoles: [],
   allowedUserTypes: [],
   allowedHotelIds: [],
 });
 
-const parseQuizText = (text: string) => {
-  if (!text.trim()) return [];
-  const parsed = JSON.parse(text);
-  if (!Array.isArray(parsed)) {
-    throw new Error('Quiz JSON must be an array.');
+const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
+  if (!Array.isArray(payload)) {
+    return [createEmptyQuestion()];
   }
-  return parsed;
+
+  const questions = payload.map((item) => {
+      const raw = item as any;
+      const prompt =
+        typeof raw?.question === 'string'
+          ? raw.question
+          : typeof raw?.prompt === 'string'
+          ? raw.prompt
+          : '';
+
+      const rawAnswers: unknown[] = Array.isArray(raw?.options)
+        ? raw.options
+        : Array.isArray(raw?.answers)
+        ? raw.answers
+        : [];
+
+      const answers = rawAnswers
+        .map((entry) => {
+          if (typeof entry === 'string') {
+            return { id: generateId(), text: entry };
+          }
+          if (entry && typeof entry === 'object' && typeof (entry as any).text === 'string') {
+            return { id: generateId(), text: (entry as any).text };
+          }
+          return null;
+        })
+        .filter((answer): answer is QuizAnswerDraft => Boolean(answer));
+
+      while (answers.length < 2) {
+        answers.push(createEmptyAnswer());
+      }
+
+      const correctAnswerLabel =
+        typeof raw?.correctAnswer === 'string'
+          ? raw.correctAnswer
+          : typeof raw?.correct_answer === 'string'
+          ? raw.correct_answer
+          : null;
+
+      const correctAnswerId =
+        typeof raw?.correctAnswerId === 'string'
+          ? raw.correctAnswerId
+          : typeof raw?.correct_answer_id === 'string'
+          ? raw.correct_answer_id
+          : null;
+
+      let resolvedCorrectId: string | null = null;
+      if (correctAnswerId) {
+        resolvedCorrectId = answers.find((answer) => answer.id === correctAnswerId)?.id ?? null;
+      }
+      if (!resolvedCorrectId && correctAnswerLabel) {
+        resolvedCorrectId =
+          answers.find((answer) => answer.text === correctAnswerLabel)?.id ?? answers[0].id;
+      }
+      if (!resolvedCorrectId) {
+        resolvedCorrectId = answers[0]?.id ?? null;
+      }
+
+      return {
+        id: generateId(),
+        prompt,
+        answers,
+        correctAnswerId: resolvedCorrectId,
+        order: 0,
+      };
+    });
+
+  const normalized = questions.length > 0 ? questions : [createEmptyQuestion()];
+  return reindexQuestions(normalized);
+};
+
+const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
+  if (!questions.length) {
+    throw new Error('Add at least one quiz question for a video task.');
+  }
+
+  return questions.map((question) => {
+    const prompt = question.prompt.trim();
+    const questionNumber = question.order;
+    if (!prompt) {
+      throw new Error(`Question ${questionNumber} is missing a prompt.`);
+    }
+
+    if (question.answers.length < 2) {
+      throw new Error(`Question ${questionNumber} must have at least two possible answers.`);
+    }
+
+    const options = question.answers.map((answer) => {
+      const text = answer.text.trim();
+      if (!text) {
+        throw new Error(`Question ${questionNumber} has an answer without text.`);
+      }
+      return text;
+    });
+
+    const uniqueOptions = new Set(options);
+    if (uniqueOptions.size !== options.length) {
+      throw new Error(`Question ${questionNumber} has duplicate answers.`);
+    }
+
+    const correctAnswer = question.answers.find(
+      (answer) => answer.id === question.correctAnswerId
+    );
+    if (!correctAnswer) {
+      throw new Error(`Question ${questionNumber} must have a correct answer selected.`);
+    }
+
+    const correctAnswerText = correctAnswer.text.trim();
+    if (!correctAnswerText) {
+      throw new Error(`Question ${questionNumber} has an empty correct answer.`);
+    }
+
+    return {
+      question: prompt,
+      options,
+      correctAnswer: correctAnswerText,
+    };
+  });
+};
+
+type MultiSelectDropdownProps = {
+  options: Option[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  buttonLabel?: string;
+};
+
+const MultiSelectDropdown = ({
+  options,
+  selectedValues,
+  onChange,
+  placeholder = 'All values allowed',
+  buttonLabel,
+}: MultiSelectDropdownProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!(event.target instanceof Node)) return;
+      if (!containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const toggleValue = (value: string) => {
+    const next = selectedValues.includes(value)
+      ? selectedValues.filter((entry) => entry !== value)
+      : [...selectedValues, value];
+
+    const ordered = options
+      .map((option) => option.value)
+      .filter((optionValue) => next.includes(optionValue));
+    onChange(ordered);
+  };
+
+  const handleClear = () => {
+    onChange([]);
+  };
+
+  const selectedSummary = selectedValues.length
+    ? options
+        .filter((option) => selectedValues.includes(option.value))
+        .map((option) => option.label)
+        .join(', ')
+    : placeholder;
+
+  return (
+    <div className={`admin-multi-select${isOpen ? ' open' : ''}`} ref={containerRef}>
+      <button
+        type="button"
+        className="admin-multi-select-toggle"
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+      >
+        <span className="admin-multi-select-label">{buttonLabel}</span>
+        <span className="admin-multi-select-value">{selectedSummary}</span>
+        <span className="admin-multi-select-icon" aria-hidden="true">
+          {isOpen ? '▲' : '▼'}
+        </span>
+      </button>
+      {isOpen && (
+        <div className="admin-multi-select-dropdown">
+          <div className="admin-multi-select-actions">
+            <button type="button" onClick={handleClear} className="admin-multi-select-clear">
+              Clear selection
+            </button>
+          </div>
+          <div className="admin-multi-select-options">
+            {options.map((option) => {
+              const checked = selectedValues.includes(option.value);
+              return (
+                <label key={option.value} className="admin-multi-select-option">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleValue(option.value)}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const moveItem = <T,>(items: T[], index: number, offset: number): T[] => {
+  const newIndex = index + offset;
+  if (newIndex < 0 || newIndex >= items.length) {
+    return items;
+  }
+  const copy = [...items];
+  const [item] = copy.splice(index, 1);
+  copy.splice(newIndex, 0, item);
+  return copy;
+};
+
+type QuizBuilderProps = {
+  questions: QuizQuestionDraft[];
+  onChange: (questions: QuizQuestionDraft[]) => void;
+};
+
+const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
+  const updateQuestions = (
+    updater: (current: QuizQuestionDraft[]) => QuizQuestionDraft[]
+  ): void => {
+    const next = reindexQuestions(updater(questions));
+    onChange(next);
+  };
+
+  const handlePromptChange = (questionId: string, value: string) => {
+    updateQuestions((current) =>
+      current.map((question) =>
+        question.id === questionId ? { ...question, prompt: value } : question
+      )
+    );
+  };
+
+  const addQuestion = () => {
+    updateQuestions((current) => [...current, createEmptyQuestion(current.length + 1)]);
+  };
+
+  const removeQuestion = (questionId: string) => {
+    updateQuestions((current) => {
+      if (current.length === 1) {
+        return current;
+      }
+      return current.filter((question) => question.id !== questionId);
+    });
+  };
+
+  const moveQuestion = (questionId: string, offset: number) => {
+    updateQuestions((current) => {
+      const index = current.findIndex((question) => question.id === questionId);
+      if (index === -1) return current;
+      return moveItem(current, index, offset);
+    });
+  };
+
+  const handleAnswerTextChange = (questionId: string, answerId: string, value: string) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId) return question;
+        return {
+          ...question,
+          answers: question.answers.map((answer) =>
+            answer.id === answerId ? { ...answer, text: value } : answer
+          ),
+        };
+      })
+    );
+  };
+
+  const addAnswer = (questionId: string) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId) return question;
+        return { ...question, answers: [...question.answers, createEmptyAnswer()] };
+      })
+    );
+  };
+
+  const removeAnswer = (questionId: string, answerId: string) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId) return question;
+        if (question.answers.length <= 2) {
+          return question;
+        }
+        const filteredAnswers = question.answers.filter((answer) => answer.id !== answerId);
+        const hasCorrect = filteredAnswers.some(
+          (answer) => answer.id === question.correctAnswerId
+        );
+        return {
+          ...question,
+          answers: filteredAnswers,
+          correctAnswerId: hasCorrect ? question.correctAnswerId : filteredAnswers[0]?.id ?? null,
+        };
+      })
+    );
+  };
+
+  const moveAnswer = (questionId: string, answerId: string, offset: number) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId) return question;
+        const index = question.answers.findIndex((answer) => answer.id === answerId);
+        if (index === -1) return question;
+        return { ...question, answers: moveItem(question.answers, index, offset) };
+      })
+    );
+  };
+
+  const selectCorrectAnswer = (questionId: string, answerId: string) => {
+    updateQuestions((current) =>
+      current.map((question) =>
+        question.id === questionId ? { ...question, correctAnswerId: answerId } : question
+      )
+    );
+  };
+
+  if (!questions.length) {
+    return (
+      <div className="admin-quiz-builder">
+        <p className="admin-quiz-empty">No questions yet. Add your first question below.</p>
+        <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
+          Add question
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-quiz-builder">
+      <div className="admin-quiz-header">
+        <h3>Quiz questions</h3>
+        <p>
+          Add multiple choice questions for this video. Each question needs at least two answers and
+          one correct answer.
+        </p>
+      </div>
+
+      <div className="admin-quiz-list">
+        {questions.map((question, questionIndex) => {
+          const answerGroupName = `correct-answer-${question.id}`;
+          return (
+            <div key={question.id} className="admin-quiz-question">
+              <div className="admin-quiz-question-header">
+                <h4>
+                  Question {question.order}
+                  <span className="admin-quiz-question-controls">
+                    <button
+                      type="button"
+                      onClick={() => moveQuestion(question.id, -1)}
+                      disabled={questionIndex === 0}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveQuestion(question.id, 1)}
+                      disabled={questionIndex === questions.length - 1}
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(question.id)}
+                      disabled={questions.length === 1}
+                    >
+                      Remove
+                    </button>
+                  </span>
+                </h4>
+              </div>
+
+              <label className="admin-field">
+                <span>Question text</span>
+                <input
+                  type="text"
+                  value={question.prompt}
+                  onChange={(event) => handlePromptChange(question.id, event.target.value)}
+                  placeholder="Enter the question prompt"
+                />
+              </label>
+
+              <div className="admin-quiz-answers">
+                {question.answers.map((answer, answerIndex) => (
+                  <div key={answer.id} className="admin-quiz-answer-row">
+                    <label className="admin-quiz-answer-select">
+                      <input
+                        type="radio"
+                        name={answerGroupName}
+                        checked={question.correctAnswerId === answer.id}
+                        onChange={() => selectCorrectAnswer(question.id, answer.id)}
+                      />
+                      <span>Correct</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={answer.text}
+                      onChange={(event) =>
+                        handleAnswerTextChange(question.id, answer.id, event.target.value)
+                      }
+                      placeholder={`Answer option ${answerIndex + 1}`}
+                    />
+                    <div className="admin-quiz-answer-controls">
+                      <button
+                        type="button"
+                        onClick={() => moveAnswer(question.id, answer.id, -1)}
+                        disabled={answerIndex === 0}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveAnswer(question.id, answer.id, 1)}
+                        disabled={answerIndex === question.answers.length - 1}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeAnswer(question.id, answer.id)}
+                        disabled={question.answers.length <= 2}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="admin-quiz-add-answer"
+                onClick={() => addAnswer(question.id)}
+              >
+                Add answer
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
+        Add question
+      </button>
+    </div>
+  );
 };
 
 function AdminPage() {
@@ -222,12 +723,12 @@ function AdminPage() {
       type: template.type,
       points: template.points ?? 0,
       video_url: template.video_url ?? '',
-      quizQuestionsText:
-        template.type === 'video'
-          ? JSON.stringify(template.quiz_questions ?? [], null, 2)
-          : '',
+    quizQuestions:
+      template.type === 'video'
+        ? normalizeQuizQuestions(template.quiz_questions ?? [])
+        : [],
       qr_code: template.qr_code ?? '',
-      photo_required: Boolean(template.photo_required),
+    photo_required: true,
       co2_savings_kg: template.co2_savings_kg ?? 0,
       allowedRoles: normalizeEnumArray(template.allowed_roles),
       allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
@@ -268,13 +769,13 @@ function AdminPage() {
 
         if (template.type === 'video') {
           payload.video_url = taskForm.video_url;
-          payload.quiz_questions = parseQuizText(taskForm.quizQuestionsText);
+          payload.quiz_questions = buildQuizPayload(taskForm.quizQuestions);
         }
         if (template.type === 'qr') {
           payload.qr_code = taskForm.qr_code;
         }
         if (template.type === 'photo') {
-          payload.photo_required = taskForm.photo_required;
+          payload.photo_required = true;
         }
 
         publishTaskMutation.mutate(payload);
@@ -304,7 +805,7 @@ function AdminPage() {
 
       if (taskSource === 'video') {
         payload.video_url = taskForm.video_url;
-        payload.quiz_questions = parseQuizText(taskForm.quizQuestionsText);
+        payload.quiz_questions = buildQuizPayload(taskForm.quizQuestions);
       }
       if (taskSource === 'qr') {
         if (!taskForm.qr_code.trim()) {
@@ -314,7 +815,7 @@ function AdminPage() {
         payload.qr_code = taskForm.qr_code;
       }
       if (taskSource === 'photo') {
-        payload.photo_required = taskForm.photo_required;
+        payload.photo_required = true;
       }
 
       publishTaskMutation.mutate(payload);
@@ -467,19 +968,15 @@ function AdminPage() {
                         }
                       />
                     </label>
-                    <label className="admin-field">
-                      <span>Quiz questions (JSON array)</span>
-                      <textarea
-                        rows={6}
-                        value={taskForm.quizQuestionsText}
-                        onChange={(event) =>
-                          setTaskForm((prev) => ({
-                            ...prev,
-                            quizQuestionsText: event.target.value,
-                          }))
-                        }
-                      />
-                    </label>
+                    <QuizBuilder
+                      questions={taskForm.quizQuestions}
+                      onChange={(questions) =>
+                        setTaskForm((prev) => ({
+                          ...prev,
+                          quizQuestions: questions,
+                        }))
+                      }
+                    />
                   </>
                 )}
 
@@ -497,18 +994,7 @@ function AdminPage() {
                 )}
 
                 {taskForm.type === 'photo' && (
-                  <label className="admin-field">
-                    <span>
-                      <input
-                        type="checkbox"
-                        checked={taskForm.photo_required}
-                        onChange={(event) =>
-                          setTaskForm((prev) => ({ ...prev, photo_required: event.target.checked }))
-                        }
-                      />{' '}
-                      Photo required
-                    </span>
-                  </label>
+                  <p className="admin-field-note">A photo is always required for this task type.</p>
                 )}
 
                 <label className="admin-field">
@@ -528,56 +1014,41 @@ function AdminPage() {
 
                 <label className="admin-field">
                   <span>Allowed roles</span>
-                  <select
-                    multiple
-                    value={taskForm.allowedRoles}
-                    onChange={(event) => {
-                      const selected = Array.from(event.target.selectedOptions).map((opt) => opt.value);
-                      setTaskForm((prev) => ({ ...prev, allowedRoles: selected }));
-                    }}
-                  >
-                    {ROLE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  <MultiSelectDropdown
+                    options={ROLE_OPTIONS}
+                    selectedValues={taskForm.allowedRoles}
+                    onChange={(selected) =>
+                      setTaskForm((prev) => ({ ...prev, allowedRoles: selected }))
+                    }
+                    buttonLabel="Select roles"
+                    placeholder="All roles"
+                  />
                 </label>
 
                 <label className="admin-field">
                   <span>Allowed user types</span>
-                  <select
-                    multiple
-                    value={taskForm.allowedUserTypes}
-                    onChange={(event) => {
-                      const selected = Array.from(event.target.selectedOptions).map((opt) => opt.value);
-                      setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }));
-                    }}
-                  >
-                    {USER_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  <MultiSelectDropdown
+                    options={USER_TYPE_OPTIONS}
+                    selectedValues={taskForm.allowedUserTypes}
+                    onChange={(selected) =>
+                      setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }))
+                    }
+                    buttonLabel="Select user types"
+                    placeholder="All user types"
+                  />
                 </label>
 
                 <label className="admin-field">
                   <span>Allowed hotel IDs</span>
-                  <select
-                    multiple
-                    value={taskForm.allowedHotelIds}
-                    onChange={(event) => {
-                      const selected = Array.from(event.target.selectedOptions).map((opt) => opt.value);
-                      setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }));
-                    }}
-                  >
-                    {HOTEL_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  <MultiSelectDropdown
+                    options={HOTEL_OPTIONS}
+                    selectedValues={taskForm.allowedHotelIds}
+                    onChange={(selected) =>
+                      setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }))
+                    }
+                    buttonLabel="Select hotel IDs"
+                    placeholder="All hotels"
+                  />
                 </label>
 
                 {taskMessage && (
