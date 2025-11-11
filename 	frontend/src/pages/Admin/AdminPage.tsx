@@ -13,6 +13,8 @@ import {
   HotelId,
   RewardType,
 } from '../../constants/enums';
+import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
+import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
 
 type AdminMode = 'task' | 'reward' | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
@@ -100,6 +102,30 @@ type Option = {
 const COMPACT_TOGGLE_STYLE: CSSProperties = {
   transform: 'scale(0.6)',
   transformOrigin: 'center',
+};
+
+const TaskTypeBadge = ({ type }: { type: string }) => {
+  const icon = TASK_TYPE_ICONS[type] ?? '🧩';
+  return (
+    <div className="admin-type-badge">
+      <span className="admin-type-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span>{type.toUpperCase()}</span>
+    </div>
+  );
+};
+
+const RewardTypeBadge = ({ type }: { type: RewardType }) => {
+  const icon = REWARD_TYPE_ICONS[type] ?? '🎁';
+  return (
+    <div className="admin-type-badge">
+      <span className="admin-type-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span>{type.toUpperCase().replace(/_/g, ' ')}</span>
+    </div>
+  );
 };
 
 const ICONS: Record<
@@ -469,6 +495,10 @@ const validateRewardFormState = ({
 
   if (!rewardForm.title.trim()) {
     return { isValid: false, message: 'Title is required.' };
+  }
+
+  if (!rewardForm.description.trim()) {
+    return { isValid: false, message: 'Description is required.' };
   }
 
   if (!rewardForm.type || !(REWARD_TYPES as readonly string[]).includes(rewardForm.type)) {
@@ -1322,20 +1352,14 @@ function AdminPage() {
               <div className="admin-form-layout">
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Task basics</h3>
-                    <p>Provide the essential details for this task.</p>
+                    <div>
+                      <h3>Task basics</h3>
+                      <p>Provide the essential details for this task.</p>
+                    </div>
+                    <TaskTypeBadge type={taskForm.type} />
                   </div>
-                  <div className="admin-form-grid">
-                    <label className="admin-field">
-                      <FieldLabel label="Task type" readOnly />
-                      <input
-                        type="text"
-                        value={taskForm.type}
-                        readOnly
-                        className="admin-input-readonly"
-                      />
-                    </label>
-                    <label className="admin-field">
+                  <div className="admin-form-grid admin-form-grid-two">
+                    <label className="admin-field admin-field-span-2">
                       <FieldLabel label="Title" required />
                       <input
                         type="text"
@@ -1656,15 +1680,14 @@ function AdminPage() {
               <div className="admin-form-layout">
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Reward details</h3>
-                    <p>Define the reward content and optional integrations.</p>
+                    <div>
+                      <h3>Reward details</h3>
+                      <p>Define the reward content and optional integrations.</p>
+                    </div>
+                    <RewardTypeBadge type={rewardForm.type} />
                   </div>
-                  <div className="admin-form-grid">
-                    <label className="admin-field">
-                      <FieldLabel label="Reward type" readOnly />
-                      <input type="text" value={formatRewardType(rewardForm.type)} readOnly />
-                    </label>
-                    <label className="admin-field">
+                  <div className="admin-form-grid admin-form-grid-two">
+                    <label className="admin-field admin-field-span-2">
                       <FieldLabel label="Title" required />
                       <input
                         type="text"
@@ -1675,7 +1698,7 @@ function AdminPage() {
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Description" />
+                      <FieldLabel label="Description" required />
                       <textarea
                         value={rewardForm.description}
                         onChange={(event) =>

@@ -120,6 +120,28 @@
   transform: translateY(1px);
 }
 
+.admin-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius);
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--color-primary);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-type-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.admin-type-badge span:last-child {
+  font-size: 0.9rem;
+}
+
 .admin-icon {
   width: 1.35rem;
   height: 1.35rem;
@@ -334,10 +356,16 @@
 .admin-form-section-header {
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xxs);
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
   z-index: 1;
+  flex-wrap: wrap;
+}
+
+.admin-form-section-header > .admin-type-badge {
+  margin-left: auto;
 }
 
 .admin-form-section-header h3 {
@@ -358,6 +386,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--spacing-md);
+}
+
+.admin-form-grid-two {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 .admin-field-span-2 {
@@ -680,6 +712,10 @@
 
   .admin-field-span-2 {
     grid-column: span 1;
+  }
+  .admin-form-section-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
