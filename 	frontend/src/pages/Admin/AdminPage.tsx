@@ -305,6 +305,10 @@ const validateTaskFormState = ({
     return { isValid: false, message: 'Title is required.' };
   }
 
+  if (!taskForm.description.trim()) {
+    return { isValid: false, message: 'Description is required.' };
+  }
+
   if (!Number.isFinite(taskForm.points) || Number.isNaN(taskForm.points)) {
     return { isValid: false, message: 'Points must be zero or greater.' };
   }
@@ -1016,7 +1020,7 @@ function AdminPage() {
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Description" />
+                      <FieldLabel label="Description" required />
                       <textarea
                         value={taskForm.description}
                         onChange={(event) =>
