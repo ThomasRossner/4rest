@@ -103,9 +103,27 @@ type Option = {
   label: string;
 };
 
+type ConfirmDialogState = {
+  visible: boolean;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  confirmTone: 'default' | 'danger';
+  onConfirm: () => void;
+};
+
 const COMPACT_TOGGLE_STYLE: CSSProperties = {
   transform: 'scale(0.6)',
   transformOrigin: 'center',
+};
+
+const defaultConfirmDialogState: ConfirmDialogState = {
+  visible: false,
+  title: '',
+  description: '',
+  confirmLabel: 'Confirm',
+  confirmTone: 'default',
+  onConfirm: () => undefined,
 };
 
 const TaskTypeBadge = ({ type }: { type: string }) => {
@@ -891,6 +909,43 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
   );
 };
 
+const ConfirmDialog = ({
+  visible,
+  title,
+  description,
+  confirmLabel,
+  confirmTone,
+  onCancel,
+  onConfirm,
+}: ConfirmDialogState & { onCancel: () => void }) => {
+  if (!visible) return null;
+
+  return (
+    <div className="admin-modal-backdrop" role="presentation">
+      <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div className="admin-modal-header">
+          <h3 id="confirm-title">{title}</h3>
+        </div>
+        <div className="admin-modal-body">
+          <p>{description}</p>
+        </div>
+        <div className="admin-modal-footer">
+          <button type="button" className="admin-action-button secondary" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={`admin-action-button ${confirmTone === 'danger' ? 'danger' : ''}`}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function AdminPage() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -913,6 +968,24 @@ function AdminPage() {
   >(null);
   const [includeInactiveTasks, setIncludeInactiveTasks] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [taskConfirm, setTaskConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+
+  const [rewardSource, setRewardSource] = useState<RewardSource>('');
+  const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
+  const [rewardForm, setRewardForm] = useState<RewardFormState>(() => defaultRewardForm('discount'));
+  const [rewardMessage, setRewardMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
+    null
+  );
+  const [hasAttemptedRewardPublish, setHasAttemptedRewardPublish] = useState(false);
+  const [isEditingReward, setIsEditingReward] = useState(false);
+  const [editingRewardId, setEditingRewardId] = useState<string | null>(null);
+  const [rewardReturnMode, setRewardReturnMode] = useState<AdminMode | null>(null);
+  const [rewardManagementMessage, setRewardManagementMessage] = useState<
+    { type: 'error' | 'success'; text: string } | null
+  >(null);
+  const [includeInactiveRewards, setIncludeInactiveRewards] = useState(false);
+  const [selectedRewardIds, setSelectedRewardIds] = useState<string[]>([]);
+  const [rewardConfirm, setRewardConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
 
   const taskValidation = useMemo(
     () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask }),
@@ -952,22 +1025,6 @@ function AdminPage() {
       active: task.active ?? true,
     }));
   }, [adminTasks]);
-
-  const [rewardSource, setRewardSource] = useState<RewardSource>('');
-  const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
-  const [rewardForm, setRewardForm] = useState<RewardFormState>(() => defaultRewardForm('discount'));
-  const [rewardMessage, setRewardMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
-    null
-  );
-  const [hasAttemptedRewardPublish, setHasAttemptedRewardPublish] = useState(false);
-  const [isEditingReward, setIsEditingReward] = useState(false);
-  const [editingRewardId, setEditingRewardId] = useState<string | null>(null);
-  const [rewardReturnMode, setRewardReturnMode] = useState<AdminMode | null>(null);
-  const [rewardManagementMessage, setRewardManagementMessage] = useState<
-    { type: 'error' | 'success'; text: string } | null
-  >(null);
-  const [includeInactiveRewards, setIncludeInactiveRewards] = useState(false);
-  const [selectedRewardIds, setSelectedRewardIds] = useState<string[]>([]);
 
   const {
     data: rewardTemplatesData,
@@ -1442,24 +1499,32 @@ function AdminPage() {
 
   const handleTaskBulkDelete = async () => {
     if (!selectedTaskIds.length) return;
-    if (!window.confirm('Delete selected tasks? They will be deactivated for users.')) {
-      return;
-    }
-    try {
-      setTaskManagementMessage(null);
-      await api.bulkDeleteTasks(selectedTaskIds);
-      setTaskManagementMessage({
-        type: 'success',
-        text: 'Selected tasks deleted.',
-      });
-      setSelectedTaskIds([]);
-      void refetchTasks();
-    } catch (error: any) {
-      setTaskManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to delete selected tasks.',
-      });
-    }
+    setTaskConfirm({
+      visible: true,
+      title: 'Delete selected tasks',
+      description: 'Are you sure you want to delete the selected tasks? They will become inactive.',
+      confirmLabel: 'Delete tasks',
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setTaskManagementMessage(null);
+          await api.bulkDeleteTasks(selectedTaskIds);
+          setTaskManagementMessage({
+            type: 'success',
+            text: 'Selected tasks deleted.',
+          });
+          setSelectedTaskIds([]);
+          void refetchTasks();
+        } catch (error: any) {
+          setTaskManagementMessage({
+            type: 'error',
+            text: error?.message || 'Failed to delete selected tasks.',
+          });
+        } finally {
+          setTaskConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
   };
 
   const handleTaskStatusChange = async (taskId: string, active: boolean) => {
@@ -1480,30 +1545,34 @@ function AdminPage() {
   };
 
   const handleTaskDelete = async (taskId: string) => {
-    if (!window.confirm('Delete this task? It will be deactivated for users.')) {
-      return;
-    }
-    try {
-      setTaskManagementMessage(null);
-      await api.bulkDeleteTasks([taskId]);
-      setTaskManagementMessage({
-        type: 'success',
-        text: 'Task deleted.',
-      });
-      if (editingTaskId === taskId) {
-        setIsEditingTask(false);
-        setEditingTaskId(null);
-        setTaskSource('');
-        setSelectedExistingTaskId('');
-        setTaskForm(defaultTaskForm('video'));
-      }
-      void refetchTasks();
-    } catch (error: any) {
-      setTaskManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to delete task.',
-      });
-    }
+    setTaskConfirm({
+      visible: true,
+      title: 'Delete task',
+      description: 'Are you sure you want to delete this task? It will become inactive for users.',
+      confirmLabel: 'Delete task',
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setTaskManagementMessage(null);
+          await api.bulkDeleteTasks([taskId]);
+          setTaskManagementMessage({
+            type: 'success',
+            text: 'Task deleted.',
+          });
+          if (editingTaskId === taskId) {
+            cancelTaskEdit();
+          }
+          void refetchTasks();
+        } catch (error: any) {
+          setTaskManagementMessage({
+            type: 'error',
+            text: error?.message || 'Failed to delete task.',
+          });
+        } finally {
+          setTaskConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
   };
 
   const handleRewardBulkStatus = async (active: boolean) => {
@@ -1527,24 +1596,32 @@ function AdminPage() {
 
   const handleRewardBulkDelete = async () => {
     if (!selectedRewardIds.length) return;
-    if (!window.confirm('Delete selected rewards? They will be deactivated for users.')) {
-      return;
-    }
-    try {
-      setRewardManagementMessage(null);
-      await api.bulkDeleteRewards(selectedRewardIds);
-      setRewardManagementMessage({
-        type: 'success',
-        text: 'Selected rewards deleted.',
-      });
-      setSelectedRewardIds([]);
-      void refetchRewardTemplates();
-    } catch (error: any) {
-      setRewardManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to delete selected rewards.',
-      });
-    }
+    setRewardConfirm({
+      visible: true,
+      title: 'Delete selected rewards',
+      description: 'Are you sure you want to delete the selected rewards? They will become inactive.',
+      confirmLabel: 'Delete rewards',
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setRewardManagementMessage(null);
+          await api.bulkDeleteRewards(selectedRewardIds);
+          setRewardManagementMessage({
+            type: 'success',
+            text: 'Selected rewards deleted.',
+          });
+          setSelectedRewardIds([]);
+          void refetchRewardTemplates();
+        } catch (error: any) {
+          setRewardManagementMessage({
+            type: 'error',
+            text: error?.message || 'Failed to delete selected rewards.',
+          });
+        } finally {
+          setRewardConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
   };
 
   const handleRewardStatusChange = async (rewardId: string, active: boolean) => {
@@ -1565,30 +1642,34 @@ function AdminPage() {
   };
 
   const handleRewardDelete = async (rewardId: string) => {
-    if (!window.confirm('Delete this reward? It will be deactivated for users.')) {
-      return;
-    }
-    try {
-      setRewardManagementMessage(null);
-      await api.bulkDeleteRewards([rewardId]);
-      setRewardManagementMessage({
-        type: 'success',
-        text: 'Reward deleted.',
-      });
-      if (editingRewardId === rewardId) {
-        setIsEditingReward(false);
-        setEditingRewardId(null);
-        setRewardSource('');
-        setSelectedRewardTemplate('');
-        setRewardForm(defaultRewardForm('discount'));
-      }
-      void refetchRewardTemplates();
-    } catch (error: any) {
-      setRewardManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to delete reward.',
-      });
-    }
+    setRewardConfirm({
+      visible: true,
+      title: 'Delete reward',
+      description: 'Are you sure you want to delete this reward? It will become inactive for users.',
+      confirmLabel: 'Delete reward',
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setRewardManagementMessage(null);
+          await api.bulkDeleteRewards([rewardId]);
+          setRewardManagementMessage({
+            type: 'success',
+            text: 'Reward deleted.',
+          });
+          if (editingRewardId === rewardId) {
+            cancelRewardEdit();
+          }
+          void refetchRewardTemplates();
+        } catch (error: any) {
+          setRewardManagementMessage({
+            type: 'error',
+            text: error?.message || 'Failed to delete reward.',
+          });
+        } finally {
+          setRewardConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
   };
 
   const startTaskEdit = (task: AdminTaskTemplate) => {
@@ -2809,6 +2890,14 @@ function AdminPage() {
           </div>
         </section>
       )}
+      <ConfirmDialog
+        {...taskConfirm}
+        onCancel={() => setTaskConfirm(defaultConfirmDialogState)}
+      />
+      <ConfirmDialog
+        {...rewardConfirm}
+        onCancel={() => setRewardConfirm(defaultConfirmDialogState)}
+      />
     </div>
   );
 }

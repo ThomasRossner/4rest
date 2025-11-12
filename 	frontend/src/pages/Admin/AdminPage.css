@@ -683,6 +683,51 @@
   border-color: rgba(37, 99, 235, 0.35);
 }
 
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  z-index: 1000;
+}
+
+.admin-modal {
+  background: white;
+  border-radius: var(--border-radius-lg, 18px);
+  box-shadow: var(--shadow-lg);
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-modal-header,
+.admin-modal-body,
+.admin-modal-footer {
+  padding: var(--spacing-xl);
+}
+
+.admin-modal-header h3 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.admin-modal-body p {
+  margin: 0;
+  color: var(--color-text-light);
+  line-height: 1.5;
+}
+
+.admin-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  border-top: 1px solid var(--color-border);
+}
+
 .admin-template-list {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
