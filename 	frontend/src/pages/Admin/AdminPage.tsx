@@ -1804,17 +1804,17 @@ function AdminPage() {
   return (
     <div className="admin-page">
       <header className="admin-header">
-        <div className="admin-header-card">
-          <div className="admin-header-text">
-            <h1 className="admin-title">Administrator Home</h1>
-            <p className="admin-subtitle">Curate experiences for guests, employees, and partners.</p>
-          </div>
-          <div className="admin-header-actions">
-            <button className="admin-icon-button" onClick={logout} title="Logout">
-              <Icon name="logout" />
-              <span className="sr-only">Logout</span>
-            </button>
-          </div>
+        <nav className="admin-navbar">
+          <div className="admin-navbar-space" aria-hidden="true" />
+          <button className="admin-icon-button admin-navbar-action" onClick={logout} title="Logout">
+            <Icon name="logout" />
+            <span className="sr-only">Logout</span>
+          </button>
+        </nav>
+
+        <div className="admin-hero">
+          <h1 className="admin-hero-title">Administrator Home</h1>
+          <p className="admin-hero-subtitle">Curate experiences for guests, employees, and partners.</p>
         </div>
       </header>
 
