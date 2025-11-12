@@ -907,6 +907,7 @@ function AdminPage() {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [taskReturnMode, setTaskReturnMode] = useState<AdminMode | null>(null);
   const [taskManagementMessage, setTaskManagementMessage] = useState<
     { type: 'error' | 'success'; text: string } | null
   >(null);
@@ -961,6 +962,7 @@ function AdminPage() {
   const [hasAttemptedRewardPublish, setHasAttemptedRewardPublish] = useState(false);
   const [isEditingReward, setIsEditingReward] = useState(false);
   const [editingRewardId, setEditingRewardId] = useState<string | null>(null);
+  const [rewardReturnMode, setRewardReturnMode] = useState<AdminMode | null>(null);
   const [rewardManagementMessage, setRewardManagementMessage] = useState<
     { type: 'error' | 'success'; text: string } | null
   >(null);
@@ -1003,6 +1005,7 @@ function AdminPage() {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
       setHasAttemptedPublish(false);
+      setTaskReturnMode(null);
       void refetchTasks();
     },
     onError: (error: any) => {
@@ -1017,10 +1020,12 @@ function AdminPage() {
         setTaskMessage({ type: 'success', text: 'Task updated successfully.' });
         setIsEditingTask(false);
         setEditingTaskId(null);
+        setMode(taskReturnMode ?? 'task');
         setTaskSource('');
         setSelectedExistingTaskId('');
         setTaskForm(defaultTaskForm('video'));
         setHasAttemptedPublish(false);
+        setTaskReturnMode(null);
         void refetchTasks();
       },
       onError: (error: any) => {
@@ -1036,6 +1041,7 @@ function AdminPage() {
       setRewardSource('');
       setSelectedRewardTemplate('');
       setRewardForm(defaultRewardForm('discount'));
+      setRewardReturnMode(null);
       void refetchRewardTemplates();
     },
     onError: (error: any) => {
@@ -1051,9 +1057,11 @@ function AdminPage() {
         setIsEditingReward(false);
         setEditingRewardId(null);
         setHasAttemptedRewardPublish(false);
+        setMode(rewardReturnMode ?? 'reward');
         setRewardSource('');
         setSelectedRewardTemplate('');
         setRewardForm(defaultRewardForm('discount'));
+        setRewardReturnMode(null);
         void refetchRewardTemplates();
       },
       onError: (error: any) => {
@@ -1584,6 +1592,7 @@ function AdminPage() {
   };
 
   const startTaskEdit = (task: AdminTaskTemplate) => {
+    setTaskReturnMode(mode === 'taskManage' ? 'taskManage' : null);
     setMode('task');
     setTaskManagementMessage(null);
     setTaskMessage(null);
@@ -1622,9 +1631,16 @@ function AdminPage() {
     setTaskForm(defaultTaskForm('video'));
     setTaskMessage(null);
     setHasAttemptedPublish(false);
+    if (taskReturnMode) {
+      setMode(taskReturnMode);
+    } else {
+      setMode(null);
+    }
+    setTaskReturnMode(null);
   };
 
   const startRewardEdit = (template: RewardTemplate) => {
+    setRewardReturnMode(mode === 'rewardManage' ? 'rewardManage' : null);
     setMode('reward');
     setRewardManagementMessage(null);
     setRewardMessage(null);
@@ -1663,6 +1679,12 @@ function AdminPage() {
     setRewardForm(defaultRewardForm('discount'));
     setRewardMessage(null);
     setHasAttemptedRewardPublish(false);
+    if (rewardReturnMode) {
+      setMode(rewardReturnMode);
+    } else {
+      setMode(null);
+    }
+    setRewardReturnMode(null);
   };
 
   const allTasksSelected =
@@ -1674,12 +1696,12 @@ function AdminPage() {
   const hasRewardSelection = selectedRewardIds.length > 0;
   const isTaskSaving = publishTaskMutation.isLoading || updateTaskMutation.isLoading;
   const taskSubmitLabel = isEditingTask
-    ? isTaskSaving
+     ? isTaskSaving
       ? 'Saving…'
       : 'Save Task Changes'
-    : publishTaskMutation.isLoading
-    ? 'Publishing…'
-    : 'Publish Task';
+     : publishTaskMutation.isLoading
+     ? 'Publishing…'
+     : 'Publish Task';
   const isRewardSaving = createRewardMutation.isLoading || updateRewardMutation.isLoading;
   const rewardSubmitLabel = isEditingReward
     ? isRewardSaving
@@ -1744,25 +1766,37 @@ function AdminPage() {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Publish Task</h2>
-              <p>Select an existing task or start from scratch depending on the task type.</p>
+              <h2>{isEditingTask ? 'Edit Task' : 'Publish Task'}</h2>
+              <p>
+                {isEditingTask
+                  ? 'Update the selected task using the form below.'
+                  : 'Select an existing task or start from scratch depending on the task type.'}
+              </p>
             </div>
             <div className="admin-actions">
+              {!isEditingTask && (
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchTasks()}
+                  title="Refresh tasks"
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">Refresh tasks</span>
+                </button>
+              )}
               <button
                 className="admin-icon-button"
-                onClick={() => refetchTasks()}
-                title="Refresh tasks"
-              >
-                <Icon name="refresh" />
-                <span className="sr-only">Refresh tasks</span>
-              </button>
-              <button
-                className="admin-icon-button"
-                onClick={() => setMode(null)}
-                title="Back to main menu"
+                onClick={() => {
+                  if (isEditingTask) {
+                    cancelTaskEdit();
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title={isEditingTask ? 'Cancel editing' : 'Back to main menu'}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{isEditingTask ? 'Cancel editing' : 'Back'}</span>
               </button>
             </div>
           </header>
@@ -1771,25 +1805,23 @@ function AdminPage() {
           {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
 
           <div className="admin-form-card">
-            <label className="admin-field">
-              <span>Create from</span>
-              <select
-                value={taskSource}
-                onChange={(event) => {
-                  if (isEditingTask) return;
-                  setTaskSource(event.target.value as TaskSource);
-                }}
-                disabled={isEditingTask}
-              >
-                <option value="">Select option</option>
-                <option value="existing">Existing task</option>
-                <option value="video">Start from scratch – Video task</option>
-                <option value="qr">Start from scratch – QR task</option>
-                <option value="photo">Start from scratch – Photo task</option>
-              </select>
-            </label>
+            {!isEditingTask && (
+              <label className="admin-field">
+                <span>Create from</span>
+                <select
+                  value={taskSource}
+                  onChange={(event) => setTaskSource(event.target.value as TaskSource)}
+                >
+                  <option value="">Select option</option>
+                  <option value="existing">Existing task</option>
+                  <option value="video">Start from scratch – Video task</option>
+                  <option value="qr">Start from scratch – QR task</option>
+                  <option value="photo">Start from scratch – Photo task</option>
+                </select>
+              </label>
+            )}
 
-            {taskSource === 'existing' && (
+            {!isEditingTask && taskSource === 'existing' && (
               <label className="admin-field">
                 <span>Select existing task</span>
                 <select
@@ -1816,17 +1848,6 @@ function AdminPage() {
                     </div>
                     <TaskTypeBadge type={taskForm.type} />
                   </div>
-                  {isEditingTask && (
-                    <div className="admin-edit-banner">
-                      <span>
-                        Editing task:&nbsp;
-                        <strong>{taskForm.title.trim() || 'Untitled task'}</strong>
-                      </span>
-                      <button type="button" className="admin-link-button" onClick={cancelTaskEdit}>
-                        Cancel editing
-                      </button>
-                    </div>
-                  )}
                   <div className="admin-form-grid admin-form-grid-two">
                     <label className="admin-field admin-field-span-2">
                       <FieldLabel label="Title" required />
@@ -2064,9 +2085,7 @@ function AdminPage() {
                         {taskMessage.text}
                       </p>
                     ) : isEditingTask ? (
-                      <p className="admin-publish-hint">
-                        Editing existing task. Save changes or cancel the edit.
-                      </p>
+                      <p className="admin-publish-hint">Editing existing task.</p>
                     ) : isUploadingVideo ? (
                       <p className="admin-publish-hint">Uploading video file…</p>
                     ) : !taskValidation.isValid ? (
@@ -2079,13 +2098,24 @@ function AdminPage() {
                       <p className="admin-publish-hint">All mandatory fields are complete.</p>
                     )}
                   </div>
-                  <button
-                    className="admin-submit"
-                    onClick={handlePublishTask}
-                    disabled={isPublishDisabled}
-                  >
-                    {taskSubmitLabel}
-                  </button>
+                  <div className="admin-form-actions-buttons">
+                    {isEditingTask && (
+                      <button
+                        type="button"
+                        className="admin-action-button secondary"
+                        onClick={cancelTaskEdit}
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    <button
+                      className="admin-submit"
+                      onClick={handlePublishTask}
+                      disabled={isPublishDisabled}
+                    >
+                      {taskSubmitLabel}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -2097,25 +2127,37 @@ function AdminPage() {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Publish Reward</h2>
-              <p>Use an existing reward as a template or start from scratch with a predefined type.</p>
+              <h2>{isEditingReward ? 'Edit Reward' : 'Publish Reward'}</h2>
+              <p>
+                {isEditingReward
+                  ? 'Update the selected reward using the form below.'
+                  : 'Use an existing reward as a template or start from scratch with a predefined type.'}
+              </p>
             </div>
             <div className="admin-actions">
+              {!isEditingReward && (
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchRewardTemplates()}
+                  title="Refresh rewards"
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">Refresh rewards</span>
+                </button>
+              )}
               <button
                 className="admin-icon-button"
-                onClick={() => refetchRewardTemplates()}
-                title="Refresh rewards"
-              >
-                <Icon name="refresh" />
-                <span className="sr-only">Refresh</span>
-              </button>
-              <button
-                className="admin-icon-button"
-                onClick={() => setMode(null)}
-                title="Back to main menu"
+                onClick={() => {
+                  if (isEditingReward) {
+                    cancelRewardEdit();
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title={isEditingReward ? 'Cancel editing' : 'Back to main menu'}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{isEditingReward ? 'Cancel editing' : 'Back'}</span>
               </button>
             </div>
           </header>
@@ -2126,27 +2168,25 @@ function AdminPage() {
           )}
 
           <div className="admin-form-card">
-            <label className="admin-field">
-              <span>Create from</span>
-              <select
-                value={rewardSource}
-                onChange={(event) => {
-                  if (isEditingReward) return;
-                  setRewardSource(event.target.value as RewardSource);
-                }}
-                disabled={isEditingReward}
-              >
-                <option value="">Select option</option>
-                <option value="existing">Existing reward</option>
-                {REWARD_TYPE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {`Start from scratch – ${option.label}`}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!isEditingReward && (
+              <label className="admin-field">
+                <span>Create from</span>
+                <select
+                  value={rewardSource}
+                  onChange={(event) => setRewardSource(event.target.value as RewardSource)}
+                >
+                  <option value="">Select option</option>
+                  <option value="existing">Existing reward</option>
+                  {REWARD_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {`Start from scratch – ${option.label}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
-            {rewardSource === 'existing' && (
+            {!isEditingReward && rewardSource === 'existing' && (
               <label className="admin-field">
                 <span>Select existing reward</span>
                 <select
@@ -2181,21 +2221,6 @@ function AdminPage() {
                     </div>
                     <RewardTypeBadge type={rewardForm.type} />
                   </div>
-                  {isEditingReward && (
-                    <div className="admin-edit-banner">
-                      <span>
-                        Editing reward:&nbsp;
-                        <strong>{rewardForm.title.trim() || 'Untitled reward'}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        className="admin-link-button"
-                        onClick={cancelRewardEdit}
-                      >
-                        Cancel editing
-                      </button>
-                    </div>
-                  )}
                   <div className="admin-form-grid admin-form-grid-two">
                     <label className="admin-field admin-field-span-2">
                       <FieldLabel label="Title" required />
@@ -2323,9 +2348,7 @@ function AdminPage() {
                         {rewardMessage.text}
                       </p>
                     ) : isEditingReward ? (
-                      <p className="admin-publish-hint">
-                        Editing existing reward. Save changes or cancel the edit.
-                      </p>
+                      <p className="admin-publish-hint">Editing existing reward.</p>
                     ) : !rewardValidation.isValid ? (
                       <p className="admin-publish-hint">
                         {hasAttemptedRewardPublish && rewardValidation.message
@@ -2336,13 +2359,24 @@ function AdminPage() {
                       <p className="admin-publish-hint">All mandatory fields are complete.</p>
                     )}
                   </div>
-                  <button
-                    className="admin-submit"
-                    onClick={handlePublishReward}
-                    disabled={isRewardPublishDisabled}
-                  >
-                    {rewardSubmitLabel}
-                  </button>
+                  <div className="admin-form-actions-buttons">
+                    {isEditingReward && (
+                      <button
+                        type="button"
+                        className="admin-action-button secondary"
+                        onClick={cancelRewardEdit}
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    <button
+                      className="admin-submit"
+                      onClick={handlePublishReward}
+                      disabled={isRewardPublishDisabled}
+                    >
+                      {rewardSubmitLabel}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -2358,21 +2392,29 @@ function AdminPage() {
               <p>Browse all tasks, toggle availability, or clean up unused entries.</p>
             </div>
             <div className="admin-actions">
+              {!isEditingTask && (
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchTasks()}
+                  title="Refresh tasks"
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">Refresh tasks</span>
+                </button>
+              )}
               <button
                 className="admin-icon-button"
-                onClick={() => refetchTasks()}
-                title="Refresh tasks"
-              >
-                <Icon name="refresh" />
-                <span className="sr-only">Refresh tasks</span>
-              </button>
-              <button
-                className="admin-icon-button"
-                onClick={() => setMode(null)}
-                title="Back to main menu"
+                onClick={() => {
+                  if (isEditingTask) {
+                    cancelTaskEdit();
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title={isEditingTask ? 'Cancel editing' : 'Back to main menu'}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{isEditingTask ? 'Cancel editing' : 'Back'}</span>
               </button>
             </div>
           </header>
@@ -2492,7 +2534,7 @@ function AdminPage() {
                               aria-label={`Select task ${task.title}`}
                             />
                           </td>
-                          <td>
+                          <td data-label="Task">
                             <div className="admin-table-primary">
                               <span className="admin-table-title">
                                 {task.title || 'Untitled task'}
@@ -2502,13 +2544,13 @@ function AdminPage() {
                               )}
                             </div>
                           </td>
-                          <td>
+                          <td data-label="Type">
                             <span className="admin-table-type">
                               <TaskTypeBadge type={task.type} />
                             </span>
                           </td>
-                          <td>{task.points}</td>
-                          <td>
+                          <td data-label="Points">{task.points}</td>
+                          <td data-label="Status">
                             <span
                               className={`admin-status-badge ${
                                 task.active ? 'active' : 'inactive'
@@ -2517,7 +2559,7 @@ function AdminPage() {
                               {task.active ? 'Active' : 'Inactive'}
                             </span>
                           </td>
-                          <td className="admin-table-actions">
+                          <td data-label="Actions" className="admin-table-actions">
                             <button
                               className="admin-action-button"
                               type="button"
@@ -2559,21 +2601,29 @@ function AdminPage() {
               <p>Review existing rewards and adjust their details or availability.</p>
             </div>
             <div className="admin-actions">
+              {!isEditingReward && (
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchRewardTemplates()}
+                  title="Refresh rewards"
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">Refresh rewards</span>
+                </button>
+              )}
               <button
                 className="admin-icon-button"
-                onClick={() => refetchRewardTemplates()}
-                title="Refresh rewards"
-              >
-                <Icon name="refresh" />
-                <span className="sr-only">Refresh rewards</span>
-              </button>
-              <button
-                className="admin-icon-button"
-                onClick={() => setMode(null)}
-                title="Back to main menu"
+                onClick={() => {
+                  if (isEditingReward) {
+                    cancelRewardEdit();
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title={isEditingReward ? 'Cancel editing' : 'Back to main menu'}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{isEditingReward ? 'Cancel editing' : 'Back'}</span>
               </button>
             </div>
           </header>
@@ -2701,54 +2751,54 @@ function AdminPage() {
                               aria-label={`Select reward ${reward.title}`}
                             />
                           </td>
-                          <td>
-                            <div className="admin-table-primary">
-                              <span className="admin-table-title">
-                                {reward.title || 'Untitled reward'}
-                              </span>
-                              {reward.description && (
-                                <span className="admin-table-subtitle">{reward.description}</span>
-                              )}
-                            </div>
-                          </td>
-                          <td>
-                            <span className="admin-table-type">
-                              <RewardTypeBadge type={reward.reward_type as RewardType} />
-                            </span>
-                          </td>
-                          <td>{cost}</td>
-                          <td>
-                            <span
-                              className={`admin-status-badge ${
-                                reward.active ? 'active' : 'inactive'
-                              }`}
-                            >
-                              {reward.active ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="admin-table-actions">
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => startRewardEdit(reward)}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => handleRewardStatusChange(reward.id, !reward.active)}
-                            >
-                              {reward.active ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button
-                              className="admin-action-button danger"
-                              type="button"
-                              onClick={() => handleRewardDelete(reward.id)}
-                            >
-                              Delete
-                            </button>
-                          </td>
+                          <td data-label="Reward">
+                             <div className="admin-table-primary">
+                               <span className="admin-table-title">
+                                 {reward.title || 'Untitled reward'}
+                               </span>
+                               {reward.description && (
+                                 <span className="admin-table-subtitle">{reward.description}</span>
+                               )}
+                             </div>
+                           </td>
+                          <td data-label="Type">
+                             <span className="admin-table-type">
+                               <RewardTypeBadge type={reward.reward_type as RewardType} />
+                             </span>
+                           </td>
+                          <td data-label="Cost">{cost}</td>
+                          <td data-label="Status">
+                             <span
+                               className={`admin-status-badge ${
+                                 reward.active ? 'active' : 'inactive'
+                               }`}
+                             >
+                               {reward.active ? 'Active' : 'Inactive'}
+                             </span>
+                           </td>
+                          <td data-label="Actions" className="admin-table-actions">
+                             <button
+                               className="admin-action-button"
+                               type="button"
+                               onClick={() => startRewardEdit(reward)}
+                             >
+                               Edit
+                             </button>
+                             <button
+                               className="admin-action-button"
+                               type="button"
+                               onClick={() => handleRewardStatusChange(reward.id, !reward.active)}
+                             >
+                               {reward.active ? 'Deactivate' : 'Activate'}
+                             </button>
+                             <button
+                               className="admin-action-button danger"
+                               type="button"
+                               onClick={() => handleRewardDelete(reward.id)}
+                             >
+                               Delete
+                             </button>
+                           </td>
                         </tr>
                       );
                     })
