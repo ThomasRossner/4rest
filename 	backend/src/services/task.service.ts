@@ -17,6 +17,7 @@ export interface Task {
   allowed_roles?: UserRole[];
   allowed_user_types?: UserType[];
   allowed_hotel_ids?: HotelId[];
+  active?: boolean;
 }
 
 export async function getAllTasks(
@@ -135,9 +136,10 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        external_id,
        allowed_roles,
        allowed_user_types,
-       allowed_hotel_ids
+       allowed_hotel_ids,
+       active
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`,
     [
       data.title,
@@ -153,6 +155,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       (data.allowed_roles ?? []) as UserRole[],
       (data.allowed_user_types ?? []) as UserType[],
       (data.allowed_hotel_ids ?? []) as HotelId[],
+      data.active ?? true,
     ]
   );
   return result.rows[0];

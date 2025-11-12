@@ -33,6 +33,7 @@ type AdminTaskTemplate = {
   allowed_roles?: UserRole[] | null;
   allowed_user_types?: UserType[] | null;
   allowed_hotel_ids?: HotelId[] | null;
+  active?: boolean | null;
 };
 
 type RewardTemplate = {
@@ -47,6 +48,7 @@ type RewardTemplate = {
   allowed_user_types?: string[] | null;
   allowed_hotel_ids?: string[] | null;
   created_at?: string | null;
+  active?: boolean | null;
 };
 
 type VideoSourceOption = 'url' | 'upload';
@@ -67,6 +69,7 @@ type TaskFormState = {
   allowedRoles: string[];
   allowedUserTypes: string[];
   allowedHotelIds: string[];
+  active: boolean;
 };
 
 type RewardFormState = {
@@ -79,6 +82,7 @@ type RewardFormState = {
   allowedRoles: string[];
   allowedUserTypes: string[];
   allowedHotelIds: string[];
+  active: boolean;
 };
 
 type QuizAnswerDraft = {
@@ -269,6 +273,7 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   allowedRoles: [],
   allowedUserTypes: [],
   allowedHotelIds: [],
+  active: true,
 });
 
 const defaultRewardForm = (type: RewardType): RewardFormState => ({
@@ -281,6 +286,7 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   allowedRoles: [],
   allowedUserTypes: [],
   allowedHotelIds: [],
+  active: true,
 });
 
 const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
@@ -1027,6 +1033,7 @@ function AdminPage() {
       allowedRoles: normalizeEnumArray(template.allowed_roles),
       allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      active: template.active ?? true,
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates]);
 
@@ -1079,6 +1086,7 @@ function AdminPage() {
       allowedRoles: normalizeEnumArray(template.allowed_roles),
       allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      active: template.active ?? true,
     });
   }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates]);
 
@@ -1143,6 +1151,7 @@ function AdminPage() {
           allowed_roles: ensureRoleList(taskForm.allowedRoles),
           allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
           allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
+          active: Boolean(taskForm.active),
         };
 
         if (template.type === 'video') {
@@ -1178,6 +1187,7 @@ function AdminPage() {
         allowed_roles: ensureRoleList(taskForm.allowedRoles),
         allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
         allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
+        active: Boolean(taskForm.active),
       };
 
       if (taskSource === 'video') {
@@ -1227,6 +1237,7 @@ function AdminPage() {
         allowed_roles: allowedRoles,
         allowed_user_types: allowedUserTypes,
         allowed_hotel_ids: allowedHotelIds,
+        active: Boolean(rewardForm.active),
       };
 
       if (rewardForm.voucherCode.trim()) {
@@ -1393,6 +1404,24 @@ function AdminPage() {
                         }
                       />
                     </label>
+                    <div className="admin-field">
+                      <FieldLabel label="Active" />
+                      <div className="admin-toggle">
+                        <input
+                          id="task-active-toggle"
+                          type="checkbox"
+                          className="admin-checkbox"
+                          style={COMPACT_TOGGLE_STYLE}
+                          checked={taskForm.active}
+                          onChange={(event) =>
+                            setTaskForm((prev) => ({ ...prev, active: event.target.checked }))
+                          }
+                        />
+                        <label htmlFor="task-active-toggle">
+                          {taskForm.active ? 'Active' : 'Inactive'}
+                        </label>
+                      </div>
+                    </div>
                     <label className="admin-field">
                       <FieldLabel label="CO₂ savings (kg)" />
                       <input
@@ -1721,6 +1750,24 @@ function AdminPage() {
                         }
                       />
                     </label>
+                    <div className="admin-field">
+                      <FieldLabel label="Active" />
+                      <div className="admin-toggle">
+                        <input
+                          id="reward-active-toggle"
+                          type="checkbox"
+                          className="admin-checkbox"
+                          style={COMPACT_TOGGLE_STYLE}
+                          checked={rewardForm.active}
+                          onChange={(event) =>
+                            setRewardForm((prev) => ({ ...prev, active: event.target.checked }))
+                          }
+                        />
+                        <label htmlFor="reward-active-toggle">
+                          {rewardForm.active ? 'Active' : 'Inactive'}
+                        </label>
+                      </div>
+                    </div>
                     <label className="admin-field">
                       <FieldLabel label="Voucher code" />
                       <input

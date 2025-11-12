@@ -60,6 +60,10 @@ export const createTask: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: 'Title is required' });
     }
 
+    if (payload.active !== undefined && typeof payload.active !== 'boolean') {
+      return res.status(400).json({ error: 'Active flag must be a boolean value' });
+    }
+
     if (payload.allowed_roles && !Array.isArray(payload.allowed_roles)) {
       return res.status(400).json({ error: 'allowed_roles must be an array of strings' });
     }

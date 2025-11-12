@@ -137,6 +137,7 @@ interface CreateCustomRewardInput {
   allowed_roles?: string[];
   allowed_user_types?: string[];
   allowed_hotel_ids?: string[];
+  active?: boolean;
 }
 
 export async function createCustomReward(data: CreateCustomRewardInput) {
@@ -158,9 +159,10 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        external_api_id,
        allowed_roles,
        allowed_user_types,
-       allowed_hotel_ids
+       allowed_hotel_ids,
+       active
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
     [
       title,
@@ -172,6 +174,7 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       validateRoleArray(data.allowed_roles ?? []),
       validateUserTypeArray(data.allowed_user_types ?? []),
       validateHotelIdArray(data.allowed_hotel_ids ?? []),
+      data.active ?? true,
     ]
   );
 

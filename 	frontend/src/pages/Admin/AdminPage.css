@@ -179,6 +179,18 @@
   font-size: 1rem;
 }
 
+.admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.admin-toggle label {
+  cursor: pointer;
+}
+
 .admin-checkbox,
 .admin-radio {
   width: 1rem;

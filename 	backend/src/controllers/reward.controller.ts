@@ -24,6 +24,10 @@ export const createReward: RequestHandler = async (req, res) => {
   try {
     const payload = req.body ?? {};
 
+    if (payload.active !== undefined && typeof payload.active !== 'boolean') {
+      return res.status(400).json({ error: 'Active flag must be a boolean value' });
+    }
+
     const reward = await createCustomReward({
       title: payload.title,
       description: payload.description,
@@ -34,6 +38,7 @@ export const createReward: RequestHandler = async (req, res) => {
       allowed_roles: payload.allowed_roles ?? payload.allowedRoles ?? [],
       allowed_user_types: payload.allowed_user_types ?? payload.allowedUserTypes ?? [],
       allowed_hotel_ids: payload.allowed_hotel_ids ?? payload.allowedHotelIds ?? [],
+      active: payload.active,
     });
 
     res.status(201).json(reward);
