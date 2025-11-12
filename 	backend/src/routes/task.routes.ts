@@ -12,6 +12,8 @@ import {
   completeTask,
   uploadPhoto,
   uploadVideo,
+  bulkUpdateTaskStatus,
+  bulkDeleteTasks,
 } from '../controllers/task.controller.js';
 
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
@@ -65,6 +67,8 @@ const uploadVideoMiddleware = multer({
 const router = Router();
 
 router.get('/', authenticate, getTasks);
+router.post('/bulk/status', authenticate, requireRole('administrator'), bulkUpdateTaskStatus);
+router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDeleteTasks);
 router.get('/:id', getTask);
 router.post('/', authenticate, requireRole('administrator'), createTask);
 router.put('/:id', authenticate, requireRole('administrator'), updateTask);

@@ -140,6 +140,19 @@ interface CreateCustomRewardInput {
   active?: boolean;
 }
 
+interface UpdateRewardInput {
+  title?: string | null;
+  description?: string | null;
+  pointsCost?: number | string | null;
+  rewardType?: string | null;
+  voucherCode?: string | null;
+  externalApiId?: string | null;
+  allowed_roles?: string[] | null;
+  allowed_user_types?: string[] | null;
+  allowed_hotel_ids?: string[] | null;
+  active?: boolean;
+}
+
 export async function createCustomReward(data: CreateCustomRewardInput) {
   const db = getPool();
   const title = data.title?.trim();
@@ -181,24 +194,140 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
   return result.rows[0];
 }
 
-export async function listRewardsForAdmin() {
+export async function updateReward(id: string, data: UpdateRewardInput) {
   const db = getPool();
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (data.title !== undefined) {
+    const trimmed = data.title === null ? null : data.title?.toString().trim() ?? null;
+    if (trimmed === '') {
+      throw new Error('Title cannot be empty.');
+    }
+    updates.push(`title = $${paramIndex++}`);
+    values.push(trimmed);
+  }
+
+  if (data.description !== undefined) {
+    updates.push(`description = $${paramIndex++}`);
+    values.push(data.description ?? null);
+  }
+
+  if (data.pointsCost !== undefined) {
+    updates.push(`points_cost = $${paramIndex++}`);
+    values.push(normalizePointsCost(data.pointsCost));
+  }
+
+  if (data.rewardType !== undefined) {
+    updates.push(`reward_type = $${paramIndex++}`);
+    values.push(validateRewardType(data.rewardType ?? undefined));
+  }
+
+  if (data.voucherCode !== undefined) {
+    updates.push(`voucher_code = $${paramIndex++}`);
+    values.push(data.voucherCode ?? null);
+  }
+
+  if (data.externalApiId !== undefined) {
+    updates.push(`external_api_id = $${paramIndex++}`);
+    values.push(data.externalApiId ?? null);
+  }
+
+  if (data.allowed_roles !== undefined) {
+    updates.push(`allowed_roles = $${paramIndex++}`);
+    values.push(validateRoleArray(data.allowed_roles ?? []));
+  }
+
+  if (data.allowed_user_types !== undefined) {
+    updates.push(`allowed_user_types = $${paramIndex++}`);
+    values.push(validateUserTypeArray(data.allowed_user_types ?? []));
+  }
+
+  if (data.allowed_hotel_ids !== undefined) {
+    updates.push(`allowed_hotel_ids = $${paramIndex++}`);
+    values.push(validateHotelIdArray(data.allowed_hotel_ids ?? []));
+  }
+
+  if (data.active !== undefined) {
+    updates.push(`active = $${paramIndex++}`);
+    values.push(data.active);
+  }
+
+  if (updates.length === 0) {
+    const reward = await getRewardById(id);
+    if (!reward) {
+      throw new Error('Reward not found');
+    }
+    return reward;
+  }
+
+  updates.push(`updated_at = CURRENT_TIMESTAMP`);
+  values.push(id);
+
   const result = await db.query(
-    `SELECT id,
-            title,
-            description,
-            points_cost,
-            reward_type,
-            voucher_code,
-            external_api_id,
-            allowed_roles,
-            allowed_user_types,
-            allowed_hotel_ids,
-            created_at
-     FROM rewards
-     WHERE active = TRUE
-     ORDER BY created_at DESC`
+    `UPDATE rewards SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+    values
   );
+
+  if (!result.rows[0]) {
+    throw new Error('Reward not found');
+  }
+
+  return result.rows[0];
+}
+
+export async function setRewardsActiveState(ids: string[], active: boolean) {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return;
+  }
+  const db = getPool();
+  await db.query(
+    'UPDATE rewards SET active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = ANY($2::uuid[])',
+    [active, ids]
+  );
+}
+
+export async function bulkDeleteRewards(ids: string[]) {
+  await setRewardsActiveState(ids, false);
+}
+
+export async function getRewardById(id: string) {
+  const db = getPool();
+  const result = await db.query('SELECT * FROM rewards WHERE id = $1', [id]);
+  return result.rows[0] || null;
+}
+
+export async function listRewardsForAdmin(includeInactive = false) {
+  const db = getPool();
+  const clauses: string[] = [];
+  const params: any[] = [];
+
+  if (!includeInactive) {
+    clauses.push('active = TRUE');
+  }
+
+  let query = `SELECT id,
+                      title,
+                      description,
+                      points_cost,
+                      reward_type,
+                      voucher_code,
+                      external_api_id,
+                      allowed_roles,
+                      allowed_user_types,
+                      allowed_hotel_ids,
+                      created_at,
+                      active
+               FROM rewards`;
+
+  if (clauses.length > 0) {
+    query += ` WHERE ${clauses.join(' AND ')}`;
+  }
+
+  query += ' ORDER BY created_at DESC';
+
+  const result = await db.query(query, params);
   return result.rows;
 }
 

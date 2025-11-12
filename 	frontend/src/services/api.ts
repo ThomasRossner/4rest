@@ -73,13 +73,34 @@ export const api = {
   },
 
   // Tasks
-  async getTasks(params?: { limit?: number; offset?: number; type?: string; includeAll?: boolean }) {
+  async getTasks(params?: {
+    limit?: number;
+    offset?: number;
+    type?: string;
+    includeAll?: boolean;
+    includeInactive?: boolean;
+  }) {
     const response = await apiClient.get('/tasks', { params });
     return response.data;
   },
 
   async getTask(id: string) {
     const response = await apiClient.get(`/tasks/${id}`);
+    return response.data;
+  },
+
+  async updateTask(id: string, payload: any) {
+    const response = await apiClient.put(`/tasks/${id}`, payload);
+    return response.data;
+  },
+
+  async bulkUpdateTasksStatus(ids: string[], active: boolean) {
+    const response = await apiClient.post('/tasks/bulk/status', { ids, active });
+    return response.data;
+  },
+
+  async bulkDeleteTasks(ids: string[]) {
+    const response = await apiClient.post('/tasks/bulk/delete', { ids });
     return response.data;
   },
 
@@ -189,8 +210,8 @@ export const api = {
   },
 
   // Admin - Rewards
-  async getRewardTemplates() {
-    const response = await apiClient.get('/rewards/templates');
+  async getRewardTemplates(params?: { includeInactive?: boolean }) {
+    const response = await apiClient.get('/rewards/templates', { params });
     return response.data;
   },
 
@@ -201,6 +222,21 @@ export const api = {
 
   async createReward(payload: any) {
     const response = await apiClient.post('/rewards', payload);
+    return response.data;
+  },
+
+  async updateReward(id: string, payload: any) {
+    const response = await apiClient.put(`/rewards/${id}`, payload);
+    return response.data;
+  },
+
+  async bulkUpdateRewardsStatus(ids: string[], active: boolean) {
+    const response = await apiClient.post('/rewards/bulk/status', { ids, active });
+    return response.data;
+  },
+
+  async bulkDeleteRewards(ids: string[]) {
+    const response = await apiClient.post('/rewards/bulk/delete', { ids });
     return response.data;
   },
 

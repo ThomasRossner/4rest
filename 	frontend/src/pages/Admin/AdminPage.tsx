@@ -16,7 +16,7 @@ import {
 import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
 import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
 
-type AdminMode = 'task' | 'reward' | null;
+type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
 
 type AdminTaskTemplate = {
@@ -422,24 +422,27 @@ type ValidateTaskFormParams = {
   taskSource: TaskSource;
   selectedExistingTaskId: string;
   taskForm: TaskFormState;
+  isEditing?: boolean;
 };
 
 type ValidateRewardFormParams = {
   rewardSource: RewardSource;
   selectedRewardTemplate: string;
   rewardForm: RewardFormState;
+  isEditing?: boolean;
 };
 
 const validateTaskFormState = ({
   taskSource,
   selectedExistingTaskId,
   taskForm,
+  isEditing = false,
 }: ValidateTaskFormParams): ValidationResult => {
-  if (!taskSource) {
+  if (!taskSource && !isEditing) {
     return { isValid: false, message: 'Choose how you want to start creating your task.' };
   }
 
-  if (taskSource === 'existing' && !selectedExistingTaskId) {
+  if (!isEditing && taskSource === 'existing' && !selectedExistingTaskId) {
     return { isValid: false, message: 'Select an existing task to continue.' };
   }
 
@@ -490,12 +493,13 @@ const validateRewardFormState = ({
   rewardSource,
   selectedRewardTemplate,
   rewardForm,
+  isEditing = false,
 }: ValidateRewardFormParams): ValidationResult => {
-  if (!rewardSource) {
+  if (!rewardSource && !isEditing) {
     return { isValid: false, message: 'Choose how you want to start creating your reward.' };
   }
 
-  if (rewardSource === 'existing' && !selectedRewardTemplate) {
+  if (!isEditing && rewardSource === 'existing' && !selectedRewardTemplate) {
     return { isValid: false, message: 'Select an existing reward template.' };
   }
 
@@ -901,10 +905,17 @@ function AdminPage() {
   );
   const [hasAttemptedPublish, setHasAttemptedPublish] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isEditingTask, setIsEditingTask] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [taskManagementMessage, setTaskManagementMessage] = useState<
+    { type: 'error' | 'success'; text: string } | null
+  >(null);
+  const [includeInactiveTasks, setIncludeInactiveTasks] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
 
   const taskValidation = useMemo(
-    () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm }),
-    [taskSource, selectedExistingTaskId, taskForm]
+    () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask }),
+    [taskSource, selectedExistingTaskId, taskForm, isEditingTask]
   );
 
   const {
@@ -912,9 +923,13 @@ function AdminPage() {
     isLoading: tasksLoading,
     error: tasksError,
     refetch: refetchTasks,
-  } = useQuery<AdminTaskTemplate[]>('adminTasks', () => api.getTasks({ includeAll: true }), {
-    enabled: isAdmin && mode === 'task',
-  });
+  } = useQuery<AdminTaskTemplate[]>(
+    ['adminTasks', includeInactiveTasks],
+    () => api.getTasks({ includeAll: true, includeInactive: includeInactiveTasks }),
+    {
+      enabled: isAdmin && (mode === 'task' || mode === 'taskManage'),
+    }
+  );
 
   const existingTemplates = useMemo<AdminTaskTemplate[]>(() => {
     const list = Array.isArray(adminTasks) ? adminTasks : [];
@@ -930,27 +945,12 @@ function AdminPage() {
               }
             })()
           : task.quiz_questions ?? [],
+      allowed_roles: normalizeEnumArray(task.allowed_roles) as UserRole[],
+      allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
+      allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
+      active: task.active ?? true,
     }));
   }, [adminTasks]);
-
-  const {
-    data: rewardTemplatesData,
-    isLoading: rewardTemplatesLoading,
-    error: rewardTemplatesError,
-    refetch: refetchRewardTemplates,
-  } = useQuery<RewardTemplate[]>('rewardTemplates', api.getRewardTemplates, {
-    enabled: isAdmin && mode === 'reward',
-  });
-
-  const rewardTemplates = rewardTemplatesData ?? [];
-  const normalizedRewardTemplates = useMemo(() => {
-    return rewardTemplates.map((template) => ({
-      ...template,
-      allowed_roles: normalizeEnumArray(template.allowed_roles),
-      allowed_user_types: normalizeEnumArray(template.allowed_user_types),
-      allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
-    }));
-  }, [rewardTemplates]);
 
   const [rewardSource, setRewardSource] = useState<RewardSource>('');
   const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
@@ -959,10 +959,41 @@ function AdminPage() {
     null
   );
   const [hasAttemptedRewardPublish, setHasAttemptedRewardPublish] = useState(false);
+  const [isEditingReward, setIsEditingReward] = useState(false);
+  const [editingRewardId, setEditingRewardId] = useState<string | null>(null);
+  const [rewardManagementMessage, setRewardManagementMessage] = useState<
+    { type: 'error' | 'success'; text: string } | null
+  >(null);
+  const [includeInactiveRewards, setIncludeInactiveRewards] = useState(false);
+  const [selectedRewardIds, setSelectedRewardIds] = useState<string[]>([]);
+
+  const {
+    data: rewardTemplatesData,
+    isLoading: rewardTemplatesLoading,
+    error: rewardTemplatesError,
+    refetch: refetchRewardTemplates,
+  } = useQuery<RewardTemplate[]>(
+    ['rewardTemplates', includeInactiveRewards],
+    () => api.getRewardTemplates({ includeInactive: includeInactiveRewards }),
+    {
+      enabled: isAdmin && (mode === 'reward' || mode === 'rewardManage'),
+    }
+  );
+
+  const rewardTemplates = rewardTemplatesData ?? [];
+  const normalizedRewardTemplates = useMemo(() => {
+    return rewardTemplates.map((template) => ({
+      ...template,
+      allowed_roles: normalizeEnumArray(template.allowed_roles),
+      allowed_user_types: normalizeEnumArray(template.allowed_user_types),
+      allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
+      active: template.active ?? true,
+    }));
+  }, [rewardTemplates]);
 
   const rewardValidation = useMemo(
-    () => validateRewardFormState({ rewardSource, selectedRewardTemplate, rewardForm }),
-    [rewardSource, selectedRewardTemplate, rewardForm]
+    () => validateRewardFormState({ rewardSource, selectedRewardTemplate, rewardForm, isEditing: isEditingReward }),
+    [rewardSource, selectedRewardTemplate, rewardForm, isEditingReward]
   );
 
   const publishTaskMutation = useMutation((payload: any) => api.createCustomTask(payload), {
@@ -979,6 +1010,25 @@ function AdminPage() {
     },
   });
 
+  const updateTaskMutation = useMutation(
+    ({ id, payload }: { id: string; payload: any }) => api.updateTask(id, payload),
+    {
+      onSuccess: () => {
+        setTaskMessage({ type: 'success', text: 'Task updated successfully.' });
+        setIsEditingTask(false);
+        setEditingTaskId(null);
+        setTaskSource('');
+        setSelectedExistingTaskId('');
+        setTaskForm(defaultTaskForm('video'));
+        setHasAttemptedPublish(false);
+        void refetchTasks();
+      },
+      onError: (error: any) => {
+        setTaskMessage({ type: 'error', text: error?.message || 'Failed to update task.' });
+      },
+    }
+  );
+
   const createRewardMutation = useMutation((payload: any) => api.createReward(payload), {
     onSuccess: () => {
       setRewardMessage({ type: 'success', text: 'Reward published successfully.' });
@@ -993,11 +1043,37 @@ function AdminPage() {
     },
   });
 
+  const updateRewardMutation = useMutation(
+    ({ id, payload }: { id: string; payload: any }) => api.updateReward(id, payload),
+    {
+      onSuccess: () => {
+        setRewardMessage({ type: 'success', text: 'Reward updated successfully.' });
+        setIsEditingReward(false);
+        setEditingRewardId(null);
+        setHasAttemptedRewardPublish(false);
+        setRewardSource('');
+        setSelectedRewardTemplate('');
+        setRewardForm(defaultRewardForm('discount'));
+        void refetchRewardTemplates();
+      },
+      onError: (error: any) => {
+        setRewardMessage({ type: 'error', text: error?.message || 'Failed to update reward.' });
+      },
+    }
+  );
+
   const isPublishDisabled =
-    publishTaskMutation.isLoading || isUploadingVideo || !taskValidation.isValid;
-  const isRewardPublishDisabled = createRewardMutation.isLoading || !rewardValidation.isValid;
+    publishTaskMutation.isLoading ||
+    updateTaskMutation.isLoading ||
+    isUploadingVideo ||
+    !taskValidation.isValid;
+  const isRewardPublishDisabled =
+    createRewardMutation.isLoading || updateRewardMutation.isLoading || !rewardValidation.isValid;
 
   useEffect(() => {
+    if (isEditingTask) {
+      return;
+    }
     setTaskMessage(null);
     setHasAttemptedPublish(false);
     setIsUploadingVideo(false);
@@ -1008,9 +1084,10 @@ function AdminPage() {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm(taskSource));
     }
-  }, [taskSource]);
+  }, [taskSource, isEditingTask]);
 
   useEffect(() => {
+    if (isEditingTask) return;
     if (taskSource !== 'existing') return;
     const template = existingTemplates.find((task) => task.id === selectedExistingTaskId);
     if (!template) return;
@@ -1035,9 +1112,12 @@ function AdminPage() {
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       active: template.active ?? true,
     });
-  }, [taskSource, selectedExistingTaskId, existingTemplates]);
+  }, [taskSource, selectedExistingTaskId, existingTemplates, isEditingTask]);
 
   useEffect(() => {
+    if (isEditingReward) {
+      return;
+    }
     if (!rewardSource) {
       setHasAttemptedRewardPublish(false);
       setSelectedRewardTemplate('');
@@ -1052,9 +1132,12 @@ function AdminPage() {
       setSelectedRewardTemplate('');
       setRewardForm(defaultRewardForm(rewardSource));
     }
-  }, [rewardSource]);
+  }, [rewardSource, isEditingReward]);
 
   useEffect(() => {
+    if (isEditingReward) {
+      return;
+    }
     if (rewardSource !== 'existing') {
       return;
     }
@@ -1088,7 +1171,7 @@ function AdminPage() {
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       active: template.active ?? true,
     });
-  }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates]);
+  }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates, isEditingReward]);
 
   const handlePublishTask = async () => {
     try {
@@ -1132,6 +1215,39 @@ function AdminPage() {
         const quizPayload = buildQuizPayload(taskForm.quizQuestions);
         return { videoUrl, quizPayload };
       };
+
+      if (isEditingTask && editingTaskId) {
+        const { videoUrl, quizPayload } = await prepareVideoData(taskForm.type);
+
+        const payload: any = {
+          title: taskForm.title,
+          description: taskForm.description,
+          type: taskForm.type,
+          points: Number(taskForm.points) || 0,
+          co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
+          allowed_roles: ensureRoleList(taskForm.allowedRoles),
+          allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
+          allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
+          active: Boolean(taskForm.active),
+        };
+
+        if (taskForm.type === 'video') {
+          if (!videoUrl) {
+            throw new Error('Video URL is required for video tasks.');
+          }
+          payload.video_url = videoUrl;
+          payload.quiz_questions = quizPayload;
+        }
+        if (taskForm.type === 'qr') {
+          payload.qr_code = taskForm.qr_code.trim();
+        }
+        if (taskForm.type === 'photo') {
+          payload.photo_required = true;
+        }
+
+        await updateTaskMutation.mutateAsync({ id: editingTaskId, payload });
+        return;
+      }
 
       if (taskSource === 'existing') {
         const template = existingTemplates.find((task) => task.id === selectedExistingTaskId);
@@ -1247,6 +1363,11 @@ function AdminPage() {
         basePayload.externalApiId = rewardForm.externalApiId.trim();
       }
 
+      if (isEditingReward && editingRewardId) {
+        await updateRewardMutation.mutateAsync({ id: editingRewardId, payload: basePayload });
+        return;
+      }
+
       await createRewardMutation.mutateAsync(basePayload);
     } catch (error: any) {
       setRewardMessage({
@@ -1255,6 +1376,318 @@ function AdminPage() {
       });
     }
   };
+
+  useEffect(() => {
+    setSelectedTaskIds((prev) =>
+      prev.filter((id) => existingTemplates.some((task) => task.id === id))
+    );
+  }, [existingTemplates]);
+
+  useEffect(() => {
+    setSelectedRewardIds((prev) =>
+      prev.filter((id) => normalizedRewardTemplates.some((reward) => reward.id === id))
+    );
+  }, [normalizedRewardTemplates]);
+
+  const toggleTaskSelection = (taskId: string, checked: boolean) => {
+    setSelectedTaskIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(taskId);
+      } else {
+        next.delete(taskId);
+      }
+      return Array.from(next);
+    });
+  };
+
+  const toggleRewardSelection = (rewardId: string, checked: boolean) => {
+    setSelectedRewardIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(rewardId);
+      } else {
+        next.delete(rewardId);
+      }
+      return Array.from(next);
+    });
+  };
+
+  const handleTaskBulkStatus = async (active: boolean) => {
+    if (!selectedTaskIds.length) return;
+    try {
+      setTaskManagementMessage(null);
+      await api.bulkUpdateTasksStatus(selectedTaskIds, active);
+      setTaskManagementMessage({
+        type: 'success',
+        text: active ? 'Selected tasks activated.' : 'Selected tasks deactivated.',
+      });
+      setSelectedTaskIds([]);
+      void refetchTasks();
+    } catch (error: any) {
+      setTaskManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update selected tasks.',
+      });
+    }
+  };
+
+  const handleTaskBulkDelete = async () => {
+    if (!selectedTaskIds.length) return;
+    if (!window.confirm('Delete selected tasks? They will be deactivated for users.')) {
+      return;
+    }
+    try {
+      setTaskManagementMessage(null);
+      await api.bulkDeleteTasks(selectedTaskIds);
+      setTaskManagementMessage({
+        type: 'success',
+        text: 'Selected tasks deleted.',
+      });
+      setSelectedTaskIds([]);
+      void refetchTasks();
+    } catch (error: any) {
+      setTaskManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to delete selected tasks.',
+      });
+    }
+  };
+
+  const handleTaskStatusChange = async (taskId: string, active: boolean) => {
+    try {
+      setTaskManagementMessage(null);
+      await api.bulkUpdateTasksStatus([taskId], active);
+      setTaskManagementMessage({
+        type: 'success',
+        text: active ? 'Task activated.' : 'Task deactivated.',
+      });
+      void refetchTasks();
+    } catch (error: any) {
+      setTaskManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update task.',
+      });
+    }
+  };
+
+  const handleTaskDelete = async (taskId: string) => {
+    if (!window.confirm('Delete this task? It will be deactivated for users.')) {
+      return;
+    }
+    try {
+      setTaskManagementMessage(null);
+      await api.bulkDeleteTasks([taskId]);
+      setTaskManagementMessage({
+        type: 'success',
+        text: 'Task deleted.',
+      });
+      if (editingTaskId === taskId) {
+        setIsEditingTask(false);
+        setEditingTaskId(null);
+        setTaskSource('');
+        setSelectedExistingTaskId('');
+        setTaskForm(defaultTaskForm('video'));
+      }
+      void refetchTasks();
+    } catch (error: any) {
+      setTaskManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to delete task.',
+      });
+    }
+  };
+
+  const handleRewardBulkStatus = async (active: boolean) => {
+    if (!selectedRewardIds.length) return;
+    try {
+      setRewardManagementMessage(null);
+      await api.bulkUpdateRewardsStatus(selectedRewardIds, active);
+      setRewardManagementMessage({
+        type: 'success',
+        text: active ? 'Selected rewards activated.' : 'Selected rewards deactivated.',
+      });
+      setSelectedRewardIds([]);
+      void refetchRewardTemplates();
+    } catch (error: any) {
+      setRewardManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update selected rewards.',
+      });
+    }
+  };
+
+  const handleRewardBulkDelete = async () => {
+    if (!selectedRewardIds.length) return;
+    if (!window.confirm('Delete selected rewards? They will be deactivated for users.')) {
+      return;
+    }
+    try {
+      setRewardManagementMessage(null);
+      await api.bulkDeleteRewards(selectedRewardIds);
+      setRewardManagementMessage({
+        type: 'success',
+        text: 'Selected rewards deleted.',
+      });
+      setSelectedRewardIds([]);
+      void refetchRewardTemplates();
+    } catch (error: any) {
+      setRewardManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to delete selected rewards.',
+      });
+    }
+  };
+
+  const handleRewardStatusChange = async (rewardId: string, active: boolean) => {
+    try {
+      setRewardManagementMessage(null);
+      await api.bulkUpdateRewardsStatus([rewardId], active);
+      setRewardManagementMessage({
+        type: 'success',
+        text: active ? 'Reward activated.' : 'Reward deactivated.',
+      });
+      void refetchRewardTemplates();
+    } catch (error: any) {
+      setRewardManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update reward.',
+      });
+    }
+  };
+
+  const handleRewardDelete = async (rewardId: string) => {
+    if (!window.confirm('Delete this reward? It will be deactivated for users.')) {
+      return;
+    }
+    try {
+      setRewardManagementMessage(null);
+      await api.bulkDeleteRewards([rewardId]);
+      setRewardManagementMessage({
+        type: 'success',
+        text: 'Reward deleted.',
+      });
+      if (editingRewardId === rewardId) {
+        setIsEditingReward(false);
+        setEditingRewardId(null);
+        setRewardSource('');
+        setSelectedRewardTemplate('');
+        setRewardForm(defaultRewardForm('discount'));
+      }
+      void refetchRewardTemplates();
+    } catch (error: any) {
+      setRewardManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to delete reward.',
+      });
+    }
+  };
+
+  const startTaskEdit = (task: AdminTaskTemplate) => {
+    setMode('task');
+    setTaskManagementMessage(null);
+    setTaskMessage(null);
+    const source: TaskSource =
+      task.type === 'video' ? 'video' : task.type === 'qr' ? 'qr' : task.type === 'photo' ? 'photo' : '';
+    setTaskSource(source);
+    setSelectedExistingTaskId('');
+    setTaskForm({
+      title: task.title ?? '',
+      description: task.description ?? '',
+      type: task.type,
+      points: task.points ?? 0,
+      video_url: task.video_url ?? '',
+      videoSource: 'url',
+      videoFile: null,
+      quizQuestions:
+        task.type === 'video' ? normalizeQuizQuestions(task.quiz_questions ?? []) : [],
+      qr_code: task.qr_code ?? '',
+      photo_required: task.type === 'photo',
+      co2_savings_kg: task.co2_savings_kg ?? 0,
+      allowedRoles: normalizeEnumArray(task.allowed_roles),
+      allowedUserTypes: normalizeEnumArray(task.allowed_user_types),
+      allowedHotelIds: normalizeEnumArray(task.allowed_hotel_ids),
+      active: task.active ?? true,
+    });
+    setIsEditingTask(true);
+    setEditingTaskId(task.id);
+    setHasAttemptedPublish(false);
+  };
+
+  const cancelTaskEdit = () => {
+    setIsEditingTask(false);
+    setEditingTaskId(null);
+    setTaskSource('');
+    setSelectedExistingTaskId('');
+    setTaskForm(defaultTaskForm('video'));
+    setTaskMessage(null);
+    setHasAttemptedPublish(false);
+  };
+
+  const startRewardEdit = (template: RewardTemplate) => {
+    setMode('reward');
+    setRewardManagementMessage(null);
+    setRewardMessage(null);
+    const templateType = (REWARD_TYPES as readonly string[]).includes(template.reward_type)
+      ? (template.reward_type as RewardType)
+      : 'discount';
+    setRewardSource(templateType);
+    setSelectedRewardTemplate('');
+    const pointsCostRaw =
+      template.points_cost !== undefined && template.points_cost !== null
+        ? Number(template.points_cost)
+        : 0;
+    const normalizedPointsCost = Number.isNaN(pointsCostRaw) ? 0 : pointsCostRaw;
+    setRewardForm({
+      title: template.title ?? '',
+      description: template.description ?? '',
+      type: templateType,
+      pointsCost: normalizedPointsCost,
+      voucherCode: template.voucher_code ?? '',
+      externalApiId: template.external_api_id ?? '',
+      allowedRoles: normalizeEnumArray(template.allowed_roles),
+      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
+      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      active: template.active ?? true,
+    });
+    setIsEditingReward(true);
+    setEditingRewardId(template.id);
+    setHasAttemptedRewardPublish(false);
+  };
+
+  const cancelRewardEdit = () => {
+    setIsEditingReward(false);
+    setEditingRewardId(null);
+    setRewardSource('');
+    setSelectedRewardTemplate('');
+    setRewardForm(defaultRewardForm('discount'));
+    setRewardMessage(null);
+    setHasAttemptedRewardPublish(false);
+  };
+
+  const allTasksSelected =
+    existingTemplates.length > 0 && selectedTaskIds.length === existingTemplates.length;
+  const allRewardsSelected =
+    normalizedRewardTemplates.length > 0 &&
+    selectedRewardIds.length === normalizedRewardTemplates.length;
+  const hasTaskSelection = selectedTaskIds.length > 0;
+  const hasRewardSelection = selectedRewardIds.length > 0;
+  const isTaskSaving = publishTaskMutation.isLoading || updateTaskMutation.isLoading;
+  const taskSubmitLabel = isEditingTask
+    ? isTaskSaving
+      ? 'Saving…'
+      : 'Save Task Changes'
+    : publishTaskMutation.isLoading
+    ? 'Publishing…'
+    : 'Publish Task';
+  const isRewardSaving = createRewardMutation.isLoading || updateRewardMutation.isLoading;
+  const rewardSubmitLabel = isEditingReward
+    ? isRewardSaving
+      ? 'Saving…'
+      : 'Save Reward Changes'
+    : createRewardMutation.isLoading
+    ? 'Publishing…'
+    : 'Publish Reward';
 
   if (!isAdmin) {
     return (
@@ -1294,6 +1727,16 @@ function AdminPage() {
             <h2>Create Reward</h2>
             <p>Publish a new reward for the marketplace.</p>
           </button>
+          <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
+            <span className="admin-choice-icon">🗂️</span>
+            <h2>Manage Tasks</h2>
+            <p>Browse, edit, activate, deactivate, or delete existing tasks.</p>
+          </button>
+          <button className="admin-choice-card" onClick={() => setMode('rewardManage')}>
+            <span className="admin-choice-icon">🧾</span>
+            <h2>Manage Rewards</h2>
+            <p>Review and maintain rewards available to users.</p>
+          </button>
         </div>
       )}
 
@@ -1332,7 +1775,11 @@ function AdminPage() {
               <span>Create from</span>
               <select
                 value={taskSource}
-                onChange={(event) => setTaskSource(event.target.value as TaskSource)}
+                onChange={(event) => {
+                  if (isEditingTask) return;
+                  setTaskSource(event.target.value as TaskSource);
+                }}
+                disabled={isEditingTask}
               >
                 <option value="">Select option</option>
                 <option value="existing">Existing task</option>
@@ -1369,6 +1816,17 @@ function AdminPage() {
                     </div>
                     <TaskTypeBadge type={taskForm.type} />
                   </div>
+                  {isEditingTask && (
+                    <div className="admin-edit-banner">
+                      <span>
+                        Editing task:&nbsp;
+                        <strong>{taskForm.title.trim() || 'Untitled task'}</strong>
+                      </span>
+                      <button type="button" className="admin-link-button" onClick={cancelTaskEdit}>
+                        Cancel editing
+                      </button>
+                    </div>
+                  )}
                   <div className="admin-form-grid admin-form-grid-two">
                     <label className="admin-field admin-field-span-2">
                       <FieldLabel label="Title" required />
@@ -1605,6 +2063,10 @@ function AdminPage() {
                       <p className={taskMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
                         {taskMessage.text}
                       </p>
+                    ) : isEditingTask ? (
+                      <p className="admin-publish-hint">
+                        Editing existing task. Save changes or cancel the edit.
+                      </p>
                     ) : isUploadingVideo ? (
                       <p className="admin-publish-hint">Uploading video file…</p>
                     ) : !taskValidation.isValid ? (
@@ -1622,7 +2084,7 @@ function AdminPage() {
                     onClick={handlePublishTask}
                     disabled={isPublishDisabled}
                   >
-                    {publishTaskMutation.isLoading ? 'Publishing…' : 'Publish Task'}
+                    {taskSubmitLabel}
                   </button>
                 </div>
               </div>
@@ -1668,7 +2130,11 @@ function AdminPage() {
               <span>Create from</span>
               <select
                 value={rewardSource}
-                onChange={(event) => setRewardSource(event.target.value as RewardSource)}
+                onChange={(event) => {
+                  if (isEditingReward) return;
+                  setRewardSource(event.target.value as RewardSource);
+                }}
+                disabled={isEditingReward}
               >
                 <option value="">Select option</option>
                 <option value="existing">Existing reward</option>
@@ -1715,6 +2181,21 @@ function AdminPage() {
                     </div>
                     <RewardTypeBadge type={rewardForm.type} />
                   </div>
+                  {isEditingReward && (
+                    <div className="admin-edit-banner">
+                      <span>
+                        Editing reward:&nbsp;
+                        <strong>{rewardForm.title.trim() || 'Untitled reward'}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        className="admin-link-button"
+                        onClick={cancelRewardEdit}
+                      >
+                        Cancel editing
+                      </button>
+                    </div>
+                  )}
                   <div className="admin-form-grid admin-form-grid-two">
                     <label className="admin-field admin-field-span-2">
                       <FieldLabel label="Title" required />
@@ -1841,6 +2322,10 @@ function AdminPage() {
                       <p className={rewardMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
                         {rewardMessage.text}
                       </p>
+                    ) : isEditingReward ? (
+                      <p className="admin-publish-hint">
+                        Editing existing reward. Save changes or cancel the edit.
+                      </p>
                     ) : !rewardValidation.isValid ? (
                       <p className="admin-publish-hint">
                         {hasAttemptedRewardPublish && rewardValidation.message
@@ -1856,11 +2341,421 @@ function AdminPage() {
                     onClick={handlePublishReward}
                     disabled={isRewardPublishDisabled}
                   >
-                    {createRewardMutation.isLoading ? 'Publishing…' : 'Publish Reward'}
+                    {rewardSubmitLabel}
                   </button>
                 </div>
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {mode === 'taskManage' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>Manage Tasks</h2>
+              <p>Browse all tasks, toggle availability, or clean up unused entries.</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => refetchTasks()}
+                title="Refresh tasks"
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">Refresh tasks</span>
+              </button>
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title="Back to main menu"
+              >
+                <Icon name="back" />
+                <span className="sr-only">Back</span>
+              </button>
+            </div>
+          </header>
+
+          {tasksLoading && <p>Loading tasks…</p>}
+          {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
+
+          <div className="admin-management-card">
+            <div className="admin-management-top">
+              <div>
+                <h3>Existing tasks</h3>
+                <p>Review, edit, activate, deactivate, or delete tasks directly.</p>
+              </div>
+              <label className="admin-toggle">
+                <input
+                  type="checkbox"
+                  className="admin-checkbox"
+                  style={COMPACT_TOGGLE_STYLE}
+                  checked={includeInactiveTasks}
+                  onChange={(event) => {
+                    setIncludeInactiveTasks(event.target.checked);
+                    setSelectedTaskIds([]);
+                  }}
+                />
+                <span>Show inactive</span>
+              </label>
+            </div>
+            {taskManagementMessage && (
+              <p
+                className={
+                  taskManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+                }
+              >
+                {taskManagementMessage.text}
+              </p>
+            )}
+            <div className="admin-management-actions">
+              <div className="admin-bulk-buttons">
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleTaskBulkStatus(true)}
+                  disabled={!hasTaskSelection}
+                  type="button"
+                >
+                  Activate
+                </button>
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleTaskBulkStatus(false)}
+                  disabled={!hasTaskSelection}
+                  type="button"
+                >
+                  Deactivate
+                </button>
+                <button
+                  className="admin-action-button danger"
+                  onClick={handleTaskBulkDelete}
+                  disabled={!hasTaskSelection}
+                  type="button"
+                >
+                  Delete
+                </button>
+              </div>
+              <span className="admin-selection-count">
+                {hasTaskSelection ? `${selectedTaskIds.length} selected` : 'No tasks selected'}
+              </span>
+            </div>
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '3rem' }}>
+                      <input
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={allTasksSelected && existingTemplates.length > 0}
+                        disabled={!existingTemplates.length}
+                        onChange={(event) =>
+                          setSelectedTaskIds(
+                            event.target.checked
+                              ? existingTemplates.map((task) => task.id)
+                              : []
+                          )
+                        }
+                        aria-label="Select all tasks"
+                      />
+                    </th>
+                    <th>Task</th>
+                    <th>Type</th>
+                    <th>Points</th>
+                    <th>Status</th>
+                    <th style={{ width: '24rem' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {existingTemplates.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="admin-table-empty">
+                        No tasks found.
+                      </td>
+                    </tr>
+                  ) : (
+                    existingTemplates.map((task) => {
+                      const isSelected = selectedTaskIds.includes(task.id);
+                      return (
+                        <tr key={task.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="admin-checkbox"
+                              style={COMPACT_TOGGLE_STYLE}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggleTaskSelection(task.id, event.target.checked)
+                              }
+                              aria-label={`Select task ${task.title}`}
+                            />
+                          </td>
+                          <td>
+                            <div className="admin-table-primary">
+                              <span className="admin-table-title">
+                                {task.title || 'Untitled task'}
+                              </span>
+                              {task.description && (
+                                <span className="admin-table-subtitle">{task.description}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="admin-table-type">
+                              <TaskTypeBadge type={task.type} />
+                            </span>
+                          </td>
+                          <td>{task.points}</td>
+                          <td>
+                            <span
+                              className={`admin-status-badge ${
+                                task.active ? 'active' : 'inactive'
+                              }`}
+                            >
+                              {task.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="admin-table-actions">
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => startTaskEdit(task)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => handleTaskStatusChange(task.id, !task.active)}
+                            >
+                              {task.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              className="admin-action-button danger"
+                              type="button"
+                              onClick={() => handleTaskDelete(task.id)}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {mode === 'rewardManage' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>Manage Rewards</h2>
+              <p>Review existing rewards and adjust their details or availability.</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => refetchRewardTemplates()}
+                title="Refresh rewards"
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">Refresh rewards</span>
+              </button>
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title="Back to main menu"
+              >
+                <Icon name="back" />
+                <span className="sr-only">Back</span>
+              </button>
+            </div>
+          </header>
+
+          {rewardTemplatesLoading && <p>Loading rewards…</p>}
+          {Boolean(rewardTemplatesError) && (
+            <p className="admin-error">Failed to load rewards.</p>
+          )}
+
+          <div className="admin-management-card">
+            <div className="admin-management-top">
+              <div>
+                <h3>Existing rewards</h3>
+                <p>Maintain active rewards, edit their details, or clean up inactive entries.</p>
+              </div>
+              <label className="admin-toggle">
+                <input
+                  type="checkbox"
+                  className="admin-checkbox"
+                  style={COMPACT_TOGGLE_STYLE}
+                  checked={includeInactiveRewards}
+                  onChange={(event) => {
+                    setIncludeInactiveRewards(event.target.checked);
+                    setSelectedRewardIds([]);
+                  }}
+                />
+                <span>Show inactive</span>
+              </label>
+            </div>
+            {rewardManagementMessage && (
+              <p
+                className={
+                  rewardManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+                }
+              >
+                {rewardManagementMessage.text}
+              </p>
+            )}
+            <div className="admin-management-actions">
+              <div className="admin-bulk-buttons">
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleRewardBulkStatus(true)}
+                  disabled={!hasRewardSelection}
+                  type="button"
+                >
+                  Activate
+                </button>
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleRewardBulkStatus(false)}
+                  disabled={!hasRewardSelection}
+                  type="button"
+                >
+                  Deactivate
+                </button>
+                <button
+                  className="admin-action-button danger"
+                  onClick={handleRewardBulkDelete}
+                  disabled={!hasRewardSelection}
+                  type="button"
+                >
+                  Delete
+                </button>
+              </div>
+              <span className="admin-selection-count">
+                {hasRewardSelection
+                  ? `${selectedRewardIds.length} selected`
+                  : 'No rewards selected'}
+              </span>
+            </div>
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '3rem' }}>
+                      <input
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={allRewardsSelected && normalizedRewardTemplates.length > 0}
+                        disabled={!normalizedRewardTemplates.length}
+                        onChange={(event) =>
+                          setSelectedRewardIds(
+                            event.target.checked
+                              ? normalizedRewardTemplates.map((reward) => reward.id)
+                              : []
+                          )
+                        }
+                        aria-label="Select all rewards"
+                      />
+                    </th>
+                    <th>Reward</th>
+                    <th>Type</th>
+                    <th>Cost</th>
+                    <th>Status</th>
+                    <th style={{ width: '24rem' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {normalizedRewardTemplates.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="admin-table-empty">
+                        No rewards found.
+                      </td>
+                    </tr>
+                  ) : (
+                    normalizedRewardTemplates.map((reward) => {
+                      const isSelected = selectedRewardIds.includes(reward.id);
+                      const cost =
+                        reward.points_cost !== undefined && reward.points_cost !== null
+                          ? Number(reward.points_cost)
+                          : 0;
+                      return (
+                        <tr key={reward.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="admin-checkbox"
+                              style={COMPACT_TOGGLE_STYLE}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggleRewardSelection(reward.id, event.target.checked)
+                              }
+                              aria-label={`Select reward ${reward.title}`}
+                            />
+                          </td>
+                          <td>
+                            <div className="admin-table-primary">
+                              <span className="admin-table-title">
+                                {reward.title || 'Untitled reward'}
+                              </span>
+                              {reward.description && (
+                                <span className="admin-table-subtitle">{reward.description}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="admin-table-type">
+                              <RewardTypeBadge type={reward.reward_type as RewardType} />
+                            </span>
+                          </td>
+                          <td>{cost}</td>
+                          <td>
+                            <span
+                              className={`admin-status-badge ${
+                                reward.active ? 'active' : 'inactive'
+                              }`}
+                            >
+                              {reward.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="admin-table-actions">
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => startRewardEdit(reward)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => handleRewardStatusChange(reward.id, !reward.active)}
+                            >
+                              {reward.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              className="admin-action-button danger"
+                              type="button"
+                              onClick={() => handleRewardDelete(reward.id)}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       )}

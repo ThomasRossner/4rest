@@ -23,7 +23,7 @@ export interface Task {
 export async function getAllTasks(
   filters?: { limit?: number; offset?: number; type?: string },
   userId?: string,
-  options?: { includeAll?: boolean }
+  options?: { includeAll?: boolean; includeInactive?: boolean }
 ) {
   const db = getPool();
   let userRole: UserRole | null = null;
@@ -32,6 +32,7 @@ export async function getAllTasks(
   let paramIndex = 1;
 
   let applyAudienceFilters = !(options?.includeAll ?? false);
+  const includeInactive = options?.includeInactive ?? false;
 
   if (userId) {
     const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
@@ -58,34 +59,52 @@ export async function getAllTasks(
     params.push(userId);
   }
 
-  let query = `SELECT ${select}${from} WHERE t.active = TRUE`;
+  const clauses: string[] = [];
+  if (!includeInactive) {
+    clauses.push('t.active = TRUE');
+  }
 
   if (applyAudienceFilters) {
     if (userRole) {
-      query += ` AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_roles))`;
+      clauses.push(
+        `(t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_roles))`
+      );
       params.push(userRole);
     } else {
-      query += ' AND (t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0)';
+      clauses.push('(t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0)');
     }
 
     if (userType) {
-      query += ` AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_user_types))`;
+      clauses.push(
+        `(t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_user_types))`
+      );
       params.push(userType);
     } else {
-      query += ' AND (t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0)';
+      clauses.push(
+        '(t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0)'
+      );
     }
 
     if (hotelId) {
-      query += ` AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_hotel_ids))`;
+      clauses.push(
+        `(t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_hotel_ids))`
+      );
       params.push(hotelId);
     } else {
-      query += ' AND (t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0)';
+      clauses.push(
+        '(t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0)'
+      );
     }
   }
 
   if (filters?.type) {
-    query += ` AND t.type = $${paramIndex++}`;
+    clauses.push(`t.type = $${paramIndex++}`);
     params.push(filters.type);
+  }
+
+  let query = `SELECT ${select}${from}`;
+  if (clauses.length > 0) {
+    query += ` WHERE ${clauses.join(' AND ')}`;
   }
 
   query += ' ORDER BY t.id, t.created_at DESC';
@@ -197,6 +216,21 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
 export async function deleteTask(id: string): Promise<void> {
   const db = getPool();
   await db.query('UPDATE tasks SET active = FALSE WHERE id = $1', [id]);
+}
+
+export async function setTasksActiveState(ids: string[], active: boolean): Promise<void> {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return;
+  }
+  const db = getPool();
+  await db.query(
+    'UPDATE tasks SET active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = ANY($2::uuid[])',
+    [active, ids]
+  );
+}
+
+export async function bulkDeleteTasks(ids: string[]): Promise<void> {
+  await setTasksActiveState(ids, false);
 }
 
 export async function completeTask(taskId: string, userId: string, data?: any) {

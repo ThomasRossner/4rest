@@ -9,14 +9,17 @@ import {
   completeTask as completeTaskService,
   uploadPhoto as uploadPhotoService,
   uploadVideo as uploadVideoService,
+  setTasksActiveState,
+  bulkDeleteTasks as bulkDeleteTasksService,
 } from '../services/task.service.js';
 import { USER_ROLES, USER_TYPES, HOTEL_IDS } from '../constants/enums.js';
 
 export const getTasks: RequestHandler = async (req, res) => {
   try {
-    const { limit, offset, type, includeAll } = req.query;
+    const { limit, offset, type, includeAll, includeInactive } = req.query;
     const authReq = req as AuthRequest;
     const isAdmin = authReq.user?.role === 'administrator';
+    const includeInactiveFlag = isAdmin && includeInactive === 'true';
     const tasks = await getAllTasks(
       {
         limit: limit ? parseInt(limit as string, 10) : undefined,
@@ -24,7 +27,7 @@ export const getTasks: RequestHandler = async (req, res) => {
         type: type as string,
       },
       authReq.user?.id,
-      { includeAll: isAdmin && includeAll === 'true' }
+      { includeAll: isAdmin && includeAll === 'true', includeInactive: includeInactiveFlag }
     );
     res.json(tasks);
   } catch (error: any) {
@@ -120,6 +123,37 @@ export const updateTask: RequestHandler = async (req, res) => {
 export const deleteTask: RequestHandler = async (req, res) => {
   try {
     await deleteTaskService(req.params.id);
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const bulkUpdateTaskStatus: RequestHandler = async (req, res) => {
+  try {
+    const { ids, active } = req.body ?? {};
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Provide an array of task ids.' });
+    }
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({ error: 'Active flag must be a boolean value.' });
+    }
+
+    await setTasksActiveState(ids, active);
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const bulkDeleteTasks: RequestHandler = async (req, res) => {
+  try {
+    const { ids } = req.body ?? {};
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Provide an array of task ids.' });
+    }
+    await bulkDeleteTasksService(ids);
     res.status(204).send();
   } catch (error: any) {
     res.status(500).json({ error: error.message });
