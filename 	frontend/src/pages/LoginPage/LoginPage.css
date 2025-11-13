@@ -168,42 +168,84 @@
 
 .social-login {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
 }
 
 .social-login-button {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
   background: white;
   color: var(--color-text);
-  font-size: 1rem;
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
+  overflow: hidden;
 }
 
 .social-login-button:hover {
-  background: #f5f5f5;
-  border-color: var(--color-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .social-login-button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .social-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 8px;
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* Tooltip styles */
+.social-login-button::before {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+.social-login-button::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+.social-login-button:hover::before,
+.social-login-button:hover::after {
+  opacity: 1;
 }
 
 .google-button {
@@ -212,8 +254,11 @@
 
 .google-button:hover {
   background: #4285F4;
-  color: white;
   border-color: #4285F4;
+}
+
+.google-button:hover .social-icon {
+  filter: brightness(0) invert(1);
 }
 
 .facebook-button {
@@ -222,8 +267,11 @@
 
 .facebook-button:hover {
   background: #1877F2;
-  color: white;
   border-color: #1877F2;
+}
+
+.facebook-button:hover .social-icon {
+  filter: brightness(0) invert(1);
 }
 
 .apple-button {
@@ -232,8 +280,11 @@
 
 .apple-button:hover {
   background: #000000;
-  color: white;
   border-color: #000000;
+}
+
+.apple-button:hover .social-icon {
+  filter: brightness(0) invert(1);
 }
 
 .github-button {
@@ -242,6 +293,9 @@
 
 .github-button:hover {
   background: #24292e;
-  color: white;
   border-color: #24292e;
+}
+
+.github-button:hover .social-icon {
+  filter: brightness(0) invert(1);
 }
