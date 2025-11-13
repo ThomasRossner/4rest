@@ -1502,7 +1502,7 @@ function AdminPage() {
     setTaskConfirm({
       visible: true,
       title: 'Delete selected tasks',
-      description: 'Are you sure you want to delete the selected tasks? They will become inactive.',
+      description: 'Are you sure you want to permanently delete the selected tasks? This action cannot be undone.',
       confirmLabel: 'Delete tasks',
       confirmTone: 'danger',
       onConfirm: async () => {
@@ -1548,7 +1548,7 @@ function AdminPage() {
     setTaskConfirm({
       visible: true,
       title: 'Delete task',
-      description: 'Are you sure you want to delete this task? It will become inactive for users.',
+      description: 'Are you sure you want to permanently delete this task? This action cannot be undone.',
       confirmLabel: 'Delete task',
       confirmTone: 'danger',
       onConfirm: async () => {
@@ -1599,7 +1599,7 @@ function AdminPage() {
     setRewardConfirm({
       visible: true,
       title: 'Delete selected rewards',
-      description: 'Are you sure you want to delete the selected rewards? They will become inactive.',
+      description: 'Are you sure you want to permanently delete the selected rewards? This action cannot be undone.',
       confirmLabel: 'Delete rewards',
       confirmTone: 'danger',
       onConfirm: async () => {
@@ -1645,7 +1645,7 @@ function AdminPage() {
     setRewardConfirm({
       visible: true,
       title: 'Delete reward',
-      description: 'Are you sure you want to delete this reward? It will become inactive for users.',
+      description: 'Are you sure you want to permanently delete this reward? This action cannot be undone.',
       confirmLabel: 'Delete reward',
       confirmTone: 'danger',
       onConfirm: async () => {

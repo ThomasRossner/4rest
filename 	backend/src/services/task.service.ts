@@ -215,7 +215,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
 
 export async function deleteTask(id: string): Promise<void> {
   const db = getPool();
-  await db.query('UPDATE tasks SET active = FALSE WHERE id = $1', [id]);
+  await db.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 
 export async function setTasksActiveState(ids: string[], active: boolean): Promise<void> {
@@ -230,7 +230,11 @@ export async function setTasksActiveState(ids: string[], active: boolean): Promi
 }
 
 export async function bulkDeleteTasks(ids: string[]): Promise<void> {
-  await setTasksActiveState(ids, false);
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return;
+  }
+  const db = getPool();
+  await db.query('DELETE FROM tasks WHERE id = ANY($1::uuid[])', [ids]);
 }
 
 export async function completeTask(taskId: string, userId: string, data?: any) {

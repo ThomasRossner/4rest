@@ -289,7 +289,11 @@ export async function setRewardsActiveState(ids: string[], active: boolean) {
 }
 
 export async function bulkDeleteRewards(ids: string[]) {
-  await setRewardsActiveState(ids, false);
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return;
+  }
+  const db = getPool();
+  await db.query('DELETE FROM rewards WHERE id = ANY($1::uuid[])', [ids]);
 }
 
 export async function getRewardById(id: string) {
