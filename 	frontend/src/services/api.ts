@@ -72,6 +72,26 @@ export const api = {
     return response.data;
   },
 
+  async forgotPassword(email: string) {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  async resetPassword(token: string, password: string) {
+    const response = await apiClient.post('/auth/reset-password', { token, password });
+    return response.data;
+  },
+
+  async verifyEmail(token: string) {
+    const response = await apiClient.post('/auth/verify-email', { token });
+    return response.data;
+  },
+
+  async resendVerificationEmail() {
+    const response = await apiClient.post('/auth/resend-verification');
+    return response.data;
+  },
+
   // Tasks
   async getTasks(params?: {
     limit?: number;

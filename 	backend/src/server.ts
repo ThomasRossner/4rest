@@ -13,7 +13,12 @@ import { startSihotSyncScheduler } from './services/sihot-sync.service.js';
 import { registerWebSocketServer } from './ws/socketRegistry.js';
 
 // Load environment variables BEFORE importing passport config
-dotenv.config();
+// Use explicit path to ensure .env is loaded from backend directory
+const envPath = path.join(process.cwd(), '.env');
+dotenv.config({ path: envPath });
+console.log(`[SERVER] Loading environment from: ${envPath}`);
+console.log(`[SERVER] EMAIL_MOCK_MODE: ${process.env.EMAIL_MOCK_MODE}`);
+console.log(`[SERVER] NODE_ENV: ${process.env.NODE_ENV}`);
 
 import passport from './config/passport.js';
 

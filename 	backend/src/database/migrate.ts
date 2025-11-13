@@ -69,6 +69,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration12 = readFileSync(
+      join(__dirname, '../../../database/migrations/012_email_verification_password_reset.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -208,6 +213,17 @@ async function runMigrations() {
       console.log('✓ Migration 011 completed');
     } else {
       console.log('✓ Migration 011 already executed');
+    }
+    
+    if (!executed.has('012_email_verification_password_reset')) {
+      console.log('Running migration: 012_email_verification_password_reset.sql');
+      await pool.query(migration12);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('012_email_verification_password_reset') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 012 completed');
+    } else {
+      console.log('✓ Migration 012 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

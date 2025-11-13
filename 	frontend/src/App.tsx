@@ -48,6 +48,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<LoginPage />} />
+        <Route path="/verify-email" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/*" element={<ProtectedApp />} />
       </Routes>

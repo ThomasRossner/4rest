@@ -15,6 +15,12 @@ export interface User {
   oauth_email?: string | null;
   sihot_guest_id?: string | null;
   sihot_guest_data?: Record<string, any> | null;
+  email_verified?: boolean;
+  email_verification_token?: string | null;
+  email_verification_expires?: Date | null;
+  password_reset_token?: string | null;
+  password_reset_expires?: Date | null;
+  email_notifications_enabled?: boolean;
 }
 
 export interface CreateUserData {
@@ -298,4 +304,12 @@ export async function updateUserProfileService(userId: string, data: Partial<Use
   );
 
   return result.rows[0];
+}
+
+export async function updateUserPassword(userId: string, passwordHash: string): Promise<void> {
+  const db = getPool();
+  await db.query(
+    'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+    [passwordHash, userId]
+  );
 }

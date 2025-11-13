@@ -108,6 +108,9 @@ docker-compose.override.yml
 uploads/
 public/uploads/
 
+# Email output (mock mode)
+backend/email-output/
+
 # Temporary files
 tmp/
 temp/

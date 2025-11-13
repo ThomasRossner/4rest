@@ -165,6 +165,7 @@ export interface User {
   points: number;
   userType: UserType;
   avatar?: string;
+  emailVerified?: boolean;
   sihotGuestId?: string | null;
   sihotGuest?: SihotGuestProfile | null;
   sihotReservations?: SihotReservationSummary[];

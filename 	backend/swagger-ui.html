@@ -41,6 +41,9 @@
     window.onload = function() {
       // Initialize Swagger UI with the OpenAPI YAML file
       // Swagger UI can load YAML files directly via URL
+      // This will automatically include all endpoints including:
+      // - Authentication (login, register, password reset, email verification)
+      // - Tasks, Rewards, Users, Forest, Statistics, GDPR, HotelKit, Sihot
       window.ui = SwaggerUIBundle({
         url: './openapi.yaml',
         dom_id: '#swagger-ui',
@@ -58,11 +61,27 @@
         supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch', 'options', 'head'],
         requestInterceptor: function(request) {
           // Add JWT token from localStorage if available
+          // To set a token for testing: localStorage.setItem('jwt_token', 'your-token-here')
           const token = localStorage.getItem('jwt_token');
           if (token && request.headers) {
             request.headers['Authorization'] = 'Bearer ' + token;
           }
           return request;
+        },
+        responseInterceptor: function(response) {
+          // Store JWT token from login/register responses
+          if (response.url && (response.url.includes('/auth/login') || response.url.includes('/auth/register'))) {
+            try {
+              const data = JSON.parse(response.body);
+              if (data.token) {
+                localStorage.setItem('jwt_token', data.token);
+                console.log('JWT token stored in localStorage');
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+          return response;
         },
         onComplete: function() {
           console.log('Swagger UI loaded successfully');

@@ -2,11 +2,19 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import passport from 'passport';
-import { createUser, getUserByEmail } from '../services/user.service.js';
+import { createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
 import { AuthRequest } from '../middleware/authenticate.js';
 import { sihot } from '../integrations/sihot.js';
 import type { SihotGuest, SihotReservation } from '../integrations/sihot.js';
 import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums.js';
+import {
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+  sendEmailVerificationEmail,
+  verifyEmailToken,
+  verifyPasswordResetToken,
+  clearPasswordResetToken,
+} from '../services/auth-email.service.js';
 
 function getJwtSecret(): Secret {
   const secret = process.env.JWT_SECRET;
@@ -58,6 +66,20 @@ export async function login(req: Request, res: Response) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Check if email verification is required
+    // Only require verification for users with email (not OAuth-only users)
+    const hasEmail = !!user.email;
+    const isEmailVerified = user.email_verified === true;
+    
+    if (hasEmail && !isEmailVerified) {
+      return res.status(403).json({ 
+        error: 'Email verification required',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+        message: 'Please verify your email address before signing in. Check your inbox for the verification link.'
+      });
+    }
+
     const userEmail = user.email || user.oauth_email || '';
     const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
 
@@ -70,6 +92,7 @@ export async function login(req: Request, res: Response) {
         role: user.role,
         points: user.points || 0,
         userType: user.user_type,
+        emailVerified: isEmailVerified,
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
@@ -112,6 +135,12 @@ export async function register(req: Request, res: Response) {
     const emailAddress = user.email ?? '';
     const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
 
+    // Send email verification email (non-blocking)
+    // Welcome email will be sent after successful email verification
+    sendEmailVerificationEmail(user.id, emailAddress, user.name).catch((error) => {
+      console.error('Failed to send verification email:', error);
+    });
+
     res.status(201).json({
       token,
       user: {
@@ -121,6 +150,7 @@ export async function register(req: Request, res: Response) {
         role: user.role,
         points: 0,
         userType: user.user_type,
+        emailVerified: user.email_verified === true,
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
@@ -262,4 +292,120 @@ export async function githubCallback(req: Request, res: Response, next: any) {
       return res.redirect(`${frontendUrl}/login?error=token_generation_failed`);
     }
   })(req, res, next);
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await getUserByEmail(email);
+    
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return res.json({ message: 'If an account exists with this email, a password reset link has been sent.' });
+    }
+
+    // Only send reset email if user has a password (not OAuth-only account)
+    if (user.password_hash) {
+      try {
+        await sendPasswordResetEmail(user.id, user.email || email, user.name);
+      } catch (error: any) {
+        console.error('Failed to send password reset email:', error);
+        // Still return success to prevent information leakage
+      }
+    }
+
+    res.json({ message: 'If an account exists with this email, a password reset link has been sent.' });
+  } catch (error: any) {
+    console.error('Password reset request error:', error);
+    res.status(500).json({ error: 'An error occurred. Please try again later.' });
+  }
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Token and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const tokenData = await verifyPasswordResetToken(token);
+    if (!tokenData) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    await updateUserPassword(tokenData.userId, passwordHash);
+    await clearPasswordResetToken(tokenData.userId);
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error: any) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ error: error.message || 'An error occurred while resetting password' });
+  }
+}
+
+export async function verifyEmail(req: Request, res: Response) {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Verification token is required' });
+    }
+
+    const tokenData = await verifyEmailToken(token);
+    if (!tokenData) {
+      return res.status(400).json({ error: 'Invalid or expired verification token' });
+    }
+
+    // Get user details to send welcome email
+    const user = await getUserById(tokenData.userId);
+    
+    if (user && user.email) {
+      // Send welcome email after successful verification (non-blocking)
+      sendWelcomeEmail(user.id, user.email, user.name, user.role).catch((error) => {
+        console.error('Failed to send welcome email:', error);
+      });
+    }
+
+    res.json({ message: 'Email verified successfully' });
+  } catch (error: any) {
+    console.error('Email verification error:', error);
+    res.status(500).json({ error: error.message || 'An error occurred while verifying email' });
+  }
+}
+
+export async function resendVerificationEmail(req: Request, res: Response) {
+  try {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await getUserByEmail(authReq.user.email);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.email_verified) {
+      return res.json({ message: 'Email is already verified' });
+    }
+
+    const email = user.email || user.oauth_email || authReq.user.email;
+    await sendEmailVerificationEmail(user.id, email, user.name);
+
+    res.json({ message: 'Verification email sent successfully' });
+  } catch (error: any) {
+    console.error('Resend verification email error:', error);
+    res.status(500).json({ error: error.message || 'An error occurred while sending verification email' });
+  }
 }

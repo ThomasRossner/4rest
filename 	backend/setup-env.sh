@@ -21,6 +21,22 @@ HOTEL_ID=ROI-BER
 VOUCHER_API_URL=
 VOUCHER_API_KEY=
 UPLOAD_DIR=./uploads
+
+# Email Configuration
+EMAIL_ENABLED=true
+EMAIL_MOCK_MODE=true
+EMAIL_FROM=noreply@roots-of-impact.com
+EMAIL_FROM_NAME=Roots of Impact
+APP_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
+
+# SMTP Configuration (for production)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=noreply@roots-of-impact.com
 EOF
 
 echo "Created .env file successfully!"
