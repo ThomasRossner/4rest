@@ -81,6 +81,36 @@ class EmailTemplatesService {
       expiresIn,
     });
   }
+
+  getLoginCodeEmail(variables: {
+    name: string;
+    email: string;
+    code: string;
+    expiresIn?: string;
+  }): string {
+    const template = this.loadTemplate('login-code-email');
+    const expiresIn = variables.expiresIn || '10 minutes';
+    
+    return this.replaceVariables(template, {
+      ...variables,
+      expiresIn,
+    });
+  }
+
+  getPasswordSetupEmail(variables: {
+    name: string;
+    email: string;
+    resetUrl: string;
+    expiresIn?: string;
+  }): string {
+    const template = this.loadTemplate('password-setup-email');
+    const expiresIn = variables.expiresIn || '1 hour';
+    
+    return this.replaceVariables(template, {
+      ...variables,
+      expiresIn,
+    });
+  }
 }
 
 export const emailTemplates = new EmailTemplatesService();

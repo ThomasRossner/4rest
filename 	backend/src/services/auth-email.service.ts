@@ -8,6 +8,9 @@ const TOKEN_EXPIRY_HOURS = {
   emailVerification: 24,
 };
 
+const LOGIN_CODE_EXPIRY_MINUTES = 10; // Login codes expire after 10 minutes
+const LOGIN_CODE_LENGTH = 6; // 6-digit code
+
 export async function generateEmailVerificationToken(userId: string): Promise<string> {
   const db = getPool();
   const token = crypto.randomBytes(32).toString('hex');
@@ -38,6 +41,47 @@ export async function generatePasswordResetToken(userId: string): Promise<string
   );
 
   return token;
+}
+
+export async function generatePasswordSetupToken(userId: string): Promise<string> {
+  const db = getPool();
+  // Reuse password_reset_token field for password setup (same purpose - setting a password)
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date();
+  expires.setHours(expires.getHours() + TOKEN_EXPIRY_HOURS.passwordReset);
+
+  await db.query(
+    `UPDATE users 
+     SET password_reset_token = $1, password_reset_expires = $2 
+     WHERE id = $3`,
+    [token, expires, userId]
+  );
+
+  return token;
+}
+
+export async function sendPasswordSetupEmail(userId: string, email: string, name: string): Promise<void> {
+  try {
+    const setupToken = await generatePasswordSetupToken(userId);
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const setupUrl = `${appUrl}/setup-password?token=${setupToken}`;
+
+    const html = emailTemplates.getPasswordSetupEmail({
+      name,
+      email,
+      resetUrl: setupUrl,
+      expiresIn: `${TOKEN_EXPIRY_HOURS.passwordReset} hour`,
+    });
+
+    await emailService.sendEmail({
+      to: email,
+      subject: 'Set Your Password - Roots of Impact',
+      html,
+    });
+  } catch (error: any) {
+    console.error('Failed to send password setup email:', error);
+    throw error;
+  }
 }
 
 export async function sendWelcomeEmail(userId: string, email: string, name: string, role: string): Promise<void> {
@@ -188,5 +232,79 @@ export async function clearPasswordResetToken(userId: string): Promise<void> {
      WHERE id = $1`,
     [userId]
   );
+}
+
+export async function generateLoginCode(userId: string): Promise<string> {
+  const db = getPool();
+  // Generate a 6-digit numeric code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expires = new Date();
+  expires.setMinutes(expires.getMinutes() + LOGIN_CODE_EXPIRY_MINUTES);
+
+  await db.query(
+    `UPDATE users 
+     SET login_code = $1, login_code_expires = $2 
+     WHERE id = $3`,
+    [code, expires, userId]
+  );
+
+  return code;
+}
+
+export async function verifyLoginCode(email: string, code: string): Promise<{ userId: string } | null> {
+  const db = getPool();
+  const result = await db.query(
+    `SELECT id FROM users 
+     WHERE email = $1 
+       AND login_code = $2 
+       AND login_code_expires > NOW()`,
+    [email, code]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const userId = result.rows[0].id;
+
+  // Clear the login code after successful verification
+  await db.query(
+    `UPDATE users 
+     SET login_code = NULL, login_code_expires = NULL 
+     WHERE id = $1`,
+    [userId]
+  );
+
+  return { userId };
+}
+
+export async function clearLoginCode(userId: string): Promise<void> {
+  const db = getPool();
+  await db.query(
+    `UPDATE users 
+     SET login_code = NULL, login_code_expires = NULL 
+     WHERE id = $1`,
+    [userId]
+  );
+}
+
+export async function sendLoginCodeEmail(userId: string, email: string, name: string, code: string): Promise<void> {
+  try {
+    const html = emailTemplates.getLoginCodeEmail({
+      name,
+      email,
+      code,
+      expiresIn: `${LOGIN_CODE_EXPIRY_MINUTES} minutes`,
+    });
+
+    await emailService.sendEmail({
+      to: email,
+      subject: 'Your Login Code - Roots of Impact',
+      html,
+    });
+  } catch (error: any) {
+    console.error('Failed to send login code email:', error);
+    throw error;
+  }
 }
 

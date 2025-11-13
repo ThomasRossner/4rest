@@ -9,6 +9,8 @@ import {
   resetPassword,
   verifyEmail,
   resendVerificationEmail,
+  requestLoginCode,
+  loginWithCode,
 } from '../controllers/auth.controller.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import { loginSchema, registerSchema } from '../schemas/auth.schema.js';
@@ -27,6 +29,10 @@ router.post('/reset-password', resetPassword);
 // Email verification routes
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', authenticate, resendVerificationEmail);
+
+// Passwordless login routes
+router.post('/request-login-code', requestLoginCode);
+router.post('/login-with-code', loginWithCode);
 
 // GitHub OAuth routes
 router.get('/github', githubAuth);

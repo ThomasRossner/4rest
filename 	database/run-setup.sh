@@ -17,5 +17,7 @@ docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/m
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/010_enum_user_fields.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/011_drop_reward_templates.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/012_email_verification_password_reset.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/013_passwordless_login.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/014_allow_passwordless_accounts.sql
 
 echo "Database setup complete!"

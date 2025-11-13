@@ -7,6 +7,7 @@ import { AuthRequest } from '../middleware/authenticate.js';
 import { sihot } from '../integrations/sihot.js';
 import type { SihotGuest, SihotReservation } from '../integrations/sihot.js';
 import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums.js';
+import { getPool } from '../database/connection.js';
 import {
   sendWelcomeEmail,
   sendPasswordResetEmail,
@@ -14,6 +15,11 @@ import {
   verifyEmailToken,
   verifyPasswordResetToken,
   clearPasswordResetToken,
+  generateLoginCode,
+  verifyLoginCode,
+  sendLoginCodeEmail,
+  clearLoginCode,
+  sendPasswordSetupEmail,
 } from '../services/auth-email.service.js';
 
 function getJwtSecret(): Secret {
@@ -57,7 +63,27 @@ export async function login(req: Request, res: Response) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Check if user has no password (passwordless account)
     if (!user.password_hash) {
+      // Check if email is verified
+      const hasEmail = !!user.email;
+      const isEmailVerified = user.email_verified === true;
+      
+      if (hasEmail && isEmailVerified && user.email) {
+        // Send password setup email (non-blocking)
+        sendPasswordSetupEmail(user.id, user.email, user.name).catch((error) => {
+          console.error('Failed to send password setup email:', error);
+        });
+        
+        return res.status(403).json({ 
+          error: 'Password setup required',
+          code: 'PASSWORD_SETUP_REQUIRED',
+          email: user.email,
+          message: 'This account uses passwordless login. A password setup link has been sent to your email. Please check your inbox to set a password.'
+        });
+      }
+      
+      // OAuth-only account or unverified email
       return res.status(401).json({ error: 'Invalid credentials - account uses social login' });
     }
 
@@ -343,11 +369,19 @@ export async function resetPassword(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid or expired reset token' });
     }
 
+    // Check if this is a password setup (user has no password) or password reset
+    const user = await getUserById(tokenData.userId);
+    const isPasswordSetup = user && !user.password_hash;
+
     const passwordHash = await bcrypt.hash(password, 10);
     await updateUserPassword(tokenData.userId, passwordHash);
     await clearPasswordResetToken(tokenData.userId);
 
-    res.json({ message: 'Password has been reset successfully' });
+    const message = isPasswordSetup 
+      ? 'Password has been set successfully. You can now sign in with your email and password.'
+      : 'Password has been reset successfully';
+
+    res.json({ message });
   } catch (error: any) {
     console.error('Password reset error:', error);
     res.status(500).json({ error: error.message || 'An error occurred while resetting password' });
@@ -410,5 +444,114 @@ export async function resendVerificationEmail(req: Request, res: Response) {
   } catch (error: any) {
     console.error('Resend verification email error:', error);
     res.status(500).json({ error: error.message || 'An error occurred while sending verification email' });
+  }
+}
+
+export async function requestLoginCode(req: Request, res: Response) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    let user = await getUserByEmail(email);
+    
+    // If user doesn't exist, create account automatically
+    if (!user) {
+      // Extract name from email (part before @) or use a default
+      const emailName = email.split('@')[0];
+      const defaultName = emailName.charAt(0).toUpperCase() + emailName.slice(1).replace(/[._-]/g, ' ');
+
+      // Enrich with Sihot data if available
+      const { combinedName, sihotGuestPayload, sihotGuest } = await enrichWithSihotData(
+        email,
+        defaultName
+      );
+
+      // Create user with email verified (since they're receiving the code at this email)
+      // No password hash - passwordless account
+      user = await createUser({
+        email,
+        password_hash: null, // No password for passwordless accounts
+        name: combinedName,
+        role: 'stakeholder',
+        user_type: 'explorer',
+        sihot_guest_id: sihotGuest?.guestId || null,
+        sihot_guest_data: sihotGuestPayload,
+      });
+
+      // Mark email as verified since they're receiving the code at this email address
+      const db = getPool();
+      await db.query(
+        'UPDATE users SET email_verified = TRUE WHERE id = $1',
+        [user.id]
+      );
+      user.email_verified = true;
+
+      // Send welcome email (non-blocking) since email is already verified
+      sendWelcomeEmail(user.id, user.email || '', user.name, user.role).catch((error) => {
+        console.error('Failed to send welcome email:', error);
+      });
+    } else {
+      // Check if email is verified (required for passwordless login)
+      if (!user.email_verified) {
+        return res.status(403).json({ 
+          error: 'Email verification required',
+          message: 'Please verify your email address before using passwordless login.'
+        });
+      }
+    }
+
+    // Generate and send login code
+    const code = await generateLoginCode(user.id);
+    await sendLoginCodeEmail(user.id, user.email || '', user.name, code);
+
+    res.json({ message: 'If an account exists with this email, a login code has been sent.' });
+  } catch (error: any) {
+    console.error('Request login code error:', error);
+    res.status(500).json({ error: error.message || 'An error occurred while sending login code' });
+  }
+}
+
+export async function loginWithCode(req: Request, res: Response) {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ error: 'Email and code are required' });
+    }
+
+    const codeData = await verifyLoginCode(email, code);
+    if (!codeData) {
+      return res.status(401).json({ error: 'Invalid or expired login code' });
+    }
+
+    const user = await getUserById(codeData.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userEmail = user.email || user.oauth_email || '';
+    const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: userEmail,
+        name: user.name,
+        role: user.role,
+        points: user.points || 0,
+        userType: user.user_type,
+        emailVerified: user.email_verified === true,
+        sihotGuestId: user.sihot_guest_id || null,
+        sihotGuest: user.sihot_guest_data?.guest ?? null,
+        sihotReservations: user.sihot_guest_data?.reservations ?? [],
+      },
+    });
+  } catch (error: any) {
+    console.error('Login with code error:', error);
+    res.status(500).json({ error: error.message || 'An error occurred while logging in' });
   }
 }

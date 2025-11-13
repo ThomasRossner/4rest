@@ -92,6 +92,16 @@ export const api = {
     return response.data;
   },
 
+  async requestLoginCode(email: string) {
+    const response = await apiClient.post('/auth/request-login-code', { email });
+    return response.data;
+  },
+
+  async loginWithCode(email: string, code: string) {
+    const response = await apiClient.post('/auth/login-with-code', { email, code });
+    return response.data;
+  },
+
   // Tasks
   async getTasks(params?: {
     limit?: number;

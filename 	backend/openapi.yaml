@@ -99,7 +99,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid credentials
+        '403':
+          description: Email verification required or password setup required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email verification required
+                  code:
+                    type: string
+                    enum: ['EMAIL_NOT_VERIFIED', 'PASSWORD_SETUP_REQUIRED']
+                    example: PASSWORD_SETUP_REQUIRED
+                  email:
+                    type: string
+                    format: email
+                    example: user@example.com
+                  message:
+                    type: string
+                    example: This account uses passwordless login. A password setup link has been sent to your email. Please check your inbox to set a password.
 
   /auth/register:
     post:
@@ -227,8 +256,13 @@ paths:
     post:
       tags:
         - Authentication
-      summary: Reset password
-      description: Reset password using a token from the password reset email
+      summary: Reset password or set password
+      description: |
+        Reset password using a token from the password reset email, or set a password for a passwordless account using a token from the password setup email.
+        
+        This endpoint handles both:
+        - Password reset: For accounts that already have a password
+        - Password setup: For passwordless accounts (accounts created via passwordless login)
       security: []
       requestBody:
         required: true
@@ -242,17 +276,17 @@ paths:
               properties:
                 token:
                   type: string
-                  description: Password reset token from email
+                  description: Password reset/setup token from email
                   example: abc123def456...
                 password:
                   type: string
                   format: password
                   minLength: 6
-                  description: New password
+                  description: New password (for reset) or password to set (for setup)
                   example: newpassword123
       responses:
         '200':
-          description: Password reset successfully
+          description: Password reset or set successfully
           content:
             application/json:
               schema:
@@ -261,6 +295,10 @@ paths:
                   message:
                     type: string
                     example: Password has been reset successfully
+                    description: |
+                      Message varies based on operation:
+                      - "Password has been reset successfully" for password reset
+                      - "Password has been set successfully. You can now sign in with your email and password." for password setup
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -323,6 +361,117 @@ paths:
                     example: Verification email sent successfully
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/request-login-code:
+    post:
+      tags:
+        - Authentication
+      summary: Request login code
+      description: |
+        Request a passwordless login code via email. The code expires in 10 minutes and can only be used once.
+        
+        If no account exists with the given email, a new account will be created automatically with:
+        - Email verified (since they're receiving the code at this email)
+        - Default role: stakeholder
+        - Default user type: explorer
+        - Name extracted from email address
+        - No password (passwordless account)
+        
+        For existing accounts, email verification is required.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address of the user
+                  example: user@example.com
+      responses:
+        '200':
+          description: Login code sent (account created if it didn't exist)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: If an account exists with this email, a login code has been sent.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Email verification required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email verification required
+                  message:
+                    type: string
+                    example: Please verify your email address before using passwordless login.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login-with-code:
+    post:
+      tags:
+        - Authentication
+      summary: Login with code
+      description: Authenticate user using a login code received via email. The code is single-use and expires after 10 minutes.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - code
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address of the user
+                  example: user@example.com
+                code:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  description: 6-digit login code from email
+                  example: '123456'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid or expired login code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid or expired login code
         '404':
           $ref: '#/components/responses/NotFound'
         '500':

@@ -15,13 +15,15 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [mode, setMode] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot-password' | 'reset-password' | 'passwordless-login'>('login');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loginCode, setLoginCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
   const verificationInProgressRef = useRef(false);
   const processedTokensRef = useRef<Set<string>>(new Set());
 
@@ -59,6 +61,7 @@ function LoginPage() {
     const resetTokenParam = searchParams.get('resetToken') || searchParams.get('token');
     const pathname = location.pathname;
     const isResetPasswordPath = pathname === '/reset-password';
+    const isSetupPasswordPath = pathname === '/setup-password';
     const isVerifyEmailPath = pathname === '/verify-email';
     const isResetPasswordMode = searchParams.get('mode') === 'reset-password';
 
@@ -76,12 +79,38 @@ function LoginPage() {
       // Password reset token in URL
       setResetToken(resetTokenParam);
       setMode('reset-password');
+    } else if (isSetupPasswordPath && resetTokenParam) {
+      // Password setup token in URL
+      setResetToken(resetTokenParam);
+      setMode('reset-password');
     } else if (isVerifyEmailPath && verifyToken) {
       // Email verification token in URL
       handleEmailVerification(verifyToken);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, location.pathname]);
+
+  const handleRequestCode = async () => {
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      await api.requestLoginCode(email);
+      setSuccess('If an account exists with this email, a login code has been sent.');
+      setCodeSent(true);
+    } catch (err: any) {
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      setError(serverMsg || 'Failed to send login code');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +122,22 @@ function LoginPage() {
       if (mode === 'login') {
         await login(email, password);
         navigate('/dashboard');
+      } else if (mode === 'passwordless-login') {
+        if (!codeSent) {
+          await handleRequestCode();
+          return;
+        }
+        if (!loginCode) {
+          setError('Please enter the login code');
+          setLoading(false);
+          return;
+        }
+        const data = await api.loginWithCode(email, loginCode);
+        if (data && data.token && data.user) {
+          const store = useAuthStore.getState();
+          store.setToken(data.token, data.user);
+          navigate('/dashboard');
+        }
       } else if (mode === 'register') {
         if (!name.trim()) {
           throw new Error('Please enter your name');
@@ -118,7 +163,10 @@ function LoginPage() {
           throw new Error('Passwords do not match');
         }
         await api.resetPassword(resetToken, newPassword);
-        setSuccess('Password reset successfully! You can now sign in with your new password.');
+        const isSetupPassword = location.pathname === '/setup-password';
+        setSuccess(isSetupPassword 
+          ? 'Password set successfully! You can now sign in with your email and password.'
+          : 'Password reset successfully! You can now sign in with your new password.');
         setMode('login');
         setResetToken(null);
         setNewPassword('');
@@ -138,6 +186,13 @@ function LoginPage() {
         );
         // Still allow login but show the error
         // The backend will return 403, so login won't succeed
+      } else if (errorCode === 'PASSWORD_SETUP_REQUIRED') {
+        const userEmail = err?.response?.data?.email || email;
+        setError(
+          `This account uses passwordless login. A password setup link has been sent to ${userEmail}. ` +
+          `Please check your inbox and click the link to set a password.`
+        );
+        setSuccess('Password setup email sent! Please check your inbox.');
       } else {
         setError(serverMsg || err?.message || (mode === 'login' ? 'Invalid email or password' : 'Operation failed'));
       }
@@ -151,6 +206,7 @@ function LoginPage() {
   };
 
   const getModeTitle = () => {
+    const isSetupPassword = location.pathname === '/setup-password';
     switch (mode) {
       case 'login':
         return 'Sign in to continue';
@@ -159,7 +215,9 @@ function LoginPage() {
       case 'forgot-password':
         return 'Reset your password';
       case 'reset-password':
-        return 'Set new password';
+        return isSetupPassword ? 'Set your password' : 'Set new password';
+      case 'passwordless-login':
+        return codeSent ? 'Enter your login code' : 'Sign in with email code';
       default:
         return 'Sign in to continue';
     }
@@ -176,6 +234,8 @@ function LoginPage() {
           return 'Sending...';
         case 'reset-password':
           return 'Resetting...';
+        case 'passwordless-login':
+          return codeSent ? 'Signing in...' : 'Sending code...';
         default:
           return 'Loading...';
       }
@@ -189,6 +249,8 @@ function LoginPage() {
         return 'Send Reset Link';
       case 'reset-password':
         return 'Reset Password';
+      case 'passwordless-login':
+        return codeSent ? 'Sign In' : 'Get Code';
       default:
         return 'Submit';
     }
@@ -220,15 +282,22 @@ function LoginPage() {
             </div>
           )}
           
-          {(mode === 'login' || mode === 'register' || mode === 'forgot-password') && (
+          {(mode === 'login' || mode === 'register' || mode === 'forgot-password' || mode === 'passwordless-login') && (
             <div className="login-field">
               <label htmlFor="email">Email</label>
               <input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (mode === 'passwordless-login') {
+                    setCodeSent(false);
+                    setLoginCode('');
+                  }
+                }}
                 required
+                disabled={codeSent && mode === 'passwordless-login'}
                 placeholder="your@email.com"
               />
             </div>
@@ -245,6 +314,25 @@ function LoginPage() {
                 required
                 placeholder="••••••••"
               />
+            </div>
+          )}
+
+          {mode === 'passwordless-login' && codeSent && (
+            <div className="login-field">
+              <label htmlFor="login-code">Login Code</label>
+              <input
+                id="login-code"
+                type="text"
+                value={loginCode}
+                onChange={(e) => setLoginCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                required
+                placeholder="000000"
+                maxLength={6}
+                style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '8px', fontFamily: 'monospace' }}
+              />
+              <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                Enter the 6-digit code sent to your email
+              </p>
             </div>
           )}
           
@@ -309,6 +397,44 @@ function LoginPage() {
               <p style={{ marginTop: 'var(--spacing-sm)' }}>
                 <button type="button" className="link-button" onClick={() => { setMode('forgot-password'); setError(''); setSuccess(''); }}>
                   Forgot your password?
+                </button>
+              </p>
+              <p style={{ marginTop: 'var(--spacing-sm)' }}>
+                <button type="button" className="link-button" onClick={() => { 
+                  setMode('passwordless-login'); 
+                  setError(''); 
+                  setSuccess(''); 
+                  setCodeSent(false);
+                  setLoginCode('');
+                }}>
+                  Sign in with email code
+                </button>
+              </p>
+            </>
+          )}
+          {mode === 'passwordless-login' && (
+            <>
+              {codeSent && (
+                <p style={{ marginTop: 'var(--spacing-sm)' }}>
+                  <button type="button" className="link-button" onClick={() => { 
+                    setCodeSent(false);
+                    setLoginCode('');
+                    setError('');
+                    setSuccess('');
+                  }}>
+                    Request a new code
+                  </button>
+                </p>
+              )}
+              <p style={{ marginTop: 'var(--spacing-sm)' }}>
+                <button type="button" className="link-button" onClick={() => { 
+                  setMode('login'); 
+                  setError(''); 
+                  setSuccess(''); 
+                  setCodeSent(false);
+                  setLoginCode('');
+                }}>
+                  Back to password login
                 </button>
               </p>
             </>
