@@ -115,33 +115,53 @@ export async function sendPasswordResetEmail(userId: string, email: string, name
   }
 }
 
-export async function verifyEmailToken(token: string): Promise<{ userId: string; email: string } | null> {
+export async function verifyEmailToken(token: string): Promise<{ userId: string; email: string; wasJustVerified: boolean } | null> {
   const db = getPool();
-  const result = await db.query(
-    `SELECT id, email FROM users 
-     WHERE email_verification_token = $1 
-     AND email_verification_expires > NOW() 
-     AND email_verified = FALSE`,
-    [token]
-  );
-
-  if (result.rows.length === 0) {
-    return null;
-  }
-
-  const user = result.rows[0];
-
-  // Mark email as verified and clear token
-  await db.query(
+  
+  // Use a conditional UPDATE that only updates if email_verified is FALSE
+  // This ensures atomicity and prevents race conditions
+  const updateResult = await db.query(
     `UPDATE users 
      SET email_verified = TRUE, 
          email_verification_token = NULL, 
          email_verification_expires = NULL 
-     WHERE id = $1`,
-    [user.id]
+     WHERE email_verification_token = $1 
+       AND email_verification_expires > NOW()
+       AND email_verified = FALSE
+     RETURNING id, email`,
+    [token]
   );
 
-  return { userId: user.id, email: user.email };
+  if (updateResult.rows.length === 0) {
+    // Token not found, expired, or already verified - check if it exists but is already verified
+    const checkResult = await db.query(
+      `SELECT id, email FROM users 
+       WHERE email_verification_token = $1 
+         AND email_verification_expires > NOW()
+         AND email_verified = TRUE`,
+      [token]
+    );
+    
+    if (checkResult.rows.length > 0) {
+      // Token exists but email is already verified - return success but don't send welcome email
+      return {
+        userId: checkResult.rows[0].id,
+        email: checkResult.rows[0].email,
+        wasJustVerified: false
+      };
+    }
+    
+    // Token not found or expired
+    return null;
+  }
+
+  // Email was just verified (update affected a row)
+  const user = updateResult.rows[0];
+  return { 
+    userId: user.id, 
+    email: user.email,
+    wasJustVerified: true // Only true if the UPDATE actually changed a row
+  };
 }
 
 export async function verifyPasswordResetToken(token: string): Promise<{ userId: string; email: string } | null> {

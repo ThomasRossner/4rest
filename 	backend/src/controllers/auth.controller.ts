@@ -367,14 +367,17 @@ export async function verifyEmail(req: Request, res: Response) {
       return res.status(400).json({ error: 'Invalid or expired verification token' });
     }
 
-    // Get user details to send welcome email
-    const user = await getUserById(tokenData.userId);
-    
-    if (user && user.email) {
-      // Send welcome email after successful verification (non-blocking)
-      sendWelcomeEmail(user.id, user.email, user.name, user.role).catch((error) => {
-        console.error('Failed to send welcome email:', error);
-      });
+    // Only send welcome email if this was the first time the email was verified
+    if (tokenData.wasJustVerified) {
+      // Get user details to send welcome email
+      const user = await getUserById(tokenData.userId);
+      
+      if (user && user.email) {
+        // Send welcome email after successful verification (non-blocking)
+        sendWelcomeEmail(user.id, user.email, user.name, user.role).catch((error) => {
+          console.error('Failed to send welcome email:', error);
+        });
+      }
     }
 
     res.json({ message: 'Email verified successfully' });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
@@ -22,8 +22,17 @@ function LoginPage() {
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const verificationInProgressRef = useRef(false);
+  const processedTokensRef = useRef<Set<string>>(new Set());
 
   const handleEmailVerification = async (token: string) => {
+    // Prevent duplicate calls - check both ref and processed tokens
+    if (verificationInProgressRef.current || processedTokensRef.current.has(token)) {
+      return;
+    }
+    
+    verificationInProgressRef.current = true;
+    processedTokensRef.current.add(token);
     setLoading(true);
     setError('');
     try {
@@ -35,8 +44,11 @@ function LoginPage() {
     } catch (err: any) {
       const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
       setError(serverMsg || 'Email verification failed. The link may have expired.');
+      // Remove from processed set on error so user can retry
+      processedTokensRef.current.delete(token);
     } finally {
       setLoading(false);
+      verificationInProgressRef.current = false;
     }
   };
 
