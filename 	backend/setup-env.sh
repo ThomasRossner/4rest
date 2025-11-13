@@ -37,6 +37,29 @@ SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASS=
 SMTP_FROM=noreply@roots-of-impact.com
+
+# OAuth Configuration
+# GitHub OAuth
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
+
+# Google OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+
+# Facebook OAuth
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
+FACEBOOK_CALLBACK_URL=http://localhost:5000/api/auth/facebook/callback
+
+# Apple OAuth (Sign in with Apple)
+APPLE_CLIENT_ID=
+APPLE_TEAM_ID=
+APPLE_KEY_ID=
+APPLE_PRIVATE_KEY=
+APPLE_CALLBACK_URL=http://localhost:5000/api/auth/apple/callback
 EOF
 
 echo "Created .env file successfully!"

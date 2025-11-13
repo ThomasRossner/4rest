@@ -216,6 +216,72 @@ paths:
         '302':
           description: Redirect after authentication
 
+  /auth/google:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth
+      description: Initiate Google OAuth flow
+      security: []
+      responses:
+        '302':
+          description: Redirect to Google
+
+  /auth/google/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth callback
+      description: Google OAuth callback handler
+      security: []
+      responses:
+        '302':
+          description: Redirect to frontend with JWT token
+
+  /auth/facebook:
+    get:
+      tags:
+        - Authentication
+      summary: Facebook OAuth
+      description: Initiate Facebook OAuth flow
+      security: []
+      responses:
+        '302':
+          description: Redirect to Facebook
+
+  /auth/facebook/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Facebook OAuth callback
+      description: Facebook OAuth callback handler
+      security: []
+      responses:
+        '302':
+          description: Redirect to frontend with JWT token
+
+  /auth/apple:
+    get:
+      tags:
+        - Authentication
+      summary: Apple OAuth (Sign in with Apple)
+      description: Initiate Apple OAuth flow
+      security: []
+      responses:
+        '302':
+          description: Redirect to Apple
+
+  /auth/apple/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Apple OAuth callback
+      description: Apple OAuth callback handler
+      security: []
+      responses:
+        '302':
+          description: Redirect to frontend with JWT token
+
   /auth/forgot-password:
     post:
       tags:

@@ -200,6 +200,42 @@
   transform: translateY(0);
 }
 
+.social-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+.google-button {
+  border-color: #4285F4;
+}
+
+.google-button:hover {
+  background: #4285F4;
+  color: white;
+  border-color: #4285F4;
+}
+
+.facebook-button {
+  border-color: #1877F2;
+}
+
+.facebook-button:hover {
+  background: #1877F2;
+  color: white;
+  border-color: #1877F2;
+}
+
+.apple-button {
+  border-color: #000000;
+}
+
+.apple-button:hover {
+  background: #000000;
+  color: white;
+  border-color: #000000;
+}
+
 .github-button {
   border-color: #24292e;
 }
@@ -208,9 +244,4 @@
   background: #24292e;
   color: white;
   border-color: #24292e;
-}
-
-.github-icon {
-  width: 20px;
-  height: 20px;
 }

@@ -267,6 +267,47 @@ export async function refreshToken(req: Request, res: Response) {
   }
 }
 
+// Helper function for OAuth callbacks
+function createOAuthCallback(provider: string, envCheck: () => boolean) {
+  return async (req: Request, res: Response, next: any) => {
+    if (!envCheck()) {
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
+    }
+    
+    passport.authenticate(provider, { session: false }, async (err: any, user: any) => {
+      if (err) {
+        console.error(`${provider} OAuth authentication error:`, err);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+      }
+      
+      if (!user) {
+        console.error(`${provider} OAuth: No user returned from authentication`);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+      }
+
+      try {
+        console.log(`${provider} OAuth callback: User authenticated, generating token for user:`, user.id);
+        // Generate JWT token
+        const userEmail = user.email || user.oauth_email || '';
+        const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
+
+        console.log(`${provider} OAuth: Token generated, redirecting to frontend`);
+        // Redirect to frontend with token
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const redirectUrl = `${frontendUrl}/auth/callback?token=${token}`;
+        return res.redirect(redirectUrl);
+      } catch (error: any) {
+        console.error(`${provider} OAuth: Token generation error:`, error);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return res.redirect(`${frontendUrl}/login?error=token_generation_failed`);
+      }
+    })(req, res, next);
+  };
+}
+
 // GitHub OAuth handlers
 export function githubAuth(req: Request, res: Response, next: any) {
   if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
@@ -283,42 +324,69 @@ export function githubAuth(req: Request, res: Response, next: any) {
   }
 }
 
-export async function githubCallback(req: Request, res: Response, next: any) {
-  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+export const githubCallback = createOAuthCallback('github', () => 
+  !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET)
+);
+
+// Google OAuth handlers
+export function googleAuth(req: Request, res: Response, next: any) {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
   }
-  passport.authenticate('github', { session: false }, async (err: any, user: any) => {
-    if (err) {
-      console.error('GitHub OAuth authentication error:', err);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
-    }
-    
-    if (!user) {
-      console.error('GitHub OAuth: No user returned from authentication');
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
-    }
-
-    try {
-      console.log('GitHub OAuth callback: User authenticated, generating token for user:', user.id);
-      // Generate JWT token
-      const userEmail = user.email || user.oauth_email || '';
-      const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
-
-      console.log('GitHub OAuth: Token generated, redirecting to frontend');
-      // Redirect to frontend with token
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const redirectUrl = `${frontendUrl}/auth/callback?token=${token}`;
-      return res.redirect(redirectUrl);
-    } catch (error: any) {
-      console.error('GitHub OAuth: Token generation error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      return res.redirect(`${frontendUrl}/login?error=token_generation_failed`);
-    }
-  })(req, res, next);
+  
+  try {
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+  } catch (error: any) {
+    console.error('Google OAuth error:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+  }
 }
+
+export const googleCallback = createOAuthCallback('google', () => 
+  !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+);
+
+// Facebook OAuth handlers
+export function facebookAuth(req: Request, res: Response, next: any) {
+  if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
+  }
+  
+  try {
+    passport.authenticate('facebook', { scope: ['email'] })(req, res, next);
+  } catch (error: any) {
+    console.error('Facebook OAuth error:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+  }
+}
+
+export const facebookCallback = createOAuthCallback('facebook', () => 
+  !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET)
+);
+
+// Apple OAuth handlers
+export function appleAuth(req: Request, res: Response, next: any) {
+  if (!process.env.APPLE_CLIENT_ID || !process.env.APPLE_TEAM_ID || !process.env.APPLE_KEY_ID || !process.env.APPLE_PRIVATE_KEY) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
+  }
+  
+  try {
+    passport.authenticate('apple')(req, res, next);
+  } catch (error: any) {
+    console.error('Apple OAuth error:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+  }
+}
+
+export const appleCallback = createOAuthCallback('apple', () => 
+  !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY)
+);
 
 export async function forgotPassword(req: Request, res: Response) {
   try {

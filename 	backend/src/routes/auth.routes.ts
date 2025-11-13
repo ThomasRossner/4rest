@@ -5,6 +5,12 @@ import {
   refreshToken,
   githubAuth,
   githubCallback,
+  googleAuth,
+  googleCallback,
+  facebookAuth,
+  facebookCallback,
+  appleAuth,
+  appleCallback,
   forgotPassword,
   resetPassword,
   verifyEmail,
@@ -34,8 +40,14 @@ router.post('/resend-verification', authenticate, resendVerificationEmail);
 router.post('/request-login-code', requestLoginCode);
 router.post('/login-with-code', loginWithCode);
 
-// GitHub OAuth routes
+// OAuth routes
 router.get('/github', githubAuth);
 router.get('/github/callback', githubCallback);
+router.get('/google', googleAuth);
+router.get('/google/callback', googleCallback);
+router.get('/facebook', facebookAuth);
+router.get('/facebook/callback', facebookCallback);
+router.get('/apple', appleAuth);
+router.get('/apple/callback', appleCallback);
 
 export default router;
