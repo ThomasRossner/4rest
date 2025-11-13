@@ -33,6 +33,21 @@ create_user "employee@example.com" "Test Employee" "employee"
 create_user "stakeholder@example.com" "Test Stakeholder" "stakeholder"
 create_user "admin@example.com" "Admin User" "administrator"
 
+echo "\n==> Marking example accounts as email verified (no verification required)"
+docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" <<EOF >/dev/null || true
+UPDATE users 
+SET email_verified = TRUE,
+    email_verification_token = NULL,
+    email_verification_expires = NULL
+WHERE email IN (
+  'test@example.com',
+  'employee@example.com',
+  'stakeholder@example.com',
+  'admin@example.com'
+);
+EOF
+echo "   - example accounts marked as verified"
+
 echo "\n==> Seeding example task into Postgres (container: ${PG_CONTAINER})"
 
 if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_example_task.sql" >/dev/null; then
