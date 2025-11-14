@@ -1,6 +1,7 @@
 import { getPool } from '../database/connection.js';
 import { addUserPoints, plantTree } from './gamification.service.js';
 import { UserRole, UserType, HotelId, HOTEL_IDS } from '../constants/enums.js';
+import { Location } from './location.service.js';
 
 export interface Task {
   id: string;
@@ -17,6 +18,8 @@ export interface Task {
   allowed_roles?: UserRole[];
   allowed_user_types?: UserType[];
   allowed_hotel_ids?: HotelId[];
+  location_id: string;
+  location?: Location;
   active?: boolean;
 }
 
@@ -51,8 +54,8 @@ export async function getAllTasks(
       ? (configuredHotelId as HotelId)
       : null;
 
-  let select = 'DISTINCT ON (t.id) t.*';
-  let from = ' FROM tasks t';
+  let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
+  let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
   if (userId) {
     select += `, (ut.user_id IS NOT NULL) AS completed`;
     from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex++}`;
@@ -129,7 +132,13 @@ export async function getAllTasks(
 
 export async function getTaskById(id: string): Promise<Task | null> {
   const db = getPool();
-  const result = await db.query('SELECT * FROM tasks WHERE id = $1', [id]);
+  const result = await db.query(
+    `SELECT t.*, row_to_json(l.*) AS location
+     FROM tasks t
+     JOIN locations l ON l.id = t.location_id
+     WHERE t.id = $1`,
+    [id]
+  );
   return result.rows[0] || null;
 }
 
@@ -156,9 +165,10 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        allowed_roles,
        allowed_user_types,
        allowed_hotel_ids,
+       location_id,
        active
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING *`,
     [
       data.title,
@@ -174,6 +184,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       (data.allowed_roles ?? []) as UserRole[],
       (data.allowed_user_types ?? []) as UserType[],
       (data.allowed_hotel_ids ?? []) as HotelId[],
+      data.location_id,
       data.active ?? true,
     ]
   );

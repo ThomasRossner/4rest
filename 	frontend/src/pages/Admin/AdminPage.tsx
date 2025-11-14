@@ -16,7 +16,7 @@ import {
 import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
 import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
 
-type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | null;
+type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | 'location' | 'locationManage' | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
 
 type AdminTaskTemplate = {
@@ -33,6 +33,8 @@ type AdminTaskTemplate = {
   allowed_roles?: UserRole[] | null;
   allowed_user_types?: UserType[] | null;
   allowed_hotel_ids?: HotelId[] | null;
+  location_id?: string | null;
+  location?: AdminLocation | null;
   active?: boolean | null;
 };
 
@@ -48,7 +50,19 @@ type RewardTemplate = {
   allowed_user_types?: string[] | null;
   allowed_hotel_ids?: string[] | null;
   created_at?: string | null;
+  location_id?: string | null;
+  location?: AdminLocation | null;
   active?: boolean | null;
+};
+
+type AdminLocation = {
+  id: string;
+  name: string;
+  description?: string | null;
+  is_online: boolean;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 type VideoSourceOption = 'url' | 'upload';
@@ -69,6 +83,7 @@ type TaskFormState = {
   allowedRoles: string[];
   allowedUserTypes: string[];
   allowedHotelIds: string[];
+  locationId: string;
   active: boolean;
 };
 
@@ -82,7 +97,17 @@ type RewardFormState = {
   allowedRoles: string[];
   allowedUserTypes: string[];
   allowedHotelIds: string[];
+  locationId: string;
   active: boolean;
+};
+
+type LocationFormState = {
+  name: string;
+  description: string;
+  mode: 'online' | 'physical';
+  address: string;
+  latitude: string;
+  longitude: string;
 };
 
 type QuizAnswerDraft = {
@@ -291,6 +316,7 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   allowedRoles: [],
   allowedUserTypes: [],
   allowedHotelIds: [],
+  locationId: '',
   active: true,
 });
 
@@ -304,7 +330,17 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   allowedRoles: [],
   allowedUserTypes: [],
   allowedHotelIds: [],
+  locationId: '',
   active: true,
+});
+
+const defaultLocationForm = (): LocationFormState => ({
+  name: '',
+  description: '',
+  mode: 'online',
+  address: '',
+  latitude: '',
+  longitude: '',
 });
 
 const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
@@ -504,6 +540,10 @@ const validateTaskFormState = ({
     return { isValid: false, message: 'Enter the QR code value for QR tasks.' };
   }
 
+  if (!taskForm.locationId) {
+    return { isValid: false, message: 'Select a location for this task.' };
+  }
+
   return { isValid: true, message: null };
 };
 
@@ -539,6 +579,42 @@ const validateRewardFormState = ({
 
   if (rewardForm.pointsCost < 0) {
     return { isValid: false, message: 'Points cost must be zero or greater.' };
+  }
+
+  if (!rewardForm.locationId) {
+    return { isValid: false, message: 'Select a location for this reward.' };
+  }
+
+  return { isValid: true, message: null };
+};
+
+const validateLocationFormState = (form: LocationFormState): ValidationResult => {
+  if (!form.name.trim()) {
+    return { isValid: false, message: 'Location name is required.' };
+  }
+
+  if (!form.description.trim()) {
+    return { isValid: false, message: 'Description is required.' };
+  }
+
+  if (form.mode === 'physical') {
+    if (!form.address.trim()) {
+      return { isValid: false, message: 'Address is required for physical locations.' };
+    }
+    if (!form.latitude.trim()) {
+      return { isValid: false, message: 'Latitude is required for physical locations.' };
+    }
+    if (!form.longitude.trim()) {
+      return { isValid: false, message: 'Longitude is required for physical locations.' };
+    }
+    const lat = Number.parseFloat(form.latitude);
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+      return { isValid: false, message: 'Latitude must be between -90 and 90.' };
+    }
+    const lon = Number.parseFloat(form.longitude);
+    if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+      return { isValid: false, message: 'Longitude must be between -180 and 180.' };
+    }
   }
 
   return { isValid: true, message: null };
@@ -987,6 +1063,19 @@ function AdminPage() {
   const [selectedRewardIds, setSelectedRewardIds] = useState<string[]>([]);
   const [rewardConfirm, setRewardConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
 
+  const [locationForm, setLocationForm] = useState<LocationFormState>(defaultLocationForm);
+  const [locationMessage, setLocationMessage] = useState<
+    { type: 'error' | 'success'; text: string } | null
+  >(null);
+  const [hasAttemptedLocationSubmit, setHasAttemptedLocationSubmit] = useState(false);
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
+  const [locationManagementMessage, setLocationManagementMessage] = useState<
+    { type: 'error' | 'success'; text: string } | null
+  >(null);
+  const [locationConfirm, setLocationConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+  const [locationReturnMode, setLocationReturnMode] = useState<AdminMode | null>(null);
+
   const taskValidation = useMemo(
     () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask }),
     [taskSource, selectedExistingTaskId, taskForm, isEditingTask]
@@ -1022,6 +1111,8 @@ function AdminPage() {
       allowed_roles: normalizeEnumArray(task.allowed_roles) as UserRole[],
       allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
       allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
+      location_id: (task as any).location_id ?? (task as any).location?.id ?? null,
+      location: (task as any).location ?? null,
       active: task.active ?? true,
     }));
   }, [adminTasks]);
@@ -1046,13 +1137,46 @@ function AdminPage() {
       allowed_roles: normalizeEnumArray(template.allowed_roles),
       allowed_user_types: normalizeEnumArray(template.allowed_user_types),
       allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
+      location_id: template.location_id ?? template.location?.id ?? null,
+      location: template.location ?? null,
       active: template.active ?? true,
     }));
   }, [rewardTemplates]);
 
+  const {
+    data: locationsData,
+    isLoading: locationsLoading,
+    error: locationsError,
+    refetch: refetchLocations,
+  } = useQuery<AdminLocation[]>(
+    ['adminLocations'],
+    () => api.getLocations(),
+    {
+      enabled: isAdmin && mode !== null,
+    }
+  );
+
+  const locationsList = locationsData ?? [];
+  const locationOptions = useMemo(
+    () =>
+      locationsList.map((location) => ({
+        value: location.id,
+        label: location.is_online ? `${location.name} (Online)` : location.name,
+        details: location.is_online ? 'Online location' : location.address || 'Physical location',
+        location,
+      })),
+    [locationsList]
+  );
+  const hasLocationOptions = locationOptions.length > 0;
+
   const rewardValidation = useMemo(
     () => validateRewardFormState({ rewardSource, selectedRewardTemplate, rewardForm, isEditing: isEditingReward }),
     [rewardSource, selectedRewardTemplate, rewardForm, isEditingReward]
+  );
+
+  const locationValidation = useMemo(
+    () => validateLocationFormState(locationForm),
+    [locationForm]
   );
 
   const publishTaskMutation = useMutation((payload: any) => api.createCustomTask(payload), {
@@ -1127,6 +1251,35 @@ function AdminPage() {
     }
   );
 
+  const createLocationMutation = useMutation((payload: any) => api.createLocation(payload), {
+    onSuccess: () => {
+      setLocationMessage({ type: 'success', text: 'Location created successfully.' });
+      setLocationForm(defaultLocationForm());
+      setHasAttemptedLocationSubmit(false);
+      void refetchLocations();
+    },
+    onError: (error: any) => {
+      setLocationMessage({ type: 'error', text: error?.message || 'Failed to create location.' });
+    },
+  });
+
+  const updateLocationMutation = useMutation(
+    ({ id, payload }: { id: string; payload: any }) => api.updateLocation(id, payload),
+    {
+      onSuccess: () => {
+        setLocationMessage({ type: 'success', text: 'Location updated successfully.' });
+        setIsEditingLocation(false);
+        setEditingLocationId(null);
+        setHasAttemptedLocationSubmit(false);
+        setLocationForm(defaultLocationForm());
+        void refetchLocations();
+      },
+      onError: (error: any) => {
+        setLocationMessage({ type: 'error', text: error?.message || 'Failed to update location.' });
+      },
+    }
+  );
+
   const isPublishDisabled =
     publishTaskMutation.isLoading ||
     updateTaskMutation.isLoading ||
@@ -1134,6 +1287,10 @@ function AdminPage() {
     !taskValidation.isValid;
   const isRewardPublishDisabled =
     createRewardMutation.isLoading || updateRewardMutation.isLoading || !rewardValidation.isValid;
+  const isLocationSubmitDisabled =
+    createLocationMutation.isLoading ||
+    updateLocationMutation.isLoading ||
+    !locationValidation.isValid;
 
   useEffect(() => {
     if (isEditingTask) {
@@ -1175,6 +1332,7 @@ function AdminPage() {
       allowedRoles: normalizeEnumArray(template.allowed_roles),
       allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates, isEditingTask]);
@@ -1234,9 +1392,22 @@ function AdminPage() {
       allowedRoles: normalizeEnumArray(template.allowed_roles),
       allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
     });
   }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates, isEditingReward]);
+
+  useEffect(() => {
+    if (mode !== 'location') {
+      return;
+    }
+    if (isEditingLocation) {
+      return;
+    }
+    setLocationMessage(null);
+    setHasAttemptedLocationSubmit(false);
+    setLocationForm(defaultLocationForm());
+  }, [mode, isEditingLocation]);
 
   const handlePublishTask = async () => {
     try {
@@ -1295,6 +1466,7 @@ function AdminPage() {
           allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
           active: Boolean(taskForm.active),
         };
+        payload.location_id = taskForm.locationId;
 
         if (taskForm.type === 'video') {
           if (!videoUrl) {
@@ -1334,6 +1506,7 @@ function AdminPage() {
           allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
           active: Boolean(taskForm.active),
         };
+        payload.location_id = taskForm.locationId;
 
         if (template.type === 'video') {
           if (!videoUrl) {
@@ -1370,6 +1543,7 @@ function AdminPage() {
         allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
         active: Boolean(taskForm.active),
       };
+      payload.location_id = taskForm.locationId;
 
       if (taskSource === 'video') {
         if (!videoUrl) {
@@ -1420,6 +1594,7 @@ function AdminPage() {
         allowed_hotel_ids: allowedHotelIds,
         active: Boolean(rewardForm.active),
       };
+      basePayload.location_id = rewardForm.locationId;
 
       if (rewardForm.voucherCode.trim()) {
         basePayload.voucherCode = rewardForm.voucherCode.trim();
@@ -1442,6 +1617,48 @@ function AdminPage() {
     }
   };
 
+  const handleLocationSubmit = async () => {
+    try {
+      setLocationMessage(null);
+      setHasAttemptedLocationSubmit(true);
+
+      if (!locationValidation.isValid) {
+        setLocationMessage({
+          type: 'error',
+          text: locationValidation.message ?? 'Please complete the required fields.',
+        });
+        return;
+      }
+
+      const payload: any = {
+        name: locationForm.name.trim(),
+        description: locationForm.description.trim(),
+        mode: locationForm.mode,
+      };
+
+      if (locationForm.mode === 'physical') {
+        payload.address = locationForm.address.trim();
+        payload.latitude = Number.parseFloat(locationForm.latitude);
+        payload.longitude = Number.parseFloat(locationForm.longitude);
+      }
+
+      if (isEditingLocation && editingLocationId) {
+        await updateLocationMutation.mutateAsync({ id: editingLocationId, payload });
+      } else {
+        await createLocationMutation.mutateAsync(payload);
+        if (locationReturnMode) {
+          setMode(locationReturnMode);
+          setLocationReturnMode(null);
+        }
+      }
+    } catch (error: any) {
+      setLocationMessage({
+        type: 'error',
+        text: error?.message || 'Failed to save location.',
+      });
+    }
+  };
+
   useEffect(() => {
     setSelectedTaskIds((prev) =>
       prev.filter((id) => existingTemplates.some((task) => task.id === id))
@@ -1453,6 +1670,21 @@ function AdminPage() {
       prev.filter((id) => normalizedRewardTemplates.some((reward) => reward.id === id))
     );
   }, [normalizedRewardTemplates]);
+
+  useEffect(() => {
+    if (
+      taskForm.locationId &&
+      !locationsList.some((location) => location.id === taskForm.locationId)
+    ) {
+      setTaskForm((prev) => ({ ...prev, locationId: '' }));
+    }
+    if (
+      rewardForm.locationId &&
+      !locationsList.some((location) => location.id === rewardForm.locationId)
+    ) {
+      setRewardForm((prev) => ({ ...prev, locationId: '' }));
+    }
+  }, [locationsList, taskForm.locationId, rewardForm.locationId]);
 
   const toggleTaskSelection = (taskId: string, checked: boolean) => {
     setSelectedTaskIds((prev) => {
@@ -1697,6 +1929,7 @@ function AdminPage() {
       allowedRoles: normalizeEnumArray(task.allowed_roles),
       allowedUserTypes: normalizeEnumArray(task.allowed_user_types),
       allowedHotelIds: normalizeEnumArray(task.allowed_hotel_ids),
+      locationId: task.location_id ?? task.location?.id ?? '',
       active: task.active ?? true,
     });
     setIsEditingTask(true);
@@ -1745,6 +1978,7 @@ function AdminPage() {
       allowedRoles: normalizeEnumArray(template.allowed_roles),
       allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
     });
     setIsEditingReward(true);
@@ -1766,6 +2000,96 @@ function AdminPage() {
       setMode(null);
     }
     setRewardReturnMode(null);
+  };
+
+  const startLocationEdit = (location: AdminLocation) => {
+    setLocationReturnMode(mode === 'locationManage' ? 'locationManage' : null);
+    setMode('location');
+    setLocationManagementMessage(null);
+    setLocationMessage(null);
+    setLocationForm({
+      name: location.name ?? '',
+      description: location.description ?? '',
+      mode: location.is_online ? 'online' : 'physical',
+      address: location.address ?? '',
+      latitude:
+        location.latitude !== null && location.latitude !== undefined
+          ? String(location.latitude)
+          : '',
+      longitude:
+        location.longitude !== null && location.longitude !== undefined
+          ? String(location.longitude)
+          : '',
+    });
+    setIsEditingLocation(true);
+    setEditingLocationId(location.id);
+    setHasAttemptedLocationSubmit(false);
+  };
+
+  const cancelLocationEdit = () => {
+    setIsEditingLocation(false);
+    setEditingLocationId(null);
+    setLocationForm(defaultLocationForm());
+    setLocationMessage(null);
+    setHasAttemptedLocationSubmit(false);
+    if (locationReturnMode) {
+      setMode(locationReturnMode);
+    } else {
+      setMode(null);
+    }
+    setLocationReturnMode(null);
+  };
+
+  const goToLocationCreation = () => {
+    setLocationReturnMode(mode);
+    setLocationMessage(null);
+    setLocationForm(defaultLocationForm());
+    setIsEditingLocation(false);
+    setEditingLocationId(null);
+    setMode('location');
+  };
+
+  const handleLocationDelete = (location: AdminLocation) => {
+    const isDefaultLocation =
+      location.is_online &&
+      (!location.address || location.address.trim() === '') &&
+      location.name.toLowerCase() === 'online';
+    if (isDefaultLocation) {
+      setLocationManagementMessage({
+        type: 'error',
+        text: 'The default online location cannot be deleted.',
+      });
+      return;
+    }
+    setLocationConfirm({
+      visible: true,
+      title: `Delete ${location.name}?`,
+      description:
+        'Are you sure you want to delete this location? Tasks and rewards using it will need to be reassigned.',
+      confirmLabel: 'Delete location',
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setLocationManagementMessage(null);
+          await api.deleteLocation(location.id);
+          setLocationManagementMessage({
+            type: 'success',
+            text: 'Location deleted successfully.',
+          });
+          if (isEditingLocation && editingLocationId === location.id) {
+            cancelLocationEdit();
+          }
+          void refetchLocations();
+        } catch (error: any) {
+          setLocationManagementMessage({
+            type: 'error',
+            text: error?.message || 'Failed to delete location.',
+          });
+        } finally {
+          setLocationConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
   };
 
   const allTasksSelected =
@@ -1840,6 +2164,22 @@ function AdminPage() {
             <h2>Manage Rewards</h2>
             <p>Review and maintain rewards available to users.</p>
           </button>
+          <button
+            className="admin-choice-card"
+            onClick={() => {
+              setLocationReturnMode(null);
+              setMode('location');
+            }}
+          >
+            <span className="admin-choice-icon">📍</span>
+            <h2>Create Location</h2>
+            <p>Define an online or physical location for tasks and rewards.</p>
+          </button>
+          <button className="admin-choice-card" onClick={() => setMode('locationManage')}>
+            <span className="admin-choice-icon">🗺️</span>
+            <h2>Manage Locations</h2>
+            <p>Update or remove available locations.</p>
+          </button>
         </div>
       )}
 
@@ -1884,6 +2224,11 @@ function AdminPage() {
 
           {tasksLoading && <p>Loading tasks…</p>}
           {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
+          {Boolean(locationsError) && (
+            <p className="admin-error">
+              Failed to load locations. Create or refresh locations before publishing tasks.
+            </p>
+          )}
 
           <div className="admin-form-card">
             {!isEditingTask && (
@@ -1963,6 +2308,33 @@ function AdminPage() {
                           }))
                         }
                       />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="Location" required />
+                      {locationsLoading ? (
+                        <p className="admin-field-note">Loading locations…</p>
+                      ) : hasLocationOptions ? (
+                        <select
+                          value={taskForm.locationId}
+                          onChange={(event) =>
+                            setTaskForm((prev) => ({ ...prev, locationId: event.target.value }))
+                          }
+                        >
+                          <option value="">Select location</option>
+                          {locationOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="admin-field-note">
+                          <p>No locations available.</p>
+                          <button type="button" className="link-button" onClick={goToLocationCreation}>
+                            Create a location
+                          </button>
+                        </div>
+                      )}
                     </label>
                     <div className="admin-field">
                       <FieldLabel label="Active" />
@@ -2247,6 +2619,11 @@ function AdminPage() {
           {Boolean(rewardTemplatesError) && (
             <p className="admin-error">Failed to load reward templates.</p>
           )}
+          {Boolean(locationsError) && (
+            <p className="admin-error">
+              Failed to load locations. Create or refresh locations before publishing rewards.
+            </p>
+          )}
 
           <div className="admin-form-card">
             {!isEditingReward && (
@@ -2336,6 +2713,33 @@ function AdminPage() {
                           }))
                         }
                       />
+                    </label>
+                    <label className="admin-field">
+                      <FieldLabel label="Location" required />
+                      {locationsLoading ? (
+                        <p className="admin-field-note">Loading locations…</p>
+                      ) : hasLocationOptions ? (
+                        <select
+                          value={rewardForm.locationId}
+                          onChange={(event) =>
+                            setRewardForm((prev) => ({ ...prev, locationId: event.target.value }))
+                          }
+                        >
+                          <option value="">Select location</option>
+                          {locationOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="admin-field-note">
+                          <p>No locations available.</p>
+                          <button type="button" className="link-button" onClick={goToLocationCreation}>
+                            Create a location
+                          </button>
+                        </div>
+                      )}
                     </label>
                     <div className="admin-field">
                       <FieldLabel label="Active" />
@@ -2465,6 +2869,328 @@ function AdminPage() {
         </section>
       )}
 
+      {mode === 'location' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{isEditingLocation ? 'Edit Location' : 'Create Location'}</h2>
+              <p>
+                Define where tasks and rewards take place. Locations can be online or physical with an
+                address and GPS coordinates.
+              </p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => {
+                  if (isEditingLocation) {
+                    cancelLocationEdit();
+                  } else if (locationReturnMode) {
+                    setMode(locationReturnMode);
+                    setLocationReturnMode(null);
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title="Back"
+              >
+                <Icon name="back" />
+                <span className="sr-only">Back</span>
+              </button>
+            </div>
+          </header>
+
+          <div className="admin-form-card">
+            <div className="admin-form-layout">
+              <section className="admin-form-section">
+                <div className="admin-form-section-header">
+                  <div>
+                    <h3>Location details</h3>
+                    <p>Provide the basic information for this location.</p>
+                  </div>
+                </div>
+                <div className="admin-form-grid admin-form-grid-two">
+                  <label className="admin-field admin-field-span-2">
+                    <FieldLabel label="Name" required />
+                    <input
+                      type="text"
+                      value={locationForm.name}
+                      onChange={(event) =>
+                        setLocationForm((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <label className="admin-field admin-field-span-2">
+                    <FieldLabel label="Description" required />
+                    <textarea
+                      rows={3}
+                      value={locationForm.description}
+                      onChange={(event) =>
+                        setLocationForm((prev) => ({ ...prev, description: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <div className="admin-field admin-field-span-2">
+                    <FieldLabel label="Location type" required />
+                    <div className="admin-toggle-group">
+                      <label className="admin-radio-option">
+                        <input
+                          type="radio"
+                          className="admin-radio"
+                          style={COMPACT_TOGGLE_STYLE}
+                          value="online"
+                          checked={locationForm.mode === 'online'}
+                          onChange={() =>
+                            setLocationForm((prev) => ({
+                              ...prev,
+                              mode: 'online',
+                              address: '',
+                              latitude: '',
+                              longitude: '',
+                            }))
+                          }
+                        />
+                        <span>Online</span>
+                      </label>
+                      <label className="admin-radio-option">
+                        <input
+                          type="radio"
+                          className="admin-radio"
+                          style={COMPACT_TOGGLE_STYLE}
+                          value="physical"
+                          checked={locationForm.mode === 'physical'}
+                          onChange={() =>
+                            setLocationForm((prev) => ({
+                              ...prev,
+                              mode: 'physical',
+                            }))
+                          }
+                        />
+                        <span>Physical</span>
+                      </label>
+                    </div>
+                  </div>
+                  {locationForm.mode === 'physical' && (
+                    <>
+                      <label className="admin-field admin-field-span-2">
+                        <FieldLabel label="Address" required />
+                        <textarea
+                          rows={2}
+                          value={locationForm.address}
+                          onChange={(event) =>
+                            setLocationForm((prev) => ({ ...prev, address: event.target.value }))
+                          }
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <FieldLabel label="Latitude" required />
+                        <input
+                          type="number"
+                          step="0.000001"
+                          value={locationForm.latitude}
+                          onChange={(event) =>
+                            setLocationForm((prev) => ({ ...prev, latitude: event.target.value }))
+                          }
+                          placeholder="e.g. 52.520008"
+                        />
+                      </label>
+                      <label className="admin-field">
+                        <FieldLabel label="Longitude" required />
+                        <input
+                          type="number"
+                          step="0.000001"
+                          value={locationForm.longitude}
+                          onChange={(event) =>
+                            setLocationForm((prev) => ({ ...prev, longitude: event.target.value }))
+                          }
+                          placeholder="e.g. 13.404954"
+                        />
+                      </label>
+                    </>
+                  )}
+                  {locationForm.mode === 'online' && (
+                    <div className="admin-form-full">
+                      <p className="admin-field-note">
+                        Online locations do not require an address or coordinates.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <div className="admin-form-actions">
+                <div className="admin-form-feedback">
+                  {locationMessage ? (
+                    <p className={locationMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
+                      {locationMessage.text}
+                    </p>
+                  ) : isEditingLocation ? (
+                    <p className="admin-publish-hint">Editing existing location.</p>
+                  ) : !locationValidation.isValid ? (
+                    <p className="admin-publish-hint">
+                      {hasAttemptedLocationSubmit && locationValidation.message
+                        ? locationValidation.message
+                        : 'Complete required fields to enable save.'}
+                    </p>
+                  ) : (
+                    <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                  )}
+                </div>
+                <div className="admin-form-actions-buttons">
+                  {isEditingLocation && (
+                    <button
+                      type="button"
+                      className="admin-action-button secondary"
+                      onClick={cancelLocationEdit}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    className="admin-submit"
+                    onClick={handleLocationSubmit}
+                    disabled={isLocationSubmitDisabled}
+                  >
+                    {isEditingLocation ? 'Update Location' : 'Create Location'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {mode === 'locationManage' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>Manage Locations</h2>
+              <p>Review existing locations, edit their details, or remove unused entries.</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => refetchLocations()}
+                title="Refresh locations"
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">Refresh locations</span>
+              </button>
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title="Back to main menu"
+              >
+                <Icon name="back" />
+                <span className="sr-only">Back</span>
+              </button>
+            </div>
+          </header>
+
+          {locationsLoading && <p>Loading locations…</p>}
+          {Boolean(locationsError) && (
+            <p className="admin-error">Failed to load locations. Please try again.</p>
+          )}
+
+          <div className="admin-management-card">
+            <div className="admin-management-top">
+              <div>
+                <h3>Existing locations</h3>
+                <p>Each task and reward references one of these locations.</p>
+              </div>
+              <button className="admin-action-button" type="button" onClick={goToLocationCreation}>
+                New location
+              </button>
+            </div>
+            {locationManagementMessage && (
+              <p
+                className={
+                  locationManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+                }
+              >
+                {locationManagementMessage.text}
+              </p>
+            )}
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Details</th>
+                    <th style={{ width: '20rem' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {locationsList.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="admin-table-empty">
+                        No locations found.
+                      </td>
+                    </tr>
+                  ) : (
+                    locationsList.map((location) => {
+                      const isDefaultLocation =
+                        location.is_online &&
+                        (!location.address || location.address.trim() === '') &&
+                        location.name.toLowerCase() === 'online';
+                      return (
+                        <tr key={location.id}>
+                          <td data-label="Name">
+                            <div className="admin-table-primary">
+                              <span className="admin-table-title">{location.name}</span>
+                              {location.description && (
+                                <span className="admin-table-subtitle">{location.description}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td data-label="Type">
+                            <span className="admin-status-badge">
+                              {location.is_online ? 'Online' : 'Physical'}
+                            </span>
+                          </td>
+                          <td data-label="Details">
+                            {location.is_online ? (
+                              <span className="admin-table-subtitle">Accessible online</span>
+                            ) : (
+                              <div className="admin-table-secondary">
+                                {location.address && (
+                                  <span className="admin-table-subtitle">{location.address}</span>
+                                )}
+                                <span className="admin-table-subtitle">
+                                  {location.latitude}, {location.longitude}
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                          <td data-label="Actions" className="admin-table-actions">
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => startLocationEdit(location)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="admin-action-button danger"
+                              type="button"
+                              onClick={() => handleLocationDelete(location)}
+                              disabled={isDefaultLocation}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
       {mode === 'taskManage' && (
         <section className="admin-section">
           <header className="admin-section-header">
@@ -2586,6 +3312,7 @@ function AdminPage() {
                     </th>
                     <th>Task</th>
                     <th>Type</th>
+                    <th>Location</th>
                     <th>Points</th>
                     <th>Status</th>
                     <th style={{ width: '24rem' }}>Actions</th>
@@ -2594,7 +3321,7 @@ function AdminPage() {
                 <tbody>
                   {existingTemplates.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="admin-table-empty">
+                      <td colSpan={7} className="admin-table-empty">
                         No tasks found.
                       </td>
                     </tr>
@@ -2629,6 +3356,18 @@ function AdminPage() {
                             <span className="admin-table-type">
                               <TaskTypeBadge type={task.type} />
                             </span>
+                          </td>
+                          <td data-label="Location">
+                            <div className="admin-table-secondary">
+                              <span className="admin-table-title">
+                                {task.location?.name || '—'}
+                              </span>
+                              {task.location?.is_online ? (
+                                <span className="admin-table-subtitle">Online</span>
+                              ) : task.location?.address ? (
+                                <span className="admin-table-subtitle">{task.location.address}</span>
+                              ) : null}
+                            </div>
                           </td>
                           <td data-label="Points">{task.points}</td>
                           <td data-label="Status">
@@ -2799,6 +3538,7 @@ function AdminPage() {
                     </th>
                     <th>Reward</th>
                     <th>Type</th>
+                    <th>Location</th>
                     <th>Cost</th>
                     <th>Status</th>
                     <th style={{ width: '24rem' }}>Actions</th>
@@ -2807,7 +3547,7 @@ function AdminPage() {
                 <tbody>
                   {normalizedRewardTemplates.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="admin-table-empty">
+                      <td colSpan={7} className="admin-table-empty">
                         No rewards found.
                       </td>
                     </tr>
@@ -2847,6 +3587,18 @@ function AdminPage() {
                                <RewardTypeBadge type={reward.reward_type as RewardType} />
                              </span>
                            </td>
+                          <td data-label="Location">
+                            <div className="admin-table-secondary">
+                              <span className="admin-table-title">
+                                {reward.location?.name || '—'}
+                              </span>
+                              {reward.location?.is_online ? (
+                                <span className="admin-table-subtitle">Online</span>
+                              ) : reward.location?.address ? (
+                                <span className="admin-table-subtitle">{reward.location.address}</span>
+                              ) : null}
+                            </div>
+                          </td>
                           <td data-label="Cost">{cost}</td>
                           <td data-label="Status">
                              <span
@@ -2897,6 +3649,10 @@ function AdminPage() {
       <ConfirmDialog
         {...rewardConfirm}
         onCancel={() => setRewardConfirm(defaultConfirmDialogState)}
+      />
+      <ConfirmDialog
+        {...locationConfirm}
+        onCancel={() => setLocationConfirm(defaultConfirmDialogState)}
       />
     </div>
   );

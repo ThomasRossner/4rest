@@ -275,4 +275,25 @@ export const api = {
     const response = await apiClient.post('/hotelkit/sync');
     return response.data;
   },
+
+  // Locations
+  async getLocations() {
+    const response = await apiClient.get('/locations');
+    return response.data;
+  },
+
+  async createLocation(payload: any) {
+    const response = await apiClient.post('/locations', payload);
+    return response.data;
+  },
+
+  async updateLocation(id: string, payload: any) {
+    const response = await apiClient.put(`/locations/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteLocation(id: string) {
+    const response = await apiClient.delete(`/locations/${id}`);
+    return response.data;
+  },
 };

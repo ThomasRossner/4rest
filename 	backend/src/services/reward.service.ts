@@ -11,6 +11,7 @@ import {
   HotelId,
   RewardType,
 } from '../constants/enums.js';
+import { Location } from './location.service.js';
 
 function validateRoleArray(values?: string[] | null): UserRole[] {
   if (!values) return [];
@@ -75,30 +76,31 @@ export async function getRewardsService(userId: string) {
   const params: any[] = [];
   let paramIndex = 1;
 
-  let query = 'SELECT * FROM rewards WHERE active = TRUE';
+  let query =
+    'SELECT r.*, row_to_json(l.*) AS location FROM rewards r JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE';
 
   if (role) {
-    query += ` AND (allowed_roles IS NULL OR COALESCE(array_length(allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(allowed_roles))`;
+    query += ` AND (r.allowed_roles IS NULL OR COALESCE(array_length(r.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_roles))`;
     params.push(role);
   } else {
-    query += ' AND (allowed_roles IS NULL OR COALESCE(array_length(allowed_roles, 1), 0) = 0)';
+    query += ' AND (r.allowed_roles IS NULL OR COALESCE(array_length(r.allowed_roles, 1), 0) = 0)';
   }
 
   if (userType) {
-    query += ` AND (allowed_user_types IS NULL OR COALESCE(array_length(allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(allowed_user_types))`;
+    query += ` AND (r.allowed_user_types IS NULL OR COALESCE(array_length(r.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_user_types))`;
     params.push(userType);
   } else {
-    query += ' AND (allowed_user_types IS NULL OR COALESCE(array_length(allowed_user_types, 1), 0) = 0)';
+    query += ' AND (r.allowed_user_types IS NULL OR COALESCE(array_length(r.allowed_user_types, 1), 0) = 0)';
   }
 
   if (hotelId) {
-    query += ` AND (allowed_hotel_ids IS NULL OR COALESCE(array_length(allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(allowed_hotel_ids))`;
+    query += ` AND (r.allowed_hotel_ids IS NULL OR COALESCE(array_length(r.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_hotel_ids))`;
     params.push(hotelId);
   } else {
-    query += ' AND (allowed_hotel_ids IS NULL OR COALESCE(array_length(allowed_hotel_ids, 1), 0) = 0)';
+    query += ' AND (r.allowed_hotel_ids IS NULL OR COALESCE(array_length(r.allowed_hotel_ids, 1), 0) = 0)';
   }
 
-  query += ' ORDER BY points_cost ASC';
+  query += ' ORDER BY r.points_cost ASC';
 
   const result = await db.query(query, params);
   const unique = new Map<string, any>();
@@ -113,6 +115,7 @@ export async function getRewardsService(userId: string) {
     pointsCost: row.points_cost,
     rewardType: row.reward_type,
     icon: getRewardIcon(row.reward_type),
+    location: row.location as Location,
   }));
 }
 
@@ -137,6 +140,7 @@ interface CreateCustomRewardInput {
   allowed_roles?: string[];
   allowed_user_types?: string[];
   allowed_hotel_ids?: string[];
+  location_id: string;
   active?: boolean;
 }
 
@@ -150,6 +154,7 @@ interface UpdateRewardInput {
   allowed_roles?: string[] | null;
   allowed_user_types?: string[] | null;
   allowed_hotel_ids?: string[] | null;
+  location_id?: string | null;
   active?: boolean;
 }
 
@@ -173,9 +178,10 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        allowed_roles,
        allowed_user_types,
        allowed_hotel_ids,
+       location_id,
        active
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING *`,
     [
       title,
@@ -187,6 +193,7 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       validateRoleArray(data.allowed_roles ?? []),
       validateUserTypeArray(data.allowed_user_types ?? []),
       validateHotelIdArray(data.allowed_hotel_ids ?? []),
+      data.location_id,
       data.active ?? true,
     ]
   );
@@ -249,6 +256,11 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
     values.push(validateHotelIdArray(data.allowed_hotel_ids ?? []));
   }
 
+  if (data.location_id !== undefined) {
+    updates.push(`location_id = $${paramIndex++}`);
+    values.push(data.location_id);
+  }
+
   if (data.active !== undefined) {
     updates.push(`active = $${paramIndex++}`);
     values.push(data.active);
@@ -308,28 +320,18 @@ export async function listRewardsForAdmin(includeInactive = false) {
   const params: any[] = [];
 
   if (!includeInactive) {
-    clauses.push('active = TRUE');
+    clauses.push('r.active = TRUE');
   }
 
-  let query = `SELECT id,
-                      title,
-                      description,
-                      points_cost,
-                      reward_type,
-                      voucher_code,
-                      external_api_id,
-                      allowed_roles,
-                      allowed_user_types,
-                      allowed_hotel_ids,
-                      created_at,
-                      active
-               FROM rewards`;
+  let query = `SELECT r.*, row_to_json(l.*) AS location
+               FROM rewards r
+               JOIN locations l ON l.id = r.location_id`;
 
   if (clauses.length > 0) {
     query += ` WHERE ${clauses.join(' AND ')}`;
   }
 
-  query += ' ORDER BY created_at DESC';
+  query += ' ORDER BY r.created_at DESC';
 
   const result = await db.query(query, params);
   return result.rows;

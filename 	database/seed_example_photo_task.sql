@@ -8,7 +8,8 @@ INSERT INTO tasks (
   points,
   photo_required,
   co2_savings_kg,
-  active
+  active,
+  location_id
 ) SELECT
   'Recycling Station Photo',
   'Find the hotel recycling station and upload a photo as proof.',
@@ -16,7 +17,8 @@ INSERT INTO tasks (
   30,
   true,
   0.25,
-  true
+  true,
+  (SELECT id FROM locations WHERE name = 'Online' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM tasks WHERE title = 'Recycling Station Photo'
 );

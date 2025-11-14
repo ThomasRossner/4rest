@@ -48,6 +48,15 @@ WHERE email IN (
 EOF
 echo "   - example accounts marked as verified"
 
+echo "\n==> Seeding example locations into Postgres (container: ${PG_CONTAINER})"
+if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_locations.sql" >/dev/null; then
+  echo "   - example locations seeded (or already exist)"
+else
+  echo "ERROR: Failed to seed locations. Is the Postgres container running?"
+  echo "       Start DBs with: docker-compose -f docker-compose.dev.yml up -d"
+  exit 1
+fi
+
 echo "\n==> Seeding example task into Postgres (container: ${PG_CONTAINER})"
 
 if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_example_task.sql" >/dev/null; then

@@ -38,5 +38,6 @@ docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/m
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/012_email_verification_password_reset.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/013_passwordless_login.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/014_allow_passwordless_accounts.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/015_locations.sql
 
 echo "✅ Database reset complete!"

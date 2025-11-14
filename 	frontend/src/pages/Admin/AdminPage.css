@@ -239,6 +239,21 @@
   cursor: pointer;
 }
 
+.admin-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.admin-radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
 .admin-upload-field input[type='file'] {
   display: none;
 }
@@ -861,6 +876,12 @@
 }
 
 .admin-table-primary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xxs);
+}
+
+.admin-table-secondary {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xxs);

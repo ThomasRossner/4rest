@@ -9,7 +9,8 @@ INSERT INTO tasks (
   video_url,
   quiz_questions,
   co2_savings_kg,
-  active
+  active,
+  location_id
 ) SELECT
   'Sustainability Basics',
   'Watch the 1-minute intro video and answer two quick questions.',
@@ -21,7 +22,8 @@ INSERT INTO tasks (
     {"question":"What should you do with lights when leaving a room?","options":["Leave on","Switch off"],"correctAnswer":"Switch off"}
   ]'::jsonb,
   0.20,
-  true
+  true,
+  (SELECT id FROM locations WHERE name = 'Online' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM tasks WHERE title = 'Sustainability Basics'
 );

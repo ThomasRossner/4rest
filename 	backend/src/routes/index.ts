@@ -8,6 +8,7 @@ import statisticsRoutes from './statistics.routes.js';
 import gdprRoutes from './gdpr.routes.js';
 import hotelkitRoutes from './hotelkit.routes.js';
 import sihotRoutes from './sihot.routes.js';
+import locationRoutes from './location.routes.js';
 
 export function setupRoutes(): Router {
   const router = Router();
@@ -21,6 +22,7 @@ export function setupRoutes(): Router {
   router.use('/gdpr', gdprRoutes);
   router.use('/hotelkit', hotelkitRoutes);
   router.use('/sihot', sihotRoutes);
+  router.use('/locations', locationRoutes);
 
   return router;
 }

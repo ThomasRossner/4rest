@@ -9,6 +9,7 @@ import {
   setRewardsActiveState,
   bulkDeleteRewards,
 } from '../services/reward.service.js';
+import { getLocationById } from '../services/location.service.js';
 
 export const getRewards: RequestHandler = async (req, res) => {
   try {
@@ -31,6 +32,15 @@ export const createReward: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: 'Active flag must be a boolean value' });
     }
 
+    const locationId = payload.locationId ?? payload.location_id;
+    if (!locationId || typeof locationId !== 'string') {
+      return res.status(400).json({ error: 'locationId is required.' });
+    }
+    const location = await getLocationById(locationId);
+    if (!location) {
+      return res.status(400).json({ error: 'Invalid locationId.' });
+    }
+
     const reward = await createCustomReward({
       title: payload.title,
       description: payload.description,
@@ -41,6 +51,7 @@ export const createReward: RequestHandler = async (req, res) => {
       allowed_roles: payload.allowed_roles ?? payload.allowedRoles ?? [],
       allowed_user_types: payload.allowed_user_types ?? payload.allowedUserTypes ?? [],
       allowed_hotel_ids: payload.allowed_hotel_ids ?? payload.allowedHotelIds ?? [],
+      location_id: location.id,
       active: payload.active,
     });
 
@@ -87,6 +98,19 @@ export const updateReward: RequestHandler = async (req, res) => {
       updatePayload.allowed_hotel_ids =
         payload.allowed_hotel_ids ?? payload.allowedHotelIds ?? [];
     }
+    if (payload.locationId !== undefined || payload.location_id !== undefined) {
+      const locationId = payload.locationId ?? payload.location_id;
+      if (locationId) {
+        const location = await getLocationById(locationId);
+        if (!location) {
+          return res.status(400).json({ error: 'Invalid locationId.' });
+        }
+        updatePayload.location_id = location.id;
+      } else {
+        return res.status(400).json({ error: 'locationId must be a valid string.' });
+      }
+    }
+
     if (payload.active !== undefined) {
       updatePayload.active = payload.active;
     }

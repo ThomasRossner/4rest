@@ -13,6 +13,7 @@ import {
   bulkDeleteTasks as bulkDeleteTasksService,
 } from '../services/task.service.js';
 import { USER_ROLES, USER_TYPES, HOTEL_IDS } from '../constants/enums.js';
+import { getLocationById } from '../services/location.service.js';
 
 export const getTasks: RequestHandler = async (req, res) => {
   try {
@@ -77,6 +78,17 @@ export const createTask: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: 'allowed_hotel_ids must be an array of strings' });
     }
 
+    const locationId = payload.locationId ?? payload.location_id;
+    if (!locationId || typeof locationId !== 'string') {
+      return res.status(400).json({ error: 'locationId is required.' });
+    }
+
+    const location = await getLocationById(locationId);
+    if (!location) {
+      return res.status(400).json({ error: 'Invalid locationId.' });
+    }
+    payload.location_id = location.id;
+
     const invalidRoles = (payload.allowed_roles || []).filter(
       (role: string) => !(USER_ROLES as readonly string[]).includes(role)
     );
@@ -110,6 +122,18 @@ export const createTask: RequestHandler = async (req, res) => {
 
 export const updateTask: RequestHandler = async (req, res) => {
   try {
+    const locationId = req.body.locationId ?? req.body.location_id;
+    if (locationId !== undefined) {
+      if (!locationId || typeof locationId !== 'string') {
+        return res.status(400).json({ error: 'locationId must be a valid string.' });
+      }
+      const location = await getLocationById(locationId);
+      if (!location) {
+        return res.status(400).json({ error: 'Invalid locationId.' });
+      }
+      req.body.location_id = location.id;
+    }
+
     const task = await updateTaskService(req.params.id, req.body);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });

@@ -7,7 +7,8 @@ INSERT INTO rewards (
   points_cost,
   reward_type,
   voucher_code,
-  active
+  active,
+  location_id
 )
 SELECT
   'Free Coffee',
@@ -15,7 +16,8 @@ SELECT
   15,
   'voucher',
   'COFFEE-ON-US',
-  true
+  true,
+  (SELECT id FROM locations WHERE name = 'Online' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM rewards WHERE title = 'Free Coffee'
 );
