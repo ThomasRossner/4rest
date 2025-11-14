@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
@@ -13,6 +14,7 @@ function RewardsPage() {
   const points = useAuthStore((s) => s.user?.points || 0);
   const { data: rewards, isLoading, isError } = useQuery('rewards', () => api.getRewards());
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
+  const { t } = useTranslation();
 
   const [lastReceipt, setLastReceipt] = useState<any | null>(null);
 
@@ -22,23 +24,26 @@ function RewardsPage() {
         const res = await api.redeemReward(rewardId, cost);
         const receipt = res?.data || res;
         setLastReceipt(receipt || null);
+        const successMessage = t('rewards.messages.redeemSuccess');
         if (import.meta.env.VITE_UI_POLISH) {
-          pushToast({ type: 'success', message: 'Reward redeemed successfully' });
+          pushToast({ type: 'success', message: successMessage });
         } else {
-          alert('Reward redeemed successfully!');
+          alert(successMessage);
         }
       } catch (error) {
+        const errorMessage = t('rewards.messages.redeemError');
         if (import.meta.env.VITE_UI_POLISH) {
-          pushToast({ type: 'error', message: 'Failed to redeem reward' });
+          pushToast({ type: 'error', message: errorMessage });
         } else {
-          alert('Failed to redeem reward');
+          alert(errorMessage);
         }
       }
     } else {
+      const infoMessage = t('rewards.messages.notEnoughPoints');
       if (import.meta.env.VITE_UI_POLISH) {
-        pushToast({ type: 'info', message: 'Not enough points' });
+        pushToast({ type: 'info', message: infoMessage });
       } else {
-        alert('Not enough points!');
+        alert(infoMessage);
       }
     }
   };
@@ -53,21 +58,21 @@ function RewardsPage() {
 
   return (
     <div className="rewards-page">
-      <h1 className="rewards-title">Rewards Marketplace</h1>
+      <h1 className="rewards-title">{t('rewards.title')}</h1>
       <div className="rewards-balance">
-        <span className="rewards-balance-label">Your Points:</span>
+        <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
         <span className="rewards-balance-value">{points}</span>
       </div>
       {uiPolish && (
         <div className="rewards-filter-container">
-          {(['all', 'discount', 'benefit', 'team_event'] as const).map((t) => (
+          {(['all', 'discount', 'benefit', 'team_event'] as const).map((filter) => (
             <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`reward-filter-btn ${typeFilter === t ? 'active' : ''}`}
-              aria-pressed={typeFilter === t}
+              key={filter}
+              onClick={() => setTypeFilter(filter)}
+              className={`reward-filter-btn ${typeFilter === filter ? 'active' : ''}`}
+              aria-pressed={typeFilter === filter}
             >
-              {t === 'all' ? 'All' : t === 'discount' ? '🏷️ Discounts' : t === 'benefit' ? '✨ Benefits' : '🤝 Team Events'}
+              {t(`rewards.filters.${filter}`)}
             </button>
           ))}
         </div>
@@ -75,31 +80,31 @@ function RewardsPage() {
 
       {isLoading && <LoadingSkeleton lines={6} />}
       {!isLoading && !isError && filteredRewards.length === 0 && (
-        <EmptyState title="No rewards available" description="Please check back later or change the filter." />
+        <EmptyState title={t('rewards.empty.title')} description={t('rewards.empty.description')} />
       )}
 
       {uiPolish && lastReceipt && (
         <div className="rewards-receipt">
           <div className="rewards-receipt-header">
             <span className="rewards-receipt-icon">🎫</span>
-            <span className="rewards-receipt-title">Redemption Receipt</span>
+            <span className="rewards-receipt-title">{t('rewards.receipt.title')}</span>
           </div>
           <div className="rewards-receipt-content">
             {lastReceipt.voucherCode && (
               <div className="rewards-receipt-field">
-                <span className="rewards-receipt-label">Voucher Code:</span>
+                <span className="rewards-receipt-label">{t('rewards.receipt.voucherCode')}:</span>
                 <code className="rewards-receipt-code">{String(lastReceipt.voucherCode)}</code>
               </div>
             )}
             {lastReceipt.expiresAt && (
               <div className="rewards-receipt-field">
-                <span className="rewards-receipt-label">Expires:</span>
+                <span className="rewards-receipt-label">{t('rewards.receipt.expires')}:</span>
                 <span className="rewards-receipt-value">{new Date(lastReceipt.expiresAt).toLocaleString()}</span>
               </div>
             )}
             {lastReceipt.title && (
               <div className="rewards-receipt-field">
-                <span className="rewards-receipt-label">Reward:</span>
+                <span className="rewards-receipt-label">{t('rewards.receipt.reward')}:</span>
                 <span className="rewards-receipt-value">{lastReceipt.title}</span>
               </div>
             )}
@@ -122,13 +127,15 @@ function RewardsPage() {
               <h3 className="reward-title">{reward.title}</h3>
               <p className="reward-description">{reward.description}</p>
               <div className="reward-footer">
-                <span className="reward-cost">{reward.pointsCost} points</span>
+                <span className="reward-cost">
+                  {t('rewards.card.cost', { count: reward.pointsCost })}
+                </span>
                 <button
                   className="reward-button"
                   onClick={() => handleRedeem(reward.id, reward.pointsCost)}
                   disabled={!user || user.points < reward.pointsCost}
                 >
-                  Redeem
+                  {t('rewards.card.redeem')}
                 </button>
               </div>
             </div>

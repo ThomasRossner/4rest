@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import './ConsentManager.css';
@@ -17,6 +18,7 @@ export function ConsentManager() {
     dataProcessing: false,
   });
   const [saved, setSaved] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Load existing consent preferences
@@ -42,7 +44,7 @@ export function ConsentManager() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
-      alert('Failed to save consent preferences');
+      alert(t('consent.alerts.saveError'));
     }
   };
 
@@ -63,33 +65,33 @@ export function ConsentManager() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      alert('Failed to export data');
+      alert(t('consent.alerts.exportError'));
     }
   };
 
   const handleDeleteData = async () => {
-    if (!confirm('Are you sure you want to delete all your data? This cannot be undone.')) {
+    if (!confirm(t('consent.alerts.deleteConfirm'))) {
       return;
     }
 
     try {
       if (!user?.id) throw new Error('Missing user');
       await api.deleteMyAccount(user.id);
-      alert('Your data has been deleted. You will be logged out.');
+      alert(t('consent.alerts.deleteSuccess'));
       // Clear auth store and redirect
       useAuthStore.getState().logout();
       window.location.href = '/login';
     } catch (error) {
-      alert('Failed to delete data');
+      alert(t('consent.alerts.deleteError'));
     }
   };
 
   return (
     <div className="consent-manager">
-      <h2>Privacy & Data Management</h2>
+      <h2>{t('consent.title')}</h2>
 
       <div className="consent-section">
-        <h3>Consent Preferences</h3>
+        <h3>{t('consent.preferences')}</h3>
         <div className="consent-item">
           <label>
             <input
@@ -97,10 +99,10 @@ export function ConsentManager() {
               checked={consent.dataProcessing}
               onChange={(e) => handleConsentChange('dataProcessing', e.target.checked)}
             />
-            <span>Data Processing (Required)</span>
+            <span>{t('consent.dataProcessing.label')}</span>
           </label>
           <p className="consent-description">
-            Allow processing of your data for core functionality
+            {t('consent.dataProcessing.description')}
           </p>
         </div>
 
@@ -111,10 +113,10 @@ export function ConsentManager() {
               checked={consent.analytics}
               onChange={(e) => handleConsentChange('analytics', e.target.checked)}
             />
-            <span>Analytics</span>
+            <span>{t('consent.analytics.label')}</span>
           </label>
           <p className="consent-description">
-            Allow collection of anonymous usage statistics
+            {t('consent.analytics.description')}
           </p>
         </div>
 
@@ -125,26 +127,26 @@ export function ConsentManager() {
               checked={consent.marketing}
               onChange={(e) => handleConsentChange('marketing', e.target.checked)}
             />
-            <span>Marketing</span>
+            <span>{t('consent.marketing.label')}</span>
           </label>
           <p className="consent-description">
-            Allow sending promotional emails and notifications
+            {t('consent.marketing.description')}
           </p>
         </div>
 
         <button onClick={handleSave} className="save-consent-button">
-          {saved ? '✓ Saved' : 'Save Preferences'}
+          {saved ? t('consent.saved') : t('consent.save')}
         </button>
       </div>
 
       <div className="gdpr-actions">
-        <h3>Your Data Rights</h3>
+        <h3>{t('consent.dataRights')}</h3>
         <div className="gdpr-buttons">
           <button onClick={handleExportData} className="export-button">
-            Export My Data
+            {t('consent.export')}
           </button>
           <button onClick={handleDeleteData} className="delete-button">
-            Delete My Account
+            {t('consent.delete')}
           </button>
         </div>
       </div>

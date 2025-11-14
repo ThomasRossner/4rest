@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 type Reward = {
   id: string;
   title: string;
@@ -15,6 +17,7 @@ type RewardCardProps = {
 };
 
 export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
+  const { t } = useTranslation();
   const badgeColor =
     reward.rewardType === 'discount'
       ? '#0ea5e9'
@@ -50,13 +53,13 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
         <p className="reward-description">{reward.description}</p>
       )}
       <div className="reward-footer">
-        <span className="reward-cost">{reward.pointsCost} points</span>
+        <span className="reward-cost">{t('rewards.card.cost', { count: reward.pointsCost })}</span>
         <button
           className="reward-button"
           onClick={() => onRedeem(reward.id, reward.pointsCost)}
           disabled={!canAfford}
         >
-          {canAfford ? 'Redeem' : 'Insufficient'}
+          {canAfford ? t('rewards.card.redeem') : t('rewards.card.insufficient')}
         </button>
       </div>
     </div>

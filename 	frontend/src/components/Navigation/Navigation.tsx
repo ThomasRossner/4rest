@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
+import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import './Navigation.css';
 
 function Navigation() {
@@ -14,6 +16,7 @@ function Navigation() {
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
+  const { t } = useTranslation();
 
   // Generate user initials
   const getUserInitials = (name: string): string => {
@@ -69,25 +72,26 @@ function Navigation() {
   };
 
   const baseNavItems = [
-    { path: '/tasks', label: 'Tasks', icon: '✅' },
-    { path: '/forest', label: 'Forest', icon: '🌲' },
-    { path: '/rewards', label: 'Rewards', icon: '🎁' },
-    { path: '/statistics', label: 'Statistics', icon: '📈' },
+    { path: '/tasks', label: t('navigation.tasks'), icon: '✅' },
+    { path: '/forest', label: t('navigation.forest'), icon: '🌲' },
+    { path: '/rewards', label: t('navigation.rewards'), icon: '🎁' },
+    { path: '/statistics', label: t('navigation.statistics'), icon: '📈' },
   ];
-  const navItems = userRole === 'administrator'
-    ? [...baseNavItems, { path: '/admin', label: 'Admin', icon: '🛠️' }]
-    : baseNavItems;
+  const navItems =
+    userRole === 'administrator'
+      ? [...baseNavItems, { path: '/admin', label: t('navigation.admin'), icon: '🛠️' }]
+      : baseNavItems;
 
   return (
     <>
       <nav className="navigation navigation-top">
         <div className="navigation-container">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className={`navigation-logo ${location.pathname === '/' ? 'active' : ''}`}
           >
             <span className="navigation-logo-icon">🌳</span>
-            <span className="navigation-logo-text">Roots of Impact</span>
+            <span className="navigation-logo-text">{t('common.appName')}</span>
           </Link>
           <div className="navigation-items navigation-items-top">
             {navItems.map((item) => (
@@ -103,6 +107,9 @@ function Navigation() {
               </Link>
             ))}
           </div>
+          <div className="navigation-extra">
+            <LanguageSwitcher compact className="navigation-language" />
+          </div>
           <div className="navigation-user" ref={userMenuRef}>
             <button
               ref={userButtonRef}
@@ -115,7 +122,9 @@ function Navigation() {
               <div className="navigation-user-avatar">
                 <span className="navigation-user-initials">{getUserInitials(userName)}</span>
               </div>
-              <span className="navigation-user-points">{points} Points</span>
+              <span className="navigation-user-points">
+                {t('navigation.points', { count: points })}
+              </span>
             </button>
             {isUserMenuOpen && (
               <div className="navigation-user-menu" style={menuStyle}>
@@ -124,14 +133,14 @@ function Navigation() {
                   onClick={handleProfileClick}
                 >
                   <span className="navigation-user-menu-icon">👤</span>
-                  <span>Profile</span>
+                  <span>{t('navigation.profile')}</span>
                 </button>
                 <button
                   className="navigation-user-menu-item navigation-user-menu-item-logout"
                   onClick={handleLogout}
                 >
                   <span className="navigation-user-menu-icon">🚪</span>
-                  <span>Logout</span>
+                  <span>{t('navigation.logout')}</span>
                 </button>
               </div>
             )}

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { VideoTask } from '../../components/Tasks/VideoTask';
 import { QRCodeTask } from '../../components/Tasks/QRCodeTask';
@@ -16,6 +17,7 @@ function TasksPage() {
   const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
+  const { t } = useTranslation();
 
   // All hooks must be called before any conditional returns
   const filteredTasks = useMemo(() => {
@@ -60,7 +62,7 @@ function TasksPage() {
   if (isLoading) {
     return (
       <div className="tasks-page">
-        <h1 className="tasks-title">Available Tasks</h1>
+        <h1 className="tasks-title">{t('tasks.title')}</h1>
         <LoadingSkeleton lines={6} />
       </div>
     );
@@ -90,47 +92,53 @@ function TasksPage() {
   if (!tasks || tasks.length === 0) {
     return (
       <div className="tasks-page">
-        <h1 className="tasks-title">Available Tasks</h1>
-        <EmptyState title="No tasks available" description="Check back later for new sustainability tasks." />
+        <h1 className="tasks-title">{t('tasks.title')}</h1>
+        <EmptyState
+          title={t('tasks.empty.all.title')}
+          description={t('tasks.empty.all.description')}
+        />
       </div>
     );
   }
 
   return (
     <div className="tasks-page">
-      <h1 className="tasks-title">Available Tasks</h1>
+      <h1 className="tasks-title">{t('tasks.title')}</h1>
       
       <div className="tasks-filters-row">
         <FilterDropdown
           value={typeFilter}
           onChange={(value) => setTypeFilter(value as typeof typeFilter)}
           options={[
-            { value: 'all', label: 'All Types' },
-            { value: 'video', label: 'Video', icon: '🎥' },
-            { value: 'qr', label: 'QR Code', icon: <QRCodeIcon size={20} /> },
-            { value: 'photo', label: 'Photo', icon: '📷' },
+            { value: 'all', label: t('tasks.filters.type.all') },
+            { value: 'video', label: t('tasks.filters.type.video'), icon: '🎥' },
+            { value: 'qr', label: t('tasks.filters.type.qr'), icon: <QRCodeIcon size={20} /> },
+            { value: 'photo', label: t('tasks.filters.type.photo'), icon: '📷' },
           ]}
         />
         <FilterDropdown
           value={completionFilter}
           onChange={(value) => setCompletionFilter(value as typeof completionFilter)}
           options={[
-            { value: 'all', label: 'All Tasks' },
-            { value: 'not_completed', label: 'Not Completed' },
+            { value: 'all', label: t('tasks.filters.completion.all') },
+            { value: 'not_completed', label: t('tasks.filters.completion.not_completed') },
           ]}
         />
         <FilterDropdown
           value={timeFilter}
           onChange={(value) => setTimeFilter(value as typeof timeFilter)}
           options={[
-            { value: 'all', label: 'All Time' },
-            { value: 'recent', label: 'Recent (7 days)' },
+            { value: 'all', label: t('tasks.filters.time.all') },
+            { value: 'recent', label: t('tasks.filters.time.recent') },
           ]}
         />
       </div>
 
       {filteredTasks.length === 0 ? (
-        <EmptyState title="No tasks match your filters" description="Try adjusting your filter settings." />
+        <EmptyState
+          title={t('tasks.empty.filtered.title')}
+          description={t('tasks.empty.filtered.description')}
+        />
       ) : (
         <div className="tasks-grid">
           {filteredTasks.map((task: any) => (
@@ -139,9 +147,11 @@ function TasksPage() {
               <span className="task-icon">
                 {task.type === 'video' ? '🎥' : task.type === 'qr' ? <QRCodeIcon size={48} /> : '📷'}
               </span>
-              <span className="task-points">+{task.points} pts</span>
+              <span className="task-points">{t('tasksComponents.points', { points: task.points })}</span>
               {task.completed && (
-                <span className="task-completed-badge" title="Task completed">✓</span>
+                <span className="task-completed-badge" title={t('tasks.badges.completed')}>
+                  ✓
+                </span>
               )}
             </div>
             <h3 className="task-title">{task.title}</h3>
@@ -151,7 +161,7 @@ function TasksPage() {
               onClick={() => handleTaskClick(task)}
               disabled={!!task.completed}
             >
-              {task.completed ? 'Completed' : 'Start Task'}
+              {task.completed ? t('tasks.buttons.completed') : t('tasks.buttons.start')}
             </button>
           </div>
         ))}

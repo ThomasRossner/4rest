@@ -230,6 +230,30 @@
   margin-left: auto;
 }
 
+.navigation-extra {
+  margin-left: auto;
+  margin-right: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+}
+
+.navigation-language .language-button {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.navigation-language .language-button.active {
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--color-primary, #0f172a);
+}
+
+.navigation-language .language-label {
+  display: none;
+}
+
 .navigation-user-button {
   display: flex;
   flex-direction: column;
@@ -393,6 +417,10 @@
     justify-content: space-between;
     padding: 0 var(--spacing-sm);
     gap: var(--spacing-sm);
+  }
+
+  .navigation-extra {
+    display: none;
   }
 
   .navigation-top .navigation-logo {

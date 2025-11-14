@@ -1,16 +1,18 @@
 import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Sky, PerspectiveCamera } from '@react-three/drei';
+import { useTranslation } from 'react-i18next';
 import ForestScene from '../../components/3d/ForestScene';
 import './ForestPage.css';
 
 function ForestPage() {
+  const { t } = useTranslation();
   return (
     <div className="forest-page">
-      <h1 className="forest-title">Virtual Forest</h1>
-      <p className="forest-subtitle">Watch your trees grow as you complete sustainable actions</p>
+      <h1 className="forest-title">{t('forest.title')}</h1>
+      <p className="forest-subtitle">{t('forest.subtitle')}</p>
       <div className="forest-container">
-        <Suspense fallback={<div className="forest-loading">Loading forest...</div>}>
+        <Suspense fallback={<div className="forest-loading">{t('forest.loading')}</div>}>
           <Canvas
             gl={{ antialias: true }}
             shadows

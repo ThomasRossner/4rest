@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import './TaskComponents.css';
 
@@ -16,6 +17,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
+  const { t } = useTranslation();
 
   const { data: task, isLoading } = useQuery(
     ['task', taskId],
@@ -40,11 +42,11 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
+        alert(t('tasksComponents.photo.fileTooLarge'));
         return;
       }
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+        alert(t('tasksComponents.photo.invalidFile'));
         return;
       }
       setPhoto(file);
@@ -79,20 +81,22 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       const { photo_url } = await uploadResponse.json();
       completeMutation.mutate(photo_url);
     } catch (error) {
-      alert('Failed to upload photo');
+      alert(t('tasksComponents.photo.uploadFailed'));
     } finally {
       setUploading(false);
     }
   };
 
-  if (isLoading) return <div>Loading task...</div>;
-  if (!task) return <div>Task not found</div>;
+  if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
+  if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
   return (
     <div className="task-container">
       <div className="task-header">
         <h2>{task.title}</h2>
-        <span className="task-points">+{task.points} points</span>
+        <span className="task-points">
+          {t('tasksComponents.points', { points: task.points })}
+        </span>
       </div>
       {task.description && (
         <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-text-light)' }}>
@@ -115,7 +119,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
                 }}
                 className="change-photo-button"
               >
-                Change Photo
+                {t('tasksComponents.photo.change')}
               </button>
               <button
                 onClick={handleUpload}
@@ -123,8 +127,8 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
                 className="upload-button"
               >
                 {uploading || completeMutation.isLoading
-                  ? 'Uploading...'
-                  : 'Upload & Complete'}
+                  ? t('tasksComponents.photo.uploading')
+                  : t('tasksComponents.photo.upload')}
               </button>
             </div>
           </div>
@@ -140,8 +144,8 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
             />
             <label htmlFor="photo-input" className="upload-label">
               <span className="upload-icon">📷</span>
-              <p>Click to select a photo</p>
-              <p className="upload-hint">Max 5MB • JPG, PNG, WebP</p>
+              <p>{t('tasksComponents.photo.clickToSelect')}</p>
+              <p className="upload-hint">{t('tasksComponents.photo.hint')}</p>
             </label>
           </div>
         )}
@@ -149,7 +153,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
         {completeMutation.isSuccess && (
           <div className="task-success">
             <span className="success-icon">✅</span>
-            <p>Photo uploaded and task completed successfully!</p>
+            <p>{t('tasksComponents.photo.success')}</p>
           </div>
         )}
       </div>

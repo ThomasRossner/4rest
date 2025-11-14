@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import jsQR from 'jsqr';
 import './TaskComponents.css';
@@ -17,6 +18,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: task, isLoading } = useQuery(
     ['task', taskId],
@@ -254,14 +256,16 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
     };
   }, [hasCamera, canDecode, qrCode, completeMutation.isLoading, completeMutation.isSuccess]);
 
-  if (isLoading) return <div>Loading task...</div>;
-  if (!task) return <div>Task not found</div>;
+  if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
+  if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
   return (
     <div className="task-container">
       <div className="task-header">
         <h2>{task.title}</h2>
-        <span className="task-points">+{task.points} points</span>
+        <span className="task-points">
+          {t('tasksComponents.points', { points: task.points })}
+        </span>
       </div>
       {task.description && (
         <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-text-light)' }}>
@@ -286,7 +290,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               </div>
               {scannedCode && (
                 <div style={{ position: 'absolute', top: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12 }}>
-                  Scanned: {scannedCode}
+                  {t('tasksComponents.qr.scanned', { value: scannedCode })}
                 </div>
               )}
               {decodeError && (
@@ -296,18 +300,18 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               )}
               {completeMutation.isLoading && (
                 <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, textAlign: 'center' }}>
-                  Completing task...
+                  {t('tasksComponents.qr.completing')}
                 </div>
               )}
             </div>
           ) : (
             <div className="qr-manual">
-              <p>Enter the QR code manually:</p>
+              <p>{t('tasksComponents.qr.manualPrompt')}</p>
               <input
                 type="text"
                 value={scannedCode}
                 onChange={(e) => setScannedCode(e.target.value)}
-                placeholder="Enter QR code"
+                placeholder={t('tasksComponents.qr.manualPlaceholder')}
                 className="qr-input"
               />
               <button
@@ -315,13 +319,13 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                   if (scannedCode === qrCode) {
                     completeMutation.mutate();
                   } else {
-                    alert('Invalid QR code');
+                    alert(t('tasksComponents.qr.invalid'));
                   }
                 }}
                 disabled={!scannedCode || completeMutation.isLoading}
                 className="verify-button"
               >
-                Verify & Complete
+                {t('tasksComponents.qr.verify')}
               </button>
             </div>
           )}
@@ -330,7 +334,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
         {completeMutation.isSuccess && (
           <div className="task-success">
             <span className="success-icon">✅</span>
-            <p>Task completed successfully!</p>
+            <p>{t('tasksComponents.qr.success')}</p>
           </div>
         )}
       </div>

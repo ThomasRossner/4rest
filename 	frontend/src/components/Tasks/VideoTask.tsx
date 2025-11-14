@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import './TaskComponents.css';
 
@@ -12,6 +13,7 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: task, isLoading } = useQuery(
     ['task', taskId],
@@ -30,8 +32,8 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
     }
   );
 
-  if (isLoading) return <div>Loading task...</div>;
-  if (!task) return <div>Task not found</div>;
+  if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
+  if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
   const questions = task.quiz_questions || [];
   const currentQuestion = questions[currentQuestionIndex];
@@ -56,7 +58,9 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
     <div className="task-container">
       <div className="task-header">
         <h2>{task.title}</h2>
-        <span className="task-points">+{task.points} points</span>
+        <span className="task-points">
+          {t('tasksComponents.points', { points: task.points })}
+        </span>
       </div>
 
       {task.video_url && (
@@ -69,15 +73,18 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
               // Video ended, show quiz questions
             }}
           >
-            Your browser does not support the video tag.
+            {t('tasksComponents.video.notSupported')}
           </video>
         </div>
       )}
 
       <div className="quiz-container">
-        <h3>Quiz Questions</h3>
+        <h3>{t('tasksComponents.video.quizTitle')}</h3>
         <div className="question-progress">
-          Question {currentQuestionIndex + 1} of {questions.length}
+          {t('tasksComponents.video.questionProgress', {
+            current: currentQuestionIndex + 1,
+            total: questions.length,
+          })}
         </div>
 
         {currentQuestion && (
@@ -104,7 +111,7 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
             onClick={() => setCurrentQuestionIndex((i) => Math.max(0, i - 1))}
             disabled={currentQuestionIndex === 0}
           >
-            Previous
+            {t('tasksComponents.video.previous')}
           </button>
           {currentQuestionIndex < questions.length - 1 ? (
             <button
@@ -113,7 +120,7 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
               }
               disabled={!answers[currentQuestionIndex]}
             >
-              Next
+              {t('tasksComponents.video.next')}
             </button>
           ) : (
             <button
@@ -121,7 +128,9 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
               disabled={!allAnswered || completeMutation.isLoading}
               className="submit-button"
             >
-              {completeMutation.isLoading ? 'Submitting...' : 'Complete Task'}
+              {completeMutation.isLoading
+                ? t('tasksComponents.video.submitting')
+                : t('tasksComponents.video.complete')}
             </button>
           )}
         </div>

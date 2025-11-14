@@ -5,6 +5,7 @@ import App from './App';
 import { Toaster } from './components/Toaster/Toaster';
 import { registerServiceWorker, syncOfflineQRCodes } from './utils/serviceWorker';
 import './index.css';
+import './i18n';
 
 const queryClient = new QueryClient({
   defaultOptions: {

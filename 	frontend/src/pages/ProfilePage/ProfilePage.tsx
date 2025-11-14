@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { ConsentManager } from '../../components/GDPR/ConsentManager';
 import './ProfilePage.css';
@@ -7,22 +8,24 @@ function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const points = useAuthStore((s) => s.user?.points || 0);
   const [showConsent, setShowConsent] = useState(false);
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
 
   const sihotGuest = user?.sihotGuest;
   const sihotReservations = user?.sihotReservations ?? [];
 
   const formatDate = (value: string) => {
-    if (!value) return '—';
+    if (!value) return t('profile.sihot.missing');
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
       return value;
     }
-    return date.toLocaleDateString();
+    return date.toLocaleDateString(locale);
   };
 
   return (
     <div className="profile-page">
-      <h1 className="profile-title">Profile</h1>
+      <h1 className="profile-title">{t('profile.title')}</h1>
       <div className="profile-card">
         <div className="profile-header">
           <div className="profile-avatar">
@@ -30,18 +33,20 @@ function ProfilePage() {
           </div>
           <div className="profile-info">
             <h2>{user?.name || 'User'}</h2>
-            <p>{user?.email || 'No email provided'}</p>
-            <span className="profile-role">{user?.role || 'guest'}</span>
+            <p>{user?.email || t('profile.noEmail')}</p>
+            <span className="profile-role">
+              {user?.role ? t('profile.role', { role: user.role }) : t('profile.role', { role: 'guest' })}
+            </span>
           </div>
         </div>
           <div className="profile-stats">
           <div className="profile-stat">
             <span className="profile-stat-value">{points}</span>
-            <span className="profile-stat-label">Total Points</span>
+            <span className="profile-stat-label">{t('profile.stats.points')}</span>
           </div>
           <div className="profile-stat">
             <span className="profile-stat-value">🌲</span>
-            <span className="profile-stat-label">Your Trees</span>
+            <span className="profile-stat-label">{t('profile.stats.trees')}</span>
           </div>
         </div>
         <div className="profile-actions">
@@ -49,7 +54,7 @@ function ProfilePage() {
             onClick={() => setShowConsent(!showConsent)}
             className="privacy-button"
           >
-            {showConsent ? 'Hide' : 'Show'} Privacy Settings
+            {showConsent ? t('profile.privacy.hide') : t('profile.privacy.show')}
           </button>
         </div>
       </div>
@@ -63,75 +68,85 @@ function ProfilePage() {
       {sihotGuest && (
         <section className="profile-sihot-card">
           <div className="profile-sihot-header">
-            <h2>SIHOT Guest Profile</h2>
+            <h2>{t('profile.sihot.title')}</h2>
             {user?.sihotGuestId && (
-              <span className="profile-sihot-badge">Guest ID: {user.sihotGuestId}</span>
+              <span className="profile-sihot-badge">
+                {t('profile.sihot.guestId', { id: user.sihotGuestId })}
+              </span>
             )}
           </div>
 
           <dl className="profile-sihot-grid">
             <div>
-              <dt>Name</dt>
+              <dt>{t('profile.sihot.fields.name')}</dt>
               <dd>
                 {sihotGuest.firstName} {sihotGuest.lastName}
               </dd>
             </div>
             <div>
-              <dt>Email</dt>
-              <dd>{sihotGuest.email || user?.email || '—'}</dd>
+              <dt>{t('profile.sihot.fields.email')}</dt>
+              <dd>{sihotGuest.email || user?.email || t('profile.sihot.missing')}</dd>
             </div>
             <div>
-              <dt>Phone</dt>
-              <dd>{sihotGuest.phone || '—'}</dd>
+              <dt>{t('profile.sihot.fields.phone')}</dt>
+              <dd>{sihotGuest.phone || t('profile.sihot.missing')}</dd>
             </div>
             <div>
-              <dt>Loyalty Level</dt>
-              <dd>{sihotGuest.loyaltyLevel || '—'}</dd>
+              <dt>{t('profile.sihot.fields.loyaltyLevel')}</dt>
+              <dd>{sihotGuest.loyaltyLevel || t('profile.sihot.missing')}</dd>
             </div>
             <div>
-              <dt>Preferred Language</dt>
-              <dd>{sihotGuest.language || '—'}</dd>
+              <dt>{t('profile.sihot.fields.language')}</dt>
+              <dd>{sihotGuest.language || t('profile.sihot.missing')}</dd>
             </div>
             <div>
-              <dt>Preferences</dt>
+              <dt>{t('profile.sihot.fields.preferences')}</dt>
               <dd>
                 {sihotGuest.preferences?.length
                   ? sihotGuest.preferences.join(', ')
-                  : '—'}
+                  : t('profile.sihot.missing')}
               </dd>
             </div>
           </dl>
 
           {sihotGuest.notes && (
             <div className="profile-sihot-notes">
-              <h3>Notes</h3>
+              <h3>{t('profile.sihot.fields.notes')}</h3>
               <p>{sihotGuest.notes}</p>
             </div>
           )}
 
           {sihotReservations.length > 0 && (
             <div className="profile-sihot-reservations">
-              <h3>Recent Reservations</h3>
+              <h3>{t('profile.sihot.reservations.title')}</h3>
               <ul>
                 {sihotReservations.map((reservation) => (
                   <li key={reservation.reservationId}>
                     <div className="reservation-row">
                       <div>
                         <strong>{reservation.propertyId}</strong>
-                        <span className="reservation-room">Room {reservation.roomNumber}</span>
+                        <span className="reservation-room">
+                          {t('profile.sihot.reservations.room', { room: reservation.roomNumber })}
+                        </span>
                       </div>
                       <div className="reservation-meta">
-                        <span>{formatDate(reservation.arrivalDate)} → {formatDate(reservation.departureDate)}</span>
+                        <span>
+                          {formatDate(reservation.arrivalDate)} → {formatDate(reservation.departureDate)}
+                        </span>
                         <span className={`reservation-status status-${reservation.status}`}>
                           {reservation.status.replace('_', ' ')}
                         </span>
                       </div>
                       <div className="reservation-footer">
                         <span className="reservation-confirmation">
-                          Confirmation: {reservation.confirmationNumber}
+                          {t('profile.sihot.reservations.confirmation', {
+                            number: reservation.confirmationNumber,
+                          })}
                         </span>
                         <span className="reservation-balance">
-                          Balance: {reservation.balance.toFixed(2)}
+                          {t('profile.sihot.reservations.balance', {
+                            amount: reservation.balance.toFixed(2),
+                          })}
                         </span>
                       </div>
                     </div>
