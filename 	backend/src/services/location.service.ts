@@ -8,6 +8,7 @@ export interface Location {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
+  active: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -19,6 +20,7 @@ interface LocationInput {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  active?: boolean;
 }
 
 interface LocationUpdateInput {
@@ -31,7 +33,7 @@ interface LocationUpdateInput {
 }
 
 const SELECT_FIELDS =
-  'id, name, description, is_online, address, latitude, longitude, created_at, updated_at';
+  'id, name, description, is_online, address, latitude, longitude, active, created_at, updated_at';
 
 function mapLocation(row: any): Location {
   if (!row) return row;
@@ -43,6 +45,7 @@ function mapLocation(row: any): Location {
     address: row.address,
     latitude: row.latitude !== null ? Number(row.latitude) : row.latitude,
     longitude: row.longitude !== null ? Number(row.longitude) : row.longitude,
+    active: row.active,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -135,9 +138,17 @@ function normalizeLocationInput(
   return normalized;
 }
 
-export async function getLocations(): Promise<Location[]> {
+export async function getLocations(includeInactive = false): Promise<Location[]> {
   const db = getPool();
-  const result = await db.query(`SELECT ${SELECT_FIELDS} FROM locations ORDER BY name ASC`);
+  const clauses: string[] = [];
+  if (!includeInactive) {
+    clauses.push('active = TRUE');
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const result = await db.query(
+    `SELECT ${SELECT_FIELDS} FROM locations ${where} ORDER BY name ASC`,
+    []
+  );
   return result.rows.map(mapLocation);
 }
 
@@ -147,13 +158,13 @@ export async function getLocationById(id: string): Promise<Location | null> {
   return mapLocation(result.rows[0]) || null;
 }
 
-export async function createLocation(data: LocationInput): Promise<Location> {
+export async function createLocation(data: LocationInput & { active?: boolean }): Promise<Location> {
   const db = getPool();
   const payload = normalizeLocationInput(data);
 
   const result = await db.query(
-    `INSERT INTO locations (name, description, is_online, address, latitude, longitude)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO locations (name, description, is_online, address, latitude, longitude, active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING ${SELECT_FIELDS}`,
     [
       payload.name,
@@ -162,13 +173,17 @@ export async function createLocation(data: LocationInput): Promise<Location> {
       payload.address ?? null,
       payload.latitude ?? null,
       payload.longitude ?? null,
+      data.active ?? true,
     ]
   );
 
   return mapLocation(result.rows[0]);
 }
 
-export async function updateLocation(id: string, data: LocationUpdateInput): Promise<Location> {
+export async function updateLocation(
+  id: string,
+  data: LocationUpdateInput & { active?: boolean }
+): Promise<Location> {
   const db = getPool();
   const existing = await getLocationById(id);
   if (!existing) {
@@ -194,8 +209,9 @@ export async function updateLocation(id: string, data: LocationUpdateInput): Pro
          address = $4,
          latitude = $5,
          longitude = $6,
+         active = $7,
          updated_at = CURRENT_TIMESTAMP
-     WHERE id = $7
+     WHERE id = $8
      RETURNING ${SELECT_FIELDS}`,
     [
       payload.name,
@@ -204,11 +220,38 @@ export async function updateLocation(id: string, data: LocationUpdateInput): Pro
       payload.address ?? null,
       payload.latitude ?? null,
       payload.longitude ?? null,
+      data.active ?? existing.active,
       id,
     ]
   );
 
   return mapLocation(result.rows[0]);
+}
+
+export async function setLocationsActiveState(ids: string[], active: boolean): Promise<void> {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return;
+  }
+  const db = getPool();
+  await db.query(
+    'UPDATE locations SET active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = ANY($2::uuid[])',
+    [active, ids]
+  );
+}
+
+export async function bulkDeleteLocations(ids: string[]): Promise<void> {
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return;
+  }
+  const db = getPool();
+  try {
+    await db.query('DELETE FROM locations WHERE id = ANY($1::uuid[])', [ids]);
+  } catch (error: any) {
+    if (error.code === '23503') {
+      throw new Error('Cannot delete locations because some are used by tasks or rewards.');
+    }
+    throw error;
+  }
 }
 
 export async function deleteLocation(id: string): Promise<void> {

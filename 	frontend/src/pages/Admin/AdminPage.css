@@ -817,6 +817,13 @@
   flex-wrap: wrap;
 }
 
+.admin-management-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
 .admin-management-top h3 {
   margin: 0;
   color: var(--color-text);

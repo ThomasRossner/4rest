@@ -20,5 +20,6 @@ docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/m
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/013_passwordless_login.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/014_allow_passwordless_accounts.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/015_locations.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/016_locations_active.sql
 
 echo "Database setup complete!"

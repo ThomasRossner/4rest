@@ -63,6 +63,7 @@ type AdminLocation = {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  active: boolean;
 };
 
 type VideoSourceOption = 'url' | 'upload';
@@ -108,6 +109,7 @@ type LocationFormState = {
   address: string;
   latitude: string;
   longitude: string;
+  active: boolean;
 };
 
 type QuizAnswerDraft = {
@@ -341,7 +343,13 @@ const defaultLocationForm = (): LocationFormState => ({
   address: '',
   latitude: '',
   longitude: '',
+  active: true,
 });
+
+const isDefaultLocationRecord = (location: AdminLocation): boolean =>
+  location.is_online &&
+  (!location.address || location.address.trim() === '') &&
+  location.name.toLowerCase() === 'online';
 
 const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
   if (!Array.isArray(payload)) {
@@ -1075,6 +1083,8 @@ function AdminPage() {
   >(null);
   const [locationConfirm, setLocationConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
   const [locationReturnMode, setLocationReturnMode] = useState<AdminMode | null>(null);
+  const [includeInactiveLocations, setIncludeInactiveLocations] = useState(false);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
 
   const taskValidation = useMemo(
     () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask }),
@@ -1149,8 +1159,8 @@ function AdminPage() {
     error: locationsError,
     refetch: refetchLocations,
   } = useQuery<AdminLocation[]>(
-    ['adminLocations'],
-    () => api.getLocations(),
+    ['adminLocations', includeInactiveLocations],
+    () => api.getLocations({ includeInactive: includeInactiveLocations }),
     {
       enabled: isAdmin && mode !== null,
     }
@@ -1161,13 +1171,41 @@ function AdminPage() {
     () =>
       locationsList.map((location) => ({
         value: location.id,
-        label: location.is_online ? `${location.name} (Online)` : location.name,
+        label: `${location.name}${location.is_online ? ' (Online)' : ''}${
+          location.active ? '' : ' (Inactive)'
+        }`,
         details: location.is_online ? 'Online location' : location.address || 'Physical location',
         location,
       })),
     [locationsList]
   );
-  const hasLocationOptions = locationOptions.length > 0;
+  const selectableLocationIds = useMemo(
+    () =>
+      locationsList
+        .filter((location) => !isDefaultLocationRecord(location))
+        .map((location) => location.id),
+    [locationsList]
+  );
+  const taskLocationSelectOptions = useMemo(
+    () =>
+      locationOptions.filter(
+        (option) => option.location?.active || option.value === taskForm.locationId
+      ),
+    [locationOptions, taskForm.locationId]
+  );
+  const rewardLocationSelectOptions = useMemo(
+    () =>
+      locationOptions.filter(
+        (option) => option.location?.active || option.value === rewardForm.locationId
+      ),
+    [locationOptions, rewardForm.locationId]
+  );
+  const hasTaskLocationOptions = taskLocationSelectOptions.length > 0;
+  const hasRewardLocationOptions = rewardLocationSelectOptions.length > 0;
+  const hasLocationSelection = selectedLocationIds.length > 0;
+  const allLocationsSelected =
+    selectableLocationIds.length > 0 &&
+    selectedLocationIds.length === selectableLocationIds.length;
 
   const rewardValidation = useMemo(
     () => validateRewardFormState({ rewardSource, selectedRewardTemplate, rewardForm, isEditing: isEditingReward }),
@@ -1634,6 +1672,7 @@ function AdminPage() {
         name: locationForm.name.trim(),
         description: locationForm.description.trim(),
         mode: locationForm.mode,
+        active: Boolean(locationForm.active),
       };
 
       if (locationForm.mode === 'physical') {
@@ -1672,6 +1711,12 @@ function AdminPage() {
   }, [normalizedRewardTemplates]);
 
   useEffect(() => {
+    setSelectedLocationIds((prev) =>
+      prev.filter((id) => locationsList.some((location) => location.id === id))
+    );
+  }, [locationsList]);
+
+  useEffect(() => {
     if (
       taskForm.locationId &&
       !locationsList.some((location) => location.id === taskForm.locationId)
@@ -1705,6 +1750,18 @@ function AdminPage() {
         next.add(rewardId);
       } else {
         next.delete(rewardId);
+      }
+      return Array.from(next);
+    });
+  };
+
+  const toggleLocationSelection = (locationId: string, checked: boolean) => {
+    setSelectedLocationIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(locationId);
+      } else {
+        next.delete(locationId);
       }
       return Array.from(next);
     });
@@ -1904,6 +1961,73 @@ function AdminPage() {
     });
   };
 
+  const handleLocationStatusChange = async (locationId: string, active: boolean) => {
+    try {
+      setLocationManagementMessage(null);
+      await api.bulkUpdateLocationsStatus([locationId], active);
+      setLocationManagementMessage({
+        type: 'success',
+        text: active ? 'Location activated.' : 'Location deactivated.',
+      });
+      void refetchLocations();
+    } catch (error: any) {
+      setLocationManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update location.',
+      });
+    }
+  };
+
+  const handleLocationBulkStatus = async (active: boolean) => {
+    if (!selectedLocationIds.length) return;
+    try {
+      setLocationManagementMessage(null);
+      await api.bulkUpdateLocationsStatus(selectedLocationIds, active);
+      setLocationManagementMessage({
+        type: 'success',
+        text: active ? 'Selected locations activated.' : 'Selected locations deactivated.',
+      });
+      setSelectedLocationIds([]);
+      void refetchLocations();
+    } catch (error: any) {
+      setLocationManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update selected locations.',
+      });
+    }
+  };
+
+  const handleLocationBulkDelete = () => {
+    if (!selectedLocationIds.length) return;
+    setLocationConfirm({
+      visible: true,
+      title: 'Delete selected locations',
+      description:
+        'Are you sure you want to permanently delete the selected locations? Tasks and rewards referencing them will need to be updated.',
+      confirmLabel: 'Delete locations',
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setLocationManagementMessage(null);
+          await api.bulkDeleteLocations(selectedLocationIds);
+          setLocationManagementMessage({
+            type: 'success',
+            text: 'Selected locations deleted.',
+          });
+          setSelectedLocationIds([]);
+          void refetchLocations();
+        } catch (error: any) {
+          setLocationManagementMessage({
+            type: 'error',
+            text: error?.message || 'Failed to delete selected locations.',
+          });
+        } finally {
+          setLocationConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
+  };
+
   const startTaskEdit = (task: AdminTaskTemplate) => {
     setTaskReturnMode(mode === 'taskManage' ? 'taskManage' : null);
     setMode('task');
@@ -2020,6 +2144,7 @@ function AdminPage() {
         location.longitude !== null && location.longitude !== undefined
           ? String(location.longitude)
           : '',
+      active: location.active ?? true,
     });
     setIsEditingLocation(true);
     setEditingLocationId(location.id);
@@ -2079,6 +2204,7 @@ function AdminPage() {
           if (isEditingLocation && editingLocationId === location.id) {
             cancelLocationEdit();
           }
+          setSelectedLocationIds((prev) => prev.filter((id) => id !== location.id));
           void refetchLocations();
         } catch (error: any) {
           setLocationManagementMessage({
@@ -2313,7 +2439,7 @@ function AdminPage() {
                       <FieldLabel label="Location" required />
                       {locationsLoading ? (
                         <p className="admin-field-note">Loading locations…</p>
-                      ) : hasLocationOptions ? (
+                      ) : hasTaskLocationOptions ? (
                         <select
                           value={taskForm.locationId}
                           onChange={(event) =>
@@ -2321,7 +2447,7 @@ function AdminPage() {
                           }
                         >
                           <option value="">Select location</option>
-                          {locationOptions.map((option) => (
+                          {taskLocationSelectOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -2718,7 +2844,7 @@ function AdminPage() {
                       <FieldLabel label="Location" required />
                       {locationsLoading ? (
                         <p className="admin-field-note">Loading locations…</p>
-                      ) : hasLocationOptions ? (
+                      ) : hasRewardLocationOptions ? (
                         <select
                           value={rewardForm.locationId}
                           onChange={(event) =>
@@ -2726,7 +2852,7 @@ function AdminPage() {
                           }
                         >
                           <option value="">Select location</option>
-                          {locationOptions.map((option) => (
+                          {rewardLocationSelectOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
@@ -2970,6 +3096,24 @@ function AdminPage() {
                       </label>
                     </div>
                   </div>
+                  <div className="admin-field">
+                    <FieldLabel label="Active" />
+                    <div className="admin-toggle">
+                      <input
+                        id="location-active-toggle"
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={locationForm.active}
+                        onChange={(event) =>
+                          setLocationForm((prev) => ({ ...prev, active: event.target.checked }))
+                        }
+                      />
+                      <label htmlFor="location-active-toggle">
+                        {locationForm.active ? 'Active' : 'Inactive'}
+                      </label>
+                    </div>
+                  </div>
                   {locationForm.mode === 'physical' && (
                     <>
                       <label className="admin-field admin-field-span-2">
@@ -3098,9 +3242,24 @@ function AdminPage() {
                 <h3>Existing locations</h3>
                 <p>Each task and reward references one of these locations.</p>
               </div>
-              <button className="admin-action-button" type="button" onClick={goToLocationCreation}>
-                New location
-              </button>
+              <div className="admin-management-controls">
+                <label className="admin-toggle">
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
+                    checked={includeInactiveLocations}
+                    onChange={(event) => {
+                      setIncludeInactiveLocations(event.target.checked);
+                      setSelectedLocationIds([]);
+                    }}
+                  />
+                  <span>Show inactive</span>
+                </label>
+                <button className="admin-action-button" type="button" onClick={goToLocationCreation}>
+                  New location
+                </button>
+              </div>
             </div>
             {locationManagementMessage && (
               <p
@@ -3111,31 +3270,92 @@ function AdminPage() {
                 {locationManagementMessage.text}
               </p>
             )}
+            <div className="admin-management-actions">
+              <div className="admin-bulk-buttons">
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleLocationBulkStatus(true)}
+                  disabled={!hasLocationSelection}
+                  type="button"
+                >
+                  Activate
+                </button>
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleLocationBulkStatus(false)}
+                  disabled={!hasLocationSelection}
+                  type="button"
+                >
+                  Deactivate
+                </button>
+                <button
+                  className="admin-action-button danger"
+                  onClick={handleLocationBulkDelete}
+                  disabled={!hasLocationSelection}
+                  type="button"
+                >
+                  Delete
+                </button>
+              </div>
+              <span className="admin-selection-count">
+                {hasLocationSelection
+                  ? `${selectedLocationIds.length} selected`
+                  : 'No locations selected'}
+              </span>
+            </div>
             <div className="admin-table-wrapper">
               <table className="admin-table">
                 <thead>
                   <tr>
+                    <th style={{ width: '3rem' }}>
+                      <input
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={allLocationsSelected && locationsList.length > 0}
+                        disabled={!locationsList.length}
+                        onChange={(event) =>
+                          setSelectedLocationIds(
+                            event.target.checked
+                              ? selectableLocationIds
+                              : []
+                          )
+                        }
+                        aria-label="Select all locations"
+                      />
+                    </th>
                     <th>Name</th>
                     <th>Type</th>
                     <th>Details</th>
-                    <th style={{ width: '20rem' }}>Actions</th>
+                    <th>Status</th>
+                    <th style={{ width: '22rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {locationsList.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="admin-table-empty">
+                      <td colSpan={6} className="admin-table-empty">
                         No locations found.
                       </td>
                     </tr>
                   ) : (
                     locationsList.map((location) => {
-                      const isDefaultLocation =
-                        location.is_online &&
-                        (!location.address || location.address.trim() === '') &&
-                        location.name.toLowerCase() === 'online';
+                      const isDefaultLocation = isDefaultLocationRecord(location);
+                      const isSelected = selectedLocationIds.includes(location.id);
                       return (
                         <tr key={location.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="admin-checkbox"
+                              style={COMPACT_TOGGLE_STYLE}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggleLocationSelection(location.id, event.target.checked)
+                              }
+                              aria-label={`Select location ${location.name}`}
+                            />
+                          </td>
                           <td data-label="Name">
                             <div className="admin-table-primary">
                               <span className="admin-table-title">{location.name}</span>
@@ -3163,6 +3383,15 @@ function AdminPage() {
                               </div>
                             )}
                           </td>
+                          <td data-label="Status">
+                            <span
+                              className={`admin-status-badge ${
+                                location.active ? 'active' : 'inactive'
+                              }`}
+                            >
+                              {location.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
                           <td data-label="Actions" className="admin-table-actions">
                             <button
                               className="admin-action-button"
@@ -3170,6 +3399,14 @@ function AdminPage() {
                               onClick={() => startLocationEdit(location)}
                             >
                               Edit
+                            </button>
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => handleLocationStatusChange(location.id, !location.active)}
+                              disabled={isDefaultLocation}
+                            >
+                              {location.active ? 'Deactivate' : 'Activate'}
                             </button>
                             <button
                               className="admin-action-button danger"

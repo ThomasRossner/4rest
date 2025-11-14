@@ -277,8 +277,8 @@ export const api = {
   },
 
   // Locations
-  async getLocations() {
-    const response = await apiClient.get('/locations');
+  async getLocations(params?: { includeInactive?: boolean }) {
+    const response = await apiClient.get('/locations', { params });
     return response.data;
   },
 
@@ -289,6 +289,16 @@ export const api = {
 
   async updateLocation(id: string, payload: any) {
     const response = await apiClient.put(`/locations/${id}`, payload);
+    return response.data;
+  },
+
+  async bulkUpdateLocationsStatus(ids: string[], active: boolean) {
+    const response = await apiClient.post('/locations/bulk/status', { ids, active });
+    return response.data;
+  },
+
+  async bulkDeleteLocations(ids: string[]) {
+    const response = await apiClient.post('/locations/bulk/delete', { ids });
     return response.data;
   },
 
