@@ -2174,6 +2174,32 @@ function AdminPage() {
     setMode('location');
   };
 
+const goToTaskCreation = () => {
+  setTaskReturnMode('taskManage');
+  setMode('task');
+  setTaskManagementMessage(null);
+  setTaskMessage(null);
+  setIsEditingTask(false);
+  setEditingTaskId(null);
+  setTaskSource('');
+  setSelectedExistingTaskId('');
+  setTaskForm(defaultTaskForm('video'));
+  setHasAttemptedPublish(false);
+};
+
+const goToRewardCreation = () => {
+  setRewardReturnMode('rewardManage');
+  setMode('reward');
+  setRewardManagementMessage(null);
+  setRewardMessage(null);
+  setIsEditingReward(false);
+  setEditingRewardId(null);
+  setRewardSource('');
+  setSelectedRewardTemplate('');
+  setRewardForm(defaultRewardForm('discount'));
+  setHasAttemptedRewardPublish(false);
+};
+
   const handleLocationDelete = (location: AdminLocation) => {
     const isDefaultLocation =
       location.is_online &&
@@ -3472,19 +3498,24 @@ function AdminPage() {
                 <h3>Existing tasks</h3>
                 <p>Review, edit, activate, deactivate, or delete tasks directly.</p>
               </div>
-              <label className="admin-toggle">
-                <input
-                  type="checkbox"
-                  className="admin-checkbox"
-                  style={COMPACT_TOGGLE_STYLE}
-                  checked={includeInactiveTasks}
-                  onChange={(event) => {
-                    setIncludeInactiveTasks(event.target.checked);
-                    setSelectedTaskIds([]);
-                  }}
-                />
-                <span>Show inactive</span>
-              </label>
+              <div className="admin-management-controls">
+                <label className="admin-toggle">
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
+                    checked={includeInactiveTasks}
+                    onChange={(event) => {
+                      setIncludeInactiveTasks(event.target.checked);
+                      setSelectedTaskIds([]);
+                    }}
+                  />
+                  <span>Show inactive</span>
+                </label>
+                <button className="admin-action-button" type="button" onClick={goToTaskCreation}>
+                  New task
+                </button>
+              </div>
             </div>
             {taskManagementMessage && (
               <p
@@ -3696,19 +3727,24 @@ function AdminPage() {
                 <h3>Existing rewards</h3>
                 <p>Maintain active rewards, edit their details, or clean up inactive entries.</p>
               </div>
-              <label className="admin-toggle">
-                <input
-                  type="checkbox"
-                  className="admin-checkbox"
-                  style={COMPACT_TOGGLE_STYLE}
-                  checked={includeInactiveRewards}
-                  onChange={(event) => {
-                    setIncludeInactiveRewards(event.target.checked);
-                    setSelectedRewardIds([]);
-                  }}
-                />
-                <span>Show inactive</span>
-              </label>
+              <div className="admin-management-controls">
+                <label className="admin-toggle">
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
+                    checked={includeInactiveRewards}
+                    onChange={(event) => {
+                      setIncludeInactiveRewards(event.target.checked);
+                      setSelectedRewardIds([]);
+                    }}
+                  />
+                  <span>Show inactive</span>
+                </label>
+                <button className="admin-action-button" type="button" onClick={goToRewardCreation}>
+                  New reward
+                </button>
+              </div>
             </div>
             {rewardManagementMessage && (
               <p
