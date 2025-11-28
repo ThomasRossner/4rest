@@ -37,18 +37,37 @@ export async function getForestService() {
     return { userId, origin, trees: [] as any[] };
   });
 
+  // Group trees by user and by the area block they belong to
+  // Trees are stored with absolute positions, so we need to determine which area block they're in
+  // This will automatically create new 20x20 blocks for trees outside the initially assigned blocks
+  const userAreaBlocks = new Map<string, Map<string, { origin: [number, number, number]; trees: any[] }>>();
+  
   const flatTrees: any[] = [];
   for (const row of result.rows) {
     // Skip trees for users not in the first N users (safety)
     if (!userToIndex.has(row.user_id)) continue;
-    const idx = userToIndex.get(row.user_id)!;
-    const origin = areas[idx].origin as [number, number, number];
-    const localPosition: [number, number, number] = [row.position_x, row.position_y, row.position_z];
+    
+    // Tree position is already absolute (stored in database as absolute)
     const absolutePosition: [number, number, number] = [
-      origin[0] + localPosition[0],
-      origin[1] + localPosition[1],
-      origin[2] + localPosition[2],
+      parseFloat(row.position_x),
+      parseFloat(row.position_y || 0),
+      parseFloat(row.position_z),
     ];
+    
+    // Calculate which 20x20 area block this tree belongs to
+    // Handle negative positions correctly: Math.floor rounds down, so -8/20 = -0.4 -> -1 -> -20
+    const areaX = Math.floor(absolutePosition[0] / areaSpacing) * areaSpacing;
+    const areaZ = Math.floor(absolutePosition[2] / areaSpacing) * areaSpacing;
+    const areaKey = `${areaX},${areaZ}`;
+    const areaOrigin: [number, number, number] = [areaX, 0, areaZ];
+    
+    // Calculate local position relative to the area block (within 0-20 range)
+    const localPosition: [number, number, number] = [
+      absolutePosition[0] - areaOrigin[0],
+      absolutePosition[1] - areaOrigin[1],
+      absolutePosition[2] - areaOrigin[2],
+    ];
+    
     const tree = {
       id: row.id,
       userId: row.user_id,
@@ -57,15 +76,41 @@ export async function getForestService() {
       localPosition,
       plantedAt: row.planted_at,
     };
-    areas[idx].trees.push(tree);
+    
+    // Group by user and area block - this automatically creates new blocks for trees outside initial bounds
+    if (!userAreaBlocks.has(row.user_id)) {
+      userAreaBlocks.set(row.user_id, new Map());
+    }
+    const userAreas = userAreaBlocks.get(row.user_id)!;
+    if (!userAreas.has(areaKey)) {
+      // Create a new 20x20 block at this location
+      userAreas.set(areaKey, { origin: areaOrigin, trees: [] });
+    }
+    userAreas.get(areaKey)!.trees.push(tree);
     flatTrees.push(tree);
   }
+  
+  // Create areas for all blocks that contain trees - this ensures all trees have their blocks rendered
+  const expandedAreas: Array<{ userId: string; origin: [number, number, number]; trees: any[] }> = [];
+  for (const [userId, areaBlocks] of userAreaBlocks.entries()) {
+    for (const areaBlock of areaBlocks.values()) {
+      expandedAreas.push({
+        userId,
+        origin: areaBlock.origin,
+        trees: areaBlock.trees,
+      });
+    }
+  }
+  
+  // Use expanded areas (which includes all blocks with trees) instead of just user primary areas
+  // This ensures trees outside the initially assigned blocks get their own 20x20 blocks rendered
+  const finalAreas = expandedAreas.length > 0 ? expandedAreas : areas;
 
   return {
-    areas,
+    areas: finalAreas,
     trees: flatTrees, // backwards-compatible flat list
     totalTrees: flatTrees.length,
-    totalAreas: areas.length,
+    totalAreas: finalAreas.length,
   };
 }
 

@@ -2,7 +2,7 @@ import { useQuery } from 'react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { api } from '../../services/api';
 import { Tree } from './Tree';
-import { Html, OrbitControls } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { useAuthStore } from '../../stores/authStore';
 import { useThree, useFrame } from '@react-three/fiber';
 
@@ -52,10 +52,13 @@ function ForestScene() {
       </mesh>
 
       {/* Render per-user areas if available */}
-      {areas.length > 0 && areas.map((area: any, idx: number) => {
+      {/* Each area block is rendered, including new blocks created for trees outside initial bounds */}
+      {areas.length > 0 && areas.map((area: any) => {
         const origin = area.origin as [number, number, number];
+        // Create unique key from userId and origin to handle multiple blocks per user
+        const uniqueKey = `${area.userId}-${origin[0]}-${origin[2]}`;
         return (
-          <group key={area.userId || idx} position={origin}>
+          <group key={uniqueKey} position={origin}>
             {/* Area ground tile */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0.001, 0]}>
               <planeGeometry args={[20, 20]} />
@@ -82,20 +85,6 @@ function ForestScene() {
               </bufferGeometry>
               <lineBasicMaterial color="#e9f2ec" transparent opacity={0.7} />
             </lineSegments>
-            {/* Area label: only show for current user and use their name */}
-            {currentUser && area.userId === currentUser.id && (
-              <Html position={[0, 0.05, 0]} center>
-                <div style={{
-                  background: 'rgba(0,0,0,0.5)',
-                  color: 'white',
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  fontSize: '12px'
-                }}>
-                  {currentUser.name}
-                </div>
-              </Html>
-            )}
             {/* Trees in this area should use local positions (relative to origin) */}
             {area.trees?.map((t: any) => (
               <Tree key={t.id} position={(t.localPosition || t.position) as [number, number, number]} />
