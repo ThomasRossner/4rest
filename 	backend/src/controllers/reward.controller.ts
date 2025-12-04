@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/authenticate.js';
 import {
   getRewardsService,
   redeemRewardService,
+  verifyQrCodeService,
   createCustomReward,
   listRewardsForAdmin,
   updateReward as updateRewardService,
@@ -176,6 +177,28 @@ export const bulkDeleteRewardsController: RequestHandler = async (req, res) => {
     await bulkDeleteRewards(ids);
     res.status(204).send();
   } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const verifyQrCode: RequestHandler = async (req, res) => {
+  try {
+    const authReq = req as AuthRequest;
+    if (!authReq.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { qrToken } = req.body;
+    if (!qrToken || typeof qrToken !== 'string') {
+      return res.status(400).json({ error: 'QR token is required' });
+    }
+
+    const result = await verifyQrCodeService(qrToken, authReq.user.id);
+    res.json(result);
+  } catch (error: any) {
+    if (error.message.includes('Unauthorized') || error.message.includes('not found')) {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 };

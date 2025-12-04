@@ -6,6 +6,8 @@ import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { RewardCard } from '../../components/Rewards/RewardCard';
+import { RedemptionConfirmationModal } from '../../components/Rewards/RedemptionConfirmationModal';
+import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
 import { pushToast } from '../../components/Toaster/Toaster';
 import './RewardsPage.css';
 
@@ -16,28 +18,26 @@ function RewardsPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 
-  const [lastReceipt, setLastReceipt] = useState<any | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    rewardId: string;
+    rewardTitle: string;
+    pointsCost: number;
+  } | null>(null);
+  const [activeRedemption, setActiveRedemption] = useState<{
+    qrToken: string;
+    redemptionId: string;
+    rewardTitle: string;
+  } | null>(null);
 
-  const handleRedeem = async (rewardId: string, cost: number) => {
+  const handleRedeemClick = (rewardId: string, rewardTitle: string, cost: number) => {
     if (user && user.points >= cost) {
-      try {
-        const res = await api.redeemReward(rewardId, cost);
-        const receipt = res?.data || res;
-        setLastReceipt(receipt || null);
-        const successMessage = t('rewards.messages.redeemSuccess');
-        if (import.meta.env.VITE_UI_POLISH) {
-          pushToast({ type: 'success', message: successMessage });
-        } else {
-          alert(successMessage);
-        }
-      } catch (error) {
-        const errorMessage = t('rewards.messages.redeemError');
-        if (import.meta.env.VITE_UI_POLISH) {
-          pushToast({ type: 'error', message: errorMessage });
-        } else {
-          alert(errorMessage);
-        }
-      }
+      setConfirmationModal({
+        isOpen: true,
+        rewardId,
+        rewardTitle,
+        pointsCost: cost,
+      });
     } else {
       const infoMessage = t('rewards.messages.notEnoughPoints');
       if (import.meta.env.VITE_UI_POLISH) {
@@ -46,6 +46,43 @@ function RewardsPage() {
         alert(infoMessage);
       }
     }
+  };
+
+  const handleConfirmRedeem = async () => {
+    if (!confirmationModal) return;
+
+    try {
+      const res = await api.redeemReward(confirmationModal.rewardId, confirmationModal.pointsCost);
+      const redemption = res?.redemption || res?.data?.redemption;
+      
+      if (redemption?.qrToken) {
+        setActiveRedemption({
+          qrToken: redemption.qrToken,
+          redemptionId: redemption.id,
+          rewardTitle: confirmationModal.rewardTitle,
+        });
+        setConfirmationModal(null);
+      } else {
+        throw new Error('No QR token received');
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || t('rewards.messages.redeemError');
+      if (import.meta.env.VITE_UI_POLISH) {
+        pushToast({ type: 'error', message: errorMessage });
+      } else {
+        alert(errorMessage);
+      }
+      setConfirmationModal(null);
+    }
+  };
+
+  const handleCancelRedeem = () => {
+    setConfirmationModal(null);
+  };
+
+  const handleQrStatusUpdate = (status: 'pending' | 'used' | 'expired') => {
+    // Status update handled by QrCodeDisplay component
+    // Don't auto-clear - let user close the modal manually
   };
 
   const filteredRewards = useMemo(() => {
@@ -83,33 +120,24 @@ function RewardsPage() {
         <EmptyState title={t('rewards.empty.title')} description={t('rewards.empty.description')} />
       )}
 
-      {uiPolish && lastReceipt && (
-        <div className="rewards-receipt">
-          <div className="rewards-receipt-header">
-            <span className="rewards-receipt-icon">🎫</span>
-            <span className="rewards-receipt-title">{t('rewards.receipt.title')}</span>
-          </div>
-          <div className="rewards-receipt-content">
-            {lastReceipt.voucherCode && (
-              <div className="rewards-receipt-field">
-                <span className="rewards-receipt-label">{t('rewards.receipt.voucherCode')}:</span>
-                <code className="rewards-receipt-code">{String(lastReceipt.voucherCode)}</code>
-              </div>
+      {activeRedemption && (
+        <QrCodeDisplay
+          qrToken={activeRedemption.qrToken}
+          redemptionId={activeRedemption.redemptionId}
+          rewardTitle={activeRedemption.rewardTitle}
+          onStatusUpdate={handleQrStatusUpdate}
+          onClose={() => setActiveRedemption(null)}
+        />
             )}
-            {lastReceipt.expiresAt && (
-              <div className="rewards-receipt-field">
-                <span className="rewards-receipt-label">{t('rewards.receipt.expires')}:</span>
-                <span className="rewards-receipt-value">{new Date(lastReceipt.expiresAt).toLocaleString()}</span>
-              </div>
-            )}
-            {lastReceipt.title && (
-              <div className="rewards-receipt-field">
-                <span className="rewards-receipt-label">{t('rewards.receipt.reward')}:</span>
-                <span className="rewards-receipt-value">{lastReceipt.title}</span>
-              </div>
-            )}
-          </div>
-        </div>
+
+      {confirmationModal && (
+        <RedemptionConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          rewardTitle={confirmationModal.rewardTitle}
+          pointsCost={confirmationModal.pointsCost}
+          onConfirm={handleConfirmRedeem}
+          onCancel={handleCancelRedeem}
+        />
       )}
 
       <div className="rewards-grid">
@@ -119,7 +147,7 @@ function RewardsPage() {
               key={reward.id}
               reward={reward}
               canAfford={!!user && user.points >= reward.pointsCost}
-              onRedeem={handleRedeem}
+              onRedeem={(id, cost) => handleRedeemClick(id, reward.title, cost)}
             />
           ) : (
             <div key={reward.id} className="reward-card">
@@ -132,7 +160,7 @@ function RewardsPage() {
                 </span>
                 <button
                   className="reward-button"
-                  onClick={() => handleRedeem(reward.id, reward.pointsCost)}
+                  onClick={() => handleRedeemClick(reward.id, reward.title, reward.pointsCost)}
                   disabled={!user || user.points < reward.pointsCost}
                 >
                   {t('rewards.card.redeem')}

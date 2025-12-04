@@ -94,6 +94,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration17 = readFileSync(
+      join(__dirname, '../../../database/migrations/017_reward_qr_tokens.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -288,6 +293,17 @@ async function runMigrations() {
       console.log('✓ Migration 016 completed');
     } else {
       console.log('✓ Migration 016 already executed');
+    }
+    
+    if (!executed.has('017_reward_qr_tokens')) {
+      console.log('Running migration: 017_reward_qr_tokens.sql');
+      await pool.query(migration17);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('017_reward_qr_tokens') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 017 completed');
+    } else {
+      console.log('✓ Migration 017 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

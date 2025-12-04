@@ -205,7 +205,52 @@
       "redeemSuccess": "Reward redeemed successfully",
       "redeemError": "Failed to redeem reward",
       "notEnoughPoints": "Not enough points"
+    },
+    "confirm": {
+      "title": "Confirm Redemption",
+      "message": "Are you sure you want to redeem {{title}} for {{cost}} points?",
+      "warning": "This QR code is temporary and will disappear if you leave this page. Points will only be deducted after an administrator scans and verifies the QR code.",
+      "yes": "Yes, redeem",
+      "no": "No, cancel"
+    },
+    "qr": {
+      "title": "QR Code for {{title}}",
+      "instruction": "Show this QR code to an administrator for verification",
+      "status": "Status: {{status}}",
+      "statuses": {
+        "pending": "Pending verification",
+        "used": "Verified and redeemed",
+        "expired": "Expired"
+      },
+      "warning": "Do not close this page until the QR code is verified",
+      "confirmed": "Successfully Verified!",
+      "confirmedMessage": "Your reward has been verified and redeemed. Points have been deducted.",
+      "successModal": {
+        "title": "Reward Redeemed Successfully!",
+        "message": "Your {{title}} has been verified and redeemed. Points have been deducted from your account."
+      }
     }
+  },
+  "admin": {
+    "qrScanner": {
+      "title": "Redeem Rewards",
+      "subtitle": "Scan QR codes to verify and redeem user rewards",
+      "instruction": "Position the QR code within the frame",
+      "scanning": "Scanning...",
+      "cameraError": "Failed to access camera",
+      "cameraHint": "Please allow camera access and ensure you're using a device with a camera",
+      "verificationSuccess": "QR code verified successfully",
+      "verificationError": "Failed to verify QR code",
+      "backToMain": "Back to main",
+      "successModal": {
+        "title": "QR Code Verified!",
+        "message": "Successfully verified and redeemed reward for {{userName}}.",
+        "reward": "Reward: {{title}}"
+      }
+    }
+  },
+  "common": {
+    "ok": "OK"
   },
   "forest": {
     "title": "Virtual forest",

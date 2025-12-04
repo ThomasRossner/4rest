@@ -205,7 +205,52 @@
       "redeemSuccess": "Belohnung erfolgreich eingelöst",
       "redeemError": "Belohnung konnte nicht eingelöst werden",
       "notEnoughPoints": "Nicht genug Punkte"
+    },
+    "confirm": {
+      "title": "Einlösung bestätigen",
+      "message": "Möchten Sie {{title}} wirklich für {{cost}} Punkte einlösen?",
+      "warning": "Dieser QR-Code ist temporär und verschwindet, wenn Sie diese Seite verlassen. Punkte werden nur abgezogen, nachdem ein Administrator den QR-Code gescannt und verifiziert hat.",
+      "yes": "Ja, einlösen",
+      "no": "Nein, abbrechen"
+    },
+    "qr": {
+      "title": "QR-Code für {{title}}",
+      "instruction": "Zeigen Sie diesen QR-Code einem Administrator zur Verifizierung",
+      "status": "Status: {{status}}",
+      "statuses": {
+        "pending": "Ausstehende Verifizierung",
+        "used": "Verifiziert und eingelöst",
+        "expired": "Abgelaufen"
+      },
+      "warning": "Schließen Sie diese Seite nicht, bis der QR-Code verifiziert wurde",
+      "confirmed": "Erfolgreich verifiziert!",
+      "confirmedMessage": "Ihre Belohnung wurde verifiziert und eingelöst. Punkte wurden abgezogen.",
+      "successModal": {
+        "title": "Belohnung erfolgreich eingelöst!",
+        "message": "Ihre {{title}} wurde verifiziert und eingelöst. Punkte wurden von Ihrem Konto abgezogen."
+      }
     }
+  },
+  "admin": {
+    "qrScanner": {
+      "title": "Belohnungen einlösen",
+      "subtitle": "QR-Codes scannen, um Benutzerbelohnungen zu verifizieren und einzulösen",
+      "instruction": "Positionieren Sie den QR-Code im Rahmen",
+      "scanning": "Scannen...",
+      "cameraError": "Kamera konnte nicht aufgerufen werden",
+      "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff und stellen Sie sicher, dass Sie ein Gerät mit Kamera verwenden",
+      "verificationSuccess": "QR-Code erfolgreich verifiziert",
+      "verificationError": "QR-Code konnte nicht verifiziert werden",
+      "backToMain": "Zurück zur Hauptseite",
+      "successModal": {
+        "title": "QR-Code verifiziert!",
+        "message": "Belohnung für {{userName}} erfolgreich verifiziert und eingelöst.",
+        "reward": "Belohnung: {{title}}"
+      }
+    }
+  },
+  "common": {
+    "ok": "OK"
   },
   "forest": {
     "title": "Virtueller Wald",

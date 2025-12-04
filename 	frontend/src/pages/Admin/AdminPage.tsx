@@ -15,8 +15,9 @@ import {
 } from '../../constants/enums';
 import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
 import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
+import QrScannerPage from './QrScannerPage';
 
-type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | 'location' | 'locationManage' | null;
+type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | 'location' | 'locationManage' | 'qrScanner' | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
 
 type AdminTaskTemplate = {
@@ -2332,6 +2333,11 @@ const goToRewardCreation = () => {
             <h2>Manage Locations</h2>
             <p>Update or remove available locations.</p>
           </button>
+          <button className="admin-choice-card" onClick={() => setMode('qrScanner')}>
+            <span className="admin-choice-icon">📷</span>
+            <h2>Redeem Rewards</h2>
+            <p>Scan QR codes to verify and redeem rewards.</p>
+          </button>
         </div>
       )}
 
@@ -3228,6 +3234,10 @@ const goToRewardCreation = () => {
             </div>
           </div>
         </section>
+      )}
+
+      {mode === 'qrScanner' && (
+        <QrScannerPage onBack={() => setMode(null)} />
       )}
 
       {mode === 'locationManage' && (

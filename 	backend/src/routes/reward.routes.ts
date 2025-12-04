@@ -4,6 +4,7 @@ import { requireRole } from '../middleware/requireRole.js';
 import {
   getRewards,
   redeemReward,
+  verifyQrCode,
   createReward,
   getRewardTemplates,
   updateReward,
@@ -20,5 +21,6 @@ router.post('/bulk/status', authenticate, requireRole('administrator'), bulkUpda
 router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDeleteRewardsController);
 router.put('/:id', authenticate, requireRole('administrator'), updateReward);
 router.post('/:id/redeem', authenticate, redeemReward);
+router.post('/verify-qr', authenticate, requireRole('administrator'), verifyQrCode);
 
 export default router;

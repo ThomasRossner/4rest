@@ -1,6 +1,7 @@
 import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
+import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
 import {
   USER_ROLES,
   USER_TYPES,
@@ -357,6 +358,10 @@ export async function redeemRewardService(rewardId: string, userId: string) {
     throw new Error('Insufficient points');
   }
 
+  // Generate unique QR token
+  const crypto = await import('node:crypto');
+  const qrToken = crypto.randomBytes(32).toString('hex');
+
   // Generate voucher code from external system if needed
   let voucherCode = reward.voucher_code;
   if (reward.external_api_id && !voucherCode) {
@@ -371,46 +376,105 @@ export async function redeemRewardService(rewardId: string, userId: string) {
     }
   }
 
-  // Deduct points
-  await db.query(
-    'UPDATE users SET points = points - $1 WHERE id = $2',
-    [reward.points_cost, userId]
-  );
-
-  // Create redemption record
+  // Create redemption record with QR token (points NOT deducted yet - will be deducted on verification)
   const redemptionResult = await db.query(
-    `INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [userId, rewardId, voucherCode || null, 'pending']
+    [userId, rewardId, voucherCode || null, 'pending', qrToken]
   );
-
-  // If external voucher system is used, validate the code
-  if (reward.external_api_id && voucherCode) {
-    try {
-      const isValid = await voucherSystem.validateVoucher(voucherCode);
-      if (isValid) {
-        await db.query(
-          'UPDATE reward_redemptions SET status = $1 WHERE id = $2',
-          ['active', redemptionResult.rows[0].id]
-        );
-      }
-    } catch (error) {
-      console.error('Failed to validate voucher:', error);
-    }
-  }
 
   return {
     success: true,
     redemption: {
       id: redemptionResult.rows[0].id,
+      qrToken: qrToken,
       voucherCode: voucherCode || redemptionResult.rows[0].voucher_code,
       status: redemptionResult.rows[0].status,
     },
-    remainingPoints: user.points - reward.points_cost,
-    message: voucherCode
-      ? `Reward redeemed! Your voucher code is: ${voucherCode}`
-      : 'Reward redeemed successfully!',
+    remainingPoints: user.points, // Points not deducted yet
+    message: 'QR code generated. Please show it to an administrator for verification.',
+  };
+}
+
+export async function verifyQrCodeService(qrToken: string, adminUserId: string) {
+  const db = getPool();
+
+  // Verify admin user
+  const admin = await getUserById(adminUserId);
+  if (!admin || admin.role !== 'administrator') {
+    throw new Error('Unauthorized: Only administrators can verify QR codes');
+  }
+
+  // Find redemption by QR token
+  const redemptionResult = await db.query(
+    `SELECT rr.*, r.points_cost, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
+     FROM reward_redemptions rr
+     JOIN rewards r ON rr.reward_id = r.id
+     JOIN users u ON rr.user_id = u.id
+     WHERE rr.qr_token = $1 AND rr.status = 'pending'`,
+    [qrToken]
+  );
+
+  if (redemptionResult.rows.length === 0) {
+    throw new Error('QR code not found or already used');
+  }
+
+  const redemption = redemptionResult.rows[0];
+
+  // Check if user still has enough points (in case they spent them elsewhere)
+  if (redemption.user_points < redemption.points_cost) {
+    // Mark as expired if user doesn't have enough points
+    await db.query(
+      `UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`,
+      [redemption.id]
+    );
+    throw new Error('User no longer has sufficient points for this redemption');
+  }
+
+  // Deduct points now that QR code is verified
+  await db.query(
+    'UPDATE users SET points = points - $1 WHERE id = $2',
+    [redemption.points_cost, redemption.user_id]
+  );
+
+  // Update redemption status to 'used'
+  await db.query(
+    `UPDATE reward_redemptions SET status = 'used' WHERE id = $1`,
+    [redemption.id]
+  );
+
+  // Get updated user points
+  const updatedUserResult = await db.query(
+    'SELECT points FROM users WHERE id = $1',
+    [redemption.user_id]
+  );
+
+  const updatedPoints = updatedUserResult.rows[0]?.points || 0;
+
+  // Broadcast update to user via WebSocket
+  broadcastRedemptionUpdate({
+    userId: redemption.user_id,
+    redemptionId: redemption.id,
+    status: 'used',
+    points: updatedPoints,
+  });
+
+  return {
+    success: true,
+    redemption: {
+      id: redemption.id,
+      status: 'used',
+    },
+    user: {
+      id: redemption.user_id,
+      name: redemption.user_name,
+      points: updatedPoints,
+    },
+    reward: {
+      title: redemption.reward_title,
+    },
+    message: 'QR code verified and reward redeemed successfully',
   };
 }
 

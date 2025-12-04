@@ -175,41 +175,21 @@ export const api = {
 
   async redeemReward(rewardId: string, fallbackCost?: number) {
     const response = await apiClient.post(`/rewards/${rewardId}/redeem`);
-    // Try to update points from server-provided user first
-    try {
+    // Don't deduct points yet - they will be deducted when QR code is verified
+    // Just return the redemption data with QR token
+    return response.data;
+  },
+
+  async verifyQrCode(qrToken: string) {
+    const response = await apiClient.post('/rewards/verify-qr', { qrToken });
+    // Update user points from response
+    if (response.data?.user?.points !== undefined) {
       const store = useAuthStore.getState();
-      const serverUser = response.data && (response.data.user || response.data.currentUser);
-      if (serverUser && typeof serverUser.points === 'number') {
-        store.setUser(serverUser as any);
-        // still refresh to align other fields
-        await api.refreshMe();
-        return response.data;
+      const currentUser = store.user;
+      if (currentUser) {
+        store.setUser({ ...currentUser, points: response.data.user.points });
       }
-    } catch (_) {
-      // ignore
-    }
-
-    // Otherwise, optimistically deduct based on any cost fields we can detect
-    const cost =
-      (response.data && (
-        response.data.pointsSpent ||
-        response.data.points_spent ||
-        response.data.pointsCost ||
-        response.data.cost ||
-        (response.data.reward && (response.data.reward.points_cost || response.data.reward.pointsCost))
-      )) ||
-      fallbackCost ||
-      0;
-
-    if (cost) {
-      try {
-        useAuthStore.getState().incrementPoints(-Number(cost));
-      } catch (_) {
-        // noop
       }
-    }
-    // Sync from server
-    await api.refreshMe();
     return response.data;
   },
 
