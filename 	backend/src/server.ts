@@ -32,8 +32,39 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Session middleware for Passport (OAuth flows)
+// Use Redis store if available, otherwise fall back to MemoryStore
+let sessionStore: any = undefined;
+
+if (process.env.REDIS_URL) {
+  try {
+    const RedisStore = require('connect-redis').default;
+    const { createClient } = require('redis');
+    const redisClient = createClient({
+      url: process.env.REDIS_URL,
+    });
+    redisClient.on('error', (err: Error) => {
+      console.warn('Redis connection error, falling back to MemoryStore:', err.message);
+    });
+    redisClient.connect().catch(() => {
+      console.warn('Failed to connect to Redis, falling back to MemoryStore');
+    });
+    sessionStore = new RedisStore({ client: redisClient });
+    console.log('Using Redis for session storage');
+  } catch (error: any) {
+    console.warn('Redis store not available, using MemoryStore:', error.message);
+  }
+}
+
+if (!sessionStore) {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('Warning: Using MemoryStore for sessions in production. This is not recommended.');
+    console.warn('Set REDIS_URL to use Redis for session storage.');
+  }
+}
+
 app.use(
   session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,

@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: roots-postgres-homeserver
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-roots_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-roots_password}
+      POSTGRES_DB: ${POSTGRES_DB:-roots_of_impact}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - roots-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-roots_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: roots-redis-homeserver
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - roots-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile.prod
+    container_name: roots-backend-homeserver
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-roots_user}:${POSTGRES_PASSWORD:-roots_password}@postgres:5432/${POSTGRES_DB:-roots_of_impact}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+      SESSION_SECRET: ${SESSION_SECRET:-${JWT_SECRET}}
+      HOTELKIT_API_URL: ${HOTELKIT_API_URL:-}
+      HOTELKIT_API_KEY: ${HOTELKIT_API_KEY:-}
+      VOUCHER_API_URL: ${VOUCHER_API_URL:-}
+      VOUCHER_API_KEY: ${VOUCHER_API_KEY:-}
+      EMAIL_MOCK_MODE: ${EMAIL_MOCK_MODE:-false}
+      BASE_URL: ${BASE_URL:-http://localhost:5000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - roots-network
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile.prod
+    container_name: roots-frontend-homeserver
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - roots-network
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  roots-network:
+    driver: bridge
+
