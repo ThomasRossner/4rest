@@ -28,6 +28,10 @@ i18n
     interpolation: {
       escapeValue: false,
     },
+    // Return the key if translation is missing (for debugging)
+    returnEmptyString: false,
+    returnNull: false,
+    returnObjects: false,
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
@@ -36,9 +40,13 @@ i18n
       useSuspense: false,
     },
     // Ensure i18n is ready before rendering
-    initImmediate: false,
+    initImmediate: true,
     // Force synchronous initialization
     lng: undefined, // Let detector decide, but ensure it's set
+    // Load translations immediately
+    load: 'languageOnly',
+    // Don't wait for backend
+    backend: undefined,
   });
 
 // Ensure i18n is initialized before export

@@ -28,7 +28,7 @@ function deriveWebSocketUrl(): string {
     }
   }
 
-  return 'ws://localhost:5000/ws';
+  return 'ws://localhost:5001/ws';
 }
 
 function scheduleReconnect() {

@@ -37,7 +37,7 @@ services:
       dockerfile: Dockerfile
     container_name: roots-backend
     ports:
-      - "5000:5000"
+      - "5001:5001"
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://roots_user:roots_password@postgres:5432/roots_of_impact
@@ -62,13 +62,13 @@ services:
     ports:
       - "3000:3000"
     environment:
-      VITE_API_URL: http://localhost:5000/api
+      VITE_API_URL: http://localhost:5001/api
     depends_on:
       - backend
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: npm run dev
+    command: npm run dev -- --host
 
 volumes:
   postgres_data:

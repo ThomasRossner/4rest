@@ -238,7 +238,9 @@ function LoginPage() {
         <div className="login-header">
           <div className="login-header-info">
             <span className="login-logo">🌳</span>
-            <h1>{t('common.appName')}</h1>
+            <h1 style={{ whiteSpace: 'nowrap' }}>
+              {t('common.appName', { defaultValue: 'Roots of Impact' })}
+            </h1>
             <p>{getModeTitle()}</p>
           </div>
           <LanguageSwitcher compact className="login-language-switcher" />

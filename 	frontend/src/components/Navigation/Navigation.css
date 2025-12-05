@@ -65,6 +65,7 @@
   padding: 0 var(--spacing-md);
   position: relative;
   z-index: 1;
+  flex-wrap: nowrap;
 }
 
 .navigation-logo {
@@ -79,9 +80,12 @@
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid transparent;
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .navigation-logo::before {
@@ -130,6 +134,7 @@
   display: inline;
   position: relative;
   z-index: 1;
+  white-space: nowrap;
 }
 
 .navigation-items {
@@ -428,6 +433,8 @@
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
     flex-shrink: 0;
+    white-space: nowrap;
+    min-width: fit-content;
   }
 
   .navigation-top .navigation-logo-icon {
@@ -437,6 +444,7 @@
   .navigation-top .navigation-logo-text {
     display: inline;
     font-size: 1rem;
+    white-space: nowrap;
   }
 
   .navigation-top .navigation-user {
@@ -589,6 +597,8 @@
 
   .navigation-top .navigation-logo {
     padding: 4px 8px;
+    white-space: nowrap;
+    min-width: fit-content;
   }
 
   .navigation-top .navigation-logo-icon {
@@ -597,6 +607,7 @@
 
   .navigation-top .navigation-logo-text {
     font-size: 0.9rem;
+    white-space: nowrap;
   }
 
   .navigation-top .navigation-user-button {

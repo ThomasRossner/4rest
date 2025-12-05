@@ -315,11 +315,11 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
 export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
   // In production, this would upload to cloud storage (S3, Azure Blob, etc.)
   // For now, return a local file path
-  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
   return `${baseUrl}/uploads/${file.filename}`;
 }
 
 export async function uploadVideo(file: Express.Multer.File): Promise<string> {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+  const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
   return `${baseUrl}/uploads/${file.filename}`;
 }
