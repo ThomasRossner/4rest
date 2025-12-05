@@ -35,10 +35,10 @@ export function getPool(): pg.Pool {
     
     pool = new Pool(poolConfig);
 
-    pool.on('error', (err) => {
+    pool.on('error', (err: any) => {
       console.error('[DATABASE] Unexpected database error:', {
         message: err.message,
-        code: err.code,
+        code: err.code || 'unknown',
         stack: err.stack,
       });
     });
