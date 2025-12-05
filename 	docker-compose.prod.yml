@@ -25,8 +25,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile.prod
     container_name: roots-backend-prod
     environment:
       NODE_ENV: production
@@ -47,8 +47,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./frontend/Dockerfile.prod
     container_name: roots-frontend-prod
     environment:
       VITE_API_URL: ${VITE_API_URL}

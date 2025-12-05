@@ -58,6 +58,10 @@ export async function login(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
     const user = await getUserByEmail(email);
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -125,7 +129,24 @@ export async function login(req: Request, res: Response) {
       },
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('[LOGIN ERROR]', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      name: error.name,
+      email: req.body?.email,
+      hasPassword: !!req.body?.password,
+      env: {
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        nodeEnv: process.env.NODE_ENV,
+      },
+    });
+    res.status(500).json({ 
+      error: process.env.NODE_ENV === 'production' 
+        ? 'An internal error occurred. Please try again later.' 
+        : error.message 
+    });
   }
 }
 

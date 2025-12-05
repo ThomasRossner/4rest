@@ -105,9 +105,18 @@ export async function createUser(data: CreateUserData): Promise<User> {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const db = getPool();
-  const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-  return result.rows[0] || null;
+  try {
+    const db = getPool();
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    return result.rows[0] || null;
+  } catch (error: any) {
+    console.error('[getUserByEmail] Database error:', {
+      message: error.message,
+      code: error.code,
+      email,
+    });
+    throw error;
+  }
 }
 
 export async function getUserById(id: string): Promise<User | null> {
