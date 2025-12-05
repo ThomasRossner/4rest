@@ -3,20 +3,11 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    'process.env': '{}',
-    'global': 'globalThis'
-  },
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
-      devOptions: {
-        enabled: false,
-        type: 'module'
-      },
       manifest: {
         name: 'Roots of Impact',
         short_name: 'Roots',
@@ -56,18 +47,7 @@ export default defineConfig({
     })
   ],
   server: {
-    host: '0.0.0.0',
     port: 3000,
-    strictPort: true,
-    hmr: {
-      port: 3000,
-      protocol: 'ws',
-      host: 'localhost',
-      clientPort: 3000
-    },
-    watch: {
-      usePolling: true
-    },
     proxy: {
       '/api': {
         target: 'http://localhost:5001',

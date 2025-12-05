@@ -91,7 +91,7 @@ function Navigation() {
             className={`navigation-logo ${location.pathname === '/' ? 'active' : ''}`}
           >
             <span className="navigation-logo-icon">🌳</span>
-            <span className="navigation-logo-text">{t('common.appName')}</span>
+            <span className="navigation-logo-text">{t('common.appName', { defaultValue: 'Roots of Impact' })}</span>
           </Link>
           <div className="navigation-items navigation-items-top">
             {navItems.map((item) => (

@@ -5,33 +5,21 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enTranslation from './locales/en/translation.json';
 import deTranslation from './locales/de/translation.json';
 
-// Ensure translations are properly loaded - use direct object access
-const resources = {
-  en: {
-    translation: enTranslation,
-  },
-  de: {
-    translation: deTranslation,
-  },
-};
-
-// Initialize i18n synchronously to ensure translations are available immediately
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
+    resources: {
+      en: { translation: enTranslation },
+      de: { translation: deTranslation },
+    },
     fallbackLng: 'en',
     supportedLngs: ['en', 'de'],
     defaultNS: 'translation',
-    ns: ['translation'],
+    ns: 'translation',
     interpolation: {
       escapeValue: false,
     },
-    // Return the key if translation is missing (for debugging)
-    returnEmptyString: false,
-    returnNull: false,
-    returnObjects: false,
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
@@ -39,20 +27,10 @@ i18n
     react: {
       useSuspense: false,
     },
-    // Ensure i18n is ready before rendering
-    initImmediate: true,
-    // Force synchronous initialization
-    lng: undefined, // Let detector decide, but ensure it's set
-    // Load translations immediately
-    load: 'languageOnly',
-    // Don't wait for backend
-    backend: undefined,
+  })
+  .catch((error) => {
+    console.error('i18n initialization error:', error);
   });
-
-// Ensure i18n is initialized before export
-if (!i18n.isInitialized) {
-  console.warn('i18n was not initialized synchronously');
-}
 
 export default i18n;
 
