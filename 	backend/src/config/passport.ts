@@ -83,7 +83,7 @@ async function handleOAuthUser(
 }
 
 // OAuth Strategies - only initialize if credentials are provided
-const baseUrl = process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5000';
+const baseUrl = process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
 if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   passport.use(
     'github',

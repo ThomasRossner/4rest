@@ -3,13 +3,13 @@
 
 cat > .env << 'EOF'
 NODE_ENV=development
-PORT=5000
+PORT=5001
 DATABASE_URL=postgresql://roots_user:roots_password@localhost:5432/roots_of_impact
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=development-secret-change-in-production
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:3000
-BASE_URL=http://localhost:5000
+BASE_URL=http://localhost:5001
 HOTELKIT_API_URL=
 HOTELKIT_API_KEY=
 SIHOT_USE_MOCK=true
@@ -42,24 +42,24 @@ SMTP_FROM=noreply@roots-of-impact.com
 # GitHub OAuth
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
+GITHUB_CALLBACK_URL=http://localhost:5001/api/auth/github/callback
 
 # Google OAuth
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:5001/api/auth/google/callback
 
 # Facebook OAuth
 FACEBOOK_APP_ID=
 FACEBOOK_APP_SECRET=
-FACEBOOK_CALLBACK_URL=http://localhost:5000/api/auth/facebook/callback
+FACEBOOK_CALLBACK_URL=http://localhost:5001/api/auth/facebook/callback
 
 # Apple OAuth (Sign in with Apple)
 APPLE_CLIENT_ID=
 APPLE_TEAM_ID=
 APPLE_KEY_ID=
 APPLE_PRIVATE_KEY=
-APPLE_CALLBACK_URL=http://localhost:5000/api/auth/apple/callback
+APPLE_CALLBACK_URL=http://localhost:5001/api/auth/apple/callback
 EOF
 
 echo "Created .env file successfully!"

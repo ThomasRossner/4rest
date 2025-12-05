@@ -5,7 +5,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enTranslation from './locales/en/translation.json';
 import deTranslation from './locales/de/translation.json';
 
-void i18n
+i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -15,6 +15,8 @@ void i18n
     },
     fallbackLng: 'en',
     supportedLngs: ['en', 'de'],
+    defaultNS: 'translation',
+    ns: 'translation',
     interpolation: {
       escapeValue: false,
     },
@@ -25,6 +27,9 @@ void i18n
     react: {
       useSuspense: false,
     },
+  })
+  .catch((error) => {
+    console.error('i18n initialization error:', error);
   });
 
 export default i18n;

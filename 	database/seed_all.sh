@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-BACKEND_URL="http://localhost:5000/api"
+BACKEND_URL="http://localhost:5001/api"
 PG_CONTAINER="roots-postgres"
 PG_USER="roots_user"
 PG_DB="roots_of_impact"
