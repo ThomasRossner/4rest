@@ -2,20 +2,46 @@
 # Remote deployment script for Roots of Impact on Homeserver
 # This script runs the deployment on the homeserver via SSH from the development machine
 #
-# Configuration via environment variables:
-#   HOMESERVER_HOST       - Hostname or IP of the homeserver (default: homeserver)
-#   HOMESERVER_USER       - SSH username (default: neueradmin)
-#   HOMESERVER_PASSWORD   - SSH password (default: REMOVED_PASSWORD)
-#   DEPLOYMENT_PATH       - Path on homeserver where app is deployed (default: /home/neueradmin/roots-of-impact)
+# Configuration via environment variables (REQUIRED):
+#   HOMESERVER_HOST       - Hostname or IP of the homeserver
+#   HOMESERVER_USER       - SSH username
+#   HOMESERVER_PASSWORD   - SSH password
+#   DEPLOYMENT_PATH       - Path on homeserver where app is deployed
 #   REPO_URL              - Git repository URL (only needed for first-time setup)
+#
+# Example: Create a local .env file or export variables:
+#   export HOMESERVER_HOST="homeserver"
+#   export HOMESERVER_USER="your-username"
+#   export HOMESERVER_PASSWORD="your-password"
+#   export DEPLOYMENT_PATH="/home/your-username/roots-of-impact"
 
 set -euo pipefail
 
-# Configuration with defaults
-HOMESERVER_HOST="${HOMESERVER_HOST:-homeserver}"
-HOMESERVER_USER="${HOMESERVER_USER:-neueradmin}"
-HOMESERVER_PASSWORD="${HOMESERVER_PASSWORD:-REMOVED_PASSWORD}"
-DEPLOYMENT_PATH="${DEPLOYMENT_PATH:-/home/neueradmin/roots-of-impact}"
+# Configuration - all variables are required
+if [ -z "${HOMESERVER_HOST:-}" ]; then
+  echo "ERROR: HOMESERVER_HOST environment variable is required"
+  exit 1
+fi
+
+if [ -z "${HOMESERVER_USER:-}" ]; then
+  echo "ERROR: HOMESERVER_USER environment variable is required"
+  exit 1
+fi
+
+if [ -z "${HOMESERVER_PASSWORD:-}" ]; then
+  echo "ERROR: HOMESERVER_PASSWORD environment variable is required"
+  exit 1
+fi
+
+if [ -z "${DEPLOYMENT_PATH:-}" ]; then
+  echo "ERROR: DEPLOYMENT_PATH environment variable is required"
+  exit 1
+fi
+
+HOMESERVER_HOST="${HOMESERVER_HOST}"
+HOMESERVER_USER="${HOMESERVER_USER}"
+HOMESERVER_PASSWORD="${HOMESERVER_PASSWORD}"
+DEPLOYMENT_PATH="${DEPLOYMENT_PATH}"
 
 # Colors for output
 RED='\033[0;31m'

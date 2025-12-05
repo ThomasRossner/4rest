@@ -16,6 +16,10 @@ build/
 .env.production.local
 scripts/deploy-homeserver-remote.env
 
+# Homeserver deployment files (keep local only)
+README-HOMESERVER.md
+scripts/deploy-homeserver-remote.env.example
+
 # Logs
 logs
 *.log
