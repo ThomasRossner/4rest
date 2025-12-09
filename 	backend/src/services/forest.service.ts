@@ -59,6 +59,9 @@ export async function getForestService() {
        ft.position_y,
        ft.position_z,
        ft.planted_at,
+       ft.growth_points,
+       ft.stage,
+       ft.size,
        u.id as user_id -- In production, this would be anonymized
      FROM forest_trees ft
      JOIN users u ON ft.user_id = u.id
@@ -105,6 +108,9 @@ export async function getForestService() {
       treeType: row.tree_type,
       position: absolutePosition,
       plantedAt: row.planted_at,
+      growthPoints: row.growth_points || 1,
+      stage: row.stage || 'sapling',
+      size: parseFloat(row.size || 0.035),
     };
     
     if (!userTrees.has(row.user_id)) {
@@ -235,6 +241,9 @@ export async function getUserForestService(userId: string) {
        ft.position_y,
        ft.position_z,
        ft.planted_at,
+       ft.growth_points,
+       ft.stage,
+       ft.size,
        t.title as task_title
      FROM forest_trees ft
      LEFT JOIN tasks t ON ft.task_id = t.id
@@ -249,6 +258,9 @@ export async function getUserForestService(userId: string) {
       treeType: row.tree_type,
       position: [row.position_x, row.position_y, row.position_z],
       plantedAt: row.planted_at,
+      growthPoints: row.growth_points || 1,
+      stage: row.stage || 'sapling',
+      size: parseFloat(row.size || 0.035),
       taskTitle: row.task_title,
     })),
     totalTrees: result.rows.length,

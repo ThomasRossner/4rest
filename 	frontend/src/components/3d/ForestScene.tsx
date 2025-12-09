@@ -7,10 +7,30 @@ import { useAuthStore } from '../../stores/authStore';
 import { useThree, useFrame } from '@react-three/fiber';
 
 function ForestScene() {
-  const { data: forest } = useQuery('forest', () => api.getForest());
+  const { data: forest, refetch: refetchForest } = useQuery('forest', () => api.getForest());
   const currentUser = useAuthStore((s) => s.user);
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
+  
+  // Handle daily forest visit on component mount
+  useEffect(() => {
+    const handleDailyVisit = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const result = await api.visitForest();
+        if (result.success) {
+          // Refetch forest data to get updated growth points
+          refetchForest();
+        }
+      } catch (error) {
+        // Silently handle errors (e.g., already visited today)
+        console.debug('Forest visit:', error);
+      }
+    };
+    
+    handleDailyVisit();
+  }, [currentUser, refetchForest]);
 
   const areas = forest?.areas || [];
   const flatTrees = forest?.trees || [];
@@ -87,7 +107,12 @@ function ForestScene() {
             </lineSegments>
             {/* Trees in this area should use local positions (relative to origin) */}
             {area.trees?.map((t: any) => (
-              <Tree key={t.id} position={(t.localPosition || t.position) as [number, number, number]} />
+              <Tree 
+                key={t.id} 
+                position={(t.localPosition || t.position) as [number, number, number]}
+                size={t.size}
+                stage={t.stage}
+              />
             ))}
           </group>
         );
@@ -95,7 +120,12 @@ function ForestScene() {
 
       {/* Fallback: render flat list if areas not provided */}
       {areas.length === 0 && flatTrees.map((t: any) => (
-        <Tree key={t.id} position={t.position as [number, number, number]} />
+        <Tree 
+          key={t.id} 
+          position={t.position as [number, number, number]}
+          size={t.size}
+          stage={t.stage}
+        />
       ))}
 
       {/* Controls centered on user's area when available */}

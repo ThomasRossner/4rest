@@ -1,6 +1,33 @@
 import { getPool } from '../database/connection.js';
 
 /**
+ * Calculate tree stage based on growth points
+ * Sapling: 1-20, Young: 21-50, Mature: 51-100
+ */
+function calculateStage(growthPoints: number): 'sapling' | 'young' | 'mature' {
+  if (growthPoints >= 51) return 'mature';
+  if (growthPoints >= 21) return 'young';
+  return 'sapling';
+}
+
+/**
+ * Generate random size for a given stage
+ * Sapling: 0.02-0.05, Young: 0.10-0.15, Mature: 0.20-0.30
+ */
+function generateSizeForStage(stage: 'sapling' | 'young' | 'mature'): number {
+  switch (stage) {
+    case 'sapling':
+      return 0.02 + Math.random() * (0.05 - 0.02); // 0.02 to 0.05
+    case 'young':
+      return 0.10 + Math.random() * (0.15 - 0.10); // 0.10 to 0.15
+    case 'mature':
+      return 0.20 + Math.random() * (0.30 - 0.20); // 0.20 to 0.30
+    default:
+      return 0.035;
+  }
+}
+
+/**
  * Calculate the required grid size for blocks based on tree count
  * Each block can hold max 6 trees
  * Grid sizes: 2x2 (4 blocks, 24 trees max), 3x3 (9 blocks, 54 trees max), 4x4 (16 blocks, 96 trees max), etc.
@@ -67,12 +94,18 @@ export async function plantTree(userId: string, taskId: string) {
     // Fallback: use simple random position
     const positionX = (Math.random() - 0.5) * 20;
     const positionZ = (Math.random() - 0.5) * 20;
-    await db.query(
-      `INSERT INTO forest_trees (user_id, task_id, position_x, position_y, position_z)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [userId, taskId, positionX, 0, positionZ]
+    const initialStage = 'sapling';
+    const initialGrowthPoints = 1;
+    const initialSize = generateSizeForStage(initialStage);
+    
+    const insertResult = await db.query(
+      `INSERT INTO forest_trees (user_id, task_id, position_x, position_y, position_z, growth_points, stage, size)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [userId, taskId, positionX, 0, positionZ, initialGrowthPoints, initialStage, initialSize]
     );
-    return;
+    
+    return insertResult.rows[0].id as string;
   }
   
   const areaSpacing = 20;
@@ -208,9 +241,138 @@ export async function plantTree(userId: string, taskId: string) {
     absoluteZ = Math.max(blockMinZ, Math.min(absoluteZ, blockMaxZ));
   }
   
-  await db.query(
-    `INSERT INTO forest_trees (user_id, task_id, position_x, position_y, position_z)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [userId, taskId, absoluteX, 0, absoluteZ]
+  // Initialize new tree with sapling stage, 1 growth point, and random size
+  const initialStage = 'sapling';
+  const initialGrowthPoints = 1;
+  const initialSize = generateSizeForStage(initialStage);
+
+  const insertResult = await db.query(
+    `INSERT INTO forest_trees (user_id, task_id, position_x, position_y, position_z, growth_points, stage, size)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING id`,
+    [userId, taskId, absoluteX, 0, absoluteZ, initialGrowthPoints, initialStage, initialSize]
   );
+  
+  return insertResult.rows[0].id as string;
+}
+
+/**
+ * Add growth points to a random existing tree (not newly planted ones)
+ * Used when user completes tasks - task points go to random tree growth
+ */
+export async function addGrowthPointsToRandomTree(userId: string, points: number, excludeTreeId?: string) {
+  const db = getPool();
+  
+  // Get all existing trees for user (excluding the newly planted one if provided)
+  let query = `SELECT id, growth_points, stage, size FROM forest_trees WHERE user_id = $1`;
+  const params: any[] = [userId];
+  
+  if (excludeTreeId) {
+    query += ` AND id != $2`;
+    params.push(excludeTreeId);
+  }
+  
+  const result = await db.query(query, params);
+  
+  if (result.rows.length === 0) {
+    // No existing trees to add growth points to
+    return;
+  }
+  
+  // Select a random tree
+  const randomIndex = Math.floor(Math.random() * result.rows.length);
+  const selectedTree = result.rows[randomIndex];
+  
+  // Calculate new growth points and check if stage changes
+  const newGrowthPoints = selectedTree.growth_points + points;
+  const newStage = calculateStage(newGrowthPoints);
+  const currentStage = selectedTree.stage;
+  
+  // If stage changed, generate new random size for the new stage
+  let newSize = parseFloat(selectedTree.size);
+  if (newStage !== currentStage) {
+    newSize = generateSizeForStage(newStage);
+  }
+  
+  // Update the tree
+  await db.query(
+    `UPDATE forest_trees 
+     SET growth_points = $1, stage = $2, size = $3 
+     WHERE id = $4`,
+    [newGrowthPoints, newStage, newSize, selectedTree.id]
+  );
+}
+
+/**
+ * Process daily forest visit - adds 1 growth point to all user's trees
+ * Returns true if visit was successful (first visit today), false if already visited
+ */
+export async function processDailyForestVisit(userId: string): Promise<boolean> {
+  const db = getPool();
+  
+  try {
+    // Try to insert today's visit record
+    await db.query(
+      `INSERT INTO daily_forest_visits (user_id, visit_date) 
+       VALUES ($1, CURRENT_DATE)
+       ON CONFLICT (user_id, visit_date) DO NOTHING`,
+      [userId]
+    );
+    
+    // Check if this was a new visit (rows affected)
+    const checkResult = await db.query(
+      `SELECT COUNT(*) as count FROM daily_forest_visits 
+       WHERE user_id = $1 AND visit_date = CURRENT_DATE`,
+      [userId]
+    );
+    
+    // If visit was recorded, add growth points to all trees
+    if (parseInt(checkResult.rows[0].count) > 0) {
+      // Get all trees for this user
+      const treesResult = await db.query(
+        `SELECT id, growth_points, stage, size FROM forest_trees WHERE user_id = $1`,
+        [userId]
+      );
+      
+      // Update each tree
+      for (const tree of treesResult.rows) {
+        const newGrowthPoints = tree.growth_points + 1;
+        const newStage = calculateStage(newGrowthPoints);
+        const currentStage = tree.stage;
+        
+        // If stage changed, generate new random size
+        let newSize = parseFloat(tree.size);
+        if (newStage !== currentStage) {
+          newSize = generateSizeForStage(newStage);
+        }
+        
+        await db.query(
+          `UPDATE forest_trees 
+           SET growth_points = $1, stage = $2, size = $3 
+           WHERE id = $4`,
+          [newGrowthPoints, newStage, newSize, tree.id]
+        );
+      }
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error processing daily forest visit:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if user has visited forest today
+ */
+export async function hasVisitedForestToday(userId: string): Promise<boolean> {
+  const db = getPool();
+  const result = await db.query(
+    `SELECT COUNT(*) as count FROM daily_forest_visits 
+     WHERE user_id = $1 AND visit_date = CURRENT_DATE`,
+    [userId]
+  );
+  return parseInt(result.rows[0].count) > 0;
 }

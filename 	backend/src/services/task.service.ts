@@ -1,5 +1,5 @@
 import { getPool } from '../database/connection.js';
-import { addUserPoints, plantTree } from './gamification.service.js';
+import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
 import { UserRole, UserType, HotelId, HOTEL_IDS } from '../constants/enums.js';
 import { Location } from './location.service.js';
 
@@ -303,7 +303,10 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
 
   // Award points and plant tree
   await addUserPoints(userId, task.points);
-  await plantTree(userId, taskId);
+  const newTreeId = await plantTree(userId, taskId);
+  
+  // Distribute task points to growth of a random existing tree (not the newly planted one)
+  await addGrowthPointsToRandomTree(userId, task.points, newTreeId);
 
   return {
     success: true,

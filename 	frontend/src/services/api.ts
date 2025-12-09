@@ -162,6 +162,11 @@ export const api = {
     return response.data;
   },
 
+  async visitForest() {
+    const response = await apiClient.post('/forest/visit');
+    return response.data;
+  },
+
   async getUserForest(userId: string) {
     const response = await apiClient.get(`/forest/users/${userId}`);
     return response.data;

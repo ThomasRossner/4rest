@@ -5,11 +5,14 @@ import React from 'react';
 
 interface TreeProps {
   position: [number, number, number];
-  scale?: number;
+  size?: number; // Size from database (randomized per stage)
+  stage?: 'sapling' | 'young' | 'mature';
+  scale?: number; // Legacy support - will use size if not provided
 }
 
 // Simple geometric tree fallback
-function FallbackTree({ position, scale = 0.25 }: TreeProps) {
+function FallbackTree({ position, size }: TreeProps) {
+  const scale = size || 0.035;
   return (
     <group position={position} scale={[scale, scale, scale]}>
       <mesh castShadow receiveShadow position={[0, 1, 0]}>
@@ -24,8 +27,11 @@ function FallbackTree({ position, scale = 0.25 }: TreeProps) {
   );
 }
 
-function TreeModel({ position, scale = 0.25 }: TreeProps) {
+function TreeModel({ position, size, scale }: TreeProps) {
   const { scene } = useGLTF('/models/tree.glb');
+  
+  // Use size from database if available, otherwise fallback to scale prop or default
+  const treeSize = size ?? scale ?? 0.035;
 
   const clonedScene = useMemo(() => {
     if (!scene) return null;
@@ -43,25 +49,26 @@ function TreeModel({ position, scale = 0.25 }: TreeProps) {
   }, [clonedScene]);
 
   if (!clonedScene) {
-    return <FallbackTree position={position} scale={scale} />;
+    return <FallbackTree position={position} size={treeSize} />;
   }
 
   return (
     <primitive
       object={clonedScene}
       position={position}
-      scale={[scale, scale, scale]}
+      scale={[treeSize, treeSize, treeSize]}
       castShadow
       receiveShadow
     />
   );
 }
 
-export function Tree({ position, scale = 0.25 }: TreeProps) {
+export function Tree({ position, size, stage, scale }: TreeProps) {
+  const treeSize = size ?? scale ?? 0.035;
   return (
-    <ErrorBoundary fallback={<FallbackTree position={position} scale={scale} />}>
-      <Suspense fallback={<FallbackTree position={position} scale={scale} />}>
-        <TreeModel position={position} scale={scale} />
+    <ErrorBoundary fallback={<FallbackTree position={position} size={treeSize} />}>
+      <Suspense fallback={<FallbackTree position={position} size={treeSize} />}>
+        <TreeModel position={position} size={treeSize} scale={scale} />
       </Suspense>
     </ErrorBoundary>
   );
