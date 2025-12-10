@@ -54,6 +54,7 @@ export const createReward: RequestHandler = async (req, res) => {
       allowed_hotel_ids: payload.allowed_hotel_ids ?? payload.allowedHotelIds ?? [],
       location_id: location.id,
       active: payload.active,
+      recurrence: payload.recurrence ?? null,
     });
 
     res.status(201).json(reward);
@@ -114,6 +115,10 @@ export const updateReward: RequestHandler = async (req, res) => {
 
     if (payload.active !== undefined) {
       updatePayload.active = payload.active;
+    }
+
+    if (payload.recurrence !== undefined) {
+      updatePayload.recurrence = payload.recurrence;
     }
 
     const reward = await updateRewardService(req.params.id, updatePayload);

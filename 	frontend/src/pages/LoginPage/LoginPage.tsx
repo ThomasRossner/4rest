@@ -220,7 +220,7 @@ function LoginPage() {
 
   const getSubmitButtonText = () => {
     if (loading) {
-      return t('common.loading');
+      return 'loading..';
     }
     if (mode === 'login') return t('login.actions.signIn');
     if (mode === 'register') return t('login.actions.register');

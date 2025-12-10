@@ -3,6 +3,17 @@ import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamific
 import { UserRole, UserType, HotelId, HOTEL_IDS } from '../constants/enums.js';
 import { Location } from './location.service.js';
 
+type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
+
+function validateTaskRecurrence(value?: string | null): TaskRecurrence {
+  if (!value) return 'once';
+  const validValues: TaskRecurrence[] = ['once', 'daily', 'weekly', 'monthly'];
+  if (!validValues.includes(value as TaskRecurrence)) {
+    throw new Error(`Invalid recurrence: ${value}. Must be one of: ${validValues.join(', ')}`);
+  }
+  return value as TaskRecurrence;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -21,6 +32,7 @@ export interface Task {
   location_id: string;
   location?: Location;
   active?: boolean;
+  recurrence?: TaskRecurrence;
 }
 
 export async function getAllTasks(
@@ -150,6 +162,8 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       : JSON.stringify(data.quiz_questions)
     : null;
 
+  const recurrence = validateTaskRecurrence((data as any).recurrence);
+
   const result = await db.query(
     `INSERT INTO tasks (
        title,
@@ -166,9 +180,10 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        allowed_user_types,
        allowed_hotel_ids,
        location_id,
-       active
+       active,
+       recurrence
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
      RETURNING *`,
     [
       data.title,
@@ -186,6 +201,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       (data.allowed_hotel_ids ?? []) as HotelId[],
       data.location_id,
       data.active ?? true,
+      recurrence,
     ]
   );
   return result.rows[0];
@@ -202,6 +218,9 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       if (key === 'quiz_questions' && typeof value === 'object') {
         updates.push(`${key} = $${paramIndex++}`);
         values.push(JSON.stringify(value));
+      } else if (key === 'recurrence') {
+        updates.push(`${key} = $${paramIndex++}`);
+        values.push(validateTaskRecurrence(value as string));
       } else {
         updates.push(`${key} = $${paramIndex++}`);
         values.push(value);

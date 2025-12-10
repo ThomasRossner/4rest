@@ -10,6 +10,7 @@ import { setupRoutes } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { initializeDatabase } from './database/connection.js';
 import { startSihotSyncScheduler } from './services/sihot-sync.service.js';
+import { startRecurringRewardsScheduler } from './services/reward-recurrence.service.js';
 import { registerWebSocketServer } from './ws/socketRegistry.js';
 
 // Load environment variables BEFORE importing passport config
@@ -128,6 +129,8 @@ async function start() {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       startSihotSyncScheduler();
+      // Start recurring rewards scheduler - runs every hour
+      startRecurringRewardsScheduler(60 * 60 * 1000);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

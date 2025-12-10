@@ -99,6 +99,21 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration18 = readFileSync(
+      join(__dirname, '../../../database/migrations/018_tree_growth_stages.sql'),
+      'utf-8'
+    );
+    
+    const migration19 = readFileSync(
+      join(__dirname, '../../../database/migrations/019_reward_recurrence.sql'),
+      'utf-8'
+    );
+    
+    const migration20 = readFileSync(
+      join(__dirname, '../../../database/migrations/020_task_recurrence.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -304,6 +319,39 @@ async function runMigrations() {
       console.log('✓ Migration 017 completed');
     } else {
       console.log('✓ Migration 017 already executed');
+    }
+    
+    if (!executed.has('018_tree_growth_stages')) {
+      console.log('Running migration: 018_tree_growth_stages.sql');
+      await pool.query(migration18);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('018_tree_growth_stages') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 018 completed');
+    } else {
+      console.log('✓ Migration 018 already executed');
+    }
+    
+    if (!executed.has('019_reward_recurrence')) {
+      console.log('Running migration: 019_reward_recurrence.sql');
+      await pool.query(migration19);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('019_reward_recurrence') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 019 completed');
+    } else {
+      console.log('✓ Migration 019 already executed');
+    }
+    
+    if (!executed.has('020_task_recurrence')) {
+      console.log('Running migration: 020_task_recurrence.sql');
+      await pool.query(migration20);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('020_task_recurrence') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 020 completed');
+    } else {
+      console.log('✓ Migration 020 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

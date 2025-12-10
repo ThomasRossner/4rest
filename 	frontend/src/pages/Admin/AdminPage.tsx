@@ -87,6 +87,7 @@ type TaskFormState = {
   allowedHotelIds: string[];
   locationId: string;
   active: boolean;
+  recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
 };
 
 type RewardFormState = {
@@ -101,6 +102,7 @@ type RewardFormState = {
   allowedHotelIds: string[];
   locationId: string;
   active: boolean;
+  recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
 };
 
 type LocationFormState = {
@@ -321,6 +323,7 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   allowedHotelIds: [],
   locationId: '',
   active: true,
+  recurrence: 'once',
 });
 
 const defaultRewardForm = (type: RewardType): RewardFormState => ({
@@ -335,6 +338,7 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   allowedHotelIds: [],
   locationId: '',
   active: true,
+  recurrence: 'once',
 });
 
 const defaultLocationForm = (): LocationFormState => ({
@@ -1125,6 +1129,7 @@ function AdminPage() {
       location_id: (task as any).location_id ?? (task as any).location?.id ?? null,
       location: (task as any).location ?? null,
       active: task.active ?? true,
+      recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
     }));
   }, [adminTasks]);
 
@@ -1433,6 +1438,7 @@ function AdminPage() {
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
     });
   }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates, isEditingReward]);
 
@@ -1504,6 +1510,7 @@ function AdminPage() {
           allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
           allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
           active: Boolean(taskForm.active),
+          recurrence: taskForm.recurrence,
         };
         payload.location_id = taskForm.locationId;
 
@@ -1581,6 +1588,7 @@ function AdminPage() {
         allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
         allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
         active: Boolean(taskForm.active),
+        recurrence: taskForm.recurrence,
       };
       payload.location_id = taskForm.locationId;
 
@@ -1632,6 +1640,7 @@ function AdminPage() {
         allowed_user_types: allowedUserTypes,
         allowed_hotel_ids: allowedHotelIds,
         active: Boolean(rewardForm.active),
+        recurrence: rewardForm.recurrence,
       };
       basePayload.location_id = rewardForm.locationId;
 
@@ -2056,6 +2065,7 @@ function AdminPage() {
       allowedHotelIds: normalizeEnumArray(task.allowed_hotel_ids),
       locationId: task.location_id ?? task.location?.id ?? '',
       active: task.active ?? true,
+      recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
     });
     setIsEditingTask(true);
     setEditingTaskId(task.id);
@@ -2105,6 +2115,7 @@ function AdminPage() {
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
     });
     setIsEditingReward(true);
     setEditingRewardId(template.id);
@@ -2689,6 +2700,32 @@ const goToRewardCreation = () => {
                     </div>
                   </div>
                 </section>
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Recurrence</h3>
+                    <p>Set how often this task should be automatically regenerated.</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Recurrence Type" />
+                      <select
+                        value={taskForm.recurrence}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            recurrence: event.target.value as 'once' | 'daily' | 'weekly' | 'monthly',
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="once">Once - Task is created once and disappears when finished</option>
+                        <option value="daily">Daily - Task appears once daily (if previous is finished, waits until next day)</option>
+                        <option value="weekly">Weekly - Task appears once weekly (if previous is finished, waits until next week)</option>
+                        <option value="monthly">Monthly - Task appears once monthly (if previous is finished, waits until next month)</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
                 <div className="admin-form-actions">
                   <div className="admin-form-feedback">
                     {taskMessage ? (
@@ -2980,6 +3017,33 @@ const goToRewardCreation = () => {
                         }
                         placeholder="All hotels"
                       />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Recurrence</h3>
+                    <p>Set how often this reward should be automatically regenerated.</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Recurrence Type" />
+                      <select
+                        value={rewardForm.recurrence}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            recurrence: event.target.value as 'once' | 'daily' | 'weekly' | 'monthly',
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="once">Once - Reward is created once and disappears when finished</option>
+                        <option value="daily">Daily - Reward appears once daily (if previous is finished, waits until next day)</option>
+                        <option value="weekly">Weekly - Reward appears once weekly (if previous is finished, waits until next week)</option>
+                        <option value="monthly">Monthly - Reward appears once monthly (if previous is finished, waits until next month)</option>
+                      </select>
                     </div>
                   </div>
                 </section>
@@ -3593,13 +3657,14 @@ const goToRewardCreation = () => {
                     <th>Location</th>
                     <th>Points</th>
                     <th>Status</th>
+                    <th>Recurrence</th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {existingTemplates.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="admin-table-empty">
+                      <td colSpan={8} className="admin-table-empty">
                         No tasks found.
                       </td>
                     </tr>
@@ -3655,6 +3720,12 @@ const goToRewardCreation = () => {
                               }`}
                             >
                               {task.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td data-label="Recurrence">
+                            <span className="admin-table-secondary">
+                              {((task as any).recurrence || 'once').charAt(0).toUpperCase() + 
+                               ((task as any).recurrence || 'once').slice(1)}
                             </span>
                           </td>
                           <td data-label="Actions" className="admin-table-actions">
@@ -3824,13 +3895,14 @@ const goToRewardCreation = () => {
                     <th>Location</th>
                     <th>Cost</th>
                     <th>Status</th>
+                    <th>Recurrence</th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {normalizedRewardTemplates.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="admin-table-empty">
+                      <td colSpan={8} className="admin-table-empty">
                         No rewards found.
                       </td>
                     </tr>
@@ -3890,6 +3962,14 @@ const goToRewardCreation = () => {
                                }`}
                              >
                                {reward.active ? 'Active' : 'Inactive'}
+                             </span>
+                           </td>
+                          <td data-label="Recurrence">
+                             <span className="admin-table-type">
+                               {reward.recurrence === 'daily' && 'Daily'}
+                               {reward.recurrence === 'weekly' && 'Weekly'}
+                               {reward.recurrence === 'monthly' && 'Monthly'}
+                               {(!reward.recurrence || reward.recurrence === 'once') && 'Once'}
                              </span>
                            </td>
                           <td data-label="Actions" className="admin-table-actions">

@@ -131,6 +131,17 @@ function getRewardIcon(type: string): string {
   return icons[type] || '🎁';
 }
 
+type RewardRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
+
+function validateRecurrence(value?: string | null): RewardRecurrence {
+  if (!value) return 'once';
+  const validValues: RewardRecurrence[] = ['once', 'daily', 'weekly', 'monthly'];
+  if (!validValues.includes(value as RewardRecurrence)) {
+    throw new Error(`Invalid recurrence: ${value}. Must be one of: ${validValues.join(', ')}`);
+  }
+  return value as RewardRecurrence;
+}
+
 interface CreateCustomRewardInput {
   title?: string;
   description?: string | null;
@@ -143,6 +154,7 @@ interface CreateCustomRewardInput {
   allowed_hotel_ids?: string[];
   location_id: string;
   active?: boolean;
+  recurrence?: string | null;
 }
 
 interface UpdateRewardInput {
@@ -157,6 +169,7 @@ interface UpdateRewardInput {
   allowed_hotel_ids?: string[] | null;
   location_id?: string | null;
   active?: boolean;
+  recurrence?: string | null;
 }
 
 export async function createCustomReward(data: CreateCustomRewardInput) {
@@ -167,6 +180,8 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
   }
   const rewardType = validateRewardType(data.rewardType);
   const pointsCost = normalizePointsCost(data.pointsCost);
+
+  const recurrence = validateRecurrence(data.recurrence);
 
   const result = await db.query(
     `INSERT INTO rewards (
@@ -180,9 +195,10 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        allowed_user_types,
        allowed_hotel_ids,
        location_id,
-       active
+       active,
+       recurrence
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING *`,
     [
       title,
@@ -196,6 +212,7 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       validateHotelIdArray(data.allowed_hotel_ids ?? []),
       data.location_id,
       data.active ?? true,
+      recurrence,
     ]
   );
 
@@ -265,6 +282,11 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
   if (data.active !== undefined) {
     updates.push(`active = $${paramIndex++}`);
     values.push(data.active);
+  }
+
+  if (data.recurrence !== undefined) {
+    updates.push(`recurrence = $${paramIndex++}`);
+    values.push(validateRecurrence(data.recurrence));
   }
 
   if (updates.length === 0) {
