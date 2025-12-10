@@ -180,6 +180,125 @@ const RewardTypeBadge = ({ type }: { type: RewardType }) => {
   );
 };
 
+type FilterDropdownProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  position: { top: number; left: number };
+  options: Array<{ id: string; name?: string } | string>;
+  selectedValue: string | null;
+  onSelect: (value: string | null) => void;
+  type: 'location' | 'status' | 'recurrence' | 'type';
+};
+
+const FilterDropdown = ({
+  isOpen,
+  onClose,
+  position,
+  options,
+  selectedValue,
+  onSelect,
+  type,
+}: FilterDropdownProps) => {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const formatValue = (value: string): string => {
+    if (type === 'status') {
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    if (type === 'recurrence') {
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    if (type === 'type') {
+      // Format task/reward types to be more readable
+      return value.toUpperCase().replace(/_/g, ' ');
+    }
+    return value;
+  };
+
+  const getOptionLabel = (option: { id: string; name?: string } | string): string => {
+    if (typeof option === 'string') {
+      return formatValue(option);
+    }
+    return option.name || option.id;
+  };
+
+  const getOptionValue = (option: { id: string; name?: string } | string): string => {
+    if (typeof option === 'string') {
+      return option;
+    }
+    return option.id;
+  };
+
+  return (
+    <div
+      ref={dropdownRef}
+      className="admin-filter-dropdown"
+      style={{
+        position: 'fixed',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        zIndex: 1000,
+      }}
+    >
+      <div className="admin-filter-dropdown-header">
+        <span>Filter by {type}</span>
+        <button
+          type="button"
+          onClick={() => onSelect(null)}
+          className="admin-filter-clear"
+          style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
+        >
+          Clear
+        </button>
+      </div>
+      <div className="admin-filter-dropdown-list">
+        <button
+          type="button"
+          className={`admin-filter-option ${selectedValue === null ? 'active' : ''}`}
+          onClick={() => {
+            onSelect(null);
+            onClose();
+          }}
+        >
+          All
+        </button>
+        {options.map((option) => {
+          const value = getOptionValue(option);
+          const label = getOptionLabel(option);
+          return (
+            <button
+              key={value}
+              type="button"
+              className={`admin-filter-option ${selectedValue === value ? 'active' : ''}`}
+              onClick={() => {
+                onSelect(value);
+                onClose();
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const ICONS: Record<
   'logout' | 'refresh' | 'back',
   { viewBox: string; paths: string[]; strokeWidth?: number }
@@ -1058,6 +1177,13 @@ function AdminPage() {
   const [includeInactiveTasks, setIncludeInactiveTasks] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [taskConfirm, setTaskConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+  const [taskFilterLocation, setTaskFilterLocation] = useState<string | null>(null);
+  const [taskFilterStatus, setTaskFilterStatus] = useState<'active' | 'inactive' | null>(null);
+  const [taskFilterRecurrence, setTaskFilterRecurrence] = useState<string | null>(null);
+  const [taskFilterType, setTaskFilterType] = useState<string | null>(null);
+  const [taskFilterDropdown, setTaskFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | null>(null);
+  const [taskFilterDropdownPosition, setTaskFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const taskFilterDropdownRef = useRef<HTMLDivElement>(null);
 
   const [rewardSource, setRewardSource] = useState<RewardSource>('');
   const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
@@ -1075,6 +1201,13 @@ function AdminPage() {
   const [includeInactiveRewards, setIncludeInactiveRewards] = useState(false);
   const [selectedRewardIds, setSelectedRewardIds] = useState<string[]>([]);
   const [rewardConfirm, setRewardConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+  const [rewardFilterLocation, setRewardFilterLocation] = useState<string | null>(null);
+  const [rewardFilterStatus, setRewardFilterStatus] = useState<'active' | 'inactive' | null>(null);
+  const [rewardFilterRecurrence, setRewardFilterRecurrence] = useState<string | null>(null);
+  const [rewardFilterType, setRewardFilterType] = useState<string | null>(null);
+  const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | null>(null);
+  const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const rewardFilterDropdownRef = useRef<HTMLDivElement>(null);
 
   const [locationForm, setLocationForm] = useState<LocationFormState>(defaultLocationForm);
   const [locationMessage, setLocationMessage] = useState<
@@ -1133,6 +1266,59 @@ function AdminPage() {
     }));
   }, [adminTasks]);
 
+  const filteredTasks = useMemo(() => {
+    let filtered = existingTemplates;
+    
+    if (taskFilterLocation) {
+      filtered = filtered.filter((task) => task.location?.id === taskFilterLocation);
+    }
+    
+    if (taskFilterStatus) {
+      filtered = filtered.filter((task) => 
+        taskFilterStatus === 'active' ? task.active : !task.active
+      );
+    }
+    
+    if (taskFilterRecurrence) {
+      filtered = filtered.filter((task) => 
+        ((task as any).recurrence || 'once') === taskFilterRecurrence
+      );
+    }
+    
+    if (taskFilterType) {
+      filtered = filtered.filter((task) => task.type === taskFilterType);
+    }
+    
+    return filtered;
+  }, [existingTemplates, taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType]);
+
+  const taskFilterOptions = useMemo(() => {
+    const locations = new Map<string, string>();
+    const statuses = new Set<'active' | 'inactive'>();
+    const recurrences = new Set<string>();
+    const types = new Set<string>();
+    
+    existingTemplates.forEach((task) => {
+      if (task.location?.id && task.location?.name) {
+        locations.set(task.location.id, task.location.name);
+      }
+      if (task.active) {
+        statuses.add('active');
+      } else {
+        statuses.add('inactive');
+      }
+      recurrences.add((task as any).recurrence || 'once');
+      types.add(task.type);
+    });
+    
+    return {
+      locations: Array.from(locations.entries()).map(([id, name]) => ({ id, name })),
+      statuses: Array.from(statuses),
+      recurrences: Array.from(recurrences),
+      types: Array.from(types),
+    };
+  }, [existingTemplates]);
+
   const {
     data: rewardTemplatesData,
     isLoading: rewardTemplatesLoading,
@@ -1156,8 +1342,62 @@ function AdminPage() {
       location_id: template.location_id ?? template.location?.id ?? null,
       location: template.location ?? null,
       active: template.active ?? true,
+      recurrence: ((template as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
     }));
   }, [rewardTemplates]);
+
+  const filteredRewards = useMemo(() => {
+    let filtered = normalizedRewardTemplates;
+    
+    if (rewardFilterLocation) {
+      filtered = filtered.filter((reward) => reward.location?.id === rewardFilterLocation);
+    }
+    
+    if (rewardFilterStatus) {
+      filtered = filtered.filter((reward) => 
+        rewardFilterStatus === 'active' ? reward.active : !reward.active
+      );
+    }
+    
+    if (rewardFilterRecurrence) {
+      filtered = filtered.filter((reward) => 
+        ((reward as any).recurrence || 'once') === rewardFilterRecurrence
+      );
+    }
+    
+    if (rewardFilterType) {
+      filtered = filtered.filter((reward) => reward.reward_type === rewardFilterType);
+    }
+    
+    return filtered;
+  }, [normalizedRewardTemplates, rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType]);
+
+  const rewardFilterOptions = useMemo(() => {
+    const locations = new Map<string, string>();
+    const statuses = new Set<'active' | 'inactive'>();
+    const recurrences = new Set<string>();
+    const types = new Set<string>();
+    
+    normalizedRewardTemplates.forEach((reward) => {
+      if (reward.location?.id && reward.location?.name) {
+        locations.set(reward.location.id, reward.location.name);
+      }
+      if (reward.active) {
+        statuses.add('active');
+      } else {
+        statuses.add('inactive');
+      }
+      recurrences.add((reward as any).recurrence || 'once');
+      types.add(reward.reward_type);
+    });
+    
+    return {
+      locations: Array.from(locations.entries()).map(([id, name]) => ({ id, name })),
+      statuses: Array.from(statuses),
+      recurrences: Array.from(recurrences),
+      types: Array.from(types),
+    };
+  }, [normalizedRewardTemplates]);
 
   const {
     data: locationsData,
@@ -2257,10 +2497,10 @@ const goToRewardCreation = () => {
   };
 
   const allTasksSelected =
-    existingTemplates.length > 0 && selectedTaskIds.length === existingTemplates.length;
+    filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length;
   const allRewardsSelected =
-    normalizedRewardTemplates.length > 0 &&
-    selectedRewardIds.length === normalizedRewardTemplates.length;
+    filteredRewards.length > 0 &&
+    selectedRewardIds.length === filteredRewards.length;
   const hasTaskSelection = selectedTaskIds.length > 0;
   const hasRewardSelection = selectedRewardIds.length > 0;
   const isTaskSaving = publishTaskMutation.isLoading || updateTaskMutation.isLoading;
@@ -3640,12 +3880,12 @@ const goToRewardCreation = () => {
                         type="checkbox"
                         className="admin-checkbox"
                         style={COMPACT_TOGGLE_STYLE}
-                        checked={allTasksSelected && existingTemplates.length > 0}
-                        disabled={!existingTemplates.length}
+                        checked={allTasksSelected && filteredTasks.length > 0}
+                        disabled={!filteredTasks.length}
                         onChange={(event) =>
                           setSelectedTaskIds(
                             event.target.checked
-                              ? existingTemplates.map((task) => task.id)
+                              ? filteredTasks.map((task) => task.id)
                               : []
                           )
                         }
@@ -3653,23 +3893,63 @@ const goToRewardCreation = () => {
                       />
                     </th>
                     <th>Task</th>
-                    <th>Type</th>
-                    <th>Location</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('type');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Type {taskFilterType && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('location');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Location {taskFilterLocation && '✓'}
+                    </th>
                     <th>Points</th>
-                    <th>Status</th>
-                    <th>Recurrence</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('status');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Status {taskFilterStatus && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('recurrence');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Recurrence {taskFilterRecurrence && '✓'}
+                    </th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {existingTemplates.length === 0 ? (
+                  {filteredTasks.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="admin-table-empty">
                         No tasks found.
                       </td>
                     </tr>
                   ) : (
-                    existingTemplates.map((task) => {
+                    filteredTasks.map((task) => {
                       const isSelected = selectedTaskIds.includes(task.id);
                       return (
                         <tr key={task.id}>
@@ -3757,6 +4037,43 @@ const goToRewardCreation = () => {
                   )}
                 </tbody>
               </table>
+              {taskFilterDropdown && taskFilterDropdownPosition && (
+                <FilterDropdown
+                  isOpen={true}
+                  onClose={() => setTaskFilterDropdown(null)}
+                  position={taskFilterDropdownPosition}
+                  options={
+                    taskFilterDropdown === 'location'
+                      ? taskFilterOptions.locations
+                      : taskFilterDropdown === 'status'
+                      ? taskFilterOptions.statuses
+                      : taskFilterDropdown === 'recurrence'
+                      ? taskFilterOptions.recurrences
+                      : taskFilterOptions.types
+                  }
+                  selectedValue={
+                    taskFilterDropdown === 'location'
+                      ? taskFilterLocation
+                      : taskFilterDropdown === 'status'
+                      ? taskFilterStatus
+                      : taskFilterDropdown === 'recurrence'
+                      ? taskFilterRecurrence
+                      : taskFilterType
+                  }
+                  onSelect={(value) => {
+                    if (taskFilterDropdown === 'location') {
+                      setTaskFilterLocation(value);
+                    } else if (taskFilterDropdown === 'status') {
+                      setTaskFilterStatus(value as 'active' | 'inactive' | null);
+                    } else if (taskFilterDropdown === 'recurrence') {
+                      setTaskFilterRecurrence(value);
+                    } else {
+                      setTaskFilterType(value);
+                    }
+                  }}
+                  type={taskFilterDropdown === 'type' ? 'type' : taskFilterDropdown}
+                />
+              )}
             </div>
           </div>
         </section>
@@ -3878,12 +4195,12 @@ const goToRewardCreation = () => {
                         type="checkbox"
                         className="admin-checkbox"
                         style={COMPACT_TOGGLE_STYLE}
-                        checked={allRewardsSelected && normalizedRewardTemplates.length > 0}
-                        disabled={!normalizedRewardTemplates.length}
+                        checked={allRewardsSelected && filteredRewards.length > 0}
+                        disabled={!filteredRewards.length}
                         onChange={(event) =>
                           setSelectedRewardIds(
                             event.target.checked
-                              ? normalizedRewardTemplates.map((reward) => reward.id)
+                              ? filteredRewards.map((reward) => reward.id)
                               : []
                           )
                         }
@@ -3891,23 +4208,63 @@ const goToRewardCreation = () => {
                       />
                     </th>
                     <th>Reward</th>
-                    <th>Type</th>
-                    <th>Location</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('type');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Type {rewardFilterType && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('location');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Location {rewardFilterLocation && '✓'}
+                    </th>
                     <th>Cost</th>
-                    <th>Status</th>
-                    <th>Recurrence</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('status');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Status {rewardFilterStatus && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('recurrence');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Recurrence {rewardFilterRecurrence && '✓'}
+                    </th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {normalizedRewardTemplates.length === 0 ? (
+                  {filteredRewards.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="admin-table-empty">
                         No rewards found.
                       </td>
                     </tr>
                   ) : (
-                    normalizedRewardTemplates.map((reward) => {
+                    filteredRewards.map((reward) => {
                       const isSelected = selectedRewardIds.includes(reward.id);
                       const cost =
                         reward.points_cost !== undefined && reward.points_cost !== null
@@ -4001,6 +4358,43 @@ const goToRewardCreation = () => {
                   )}
                 </tbody>
               </table>
+              {rewardFilterDropdown && rewardFilterDropdownPosition && (
+                <FilterDropdown
+                  isOpen={true}
+                  onClose={() => setRewardFilterDropdown(null)}
+                  position={rewardFilterDropdownPosition}
+                  options={
+                    rewardFilterDropdown === 'location'
+                      ? rewardFilterOptions.locations
+                      : rewardFilterDropdown === 'status'
+                      ? rewardFilterOptions.statuses
+                      : rewardFilterDropdown === 'recurrence'
+                      ? rewardFilterOptions.recurrences
+                      : rewardFilterOptions.types
+                  }
+                  selectedValue={
+                    rewardFilterDropdown === 'location'
+                      ? rewardFilterLocation
+                      : rewardFilterDropdown === 'status'
+                      ? rewardFilterStatus
+                      : rewardFilterDropdown === 'recurrence'
+                      ? rewardFilterRecurrence
+                      : rewardFilterType
+                  }
+                  onSelect={(value) => {
+                    if (rewardFilterDropdown === 'location') {
+                      setRewardFilterLocation(value);
+                    } else if (rewardFilterDropdown === 'status') {
+                      setRewardFilterStatus(value as 'active' | 'inactive' | null);
+                    } else if (rewardFilterDropdown === 'recurrence') {
+                      setRewardFilterRecurrence(value);
+                    } else {
+                      setRewardFilterType(value);
+                    }
+                  }}
+                  type={rewardFilterDropdown === 'type' ? 'type' : rewardFilterDropdown}
+                />
+              )}
             </div>
           </div>
         </section>
