@@ -18,7 +18,7 @@ function ForestPage() {
             shadows
             style={{ width: '100%', height: '100%' }}
           >
-            <PerspectiveCamera makeDefault position={[10, 10, 10]} />
+            <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={75} />
             <ambientLight intensity={0.5} />
             <directionalLight
               position={[30, 40, 20]}

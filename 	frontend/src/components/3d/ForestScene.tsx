@@ -147,7 +147,7 @@ function ForestScene() {
         enableZoom
         enableRotate
         minDistance={5}
-        maxDistance={50}
+        maxDistance={75}
         maxPolarAngle={Math.PI / 2}
         minPolarAngle={0}
       />
