@@ -2,19 +2,19 @@ import { getPool } from '../database/connection.js';
 
 /**
  * Calculate the required grid size for blocks based on tree count
- * Each block can hold max 6 trees
- * Grid sizes: 2x2 (4 blocks, 24 trees max), 3x3 (9 blocks, 54 trees max), 4x4 (16 blocks, 96 trees max), etc.
+ * Each block can hold max 8 trees
+ * Grid sizes: 2x2 (4 blocks, 32 trees max), 3x3 (9 blocks, 72 trees max), 4x4 (16 blocks, 128 trees max), etc.
  */
-function calculateGridSize(treeCount: number, maxTreesPerBlock: number = 6): number {
+function calculateGridSize(treeCount: number, maxTreesPerBlock: number = 8): number {
   if (treeCount === 0) return 2; // Default 2x2 grid
   
   // Start with 2x2 (4 blocks)
   let gridSize = 2;
-  let maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock; // 4 * 6 = 24
+  let maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock; // 4 * 8 = 32
   
   // Expand grid when all blocks are full
   // Note: We use > (not >=) so grid expands BEFORE reaching capacity
-  // e.g., with 24 trees in 2x2, we stay at 2x2. At 25 trees, expand to 3x3
+  // e.g., with 32 trees in 2x2, we stay at 2x2. At 33 trees, expand to 3x3
   while (treeCount > maxTreesForGrid) {
     gridSize++;
     maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock;
@@ -138,7 +138,7 @@ export async function getForestService() {
   for (const [userId, trees] of userTrees.entries()) {
     const primaryOrigin = userPrimaryOrigins.get(userId)!;
     const treeCount = trees.length;
-    const maxTreesPerBlock = 6;
+    const maxTreesPerBlock = 8;
     
     // Calculate required grid size for this user's trees
     const gridSize = calculateGridSize(treeCount, maxTreesPerBlock);

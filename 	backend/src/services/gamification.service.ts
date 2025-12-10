@@ -29,10 +29,10 @@ function generateSizeForStage(stage: 'sapling' | 'young' | 'mature'): number {
 
 /**
  * Calculate the required grid size for blocks based on tree count
- * Each block can hold max 6 trees
- * Grid sizes: 2x2 (4 blocks, 24 trees max), 3x3 (9 blocks, 54 trees max), 4x4 (16 blocks, 96 trees max), etc.
+ * Each block can hold max 8 trees
+ * Grid sizes: 2x2 (4 blocks, 32 trees max), 3x3 (9 blocks, 72 trees max), 4x4 (16 blocks, 128 trees max), etc.
  */
-function calculateGridSize(treeCount: number, maxTreesPerBlock: number = 6): number {
+function calculateGridSize(treeCount: number, maxTreesPerBlock: number = 8): number {
   if (treeCount === 0) return 2; // Default 2x2 grid
   
   // Start with 2x2 (4 blocks)
@@ -135,7 +135,7 @@ export async function plantTree(userId: string, taskId: string) {
   const currentTreeCount = parseInt(treeCountResult.rows[0].count);
   
   // Calculate required grid size (includes the tree we're about to add)
-  const maxTreesPerBlock = 6;
+  const maxTreesPerBlock = 8;
   const gridSize = calculateGridSize(currentTreeCount + 1, maxTreesPerBlock);
   
   // Generate all block origins for this grid
@@ -164,7 +164,7 @@ export async function plantTree(userId: string, taskId: string) {
     blockCountMap.set(key, parseInt(row.tree_count));
   });
   
-  // Find available blocks (less than 6 trees) from the generated grid
+  // Find available blocks (less than 8 trees) from the generated grid
   const availableBlocks = blockOrigins
     .map((block) => {
       const key = `${block.x},${block.z}`;
@@ -194,7 +194,7 @@ export async function plantTree(userId: string, taskId: string) {
   const selectedBlock = bestBlocks[Math.floor(Math.random() * bestBlocks.length)];
   
   // Generate position within selected block
-  const edgePadding = 2.0;
+  const edgePadding = 0.5;
   const minDistance = 1.0;
   const blockMinX = selectedBlock.x + edgePadding;
   const blockMaxX = selectedBlock.x + areaSpacing - edgePadding;
