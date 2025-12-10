@@ -16,6 +16,7 @@ import {
 import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
 import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
 import QrScannerPage from './QrScannerPage';
+import { LocationMap } from '../../components/LocationMap/LocationMap';
 
 type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | 'location' | 'locationManage' | 'qrScanner' | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
@@ -299,8 +300,219 @@ const FilterDropdown = ({
   );
 };
 
+type MobileFilterModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  filterOptions: {
+    locations: Array<{ id: string; name?: string } | string>;
+    statuses: Array<string>;
+    recurrences: Array<string>;
+    types: Array<string>;
+  };
+  filters: {
+    location: string | null;
+    status: 'active' | 'inactive' | null;
+    recurrence: string | null;
+    type: string | null;
+  };
+  onFilterChange: (filterType: 'location' | 'status' | 'recurrence' | 'type', value: string | null) => void;
+  onClearAll: () => void;
+};
+
+const MobileFilterModal = ({
+  isOpen,
+  onClose,
+  filterOptions,
+  filters,
+  onFilterChange,
+  onClearAll,
+}: MobileFilterModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const formatValue = (value: string, type: string): string => {
+    if (type === 'status' || type === 'recurrence') {
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    if (type === 'type') {
+      return value.toUpperCase().replace(/_/g, ' ');
+    }
+    return value;
+  };
+
+  const getOptionLabel = (option: { id: string; name?: string } | string, type: string): string => {
+    if (typeof option === 'string') {
+      return formatValue(option, type);
+    }
+    return option.name || option.id;
+  };
+
+  const getOptionValue = (option: { id: string; name?: string } | string): string => {
+    if (typeof option === 'string') {
+      return option;
+    }
+    return option.id;
+  };
+
+  const activeFilterCount = [filters.location, filters.status, filters.recurrence, filters.type].filter(Boolean).length;
+
+  return (
+    <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="mobile-filter-title">
+      <div ref={modalRef} className="admin-mobile-filter-modal">
+        <div className="admin-mobile-filter-header">
+          <h3 id="mobile-filter-title">Filters {activeFilterCount > 0 && `(${activeFilterCount})`}</h3>
+          <button
+            type="button"
+            className="admin-icon-button"
+            onClick={onClose}
+            aria-label="Close filters"
+          >
+            <Icon name="back" />
+          </button>
+        </div>
+        <div className="admin-mobile-filter-content">
+          {/* Location Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>Location</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.location ? 'active' : ''}`}
+                onClick={() => onFilterChange('location', null)}
+              >
+                All Locations
+              </button>
+              {filterOptions.locations.map((option) => {
+                const value = getOptionValue(option);
+                const label = getOptionLabel(option, 'location');
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`admin-mobile-filter-option ${filters.location === value ? 'active' : ''}`}
+                    onClick={() => onFilterChange('location', filters.location === value ? null : value)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>Status</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.status ? 'active' : ''}`}
+                onClick={() => onFilterChange('status', null)}
+              >
+                All Statuses
+              </button>
+              {filterOptions.statuses.map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  className={`admin-mobile-filter-option ${filters.status === status ? 'active' : ''}`}
+                  onClick={() => onFilterChange('status', filters.status === status ? null : status as 'active' | 'inactive')}
+                >
+                  {formatValue(status, 'status')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Recurrence Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>Recurrence</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.recurrence ? 'active' : ''}`}
+                onClick={() => onFilterChange('recurrence', null)}
+              >
+                All Recurrences
+              </button>
+              {filterOptions.recurrences.map((recurrence) => (
+                <button
+                  key={recurrence}
+                  type="button"
+                  className={`admin-mobile-filter-option ${filters.recurrence === recurrence ? 'active' : ''}`}
+                  onClick={() => onFilterChange('recurrence', filters.recurrence === recurrence ? null : recurrence)}
+                >
+                  {formatValue(recurrence, 'recurrence')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Type Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>Type</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.type ? 'active' : ''}`}
+                onClick={() => onFilterChange('type', null)}
+              >
+                All Types
+              </button>
+              {filterOptions.types.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={`admin-mobile-filter-option ${filters.type === type ? 'active' : ''}`}
+                  onClick={() => onFilterChange('type', filters.type === type ? null : type)}
+                >
+                  {formatValue(type, 'type')}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="admin-mobile-filter-footer">
+          <button
+            type="button"
+            className="admin-action-button secondary"
+            onClick={onClearAll}
+            disabled={activeFilterCount === 0}
+          >
+            Clear All
+          </button>
+          <button
+            type="button"
+            className="admin-action-button"
+            onClick={onClose}
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ICONS: Record<
-  'logout' | 'refresh' | 'back',
+  'logout' | 'refresh' | 'back' | 'filter',
   { viewBox: string; paths: string[]; strokeWidth?: number }
 > = {
   logout: {
@@ -325,6 +537,13 @@ const ICONS: Record<
   back: {
     viewBox: '0 0 24 24',
     paths: ['M19 12H5', 'M12 19l-7-7 7-7'],
+    strokeWidth: 1.5,
+  },
+  filter: {
+    viewBox: '0 0 24 24',
+    paths: [
+      'M22 3H2l8 9.46V19l4 2v-8.54L22 3z',
+    ],
     strokeWidth: 1.5,
   },
 };
@@ -1184,6 +1403,7 @@ function AdminPage() {
   const [taskFilterDropdown, setTaskFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | null>(null);
   const [taskFilterDropdownPosition, setTaskFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const taskFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileTaskFilterOpen, setIsMobileTaskFilterOpen] = useState(false);
 
   const [rewardSource, setRewardSource] = useState<RewardSource>('');
   const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
@@ -1208,6 +1428,7 @@ function AdminPage() {
   const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | null>(null);
   const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const rewardFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileRewardFilterOpen, setIsMobileRewardFilterOpen] = useState(false);
 
   const [locationForm, setLocationForm] = useState<LocationFormState>(defaultLocationForm);
   const [locationMessage, setLocationMessage] = useState<
@@ -1948,23 +2169,83 @@ function AdminPage() {
     }
   };
 
+  // Track previous template/location IDs to avoid infinite loops
+  const prevTaskTemplateIdsRef = useRef<string>('');
+  const prevRewardTemplateIdsRef = useRef<string>('');
+  const prevLocationIdsRef = useRef<string>('');
+
+  // Store latest arrays in refs to avoid dependency issues
+  const existingTemplatesRef = useRef(existingTemplates);
+  const normalizedRewardTemplatesRef = useRef(normalizedRewardTemplates);
+  const locationsListRef = useRef(locationsList);
+
   useEffect(() => {
-    setSelectedTaskIds((prev) =>
-      prev.filter((id) => existingTemplates.some((task) => task.id === id))
-    );
+    existingTemplatesRef.current = existingTemplates;
   }, [existingTemplates]);
 
   useEffect(() => {
-    setSelectedRewardIds((prev) =>
-      prev.filter((id) => normalizedRewardTemplates.some((reward) => reward.id === id))
-    );
+    normalizedRewardTemplatesRef.current = normalizedRewardTemplates;
   }, [normalizedRewardTemplates]);
 
   useEffect(() => {
-    setSelectedLocationIds((prev) =>
-      prev.filter((id) => locationsList.some((location) => location.id === id))
-    );
+    locationsListRef.current = locationsList;
   }, [locationsList]);
+
+  // Create stable ID strings for dependency tracking
+  const taskTemplateIdsKey = useMemo(() => existingTemplates.map((t) => t.id).sort().join(','), [existingTemplates]);
+  const rewardTemplateIdsKey = useMemo(() => normalizedRewardTemplates.map((r) => r.id).sort().join(','), [normalizedRewardTemplates]);
+  const locationIdsKey = useMemo(() => locationsList.map((l) => l.id).sort().join(','), [locationsList]);
+
+  useEffect(() => {
+    if (prevTaskTemplateIdsRef.current === taskTemplateIdsKey) {
+      return; // No change in template IDs
+    }
+    prevTaskTemplateIdsRef.current = taskTemplateIdsKey;
+
+    setSelectedTaskIds((prev) => {
+      const validIds = new Set(existingTemplatesRef.current.map((task) => task.id));
+      const filtered = prev.filter((id) => validIds.has(id));
+      // Only update if changed
+      if (filtered.length !== prev.length || !filtered.every((id, idx) => prev[idx] === id)) {
+        return filtered;
+      }
+      return prev;
+    });
+  }, [taskTemplateIdsKey]);
+
+  useEffect(() => {
+    if (prevRewardTemplateIdsRef.current === rewardTemplateIdsKey) {
+      return; // No change in template IDs
+    }
+    prevRewardTemplateIdsRef.current = rewardTemplateIdsKey;
+
+    setSelectedRewardIds((prev) => {
+      const validIds = new Set(normalizedRewardTemplatesRef.current.map((reward) => reward.id));
+      const filtered = prev.filter((id) => validIds.has(id));
+      // Only update if changed
+      if (filtered.length !== prev.length || !filtered.every((id, idx) => prev[idx] === id)) {
+        return filtered;
+      }
+      return prev;
+    });
+  }, [rewardTemplateIdsKey]);
+
+  useEffect(() => {
+    if (prevLocationIdsRef.current === locationIdsKey) {
+      return; // No change in location IDs
+    }
+    prevLocationIdsRef.current = locationIdsKey;
+
+    setSelectedLocationIds((prev) => {
+      const validIds = new Set(locationsListRef.current.map((location) => location.id));
+      const filtered = prev.filter((id) => validIds.has(id));
+      // Only update if changed
+      if (filtered.length !== prev.length || !filtered.every((id, idx) => prev[idx] === id)) {
+        return filtered;
+      }
+      return prev;
+    });
+  }, [locationIdsKey]);
 
   useEffect(() => {
     if (
@@ -3371,7 +3652,7 @@ const goToRewardCreation = () => {
                     <p>Provide the basic information for this location.</p>
                   </div>
                 </div>
-                <div className="admin-form-grid admin-form-grid-two">
+                <div className={`admin-form-grid admin-form-grid-two ${locationForm.mode === 'physical' ? 'admin-form-grid-location' : ''}`}>
                   <label className="admin-field admin-field-span-2">
                     <FieldLabel label="Name" required />
                     <input
@@ -3392,6 +3673,24 @@ const goToRewardCreation = () => {
                       }
                     />
                   </label>
+                  <div className="admin-field">
+                    <FieldLabel label="Active" />
+                    <div className="admin-toggle">
+                      <input
+                        id="location-active-toggle"
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={locationForm.active}
+                        onChange={(event) =>
+                          setLocationForm((prev) => ({ ...prev, active: event.target.checked }))
+                        }
+                      />
+                      <label htmlFor="location-active-toggle">
+                        {locationForm.active ? 'Active' : 'Inactive'}
+                      </label>
+                    </div>
+                  </div>
                   <div className="admin-field admin-field-span-2">
                     <FieldLabel label="Location type" required />
                     <div className="admin-toggle-group">
@@ -3432,36 +3731,41 @@ const goToRewardCreation = () => {
                       </label>
                     </div>
                   </div>
-                  <div className="admin-field">
-                    <FieldLabel label="Active" />
-                    <div className="admin-toggle">
-                      <input
-                        id="location-active-toggle"
-                        type="checkbox"
-                        className="admin-checkbox"
-                        style={COMPACT_TOGGLE_STYLE}
-                        checked={locationForm.active}
-                        onChange={(event) =>
-                          setLocationForm((prev) => ({ ...prev, active: event.target.checked }))
-                        }
-                      />
-                      <label htmlFor="location-active-toggle">
-                        {locationForm.active ? 'Active' : 'Inactive'}
-                      </label>
-                    </div>
-                  </div>
                   {locationForm.mode === 'physical' && (
                     <>
-                      <label className="admin-field admin-field-span-2">
+                      <div className="admin-field location-map-field">
+                        <FieldLabel label="Map Location" required />
+                        <p className="admin-field-note" style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                          Search for a location or click on the map to set coordinates.
+                        </p>
+                        <LocationMap
+                          latitude={locationForm.latitude}
+                          longitude={locationForm.longitude}
+                          address={locationForm.address}
+                          onLocationSelect={(lat, lng, address) => {
+                            setLocationForm((prev) => ({
+                              ...prev,
+                              latitude: lat.toString(),
+                              longitude: lng.toString(),
+                              address: address || prev.address,
+                            }));
+                          }}
+                          height="400px"
+                        />
+                      </div>
+                      <div className="admin-field location-details-field">
+                        <label className="admin-field" style={{ marginBottom: '1rem' }}>
                         <FieldLabel label="Address" required />
                         <textarea
-                          rows={2}
+                            rows={3}
                           value={locationForm.address}
                           onChange={(event) =>
                             setLocationForm((prev) => ({ ...prev, address: event.target.value }))
                           }
+                            placeholder="Address will be auto-filled from map selection"
                         />
                       </label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       <label className="admin-field">
                         <FieldLabel label="Latitude" required />
                         <input
@@ -3486,6 +3790,8 @@ const goToRewardCreation = () => {
                           placeholder="e.g. 13.404954"
                         />
                       </label>
+                        </div>
+                      </div>
                     </>
                   )}
                   {locationForm.mode === 'online' && (
@@ -3806,6 +4112,14 @@ const goToRewardCreation = () => {
           {tasksLoading && <p>Loading tasks…</p>}
           {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
 
+          <button 
+            className="admin-action-button admin-mobile-new-task-button" 
+            type="button" 
+            onClick={goToTaskCreation}
+          >
+            New task
+          </button>
+
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
@@ -3826,7 +4140,20 @@ const goToRewardCreation = () => {
                   />
                   <span>Show inactive</span>
                 </label>
-                <button className="admin-action-button" type="button" onClick={goToTaskCreation}>
+                <button
+                  className="admin-mobile-filter-button"
+                  type="button"
+                  onClick={() => setIsMobileTaskFilterOpen(true)}
+                  aria-label="Open filters"
+                >
+                  <Icon name="filter" />
+                  {(taskFilterLocation || taskFilterStatus || taskFilterRecurrence || taskFilterType) && (
+                    <span className="admin-mobile-filter-badge">
+                      {[taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+                <button className="admin-action-button admin-desktop-new-task-button" type="button" onClick={goToTaskCreation}>
                   New task
                 </button>
               </div>
@@ -4076,6 +4403,34 @@ const goToRewardCreation = () => {
               )}
             </div>
           </div>
+          <MobileFilterModal
+            isOpen={isMobileTaskFilterOpen}
+            onClose={() => setIsMobileTaskFilterOpen(false)}
+            filterOptions={taskFilterOptions}
+            filters={{
+              location: taskFilterLocation,
+              status: taskFilterStatus,
+              recurrence: taskFilterRecurrence,
+              type: taskFilterType,
+            }}
+            onFilterChange={(filterType, value) => {
+              if (filterType === 'location') {
+                setTaskFilterLocation(value);
+              } else if (filterType === 'status') {
+                setTaskFilterStatus(value as 'active' | 'inactive' | null);
+              } else if (filterType === 'recurrence') {
+                setTaskFilterRecurrence(value);
+              } else if (filterType === 'type') {
+                setTaskFilterType(value);
+              }
+            }}
+            onClearAll={() => {
+              setTaskFilterLocation(null);
+              setTaskFilterStatus(null);
+              setTaskFilterRecurrence(null);
+              setTaskFilterType(null);
+            }}
+          />
         </section>
       )}
 
@@ -4139,6 +4494,19 @@ const goToRewardCreation = () => {
                   />
                   <span>Show inactive</span>
                 </label>
+                <button
+                  className="admin-mobile-filter-button"
+                  type="button"
+                  onClick={() => setIsMobileRewardFilterOpen(true)}
+                  aria-label="Open filters"
+                >
+                  <Icon name="filter" />
+                  {(rewardFilterLocation || rewardFilterStatus || rewardFilterRecurrence || rewardFilterType) && (
+                    <span className="admin-mobile-filter-badge">
+                      {[rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
                 <button className="admin-action-button" type="button" onClick={goToRewardCreation}>
                   New reward
                 </button>
@@ -4397,6 +4765,34 @@ const goToRewardCreation = () => {
               )}
             </div>
           </div>
+          <MobileFilterModal
+            isOpen={isMobileRewardFilterOpen}
+            onClose={() => setIsMobileRewardFilterOpen(false)}
+            filterOptions={rewardFilterOptions}
+            filters={{
+              location: rewardFilterLocation,
+              status: rewardFilterStatus,
+              recurrence: rewardFilterRecurrence,
+              type: rewardFilterType,
+            }}
+            onFilterChange={(filterType, value) => {
+              if (filterType === 'location') {
+                setRewardFilterLocation(value);
+              } else if (filterType === 'status') {
+                setRewardFilterStatus(value as 'active' | 'inactive' | null);
+              } else if (filterType === 'recurrence') {
+                setRewardFilterRecurrence(value);
+              } else if (filterType === 'type') {
+                setRewardFilterType(value);
+              }
+            }}
+            onClearAll={() => {
+              setRewardFilterLocation(null);
+              setRewardFilterStatus(null);
+              setRewardFilterRecurrence(null);
+              setRewardFilterType(null);
+            }}
+          />
         </section>
       )}
       <ConfirmDialog

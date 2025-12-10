@@ -442,8 +442,57 @@
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
+/* Make "Active" field consistent across both modes on desktop */
+@media (min-width: 768px) {
+  /* Always make single-column fields in location form span full width for consistency */
+  .admin-form-grid.admin-form-grid-two > .admin-field:not(.admin-field-span-2):not(.location-map-field):not(.location-details-field) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* Force 2 columns for location form on desktop when map is present - Map on LEFT */
+@media (min-width: 768px) {
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-auto-flow: row;
+  }
+  
+  /* Map field on left column */
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location .location-map-field {
+    grid-column: 1 !important;
+  }
+  
+  /* Details field on right column - same row as map */
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location .location-details-field {
+    grid-column: 2 !important;
+  }
+  
+  /* Ensure fields that span 2 columns take full width */
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location .admin-field-span-2 {
+    grid-column: 1 / -1 !important;
+  }
+}
+
 .admin-field-span-2 {
   grid-column: span 2;
+}
+
+.location-map-field {
+  grid-column: 1;
+  align-self: start;
+}
+
+.location-details-field {
+  grid-column: 2;
+  align-self: start;
+}
+
+@media (max-width: 768px) {
+  .location-map-field,
+  .location-details-field {
+    grid-column: 1 / -1;
+  }
 }
 
 .admin-form-full {
@@ -992,6 +1041,17 @@
 }
 
 @media (max-width: 768px) {
+  /* Show mobile "New task" button, hide desktop one */
+  .admin-mobile-new-task-button {
+    display: block;
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .admin-desktop-new-task-button {
+    display: none;
+  }
+
   .admin-management-card {
     padding: var(--spacing-lg);
   }
@@ -1092,6 +1152,74 @@
   }
 }
 
+.location-map-container {
+  width: 100%;
+  min-height: 400px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* Leaflet Geocoder Control Styles */
+.leaflet-control-geocoder {
+  border-radius: var(--border-radius);
+  background: white;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.leaflet-control-geocoder a {
+  background-color: white;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.leaflet-control-geocoder a:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.leaflet-control-geocoder-form {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.leaflet-control-geocoder-form input {
+  border: none;
+  outline: none;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.leaflet-control-geocoder-icon {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjExIiBjeT0iMTEiIHI9IjgiLz48cGF0aCBkPSJtMjEgMjEtNC4zNS00LjM1Ii8+PC9zdmc+');
+  background-size: 18px 18px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.leaflet-control-geocoder-alternatives {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.leaflet-control-geocoder-alternatives li {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.leaflet-control-geocoder-alternatives li:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.leaflet-control-geocoder-alternatives li:last-child {
+  border-bottom: none;
+}
+
 .admin-filter-header {
   cursor: pointer;
   user-select: none;
@@ -1164,5 +1292,179 @@
   background-color: rgba(37, 99, 235, 0.1);
   color: var(--color-primary);
   font-weight: 600;
+}
+
+/* Mobile Filter Button */
+.admin-mobile-filter-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: white;
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.admin-mobile-filter-button:hover {
+  background: rgba(37, 99, 235, 0.08);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-mobile-filter-button:active {
+  transform: translateY(1px);
+}
+
+.admin-mobile-filter-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 2px solid white;
+}
+
+/* Hide mobile filter button on desktop */
+@media (min-width: 769px) {
+  .admin-mobile-filter-button {
+    display: none;
+  }
+
+  /* Hide mobile "New task" button, show desktop one */
+  .admin-mobile-new-task-button {
+    display: none;
+  }
+
+  .admin-desktop-new-task-button {
+    display: inline-block;
+  }
+}
+
+/* Hide desktop filter headers on mobile */
+@media (max-width: 768px) {
+  .admin-filter-header {
+    display: none;
+  }
+}
+
+/* Mobile Filter Modal */
+.admin-mobile-filter-modal {
+  background: white;
+  border-radius: var(--border-radius-lg, 18px) var(--border-radius-lg, 18px) 0 0;
+  box-shadow: var(--shadow-lg);
+  max-width: 100%;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.admin-mobile-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-mobile-filter-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text);
+}
+
+.admin-mobile-filter-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.admin-mobile-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.admin-mobile-filter-section h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+}
+
+.admin-mobile-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.admin-mobile-filter-option {
+  background: none;
+  border: 1px solid var(--color-border);
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  border-radius: var(--border-radius);
+  transition: all 0.15s ease;
+}
+
+.admin-mobile-filter-option:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.admin-mobile-filter-option.active {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+  font-weight: 600;
+  border-color: var(--color-primary);
+}
+
+.admin-mobile-filter-footer {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.admin-mobile-filter-footer button {
+  flex: 1;
 }
 

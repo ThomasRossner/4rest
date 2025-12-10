@@ -8,6 +8,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
+      // Disable PWA in development to prevent service worker caching issues
+      devOptions: {
+        enabled: false,
+        type: 'module',
+      },
       manifest: {
         name: 'Roots of Impact',
         short_name: 'Roots',
@@ -48,6 +53,15 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
+    hmr: {
+      overlay: true,
+      port: 3000,
+    },
+    watch: {
+      // Enable polling for better file watching on WSL/Windows
+      usePolling: true,
+      interval: 1000,
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5001',
