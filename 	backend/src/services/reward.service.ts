@@ -2,103 +2,39 @@ import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
-import {
-  USER_ROLES,
-  USER_TYPES,
-  HOTEL_IDS,
-  REWARD_TYPES,
-  UserRole,
-  UserType,
-  HotelId,
-  RewardType,
-} from '../constants/enums.js';
+import { UserRole, UserType } from '../constants/enums.js';
 import { Location } from './location.service.js';
-
-function validateRoleArray(values?: string[] | null): UserRole[] {
-  if (!values) return [];
-  const invalid = values.filter((value) => !(USER_ROLES as readonly string[]).includes(value));
-  if (invalid.length) {
-    throw new Error(`Invalid roles: ${invalid.join(', ')}`);
-  }
-  return values as UserRole[];
-}
-
-function validateUserTypeArray(values?: string[] | null): UserType[] {
-  if (!values) return [];
-  const invalid = values.filter((value) => !(USER_TYPES as readonly string[]).includes(value));
-  if (invalid.length) {
-    throw new Error(`Invalid user types: ${invalid.join(', ')}`);
-  }
-  return values as UserType[];
-}
-
-function validateHotelIdArray(values?: string[] | null): HotelId[] {
-  if (!values) return [];
-  const invalid = values.filter((value) => !(HOTEL_IDS as readonly string[]).includes(value));
-  if (invalid.length) {
-    throw new Error(`Invalid hotel IDs: ${invalid.join(', ')}`);
-  }
-  return values as HotelId[];
-}
-
-function validateRewardType(value?: string | null): RewardType {
-  if (!value) {
-    throw new Error('Reward type is required.');
-  }
-  if (!(REWARD_TYPES as readonly string[]).includes(value)) {
-    throw new Error(`Invalid reward type: ${value}`);
-  }
-  return value as RewardType;
-}
-
-function normalizePointsCost(value: unknown): number {
-  if (value === undefined || value === null || value === '') {
-    throw new Error('pointsCost must be zero or greater.');
-  }
-  const parsed =
-    typeof value === 'string' ? Number.parseFloat(value) : typeof value === 'number' ? value : NaN;
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error('pointsCost must be zero or greater.');
-  }
-  return parsed;
-}
+import {
+  validateRoleArray,
+  validateUserTypeArray,
+  validateHotelIdArray,
+  validateRewardType,
+  validateRecurrence,
+  normalizePointsCost,
+} from '../utils/validation.js';
+import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 
 export async function getRewardsService(userId: string) {
   const db = getPool();
   const user = await getUserById(userId);
   const role: UserRole | null = user?.role ?? null;
   const userType: UserType | null = user?.user_type ?? null;
-  const configuredHotelId = process.env.HOTEL_ID;
-  const hotelId: HotelId | null =
-    configuredHotelId && (HOTEL_IDS as readonly string[]).includes(configuredHotelId)
-      ? (configuredHotelId as HotelId)
-      : null;
+  const hotelId = getConfiguredHotelId();
 
   const params: any[] = [];
-  let paramIndex = 1;
+  const paramIndex = { current: 1 };
 
   let query =
     'SELECT r.*, row_to_json(l.*) AS location FROM rewards r JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE';
 
-  if (role) {
-    query += ` AND (r.allowed_roles IS NULL OR COALESCE(array_length(r.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_roles))`;
-    params.push(role);
-  } else {
-    query += ' AND (r.allowed_roles IS NULL OR COALESCE(array_length(r.allowed_roles, 1), 0) = 0)';
-  }
-
-  if (userType) {
-    query += ` AND (r.allowed_user_types IS NULL OR COALESCE(array_length(r.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_user_types))`;
-    params.push(userType);
-  } else {
-    query += ' AND (r.allowed_user_types IS NULL OR COALESCE(array_length(r.allowed_user_types, 1), 0) = 0)';
-  }
-
-  if (hotelId) {
-    query += ` AND (r.allowed_hotel_ids IS NULL OR COALESCE(array_length(r.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_hotel_ids))`;
-    params.push(hotelId);
-  } else {
-    query += ' AND (r.allowed_hotel_ids IS NULL OR COALESCE(array_length(r.allowed_hotel_ids, 1), 0) = 0)';
+  const audienceClauses = buildAudienceFilterClauses(
+    { userRole: role, userType, hotelId, applyFilters: true },
+    params,
+    paramIndex
+  );
+  // Prefix table alias for reward-specific queries
+  if (audienceClauses.length > 0) {
+    query += ' AND ' + audienceClauses.map((clause) => clause.replace(/\b(allowed_\w+)\b/g, 'r.$1')).join(' AND ');
   }
 
   query += ' ORDER BY r.points_cost ASC';
@@ -131,16 +67,6 @@ function getRewardIcon(type: string): string {
   return icons[type] || '🎁';
 }
 
-type RewardRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
-
-function validateRecurrence(value?: string | null): RewardRecurrence {
-  if (!value) return 'once';
-  const validValues: RewardRecurrence[] = ['once', 'daily', 'weekly', 'monthly'];
-  if (!validValues.includes(value as RewardRecurrence)) {
-    throw new Error(`Invalid recurrence: ${value}. Must be one of: ${validValues.join(', ')}`);
-  }
-  return value as RewardRecurrence;
-}
 
 interface CreateCustomRewardInput {
   title?: string;

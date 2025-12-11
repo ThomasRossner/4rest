@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import passport from 'passport';
 import { createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
 import { AuthRequest } from '../middleware/authenticate.js';
@@ -21,24 +20,8 @@ import {
   clearLoginCode,
   sendPasswordSetupEmail,
 } from '../services/auth-email.service.js';
-
-function getJwtSecret(): Secret {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not configured');
-  }
-  return secret as Secret;
-}
-
-function getJwtOptions(): SignOptions {
-  const options: SignOptions = {};
-  options.expiresIn = (process.env.JWT_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'];
-  return options;
-}
-
-function signUserToken(payload: { id: string; email: string; role: UserRole }) {
-  return jwt.sign(payload, getJwtSecret(), getJwtOptions());
-}
+import { signUserToken } from '../utils/jwt.js';
+import { createOAuthCallback, getFrontendUrl } from '../utils/oauth.js';
 
 function normalizeRole(role: unknown): UserRole {
   if (typeof role === 'string' && (USER_ROLES as readonly string[]).includes(role)) {
@@ -288,60 +271,18 @@ export async function refreshToken(req: Request, res: Response) {
   }
 }
 
-// Helper function for OAuth callbacks
-function createOAuthCallback(provider: string, envCheck: () => boolean) {
-  return async (req: Request, res: Response, next: any) => {
-    if (!envCheck()) {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
-    }
-    
-    passport.authenticate(provider, { session: false }, async (err: any, user: any) => {
-      if (err) {
-        console.error(`${provider} OAuth authentication error:`, err);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
-      }
-      
-      if (!user) {
-        console.error(`${provider} OAuth: No user returned from authentication`);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
-      }
-
-      try {
-        console.log(`${provider} OAuth callback: User authenticated, generating token for user:`, user.id);
-        // Generate JWT token
-        const userEmail = user.email || user.oauth_email || '';
-        const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
-
-        console.log(`${provider} OAuth: Token generated, redirecting to frontend`);
-        // Redirect to frontend with token
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        const redirectUrl = `${frontendUrl}/auth/callback?token=${token}`;
-        return res.redirect(redirectUrl);
-      } catch (error: any) {
-        console.error(`${provider} OAuth: Token generation error:`, error);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return res.redirect(`${frontendUrl}/login?error=token_generation_failed`);
-      }
-    })(req, res, next);
-  };
-}
 
 // GitHub OAuth handlers
 export function githubAuth(req: Request, res: Response, next: any) {
   if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_not_configured`);
   }
   
   try {
     passport.authenticate('github', { scope: ['user:email'] })(req, res, next);
   } catch (error: any) {
     console.error('GitHub OAuth error:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
   }
 }
 
@@ -352,16 +293,14 @@ export const githubCallback = createOAuthCallback('github', () =>
 // Google OAuth handlers
 export function googleAuth(req: Request, res: Response, next: any) {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_not_configured`);
   }
   
   try {
     passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
   } catch (error: any) {
     console.error('Google OAuth error:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
   }
 }
 
@@ -372,16 +311,14 @@ export const googleCallback = createOAuthCallback('google', () =>
 // Facebook OAuth handlers
 export function facebookAuth(req: Request, res: Response, next: any) {
   if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_not_configured`);
   }
   
   try {
     passport.authenticate('facebook', { scope: ['email'] })(req, res, next);
   } catch (error: any) {
     console.error('Facebook OAuth error:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
   }
 }
 
@@ -392,16 +329,14 @@ export const facebookCallback = createOAuthCallback('facebook', () =>
 // Apple OAuth handlers
 export function appleAuth(req: Request, res: Response, next: any) {
   if (!process.env.APPLE_CLIENT_ID || !process.env.APPLE_TEAM_ID || !process.env.APPLE_KEY_ID || !process.env.APPLE_PRIVATE_KEY) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_not_configured`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_not_configured`);
   }
   
   try {
     passport.authenticate('apple')(req, res, next);
   } catch (error: any) {
     console.error('Apple OAuth error:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+    return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
   }
 }
 

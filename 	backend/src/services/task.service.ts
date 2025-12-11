@@ -1,18 +1,11 @@
 import { getPool } from '../database/connection.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
-import { UserRole, UserType, HotelId, HOTEL_IDS } from '../constants/enums.js';
+import { UserRole, UserType } from '../constants/enums.js';
 import { Location } from './location.service.js';
+import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
+import { validateRecurrence } from '../utils/validation.js';
 
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
-
-function validateTaskRecurrence(value?: string | null): TaskRecurrence {
-  if (!value) return 'once';
-  const validValues: TaskRecurrence[] = ['once', 'daily', 'weekly', 'monthly'];
-  if (!validValues.includes(value as TaskRecurrence)) {
-    throw new Error(`Invalid recurrence: ${value}. Must be one of: ${validValues.join(', ')}`);
-  }
-  return value as TaskRecurrence;
-}
 
 export interface Task {
   id: string;
@@ -60,11 +53,7 @@ export async function getAllTasks(
     }
   }
 
-  const configuredHotelId = process.env.HOTEL_ID;
-  const hotelId: HotelId | null =
-    configuredHotelId && (HOTEL_IDS as readonly string[]).includes(configuredHotelId)
-      ? (configuredHotelId as HotelId)
-      : null;
+  const hotelId = getConfiguredHotelId();
 
   let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
   let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
@@ -80,36 +69,15 @@ export async function getAllTasks(
   }
 
   if (applyAudienceFilters) {
-    if (userRole) {
-      clauses.push(
-        `(t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_roles))`
-      );
-      params.push(userRole);
-    } else {
-      clauses.push('(t.allowed_roles IS NULL OR COALESCE(array_length(t.allowed_roles, 1), 0) = 0)');
-    }
-
-    if (userType) {
-      clauses.push(
-        `(t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_user_types))`
-      );
-      params.push(userType);
-    } else {
-      clauses.push(
-        '(t.allowed_user_types IS NULL OR COALESCE(array_length(t.allowed_user_types, 1), 0) = 0)'
-      );
-    }
-
-    if (hotelId) {
-      clauses.push(
-        `(t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(t.allowed_hotel_ids))`
-      );
-      params.push(hotelId);
-    } else {
-      clauses.push(
-        '(t.allowed_hotel_ids IS NULL OR COALESCE(array_length(t.allowed_hotel_ids, 1), 0) = 0)'
-      );
-    }
+    const paramIndexObj = { current: paramIndex };
+    const audienceClauses = buildAudienceFilterClauses(
+      { userRole, userType, hotelId, applyFilters: true },
+      params,
+      paramIndexObj
+    );
+    // Prefix table alias for task-specific queries
+    clauses.push(...audienceClauses.map((clause) => clause.replace(/\b(allowed_\w+)\b/g, 't.$1')));
+    paramIndex = paramIndexObj.current;
   }
 
   if (filters?.type) {
@@ -162,7 +130,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       : JSON.stringify(data.quiz_questions)
     : null;
 
-  const recurrence = validateTaskRecurrence((data as any).recurrence);
+  const recurrence = validateRecurrence((data as any).recurrence);
 
   const result = await db.query(
     `INSERT INTO tasks (
@@ -220,7 +188,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
         values.push(JSON.stringify(value));
       } else if (key === 'recurrence') {
         updates.push(`${key} = $${paramIndex++}`);
-        values.push(validateTaskRecurrence(value as string));
+        values.push(validateRecurrence(value as string));
       } else {
         updates.push(`${key} = $${paramIndex++}`);
         values.push(value);

@@ -12,44 +12,35 @@ import {
   setTasksActiveState,
   bulkDeleteTasks as bulkDeleteTasksService,
 } from '../services/task.service.js';
-import { USER_ROLES, USER_TYPES, HOTEL_IDS } from '../constants/enums.js';
-import { getLocationById } from '../services/location.service.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
 
-export const getTasks: RequestHandler = async (req, res) => {
-  try {
-    const { limit, offset, type, includeAll, includeInactive } = req.query;
-    const authReq = req as AuthRequest;
-    const isAdmin = authReq.user?.role === 'administrator';
-    const includeInactiveFlag = isAdmin && includeInactive === 'true';
-    const tasks = await getAllTasks(
-      {
-        limit: limit ? parseInt(limit as string, 10) : undefined,
-        offset: offset ? parseInt(offset as string, 10) : undefined,
-        type: type as string,
-      },
-      authReq.user?.id,
-      { includeAll: isAdmin && includeAll === 'true', includeInactive: includeInactiveFlag }
-    );
-    res.json(tasks);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
+  const { limit, offset, type, includeAll, includeInactive } = req.query;
+  const authReq = req as AuthRequest;
+  const isAdmin = authReq.user?.role === 'administrator';
+  const includeInactiveFlag = isAdmin && includeInactive === 'true';
+  const tasks = await getAllTasks(
+    {
+      limit: limit ? parseInt(limit as string, 10) : undefined,
+      offset: offset ? parseInt(offset as string, 10) : undefined,
+      type: type as string,
+    },
+    authReq.user?.id,
+    { includeAll: isAdmin && includeAll === 'true', includeInactive: includeInactiveFlag }
+  );
+  res.json(tasks);
+});
+
+export const getTask: RequestHandler = asyncHandler(async (req, res) => {
+  const task = await getTaskById(req.params.id);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
   }
-};
+  res.json(task);
+});
 
-export const getTask: RequestHandler = async (req, res) => {
-  try {
-    const task = await getTaskById(req.params.id);
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-    res.json(task);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-export const createTask: RequestHandler = async (req, res) => {
-  try {
+export const createTask: RequestHandler = asyncHandler(async (req, res) => {
     const { templateId, ...payload } = req.body;
 
     if (templateId) {
@@ -83,142 +74,98 @@ export const createTask: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: 'locationId is required.' });
     }
 
+    const { getLocationById } = await import('../services/location.service.js');
     const location = await getLocationById(locationId);
     if (!location) {
       return res.status(400).json({ error: 'Invalid locationId.' });
     }
     payload.location_id = location.id;
 
-    const invalidRoles = (payload.allowed_roles || []).filter(
-      (role: string) => !(USER_ROLES as readonly string[]).includes(role)
-    );
-    if (invalidRoles.length > 0) {
-      return res.status(400).json({ error: `Invalid roles: ${invalidRoles.join(', ')}` });
-    }
-
-    const invalidUserTypes = (payload.allowed_user_types || []).filter(
-      (userType: string) => !(USER_TYPES as readonly string[]).includes(userType)
-    );
-    if (invalidUserTypes.length > 0) {
-      return res.status(400).json({ error: `Invalid user types: ${invalidUserTypes.join(', ')}` });
-    }
-
-    const invalidHotelIds = (payload.allowed_hotel_ids || []).filter(
-      (hotelId: string) => !(HOTEL_IDS as readonly string[]).includes(hotelId)
-    );
-    if (invalidHotelIds.length > 0) {
-      return res.status(400).json({ error: `Invalid hotel IDs: ${invalidHotelIds.join(', ')}` });
+    // Validate arrays using shared validation functions
+    try {
+      validateRoleArray(payload.allowed_roles);
+      validateUserTypeArray(payload.allowed_user_types);
+      validateHotelIdArray(payload.allowed_hotel_ids);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
     }
 
     const task = await createTaskService(payload);
     return res.status(201).json(task);
-  } catch (error: any) {
-    if (error instanceof Error && error.message.startsWith('Invalid')) {
-      return res.status(400).json({ error: error.message });
+});
+
+export const updateTask: RequestHandler = asyncHandler(async (req, res) => {
+  const locationId = req.body.locationId ?? req.body.location_id;
+  if (locationId !== undefined) {
+    if (!locationId || typeof locationId !== 'string') {
+      return res.status(400).json({ error: 'locationId must be a valid string.' });
     }
-    res.status(500).json({ error: error.message });
+    const { getLocationById } = await import('../services/location.service.js');
+    const location = await getLocationById(locationId);
+    if (!location) {
+      return res.status(400).json({ error: 'Invalid locationId.' });
+    }
+    req.body.location_id = location.id;
   }
-};
 
-export const updateTask: RequestHandler = async (req, res) => {
-  try {
-    const locationId = req.body.locationId ?? req.body.location_id;
-    if (locationId !== undefined) {
-      if (!locationId || typeof locationId !== 'string') {
-        return res.status(400).json({ error: 'locationId must be a valid string.' });
-      }
-      const location = await getLocationById(locationId);
-      if (!location) {
-        return res.status(400).json({ error: 'Invalid locationId.' });
-      }
-      req.body.location_id = location.id;
-    }
-
-    const task = await updateTaskService(req.params.id, req.body);
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-    res.json(task);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  const task = await updateTaskService(req.params.id, req.body);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
   }
-};
+  res.json(task);
+});
 
-export const deleteTask: RequestHandler = async (req, res) => {
-  try {
-    await deleteTaskService(req.params.id);
-    res.status(204).send();
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+export const deleteTask: RequestHandler = asyncHandler(async (req, res) => {
+  await deleteTaskService(req.params.id);
+  res.status(204).send();
+});
+
+export const bulkUpdateTaskStatus: RequestHandler = asyncHandler(async (req, res) => {
+  const { ids, active } = req.body ?? {};
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Provide an array of task ids.' });
   }
-};
-
-export const bulkUpdateTaskStatus: RequestHandler = async (req, res) => {
-  try {
-    const { ids, active } = req.body ?? {};
-
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ error: 'Provide an array of task ids.' });
-    }
-    if (typeof active !== 'boolean') {
-      return res.status(400).json({ error: 'Active flag must be a boolean value.' });
-    }
-
-    await setTasksActiveState(ids, active);
-    res.status(204).send();
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  if (typeof active !== 'boolean') {
+    return res.status(400).json({ error: 'Active flag must be a boolean value.' });
   }
-};
 
-export const bulkDeleteTasks: RequestHandler = async (req, res) => {
-  try {
-    const { ids } = req.body ?? {};
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ error: 'Provide an array of task ids.' });
-    }
-    await bulkDeleteTasksService(ids);
-    res.status(204).send();
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-};
+  await setTasksActiveState(ids, active);
+  res.status(204).send();
+});
 
-export const completeTask: RequestHandler = async (req, res) => {
-  try {
-    const authReq = req as AuthRequest;
-    if (!authReq.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    const result = await completeTaskService(req.params.id, authReq.user.id, req.body);
-    res.json(result);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+export const bulkDeleteTasks: RequestHandler = asyncHandler(async (req, res) => {
+  const { ids } = req.body ?? {};
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Provide an array of task ids.' });
   }
-};
+  await bulkDeleteTasksService(ids);
+  res.status(204).send();
+});
 
-export const uploadPhoto: RequestHandler = async (req, res) => {
-  try {
-    const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
-    if (!file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-    const photoUrl = await uploadPhotoService(file);
-    res.json({ photo_url: photoUrl });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+export const completeTask: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-};
+  const result = await completeTaskService(req.params.id, authReq.user.id, req.body);
+  res.json(result);
+});
 
-export const uploadVideo: RequestHandler = async (req, res) => {
-  try {
-    const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
-    if (!file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-    const videoUrl = await uploadVideoService(file);
-    res.json({ video_url: videoUrl });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+export const uploadPhoto: RequestHandler = asyncHandler(async (req, res) => {
+  const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
+  if (!file) {
+    return res.status(400).json({ error: 'No file uploaded' });
   }
-};
+  const photoUrl = await uploadPhotoService(file);
+  res.json({ photo_url: photoUrl });
+});
+
+export const uploadVideo: RequestHandler = asyncHandler(async (req, res) => {
+  const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
+  if (!file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  const videoUrl = await uploadVideoService(file);
+  res.json({ video_url: videoUrl });
+});
