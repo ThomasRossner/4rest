@@ -19,7 +19,7 @@ import QrScannerPage from './QrScannerPage';
 import { LocationMap } from '../../components/LocationMap/LocationMap';
 
 type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | 'location' | 'locationManage' | 'qrScanner' | null;
-type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
+type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo' | 'visit_location';
 
 type AdminTaskTemplate = {
   id: string;
@@ -36,6 +36,8 @@ type AdminTaskTemplate = {
   allowed_user_types?: UserType[] | null;
   allowed_hotel_ids?: HotelId[] | null;
   location_id?: string | null;
+  target_latitude?: number | null;
+  target_longitude?: number | null;
   location?: AdminLocation | null;
   active?: boolean | null;
 };
@@ -644,7 +646,7 @@ const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
   label: formatRewardType(type),
 }));
 
-const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
+const defaultTaskForm = (type: 'video' | 'qr' | 'photo' | 'visit_location'): TaskFormState => ({
   title: '',
   description: '',
   type,
@@ -662,6 +664,9 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   locationId: '',
   active: true,
   recurrence: 'once',
+  target_latitude: type === 'visit_location' ? '' : undefined,
+  target_longitude: type === 'visit_location' ? '' : undefined,
+  target_address: type === 'visit_location' ? '' : undefined,
 });
 
 const defaultRewardForm = (type: RewardType): RewardFormState => ({
@@ -889,6 +894,17 @@ const validateTaskFormState = ({
 
   if (taskForm.type === 'qr' && !taskForm.qr_code.trim()) {
     return { isValid: false, message: 'Enter the QR code value for QR tasks.' };
+  }
+
+  if (taskForm.type === 'visit_location') {
+    if (!taskForm.target_latitude || !taskForm.target_longitude) {
+      return { isValid: false, message: 'Target location coordinates are required for visit location tasks.' };
+    }
+    const lat = parseFloat(taskForm.target_latitude);
+    const lng = parseFloat(taskForm.target_longitude);
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return { isValid: false, message: 'Invalid target location coordinates.' };
+    }
   }
 
   if (!taskForm.locationId) {
@@ -1441,6 +1457,34 @@ function AdminPage() {
     { type: 'error' | 'success'; text: string } | null
   >(null);
   const [locationConfirm, setLocationConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+
+  // Forest debug stats (admin-only)
+  const [forestStats, setForestStats] = useState<
+    Array<{
+      id: string;
+      email: string;
+      points: number;
+      tree_count: number;
+      completed_tasks: number;
+      is_count_consistent: boolean;
+    }>
+  >([]);
+  const [forestStatsLoading, setForestStatsLoading] = useState(false);
+  const [forestStatsError, setForestStatsError] = useState<string | null>(null);
+
+  const loadForestStats = async () => {
+    try {
+      setForestStatsLoading(true);
+      setForestStatsError(null);
+      const data = await api.getForestStats();
+      setForestStats(data || []);
+    } catch (error: any) {
+      console.error('Failed to load forest stats', error);
+      setForestStatsError('Failed to load forest stats.');
+    } finally {
+      setForestStatsLoading(false);
+    }
+  };
   const [locationReturnMode, setLocationReturnMode] = useState<AdminMode | null>(null);
   const [includeInactiveLocations, setIncludeInactiveLocations] = useState(false);
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
@@ -1807,7 +1851,7 @@ function AdminPage() {
     if (taskSource === 'existing') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
-    } else if (taskSource === 'video' || taskSource === 'qr' || taskSource === 'photo') {
+    } else if (taskSource === 'video' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm(taskSource));
     }
@@ -1988,6 +2032,10 @@ function AdminPage() {
         if (taskForm.type === 'photo') {
           payload.photo_required = true;
         }
+        if (taskForm.type === 'visit_location') {
+          payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
+          payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
+        }
 
         await updateTaskMutation.mutateAsync({ id: editingTaskId, payload });
         return;
@@ -2028,6 +2076,10 @@ function AdminPage() {
         if (template.type === 'photo') {
           payload.photo_required = true;
         }
+        if (template.type === 'visit_location') {
+          payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
+          payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
+        }
 
         await publishTaskMutation.mutateAsync(payload);
         return;
@@ -2065,6 +2117,10 @@ function AdminPage() {
       }
       if (taskSource === 'photo') {
         payload.photo_required = true;
+      }
+      if (taskSource === 'visit_location') {
+        payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
+        payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
       }
 
       await publishTaskMutation.mutateAsync(payload);
@@ -2565,7 +2621,11 @@ function AdminPage() {
     setTaskManagementMessage(null);
     setTaskMessage(null);
     const source: TaskSource =
-      task.type === 'video' ? 'video' : task.type === 'qr' ? 'qr' : task.type === 'photo' ? 'photo' : '';
+      task.type === 'video' ? 'video' 
+      : task.type === 'qr' ? 'qr' 
+      : task.type === 'photo' ? 'photo'
+      : task.type === 'visit_location' ? 'visit_location'
+      : '';
     setTaskSource(source);
     setSelectedExistingTaskId('');
     setTaskForm({
@@ -2581,6 +2641,9 @@ function AdminPage() {
       qr_code: task.qr_code ?? '',
       photo_required: task.type === 'photo',
       co2_savings_kg: task.co2_savings_kg ?? 0,
+      target_latitude: task.target_latitude ? String(task.target_latitude) : '',
+      target_longitude: task.target_longitude ? String(task.target_longitude) : '',
+      target_address: '',
       allowedRoles: normalizeEnumArray(task.allowed_roles),
       allowedUserTypes: normalizeEnumArray(task.allowed_user_types),
       allowedHotelIds: normalizeEnumArray(task.allowed_hotel_ids),
@@ -2870,6 +2933,17 @@ const goToRewardCreation = () => {
             <h2>Redeem Rewards</h2>
             <p>Scan QR codes to verify and redeem rewards.</p>
           </button>
+          <button
+            className="admin-choice-card"
+            onClick={() => {
+              void loadForestStats();
+              setMode('task'); // show stats panel inside the Task section
+            }}
+          >
+            <span className="admin-choice-icon">🌲</span>
+            <h2>Forest Debug Stats</h2>
+            <p>View per-user tree and completed-task counts for debugging.</p>
+          </button>
         </div>
       )}
 
@@ -2920,6 +2994,73 @@ const goToRewardCreation = () => {
             </p>
           )}
 
+          {/* Forest debug stats panel */}
+          <div className="admin-form-card" style={{ marginBottom: '1.5rem' }}>
+            <div className="admin-form-section-header">
+              <div>
+                <h3>Forest Debug Stats</h3>
+                <p>
+                  Per-user tree counts vs. completed tasks, based on the current database state.
+                  Useful for checking the forest validation script without using psql.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="admin-icon-button"
+                onClick={() => void loadForestStats()}
+                title="Refresh forest stats"
+                disabled={forestStatsLoading}
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">Refresh forest stats</span>
+              </button>
+            </div>
+            {forestStatsLoading && <p>Loading forest stats…</p>}
+            {forestStatsError && <p className="admin-error">{forestStatsError}</p>}
+            {!forestStatsLoading && !forestStatsError && forestStats.length === 0 && (
+              <p className="admin-field-note">No users found.</p>
+            )}
+            {!forestStatsLoading && !forestStatsError && forestStats.length > 0 && (
+              <div className="admin-table-wrapper" style={{ marginTop: '0.75rem' }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Points</th>
+                      <th>Trees</th>
+                      <th>Completed tasks</th>
+                      <th>Counts consistent?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {forestStats.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>{row.email || '(no email)'}</span>
+                            <span className="admin-field-note" style={{ fontSize: '0.75rem' }}>
+                              {row.id}
+                            </span>
+                          </div>
+                        </td>
+                        <td>{row.points}</td>
+                        <td>{row.tree_count}</td>
+                        <td>{row.completed_tasks}</td>
+                        <td>
+                          {row.is_count_consistent ? (
+                            <span style={{ color: '#15803d', fontWeight: 500 }}>Yes</span>
+                          ) : (
+                            <span style={{ color: '#b91c1c', fontWeight: 500 }}>No (check user)</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           <div className="admin-form-card">
             {!isEditingTask && (
               <label className="admin-field">
@@ -2933,6 +3074,7 @@ const goToRewardCreation = () => {
                   <option value="video">Start from scratch – Video task</option>
                   <option value="qr">Start from scratch – QR task</option>
                   <option value="photo">Start from scratch – Photo task</option>
+                  <option value="visit_location">Start from scratch – Visit location task</option>
                 </select>
               </label>
             )}
@@ -3162,6 +3304,69 @@ const goToRewardCreation = () => {
                         <p className="admin-field-note">
                           A photo is always required for this task type.
                         </p>
+                      </div>
+                    )}
+                    {taskForm.type === 'visit_location' && (
+                      <div className="admin-form-full">
+                        <FieldLabel label="Target Location (GPS Coordinates)" required />
+                        <p className="admin-field-note" style={{ marginBottom: '12px' }}>
+                          Set the GPS coordinates of the location users need to visit. Users will see a map and must be within 50 meters to complete the task.
+                        </p>
+                        <LocationMap
+                          latitude={taskForm.target_latitude || ''}
+                          longitude={taskForm.target_longitude || ''}
+                          address={taskForm.target_address}
+                          onLocationSelect={(lat, lng, address) => {
+                            setTaskForm((prev) => ({
+                              ...prev,
+                              target_latitude: String(lat),
+                              target_longitude: String(lng),
+                              target_address: address || '',
+                            }));
+                          }}
+                          height="300px"
+                        />
+                        <label className="admin-field" style={{ marginTop: '12px' }}>
+                          <FieldLabel label="Address" />
+                          <textarea
+                            rows={3}
+                            value={taskForm.target_address || ''}
+                            onChange={(e) =>
+                              setTaskForm((prev) => ({ ...prev, target_address: e.target.value }))
+                            }
+                            placeholder="Address will be auto-filled from map selection"
+                          />
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                          <label className="admin-field">
+                            <FieldLabel label="Latitude" required />
+                            <input
+                              type="number"
+                              step="any"
+                              value={taskForm.target_latitude || ''}
+                              onChange={(e) =>
+                                setTaskForm((prev) => ({ ...prev, target_latitude: e.target.value }))
+                              }
+                              placeholder="52.5200"
+                              min="-90"
+                              max="90"
+                            />
+                          </label>
+                          <label className="admin-field">
+                            <FieldLabel label="Longitude" required />
+                            <input
+                              type="number"
+                              step="any"
+                              value={taskForm.target_longitude || ''}
+                              onChange={(e) =>
+                                setTaskForm((prev) => ({ ...prev, target_longitude: e.target.value }))
+                              }
+                              placeholder="13.4050"
+                              min="-180"
+                              max="180"
+                            />
+                          </label>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -3733,39 +3938,17 @@ const goToRewardCreation = () => {
                   </div>
                   {locationForm.mode === 'physical' && (
                     <>
-                      <div className="admin-field location-map-field">
-                        <FieldLabel label="Map Location" required />
-                        <p className="admin-field-note" style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                          Search for a location or click on the map to set coordinates.
-                        </p>
-                        <LocationMap
-                          latitude={locationForm.latitude}
-                          longitude={locationForm.longitude}
-                          address={locationForm.address}
-                          onLocationSelect={(lat, lng, address) => {
-                            setLocationForm((prev) => ({
-                              ...prev,
-                              latitude: lat.toString(),
-                              longitude: lng.toString(),
-                              address: address || prev.address,
-                            }));
-                          }}
-                          height="400px"
-                        />
-                      </div>
-                      <div className="admin-field location-details-field">
-                        <label className="admin-field" style={{ marginBottom: '1rem' }}>
+                      <label className="admin-field">
                         <FieldLabel label="Address" required />
                         <textarea
-                            rows={3}
+                          rows={3}
                           value={locationForm.address}
                           onChange={(event) =>
                             setLocationForm((prev) => ({ ...prev, address: event.target.value }))
                           }
-                            placeholder="Address will be auto-filled from map selection"
+                          placeholder="Enter the full address"
                         />
                       </label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       <label className="admin-field">
                         <FieldLabel label="Latitude" required />
                         <input
@@ -3790,8 +3973,6 @@ const goToRewardCreation = () => {
                           placeholder="e.g. 13.404954"
                         />
                       </label>
-                        </div>
-                      </div>
                     </>
                   )}
                   {locationForm.mode === 'online' && (

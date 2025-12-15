@@ -36,19 +36,15 @@ function ForestScene() {
   const flatTrees = forest?.trees || [];
 
   const myOrigin = useMemo(() => {
-    if (!currentUser) return null;
-    
-    // Find all areas for the current user
-    const userAreas = areas.filter((a: any) => a.userId === currentUser.id);
-    if (userAreas.length === 0) return null;
+    if (!currentUser || areas.length === 0) return null;
     
     // Calculate the center of all blocks for this user
     // Since blocks are in a square grid centered around the primary origin,
     // we calculate the center by averaging all block origins
-    const sumX = userAreas.reduce((sum, a) => sum + a.origin[0], 0);
-    const sumZ = userAreas.reduce((sum, a) => sum + a.origin[2], 0);
-    const centerX = sumX / userAreas.length;
-    const centerZ = sumZ / userAreas.length;
+    const sumX = areas.reduce((sum, a: any) => sum + a.origin[0], 0);
+    const sumZ = areas.reduce((sum, a: any) => sum + a.origin[2], 0);
+    const centerX = sumX / areas.length;
+    const centerZ = sumZ / areas.length;
     
     return [centerX, 0, centerZ] as [number, number, number];
   }, [areas, currentUser?.id]);
@@ -83,12 +79,11 @@ function ForestScene() {
         <meshStandardMaterial color="#4a7c59" />
       </mesh>
 
-      {/* Render per-user areas if available */}
-      {/* Each area block is rendered, including new blocks created for trees outside initial bounds */}
+      {/* Render user's forest areas */}
       {areas.length > 0 && areas.map((area: any) => {
         const origin = area.origin as [number, number, number];
-        // Create unique key from userId and origin to handle multiple blocks per user
-        const uniqueKey = `${area.userId}-${origin[0]}-${origin[2]}`;
+        // Create unique key from origin coordinates
+        const uniqueKey = `${origin[0]}-${origin[2]}`;
         return (
           <group key={uniqueKey} position={origin}>
             {/* Area ground tile */}
