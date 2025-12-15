@@ -292,3 +292,26 @@
   display: block;
   margin-bottom: var(--spacing-xs);
 }
+
+.visit-location-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.task-error {
+  padding: var(--spacing-md);
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  border-radius: var(--border-radius);
+  color: #991b1b;
+  margin-top: var(--spacing-md);
+}

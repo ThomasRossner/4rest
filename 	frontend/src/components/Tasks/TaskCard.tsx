@@ -18,6 +18,7 @@ const typeEmoji: Record<string, string> = {
   video: '🎬',
   photo: '📸',
   qr: '📱',
+  visit_location: '📍',
 };
 
 function getTaskEmoji(taskType?: string): string {

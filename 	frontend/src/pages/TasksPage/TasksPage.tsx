@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 import { VideoTask } from '../../components/Tasks/VideoTask';
 import { QRCodeTask } from '../../components/Tasks/QRCodeTask';
 import { PhotoTask } from '../../components/Tasks/PhotoTask';
+import { VisitLocationTask } from '../../components/Tasks/VisitLocationTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
@@ -13,7 +14,7 @@ import './TasksPage.css';
 
 function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'qr' | 'photo'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'qr' | 'photo' | 'visit_location'>('all');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
@@ -87,6 +88,9 @@ function TasksPage() {
     if (task.type === 'photo') {
       return <PhotoTask taskId={task.id} onComplete={handleTaskComplete} />;
     }
+    if (task.type === 'visit_location') {
+      return <VisitLocationTask taskId={task.id} onComplete={handleTaskComplete} />;
+    }
   }
 
   if (!tasks || tasks.length === 0) {
@@ -114,6 +118,7 @@ function TasksPage() {
             { value: 'video', label: t('tasks.filters.type.video'), icon: '🎥' },
             { value: 'qr', label: t('tasks.filters.type.qr'), icon: <QRCodeIcon size={20} /> },
             { value: 'photo', label: t('tasks.filters.type.photo'), icon: '📷' },
+            { value: 'visit_location', label: t('tasks.filters.type.visit_location'), icon: '📍' },
           ]}
         />
         <FilterDropdown
@@ -145,7 +150,7 @@ function TasksPage() {
             <div key={task.id} className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
             <div className="task-header">
               <span className="task-icon">
-                {task.type === 'video' ? '🎥' : task.type === 'qr' ? <QRCodeIcon size={48} /> : '📷'}
+                {task.type === 'video' ? '🎥' : task.type === 'qr' ? <QRCodeIcon size={48} /> : task.type === 'visit_location' ? '📍' : '📷'}
               </span>
               <span className="task-points">{t('tasksComponents.points', { points: task.points })}</span>
               {task.completed && (

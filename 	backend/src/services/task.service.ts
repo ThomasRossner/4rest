@@ -26,6 +26,8 @@ export interface Task {
   location?: Location;
   active?: boolean;
   recurrence?: TaskRecurrence;
+  target_latitude?: number;
+  target_longitude?: number;
 }
 
 export async function getAllTasks(
@@ -149,9 +151,11 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        allowed_hotel_ids,
        location_id,
        active,
-       recurrence
+       recurrence,
+       target_latitude,
+       target_longitude
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
      RETURNING *`,
     [
       data.title,
@@ -170,6 +174,8 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.location_id,
       data.active ?? true,
       recurrence,
+      (data as any).target_latitude ?? null,
+      (data as any).target_longitude ?? null,
     ]
   );
   return result.rows[0];

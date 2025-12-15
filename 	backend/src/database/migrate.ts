@@ -114,6 +114,11 @@ async function runMigrations() {
       'utf-8'
     );
     
+    const migration21 = readFileSync(
+      join(__dirname, '../../../database/migrations/021_visit_location_task.sql'),
+      'utf-8'
+    );
+    
     // Create migrations table to track executed migrations
     await pool.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -352,6 +357,17 @@ async function runMigrations() {
       console.log('✓ Migration 020 completed');
     } else {
       console.log('✓ Migration 020 already executed');
+    }
+    
+    if (!executed.has('021_visit_location_task')) {
+      console.log('Running migration: 021_visit_location_task.sql');
+      await pool.query(migration21);
+      await pool.query(
+        "INSERT INTO schema_migrations (migration_name) VALUES ('021_visit_location_task') ON CONFLICT DO NOTHING"
+      );
+      console.log('✓ Migration 021 completed');
+    } else {
+      console.log('✓ Migration 021 already executed');
     }
     
     console.log('\nAll migrations completed successfully!');

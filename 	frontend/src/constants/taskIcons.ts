@@ -5,4 +5,5 @@ export const TASK_TYPE_ICONS: Record<string, ReactNode> = {
   video: '🎥',
   qr: createElement(QRCodeIcon, { size: 24 }),
   photo: '📷',
+  visit_location: '📍',
 };
