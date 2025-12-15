@@ -113,13 +113,13 @@ The script prints:
 
 ## Automation (Cron)
 
-You can run this script automatically with a nightly cron job, for example at 02:00 server time.
+You can run this script automatically with a cron job. For example, to run it **every hour**:
 
 Use the helper script `backend/scripts/run-validate-forest.sh` from a system scheduler. Example `crontab -e` entry on Linux:
 
 ```cron
-# Run forest validation every day at 02:00 (server local time)
-0 2 * * * /absolute/path/to/your/repo/backend/scripts/run-validate-forest.sh
+# Run forest validation every hour (at minute 0)
+0 * * * * /absolute/path/to/your/repo/backend/scripts/run-validate-forest.sh
 ```
 
 Notes:

@@ -1,63 +1,10 @@
 import { getPool } from '../database/connection.js';
-
-/**
- * Calculate the required grid size for blocks based on tree count
- * Each block can hold max 8 trees
- * Grid sizes: 2x2 (4 blocks, 32 trees max), 3x3 (9 blocks, 72 trees max), 4x4 (16 blocks, 128 trees max), etc.
- */
-function calculateGridSize(treeCount: number, maxTreesPerBlock: number = 8): number {
-  if (treeCount === 0) return 2; // Default 2x2 grid
-  
-  // Start with 2x2 (4 blocks)
-  let gridSize = 2;
-  let maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock; // 4 * 8 = 32
-  
-  // Expand grid when all blocks are full
-  // Note: We use > (not >=) so grid expands BEFORE reaching capacity
-  // e.g., with 32 trees in 2x2, we stay at 2x2. At 33 trees, expand to 3x3
-  while (treeCount > maxTreesForGrid) {
-    gridSize++;
-    maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock;
-  }
-  
-  return gridSize;
-}
-
-/**
- * Generate block origins for a square grid centered around [0,0]
- * Returns array of block origins in row-major order
- * Block [0,0] will always be at the center (or near-center for even-sized grids)
- */
-function generateBlockOrigins(
-  primaryOriginX: number,
-  primaryOriginZ: number,
-  gridSize: number,
-  areaSpacing: number
-): Array<{ x: number; z: number }> {
-  const blocks: Array<{ x: number; z: number }> = [];
-  
-  // Calculate offset to center the grid around [0,0]
-  // For odd grids (3x3, 5x5): center block is at [0,0]
-  // For even grids (2x2, 4x4): [0,0] is in one of the center blocks
-  // Formula: centerOffset = Math.floor(-(gridSize - 1) / 2) * areaSpacing
-  // This ensures blocks align to areaSpacing boundaries and [0,0] is centered
-  const centerOffset = Math.floor(-(gridSize - 1) / 2) * areaSpacing;
-  
-  // Start from the calculated center offset, relative to primary origin
-  const startX = primaryOriginX + centerOffset;
-  const startZ = primaryOriginZ + centerOffset;
-  
-  for (let row = 0; row < gridSize; row++) {
-    for (let col = 0; col < gridSize; col++) {
-      blocks.push({
-        x: startX + col * areaSpacing,
-        z: startZ + row * areaSpacing,
-      });
-    }
-  }
-  
-  return blocks;
-}
+import {
+  FOREST_AREA_SPACING,
+  FOREST_MAX_TREES_PER_BLOCK,
+  calculateGridSize,
+  generateBlockOrigins,
+} from './forestLayout.js';
 
 /**
  * Get forest data for a specific user
@@ -101,7 +48,7 @@ export async function getForestService(userId: string) {
     };
   }
 
-  const areaSpacing = 20; // match tile size
+  const areaSpacing = FOREST_AREA_SPACING; // match tile size
   const gridCols = Math.max(1, Math.ceil(Math.sqrt(Math.max(1, userIds.length))));
   
   // Calculate primary origin for this user
@@ -131,7 +78,7 @@ export async function getForestService(userId: string) {
 
   // Calculate required grid size for this user's trees
   const treeCount = trees.length;
-  const maxTreesPerBlock = 8;
+  const maxTreesPerBlock = FOREST_MAX_TREES_PER_BLOCK;
   const gridSize = calculateGridSize(treeCount, maxTreesPerBlock);
   
   // Generate all block origins for this grid (always square, starting from primary origin)

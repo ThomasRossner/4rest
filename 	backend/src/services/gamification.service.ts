@@ -195,7 +195,7 @@ export async function plantTree(userId: string, taskId: string) {
   
   // Generate position within selected block
   const edgePadding = 0.5;
-  const minDistance = 1.0;
+  const minDistance = 1.5;
   const blockMinX = selectedBlock.x + edgePadding;
   const blockMaxX = selectedBlock.x + areaSpacing - edgePadding;
   const blockMinZ = selectedBlock.z + edgePadding;
