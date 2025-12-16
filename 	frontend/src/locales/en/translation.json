@@ -480,6 +480,45 @@
         "trees": "Trees",
         "completedTasks": "Completed tasks",
         "consistent": "Counts consistent?"
+      },
+      "validation": {
+        "title": "Forest Validation & Fix",
+        "subtitle": "Run the validation script to check and fix forest tree coordinates, block layout, and consistency with completed tasks.",
+        "dryRun": "Dry run (preview only)",
+        "dryRunHint": "Preview changes without applying them. Recommended for first-time use.",
+        "forceGeometry": "Force geometry repositioning",
+        "forceGeometryHint": "Reposition all trees even if they're already in valid positions.",
+        "userFilter": "User filter (optional)",
+        "userFilterPlaceholder": "Email or user ID (leave empty for all users)",
+        "userFilterHint": "Run validation for a specific user only. Enter email or user ID.",
+        "run": "Run Validation",
+        "error": "Validation Error",
+        "startFailed": "Failed to start validation. Please try again.",
+        "failed": "Validation failed",
+        "confirmDryRun": {
+          "title": "Run Forest Validation (Dry Run)?",
+          "description": "This will preview what changes would be made without applying them. No database changes will occur."
+        },
+        "confirmLive": {
+          "title": "Run Forest Validation (LIVE)?",
+          "description": "⚠️ WARNING: This will modify the database! Trees may be deleted, moved, or recreated based on completed tasks and geometry rules. This action cannot be undone. Are you sure you want to continue?"
+        },
+        "status": {
+          "pending": "Pending…",
+          "running": "Running…",
+          "completed": "Completed",
+          "failed": "Failed"
+        },
+        "results": {
+          "title": "Validation Results",
+          "usersProcessed": "Users processed",
+          "treesMoved": "Trees moved",
+          "treesDeleted": "Trees deleted",
+          "totalFixed": "Total fixed",
+          "errors": "Errors",
+          "showErrors": "Show error details"
+        },
+        "closeResults": "Close Results"
       }
     },
     "filters": {

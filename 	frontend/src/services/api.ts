@@ -167,6 +167,16 @@ export const api = {
     return response.data;
   },
 
+  async validateAndFixForest(options: { dryRun?: boolean; forceGeometry?: boolean; userFilter?: string }) {
+    const response = await apiClient.post('/forest/validate-fix', options);
+    return response.data;
+  },
+
+  async getValidationJobStatus(jobId: string) {
+    const response = await apiClient.get(`/forest/validate-fix/${jobId}`);
+    return response.data;
+  },
+
   async visitForest() {
     const response = await apiClient.post('/forest/visit');
     return response.data;

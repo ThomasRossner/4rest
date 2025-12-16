@@ -1488,6 +1488,14 @@ function AdminPage() {
   const [forestStatsLoading, setForestStatsLoading] = useState(false);
   const [forestStatsError, setForestStatsError] = useState<string | null>(null);
 
+  // Forest validation
+  const [validationDryRun, setValidationDryRun] = useState(true);
+  const [validationForceGeometry, setValidationForceGeometry] = useState(false);
+  const [validationUserFilter, setValidationUserFilter] = useState('');
+  const [validationJobId, setValidationJobId] = useState<string | null>(null);
+  const [validationJobStatus, setValidationJobStatus] = useState<any>(null);
+  const [validationConfirm, setValidationConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+
   const loadForestStats = async () => {
     try {
       setForestStatsLoading(true);
@@ -1500,6 +1508,73 @@ function AdminPage() {
     } finally {
       setForestStatsLoading(false);
     }
+  };
+
+  // Poll validation job status
+  useEffect(() => {
+    if (!validationJobId) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await api.getValidationJobStatus(validationJobId);
+        setValidationJobStatus(status);
+        
+        if (status.status === 'completed' || status.status === 'failed') {
+          clearInterval(pollInterval);
+          // Refresh forest stats after completion
+          if (status.status === 'completed') {
+            await loadForestStats();
+          }
+        }
+      } catch (error: any) {
+        console.error('Failed to poll validation job status', error);
+        clearInterval(pollInterval);
+        setValidationJobStatus(null);
+        setValidationJobId(null);
+      }
+    }, 1000); // Poll every second
+
+    return () => clearInterval(pollInterval);
+  }, [validationJobId]);
+
+  const startValidation = async () => {
+    try {
+      const result = await api.validateAndFixForest({
+        dryRun: validationDryRun,
+        forceGeometry: validationForceGeometry,
+        userFilter: validationUserFilter || undefined,
+      });
+      setValidationJobId(result.jobId);
+      setValidationJobStatus({ status: 'pending', progress: { currentUser: 0, totalUsers: 0 } });
+      setValidationConfirm({ ...defaultConfirmDialogState });
+    } catch (error: any) {
+      console.error('Failed to start validation', error);
+      setValidationConfirm({
+        ...defaultConfirmDialogState,
+        visible: true,
+        title: t('admin.forestStats.validation.error'),
+        description: error?.message || t('admin.forestStats.validation.startFailed'),
+        confirmLabel: t('common.actions.close'),
+        onConfirm: () => setValidationConfirm(defaultConfirmDialogState),
+      });
+    }
+  };
+
+  const handleValidationConfirm = () => {
+    setValidationConfirm({
+      ...defaultConfirmDialogState,
+      visible: true,
+      title: validationDryRun
+        ? t('admin.forestStats.validation.confirmDryRun.title')
+        : t('admin.forestStats.validation.confirmLive.title'),
+      description: validationDryRun
+        ? t('admin.forestStats.validation.confirmDryRun.description')
+        : t('admin.forestStats.validation.confirmLive.description'),
+      confirmLabel: t('admin.forestStats.validation.run'),
+      onConfirm: () => {
+        void startValidation();
+      },
+    });
   };
   const [locationReturnMode, setLocationReturnMode] = useState<AdminMode | null>(null);
   const [includeInactiveLocations, setIncludeInactiveLocations] = useState(false);
@@ -3007,7 +3082,7 @@ const goToRewardCreation = () => {
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>{t('admin.forestStats.table.user')}</th>
+                      <th>{t('admin.forestStats.table.email')}</th>
                       <th>{t('admin.forestStats.table.points')}</th>
                       <th>{t('admin.forestStats.table.trees')}</th>
                       <th>{t('admin.forestStats.table.completedTasks')}</th>
@@ -3042,6 +3117,196 @@ const goToRewardCreation = () => {
               </div>
             </div>
           )}
+
+          {/* Forest Validation Section */}
+          <div className="admin-form-card" style={{ marginTop: '1.5rem' }}>
+            <div className="admin-form-section-header">
+              <div>
+                <h3>{t('admin.forestStats.validation.title')}</h3>
+                <p className="admin-field-note">{t('admin.forestStats.validation.subtitle')}</p>
+              </div>
+            </div>
+
+            {validationJobId && validationJobStatus ? (
+              <div style={{ marginTop: '1rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 500 }}>
+                      {validationJobStatus.status === 'pending' && t('admin.forestStats.validation.status.pending')}
+                      {validationJobStatus.status === 'running' && t('admin.forestStats.validation.status.running')}
+                      {validationJobStatus.status === 'completed' && t('admin.forestStats.validation.status.completed')}
+                      {validationJobStatus.status === 'failed' && t('admin.forestStats.validation.status.failed')}
+                    </span>
+                    {validationJobStatus.status === 'running' && (
+                      <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                        {validationJobStatus.progress.currentUser} / {validationJobStatus.progress.totalUsers}
+                        {validationJobStatus.progress.currentUserEmail && ` (${validationJobStatus.progress.currentUserEmail})`}
+                      </span>
+                    )}
+                  </div>
+                  {validationJobStatus.status === 'running' && (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '8px',
+                        backgroundColor: 'var(--color-border)',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${validationJobStatus.progress.totalUsers > 0 ? (validationJobStatus.progress.currentUser / validationJobStatus.progress.totalUsers) * 100 : 0}%`,
+                          height: '100%',
+                          backgroundColor: 'var(--color-primary)',
+                          transition: 'width 0.3s ease',
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {validationJobStatus.status === 'completed' && validationJobStatus.result && (
+                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
+                    <h4 style={{ marginBottom: '0.75rem', fontSize: '1rem', fontWeight: 600 }}>
+                      {t('admin.forestStats.validation.results.title')}
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.usersProcessed')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.usersProcessed}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.treesMoved')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.totalMoved}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.treesDeleted')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.totalDeleted}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.totalFixed')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.totalFixed}
+                        </div>
+                      </div>
+                    </div>
+                    {validationJobStatus.result.errors && validationJobStatus.result.errors.length > 0 && (
+                      <div style={{ marginTop: '1rem' }}>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.errors')}: {validationJobStatus.result.totalErrors}
+                        </span>
+                        <details style={{ marginTop: '0.5rem' }}>
+                          <summary style={{ cursor: 'pointer', fontSize: '0.875rem' }}>
+                            {t('admin.forestStats.validation.results.showErrors')}
+                          </summary>
+                          <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem', fontSize: '0.875rem' }}>
+                            {validationJobStatus.result.errors.slice(0, 10).map((err: string, idx: number) => (
+                              <li key={idx}>{err}</li>
+                            ))}
+                            {validationJobStatus.result.errors.length > 10 && (
+                              <li>... and {validationJobStatus.result.errors.length - 10} more</li>
+                            )}
+                          </ul>
+                        </details>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="admin-button admin-button-secondary"
+                      style={{ marginTop: '1rem' }}
+                      onClick={() => {
+                        setValidationJobId(null);
+                        setValidationJobStatus(null);
+                      }}
+                    >
+                      {t('admin.forestStats.validation.closeResults')}
+                    </button>
+                  </div>
+                )}
+
+                {validationJobStatus.status === 'failed' && (
+                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
+                    <p className="admin-error">{validationJobStatus.error || t('admin.forestStats.validation.failed')}</p>
+                    <button
+                      type="button"
+                      className="admin-button admin-button-secondary"
+                      style={{ marginTop: '0.5rem' }}
+                      onClick={() => {
+                        setValidationJobId(null);
+                        setValidationJobStatus(null);
+                      }}
+                    >
+                      {t('common.actions.close')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="admin-form-section" style={{ marginTop: '1rem' }}>
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={validationDryRun}
+                      onChange={(e) => setValidationDryRun(e.target.checked)}
+                    />
+                    <span>{t('admin.forestStats.validation.dryRun')}</span>
+                  </label>
+                  <p className="admin-field-note">{t('admin.forestStats.validation.dryRunHint')}</p>
+                </div>
+
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={validationForceGeometry}
+                      onChange={(e) => setValidationForceGeometry(e.target.checked)}
+                    />
+                    <span>{t('admin.forestStats.validation.forceGeometry')}</span>
+                  </label>
+                  <p className="admin-field-note">{t('admin.forestStats.validation.forceGeometryHint')}</p>
+                </div>
+
+                <div className="admin-field">
+                  <label>
+                    <span>{t('admin.forestStats.validation.userFilter')}</span>
+                    <input
+                      type="text"
+                      value={validationUserFilter}
+                      onChange={(e) => setValidationUserFilter(e.target.value)}
+                      placeholder={t('admin.forestStats.validation.userFilterPlaceholder')}
+                    />
+                  </label>
+                  <p className="admin-field-note">{t('admin.forestStats.validation.userFilterHint')}</p>
+                </div>
+
+                <div style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className="admin-button admin-button-primary"
+                    onClick={handleValidationConfirm}
+                  >
+                    {t('admin.forestStats.validation.run')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </section>
       )}
 
@@ -5018,6 +5283,10 @@ const goToRewardCreation = () => {
       <ConfirmDialog
         {...locationConfirm}
         onCancel={() => setLocationConfirm(defaultConfirmDialogState)}
+      />
+      <ConfirmDialog
+        {...validationConfirm}
+        onCancel={() => setValidationConfirm(defaultConfirmDialogState)}
       />
     </div>
   );

@@ -480,6 +480,45 @@
         "trees": "Bäume",
         "completedTasks": "Abgeschlossene Aufgaben",
         "consistent": "Anzahlen konsistent?"
+      },
+      "validation": {
+        "title": "Wald-Validierung & Reparatur",
+        "subtitle": "Führen Sie das Validierungsskript aus, um Wald-Baumkoordinaten, Block-Layout und Konsistenz mit abgeschlossenen Aufgaben zu überprüfen und zu reparieren.",
+        "dryRun": "Trockenlauf (nur Vorschau)",
+        "dryRunHint": "Vorschau der Änderungen ohne Anwendung. Empfohlen für die erste Verwendung.",
+        "forceGeometry": "Geometrie-Neuplatzierung erzwingen",
+        "forceGeometryHint": "Platzieren Sie alle Bäume neu, auch wenn sie bereits in gültigen Positionen sind.",
+        "userFilter": "Benutzerfilter (optional)",
+        "userFilterPlaceholder": "E-Mail oder Benutzer-ID (leer lassen für alle Benutzer)",
+        "userFilterHint": "Validierung nur für einen bestimmten Benutzer ausführen. E-Mail oder Benutzer-ID eingeben.",
+        "run": "Validierung ausführen",
+        "error": "Validierungsfehler",
+        "startFailed": "Validierung konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
+        "failed": "Validierung fehlgeschlagen",
+        "confirmDryRun": {
+          "title": "Wald-Validierung ausführen (Trockenlauf)?",
+          "description": "Dies zeigt eine Vorschau der Änderungen ohne sie anzuwenden. Es werden keine Datenbankänderungen vorgenommen."
+        },
+        "confirmLive": {
+          "title": "Wald-Validierung ausführen (LIVE)?",
+          "description": "⚠️ WARNUNG: Dies wird die Datenbank ändern! Bäume können basierend auf abgeschlossenen Aufgaben und Geometrieregeln gelöscht, verschoben oder neu erstellt werden. Diese Aktion kann nicht rückgängig gemacht werden. Sind Sie sicher, dass Sie fortfahren möchten?"
+        },
+        "status": {
+          "pending": "Ausstehend…",
+          "running": "Läuft…",
+          "completed": "Abgeschlossen",
+          "failed": "Fehlgeschlagen"
+        },
+        "results": {
+          "title": "Validierungsergebnisse",
+          "usersProcessed": "Verarbeitete Benutzer",
+          "treesMoved": "Verschobene Bäume",
+          "treesDeleted": "Gelöschte Bäume",
+          "totalFixed": "Gesamt repariert",
+          "errors": "Fehler",
+          "showErrors": "Fehlerdetails anzeigen"
+        },
+        "closeResults": "Ergebnisse schließen"
       }
     },
     "filters": {
