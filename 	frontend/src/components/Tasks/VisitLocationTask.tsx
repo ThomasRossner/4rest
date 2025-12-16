@@ -93,7 +93,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
     const targetLng = task.target_longitude;
 
     if (!targetLat || !targetLng) {
-      setLocationError('Task target location is not set');
+      setLocationError(t('tasksComponents.visit_location.targetLocationNotSet'));
       return;
     }
 
@@ -111,7 +111,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
     // Add target marker (red)
     const targetMarker = L.marker([targetLat, targetLng], { icon: TargetIcon })
       .addTo(map)
-      .bindPopup('<div style="color: #dc2626; font-weight: bold;">🎯 Target Location</div>')
+      .bindPopup(`<div style="color: #dc2626; font-weight: bold;">🎯 ${t('tasksComponents.visit_location.targetLocation')}</div>`)
       .openPopup();
 
     targetMarkerRef.current = targetMarker;
@@ -135,12 +135,12 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
       targetMarkerRef.current = null;
       userMarkerRef.current = null;
     };
-  }, [task]);
+  }, [task, t]);
 
   // Request location permission and start tracking
   const startTracking = () => {
     if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser');
+      setLocationError(t('tasksComponents.visit_location.geolocationNotSupported'));
       return;
     }
 
@@ -156,7 +156,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
         checkProximity(latitude, longitude);
       },
       (error) => {
-        setLocationError(`Location error: ${error.message}`);
+        setLocationError(t('tasksComponents.visit_location.locationError', { message: error.message }));
         setIsTracking(false);
       },
       {
@@ -175,7 +175,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
         checkProximity(latitude, longitude);
       },
       (error) => {
-        setLocationError(`Location tracking error: ${error.message}`);
+        setLocationError(t('tasksComponents.visit_location.locationTrackingError', { message: error.message }));
       },
       {
         enableHighAccuracy: true,
@@ -201,7 +201,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
     } else {
       const userMarker = L.marker([lat, lng])
         .addTo(mapInstanceRef.current)
-        .bindPopup('Your Location');
+        .bindPopup(t('tasksComponents.visit_location.yourLocation'));
       userMarkerRef.current = userMarker;
     }
 
@@ -261,7 +261,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
           </span>
         </div>
         <div className="task-error">
-          <p>This task does not have a target location configured.</p>
+          <p>{t('tasksComponents.visit_location.noTargetLocation')}</p>
         </div>
       </div>
     );
@@ -301,8 +301,8 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
               }}
             >
               {distance <= PROXIMITY_THRESHOLD
-                ? '✓ You are at the location!'
-                : `Distance: ${Math.round(distance)}m`}
+                ? t('tasksComponents.visit_location.atLocation')
+                : t('tasksComponents.visit_location.distance', { distance: Math.round(distance) })}
             </div>
           )}
 
@@ -336,7 +336,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
                 fontWeight: 'bold',
               }}
             >
-              Start Location Tracking
+              {t('tasksComponents.visit_location.startTracking')}
             </button>
           ) : (
             <button
@@ -349,20 +349,23 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
                 background: '#dc2626',
               }}
             >
-              Stop Tracking
+              {t('tasksComponents.visit_location.stopTracking')}
             </button>
           )}
 
           {userLocation && (
             <div style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>
-              Your location: {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+              {t('tasksComponents.visit_location.yourLocationLabel', {
+                lat: userLocation.lat.toFixed(6),
+                lng: userLocation.lng.toFixed(6),
+              })}
             </div>
           )}
 
           {completeMutation.isSuccess && (
             <div className="task-success">
               <span className="success-icon">✅</span>
-              <p>Location reached! Task completed successfully.</p>
+              <p>{t('tasksComponents.visit_location.locationReached')}</p>
             </div>
           )}
         </div>

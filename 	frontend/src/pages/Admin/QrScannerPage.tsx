@@ -132,11 +132,21 @@ function QrScannerPage({ onBack }: QrScannerPageProps) {
         {onBack && (
           <button
             type="button"
-            className="qr-scanner-back-button"
+            className="admin-icon-button"
             onClick={onBack}
             title={t('admin.qrScanner.backToMain')}
           >
-            ← {t('admin.qrScanner.backToMain')}
+            <svg
+              className="admin-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path d="M19 12H5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="sr-only">{t('admin.qrScanner.backToMain')}</span>
           </button>
         )}
       </div>

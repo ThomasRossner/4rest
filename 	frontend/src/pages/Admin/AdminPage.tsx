@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useQuery, useMutation } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 import './AdminPage.css';
@@ -17,8 +18,18 @@ import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
 import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
 import QrScannerPage from './QrScannerPage';
 import { LocationMap } from '../../components/LocationMap/LocationMap';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 
-type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | 'location' | 'locationManage' | 'qrScanner' | null;
+type AdminMode =
+  | 'task'
+  | 'reward'
+  | 'taskManage'
+  | 'rewardManage'
+  | 'location'
+  | 'locationManage'
+  | 'qrScanner'
+  | 'forestStats'
+  | null;
 type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo' | 'visit_location';
 
 type AdminTaskTemplate = {
@@ -259,7 +270,7 @@ const FilterDropdown = ({
       }}
     >
       <div className="admin-filter-dropdown-header">
-        <span>Filter by {type}</span>
+        <span>{t('admin.filters.filterBy', { type })}</span>
         <button
           type="button"
           onClick={() => onSelect(null)}
@@ -385,7 +396,7 @@ const MobileFilterModal = ({
             type="button"
             className="admin-icon-button"
             onClick={onClose}
-            aria-label="Close filters"
+            aria-label={t('admin.filters.close')}
           >
             <Icon name="back" />
           </button>
@@ -1092,17 +1103,20 @@ type FieldLabelProps = {
   readOnly?: boolean;
 };
 
-const FieldLabel = ({ label, required, readOnly }: FieldLabelProps) => (
-  <span className="admin-field-label">
-    <span>{label}</span>
-    {required && (
-      <span className="admin-field-required" aria-hidden="true" title="Required field">
-        *
-      </span>
-    )}
-    {readOnly && <span className="admin-field-readonly">Read only</span>}
-  </span>
-);
+const FieldLabel = ({ label, required, readOnly }: FieldLabelProps) => {
+  const { t } = useTranslation();
+  return (
+    <span className="admin-field-label">
+      <span>{label}</span>
+      {required && (
+        <span className="admin-field-required" aria-hidden="true" title={t('admin.fields.required')}>
+          *
+        </span>
+      )}
+      {readOnly && <span className="admin-field-readonly">{t('admin.fields.readOnly')}</span>}
+    </span>
+  );
+};
 
 const moveItem = <T,>(items: T[], index: number, offset: number): T[] => {
   const newIndex = index + offset;
@@ -1222,7 +1236,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
   if (!questions.length) {
     return (
       <div className="admin-quiz-builder">
-        <p className="admin-quiz-empty">No questions yet. Add your first question below.</p>
+        <p className="admin-quiz-empty">{t('admin.task.quiz.empty')}</p>
         <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
           Add question
         </button>
@@ -1233,7 +1247,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
   return (
     <div className="admin-quiz-builder">
       <div className="admin-quiz-header">
-        <h3>Quiz questions</h3>
+        <h3>{t('admin.task.quiz.title')}</h3>
         <p>
           Add multiple choice questions for this video. Each question needs at least two answers and
           one correct answer.
@@ -1275,12 +1289,12 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
               </div>
 
               <label className="admin-field">
-                <span>Question text</span>
+                <span>{t('admin.task.quiz.questionText')}</span>
                 <input
                   type="text"
                   value={question.prompt}
                   onChange={(event) => handlePromptChange(question.id, event.target.value)}
-                  placeholder="Enter the question prompt"
+                  placeholder={t('admin.task.quiz.questionPlaceholder')}
                 />
               </label>
 
@@ -1296,7 +1310,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                         checked={question.correctAnswerId === answer.id}
                         onChange={() => selectCorrectAnswer(question.id, answer.id)}
                       />
-                      <span>Correct</span>
+                      <span>{t('admin.task.quiz.correct')}</span>
                     </label>
                     <input
                       type="text"
@@ -1361,6 +1375,7 @@ const ConfirmDialog = ({
   onCancel,
   onConfirm,
 }: ConfirmDialogState & { onCancel: () => void }) => {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -1374,7 +1389,7 @@ const ConfirmDialog = ({
         </div>
         <div className="admin-modal-footer">
           <button type="button" className="admin-action-button secondary" onClick={onCancel}>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             type="button"
@@ -1390,6 +1405,7 @@ const ConfirmDialog = ({
 };
 
 function AdminPage() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const isAdmin = user?.role === 'administrator';
@@ -2361,7 +2377,7 @@ function AdminPage() {
       await api.bulkUpdateTasksStatus(selectedTaskIds, active);
       setTaskManagementMessage({
         type: 'success',
-        text: active ? 'Selected tasks activated.' : 'Selected tasks deactivated.',
+        text: active ? t('admin.messages.selectedTasksActivated') : t('admin.messages.selectedTasksDeactivated'),
       });
       setSelectedTaskIds([]);
       void refetchTasks();
@@ -2377,9 +2393,9 @@ function AdminPage() {
     if (!selectedTaskIds.length) return;
     setTaskConfirm({
       visible: true,
-      title: 'Delete selected tasks',
-      description: 'Are you sure you want to permanently delete the selected tasks? This action cannot be undone.',
-      confirmLabel: 'Delete tasks',
+      title: t('admin.confirm.deleteSelectedTasks.title'),
+      description: t('admin.confirm.deleteSelectedTasks.description'),
+      confirmLabel: t('admin.confirm.deleteTasks'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2387,14 +2403,14 @@ function AdminPage() {
           await api.bulkDeleteTasks(selectedTaskIds);
           setTaskManagementMessage({
             type: 'success',
-            text: 'Selected tasks deleted.',
+            text: t('admin.messages.selectedTasksDeleted'),
           });
           setSelectedTaskIds([]);
           void refetchTasks();
         } catch (error: any) {
           setTaskManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete selected tasks.',
+            text: error?.message || t('admin.messages.failedToDeleteTasks'),
           });
         } finally {
           setTaskConfirm(defaultConfirmDialogState);
@@ -2409,13 +2425,13 @@ function AdminPage() {
       await api.bulkUpdateTasksStatus([taskId], active);
       setTaskManagementMessage({
         type: 'success',
-        text: active ? 'Task activated.' : 'Task deactivated.',
+        text: active ? t('admin.messages.taskActivated') : t('admin.messages.taskDeactivated'),
       });
       void refetchTasks();
     } catch (error: any) {
       setTaskManagementMessage({
         type: 'error',
-        text: error?.message || 'Failed to update task.',
+        text: error?.message || t('admin.messages.failedToUpdateTask'),
       });
     }
   };
@@ -2423,9 +2439,9 @@ function AdminPage() {
   const handleTaskDelete = async (taskId: string) => {
     setTaskConfirm({
       visible: true,
-      title: 'Delete task',
-      description: 'Are you sure you want to permanently delete this task? This action cannot be undone.',
-      confirmLabel: 'Delete task',
+      title: t('admin.confirm.deleteTaskSingle.title'),
+      description: t('admin.confirm.deleteTaskSingle.description'),
+      confirmLabel: t('admin.confirm.deleteTask'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2442,7 +2458,7 @@ function AdminPage() {
         } catch (error: any) {
           setTaskManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete task.',
+            text: error?.message || t('admin.messages.failedToDeleteTask'),
           });
         } finally {
           setTaskConfirm(defaultConfirmDialogState);
@@ -2458,7 +2474,7 @@ function AdminPage() {
       await api.bulkUpdateRewardsStatus(selectedRewardIds, active);
       setRewardManagementMessage({
         type: 'success',
-        text: active ? 'Selected rewards activated.' : 'Selected rewards deactivated.',
+        text: active ? t('admin.messages.selectedRewardsActivated') : t('admin.messages.selectedRewardsDeactivated'),
       });
       setSelectedRewardIds([]);
       void refetchRewardTemplates();
@@ -2474,9 +2490,9 @@ function AdminPage() {
     if (!selectedRewardIds.length) return;
     setRewardConfirm({
       visible: true,
-      title: 'Delete selected rewards',
-      description: 'Are you sure you want to permanently delete the selected rewards? This action cannot be undone.',
-      confirmLabel: 'Delete rewards',
+      title: t('admin.confirm.deleteSelectedRewards.title'),
+      description: t('admin.confirm.deleteSelectedRewards.description'),
+      confirmLabel: t('admin.confirm.deleteRewards'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2484,14 +2500,14 @@ function AdminPage() {
           await api.bulkDeleteRewards(selectedRewardIds);
           setRewardManagementMessage({
             type: 'success',
-            text: 'Selected rewards deleted.',
+            text: t('admin.messages.selectedRewardsDeleted'),
           });
           setSelectedRewardIds([]);
           void refetchRewardTemplates();
         } catch (error: any) {
           setRewardManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete selected rewards.',
+            text: error?.message || t('admin.messages.failedToDeleteRewards'),
           });
         } finally {
           setRewardConfirm(defaultConfirmDialogState);
@@ -2506,7 +2522,7 @@ function AdminPage() {
       await api.bulkUpdateRewardsStatus([rewardId], active);
       setRewardManagementMessage({
         type: 'success',
-        text: active ? 'Reward activated.' : 'Reward deactivated.',
+        text: active ? t('admin.messages.rewardActivated') : t('admin.messages.rewardDeactivated'),
       });
       void refetchRewardTemplates();
     } catch (error: any) {
@@ -2520,9 +2536,9 @@ function AdminPage() {
   const handleRewardDelete = async (rewardId: string) => {
     setRewardConfirm({
       visible: true,
-      title: 'Delete reward',
-      description: 'Are you sure you want to permanently delete this reward? This action cannot be undone.',
-      confirmLabel: 'Delete reward',
+      title: t('admin.confirm.deleteRewardSingle.title'),
+      description: t('admin.confirm.deleteRewardSingle.description'),
+      confirmLabel: t('admin.confirm.deleteReward'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2539,7 +2555,7 @@ function AdminPage() {
         } catch (error: any) {
           setRewardManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete reward.',
+            text: error?.message || t('admin.messages.failedToDeleteReward'),
           });
         } finally {
           setRewardConfirm(defaultConfirmDialogState);
@@ -2554,7 +2570,7 @@ function AdminPage() {
       await api.bulkUpdateLocationsStatus([locationId], active);
       setLocationManagementMessage({
         type: 'success',
-        text: active ? 'Location activated.' : 'Location deactivated.',
+        text: active ? t('admin.messages.locationActivated') : t('admin.messages.locationDeactivated'),
       });
       void refetchLocations();
     } catch (error: any) {
@@ -2572,7 +2588,7 @@ function AdminPage() {
       await api.bulkUpdateLocationsStatus(selectedLocationIds, active);
       setLocationManagementMessage({
         type: 'success',
-        text: active ? 'Selected locations activated.' : 'Selected locations deactivated.',
+        text: active ? t('admin.messages.selectedLocationsActivated') : t('admin.messages.selectedLocationsDeactivated'),
       });
       setSelectedLocationIds([]);
       void refetchLocations();
@@ -2588,10 +2604,9 @@ function AdminPage() {
     if (!selectedLocationIds.length) return;
     setLocationConfirm({
       visible: true,
-      title: 'Delete selected locations',
-      description:
-        'Are you sure you want to permanently delete the selected locations? Tasks and rewards referencing them will need to be updated.',
-      confirmLabel: 'Delete locations',
+      title: t('admin.confirm.deleteSelectedLocations.title'),
+      description: t('admin.confirm.deleteSelectedLocations.description'),
+      confirmLabel: t('admin.confirm.deleteLocations'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2599,14 +2614,14 @@ function AdminPage() {
           await api.bulkDeleteLocations(selectedLocationIds);
           setLocationManagementMessage({
             type: 'success',
-            text: 'Selected locations deleted.',
+            text: t('admin.messages.selectedLocationsDeleted'),
           });
           setSelectedLocationIds([]);
           void refetchLocations();
         } catch (error: any) {
           setLocationManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete selected locations.',
+            text: error?.message || t('admin.messages.failedToDeleteLocations'),
           });
         } finally {
           setLocationConfirm(defaultConfirmDialogState);
@@ -2810,10 +2825,9 @@ const goToRewardCreation = () => {
     }
     setLocationConfirm({
       visible: true,
-      title: `Delete ${location.name}?`,
-      description:
-        'Are you sure you want to delete this location? Tasks and rewards using it will need to be reassigned.',
-      confirmLabel: 'Delete location',
+      title: t('admin.confirm.deleteLocationWithName.title', { name: location.name }),
+      description: t('admin.confirm.deleteLocationWithName.description'),
+      confirmLabel: t('admin.confirm.deleteLocation'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2821,7 +2835,7 @@ const goToRewardCreation = () => {
           await api.deleteLocation(location.id);
           setLocationManagementMessage({
             type: 'success',
-            text: 'Location deleted successfully.',
+            text: t('admin.messages.locationDeletedSuccessfully'),
           });
           if (isEditingLocation && editingLocationId === location.id) {
             cancelLocationEdit();
@@ -2831,7 +2845,7 @@ const goToRewardCreation = () => {
         } catch (error: any) {
           setLocationManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete location.',
+            text: error?.message || t('admin.messages.failedToDeleteLocation'),
           });
         } finally {
           setLocationConfirm(defaultConfirmDialogState);
@@ -2867,8 +2881,8 @@ const goToRewardCreation = () => {
   if (!isAdmin) {
     return (
       <div className="admin-page">
-        <h1 className="admin-title">Administrator Area</h1>
-        <p className="admin-info">You need administrator privileges to access this page.</p>
+        <h1 className="admin-title">{t('admin.title')}</h1>
+        <p className="admin-info">{t('admin.requiresPrivileges')}</p>
       </div>
     );
   }
@@ -2878,15 +2892,16 @@ const goToRewardCreation = () => {
       <header className="admin-header">
         <nav className="admin-navbar">
           <div className="admin-navbar-space" aria-hidden="true" />
-          <button className="admin-icon-button admin-navbar-action" onClick={logout} title="Logout">
+          <LanguageSwitcher compact className="admin-navbar-language" />
+          <button className="admin-icon-button admin-navbar-action" onClick={logout} title={t('admin.logout')}>
             <Icon name="logout" />
-            <span className="sr-only">Logout</span>
+            <span className="sr-only">{t('admin.logout')}</span>
           </button>
         </nav>
 
         <div className="admin-hero">
-          <h1 className="admin-hero-title">Administrator Home</h1>
-          <p className="admin-hero-subtitle">Curate experiences for guests, employees, and partners.</p>
+          <h1 className="admin-hero-title">{t('admin.home.title')}</h1>
+          <p className="admin-hero-subtitle">{t('admin.home.subtitle')}</p>
         </div>
       </header>
 
@@ -2894,23 +2909,23 @@ const goToRewardCreation = () => {
         <div className="admin-choice-grid">
           <button className="admin-choice-card" onClick={() => setMode('task')}>
             <span className="admin-choice-icon">✅</span>
-            <h2>Create Task</h2>
-            <p>Use an existing task or start from scratch.</p>
+            <h2>{t('admin.actions.createTask.title')}</h2>
+            <p>{t('admin.actions.createTask.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('reward')}>
             <span className="admin-choice-icon">🎁</span>
-            <h2>Create Reward</h2>
-            <p>Publish a new reward for the marketplace.</p>
+            <h2>{t('admin.actions.createReward.title')}</h2>
+            <p>{t('admin.actions.createReward.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
             <span className="admin-choice-icon">🗂️</span>
-            <h2>Manage Tasks</h2>
-            <p>Browse, edit, activate, deactivate, or delete existing tasks.</p>
+            <h2>{t('admin.actions.manageTasks.title')}</h2>
+            <p>{t('admin.actions.manageTasks.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('rewardManage')}>
             <span className="admin-choice-icon">🧾</span>
-            <h2>Manage Rewards</h2>
-            <p>Review and maintain rewards available to users.</p>
+            <h2>{t('admin.actions.manageRewards.title')}</h2>
+            <p>{t('admin.actions.manageRewards.description')}</p>
           </button>
           <button
             className="admin-choice-card"
@@ -2920,116 +2935,83 @@ const goToRewardCreation = () => {
             }}
           >
             <span className="admin-choice-icon">📍</span>
-            <h2>Create Location</h2>
-            <p>Define an online or physical location for tasks and rewards.</p>
+            <h2>{t('admin.actions.createLocation.title')}</h2>
+            <p>{t('admin.actions.createLocation.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('locationManage')}>
             <span className="admin-choice-icon">🗺️</span>
-            <h2>Manage Locations</h2>
-            <p>Update or remove available locations.</p>
+            <h2>{t('admin.actions.manageLocations.title')}</h2>
+            <p>{t('admin.actions.manageLocations.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('qrScanner')}>
             <span className="admin-choice-icon">📷</span>
-            <h2>Redeem Rewards</h2>
-            <p>Scan QR codes to verify and redeem rewards.</p>
+            <h2>{t('admin.actions.redeemRewards.title')}</h2>
+            <p>{t('admin.actions.redeemRewards.description')}</p>
           </button>
           <button
             className="admin-choice-card"
             onClick={() => {
               void loadForestStats();
-              setMode('task'); // show stats panel inside the Task section
+              setMode('forestStats');
             }}
           >
             <span className="admin-choice-icon">🌲</span>
-            <h2>Forest Debug Stats</h2>
-            <p>View per-user tree and completed-task counts for debugging.</p>
+            <h2>{t('admin.actions.forestDebugStats.title')}</h2>
+            <p>{t('admin.actions.forestDebugStats.description')}</p>
           </button>
         </div>
       )}
 
-      {mode === 'task' && (
+      {mode === 'forestStats' && (
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>{isEditingTask ? 'Edit Task' : 'Publish Task'}</h2>
-              <p>
-                {isEditingTask
-                  ? 'Update the selected task using the form below.'
-                  : 'Select an existing task or start from scratch depending on the task type.'}
-              </p>
+              <h2>{t('admin.forestStats.title')}</h2>
+              <p>{t('admin.forestStats.subtitle')}</p>
             </div>
             <div className="admin-actions">
-              {!isEditingTask && (
-                <button
-                  className="admin-icon-button"
-                  onClick={() => refetchTasks()}
-                  title="Refresh tasks"
-                >
-                  <Icon name="refresh" />
-                  <span className="sr-only">Refresh tasks</span>
-                </button>
-              )}
               <button
                 className="admin-icon-button"
-                onClick={() => {
-                  if (isEditingTask) {
-                    cancelTaskEdit();
-                  } else {
-                    setMode(null);
-                  }
-                }}
-                title={isEditingTask ? 'Cancel editing' : 'Back to main menu'}
+                onClick={() => void loadForestStats()}
+                title={t('admin.forestStats.refresh')}
+                disabled={forestStatsLoading}
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">{t('admin.forestStats.refresh')}</span>
+              </button>
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.forestStats.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingTask ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{t('admin.forestStats.back')}</span>
               </button>
             </div>
           </header>
 
-          {tasksLoading && <p>Loading tasks…</p>}
-          {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
-          {Boolean(locationsError) && (
-            <p className="admin-error">
-              Failed to load locations. Create or refresh locations before publishing tasks.
-            </p>
+          {forestStatsLoading && <p>{t('admin.forestStats.loading')}</p>}
+          {forestStatsError && <p className="admin-error">{forestStatsError}</p>}
+          {!forestStatsLoading && !forestStatsError && forestStats.length === 0 && (
+            <p className="admin-field-note">{t('admin.forestStats.noUsers')}</p>
           )}
-
-          {/* Forest debug stats panel */}
-          <div className="admin-form-card" style={{ marginBottom: '1.5rem' }}>
-            <div className="admin-form-section-header">
-              <div>
-                <h3>Forest Debug Stats</h3>
-                <p>
-                  Per-user tree counts vs. completed tasks, based on the current database state.
-                  Useful for checking the forest validation script without using psql.
-                </p>
+          {!forestStatsLoading && !forestStatsError && forestStats.length > 0 && (
+            <div className="admin-form-card">
+              <div className="admin-form-section-header">
+                <div>
+                  <h3>{t('admin.forestStats.table.title')}</h3>
+                  <p className="admin-field-note">{t('admin.forestStats.table.subtitle')}</p>
+                </div>
               </div>
-              <button
-                type="button"
-                className="admin-icon-button"
-                onClick={() => void loadForestStats()}
-                title="Refresh forest stats"
-                disabled={forestStatsLoading}
-              >
-                <Icon name="refresh" />
-                <span className="sr-only">Refresh forest stats</span>
-              </button>
-            </div>
-            {forestStatsLoading && <p>Loading forest stats…</p>}
-            {forestStatsError && <p className="admin-error">{forestStatsError}</p>}
-            {!forestStatsLoading && !forestStatsError && forestStats.length === 0 && (
-              <p className="admin-field-note">No users found.</p>
-            )}
-            {!forestStatsLoading && !forestStatsError && forestStats.length > 0 && (
               <div className="admin-table-wrapper" style={{ marginTop: '0.75rem' }}>
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>User</th>
-                      <th>Points</th>
-                      <th>Trees</th>
-                      <th>Completed tasks</th>
-                      <th>Counts consistent?</th>
+                      <th>{t('admin.forestStats.table.user')}</th>
+                      <th>{t('admin.forestStats.table.points')}</th>
+                      <th>{t('admin.forestStats.table.trees')}</th>
+                      <th>{t('admin.forestStats.table.completedTasks')}</th>
+                      <th>{t('admin.forestStats.table.consistent')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3058,35 +3040,84 @@ const goToRewardCreation = () => {
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {mode === 'task' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{isEditingTask ? t('admin.task.edit.title') : t('admin.task.publish.title')}</h2>
+              <p>
+                {isEditingTask
+                  ? t('admin.task.edit.subtitle')
+                  : t('admin.task.publish.subtitle')}
+              </p>
+            </div>
+            <div className="admin-actions">
+              {!isEditingTask && (
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchTasks()}
+                  title={t('admin.task.refresh')}
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">{t('admin.task.refresh')}</span>
+                </button>
+              )}
+              <button
+                className="admin-icon-button"
+                onClick={() => {
+                  if (isEditingTask) {
+                    cancelTaskEdit();
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title={isEditingTask ? t('admin.task.cancelEditing') : t('admin.task.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{isEditingTask ? t('admin.task.cancelEditing') : t('admin.task.back')}</span>
+              </button>
+            </div>
+          </header>
+
+          {tasksLoading && <p>{t('admin.task.loading')}</p>}
+          {Boolean(tasksError) && <p className="admin-error">{t('admin.task.loadError')}</p>}
+          {Boolean(locationsError) && (
+            <p className="admin-error">{t('admin.task.locationsError')}</p>
+          )}
 
           <div className="admin-form-card">
             {!isEditingTask && (
               <label className="admin-field">
-                <span>Create from</span>
+                <span>{t('admin.task.createFrom')}</span>
                 <select
                   value={taskSource}
-                  onChange={(event) => setTaskSource(event.target.value as TaskSource)}
+                  onChange={(event) => {
+                    setTaskSource(event.target.value as TaskSource);
+                  }}
                 >
-                  <option value="">Select option</option>
-                  <option value="existing">Existing task</option>
-                  <option value="video">Start from scratch – Video task</option>
-                  <option value="qr">Start from scratch – QR task</option>
-                  <option value="photo">Start from scratch – Photo task</option>
-                  <option value="visit_location">Start from scratch – Visit location task</option>
+                  <option value="">{t('admin.task.selectOption')}</option>
+                  <option value="existing">{t('admin.task.existingTask')}</option>
+                  <option value="video">{t('admin.task.startFromScratch.video')}</option>
+                  <option value="qr">{t('admin.task.startFromScratch.qr')}</option>
+                  <option value="photo">{t('admin.task.startFromScratch.photo')}</option>
+                  <option value="visit_location">{t('admin.task.startFromScratch.visitLocation')}</option>
                 </select>
               </label>
             )}
 
             {!isEditingTask && taskSource === 'existing' && (
               <label className="admin-field">
-                <span>Select existing task</span>
+                <span>{t('admin.task.selectExisting')}</span>
                 <select
                   value={selectedExistingTaskId}
                   onChange={(event) => setSelectedExistingTaskId(event.target.value)}
                 >
-                  <option value="">Select task</option>
+                  <option value="">{t('admin.task.selectTask')}</option>
                   {existingTemplates.map((template) => (
                     <option key={template.id} value={template.id}>
                       {template.title} ({template.type})
@@ -3101,8 +3132,8 @@ const goToRewardCreation = () => {
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
                     <div>
-                      <h3>Task basics</h3>
-                      <p>Provide the essential details for this task.</p>
+                      <h3>{t('admin.task.basics.title')}</h3>
+                      <p>{t('admin.task.basics.subtitle')}</p>
                     </div>
                     <TaskTypeBadge type={taskForm.type} />
                   </div>
@@ -3161,7 +3192,7 @@ const goToRewardCreation = () => {
                         </select>
                       ) : (
                         <div className="admin-field-note">
-                          <p>No locations available.</p>
+                          <p>{t('admin.task.noLocations')}</p>
                           <button type="button" className="link-button" onClick={goToLocationCreation}>
                             Create a location
                           </button>
@@ -3203,7 +3234,7 @@ const goToRewardCreation = () => {
                     {taskForm.type === 'video' && (
                       <>
                         <div className="admin-field admin-field-span-2">
-                          <FieldLabel label="Video source" required />
+                          <FieldLabel label={t('admin.fields.videoSource')} required />
                           <div className="admin-video-source">
                             <label className="admin-video-option">
                               <input
@@ -3258,7 +3289,7 @@ const goToRewardCreation = () => {
                         )}
                         {taskForm.videoSource === 'upload' && (
                           <div className="admin-field admin-field-span-2 admin-video-upload-block">
-                            <FieldLabel label="Video file" required />
+                            <FieldLabel label={t('admin.fields.videoFile')} required />
                             <div className="admin-upload-field">
                               <span>Select a video file to upload</span>
                               <div className="admin-upload-control">
@@ -3300,7 +3331,7 @@ const goToRewardCreation = () => {
                     )}
                     {taskForm.type === 'photo' && (
                       <div className="admin-form-full">
-                        <FieldLabel label="Photo requirement" readOnly />
+                        <FieldLabel label={t('admin.fields.photoRequirement')} readOnly />
                         <p className="admin-field-note">
                           A photo is always required for this task type.
                         </p>
@@ -3372,7 +3403,7 @@ const goToRewardCreation = () => {
                   </div>
                 {taskForm.type === 'video' && (
                   <div className="admin-form-full admin-quiz-block">
-                      <FieldLabel label="Quiz questions" required />
+                      <FieldLabel label={t('admin.task.quiz.title')} required />
                       <QuizBuilder
                         questions={taskForm.quizQuestions}
                         onChange={(questions) =>
@@ -3392,36 +3423,36 @@ const goToRewardCreation = () => {
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
-                      <FieldLabel label="Allowed roles" />
+                      <FieldLabel label={t('admin.fields.allowedRoles')} />
                       <MultiSelectDropdown
                         options={ROLE_OPTIONS}
                         selectedValues={taskForm.allowedRoles}
                         onChange={(selected) =>
                           setTaskForm((prev) => ({ ...prev, allowedRoles: selected }))
                         }
-                        placeholder="All roles"
+                        placeholder={t('admin.task.audience.allRoles')}
                       />
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Allowed user types" />
+                      <FieldLabel label={t('admin.fields.allowedUserTypes')} />
                       <MultiSelectDropdown
                         options={USER_TYPE_OPTIONS}
                         selectedValues={taskForm.allowedUserTypes}
                         onChange={(selected) =>
                           setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }))
                         }
-                        placeholder="All user types"
+                        placeholder={t('admin.task.audience.allUserTypes')}
                       />
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Allowed hotel IDs" />
+                      <FieldLabel label={t('admin.fields.allowedHotels')} />
                       <MultiSelectDropdown
                         options={HOTEL_OPTIONS}
                         selectedValues={taskForm.allowedHotelIds}
                         onChange={(selected) =>
                           setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }))
                         }
-                        placeholder="All hotels"
+                        placeholder={t('admin.task.audience.allHotels')}
                       />
                     </div>
                   </div>
@@ -3466,10 +3497,10 @@ const goToRewardCreation = () => {
                       <p className="admin-publish-hint">
                         {hasAttemptedPublish && taskValidation.message
                           ? taskValidation.message
-                          : 'Complete required fields to enable publish.'}
+                          : t('admin.task.publishHint.completeRequired')}
                       </p>
                     ) : (
-                      <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                      <p className="admin-publish-hint">{t('admin.task.publishHint.ready')}</p>
                     )}
                   </div>
                   <div className="admin-form-actions-buttons">
@@ -3479,7 +3510,7 @@ const goToRewardCreation = () => {
                         className="admin-action-button secondary"
                         onClick={cancelTaskEdit}
                       >
-                        Cancel
+                        {t('common.actions.cancel')}
                       </button>
                     )}
                     <button
@@ -3528,10 +3559,10 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title={isEditingReward ? 'Cancel editing' : 'Back to main menu'}
+                title={isEditingReward ? t('admin.reward.cancelEditing') : t('admin.reward.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingReward ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{isEditingReward ? t('admin.reward.cancelEditing') : t('admin.reward.back')}</span>
               </button>
             </div>
           </header>
@@ -3655,7 +3686,7 @@ const goToRewardCreation = () => {
                         </select>
                       ) : (
                         <div className="admin-field-note">
-                          <p>No locations available.</p>
+                          <p>{t('admin.task.noLocations')}</p>
                           <button type="button" className="link-button" onClick={goToLocationCreation}>
                             Create a location
                           </button>
@@ -3712,36 +3743,36 @@ const goToRewardCreation = () => {
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
-                      <FieldLabel label="Allowed roles" />
+                      <FieldLabel label={t('admin.fields.allowedRoles')} />
                       <MultiSelectDropdown
                         options={ROLE_OPTIONS}
                         selectedValues={rewardForm.allowedRoles}
                         onChange={(selected) =>
                           setRewardForm((prev) => ({ ...prev, allowedRoles: selected }))
                         }
-                        placeholder="All roles"
+                        placeholder={t('admin.reward.audience.allRoles')}
                       />
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Allowed user types" />
+                      <FieldLabel label={t('admin.fields.allowedUserTypes')} />
                       <MultiSelectDropdown
                         options={USER_TYPE_OPTIONS}
                         selectedValues={rewardForm.allowedUserTypes}
                         onChange={(selected) =>
                           setRewardForm((prev) => ({ ...prev, allowedUserTypes: selected }))
                         }
-                        placeholder="All user types"
+                        placeholder={t('admin.reward.audience.allUserTypes')}
                       />
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Allowed hotel IDs" />
+                      <FieldLabel label={t('admin.fields.allowedHotels')} />
                       <MultiSelectDropdown
                         options={HOTEL_OPTIONS}
                         selectedValues={rewardForm.allowedHotelIds}
                         onChange={(selected) =>
                           setRewardForm((prev) => ({ ...prev, allowedHotelIds: selected }))
                         }
-                        placeholder="All hotels"
+                        placeholder={t('admin.reward.audience.allHotels')}
                       />
                     </div>
                   </div>
@@ -3786,10 +3817,10 @@ const goToRewardCreation = () => {
                       <p className="admin-publish-hint">
                         {hasAttemptedRewardPublish && rewardValidation.message
                           ? rewardValidation.message
-                          : 'Complete required fields to enable publish.'}
+                          : t('admin.reward.publishHint.completeRequired')}
                       </p>
                     ) : (
-                      <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                      <p className="admin-publish-hint">{t('admin.reward.publishHint.ready')}</p>
                     )}
                   </div>
                   <div className="admin-form-actions-buttons">
@@ -3799,7 +3830,7 @@ const goToRewardCreation = () => {
                         className="admin-action-button secondary"
                         onClick={cancelRewardEdit}
                       >
-                        Cancel
+                        {t('common.actions.cancel')}
                       </button>
                     )}
                     <button
@@ -3997,10 +4028,10 @@ const goToRewardCreation = () => {
                     <p className="admin-publish-hint">
                       {hasAttemptedLocationSubmit && locationValidation.message
                         ? locationValidation.message
-                        : 'Complete required fields to enable save.'}
+                        : t('admin.location.publishHint.completeRequired')}
                     </p>
                   ) : (
-                    <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                    <p className="admin-publish-hint">{t('admin.location.publishHint.ready')}</p>
                   )}
                 </div>
                 <div className="admin-form-actions-buttons">
@@ -4010,7 +4041,7 @@ const goToRewardCreation = () => {
                       className="admin-action-button secondary"
                       onClick={cancelLocationEdit}
                     >
-                      Cancel
+                      {t('common.actions.cancel')}
                     </button>
                   )}
                   <button
@@ -4042,32 +4073,32 @@ const goToRewardCreation = () => {
               <button
                 className="admin-icon-button"
                 onClick={() => refetchLocations()}
-                title="Refresh locations"
+                title={t('admin.locationManage.refresh')}
               >
                 <Icon name="refresh" />
-                <span className="sr-only">Refresh locations</span>
+                <span className="sr-only">{t('admin.locationManage.refresh')}</span>
               </button>
               <button
                 className="admin-icon-button"
                 onClick={() => setMode(null)}
-                title="Back to main menu"
+                title={t('admin.locationManage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{t('admin.locationManage.back')}</span>
               </button>
             </div>
           </header>
 
-          {locationsLoading && <p>Loading locations…</p>}
+          {locationsLoading && <p>{t('admin.locationManage.loading')}</p>}
           {Boolean(locationsError) && (
-            <p className="admin-error">Failed to load locations. Please try again.</p>
+            <p className="admin-error">{t('admin.locationManage.loadError')}</p>
           )}
 
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
-                <h3>Existing locations</h3>
-                <p>Each task and reward references one of these locations.</p>
+                <h3>{t('admin.locationManage.existing.title')}</h3>
+                <p>{t('admin.locationManage.existing.subtitle')}</p>
               </div>
               <div className="admin-management-controls">
                 <label className="admin-toggle">
@@ -4081,7 +4112,7 @@ const goToRewardCreation = () => {
                       setSelectedLocationIds([]);
                     }}
                   />
-                  <span>Show inactive</span>
+                  <span>{t('admin.locationManage.showInactive')}</span>
                 </label>
                 <button className="admin-action-button" type="button" onClick={goToLocationCreation}>
                   New location
@@ -4148,7 +4179,7 @@ const goToRewardCreation = () => {
                               : []
                           )
                         }
-                        aria-label="Select all locations"
+                        aria-label={t('admin.locationManage.selectAll')}
                       />
                     </th>
                     <th>Name</th>
@@ -4267,10 +4298,10 @@ const goToRewardCreation = () => {
                 <button
                   className="admin-icon-button"
                   onClick={() => refetchTasks()}
-                  title="Refresh tasks"
+                  title={t('admin.taskManage.refresh')}
                 >
                   <Icon name="refresh" />
-                  <span className="sr-only">Refresh tasks</span>
+                  <span className="sr-only">{t('admin.taskManage.refresh')}</span>
                 </button>
               )}
               <button
@@ -4282,16 +4313,16 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title={isEditingTask ? 'Cancel editing' : 'Back to main menu'}
+                title={isEditingTask ? t('admin.task.cancelEditing') : t('admin.taskManage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingTask ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{isEditingTask ? t('admin.task.cancelEditing') : t('admin.taskManage.back')}</span>
               </button>
             </div>
           </header>
 
-          {tasksLoading && <p>Loading tasks…</p>}
-          {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
+          {tasksLoading && <p>{t('admin.taskManage.loading')}</p>}
+          {Boolean(tasksError) && <p className="admin-error">{t('admin.taskManage.loadError')}</p>}
 
           <button 
             className="admin-action-button admin-mobile-new-task-button" 
@@ -4304,7 +4335,7 @@ const goToRewardCreation = () => {
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
-                <h3>Existing tasks</h3>
+                <h3>{t('admin.taskManage.existing.title')}</h3>
                 <p>Review, edit, activate, deactivate, or delete tasks directly.</p>
               </div>
               <div className="admin-management-controls">
@@ -4319,13 +4350,13 @@ const goToRewardCreation = () => {
                       setSelectedTaskIds([]);
                     }}
                   />
-                  <span>Show inactive</span>
+                  <span>{t('admin.taskManage.showInactive')}</span>
                 </label>
                 <button
                   className="admin-mobile-filter-button"
                   type="button"
                   onClick={() => setIsMobileTaskFilterOpen(true)}
-                  aria-label="Open filters"
+                  aria-label={t('admin.taskManage.openFilters')}
                 >
                   <Icon name="filter" />
                   {(taskFilterLocation || taskFilterStatus || taskFilterRecurrence || taskFilterType) && (
@@ -4397,7 +4428,7 @@ const goToRewardCreation = () => {
                               : []
                           )
                         }
-                        aria-label="Select all tasks"
+                        aria-label={t('admin.taskManage.selectAll')}
                       />
                     </th>
                     <th>Task</th>
@@ -4627,10 +4658,10 @@ const goToRewardCreation = () => {
                 <button
                   className="admin-icon-button"
                   onClick={() => refetchRewardTemplates()}
-                  title="Refresh rewards"
+                  title={t('admin.rewardManage.refresh')}
                 >
                   <Icon name="refresh" />
-                  <span className="sr-only">Refresh rewards</span>
+                  <span className="sr-only">{t('admin.rewardManage.refresh')}</span>
                 </button>
               )}
               <button
@@ -4642,24 +4673,24 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title={isEditingReward ? 'Cancel editing' : 'Back to main menu'}
+                title={isEditingReward ? t('admin.reward.cancelEditing') : t('admin.rewardManage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingReward ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{isEditingReward ? t('admin.reward.cancelEditing') : t('admin.rewardManage.back')}</span>
               </button>
             </div>
           </header>
 
-          {rewardTemplatesLoading && <p>Loading rewards…</p>}
+          {rewardTemplatesLoading && <p>{t('admin.rewardManage.loading')}</p>}
           {Boolean(rewardTemplatesError) && (
-            <p className="admin-error">Failed to load rewards.</p>
+            <p className="admin-error">{t('admin.rewardManage.loadError')}</p>
           )}
 
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
-                <h3>Existing rewards</h3>
-                <p>Maintain active rewards, edit their details, or clean up inactive entries.</p>
+                <h3>{t('admin.rewardManage.existing.title')}</h3>
+                <p>{t('admin.rewardManage.existing.subtitle')}</p>
               </div>
               <div className="admin-management-controls">
                 <label className="admin-toggle">
@@ -4753,7 +4784,7 @@ const goToRewardCreation = () => {
                               : []
                           )
                         }
-                        aria-label="Select all rewards"
+                        aria-label={t('admin.rewardManage.selectAll')}
                       />
                     </th>
                     <th>Reward</th>

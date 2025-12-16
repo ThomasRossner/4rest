@@ -146,7 +146,8 @@
         "all": "Alle Typen",
         "video": "Video",
         "qr": "QR-Code",
-        "photo": "Foto"
+        "photo": "Foto",
+        "visit_location": "Standort besuchen"
       },
       "completion": {
         "label": "Status",
@@ -232,6 +233,337 @@
     }
   },
   "admin": {
+    "title": "Administrator-Bereich",
+    "requiresPrivileges": "Sie benötigen Administratorrechte, um auf diese Seite zuzugreifen.",
+    "home": {
+      "title": "Administrator-Startseite",
+      "subtitle": "Erstellen Sie Erlebnisse für Gäste, Mitarbeiter und Partner."
+    },
+    "logout": "Abmelden",
+    "actions": {
+      "createTask": {
+        "title": "Aufgabe erstellen",
+        "description": "Verwenden Sie eine bestehende Aufgabe oder beginnen Sie von Grund auf."
+      },
+      "createReward": {
+        "title": "Belohnung erstellen",
+        "description": "Veröffentlichen Sie eine neue Belohnung für den Marktplatz."
+      },
+      "manageTasks": {
+        "title": "Aufgaben verwalten",
+        "description": "Durchsuchen, bearbeiten, aktivieren, deaktivieren oder löschen Sie bestehende Aufgaben."
+      },
+      "manageRewards": {
+        "title": "Belohnungen verwalten",
+        "description": "Überprüfen und pflegen Sie für Benutzer verfügbare Belohnungen."
+      },
+      "createLocation": {
+        "title": "Standort erstellen",
+        "description": "Definieren Sie einen Online- oder physischen Standort für Aufgaben und Belohnungen."
+      },
+      "manageLocations": {
+        "title": "Standorte verwalten",
+        "description": "Aktualisieren oder entfernen Sie verfügbare Standorte."
+      },
+      "redeemRewards": {
+        "title": "Belohnungen einlösen",
+        "description": "Scannen Sie QR-Codes, um Belohnungen zu verifizieren und einzulösen."
+      },
+      "forestDebugStats": {
+        "title": "Wald-Debug-Statistiken",
+        "description": "Zeigen Sie pro Benutzer Baum- und abgeschlossene Aufgabenanzahlen zur Fehlerbehebung an."
+      }
+    },
+    "task": {
+      "publish": {
+        "title": "Aufgabe veröffentlichen",
+        "subtitle": "Wählen Sie eine bestehende Aufgabe oder beginnen Sie je nach Aufgabentyp von Grund auf."
+      },
+      "edit": {
+        "title": "Aufgabe bearbeiten",
+        "subtitle": "Aktualisieren Sie die ausgewählte Aufgabe mit dem untenstehenden Formular."
+      },
+      "createFrom": "Erstellen aus",
+      "selectOption": "Option auswählen",
+      "existingTask": "Bestehende Aufgabe",
+      "startFromScratch": {
+        "video": "Von Grund auf – Video-Aufgabe",
+        "qr": "Von Grund auf – QR-Aufgabe",
+        "photo": "Von Grund auf – Foto-Aufgabe",
+        "visitLocation": "Von Grund auf – Standort besuchen Aufgabe"
+      },
+      "selectExisting": "Bestehende Aufgabe auswählen",
+      "selectTask": "Aufgabe auswählen",
+      "basics": {
+        "title": "Aufgabengrundlagen",
+        "subtitle": "Geben Sie die wesentlichen Details für diese Aufgabe an."
+      },
+      "selectLocation": "Standort auswählen",
+      "noLocations": "Keine Standorte verfügbar.",
+      "loadingLocations": "Standorte werden geladen…",
+      "videoSource": {
+        "url": "Externe Video-URL verwenden",
+        "upload": "Video-Datei hochladen"
+      },
+      "videoUrlPlaceholder": "https://example.com/video.mp4",
+      "selectVideoFile": "Wählen Sie eine Video-Datei zum Hochladen",
+      "chooseFile": "Datei auswählen",
+      "targetLocation": {
+        "title": "Zielstandort",
+        "addressPlaceholder": "Adresse wird automatisch aus der Kartenauswahl ausgefüllt",
+        "latitudePlaceholder": "52.5200",
+        "longitudePlaceholder": "13.4050"
+      },
+      "audience": {
+        "title": "Zielgruppe & Zugriff",
+        "subtitle": "Beschränken Sie die Sichtbarkeit auf bestimmte Rollen, Benutzertypen oder Hotels.",
+        "allRoles": "Alle Rollen",
+        "allUserTypes": "Alle Benutzertypen",
+        "allHotels": "Alle Hotels"
+      },
+      "recurrence": {
+        "title": "Wiederholung",
+        "subtitle": "Legen Sie fest, wie oft diese Aufgabe automatisch neu erstellt werden soll.",
+        "once": "Einmal - Aufgabe wird einmal erstellt und verschwindet, wenn sie abgeschlossen ist",
+        "daily": "Täglich - Aufgabe erscheint einmal täglich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Tag)",
+        "weekly": "Wöchentlich - Aufgabe erscheint einmal wöchentlich (wenn die vorherige abgeschlossen ist, wartet bis zur nächsten Woche)",
+        "monthly": "Monatlich - Aufgabe erscheint einmal monatlich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Monat)"
+      },
+      "publishHint": {
+        "editing": "Bestehende Aufgabe bearbeiten.",
+        "uploading": "Video-Datei wird hochgeladen…",
+        "ready": "Alle Pflichtfelder sind ausgefüllt.",
+        "completeRequired": "Vervollständigen Sie die erforderlichen Felder, um zu veröffentlichen."
+      },
+      "quiz": {
+        "title": "Quizfragen",
+        "empty": "Noch keine Fragen. Fügen Sie unten Ihre erste Frage hinzu.",
+        "questionText": "Fragetext",
+        "questionPlaceholder": "Geben Sie die Frageaufforderung ein",
+        "correct": "Richtig"
+      },
+      "refresh": "Aufgaben aktualisieren",
+      "loading": "Aufgaben werden geladen…",
+      "loadError": "Aufgaben konnten nicht geladen werden.",
+      "locationsError": "Standorte konnten nicht geladen werden. Erstellen oder aktualisieren Sie Standorte, bevor Sie Aufgaben veröffentlichen.",
+      "cancelEditing": "Bearbeitung abbrechen",
+      "back": "Zurück zum Hauptmenü"
+    },
+    "reward": {
+      "create": {
+        "title": "Belohnung veröffentlichen",
+        "subtitle": "Wählen Sie eine bestehende Belohnung oder beginnen Sie von Grund auf."
+      },
+      "edit": {
+        "title": "Belohnung bearbeiten",
+        "subtitle": "Aktualisieren Sie die ausgewählte Belohnung mit dem untenstehenden Formular."
+      },
+      "createFrom": "Erstellen aus",
+      "selectOption": "Option auswählen",
+      "existingReward": "Bestehende Belohnung",
+      "selectExisting": "Bestehende Belohnung auswählen",
+      "selectReward": "Belohnung auswählen",
+      "details": {
+        "title": "Belohnungsdetails",
+        "subtitle": "Definieren Sie den Belohnungsinhalt und optionale Integrationen."
+      },
+      "selectLocation": "Standort auswählen",
+      "noLocations": "Keine Standorte verfügbar.",
+      "loadingLocations": "Standorte werden geladen…",
+      "voucherCodePlaceholder": "Optionaler Code für gutscheinbasierte Belohnungen",
+      "externalApiPlaceholder": "Optionaler Bezeichner für externe Integrationen",
+      "audience": {
+        "title": "Zielgruppe & Zugriff",
+        "subtitle": "Beschränken Sie die Sichtbarkeit der Belohnung auf bestimmte Rollen, Benutzertypen oder Hotels.",
+        "allRoles": "Alle Rollen",
+        "allUserTypes": "Alle Benutzertypen",
+        "allHotels": "Alle Hotels"
+      },
+      "recurrence": {
+        "title": "Wiederholung",
+        "subtitle": "Legen Sie fest, wie oft diese Belohnung automatisch neu erstellt werden soll.",
+        "once": "Einmal - Belohnung wird einmal erstellt und verschwindet, wenn sie abgeschlossen ist",
+        "daily": "Täglich - Belohnung erscheint einmal täglich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Tag)",
+        "weekly": "Wöchentlich - Belohnung erscheint einmal wöchentlich (wenn die vorherige abgeschlossen ist, wartet bis zur nächsten Woche)",
+        "monthly": "Monatlich - Belohnung erscheint einmal monatlich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Monat)"
+      },
+      "publishHint": {
+        "editing": "Bestehende Belohnung bearbeiten.",
+        "ready": "Alle Pflichtfelder sind ausgefüllt.",
+        "completeRequired": "Vervollständigen Sie die erforderlichen Felder, um zu veröffentlichen."
+      },
+      "refresh": "Belohnungen aktualisieren",
+      "loading": "Belohnungsvorlagen werden geladen…",
+      "loadError": "Belohnungsvorlagen konnten nicht geladen werden.",
+      "cancelEditing": "Bearbeitung abbrechen",
+      "back": "Zurück zum Hauptmenü"
+    },
+    "location": {
+      "create": {
+        "title": "Standort erstellen",
+        "subtitle": "Definieren Sie einen neuen Standort für Aufgaben und Belohnungen."
+      },
+      "edit": {
+        "title": "Standort bearbeiten",
+        "subtitle": "Aktualisieren Sie die Standortdetails unten."
+      },
+      "details": {
+        "title": "Standortdetails",
+        "subtitle": "Geben Sie die grundlegenden Informationen für diesen Standort an."
+      },
+      "addressPlaceholder": "Geben Sie die vollständige Adresse ein",
+      "latitudePlaceholder": "z.B. 52.520008",
+      "longitudePlaceholder": "z.B. 13.404954",
+      "publishHint": {
+        "editing": "Bestehenden Standort bearbeiten.",
+        "ready": "Alle Pflichtfelder sind ausgefüllt.",
+        "completeRequired": "Vervollständigen Sie die erforderlichen Felder, um zu speichern."
+      },
+      "back": "Zurück"
+    },
+    "locationManage": {
+      "title": "Standorte verwalten",
+      "subtitle": "Überprüfen Sie bestehende Standorte, bearbeiten Sie deren Details oder entfernen Sie ungenutzte Einträge.",
+      "refresh": "Standorte aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Standorte werden geladen…",
+      "loadError": "Standorte konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "existing": {
+        "title": "Bestehende Standorte",
+        "subtitle": "Jede Aufgabe und Belohnung verweist auf einen dieser Standorte."
+      },
+      "showInactive": "Inaktive anzeigen",
+      "selectAll": "Alle Standorte auswählen",
+      "online": "Online zugänglich"
+    },
+    "taskManage": {
+      "title": "Aufgaben verwalten",
+      "subtitle": "Durchsuchen Sie alle Aufgaben, ändern Sie die Verfügbarkeit oder bereinigen Sie ungenutzte Einträge.",
+      "refresh": "Aufgaben aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Aufgaben werden geladen…",
+      "loadError": "Aufgaben konnten nicht geladen werden.",
+      "existing": {
+        "title": "Bestehende Aufgaben"
+      },
+      "showInactive": "Inaktive anzeigen",
+      "openFilters": "Filter öffnen",
+      "selectAll": "Alle Aufgaben auswählen"
+    },
+    "rewardManage": {
+      "title": "Belohnungen verwalten",
+      "subtitle": "Überprüfen Sie bestehende Belohnungen und passen Sie deren Details oder Verfügbarkeit an.",
+      "refresh": "Belohnungen aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Belohnungen werden geladen…",
+      "loadError": "Belohnungen konnten nicht geladen werden.",
+      "existing": {
+        "title": "Bestehende Belohnungen",
+        "subtitle": "Pflegen Sie aktive Belohnungen, bearbeiten Sie deren Details oder bereinigen Sie inaktive Einträge."
+      },
+      "showInactive": "Inaktive anzeigen",
+      "openFilters": "Filter öffnen",
+      "selectAll": "Alle Belohnungen auswählen"
+    },
+    "forestStats": {
+      "title": "Wald-Debug-Statistiken",
+      "subtitle": "Pro-Benutzer Baumanzahlen vs. abgeschlossene Aufgaben, basierend auf dem aktuellen Datenbankstatus. Nützlich zum Überprüfen des Wald-Validierungsskripts ohne psql.",
+      "refresh": "Wald-Statistiken aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Wald-Statistiken werden geladen…",
+      "noUsers": "Keine Benutzer gefunden.",
+      "table": {
+        "title": "Pro-Benutzer Bäume vs. abgeschlossene Aufgaben",
+        "subtitle": "Vergleichen Sie Punkte, gepflanzte Bäume und abgeschlossene Aufgaben für jeden Benutzer.",
+        "email": "E-Mail",
+        "points": "Punkte",
+        "trees": "Bäume",
+        "completedTasks": "Abgeschlossene Aufgaben",
+        "consistent": "Anzahlen konsistent?"
+      }
+    },
+    "filters": {
+      "title": "Filter",
+      "close": "Filter schließen",
+      "location": "Standort",
+      "status": "Status",
+      "recurrence": "Wiederholung",
+      "type": "Typ",
+      "filterBy": "Nach {{type}} filtern"
+    },
+    "fields": {
+      "required": "Pflichtfeld",
+      "readOnly": "Nur lesen",
+      "videoSource": "Video-Quelle",
+      "videoFile": "Video-Datei",
+      "photoRequirement": "Foto-Anforderung",
+      "allowedRoles": "Erlaubte Rollen",
+      "allowedUserTypes": "Erlaubte Benutzertypen",
+      "allowedHotels": "Erlaubte Hotels"
+    },
+    "confirm": {
+      "deleteTasks": "Aufgaben löschen",
+      "deleteTask": "Aufgabe löschen",
+      "deleteRewards": "Belohnungen löschen",
+      "deleteReward": "Belohnung löschen",
+      "deleteLocations": "Standorte löschen",
+      "deleteLocation": "Standort löschen",
+      "deleteSelectedTasks": {
+        "title": "Ausgewählte Aufgaben löschen",
+        "description": "Möchten Sie die ausgewählten Aufgaben wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteTaskSingle": {
+        "title": "Aufgabe löschen",
+        "description": "Möchten Sie diese Aufgabe wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteSelectedRewards": {
+        "title": "Ausgewählte Belohnungen löschen",
+        "description": "Möchten Sie die ausgewählten Belohnungen wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteRewardSingle": {
+        "title": "Belohnung löschen",
+        "description": "Möchten Sie diese Belohnung wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteSelectedLocations": {
+        "title": "Ausgewählte Standorte löschen",
+        "description": "Möchten Sie die ausgewählten Standorte wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteLocationSingle": {
+        "title": "Standort löschen",
+        "description": "Möchten Sie diesen Standort wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteLocationWithName": {
+        "title": "{{name}} löschen?",
+        "description": "Möchten Sie diesen Standort wirklich löschen? Aufgaben und Belohnungen, die ihn verwenden, müssen neu zugewiesen werden."
+      }
+    },
+    "messages": {
+      "selectedTasksDeleted": "Ausgewählte Aufgaben gelöscht.",
+      "failedToDeleteTasks": "Ausgewählte Aufgaben konnten nicht gelöscht werden.",
+      "taskActivated": "Aufgabe aktiviert.",
+      "taskDeactivated": "Aufgabe deaktiviert.",
+      "failedToUpdateTask": "Aufgabe konnte nicht aktualisiert werden.",
+      "selectedRewardsDeleted": "Ausgewählte Belohnungen gelöscht.",
+      "failedToDeleteRewards": "Ausgewählte Belohnungen konnten nicht gelöscht werden.",
+      "rewardActivated": "Belohnung aktiviert.",
+      "rewardDeactivated": "Belohnung deaktiviert.",
+      "failedToUpdateReward": "Belohnung konnte nicht aktualisiert werden.",
+      "selectedLocationsDeleted": "Ausgewählte Standorte gelöscht.",
+      "failedToDeleteLocations": "Ausgewählte Standorte konnten nicht gelöscht werden.",
+      "locationActivated": "Standort aktiviert.",
+      "locationDeactivated": "Standort deaktiviert.",
+      "failedToUpdateLocation": "Standort konnte nicht aktualisiert werden.",
+      "selectedTasksActivated": "Ausgewählte Aufgaben aktiviert.",
+      "selectedTasksDeactivated": "Ausgewählte Aufgaben deaktiviert.",
+      "selectedRewardsActivated": "Ausgewählte Belohnungen aktiviert.",
+      "selectedRewardsDeactivated": "Ausgewählte Belohnungen deaktiviert.",
+      "selectedLocationsActivated": "Ausgewählte Standorte aktiviert.",
+      "selectedLocationsDeactivated": "Ausgewählte Standorte deaktiviert.",
+      "locationDeletedSuccessfully": "Standort erfolgreich gelöscht.",
+      "failedToDeleteTask": "Aufgabe konnte nicht gelöscht werden.",
+      "failedToDeleteReward": "Belohnung konnte nicht gelöscht werden.",
+      "failedToDeleteLocation": "Standort konnte nicht gelöscht werden."
+    },
     "qrScanner": {
       "title": "Belohnungen einlösen",
       "subtitle": "QR-Codes scannen, um Benutzerbelohnungen zu verifizieren und einzulösen",
@@ -371,6 +703,21 @@
       "clickToSelect": "Klicke, um ein Foto auszuwählen",
       "hint": "Max. 5 MB • JPG, PNG, WebP",
       "uploadFailed": "Foto konnte nicht hochgeladen werden"
+    },
+    "visit_location": {
+      "targetLocationNotSet": "Zielstandort der Aufgabe ist nicht festgelegt",
+      "geolocationNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
+      "locationError": "Standortfehler: {{message}}",
+      "locationTrackingError": "Standortverfolgungsfehler: {{message}}",
+      "targetLocation": "Zielstandort",
+      "yourLocation": "Ihr Standort",
+      "noTargetLocation": "Diese Aufgabe hat keinen konfigurierten Zielstandort.",
+      "atLocation": "✓ Sie sind am Standort!",
+      "distance": "Entfernung: {{distance}}m",
+      "startTracking": "Standortverfolgung starten",
+      "stopTracking": "Verfolgung beenden",
+      "yourLocationLabel": "Ihr Standort: {{lat}}, {{lng}}",
+      "locationReached": "Standort erreicht! Aufgabe erfolgreich abgeschlossen."
     }
   }
 }

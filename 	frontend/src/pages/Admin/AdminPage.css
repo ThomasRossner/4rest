@@ -30,6 +30,10 @@
   height: 2.75rem;
 }
 
+.admin-navbar-language {
+  margin-right: var(--spacing-sm);
+}
+
 .admin-hero {
   text-align: center;
   padding: var(--spacing-xl);
