@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
+import { useGLTF } from '@react-three/drei';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
@@ -11,6 +13,30 @@ function HomePage() {
   const userId = useAuthStore((s) => s.user?.id);
   const userPoints = useAuthStore((s) => s.user?.points || 0);
   const { t } = useTranslation();
+
+  // Preload 3D tree models in background when user is on homepage
+  // This ensures models are ready when user navigates to ForestPage
+  useEffect(() => {
+    if (!user) return;
+
+    // Use requestIdleCallback for non-blocking preload, fallback to setTimeout
+    const preloadModels = () => {
+      try {
+        useGLTF.preload('/models/twigLeafTree.glb');
+        useGLTF.preload('/models/tree.glb');
+        useGLTF.preload('/models/leaves.glb');
+      } catch (error) {
+        // Silently handle errors - models might already be preloaded or not critical
+        console.debug('Model preload:', error);
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(preloadModels, { timeout: 2000 });
+    } else {
+      setTimeout(preloadModels, 100);
+    }
+  }, [user]);
 
   const { data: progress, isLoading: progressLoading } = useQuery(
     ['userProgress', userId],

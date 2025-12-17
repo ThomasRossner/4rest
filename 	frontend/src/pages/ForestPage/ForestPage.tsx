@@ -14,8 +14,20 @@ function ForestPage() {
       <div className="forest-container">
         <Suspense fallback={<div className="forest-loading">{t('forest.loading')}</div>}>
           <Canvas
-            gl={{ antialias: true }}
+            gl={{ 
+              // Disable antialiasing to reduce GPU cost on low-end devices
+              antialias: false,
+              powerPreference: "high-performance",
+              alpha: false,
+              stencil: false,
+              depth: true
+            }}
             shadows
+            // Slightly lower device pixel ratio for better performance
+            dpr={[1, 1.5]}
+            // Bias toward keeping FPS up by dynamically reducing quality when needed
+            performance={{ min: 0.7 }}
+            frameloop="always"
             style={{ width: '100%', height: '100%' }}
           >
             <PerspectiveCamera makeDefault position={[10, 10, 10]} fov={75} />
@@ -24,8 +36,9 @@ function ForestPage() {
               position={[30, 40, 20]}
               intensity={1.1}
               castShadow
-              shadow-mapSize-width={2048}
-              shadow-mapSize-height={2048}
+              // Smaller shadow map for cheaper rendering
+              shadow-mapSize-width={512}
+              shadow-mapSize-height={512}
               shadow-camera-near={1}
               shadow-camera-far={200}
               shadow-camera-left={-120}

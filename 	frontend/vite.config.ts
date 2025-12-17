@@ -34,7 +34,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,glb}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\./i,
@@ -44,6 +44,18 @@ export default defineConfig({
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 // 1 hour
+              }
+            }
+          },
+          {
+            // Cache 3D models aggressively for fast repeat visits
+            urlPattern: /\/models\/.*\.glb$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'tree-models-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
           }
