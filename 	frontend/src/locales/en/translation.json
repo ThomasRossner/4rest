@@ -144,7 +144,8 @@
       "type": {
         "label": "Type",
         "all": "All types",
-        "video": "Video",
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
         "qr": "QR code",
         "photo": "Photo",
         "visit_location": "Visit location"
@@ -291,7 +292,8 @@
       "selectOption": "Select option",
       "existingTask": "Existing task",
       "startFromScratch": {
-        "video": "Start from scratch – Video task",
+        "video": "Start from scratch – Video-Quiz task",
+        "quiz": "Start from scratch – Quiz task",
         "qr": "Start from scratch – QR task",
         "photo": "Start from scratch – Photo task",
         "visitLocation": "Start from scratch – Visit location task"
@@ -766,6 +768,15 @@
       "clickToSelect": "Click to select a photo",
       "hint": "Max 5MB • JPG, PNG, WebP",
       "uploadFailed": "Failed to upload photo"
+    },
+    "quiz": {
+      "title": "Quiz questions",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "complete": "Complete task",
+      "submitting": "Submitting...",
+      "noQuestions": "This quiz task has no questions configured."
     },
     "visit_location": {
       "targetLocationNotSet": "Task target location is not set",

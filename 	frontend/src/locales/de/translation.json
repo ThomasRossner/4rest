@@ -144,7 +144,8 @@
       "type": {
         "label": "Typ",
         "all": "Alle Typen",
-        "video": "Video",
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
         "qr": "QR-Code",
         "photo": "Foto",
         "visit_location": "Standort besuchen"
@@ -291,7 +292,8 @@
       "selectOption": "Option auswählen",
       "existingTask": "Bestehende Aufgabe",
       "startFromScratch": {
-        "video": "Von Grund auf – Video-Aufgabe",
+        "video": "Von Grund auf – Video-Quiz-Aufgabe",
+        "quiz": "Von Grund auf – Quiz-Aufgabe",
         "qr": "Von Grund auf – QR-Aufgabe",
         "photo": "Von Grund auf – Foto-Aufgabe",
         "visitLocation": "Von Grund auf – Standort besuchen Aufgabe"
@@ -752,6 +754,15 @@
       "clickToSelect": "Klicke, um ein Foto auszuwählen",
       "hint": "Max. 5 MB • JPG, PNG, WebP",
       "uploadFailed": "Foto konnte nicht hochgeladen werden"
+    },
+    "quiz": {
+      "title": "Quizfragen",
+      "questionProgress": "Frage {{current}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "complete": "Aufgabe abschließen",
+      "submitting": "Wird übermittelt...",
+      "noQuestions": "Diese Quiz-Aufgabe hat keine konfigurierten Fragen."
     },
     "visit_location": {
       "targetLocationNotSet": "Zielstandort der Aufgabe ist nicht festgelegt",

@@ -3,7 +3,7 @@ import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamific
 import { UserRole, UserType } from '../constants/enums.js';
 import { Location } from './location.service.js';
 import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
-import { validateRecurrence } from '../utils/validation.js';
+import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
 
@@ -134,6 +134,29 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
 
   const recurrence = validateRecurrence((data as any).recurrence);
 
+  // Validate task type-specific fields
+  if (data.type === 'video' && data.video_url) {
+    validateUrl(data.video_url, 'Video URL');
+  }
+  
+  if (data.type === 'qr' && data.qr_code) {
+    validateQrCode(data.qr_code);
+  }
+  
+  if (data.type === 'visit_location') {
+    const coords = validateGpsCoordinates(
+      (data as any).target_latitude,
+      (data as any).target_longitude
+    );
+    if (!coords) {
+      throw new Error('Target latitude and longitude are required for visit_location tasks');
+    }
+  }
+  
+  if (data.type === 'quiz' && !quizPayload) {
+    throw new Error('Quiz questions are required for quiz tasks');
+  }
+
   const result = await db.query(
     `INSERT INTO tasks (
        title,
@@ -183,6 +206,41 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
 
 export async function updateTask(id: string, data: Partial<Task>): Promise<Task | null> {
   const db = getPool();
+  
+  // Get existing task to validate type-specific fields
+  const existingTask = await getTaskById(id);
+  if (!existingTask) {
+    return null;
+  }
+  
+  const taskType = data.type || existingTask.type;
+  
+  // Validate task type-specific fields
+  if (taskType === 'video' && data.video_url !== undefined) {
+    if (data.video_url) {
+      validateUrl(data.video_url, 'Video URL');
+    }
+  }
+  
+  if (taskType === 'qr' && data.qr_code !== undefined) {
+    if (data.qr_code) {
+      validateQrCode(data.qr_code);
+    }
+  }
+  
+  if (taskType === 'visit_location' && ((data as any).target_latitude !== undefined || (data as any).target_longitude !== undefined)) {
+    const lat = (data as any).target_latitude !== undefined ? (data as any).target_latitude : existingTask.target_latitude;
+    const lng = (data as any).target_longitude !== undefined ? (data as any).target_longitude : existingTask.target_longitude;
+    const coords = validateGpsCoordinates(lat, lng);
+    if (!coords) {
+      throw new Error('Target latitude and longitude are required for visit_location tasks');
+    }
+  }
+  
+  if (taskType === 'quiz' && data.quiz_questions !== undefined && !data.quiz_questions) {
+    throw new Error('Quiz questions are required for quiz tasks');
+  }
+  
   const updates: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
