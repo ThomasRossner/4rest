@@ -146,6 +146,7 @@
         "all": "Alle Typen",
         "video": "Video-Quiz",
         "quiz": "Quiz",
+        "article_quiz": "Artikel-Quiz",
         "qr": "QR-Code",
         "photo": "Foto",
         "visit_location": "Standort besuchen"
@@ -294,6 +295,7 @@
       "startFromScratch": {
         "video": "Von Grund auf – Video-Quiz-Aufgabe",
         "quiz": "Von Grund auf – Quiz-Aufgabe",
+        "articleQuiz": "Von Grund auf – Artikel-Quiz-Aufgabe",
         "qr": "Von Grund auf – QR-Aufgabe",
         "photo": "Von Grund auf – Foto-Aufgabe",
         "visitLocation": "Von Grund auf – Standort besuchen Aufgabe"
@@ -778,6 +780,20 @@
       "stopTracking": "Verfolgung beenden",
       "yourLocationLabel": "Ihr Standort: {{lat}}, {{lng}}",
       "locationReached": "Standort erreicht! Aufgabe erfolgreich abgeschlossen."
+    },
+    "article_quiz": {
+      "readArticle": "Artikel lesen",
+      "readInstruction": "Bitte lesen Sie den Artikel unten, dann beantworten Sie die Quizfragen.",
+      "quizPrompt": "Nach dem Lesen des Artikels klicken Sie auf die Schaltfläche unten, um das Quiz zu starten.",
+      "startQuiz": "Quiz starten",
+      "quizTitle": "Quizfragen",
+      "questionProgress": "Frage {{current}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "complete": "Aufgabe abschließen",
+      "submitting": "Wird übermittelt...",
+      "noArticle": "Diese Artikel-Quiz-Aufgabe hat keinen konfigurierten Artikel.",
+      "noQuestions": "Diese Artikel-Quiz-Aufgabe hat keine konfigurierten Fragen."
     }
   }
 }

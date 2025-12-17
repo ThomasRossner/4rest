@@ -28,6 +28,8 @@ export interface Task {
   recurrence?: TaskRecurrence;
   target_latitude?: number;
   target_longitude?: number;
+  article_url?: string;
+  article_content?: string;
 }
 
 export async function getAllTasks(
@@ -156,6 +158,18 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
   if (data.type === 'quiz' && !quizPayload) {
     throw new Error('Quiz questions are required for quiz tasks');
   }
+  
+  if (data.type === 'article_quiz') {
+    if (!(data as any).article_url && !(data as any).article_content) {
+      throw new Error('Article URL or article content is required for article_quiz tasks');
+    }
+    if ((data as any).article_url) {
+      validateUrl((data as any).article_url, 'Article URL');
+    }
+    if (!quizPayload) {
+      throw new Error('Quiz questions are required for article_quiz tasks');
+    }
+  }
 
   const result = await db.query(
     `INSERT INTO tasks (
@@ -176,9 +190,11 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        active,
        recurrence,
        target_latitude,
-       target_longitude
+       target_longitude,
+       article_url,
+       article_content
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
      RETURNING *`,
     [
       data.title,
@@ -199,6 +215,8 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       recurrence,
       (data as any).target_latitude ?? null,
       (data as any).target_longitude ?? null,
+      (data as any).article_url ?? null,
+      (data as any).article_content ?? null,
     ]
   );
   return result.rows[0];
@@ -239,6 +257,22 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   
   if (taskType === 'quiz' && data.quiz_questions !== undefined && !data.quiz_questions) {
     throw new Error('Quiz questions are required for quiz tasks');
+  }
+  
+  if (taskType === 'article_quiz') {
+    if ((data as any).article_url !== undefined || (data as any).article_content !== undefined) {
+      const articleUrl = (data as any).article_url !== undefined ? (data as any).article_url : existingTask.article_url;
+      const articleContent = (data as any).article_content !== undefined ? (data as any).article_content : existingTask.article_content;
+      if (!articleUrl && !articleContent) {
+        throw new Error('Article URL or article content is required for article_quiz tasks');
+      }
+      if (articleUrl) {
+        validateUrl(articleUrl, 'Article URL');
+      }
+    }
+    if (data.quiz_questions !== undefined && !data.quiz_questions) {
+      throw new Error('Quiz questions are required for article_quiz tasks');
+    }
   }
   
   const updates: string[] = [];

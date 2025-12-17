@@ -146,6 +146,7 @@
         "all": "All types",
         "video": "Video-Quiz",
         "quiz": "Quiz",
+        "article_quiz": "Article Quiz",
         "qr": "QR code",
         "photo": "Photo",
         "visit_location": "Visit location"
@@ -294,6 +295,7 @@
       "startFromScratch": {
         "video": "Start from scratch – Video-Quiz task",
         "quiz": "Start from scratch – Quiz task",
+        "articleQuiz": "Start from scratch – Article Quiz task",
         "qr": "Start from scratch – QR task",
         "photo": "Start from scratch – Photo task",
         "visitLocation": "Start from scratch – Visit location task"
@@ -777,6 +779,20 @@
       "complete": "Complete task",
       "submitting": "Submitting...",
       "noQuestions": "This quiz task has no questions configured."
+    },
+    "article_quiz": {
+      "readArticle": "Read the Article",
+      "readInstruction": "Please read the article below, then answer the quiz questions.",
+      "quizPrompt": "After reading the article, click the button below to start the quiz.",
+      "startQuiz": "Start Quiz",
+      "quizTitle": "Quiz questions",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "complete": "Complete task",
+      "submitting": "Submitting...",
+      "noArticle": "This article quiz task has no article configured.",
+      "noQuestions": "This article quiz task has no questions configured."
     },
     "visit_location": {
       "targetLocationNotSet": "Task target location is not set",

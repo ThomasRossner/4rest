@@ -31,7 +31,7 @@ type AdminMode =
   | 'qrScanner'
   | 'forestStats'
   | null;
-type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'qr' | 'photo' | 'visit_location';
+type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'qr' | 'photo' | 'visit_location';
 
 type AdminTaskTemplate = {
   id: string;
@@ -103,6 +103,12 @@ type TaskFormState = {
   locationId: string;
   active: boolean;
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
+  article_url: string;
+  article_content: string;
+  articleSource: 'url' | 'content';
+  target_latitude?: string;
+  target_longitude?: string;
+  target_address?: string;
 };
 
 type RewardFormState = {
@@ -658,7 +664,7 @@ const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
   label: formatRewardType(type),
 }));
 
-const defaultTaskForm = (type: 'video' | 'quiz' | 'qr' | 'photo' | 'visit_location'): TaskFormState => ({
+const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'qr' | 'photo' | 'visit_location'): TaskFormState => ({
   title: '',
   description: '',
   type,
@@ -666,7 +672,7 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'qr' | 'photo' | 'visit_locati
   video_url: '',
   videoSource: 'url',
   videoFile: null,
-  quizQuestions: (type === 'video' || type === 'quiz') ? [createEmptyQuestion(1)] : [],
+  quizQuestions: (type === 'video' || type === 'quiz' || type === 'article_quiz') ? [createEmptyQuestion(1)] : [],
   qr_code: type === 'qr' ? '' : '',
   photo_required: type === 'photo',
   co2_savings_kg: 0,
@@ -676,6 +682,9 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'qr' | 'photo' | 'visit_locati
   locationId: '',
   active: true,
   recurrence: 'once',
+  article_url: type === 'article_quiz' ? '' : '',
+  article_content: type === 'article_quiz' ? '' : '',
+  articleSource: 'url',
   target_latitude: type === 'visit_location' ? '' : undefined,
   target_longitude: type === 'visit_location' ? '' : undefined,
   target_address: type === 'visit_location' ? '' : undefined,
@@ -905,6 +914,26 @@ const validateTaskFormState = ({
   }
 
   if (taskForm.type === 'quiz') {
+    try {
+      buildQuizPayload(taskForm.quizQuestions);
+    } catch (error: any) {
+      return {
+        isValid: false,
+        message: error?.message ?? 'Check the quiz questions for missing details.',
+      };
+    }
+  }
+
+  if (taskForm.type === 'article_quiz') {
+    if (taskForm.articleSource === 'url') {
+      if (!taskForm.article_url.trim()) {
+        return { isValid: false, message: 'Article URL is required for article quiz tasks.' };
+      }
+    } else {
+      if (!taskForm.article_content.trim()) {
+        return { isValid: false, message: 'Article content is required for article quiz tasks.' };
+      }
+    }
     try {
       buildQuizPayload(taskForm.quizQuestions);
     } catch (error: any) {
@@ -1967,7 +1996,7 @@ function AdminPage() {
     if (taskSource === 'existing') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
-    } else if (taskSource === 'video' || taskSource === 'quiz' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
+    } else if (taskSource === 'video' || taskSource === 'quiz' || taskSource === 'article_quiz' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm(taskSource));
     }
@@ -1988,7 +2017,7 @@ function AdminPage() {
       videoSource: 'url',
       videoFile: null,
     quizQuestions:
-      (template.type === 'video' || template.type === 'quiz')
+      (template.type === 'video' || template.type === 'quiz' || template.type === 'article_quiz')
         ? normalizeQuizQuestions(template.quiz_questions ?? [])
         : [],
       qr_code: template.qr_code ?? '',
@@ -2089,7 +2118,7 @@ function AdminPage() {
       }
 
       const prepareVideoData = async (taskType: string) => {
-        if (taskType === 'quiz') {
+        if (taskType === 'quiz' || taskType === 'article_quiz') {
           const quizPayload = buildQuizPayload(taskForm.quizQuestions);
           return { videoUrl: undefined as string | undefined, quizPayload };
         }
@@ -2150,6 +2179,16 @@ function AdminPage() {
         if (taskForm.type === 'quiz') {
           payload.quiz_questions = quizPayload;
         }
+        if (taskForm.type === 'article_quiz') {
+          if (taskForm.articleSource === 'url') {
+            payload.article_url = taskForm.article_url.trim();
+            payload.article_content = null;
+          } else {
+            payload.article_content = taskForm.article_content.trim();
+            payload.article_url = null;
+          }
+          payload.quiz_questions = quizPayload;
+        }
         if (taskForm.type === 'qr') {
           payload.qr_code = taskForm.qr_code.trim();
         }
@@ -2197,6 +2236,16 @@ function AdminPage() {
         if (template.type === 'quiz') {
           payload.quiz_questions = quizPayload;
         }
+        if (template.type === 'article_quiz') {
+          if (taskForm.articleSource === 'url') {
+            payload.article_url = taskForm.article_url.trim();
+            payload.article_content = null;
+          } else {
+            payload.article_content = taskForm.article_content.trim();
+            payload.article_url = null;
+          }
+          payload.quiz_questions = quizPayload;
+        }
         if (template.type === 'qr') {
           payload.qr_code = taskForm.qr_code.trim();
         }
@@ -2240,6 +2289,16 @@ function AdminPage() {
         payload.quiz_questions = quizPayload;
       }
       if (taskSource === 'quiz') {
+        payload.quiz_questions = quizPayload;
+      }
+      if (taskSource === 'article_quiz') {
+        if (taskForm.articleSource === 'url') {
+          payload.article_url = taskForm.article_url.trim();
+          payload.article_content = null;
+        } else {
+          payload.article_content = taskForm.article_content.trim();
+          payload.article_url = null;
+        }
         payload.quiz_questions = quizPayload;
       }
       if (taskSource === 'qr') {
@@ -2752,6 +2811,7 @@ function AdminPage() {
     const source: TaskSource =
       task.type === 'video' ? 'video' 
       : task.type === 'quiz' ? 'quiz'
+      : task.type === 'article_quiz' ? 'article_quiz'
       : task.type === 'qr' ? 'qr' 
       : task.type === 'photo' ? 'photo'
       : task.type === 'visit_location' ? 'visit_location'
@@ -2767,7 +2827,10 @@ function AdminPage() {
       videoSource: 'url',
       videoFile: null,
       quizQuestions:
-        (task.type === 'video' || task.type === 'quiz') ? normalizeQuizQuestions(task.quiz_questions ?? []) : [],
+        (task.type === 'video' || task.type === 'quiz' || task.type === 'article_quiz') ? normalizeQuizQuestions(task.quiz_questions ?? []) : [],
+      article_url: (task as any).article_url ?? '',
+      article_content: (task as any).article_content ?? '',
+      articleSource: (task as any).article_url ? 'url' : 'content',
       qr_code: task.qr_code ?? '',
       photo_required: task.type === 'photo',
       co2_savings_kg: task.co2_savings_kg ?? 0,
@@ -3409,6 +3472,7 @@ const goToRewardCreation = () => {
                   <option value="existing">{t('admin.task.existingTask')}</option>
                   <option value="video">{t('admin.task.startFromScratch.video')}</option>
                   <option value="quiz">{t('admin.task.startFromScratch.quiz')}</option>
+                  <option value="article_quiz">{t('admin.task.startFromScratch.articleQuiz')}</option>
                   <option value="qr">{t('admin.task.startFromScratch.qr')}</option>
                   <option value="photo">{t('admin.task.startFromScratch.photo')}</option>
                   <option value="visit_location">{t('admin.task.startFromScratch.visitLocation')}</option>
@@ -3707,7 +3771,78 @@ const goToRewardCreation = () => {
                       </div>
                     )}
                   </div>
-                {(taskForm.type === 'video' || taskForm.type === 'quiz') && (
+                    {taskForm.type === 'article_quiz' && (
+                      <>
+                        <div className="admin-field admin-field-span-2">
+                          <FieldLabel label="Article Source" required />
+                          <div className="admin-video-source">
+                            <label className="admin-video-option">
+                              <input
+                                type="radio"
+                                className="admin-radio"
+                                style={COMPACT_TOGGLE_STYLE}
+                                name="article-source"
+                                value="url"
+                                checked={taskForm.articleSource === 'url'}
+                                onChange={() =>
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    articleSource: 'url',
+                                    article_content: '',
+                                  }))
+                                }
+                              />
+                              <span>Use external article URL</span>
+                            </label>
+                            <label className="admin-video-option">
+                              <input
+                                type="radio"
+                                className="admin-radio"
+                                style={COMPACT_TOGGLE_STYLE}
+                                name="article-source"
+                                value="content"
+                                checked={taskForm.articleSource === 'content'}
+                                onChange={() =>
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    articleSource: 'content',
+                                    article_url: '',
+                                  }))
+                                }
+                              />
+                              <span>Enter article content</span>
+                            </label>
+                          </div>
+                        </div>
+                        {taskForm.articleSource === 'url' && (
+                          <label className="admin-field admin-field-span-2">
+                            <FieldLabel label="Article URL" required />
+                            <input
+                              type="url"
+                              value={taskForm.article_url}
+                              onChange={(event) =>
+                                setTaskForm((prev) => ({ ...prev, article_url: event.target.value }))
+                              }
+                              placeholder="https://example.com/article"
+                            />
+                          </label>
+                        )}
+                        {taskForm.articleSource === 'content' && (
+                          <label className="admin-field admin-field-span-2">
+                            <FieldLabel label="Article Content" required />
+                            <textarea
+                              value={taskForm.article_content}
+                              onChange={(event) =>
+                                setTaskForm((prev) => ({ ...prev, article_content: event.target.value }))
+                              }
+                              rows={10}
+                              placeholder="Enter the article content here..."
+                            />
+                          </label>
+                        )}
+                      </>
+                    )}
+                {(taskForm.type === 'video' || taskForm.type === 'quiz' || taskForm.type === 'article_quiz') && (
                   <div className="admin-form-full admin-quiz-block">
                       <FieldLabel label={t('admin.task.quiz.title')} required />
                       <QuizBuilder
