@@ -47,12 +47,10 @@ function ForestScene() {
   
   const getMaxLeavesForDistance = useMemo(() => {
     return (distance: number) => {
-      // More aggressive LOD for smoother camera movement:
-      // - Far trees: almost no leaves
-      // - Mid distance: moderate leaves
-      // - Close trees only get many leaves
-      if (distance > 50) return 20;   // Very few leaves for far trees
-      if (distance > 35) return 60;   // Few leaves
+      // LOD system for performance - reduces leaves based on distance
+      // Increased minimums to ensure distant trees still show some leaves
+      if (distance > 50) return 40;   // Minimum leaves for very far trees (increased from 20)
+      if (distance > 35) return 80;   // Few leaves (increased from 60)
       if (distance > 20) return 120;  // Medium leaves
       return 200;                     // Cap close trees
     };
@@ -159,6 +157,27 @@ function ForestScene() {
 
   return (
     <>
+      {/* Debug: Coordinate axes at origin (only in development) */}
+      {import.meta.env.DEV && (
+        <group position={[0, 0.1, 0]}>
+          {/* X axis - Red */}
+          <mesh position={[10, 0, 0]}>
+            <boxGeometry args={[20, 0.2, 0.2]} />
+            <meshStandardMaterial color="#ff0000" />
+          </mesh>
+          {/* Z axis - Blue */}
+          <mesh position={[0, 0, 10]}>
+            <boxGeometry args={[0.2, 0.2, 20]} />
+            <meshStandardMaterial color="#0000ff" />
+          </mesh>
+          {/* Y axis - Green */}
+          <mesh position={[0, 5, 0]}>
+            <boxGeometry args={[0.2, 10, 0.2]} />
+            <meshStandardMaterial color="#00ff00" />
+          </mesh>
+        </group>
+      )}
+
       {/* Background ground (covers multiple areas) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[200, 200]} />
@@ -172,26 +191,26 @@ function ForestScene() {
         const uniqueKey = `${origin[0]}-${origin[2]}`;
         return (
           <group key={uniqueKey} position={origin}>
-            {/* Area ground tile */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0.001, 0]}>
+            {/* Area ground tile - positioned to cover 0-20 range (not centered) */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[10, 0.001, 10]}>
               <planeGeometry args={[20, 20]} />
               <meshStandardMaterial color="#5b8f69" />
             </mesh>
-            {/* Area border (perimeter only) */}
+            {/* Area border (perimeter only) - covers 0-20 range, aligned with ground tile */}
             <lineSegments position={[0, 0.012, 0]}>
               <bufferGeometry>
                 <bufferAttribute
                   attach="attributes-position"
                   count={8}
                   array={new Float32Array([
-                    -10, 0, -10,  // Top-left
-                    10, 0, -10,   // Top-right
-                    10, 0, -10,   // Top-right
-                    10, 0, 10,    // Bottom-right
-                    10, 0, 10,    // Bottom-right
-                    -10, 0, 10,   // Bottom-left
-                    -10, 0, 10,   // Bottom-left
-                    -10, 0, -10,  // Top-left (close the square)
+                    0, 0, 0,    // Top-left (at block origin)
+                    20, 0, 0,   // Top-right
+                    20, 0, 0,   // Top-right
+                    20, 0, 20,  // Bottom-right
+                    20, 0, 20,  // Bottom-right
+                    0, 0, 20,   // Bottom-left
+                    0, 0, 20,   // Bottom-left
+                    0, 0, 0,    // Top-left (close the square)
                   ])}
                   itemSize={3}
                 />
@@ -206,11 +225,14 @@ function ForestScene() {
               const treeKey = `tree-${t.id}`;
               const treeWorldPos = treeWorldPositionsRef.current.get(treeKey);
               
-              // Skip rendering trees that are too far away (camera frustum culling)
-              // During camera movement: use cached distance (no calculations)
-              // When camera stops: calculate and cache distance
+              // Calculate distance and LOD for this tree
+              let distance: number | undefined;
+              let maxLeaves: number | undefined;
+              
               if (treeWorldPos) {
-                let distance: number;
+                // Skip rendering trees that are too far away (camera frustum culling)
+                // During camera movement: use cached distance (no calculations)
+                // When camera stops: calculate and cache distance
                 if (isCameraMovingRef.current) {
                   // During movement: use cached distance, fallback to rendering (no calculation)
                   distance = treeLodCacheRef.current.get(`${treeKey}-distance`) ?? 0;
@@ -220,23 +242,21 @@ function ForestScene() {
                   treeLodCacheRef.current.set(`${treeKey}-distance`, distance);
                 }
                 
-                // Only skip rendering if we have a cached distance > 40
-                if (distance > 40) {
+                // Only skip rendering if we have a cached distance > 150
+                // Increased from 40 to 150 to accommodate forests spread across multiple blocks
+                if (distance > 150) {
                   return null;
                 }
-              }
-              
-              // Get cached LOD value or calculate if camera is not moving
-              let maxLeaves: number | undefined;
-              if (!isCameraMovingRef.current && treeWorldPos) {
-                // Calculate LOD only when camera is not moving
-                const distance = treeWorldPos ? camera.position.distanceTo(treeWorldPos) : Infinity;
-                maxLeaves = getMaxLeavesForDistance(distance);
-                // Cache the result
-                treeLodCacheRef.current.set(treeKey, maxLeaves);
-              } else {
-                // Use cached value during camera movement (prevents re-renders)
-                maxLeaves = treeLodCacheRef.current.get(treeKey);
+                
+                // Calculate LOD value when camera is not moving
+                if (!isCameraMovingRef.current && distance !== undefined) {
+                  maxLeaves = getMaxLeavesForDistance(distance);
+                  // Cache the result
+                  treeLodCacheRef.current.set(treeKey, maxLeaves);
+                } else {
+                  // Use cached value during camera movement (prevents re-renders)
+                  maxLeaves = treeLodCacheRef.current.get(treeKey);
+                }
               }
               
               return (
@@ -261,11 +281,14 @@ function ForestScene() {
         const treeKey = `flat-tree-${t.id}`;
         const treeWorldPos = treeWorldPositionsRef.current.get(treeKey);
         
-        // Skip rendering trees that are too far away (camera frustum culling)
-        // During camera movement: use cached distance (no calculations)
-        // When camera stops: calculate and cache distance
+        // Calculate distance and LOD for this tree (same logic as area trees)
+        let distance: number | undefined;
+        let maxLeaves: number | undefined;
+        
         if (treeWorldPos) {
-          let distance: number;
+          // Skip rendering trees that are too far away (camera frustum culling)
+          // During camera movement: use cached distance (no calculations)
+          // When camera stops: calculate and cache distance
           if (isCameraMovingRef.current) {
             // During movement: use cached distance, fallback to rendering (no calculation)
             distance = treeLodCacheRef.current.get(`${treeKey}-distance`) ?? 0;
@@ -275,23 +298,21 @@ function ForestScene() {
             treeLodCacheRef.current.set(`${treeKey}-distance`, distance);
           }
           
-          // Only skip rendering if we have a cached distance > 40
-          if (distance > 40) {
+          // Only skip rendering if we have a cached distance > 150
+          // Increased from 40 to 150 to accommodate forests spread across multiple blocks
+          if (distance > 150) {
             return null;
           }
-        }
-        
-        // Get cached LOD value or calculate if camera is not moving
-        let maxLeaves: number | undefined;
-        if (!isCameraMovingRef.current && treeWorldPos) {
-          // Calculate LOD only when camera is not moving
-          const distance = treeWorldPos ? camera.position.distanceTo(treeWorldPos) : Infinity;
-          maxLeaves = getMaxLeavesForDistance(distance);
-          // Cache the result
-          treeLodCacheRef.current.set(treeKey, maxLeaves);
-        } else {
-          // Use cached value during camera movement (prevents re-renders)
-          maxLeaves = treeLodCacheRef.current.get(treeKey);
+          
+          // Calculate LOD value when camera is not moving
+          if (!isCameraMovingRef.current && distance !== undefined) {
+            maxLeaves = getMaxLeavesForDistance(distance);
+            // Cache the result
+            treeLodCacheRef.current.set(treeKey, maxLeaves);
+          } else {
+            // Use cached value during camera movement (prevents re-renders)
+            maxLeaves = treeLodCacheRef.current.get(treeKey);
+          }
         }
         
         return (

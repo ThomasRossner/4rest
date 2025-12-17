@@ -107,8 +107,8 @@ const TreeComponent = React.forwardRef<TreeComponentRef, AnimatedTreeProps>((pro
   }));
 
   // Calculate trunk scale based on growth counter - memoized
-  // Ensure minimum scale of 0.05 (5%) so tree is always visible if growthPoints > 0
-  const trunkScale = useMemo(() => Math.max(0.05, growthCounter / trunkGrowSteps), [growthCounter, trunkGrowSteps]);
+  // Ensure minimum scale of 0.10 (10%) so new trees are clearly visible (200% larger than before)
+  const trunkScale = useMemo(() => Math.max(0.10, growthCounter / trunkGrowSteps), [growthCounter, trunkGrowSteps]);
 
   // Memoize twig scales to avoid recalculating on every render
   const twigScales = useMemo(() => {
@@ -174,13 +174,17 @@ const TreeComponent = React.forwardRef<TreeComponentRef, AnimatedTreeProps>((pro
           const twigVektor = twigMaxPositions[twigIndex].clone().sub(trunkOrigin!);
           const twigOriginPos = twigVektor.multiplyScalar(trunkScale);
 
-          // Apply LOD
+          // Apply LOD - only hide twigs if they have significantly more leaves than allowed
+          // This prevents hiding twigs when LOD is just reducing leaf count slightly
           const leavesArray = twigLeavesList[twigIndex] || [];
           if (maxVisibleLeaves && leavesArray.length > 0) {
             const maxLeavesForTwig = Math.floor((maxVisibleLeaves / twigLeavesList.length) * leavesArray.length);
-            if (leavesArray.length > maxLeavesForTwig * 2) {
+            // Only hide twig if it has way too many leaves (more than 5x the limit)
+            // This allows LOD to work while still showing some leaves on distant trees
+            if (maxLeavesForTwig > 0 && leavesArray.length > maxLeavesForTwig * 5) {
               return null;
             }
+            // If maxLeavesForTwig is 0 or very small, still show the twig (it will be handled by merged geometry)
           }
 
           const material = leafMaterials[twigIndex];
