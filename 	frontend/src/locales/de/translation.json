@@ -176,6 +176,10 @@
     },
     "badges": {
       "completed": "Aufgabe erledigt"
+    },
+    "toast": {
+      "completedTitle": "Aufgabe abgeschlossen",
+      "completedMessage": "Du hast einen neuen Baum gepflanzt und {{points}} Punkte gesammelt!"
     }
   },
   "rewards": {
@@ -602,6 +606,12 @@
       "failedToDeleteTask": "Aufgabe konnte nicht gelöscht werden.",
       "failedToDeleteReward": "Belohnung konnte nicht gelöscht werden.",
       "failedToDeleteLocation": "Standort konnte nicht gelöscht werden."
+    },
+    "toasts": {
+      "taskCreatedTitle": "Aufgabe erstellt",
+      "taskCreatedMessage": "Deine neue Aufgabe ist jetzt für Nutzer sichtbar.",
+      "rewardCreatedTitle": "Belohnung erstellt",
+      "rewardCreatedMessage": "Deine neue Belohnung ist jetzt im Marktplatz sichtbar."
     },
     "qrScanner": {
       "title": "Belohnungen einlösen",

@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../../services/api';
+import { useToastStore } from '../../stores/toastStore';
+import { TREES_PER_TASK } from '../../constants/toast';
 import './TaskComponents.css';
 
 // Fix for default marker icons in Leaflet
@@ -67,6 +69,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
   const watchIdRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const showToast = useToastStore((s) => s.showToast);
 
   const { data: task, isLoading } = useQuery(
     ['task', taskId],
@@ -80,6 +83,11 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
       onSuccess: () => {
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
+        showToast({
+          type: 'success',
+          title: t('tasks.toast.completedTitle'),
+          message: t('tasks.toast.completedMessage', { points: task?.points ?? 0, trees: TREES_PER_TASK }),
+        });
         onComplete?.();
       },
     }

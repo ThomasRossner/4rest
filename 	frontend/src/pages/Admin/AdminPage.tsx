@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useQuery, useMutation } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
+import { useToastStore } from '../../stores/toastStore';
 import { useAuthStore } from '../../stores/authStore';
 import './AdminPage.css';
 import {
@@ -1135,6 +1136,8 @@ type QuizBuilderProps = {
 };
 
 const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
+  const { t } = useTranslation();
+
   const updateQuestions = (
     updater: (current: QuizQuestionDraft[]) => QuizQuestionDraft[]
   ): void => {
@@ -1408,6 +1411,7 @@ function AdminPage() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const showToast = useToastStore((s) => s.showToast);
   const isAdmin = user?.role === 'administrator';
   const [mode, setMode] = useState<AdminMode>(null);
 
@@ -1822,6 +1826,11 @@ function AdminPage() {
   const publishTaskMutation = useMutation((payload: any) => api.createCustomTask(payload), {
     onSuccess: () => {
       setTaskMessage({ type: 'success', text: 'Task published successfully.' });
+      showToast({
+        type: 'success',
+        title: t('admin.toasts.taskCreatedTitle'),
+        message: t('admin.toasts.taskCreatedMessage'),
+      });
       setTaskSource('');
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
@@ -1858,6 +1867,11 @@ function AdminPage() {
   const createRewardMutation = useMutation((payload: any) => api.createReward(payload), {
     onSuccess: () => {
       setRewardMessage({ type: 'success', text: 'Reward published successfully.' });
+      showToast({
+        type: 'success',
+        title: t('admin.toasts.rewardCreatedTitle'),
+        message: t('admin.toasts.rewardCreatedMessage'),
+      });
       setHasAttemptedRewardPublish(false);
       setRewardSource('');
       setSelectedRewardTemplate('');

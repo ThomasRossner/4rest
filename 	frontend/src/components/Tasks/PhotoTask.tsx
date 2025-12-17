@@ -3,6 +3,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
+import { useToastStore } from '../../stores/toastStore';
+import { TREES_PER_TASK } from '../../constants/toast';
 import './TaskComponents.css';
 
 interface PhotoTaskProps {
@@ -18,6 +20,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
   const { t } = useTranslation();
+  const showToast = useToastStore((s) => s.showToast);
 
   const { data: task, isLoading } = useQuery(
     ['task', taskId],
@@ -33,6 +36,11 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       onSuccess: () => {
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
+        showToast({
+          type: 'success',
+          title: t('tasks.toast.completedTitle'),
+          message: t('tasks.toast.completedMessage', { points: task?.points ?? 0, trees: TREES_PER_TASK }),
+        });
         onComplete?.();
       },
     }

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import Layout from './components/Layout/Layout';
+import { ToastContainer } from './components/Feedback/ToastContainer';
 import HomePage from './pages/HomePage/HomePage';
 import TasksPage from './pages/TasksPage/TasksPage';
 import ForestPage from './pages/ForestPage/ForestPage';
@@ -46,6 +47,7 @@ function ProtectedApp() {
 function App() {
   return (
     <Router>
+      <ToastContainer />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reset-password" element={<LoginPage />} />

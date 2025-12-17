@@ -1,15 +1,24 @@
 import { useState } from 'react';
+import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
+import { api } from '../../services/api';
 import { ConsentManager } from '../../components/GDPR/ConsentManager';
 import './ProfilePage.css';
 
 function ProfilePage() {
   const user = useAuthStore((s) => s.user);
+  const userId = useAuthStore((s) => s.user?.id);
   const points = useAuthStore((s) => s.user?.points || 0);
   const [showConsent, setShowConsent] = useState(false);
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
+
+  const { data: progress } = useQuery(
+    ['userProgress', userId],
+    () => api.getUserProgress(userId as string),
+    { enabled: !!userId }
+  );
 
   const sihotGuest = user?.sihotGuest;
   const sihotReservations = user?.sihotReservations ?? [];
@@ -45,7 +54,9 @@ function ProfilePage() {
             <span className="profile-stat-label">{t('profile.stats.points')}</span>
           </div>
           <div className="profile-stat">
-            <span className="profile-stat-value">🌲</span>
+            <span className="profile-stat-value">
+              🌲 {progress?.treesPlanted || 0}
+            </span>
             <span className="profile-stat-label">{t('profile.stats.trees')}</span>
           </div>
         </div>

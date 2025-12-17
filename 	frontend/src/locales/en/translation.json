@@ -176,6 +176,10 @@
     },
     "badges": {
       "completed": "Task completed"
+    },
+    "toast": {
+      "completedTitle": "Task completed",
+      "completedMessage": "You planted a new tree and earned {{points}} points!"
     }
   },
   "rewards": {
@@ -602,6 +606,12 @@
       "failedToDeleteTask": "Failed to delete task.",
       "failedToDeleteReward": "Failed to delete reward.",
       "failedToDeleteLocation": "Failed to delete location."
+    },
+    "toasts": {
+      "taskCreatedTitle": "Task created",
+      "taskCreatedMessage": "Your new task is now available for users.",
+      "rewardCreatedTitle": "Reward created",
+      "rewardCreatedMessage": "Your new reward is now visible in the marketplace."
     },
     "confirm": {
       "deleteLocationWithName": {

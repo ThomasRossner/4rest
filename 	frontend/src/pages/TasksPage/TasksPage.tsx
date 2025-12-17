@@ -23,19 +23,19 @@ function TasksPage() {
   // All hooks must be called before any conditional returns
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
-    
+
     let filtered = [...tasks];
-    
+
     // Filter by type
     if (typeFilter !== 'all') {
       filtered = filtered.filter((task: any) => task.type === typeFilter);
     }
-    
+
     // Filter by completion
     if (completionFilter === 'not_completed') {
       filtered = filtered.filter((task: any) => !task.completed);
     }
-    
+
     // Filter by time (recent = last 7 days)
     if (timeFilter === 'recent') {
       const sevenDaysAgo = new Date();
@@ -45,7 +45,15 @@ function TasksPage() {
         return taskDate >= sevenDaysAgo;
       });
     }
-    
+
+    // Always show unfinished tasks first
+    filtered.sort((a: any, b: any) => {
+      const aCompleted = !!a.completed;
+      const bCompleted = !!b.completed;
+      if (aCompleted === bCompleted) return 0;
+      return aCompleted ? 1 : -1;
+    });
+
     return filtered;
   }, [tasks, typeFilter, completionFilter, timeFilter]);
 
