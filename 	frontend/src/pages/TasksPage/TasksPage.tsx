@@ -8,6 +8,7 @@ import { PhotoTask } from '../../components/Tasks/PhotoTask';
 import { VisitLocationTask } from '../../components/Tasks/VisitLocationTask';
 import { QuizTask } from '../../components/Tasks/QuizTask';
 import { ArticleQuizTask } from '../../components/Tasks/ArticleQuizTask';
+import { SurveyTask } from '../../components/Tasks/SurveyTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
@@ -16,7 +17,7 @@ import './TasksPage.css';
 
 function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'qr' | 'photo' | 'visit_location' | 'quiz' | 'article_quiz'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'qr' | 'photo' | 'visit_location' | 'quiz' | 'article_quiz' | 'survey'>('all');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
@@ -92,6 +93,9 @@ function TasksPage() {
     if (task.type === 'article_quiz') {
       return <ArticleQuizTask taskId={task.id} onComplete={handleTaskComplete} />;
     }
+    if (task.type === 'survey') {
+      return <SurveyTask taskId={task.id} onComplete={handleTaskComplete} />;
+    }
     if (task.type === 'qr') {
       return (
         <QRCodeTask
@@ -134,6 +138,7 @@ function TasksPage() {
             { value: 'video', label: t('tasks.filters.type.video'), icon: '🎥' },
             { value: 'quiz', label: t('tasks.filters.type.quiz'), icon: '❓' },
             { value: 'article_quiz', label: t('tasks.filters.type.article_quiz'), icon: '📄' },
+            { value: 'survey', label: t('tasks.filters.type.survey'), icon: '📋' },
             { value: 'qr', label: t('tasks.filters.type.qr'), icon: <QRCodeIcon size={20} /> },
             { value: 'photo', label: t('tasks.filters.type.photo'), icon: '📷' },
             { value: 'visit_location', label: t('tasks.filters.type.visit_location'), icon: '📍' },
@@ -171,6 +176,7 @@ function TasksPage() {
                 {task.type === 'video' ? '🎥' : 
                  task.type === 'quiz' ? '❓' : 
                  task.type === 'article_quiz' ? '📄' :
+                 task.type === 'survey' ? '📋' :
                  task.type === 'qr' ? <QRCodeIcon size={48} /> : 
                  task.type === 'visit_location' ? '📍' : '📷'}
               </span>

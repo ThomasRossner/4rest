@@ -20,6 +20,7 @@ import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
 import QrScannerPage from './QrScannerPage';
 import { LocationMap } from '../../components/LocationMap/LocationMap';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
+import { SurveyAnalytics } from './SurveyAnalytics';
 
 type AdminMode =
   | 'task'
@@ -30,8 +31,9 @@ type AdminMode =
   | 'locationManage'
   | 'qrScanner'
   | 'forestStats'
+  | 'surveyAnalytics'
   | null;
-type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'qr' | 'photo' | 'visit_location';
+type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
 type AdminTaskTemplate = {
   id: string;
@@ -106,6 +108,8 @@ type TaskFormState = {
   article_url: string;
   article_content: string;
   articleSource: 'url' | 'content';
+  surveyQuestions: any[];
+  surveyType: 'single_choice' | 'multiple_choice' | 'text' | 'rating' | 'mixed';
   target_latitude?: string;
   target_longitude?: string;
   target_address?: string;
@@ -146,6 +150,17 @@ type QuizQuestionDraft = {
   prompt: string;
   answers: QuizAnswerDraft[];
   correctAnswerId: string | null;
+  order: number;
+};
+
+type SurveyQuestionDraft = {
+  id: string;
+  question: string;
+  type: 'single_choice' | 'multiple_choice' | 'text' | 'rating';
+  options?: string[];
+  required: boolean;
+  minRating?: number;
+  maxRating?: number;
   order: number;
 };
 
@@ -654,6 +669,23 @@ const reindexQuestions = (questions: QuizQuestionDraft[]): QuizQuestionDraft[] =
     order: index + 1,
   }));
 
+const createEmptySurveyQuestion = (order = 1): SurveyQuestionDraft => {
+  return {
+    id: generateId(),
+    question: '',
+    type: 'single_choice',
+    options: ['', ''],
+    required: true,
+    order,
+  };
+};
+
+const reindexSurveyQuestions = (questions: SurveyQuestionDraft[]): SurveyQuestionDraft[] =>
+  questions.map((question, index) => ({
+    ...question,
+    order: index + 1,
+  }));
+
 const ROLE_OPTIONS = USER_ROLES.map((role) => ({ value: role, label: role }));
 const USER_TYPE_OPTIONS = USER_TYPES.map((type) => ({ value: type, label: type }));
 const HOTEL_OPTIONS = HOTEL_IDS.map((id) => ({ value: id, label: id }));
@@ -664,7 +696,7 @@ const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
   label: formatRewardType(type),
 }));
 
-const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'qr' | 'photo' | 'visit_location'): TaskFormState => ({
+const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location'): TaskFormState => ({
   title: '',
   description: '',
   type,
@@ -685,6 +717,8 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'qr' | 'photo
   article_url: type === 'article_quiz' ? '' : '',
   article_content: type === 'article_quiz' ? '' : '',
   articleSource: 'url',
+  surveyQuestions: type === 'survey' ? [createEmptySurveyQuestion(1)] : [],
+  surveyType: 'mixed',
   target_latitude: type === 'visit_location' ? '' : undefined,
   target_longitude: type === 'visit_location' ? '' : undefined,
   target_address: type === 'visit_location' ? '' : undefined,
@@ -793,6 +827,59 @@ const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
 
   const normalized = questions.length > 0 ? questions : [createEmptyQuestion()];
   return reindexQuestions(normalized);
+};
+
+const normalizeSurveyQuestions = (payload: unknown): SurveyQuestionDraft[] => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) {
+    return payload.map((q, index) => ({
+      id: q.id || generateId(),
+      question: q.question || '',
+      type: q.type || 'single_choice',
+      options: q.options || (q.type === 'single_choice' || q.type === 'multiple_choice' ? ['', ''] : undefined),
+      required: q.required !== undefined ? q.required : true,
+      minRating: q.minRating || 1,
+      maxRating: q.maxRating || 5,
+      order: q.order || index + 1,
+    }));
+  }
+  return [createEmptySurveyQuestion()];
+};
+
+const buildSurveyPayload = (questions: SurveyQuestionDraft[]) => {
+  if (!questions.length) {
+    throw new Error('Add at least one survey question for a survey task.');
+  }
+
+  return questions.map((question) => {
+    const q = {
+      id: question.id,
+      question: question.question.trim(),
+      type: question.type,
+      required: question.required,
+    };
+
+    if (question.type === 'single_choice' || question.type === 'multiple_choice') {
+      if (!question.options || question.options.length < 2) {
+        throw new Error(`Question "${question.question || 'Untitled'}" must have at least 2 options.`);
+      }
+      const validOptions = question.options.filter(opt => opt.trim() !== '');
+      if (validOptions.length < 2) {
+        throw new Error(`Question "${question.question || 'Untitled'}" must have at least 2 non-empty options.`);
+      }
+      return { ...q, options: validOptions };
+    }
+
+    if (question.type === 'rating') {
+      return {
+        ...q,
+        minRating: question.minRating || 1,
+        maxRating: question.maxRating || 5,
+      };
+    }
+
+    return q;
+  });
 };
 
 const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
@@ -940,6 +1027,17 @@ const validateTaskFormState = ({
       return {
         isValid: false,
         message: error?.message ?? 'Check the quiz questions for missing details.',
+      };
+    }
+  }
+
+  if (taskForm.type === 'survey') {
+    try {
+      buildSurveyPayload(taskForm.surveyQuestions);
+    } catch (error: any) {
+      return {
+        isValid: false,
+        message: error?.message ?? 'Check the survey questions for missing details.',
       };
     }
   }
@@ -1404,6 +1502,282 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
 
       <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
         Add question
+      </button>
+    </div>
+  );
+};
+
+type SurveyBuilderProps = {
+  questions: SurveyQuestionDraft[];
+  onChange: (questions: SurveyQuestionDraft[]) => void;
+};
+
+const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
+  const { t } = useTranslation();
+
+  const updateQuestions = (
+    updater: (current: SurveyQuestionDraft[]) => SurveyQuestionDraft[]
+  ): void => {
+    const next = reindexSurveyQuestions(updater(questions));
+    onChange(next);
+  };
+
+  const handleQuestionChange = (questionId: string, field: keyof SurveyQuestionDraft, value: any) => {
+    updateQuestions((current) =>
+      current.map((question) =>
+        question.id === questionId ? { ...question, [field]: value } : question
+      )
+    );
+  };
+
+  const addQuestion = () => {
+    updateQuestions((current) => [...current, createEmptySurveyQuestion(current.length + 1)]);
+  };
+
+  const removeQuestion = (questionId: string) => {
+    updateQuestions((current) => {
+      if (current.length === 1) {
+        return current;
+      }
+      return current.filter((question) => question.id !== questionId);
+    });
+  };
+
+  const moveQuestion = (questionId: string, offset: number) => {
+    updateQuestions((current) => {
+      const index = current.findIndex((question) => question.id === questionId);
+      if (index === -1) return current;
+      return moveItem(current, index, offset);
+    });
+  };
+
+  const handleOptionChange = (questionId: string, optionIndex: number, value: string) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId || !question.options) return question;
+        const newOptions = [...question.options];
+        newOptions[optionIndex] = value;
+        return { ...question, options: newOptions };
+      })
+    );
+  };
+
+  const addOption = (questionId: string) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId) return question;
+        return {
+          ...question,
+          options: [...(question.options || []), ''],
+        };
+      })
+    );
+  };
+
+  const removeOption = (questionId: string, optionIndex: number) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId || !question.options) return question;
+        if (question.options.length <= 2) return question;
+        const newOptions = question.options.filter((_, idx) => idx !== optionIndex);
+        return { ...question, options: newOptions };
+      })
+    );
+  };
+
+  const moveOption = (questionId: string, optionIndex: number, offset: number) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId || !question.options) return question;
+        return { ...question, options: moveItem(question.options, optionIndex, offset) };
+      })
+    );
+  };
+
+  if (!questions.length) {
+    return (
+      <div className="admin-quiz-builder">
+        <p className="admin-quiz-empty">{t('admin.task.survey.empty')}</p>
+        <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
+          {t('admin.task.survey.addQuestion')}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-quiz-builder">
+      <div className="admin-quiz-header">
+        <h3>{t('admin.task.survey.title')}</h3>
+        <p>{t('admin.task.survey.description')}</p>
+      </div>
+
+      <div className="admin-quiz-list">
+        {questions.map((question, questionIndex) => (
+          <div key={question.id} className="admin-quiz-question">
+            <div className="admin-quiz-question-header">
+              <h4>
+                {t('admin.task.survey.questionNumber', { number: question.order })}
+                <span className="admin-quiz-question-controls">
+                  <button
+                    type="button"
+                    onClick={() => moveQuestion(question.id, -1)}
+                    disabled={questionIndex === 0}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveQuestion(question.id, 1)}
+                    disabled={questionIndex === questions.length - 1}
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeQuestion(question.id)}
+                    disabled={questions.length === 1}
+                  >
+                    {t('admin.task.survey.remove')}
+                  </button>
+                </span>
+              </h4>
+            </div>
+
+            <label className="admin-field">
+              <span>{t('admin.task.survey.questionText')}</span>
+              <input
+                type="text"
+                value={question.question}
+                onChange={(e) => handleQuestionChange(question.id, 'question', e.target.value)}
+                placeholder={t('admin.task.survey.questionPlaceholder')}
+              />
+            </label>
+
+            <div className="admin-field">
+              <span>{t('admin.task.survey.questionType')}</span>
+              <select
+                value={question.type}
+                onChange={(e) => {
+                  const newType = e.target.value as SurveyQuestionDraft['type'];
+                  const updates: Partial<SurveyQuestionDraft> = { type: newType };
+                  if (newType === 'single_choice' || newType === 'multiple_choice') {
+                    updates.options = question.options && question.options.length >= 2 
+                      ? question.options 
+                      : ['', ''];
+                  } else if (newType === 'rating') {
+                    updates.minRating = 1;
+                    updates.maxRating = 5;
+                    updates.options = undefined;
+                  } else {
+                    updates.options = undefined;
+                  }
+                  updateQuestions((current) =>
+                    current.map((q) =>
+                      q.id === question.id ? { ...q, ...updates } : q
+                    )
+                  );
+                }}
+              >
+                <option value="single_choice">{t('admin.task.survey.typeSingleChoice')}</option>
+                <option value="multiple_choice">{t('admin.task.survey.typeMultipleChoice')}</option>
+                <option value="text">{t('admin.task.survey.typeText')}</option>
+                <option value="rating">{t('admin.task.survey.typeRating')}</option>
+              </select>
+            </div>
+
+            {(question.type === 'single_choice' || question.type === 'multiple_choice') && (
+              <div className="admin-quiz-answers">
+                <label className="admin-field">
+                  <span>{t('admin.task.survey.options')}</span>
+                </label>
+                {question.options?.map((option, optionIndex) => (
+                  <div key={optionIndex} className="admin-quiz-answer-row">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(question.id, optionIndex, e.target.value)}
+                      placeholder={t('admin.task.survey.optionPlaceholder', { number: optionIndex + 1 })}
+                    />
+                    <div className="admin-quiz-answer-controls">
+                      <button
+                        type="button"
+                        onClick={() => moveOption(question.id, optionIndex, -1)}
+                        disabled={optionIndex === 0}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveOption(question.id, optionIndex, 1)}
+                        disabled={optionIndex === (question.options?.length || 0) - 1}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeOption(question.id, optionIndex)}
+                        disabled={(question.options?.length || 0) <= 2}
+                      >
+                        {t('admin.task.survey.remove')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="admin-quiz-add-answer"
+                  onClick={() => addOption(question.id)}
+                >
+                  {t('admin.task.survey.addOption')}
+                </button>
+              </div>
+            )}
+
+            {question.type === 'rating' && (
+              <div className="admin-field" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <label>
+                  <span>{t('admin.task.survey.minRating')}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={question.minRating ?? 1}
+                    onChange={(e) =>
+                      handleQuestionChange(question.id, 'minRating', parseInt(e.target.value) || 1)
+                    }
+                  />
+                </label>
+                <label>
+                  <span>{t('admin.task.survey.maxRating')}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={question.maxRating ?? 5}
+                    onChange={(e) =>
+                      handleQuestionChange(question.id, 'maxRating', parseInt(e.target.value) || 5)
+                    }
+                  />
+                </label>
+              </div>
+            )}
+
+            <label className="admin-field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={question.required}
+                onChange={(e) => handleQuestionChange(question.id, 'required', e.target.checked)}
+                style={COMPACT_TOGGLE_STYLE}
+              />
+              <span>{t('admin.task.survey.required')}</span>
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
+        {t('admin.task.survey.addQuestion')}
       </button>
     </div>
   );
@@ -1996,7 +2370,7 @@ function AdminPage() {
     if (taskSource === 'existing') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
-    } else if (taskSource === 'video' || taskSource === 'quiz' || taskSource === 'article_quiz' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
+    } else if (taskSource === 'video' || taskSource === 'quiz' || taskSource === 'article_quiz' || taskSource === 'survey' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm(taskSource));
     }
@@ -2020,6 +2394,8 @@ function AdminPage() {
       (template.type === 'video' || template.type === 'quiz' || template.type === 'article_quiz')
         ? normalizeQuizQuestions(template.quiz_questions ?? [])
         : [],
+      surveyQuestions: template.type === 'survey' ? ((template as any).survey_questions ?? []) : [],
+      surveyType: template.type === 'survey' ? ((template as any).survey_type ?? 'mixed') : 'mixed',
       qr_code: template.qr_code ?? '',
     photo_required: template.type === 'photo',
       co2_savings_kg: template.co2_savings_kg ?? 0,
@@ -2189,6 +2565,10 @@ function AdminPage() {
           }
           payload.quiz_questions = quizPayload;
         }
+        if (taskForm.type === 'survey') {
+          payload.survey_questions = buildSurveyPayload(taskForm.surveyQuestions);
+          payload.survey_type = taskForm.surveyType;
+        }
         if (taskForm.type === 'qr') {
           payload.qr_code = taskForm.qr_code.trim();
         }
@@ -2246,6 +2626,10 @@ function AdminPage() {
           }
           payload.quiz_questions = quizPayload;
         }
+        if (template.type === 'survey') {
+          payload.survey_questions = buildSurveyPayload(taskForm.surveyQuestions);
+          payload.survey_type = taskForm.surveyType;
+        }
         if (template.type === 'qr') {
           payload.qr_code = taskForm.qr_code.trim();
         }
@@ -2300,6 +2684,10 @@ function AdminPage() {
           payload.article_url = null;
         }
         payload.quiz_questions = quizPayload;
+      }
+      if (taskSource === 'survey') {
+        payload.survey_questions = buildSurveyPayload(taskForm.surveyQuestions);
+        payload.survey_type = taskForm.surveyType;
       }
       if (taskSource === 'qr') {
         payload.qr_code = taskForm.qr_code.trim();
@@ -2812,6 +3200,7 @@ function AdminPage() {
       task.type === 'video' ? 'video' 
       : task.type === 'quiz' ? 'quiz'
       : task.type === 'article_quiz' ? 'article_quiz'
+      : task.type === 'survey' ? 'survey'
       : task.type === 'qr' ? 'qr' 
       : task.type === 'photo' ? 'photo'
       : task.type === 'visit_location' ? 'visit_location'
@@ -2831,6 +3220,8 @@ function AdminPage() {
       article_url: (task as any).article_url ?? '',
       article_content: (task as any).article_content ?? '',
       articleSource: (task as any).article_url ? 'url' : 'content',
+      surveyQuestions: (task as any).survey_questions ?? [],
+      surveyType: (task as any).survey_type ?? 'mixed',
       qr_code: task.qr_code ?? '',
       photo_required: task.type === 'photo',
       co2_savings_kg: task.co2_savings_kg ?? 0,
@@ -3137,7 +3528,36 @@ const goToRewardCreation = () => {
             <h2>{t('admin.actions.forestDebugStats.title')}</h2>
             <p>{t('admin.actions.forestDebugStats.description')}</p>
           </button>
+          <button
+            className="admin-choice-card"
+            onClick={() => setMode('surveyAnalytics')}
+          >
+            <span className="admin-choice-icon">📊</span>
+            <h2>{t('admin.actions.surveyAnalytics.title')}</h2>
+            <p>{t('admin.actions.surveyAnalytics.description')}</p>
+          </button>
         </div>
+      )}
+
+      {mode === 'surveyAnalytics' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.surveyAnalytics.title')}</h2>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+          <SurveyAnalytics />
+        </section>
       )}
 
       {mode === 'forestStats' && (
@@ -3473,6 +3893,7 @@ const goToRewardCreation = () => {
                   <option value="video">{t('admin.task.startFromScratch.video')}</option>
                   <option value="quiz">{t('admin.task.startFromScratch.quiz')}</option>
                   <option value="article_quiz">{t('admin.task.startFromScratch.articleQuiz')}</option>
+                  <option value="survey">{t('admin.task.startFromScratch.survey')}</option>
                   <option value="qr">{t('admin.task.startFromScratch.qr')}</option>
                   <option value="photo">{t('admin.task.startFromScratch.photo')}</option>
                   <option value="visit_location">{t('admin.task.startFromScratch.visitLocation')}</option>
@@ -3842,6 +4263,42 @@ const goToRewardCreation = () => {
                         )}
                       </>
                     )}
+                    {taskForm.type === 'survey' && (
+                      <>
+                        <div className="admin-field admin-field-span-2">
+                          <FieldLabel label="Survey Type" />
+                          <select
+                            value={taskForm.surveyType}
+                            onChange={(e) =>
+                              setTaskForm((prev) => ({
+                                ...prev,
+                                surveyType: e.target.value as 'single_choice' | 'multiple_choice' | 'text' | 'rating' | 'mixed',
+                              }))
+                            }
+                          >
+                            <option value="mixed">{t('admin.task.survey.typeMixed')}</option>
+                            <option value="single_choice">{t('admin.task.survey.typeSingleChoiceOnly')}</option>
+                            <option value="multiple_choice">{t('admin.task.survey.typeMultipleChoiceOnly')}</option>
+                            <option value="text">{t('admin.task.survey.typeTextOnly')}</option>
+                            <option value="rating">{t('admin.task.survey.typeRatingOnly')}</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                {taskForm.type === 'survey' && (
+                  <div className="admin-form-full admin-quiz-block">
+                    <FieldLabel label={t('admin.task.survey.title')} required />
+                    <SurveyBuilder
+                      questions={taskForm.surveyQuestions}
+                      onChange={(questions) =>
+                        setTaskForm((prev) => ({
+                          ...prev,
+                          surveyQuestions: questions,
+                        }))
+                      }
+                    />
+                  </div>
+                )}
                 {(taskForm.type === 'video' || taskForm.type === 'quiz' || taskForm.type === 'article_quiz') && (
                   <div className="admin-form-full admin-quiz-block">
                       <FieldLabel label={t('admin.task.quiz.title')} required />

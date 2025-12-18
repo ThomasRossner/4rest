@@ -147,6 +147,7 @@
         "video": "Video-Quiz",
         "quiz": "Quiz",
         "article_quiz": "Artikel-Quiz",
+        "survey": "Umfrage",
         "qr": "QR-Code",
         "photo": "Foto",
         "visit_location": "Standort besuchen"
@@ -278,6 +279,10 @@
       "forestDebugStats": {
         "title": "Wald-Debug-Statistiken",
         "description": "Zeigen Sie pro Benutzer Baum- und abgeschlossene Aufgabenanzahlen zur Fehlerbehebung an."
+      },
+      "surveyAnalytics": {
+        "title": "Umfrage-Analysen",
+        "description": "Zeigen Sie aggregierte Umfrageantworten mit visuellen Diagrammen und Statistiken an."
       }
     },
     "task": {
@@ -296,6 +301,7 @@
         "video": "Von Grund auf – Video-Quiz-Aufgabe",
         "quiz": "Von Grund auf – Quiz-Aufgabe",
         "articleQuiz": "Von Grund auf – Artikel-Quiz-Aufgabe",
+        "survey": "Von Grund auf – Umfrage-Aufgabe",
         "qr": "Von Grund auf – QR-Aufgabe",
         "photo": "Von Grund auf – Foto-Aufgabe",
         "visitLocation": "Von Grund auf – Standort besuchen Aufgabe"
@@ -349,6 +355,32 @@
         "questionText": "Fragetext",
         "questionPlaceholder": "Geben Sie die Frageaufforderung ein",
         "correct": "Richtig"
+      },
+      "survey": {
+        "title": "Umfragefragen",
+        "description": "Fügen Sie Umfragefragen mit verschiedenen Typen hinzu. Jede Frage kann erforderlich oder optional sein.",
+        "empty": "Noch keine Fragen. Fügen Sie unten Ihre erste Frage hinzu.",
+        "addQuestion": "Frage hinzufügen",
+        "questionNumber": "Frage {{number}}",
+        "questionText": "Fragetext",
+        "questionPlaceholder": "Geben Sie den Fragetext ein",
+        "questionType": "Fragetyp",
+        "typeSingleChoice": "Einzelauswahl",
+        "typeMultipleChoice": "Mehrfachauswahl",
+        "typeText": "Texteingabe",
+        "typeRating": "Bewertungsskala",
+        "typeMixed": "Gemischt (alle Fragetypen erlaubt)",
+        "typeSingleChoiceOnly": "Nur Einzelauswahl",
+        "typeMultipleChoiceOnly": "Nur Mehrfachauswahl",
+        "typeTextOnly": "Nur Text",
+        "typeRatingOnly": "Nur Bewertung",
+        "options": "Optionen",
+        "optionPlaceholder": "Option {{number}}",
+        "addOption": "Option hinzufügen",
+        "minRating": "Mindestbewertung",
+        "maxRating": "Höchstbewertung",
+        "required": "Erforderlich",
+        "remove": "Entfernen"
       },
       "refresh": "Aufgaben aktualisieren",
       "loading": "Aufgaben werden geladen…",
@@ -528,6 +560,21 @@
         },
         "closeResults": "Ergebnisse schließen"
       }
+    },
+    "surveyAnalytics": {
+      "title": "Umfrage-Analysen",
+      "selectTask": "Umfrage-Aufgabe auswählen",
+      "allSurveys": "Alle Umfragen",
+      "totalResponses": "{{count}} Antwort",
+      "totalResponses_plural": "{{count}} Antworten",
+      "noData": "Keine Umfragedaten",
+      "noDataDescription": "Keine Umfrageantworten gefunden. Antworten werden hier angezeigt, sobald Benutzer Umfrage-Aufgaben abschließen.",
+      "averageRating": "Durchschnittliche Bewertung: {{value}}",
+      "textResponses": "{{count}} Textantwort",
+      "textResponses_plural": "{{count}} Textantworten"
+    },
+    "common": {
+      "back": "Zurück"
     },
     "filters": {
       "title": "Filter",

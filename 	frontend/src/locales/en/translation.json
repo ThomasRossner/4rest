@@ -147,6 +147,7 @@
         "video": "Video-Quiz",
         "quiz": "Quiz",
         "article_quiz": "Article Quiz",
+        "survey": "Survey",
         "qr": "QR code",
         "photo": "Photo",
         "visit_location": "Visit location"
@@ -278,6 +279,10 @@
       "forestDebugStats": {
         "title": "Forest Debug Stats",
         "description": "View per-user tree and completed-task counts for debugging."
+      },
+      "surveyAnalytics": {
+        "title": "Survey Analytics",
+        "description": "View aggregated survey responses with visual charts and statistics."
       }
     },
     "task": {
@@ -296,6 +301,7 @@
         "video": "Start from scratch – Video-Quiz task",
         "quiz": "Start from scratch – Quiz task",
         "articleQuiz": "Start from scratch – Article Quiz task",
+        "survey": "Start from scratch – Survey task",
         "qr": "Start from scratch – QR task",
         "photo": "Start from scratch – Photo task",
         "visitLocation": "Start from scratch – Visit location task"
@@ -349,6 +355,32 @@
         "questionText": "Question text",
         "questionPlaceholder": "Enter the question prompt",
         "correct": "Correct"
+      },
+      "survey": {
+        "title": "Survey Questions",
+        "description": "Add survey questions with different types. Each question can be required or optional.",
+        "empty": "No questions yet. Add your first question below.",
+        "addQuestion": "Add question",
+        "questionNumber": "Question {{number}}",
+        "questionText": "Question text",
+        "questionPlaceholder": "Enter the question text",
+        "questionType": "Question type",
+        "typeSingleChoice": "Single Choice",
+        "typeMultipleChoice": "Multiple Choice",
+        "typeText": "Text Input",
+        "typeRating": "Rating Scale",
+        "typeMixed": "Mixed (all question types allowed)",
+        "typeSingleChoiceOnly": "Single Choice Only",
+        "typeMultipleChoiceOnly": "Multiple Choice Only",
+        "typeTextOnly": "Text Only",
+        "typeRatingOnly": "Rating Only",
+        "options": "Options",
+        "optionPlaceholder": "Option {{number}}",
+        "addOption": "Add option",
+        "minRating": "Minimum rating",
+        "maxRating": "Maximum rating",
+        "required": "Required",
+        "remove": "Remove"
       },
       "refresh": "Refresh tasks",
       "loading": "Loading tasks…",
@@ -528,6 +560,21 @@
         },
         "closeResults": "Close Results"
       }
+    },
+    "surveyAnalytics": {
+      "title": "Survey Analytics",
+      "selectTask": "Select Survey Task",
+      "allSurveys": "All Surveys",
+      "totalResponses": "{{count}} Response",
+      "totalResponses_plural": "{{count}} Responses",
+      "noData": "No Survey Data",
+      "noDataDescription": "No survey responses found. Responses will appear here once users complete survey tasks.",
+      "averageRating": "Average Rating: {{value}}",
+      "textResponses": "{{count}} Text Response",
+      "textResponses_plural": "{{count}} Text Responses"
+    },
+    "common": {
+      "back": "Back"
     },
     "filters": {
       "title": "Filters",
@@ -808,6 +855,16 @@
       "stopTracking": "Stop Tracking",
       "yourLocationLabel": "Your location: {{lat}}, {{lng}}",
       "locationReached": "Location reached! Task completed successfully."
+    },
+    "survey": {
+      "title": "Survey",
+      "instruction": "Please answer all required questions.",
+      "required": "Required",
+      "textPlaceholder": "Enter your answer here...",
+      "submit": "Submit Survey",
+      "submitting": "Submitting...",
+      "noQuestions": "This survey task has no questions configured.",
+      "requiredQuestions": "Please answer all required questions before submitting."
     }
   }
 }

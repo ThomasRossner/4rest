@@ -209,7 +209,7 @@ export const api = {
       if (currentUser) {
         store.setUser({ ...currentUser, points: response.data.user.points });
       }
-      }
+    }
     return response.data;
   },
 
@@ -304,6 +304,13 @@ export const api = {
 
   async deleteLocation(id: string) {
     const response = await apiClient.delete(`/locations/${id}`);
+    return response.data;
+  },
+
+  // Survey Analytics
+  async getSurveyAnalytics(taskId?: string) {
+    const params = taskId ? { taskId } : {};
+    const response = await apiClient.get('/admin/surveys/analytics', { params });
     return response.data;
   },
 };

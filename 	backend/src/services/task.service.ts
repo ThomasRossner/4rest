@@ -1,6 +1,6 @@
 import { getPool } from '../database/connection.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
-import { UserRole, UserType } from '../constants/enums.js';
+import { UserRole, UserType, HotelId } from '../constants/enums.js';
 import { Location } from './location.service.js';
 import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
@@ -30,6 +30,8 @@ export interface Task {
   target_longitude?: number;
   article_url?: string;
   article_content?: string;
+  survey_questions?: any;
+  survey_type?: string;
 }
 
 export async function getAllTasks(
@@ -170,6 +172,18 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       throw new Error('Quiz questions are required for article_quiz tasks');
     }
   }
+  
+  const surveyPayload = data.survey_questions
+    ? typeof data.survey_questions === 'string'
+      ? data.survey_questions
+      : JSON.stringify(data.survey_questions)
+    : null;
+  
+  if (data.type === 'survey') {
+    if (!surveyPayload) {
+      throw new Error('Survey questions are required for survey tasks');
+    }
+  }
 
   const result = await db.query(
     `INSERT INTO tasks (
@@ -192,9 +206,11 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        target_latitude,
        target_longitude,
        article_url,
-       article_content
+       article_content,
+       survey_questions,
+       survey_type
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
      RETURNING *`,
     [
       data.title,
@@ -217,6 +233,8 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       (data as any).target_longitude ?? null,
       (data as any).article_url ?? null,
       (data as any).article_content ?? null,
+      surveyPayload,
+      (data as any).survey_type ?? null,
     ]
   );
   return result.rows[0];
@@ -281,7 +299,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
 
   Object.entries(data).forEach(([key, value]) => {
     if (value !== undefined && key !== 'id') {
-      if (key === 'quiz_questions' && typeof value === 'object') {
+      if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
         updates.push(`${key} = $${paramIndex++}`);
         values.push(JSON.stringify(value));
       } else if (key === 'recurrence') {
@@ -374,14 +392,19 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
   }
 
   // Insert completion record
+  const surveyResponsesPayload = data?.survey_responses
+    ? JSON.stringify(data.survey_responses)
+    : null;
+  
   await db.query(
-    `INSERT INTO user_tasks (user_id, task_id, photo_url, quiz_answers, points_earned)
-     VALUES ($1, $2, $3, $4, $5)`,
+    `INSERT INTO user_tasks (user_id, task_id, photo_url, quiz_answers, survey_responses, points_earned)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
     [
       userId,
       taskId,
       data?.photo_url,
       data?.quiz_answers ? JSON.stringify(data.quiz_answers) : null,
+      surveyResponsesPayload,
       task.points,
     ]
   );
