@@ -21,6 +21,7 @@ import QrScannerPage from './QrScannerPage';
 import { LocationMap } from '../../components/LocationMap/LocationMap';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { SurveyAnalytics } from './SurveyAnalytics';
+import { DebugTools } from './DebugTools';
 
 type AdminMode =
   | 'task'
@@ -32,6 +33,7 @@ type AdminMode =
   | 'qrScanner'
   | 'forestStats'
   | 'surveyAnalytics'
+  | 'debugTools'
   | null;
 type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
@@ -1828,6 +1830,7 @@ function AdminPage() {
   const showToast = useToastStore((s) => s.showToast);
   const isAdmin = user?.role === 'administrator';
   const [mode, setMode] = useState<AdminMode>(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   const [taskSource, setTaskSource] = useState<TaskSource>('');
   const [selectedExistingTaskId, setSelectedExistingTaskId] = useState<string>('');
@@ -3462,6 +3465,14 @@ const goToRewardCreation = () => {
         <nav className="admin-navbar">
           <div className="admin-navbar-space" aria-hidden="true" />
           <LanguageSwitcher compact className="admin-navbar-language" />
+          <button
+            className={`admin-debug-toggle ${debugMode ? 'active' : ''}`}
+            onClick={() => setDebugMode(!debugMode)}
+            title={debugMode ? t('admin.debugMode.disable') : t('admin.debugMode.enable')}
+          >
+            🔧
+            <span className="sr-only">{debugMode ? t('admin.debugMode.disable') : t('admin.debugMode.enable')}</span>
+          </button>
           <button className="admin-icon-button admin-navbar-action" onClick={logout} title={t('admin.logout')}>
             <Icon name="logout" />
             <span className="sr-only">{t('admin.logout')}</span>
@@ -3517,17 +3528,29 @@ const goToRewardCreation = () => {
             <h2>{t('admin.actions.redeemRewards.title')}</h2>
             <p>{t('admin.actions.redeemRewards.description')}</p>
           </button>
-          <button
-            className="admin-choice-card"
-            onClick={() => {
-              void loadForestStats();
-              setMode('forestStats');
-            }}
-          >
-            <span className="admin-choice-icon">🌲</span>
-            <h2>{t('admin.actions.forestDebugStats.title')}</h2>
-            <p>{t('admin.actions.forestDebugStats.description')}</p>
-          </button>
+          {debugMode && (
+            <button
+              className="admin-choice-card"
+              onClick={() => {
+                void loadForestStats();
+                setMode('forestStats');
+              }}
+            >
+              <span className="admin-choice-icon">🌲</span>
+              <h2>{t('admin.actions.forestDebugStats.title')}</h2>
+              <p>{t('admin.actions.forestDebugStats.description')}</p>
+            </button>
+          )}
+          {debugMode && (
+            <button
+              className="admin-choice-card"
+              onClick={() => setMode('debugTools')}
+            >
+              <span className="admin-choice-icon">🔧</span>
+              <h2>{t('admin.actions.debugTools.title')}</h2>
+              <p>{t('admin.actions.debugTools.description')}</p>
+            </button>
+          )}
           <button
             className="admin-choice-card"
             onClick={() => setMode('surveyAnalytics')}
@@ -3560,7 +3583,28 @@ const goToRewardCreation = () => {
         </section>
       )}
 
-      {mode === 'forestStats' && (
+      {mode === 'debugTools' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.debugTools.title')}</h2>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+          <DebugTools />
+        </section>
+      )}
+
+      {mode === 'forestStats' && debugMode && (
         <section className="admin-section">
           <header className="admin-section-header">
             <div>

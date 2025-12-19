@@ -1,0 +1,443 @@
+.debug-tools-page {
+  padding: var(--spacing-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.debug-tools-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  text-align: center;
+}
+
+.debug-tools-subtitle {
+  text-align: center;
+  color: var(--color-text-light);
+  margin: 0 0 var(--spacing-xl) 0;
+}
+
+.debug-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.debug-tool-card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.debug-tool-card-wide {
+  grid-column: 1 / -1;
+}
+
+.debug-tool-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.debug-tool-description {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.debug-tool-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.debug-tool-form label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.debug-tool-form input,
+.debug-tool-form textarea,
+.debug-tool-form select {
+  padding: var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.debug-tool-form input:focus,
+.debug-tool-form textarea:focus,
+.debug-tool-form select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-ghost);
+}
+
+.debug-tool-form input:disabled,
+.debug-tool-form textarea:disabled,
+.debug-tool-form select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--color-surface);
+}
+
+.debug-tool-button {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: var(--spacing-sm);
+}
+
+.debug-tool-button:hover:not(:disabled) {
+  background-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.debug-tool-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.debug-tool-button.secondary {
+  background: white;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+
+.debug-tool-button.secondary:hover:not(:disabled) {
+  background: var(--color-primary-ghost);
+}
+
+.debug-tool-button.danger {
+  background-color: #dc2626;
+}
+
+.debug-tool-button.danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.debug-survey-questions {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--color-border);
+}
+
+.debug-survey-questions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.debug-survey-questions-header h3 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.debug-survey-question {
+  background: var(--color-surface);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.debug-survey-question-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.debug-survey-question-number {
+  font-weight: 600;
+  color: var(--color-primary);
+  min-width: 24px;
+}
+
+.debug-survey-remove-button {
+  margin-left: auto;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.debug-survey-remove-button:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: scale(1.1);
+}
+
+.debug-survey-remove-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.debug-survey-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.debug-survey-rating-range {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xs);
+}
+
+.debug-survey-rating-range label {
+  flex: 1;
+}
+
+.debug-reset-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--border-radius);
+  border: 2px solid var(--color-border);
+}
+
+.debug-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius);
+  transition: background 0.2s ease;
+}
+
+.debug-checkbox-label:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.debug-checkbox-label input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.debug-confirm-dialog {
+  padding: var(--spacing-lg);
+  background: #fef2f2;
+  border: 2px solid #dc2626;
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-md);
+}
+
+.debug-confirm-dialog p {
+  margin: 0 0 var(--spacing-md) 0;
+  color: #991b1b;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.debug-confirm-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.debug-stats-dates,
+.debug-stats-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+  .debug-tools-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .debug-tool-card-wide {
+    grid-column: 1;
+  }
+
+  .debug-stats-dates,
+  .debug-stats-range {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Debug Logs Viewer */
+.debug-logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.debug-logs-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.debug-logs-filter {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  min-width: 150px;
+}
+
+.debug-logs-container {
+  max-height: 600px;
+  overflow-y: auto;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+}
+
+.debug-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+}
+
+.debug-log-entry {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--color-border);
+  background: white;
+  font-size: 0.85rem;
+}
+
+.debug-log-entry.debug-log-info {
+  border-left-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.debug-log-entry.debug-log-warn {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.debug-log-entry.debug-log-error {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+}
+
+.debug-log-header {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-xs);
+}
+
+.debug-log-timestamp {
+  color: var(--color-text-light);
+  font-size: 0.8rem;
+  font-family: monospace;
+}
+
+.debug-log-level {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.debug-log-level-info {
+  background: #3b82f6;
+  color: white;
+}
+
+.debug-log-level-warn {
+  background: #f59e0b;
+  color: white;
+}
+
+.debug-log-level-error {
+  background: #dc2626;
+  color: white;
+}
+
+.debug-log-operation {
+  font-weight: 600;
+  color: var(--color-primary);
+  font-family: monospace;
+}
+
+.debug-log-user {
+  color: var(--color-text-light);
+  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.debug-log-message {
+  color: var(--color-text);
+  margin-top: var(--spacing-xs);
+  line-height: 1.5;
+}
+
+.debug-log-details {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.debug-log-details summary {
+  cursor: pointer;
+  color: var(--color-primary);
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.debug-log-details pre {
+  background: rgba(0, 0, 0, 0.05);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.debug-logs-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-light);
+}
+

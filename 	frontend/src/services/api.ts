@@ -313,4 +313,96 @@ export const api = {
     const response = await apiClient.get('/admin/surveys/analytics', { params });
     return response.data;
   },
+
+  // Debug Tools (Admin only)
+  async createBulkTasks(userEmail: string, count?: number) {
+    const response = await apiClient.post('/admin/debug/create-tasks', { userEmail, count });
+    return response.data;
+  },
+
+  async completeBulkTasks(userEmail: string, count?: number) {
+    const response = await apiClient.post('/admin/debug/complete-tasks', { userEmail, count });
+    return response.data;
+  },
+
+  async deleteUserData(userEmail: string, taskCount: number, pointsToRemove: number) {
+    const response = await apiClient.post('/admin/debug/delete-user-data', {
+      userEmail,
+      taskCount,
+      pointsToRemove,
+    });
+    return response.data;
+  },
+
+  async createSurveyWithParticipants(surveyData: any, participantCount: number) {
+    const response = await apiClient.post('/admin/debug/create-survey', {
+      surveyData,
+      participantCount,
+    });
+    return response.data;
+  },
+
+  async simulateTimeActivity(userEmail: string, taskCount: number, startDate: string, endDate: string, distribution?: 'uniform' | 'random') {
+    const response = await apiClient.post('/admin/debug/simulate-time-activity', {
+      userEmail,
+      taskCount,
+      startDate,
+      endDate,
+      distribution: distribution || 'uniform',
+    });
+    return response.data;
+  },
+
+  async simulateRewardRedemption(userEmail: string, rewardId?: string, autoVerify?: boolean) {
+    const response = await apiClient.post('/admin/debug/simulate-reward-redemption', {
+      userEmail,
+      rewardId,
+      autoVerify: autoVerify || false,
+    });
+    return response.data;
+  },
+
+  async resetUserData(userEmail: string, resetOptions: { tasks?: boolean; trees?: boolean; points?: boolean; redemptions?: boolean }) {
+    const response = await apiClient.post('/admin/debug/reset-user-data', {
+      userEmail,
+      resetOptions,
+    });
+    return response.data;
+  },
+
+  async generateStatisticsData(
+    startDate: string,
+    endDate: string,
+    targetUserCount: number,
+    tasksPerUserMin?: number,
+    tasksPerUserMax?: number,
+    co2PerTaskMin?: number,
+    co2PerTaskMax?: number
+  ) {
+    const response = await apiClient.post('/admin/debug/generate-statistics-data', {
+      startDate,
+      endDate,
+      targetUserCount,
+      tasksPerUserMin,
+      tasksPerUserMax,
+      co2PerTaskMin,
+      co2PerTaskMax,
+    });
+    return response.data;
+  },
+
+  async simulateForestVisits(userEmail: string, days: number) {
+    const response = await apiClient.post('/admin/debug/simulate-forest-visits', { userEmail, days });
+    return response.data;
+  },
+
+  async getDebugLogs(params?: { limit?: number; level?: 'info' | 'warn' | 'error'; operation?: string }) {
+    const response = await apiClient.get('/admin/debug/logs', { params });
+    return response.data;
+  },
+
+  async clearDebugLogs() {
+    const response = await apiClient.delete('/admin/debug/logs');
+    return response.data;
+  },
 };
