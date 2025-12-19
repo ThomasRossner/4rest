@@ -129,12 +129,13 @@ export async function getForestService(userId: string) {
     const treeGridRows = maxGridRow - minGridRow + 1;
     const gridSize = Math.max(treeGridCols, treeGridRows);
     
-    // Generate block origins for a grid that covers the tree blocks
-    // Use the actual min/max bounds, not a centered grid
-    const startX = primaryOrigin[0] + minGridCol * areaSpacing;
-    const startZ = primaryOrigin[2] + minGridRow * areaSpacing;
+    // Generate block origins for a grid centered around the primary origin
+    // Use the same centering logic as generateBlockOrigins function
+    const centerOffset = Math.floor(-(gridSize - 1) / 2) * areaSpacing;
+    const startX = primaryOrigin[0] + centerOffset;
+    const startZ = primaryOrigin[2] + centerOffset;
     
-    // Add all blocks in the bounding grid (including empty ones)
+    // Add all blocks in the centered grid (including empty ones)
     for (let row = 0; row < gridSize; row++) {
       for (let col = 0; col < gridSize; col++) {
         const blockX = startX + col * areaSpacing;
@@ -186,20 +187,59 @@ export async function getForestService(userId: string) {
     });
   }
 
-  // Create areas for all blocks (including empty ones)
+  // Calculate center of all blocks to center the forest at [0, 0, 0]
+  let centerX = 0;
+  let centerZ = 0;
+  if (blocksMap.size > 0) {
+    let sumX = 0;
+    let sumZ = 0;
+    for (const block of blocksMap.values()) {
+      sumX += block.origin[0];
+      sumZ += block.origin[2];
+    }
+    centerX = sumX / blocksMap.size;
+    centerZ = sumZ / blocksMap.size;
+  }
+  
+  // Create areas for all blocks (including empty ones) with centered origins
   const expandedAreas: Array<{ origin: [number, number, number]; trees: any[] }> = [];
   let totalTreesInAreas = 0;
   const blocksWithTrees: Array<{ origin: string; count: number }> = [];
   
   for (const areaBlock of blocksMap.values()) {
+    // Offset block origin to center the forest at [0, 0, 0]
+    const centeredOrigin: [number, number, number] = [
+      areaBlock.origin[0] - centerX,
+      areaBlock.origin[1],
+      areaBlock.origin[2] - centerZ,
+    ];
+    
+    // Recalculate local positions relative to the centered block origin
+    // The tree's absolute position (from DB) stays the same, but the block origin changed
+    // So: newLocalPosition = treeAbsolutePosition - centeredBlockOrigin
+    const treesWithCenteredLocalPos = areaBlock.trees.map((tree: any) => {
+      // tree.position is the absolute position from the database
+      const treeAbsolutePos = tree.position as [number, number, number];
+      // Calculate new local position relative to the centered block origin
+      const newLocalPosition: [number, number, number] = [
+        treeAbsolutePos[0] - centeredOrigin[0],
+        treeAbsolutePos[1] - centeredOrigin[1],
+        treeAbsolutePos[2] - centeredOrigin[2],
+      ];
+      return {
+        ...tree,
+        localPosition: newLocalPosition,
+      };
+    });
+    
     expandedAreas.push({
-      origin: areaBlock.origin,
-      trees: areaBlock.trees,
+      origin: centeredOrigin,
+      trees: treesWithCenteredLocalPos,
     });
     totalTreesInAreas += areaBlock.trees.length;
     if (areaBlock.trees.length > 0) {
       blocksWithTrees.push({
-        origin: `${areaBlock.origin[0]},${areaBlock.origin[2]}`,
+        origin: `${centeredOrigin[0]},${centeredOrigin[2]}`,
         count: areaBlock.trees.length,
       });
     }
@@ -213,9 +253,19 @@ export async function getForestService(userId: string) {
     );
   }
 
+  // Also center the flat trees list for backwards compatibility
+  const centeredTrees = trees.map((tree: any) => ({
+    ...tree,
+    position: [
+      tree.position[0] - centerX,
+      tree.position[1],
+      tree.position[2] - centerZ,
+    ] as [number, number, number],
+  }));
+
   return {
     areas: expandedAreas,
-    trees: trees, // backwards-compatible flat list
+    trees: centeredTrees, // backwards-compatible flat list (centered)
     totalTrees: trees.length,
     totalAreas: expandedAreas.length,
   };
