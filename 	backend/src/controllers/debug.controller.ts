@@ -10,6 +10,7 @@ import {
   resetUserData,
   generateStatisticsData,
   simulateForestVisits,
+  recalculateTreeSizes,
 } from '../services/debug.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
@@ -76,17 +77,26 @@ export const completeBulkTasks: RequestHandler = asyncHandler(async (req, res) =
 
   const result = await completeBulkTasksForUser(userEmail, taskCount);
 
-  logger.info('DEBUG_COMPLETE_BULK_TASKS', `Successfully completed ${result.completed} tasks`, {
-    userId: authReq.user?.id,
-    userEmail: authReq.user?.email,
-    details: { targetUserEmail: userEmail, completed: result.completed },
-  });
+  if (result.errors && result.errors.length > 0) {
+    logger.warn('DEBUG_COMPLETE_BULK_TASKS', `Completed ${result.completed} tasks with ${result.errors.length} errors`, {
+      userId: authReq.user?.id,
+      userEmail: authReq.user?.email,
+      details: { targetUserEmail: userEmail, completed: result.completed, errors: result.errors },
+    });
+  } else {
+    logger.info('DEBUG_COMPLETE_BULK_TASKS', `Successfully completed ${result.completed} tasks`, {
+      userId: authReq.user?.id,
+      userEmail: authReq.user?.email,
+      details: { targetUserEmail: userEmail, completed: result.completed },
+    });
+  }
 
   res.json({
     success: true,
-    message: `Completed ${result.completed} tasks for user ${userEmail}`,
+    message: `Completed ${result.completed} tasks for user ${userEmail}${result.errors && result.errors.length > 0 ? ` (${result.errors.length} errors occurred)` : ''}`,
     taskIds: result.taskIds,
     completed: result.completed,
+    errors: result.errors,
   });
 });
 
@@ -456,6 +466,38 @@ export const simulateForestVisitsController: RequestHandler = asyncHandler(async
   res.json({
     success: true,
     message: `Successfully simulated ${result.visitsCreated} forest visits. ${result.treesUpdated} tree updates performed.`,
+    ...result,
+  });
+});
+
+export const recalculateTreeSizesController: RequestHandler = asyncHandler(async (req, res) => {
+  const { userEmail } = req.body;
+  const authReq = req as AuthRequest;
+
+  if (!userEmail || typeof userEmail !== 'string') {
+    return res.status(400).json({ error: 'userEmail is required' });
+  }
+
+  logger.info('DEBUG_RECALCULATE_TREE_SIZES', `Recalculating tree sizes for user ${userEmail}`, {
+    userId: authReq.user?.id,
+    userEmail: authReq.user?.email,
+    details: { targetUserEmail: userEmail },
+  });
+
+  const result = await recalculateTreeSizes(userEmail);
+
+  logger.info('DEBUG_RECALCULATE_TREE_SIZES', `Successfully recalculated ${result.treesUpdated} tree sizes`, {
+    userId: authReq.user?.id,
+    userEmail: authReq.user?.email,
+    details: {
+      targetUserEmail: userEmail,
+      treesUpdated: result.treesUpdated,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: `Successfully recalculated sizes for ${result.treesUpdated} trees.`,
     ...result,
   });
 });

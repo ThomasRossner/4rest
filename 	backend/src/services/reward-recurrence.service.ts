@@ -2,7 +2,7 @@ import { getPool } from '../database/connection.js';
 
 /**
  * Process recurring rewards - generates new reward instances based on recurrence settings
- * This should be called periodically (e.g., via cron job or scheduled task)
+ * This should be called periodically (e.g., via scheduled task)
  * 
  * Logic:
  * - Daily: Check if last_generated_at was yesterday or earlier, and all previous redemptions are finished

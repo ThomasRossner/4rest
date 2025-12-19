@@ -78,46 +78,113 @@ export async function completeBulkTasksForUser(
   userEmail: string,
   count: number = 20
 ): Promise<{ completed: number; taskIds: string[] }> {
+  const db = getPool();
   const user = await getUserByEmail(userEmail);
   if (!user) {
     throw new Error(`User with email ${userEmail} not found`);
   }
 
   // Get uncompleted tasks for this user
-  const allTasks = await getAllTasks(
+  // First try with audience filters (normal behavior)
+  let allTasks = await getAllTasks(
     { limit: count * 2 }, // Get more to ensure we have enough
     user.id,
     { includeAll: false, includeInactive: false }
   );
 
   // Filter to only uncompleted tasks
-  const uncompletedTasks = allTasks.filter((task: any) => !task.completed);
+  let uncompletedTasks = allTasks.filter((task: any) => !task.completed);
   
+  // If no tasks found with audience filters, try without filters (for debug purposes)
   if (uncompletedTasks.length === 0) {
-    throw new Error(`No uncompleted tasks found for user ${userEmail}`);
+    allTasks = await getAllTasks(
+      { limit: count * 2 },
+      user.id,
+      { includeAll: true, includeInactive: false }
+    );
+    uncompletedTasks = allTasks.filter((task: any) => !task.completed);
+  }
+  
+  // If still no tasks, create tasks for this user (like createBulkTasksForUser does)
+  if (uncompletedTasks.length === 0) {
+    const locations = await getLocations(false);
+    if (locations.length === 0) {
+      throw new Error('No locations available. Please create a location first.');
+    }
+    
+    const location = locations.find(l => l.name === 'Online') || locations[0];
+    const pointsOptions = [15, 20, 25];
+    
+    // Create tasks in a transaction
+    await db.query('BEGIN');
+    try {
+      for (let i = 0; i < count; i++) {
+        const points = pointsOptions[Math.floor(Math.random() * pointsOptions.length)];
+        
+        const task = await createTask({
+          title: `Debug Test Task ${i + 1}`,
+          description: `Automatically generated test task for debugging purposes`,
+          type: 'quiz',
+          points,
+          location_id: location.id,
+          active: true,
+          allowed_roles: [user.role] as UserRole[],
+          allowed_user_types: [user.user_type] as UserType[],
+          allowed_hotel_ids: [],
+          quiz_questions: JSON.stringify([
+            {
+              question: 'This is a test question?',
+              options: ['Option A', 'Option B', 'Option C'],
+              correctAnswer: 'Option A'
+            }
+          ])
+        });
+        
+        uncompletedTasks.push({ id: task.id, completed: false });
+      }
+      
+      await db.query('COMMIT');
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    }
   }
 
   const tasksToComplete = uncompletedTasks.slice(0, count);
   const taskIds: string[] = [];
   let completed = 0;
+  const errors: string[] = [];
 
   for (const task of tasksToComplete) {
     try {
-      await completeTask(task.id, user.id, {});
+      // For quiz tasks, provide dummy answers to pass validation
+      let completionData: any = {};
+      if (task.type === 'quiz' && task.quiz_questions) {
+        const questions = typeof task.quiz_questions === 'string' 
+          ? JSON.parse(task.quiz_questions)
+          : task.quiz_questions;
+        completionData.quiz_answers = questions.map((q: any, idx: number) => ({
+          questionIndex: idx,
+          answer: q.correctAnswer || q.options?.[0] || 'Option A'
+        }));
+      }
+      
+      await completeTask(task.id, user.id, completionData);
       taskIds.push(task.id);
       completed++;
     } catch (error: unknown) {
-      // Skip if task already completed or other error
-      // Silently continue - this is expected for already-completed tasks
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      if (!errorMessage.includes('already completed')) {
-        // Only log unexpected errors, not "already completed" which is expected
-        // In production, consider using a proper logger instead of console.error
-      }
+      errors.push(`Task ${task.id} (${task.title}): ${errorMessage}`);
+      // Continue to next task
     }
   }
 
-  return { completed, taskIds };
+  if (errors.length > 0 && completed === 0) {
+    // If all tasks failed, throw an error with details
+    throw new Error(`Failed to complete any tasks. Errors: ${errors.join('; ')}`);
+  }
+
+  return { completed, taskIds, errors: errors.length > 0 ? errors : undefined };
 }
 
 /**
@@ -417,7 +484,7 @@ export async function simulateRewardRedemption(
     throw new Error(`User with email ${userEmail} not found`);
   }
 
-  let selectedRewardId = rewardId;
+  let selectedRewardId: string = rewardId || '';
 
   // If no reward specified, get first available reward
   if (!selectedRewardId) {
@@ -846,6 +913,60 @@ export async function simulateForestVisits(
       treesUpdated, // Total tree updates across all visits
       daysSimulated: days,
     };
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  }
+}
+
+/**
+ * Recalculate tree sizes based on current growth points and stage
+ * This fixes trees that may have incorrect sizes due to bugs or manual database changes
+ */
+export async function recalculateTreeSizes(userEmail: string): Promise<{ treesUpdated: number }> {
+  const db = getPool();
+  
+  // Get user
+  const user = await getUserByEmail(userEmail);
+  if (!user) {
+    throw new Error(`User with email ${userEmail} not found`);
+  }
+
+  // Get all trees for this user
+  const treesResult = await db.query(
+    `SELECT id, growth_points, stage FROM forest_trees WHERE user_id = $1`,
+    [user.id]
+  );
+
+  if (treesResult.rows.length === 0) {
+    throw new Error('User has no trees');
+  }
+
+  let treesUpdated = 0;
+
+  await db.query('BEGIN');
+  try {
+    for (const tree of treesResult.rows) {
+      const growthPoints = parseInt(tree.growth_points);
+      const expectedStage = calculateStage(growthPoints);
+      const currentStage = tree.stage;
+
+      // Recalculate size based on expected stage
+      const expectedSize = generateSizeForStage(expectedStage);
+
+      // Always update to ensure size matches stage
+      await db.query(
+        `UPDATE forest_trees 
+         SET stage = $1, size = $2 
+         WHERE id = $3`,
+        [expectedStage, expectedSize, tree.id]
+      );
+      treesUpdated++;
+    }
+
+    await db.query('COMMIT');
+
+    return { treesUpdated };
   } catch (error) {
     await db.query('ROLLBACK');
     throw error;

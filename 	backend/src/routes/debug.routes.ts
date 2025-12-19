@@ -12,6 +12,7 @@ import {
   resetUserDataController,
   generateStatisticsDataController,
   simulateForestVisitsController,
+  recalculateTreeSizesController,
   getDebugLogs,
   clearDebugLogs,
 } from '../controllers/debug.controller.js';
@@ -54,6 +55,9 @@ router.post('/generate-statistics-data', generateStatisticsDataController);
 
 // POST /admin/debug/simulate-forest-visits
 router.post('/simulate-forest-visits', simulateForestVisitsController);
+
+// POST /admin/debug/recalculate-tree-sizes
+router.post('/recalculate-tree-sizes', recalculateTreeSizesController);
 
 // DELETE /admin/debug/logs - Clear debug logs
 router.delete('/logs', clearDebugLogs);

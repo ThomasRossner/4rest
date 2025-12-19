@@ -157,27 +157,6 @@ function ForestScene() {
 
   return (
     <>
-      {/* Debug: Coordinate axes at origin (only in development) */}
-      {import.meta.env.DEV && (
-        <group position={[0, 0.1, 0]}>
-          {/* X axis - Red */}
-          <mesh position={[10, 0, 0]}>
-            <boxGeometry args={[20, 0.2, 0.2]} />
-            <meshStandardMaterial color="#ff0000" />
-          </mesh>
-          {/* Z axis - Blue */}
-          <mesh position={[0, 0, 10]}>
-            <boxGeometry args={[0.2, 0.2, 20]} />
-            <meshStandardMaterial color="#0000ff" />
-          </mesh>
-          {/* Y axis - Green */}
-          <mesh position={[0, 5, 0]}>
-            <boxGeometry args={[0.2, 10, 0.2]} />
-            <meshStandardMaterial color="#00ff00" />
-          </mesh>
-        </group>
-      )}
-
       {/* Background ground (covers multiple areas) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[200, 200]} />

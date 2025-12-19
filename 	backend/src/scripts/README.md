@@ -111,24 +111,8 @@ The script prints:
 - It's safe to run while the application is running (read operations are non-blocking)
 - Write operations use standard SQL DELETE/INSERT which are atomic
 
-## Automation (Cron)
+## Running the Script
 
-You can run this script automatically with a cron job. For example, to run it **every hour**:
-
-Use the helper script `backend/scripts/run-validate-forest.sh` from a system scheduler. Example `crontab -e` entry on Linux:
-
-```cron
-# Run forest validation every hour (at minute 0)
-0 * * * * /absolute/path/to/your/repo/backend/scripts/run-validate-forest.sh
-```
-
-Notes:
-
-- Make sure `/absolute/path/to/your/repo/backend` points to the backend root on that server.
-- The script writes logs to `backend/logs/validate-forest.log`.
-- If you are running the backend in Docker, adapt the command, for example:
-
-  ```cron
-  0 2 * * * docker exec <backend-container-name> sh -c "cd /app/backend && npm run validate-forest" >> /var/log/validate-forest.log 2>&1
-  ```
+**Note:** Forest validation is available via the admin debug tools in the web interface. 
+You can also run this script manually from the command line when needed.
 

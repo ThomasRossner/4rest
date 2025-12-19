@@ -427,6 +427,16 @@
         "invalidDays": "Anzahl der Tage muss zwischen 1 und 365 liegen",
         "noTrees": "Benutzer hat keine Bäume zum Wachsen"
       },
+      "recalculateTreeSizes": {
+        "title": "Baumgrößen neu berechnen",
+        "description": "Baumgrößen basierend auf aktuellen Wachstumspunkten und Stadium neu berechnen. Behebt Bäume mit falschen Größen.",
+        "userEmail": "Benutzer-E-Mail",
+        "submit": "Größen neu berechnen",
+        "recalculating": "Wird neu berechnet...",
+        "success": "Baumgrößen neu berechnet",
+        "error": "Baumgrößen konnten nicht neu berechnet werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich"
+      },
       "rateLimit": {
         "title": "Rate Limit überschritten",
         "message": "Bitte warten Sie einige Sekunden, bevor Sie eine weitere Anfrage stellen"

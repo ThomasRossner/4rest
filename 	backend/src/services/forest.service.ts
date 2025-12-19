@@ -31,10 +31,6 @@ export async function getForestService(userId: string) {
     [userId]
   );
 
-  // Log actual tree count from database (only in development)
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`Forest service (userId: ${userId}): Found ${result.rows.length} trees in database`);
-  }
 
   // Get user index to calculate primary origin
   const usersResult = await db.query(
@@ -157,7 +153,7 @@ export async function getForestService(userId: string) {
   // Include ALL trees, even if they're in blocks outside the "expected" grid
   // Reuse pre-calculated block info to avoid duplicate calculations
   for (const tree of trees) {
-    const blockInfo = treeBlockInfo.get(tree.id);
+    let blockInfo = treeBlockInfo.get(tree.id);
     if (!blockInfo) {
       // Fallback: calculate if not found (shouldn't happen, but safe)
       const areaX = Math.floor(tree.position[0] / areaSpacing) * areaSpacing;
@@ -209,19 +205,11 @@ export async function getForestService(userId: string) {
     }
   }
 
-  // Verify all trees are included in areas (only log in development or on mismatch)
+  // Verify all trees are included in areas (only log on mismatch)
   if (totalTreesInAreas !== trees.length) {
     console.warn(
       `Forest service (userId: ${userId}): Tree count mismatch! Total trees: ${trees.length}, Trees in areas: ${totalTreesInAreas}. ` +
       `Blocks with trees: ${blocksWithTrees.length}. This may indicate trees in blocks outside the calculated grid.`
-    );
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(`Blocks with trees:`, blocksWithTrees);
-    }
-  } else if (process.env.NODE_ENV === 'development') {
-    console.log(
-      `Forest service (userId: ${userId}): All ${trees.length} trees included in ${blocksWithTrees.length} blocks. ` +
-      `Blocks: ${blocksWithTrees.map(b => `${b.origin}(${b.count})`).join(', ')}`
     );
   }
 

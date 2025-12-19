@@ -416,6 +416,30 @@ export function DebugTools() {
     }
   );
 
+  // Tool 8b: Recalculate Tree Sizes
+  const [recalculateSizesEmail, setRecalculateSizesEmail] = useState('');
+  const recalculateSizesMutation = useMutation(
+    (data: { userEmail: string }) => api.recalculateTreeSizes(data.userEmail),
+    {
+      onSuccess: (data) => {
+        showToast({
+          type: 'success',
+          title: t('admin.debugTools.recalculateTreeSizes.success'),
+          message: data.message,
+        });
+        setRecalculateSizesEmail('');
+      },
+      onError: (error: any) => {
+        const errorMessage = error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Failed to recalculate tree sizes';
+        showToast({
+          type: 'error',
+          title: error?.response?.status === 429 ? t('admin.debugTools.rateLimit.title') : t('admin.debugTools.recalculateTreeSizes.error'),
+          message: errorMessage,
+        });
+      },
+    }
+  );
+
   // Tool 9: Generate Statistics Data
   const [statsStartDate, setStatsStartDate] = useState('');
   const [statsEndDate, setStatsEndDate] = useState('');
@@ -549,6 +573,20 @@ export function DebugTools() {
     forestVisitsMutation.mutate({
       userEmail: forestVisitsEmail.trim(),
       days: forestVisitsDays,
+    });
+  };
+
+  const handleRecalculateTreeSizes = () => {
+    if (!recalculateSizesEmail.trim()) {
+      showToast({
+        type: 'error',
+        title: t('admin.debugTools.recalculateTreeSizes.error'),
+        message: t('admin.debugTools.recalculateTreeSizes.emailRequired'),
+      });
+      return;
+    }
+    recalculateSizesMutation.mutate({
+      userEmail: recalculateSizesEmail.trim(),
     });
   };
 
@@ -1101,6 +1139,33 @@ export function DebugTools() {
               {forestVisitsMutation.isLoading
                 ? t('admin.debugTools.simulateForestVisits.simulating')
                 : t('admin.debugTools.simulateForestVisits.submit')}
+            </button>
+          </div>
+        </div>
+
+        {/* Tool 8b: Recalculate Tree Sizes */}
+        <div className="debug-tool-card">
+          <h2 className="debug-tool-title">{t('admin.debugTools.recalculateTreeSizes.title')}</h2>
+          <p className="debug-tool-description">{t('admin.debugTools.recalculateTreeSizes.description')}</p>
+          <div className="debug-tool-form">
+            <label>
+              {t('admin.debugTools.recalculateTreeSizes.userEmail')}
+              <input
+                type="email"
+                value={recalculateSizesEmail}
+                onChange={(e) => setRecalculateSizesEmail(e.target.value)}
+                placeholder="user@example.com"
+                disabled={recalculateSizesMutation.isLoading}
+              />
+            </label>
+            <button
+              onClick={handleRecalculateTreeSizes}
+              disabled={recalculateSizesMutation.isLoading || !recalculateSizesEmail.trim()}
+              className="debug-tool-button"
+            >
+              {recalculateSizesMutation.isLoading
+                ? t('admin.debugTools.recalculateTreeSizes.recalculating')
+                : t('admin.debugTools.recalculateTreeSizes.submit')}
             </button>
           </div>
         </div>

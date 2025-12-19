@@ -427,6 +427,16 @@
         "invalidDays": "Number of days must be between 1 and 365",
         "noTrees": "User has no trees to grow"
       },
+      "recalculateTreeSizes": {
+        "title": "Recalculate Tree Sizes",
+        "description": "Recalculate tree sizes based on current growth points and stage. Fixes trees with incorrect sizes.",
+        "userEmail": "User Email",
+        "submit": "Recalculate Sizes",
+        "recalculating": "Recalculating...",
+        "success": "Tree Sizes Recalculated",
+        "error": "Failed to Recalculate Tree Sizes",
+        "emailRequired": "User email is required"
+      },
       "rateLimit": {
         "title": "Rate Limit Exceeded",
         "message": "Please wait a few seconds before making another request"

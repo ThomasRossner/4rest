@@ -396,6 +396,11 @@ export const api = {
     return response.data;
   },
 
+  async recalculateTreeSizes(userEmail: string) {
+    const response = await apiClient.post('/admin/debug/recalculate-tree-sizes', { userEmail });
+    return response.data;
+  },
+
   async getDebugLogs(params?: { limit?: number; level?: 'info' | 'warn' | 'error'; operation?: string }) {
     const response = await apiClient.get('/admin/debug/logs', { params });
     return response.data;

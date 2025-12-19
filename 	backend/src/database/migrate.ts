@@ -45,7 +45,7 @@ async function runMigrations() {
       name,
       content: readFileSync(
         join(__dirname, '../../../database/migrations', `${name}.sql`),
-        'utf-8'
+      'utf-8'
       ),
     }));
     
@@ -71,14 +71,14 @@ async function runMigrations() {
       if (!executed.has(migration.name)) {
         console.log(`Running migration: ${migration.name}.sql`);
         await pool.query(migration.content);
-        await pool.query(
+      await pool.query(
           `INSERT INTO schema_migrations (migration_name) VALUES ($1) ON CONFLICT DO NOTHING`,
           [migration.name]
-        );
+      );
         console.log(`✓ Migration ${migration.name.split('_')[0]} completed`);
-      } else {
+    } else {
         console.log(`✓ Migration ${migration.name.split('_')[0]} already executed`);
-      }
+    }
     }
     
     console.log('\nAll migrations completed successfully!');

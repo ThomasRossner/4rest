@@ -296,7 +296,7 @@ export async function addGrowthPointsToRandomTree(userId: string, points: number
   const selectedTree = result.rows[randomIndex];
   
   // Calculate new growth points and check if stage changes
-  const newGrowthPoints = selectedTree.growth_points + points;
+  const newGrowthPoints = parseInt(selectedTree.growth_points) + points;
   const newStage = calculateStage(newGrowthPoints);
   const currentStage = selectedTree.stage;
   
@@ -348,7 +348,7 @@ export async function processDailyForestVisit(userId: string): Promise<boolean> 
       
       // Update each tree
       for (const tree of treesResult.rows) {
-        const newGrowthPoints = tree.growth_points + 1;
+        const newGrowthPoints = parseInt(tree.growth_points) + 1;
         const newStage = calculateStage(newGrowthPoints);
         const currentStage = tree.stage;
         
