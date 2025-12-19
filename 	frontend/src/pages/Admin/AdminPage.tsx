@@ -56,6 +56,10 @@ type AdminTaskTemplate = {
   target_longitude?: number | null;
   location?: AdminLocation | null;
   active?: boolean | null;
+  created_at?: string | null;
+  prerequisite_task_id?: string | null;
+  prerequisite_task_count?: number | null;
+  prerequisite_task_ids?: string[] | null;
 };
 
 type RewardTemplate = {
@@ -117,6 +121,9 @@ type TaskFormState = {
   target_latitude?: string;
   target_longitude?: string;
   target_address?: string;
+  prerequisite_task_id?: string;
+  prerequisite_task_count?: number;
+  prerequisite_task_ids?: string[];
 };
 
 type RewardFormState = {
@@ -226,10 +233,18 @@ type FilterDropdownProps = {
   isOpen: boolean;
   onClose: () => void;
   position: { top: number; left: number };
-  options: Array<{ id: string; name?: string } | string>;
-  selectedValue: string | null;
-  onSelect: (value: string | null) => void;
-  type: 'location' | 'status' | 'recurrence' | 'type';
+  options?: Array<{ id: string; name?: string } | string>;
+  selectedValue?: string | null;
+  onSelect?: (value: string | null) => void;
+  type: 'location' | 'status' | 'recurrence' | 'type' | 'title' | 'points' | 'cost';
+  // For text filters
+  textValue?: string;
+  onTextChange?: (value: string) => void;
+  // For numeric filters
+  minValue?: string;
+  maxValue?: string;
+  onMinChange?: (value: string) => void;
+  onMaxChange?: (value: string) => void;
 };
 
 const FilterDropdown = ({
@@ -240,7 +255,14 @@ const FilterDropdown = ({
   selectedValue,
   onSelect,
   type,
+  textValue,
+  onTextChange,
+  minValue,
+  maxValue,
+  onMinChange,
+  onMaxChange,
 }: FilterDropdownProps) => {
+  const { t } = useTranslation();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -258,12 +280,119 @@ const FilterDropdown = ({
 
   if (!isOpen) return null;
 
+  // Text input filter (for title)
+  if (type === 'title' && onTextChange !== undefined) {
+    return (
+      <div
+        ref={dropdownRef}
+        className="admin-filter-dropdown"
+        style={{
+          position: 'fixed',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          zIndex: 1000,
+          minWidth: '200px',
+        }}
+      >
+        <div className="admin-filter-dropdown-header">
+          <span>{t('admin.filters.filterBy', { type: t('admin.filters.title') })}</span>
+          <button
+            type="button"
+            onClick={() => {
+              onTextChange('');
+              onClose();
+            }}
+            className="admin-filter-clear"
+            style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
+          >
+            {t('admin.filters.clear')}
+          </button>
+        </div>
+        <div className="admin-filter-dropdown-content" style={{ padding: '0.75rem' }}>
+          <input
+            type="text"
+            value={textValue || ''}
+            onChange={(e) => onTextChange(e.target.value)}
+            placeholder={t('admin.filters.titlePlaceholder')}
+            style={{ width: '100%', padding: '0.5rem' }}
+            autoFocus
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Numeric range filter (for points/cost)
+  if ((type === 'points' || type === 'cost') && onMinChange !== undefined && onMaxChange !== undefined) {
+    return (
+      <div
+        ref={dropdownRef}
+        className="admin-filter-dropdown"
+        style={{
+          position: 'fixed',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          zIndex: 1000,
+          minWidth: '220px',
+        }}
+      >
+        <div className="admin-filter-dropdown-header">
+          <span>{t('admin.filters.filterBy', { type: t(`admin.filters.${type}`) })}</span>
+          <button
+            type="button"
+            onClick={() => {
+              onMinChange('');
+              onMaxChange('');
+              onClose();
+            }}
+            className="admin-filter-clear"
+            style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
+          >
+            {t('admin.filters.clear')}
+          </button>
+        </div>
+        <div className="admin-filter-dropdown-content" style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+              {t('admin.filters.min')}
+            </label>
+            <input
+              type="number"
+              value={minValue || ''}
+              onChange={(e) => onMinChange(e.target.value)}
+              placeholder={t('admin.filters.minPlaceholder')}
+              style={{ width: '100%', padding: '0.5rem' }}
+              min="0"
+              step="1"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+              {t('admin.filters.max')}
+            </label>
+            <input
+              type="number"
+              value={maxValue || ''}
+              onChange={(e) => onMaxChange(e.target.value)}
+              placeholder={t('admin.filters.maxPlaceholder')}
+              style={{ width: '100%', padding: '0.5rem' }}
+              min="0"
+              step="1"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Dropdown filter (existing behavior for location, status, recurrence, type)
   const formatValue = (value: string): string => {
     if (type === 'status') {
       return value.charAt(0).toUpperCase() + value.slice(1);
     }
     if (type === 'recurrence') {
-      return value.charAt(0).toUpperCase() + value.slice(1);
+      const recurrenceKey = value as 'once' | 'daily' | 'weekly' | 'monthly';
+      return t(`admin.task.recurrence.${recurrenceKey}`).split(' - ')[0]; // Get just the first part before the dash
     }
     if (type === 'type') {
       // Format task/reward types to be more readable
@@ -301,11 +430,11 @@ const FilterDropdown = ({
         <span>{t('admin.filters.filterBy', { type })}</span>
         <button
           type="button"
-          onClick={() => onSelect(null)}
+          onClick={() => onSelect?.(null)}
           className="admin-filter-clear"
           style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
         >
-          Clear
+          {t('admin.filters.clear')}
         </button>
       </div>
       <div className="admin-filter-dropdown-list">
@@ -313,13 +442,13 @@ const FilterDropdown = ({
           type="button"
           className={`admin-filter-option ${selectedValue === null ? 'active' : ''}`}
           onClick={() => {
-            onSelect(null);
+            onSelect?.(null);
             onClose();
           }}
         >
           All
         </button>
-        {options.map((option) => {
+        {options?.map((option) => {
           const value = getOptionValue(option);
           const label = getOptionLabel(option);
           return (
@@ -328,7 +457,7 @@ const FilterDropdown = ({
               type="button"
               className={`admin-filter-option ${selectedValue === value ? 'active' : ''}`}
               onClick={() => {
-                onSelect(value);
+                onSelect?.(value);
                 onClose();
               }}
             >
@@ -355,9 +484,20 @@ type MobileFilterModalProps = {
     status: 'active' | 'inactive' | null;
     recurrence: string | null;
     type: string | null;
+    title?: string;
+    pointsMin?: string;
+    pointsMax?: string;
+    costMin?: string;
+    costMax?: string;
   };
   onFilterChange: (filterType: 'location' | 'status' | 'recurrence' | 'type', value: string | null) => void;
+  onTitleChange?: (value: string) => void;
+  onPointsMinChange?: (value: string) => void;
+  onPointsMaxChange?: (value: string) => void;
+  onCostMinChange?: (value: string) => void;
+  onCostMaxChange?: (value: string) => void;
   onClearAll: () => void;
+  filterType?: 'task' | 'reward';
 };
 
 const MobileFilterModal = ({
@@ -366,8 +506,15 @@ const MobileFilterModal = ({
   filterOptions,
   filters,
   onFilterChange,
+  onTitleChange,
+  onPointsMinChange,
+  onPointsMaxChange,
+  onCostMinChange,
+  onCostMaxChange,
   onClearAll,
+  filterType = 'task',
 }: MobileFilterModalProps) => {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -390,8 +537,12 @@ const MobileFilterModal = ({
   if (!isOpen) return null;
 
   const formatValue = (value: string, type: string): string => {
-    if (type === 'status' || type === 'recurrence') {
+    if (type === 'status') {
       return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    if (type === 'recurrence') {
+      const recurrenceKey = value as 'once' | 'daily' | 'weekly' | 'monthly';
+      return t(`admin.task.recurrence.${recurrenceKey}`).split(' - ')[0]; // Get just the first part before the dash
     }
     if (type === 'type') {
       return value.toUpperCase().replace(/_/g, ' ');
@@ -413,7 +564,15 @@ const MobileFilterModal = ({
     return option.id;
   };
 
-  const activeFilterCount = [filters.location, filters.status, filters.recurrence, filters.type].filter(Boolean).length;
+  const activeFilterCount = [
+    filters.location,
+    filters.status,
+    filters.recurrence,
+    filters.type,
+    filters.title?.trim(),
+    filters.pointsMin?.trim() || filters.pointsMax?.trim(),
+    filters.costMin?.trim() || filters.costMax?.trim(),
+  ].filter(Boolean).length;
 
   return (
     <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="mobile-filter-title">
@@ -439,7 +598,7 @@ const MobileFilterModal = ({
                 className={`admin-mobile-filter-option ${!filters.location ? 'active' : ''}`}
                 onClick={() => onFilterChange('location', null)}
               >
-                All Locations
+                {t('admin.filters.allLocations')}
               </button>
               {filterOptions.locations.map((option) => {
                 const value = getOptionValue(option);
@@ -467,7 +626,7 @@ const MobileFilterModal = ({
                 className={`admin-mobile-filter-option ${!filters.status ? 'active' : ''}`}
                 onClick={() => onFilterChange('status', null)}
               >
-                All Statuses
+                {t('admin.filters.allStatuses')}
               </button>
               {filterOptions.statuses.map((status) => (
                 <button
@@ -484,14 +643,14 @@ const MobileFilterModal = ({
 
           {/* Recurrence Filter */}
           <div className="admin-mobile-filter-section">
-            <h4>Recurrence</h4>
+            <h4>{t('admin.filters.recurrence')}</h4>
             <div className="admin-mobile-filter-options">
               <button
                 type="button"
                 className={`admin-mobile-filter-option ${!filters.recurrence ? 'active' : ''}`}
                 onClick={() => onFilterChange('recurrence', null)}
               >
-                All Recurrences
+                {t('admin.filters.allRecurrences')}
               </button>
               {filterOptions.recurrences.map((recurrence) => (
                 <button
@@ -515,7 +674,7 @@ const MobileFilterModal = ({
                 className={`admin-mobile-filter-option ${!filters.type ? 'active' : ''}`}
                 onClick={() => onFilterChange('type', null)}
               >
-                All Types
+                {t('admin.filters.allTypes')}
               </button>
               {filterOptions.types.map((type) => (
                 <button
@@ -529,6 +688,71 @@ const MobileFilterModal = ({
               ))}
             </div>
           </div>
+
+          {/* Title Filter */}
+          {onTitleChange && (
+            <div className="admin-mobile-filter-section">
+              <h4>{t('admin.filters.title')}</h4>
+              <div className="admin-mobile-filter-options">
+                <input
+                  type="text"
+                  value={filters.title || ''}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  placeholder={t('admin.filters.titlePlaceholder')}
+                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Points/Cost Filter */}
+          {(onPointsMinChange || onCostMinChange) && (
+            <div className="admin-mobile-filter-section">
+              <h4>{t(`admin.filters.${filterType === 'task' ? 'points' : 'cost'}`)}</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                    {t('admin.filters.min')}
+                  </label>
+                  <input
+                    type="number"
+                    value={filterType === 'task' ? (filters.pointsMin || '') : (filters.costMin || '')}
+                    onChange={(e) => {
+                      if (filterType === 'task' && onPointsMinChange) {
+                        onPointsMinChange(e.target.value);
+                      } else if (filterType === 'reward' && onCostMinChange) {
+                        onCostMinChange(e.target.value);
+                      }
+                    }}
+                    placeholder={t('admin.filters.minPlaceholder')}
+                    style={{ width: '100%', padding: '0.5rem' }}
+                    min="0"
+                    step="1"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                    {t('admin.filters.max')}
+                  </label>
+                  <input
+                    type="number"
+                    value={filterType === 'task' ? (filters.pointsMax || '') : (filters.costMax || '')}
+                    onChange={(e) => {
+                      if (filterType === 'task' && onPointsMaxChange) {
+                        onPointsMaxChange(e.target.value);
+                      } else if (filterType === 'reward' && onCostMaxChange) {
+                        onCostMaxChange(e.target.value);
+                      }
+                    }}
+                    placeholder={t('admin.filters.maxPlaceholder')}
+                    style={{ width: '100%', padding: '0.5rem' }}
+                    min="0"
+                    step="1"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="admin-mobile-filter-footer">
           <button
@@ -537,14 +761,230 @@ const MobileFilterModal = ({
             onClick={onClearAll}
             disabled={activeFilterCount === 0}
           >
-            Clear All
+            {t('admin.filters.clearAll')}
           </button>
           <button
             type="button"
             className="admin-action-button"
             onClick={onClose}
           >
-            Apply Filters
+            {t('admin.filters.applyFilters')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type TaskSelectionModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  mode: 'single' | 'multi';
+  tasks: AdminTaskTemplate[];
+  selectedTaskIds: string[];
+  onApply: (selectedIds: string[]) => void;
+  excludeTaskId?: string;
+};
+
+const TaskSelectionModal = ({
+  isOpen,
+  onClose,
+  mode,
+  tasks,
+  selectedTaskIds,
+  onApply,
+  excludeTaskId,
+}: TaskSelectionModalProps) => {
+  const { t } = useTranslation();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tempSelectedIds, setTempSelectedIds] = useState<string[]>(selectedTaskIds);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+      // Reset temp selection when modal opens
+      setTempSelectedIds(selectedTaskIds);
+      setSearchTerm('');
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen, onClose, selectedTaskIds]);
+
+  // Filter and sort tasks - MUST be before early return (React Hooks rule)
+  const filteredAndSortedTasks = useMemo(() => {
+    let filtered = tasks.filter((task) => {
+      // Exclude the current task being edited
+      if (excludeTaskId && task.id === excludeTaskId) {
+        return false;
+      }
+      // Exclude tasks that have circular dependency (they already have this task as prerequisite)
+      if (excludeTaskId) {
+        if (task.prerequisite_task_id === excludeTaskId) {
+          return false;
+        }
+        if (task.prerequisite_task_ids?.includes(excludeTaskId)) {
+          return false;
+        }
+      }
+      // Filter by search term (title or type)
+      if (searchTerm.trim()) {
+        const searchLower = searchTerm.toLowerCase();
+        const searchUpper = searchTerm.toUpperCase();
+        const searchNormalized = searchUpper.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+        
+        const titleMatch = task.title.toLowerCase().includes(searchLower);
+        
+        // Check if search term matches task type
+        // Support: "quiz", "QUIZ", "visit_location", "VISIT_LOCATION", "VISIT LOCATION"
+        const taskTypeUpper = task.type.toUpperCase();
+        const taskTypeNormalized = taskTypeUpper.replace(/_/g, ' ');
+        const typeMatch = 
+          task.type.toLowerCase().includes(searchLower) ||
+          taskTypeUpper.includes(searchUpper) ||
+          taskTypeNormalized.includes(searchNormalized);
+        
+        return titleMatch || typeMatch;
+      }
+      return true;
+    });
+
+    // Sort by created_at DESC (newest first), then alphabetically by title
+    filtered.sort((a, b) => {
+      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (bCreated !== aCreated) {
+        return bCreated - aCreated; // DESC
+      }
+      return a.title.localeCompare(b.title);
+    });
+
+    return filtered;
+  }, [tasks, excludeTaskId, searchTerm]);
+
+  // Early return AFTER all hooks
+  if (!isOpen) {
+    return null;
+  }
+
+  const handleTaskToggle = (taskId: string) => {
+    if (mode === 'single') {
+      setTempSelectedIds(tempSelectedIds.includes(taskId) ? [] : [taskId]);
+    } else {
+      setTempSelectedIds(
+        tempSelectedIds.includes(taskId)
+          ? tempSelectedIds.filter((id) => id !== taskId)
+          : [...tempSelectedIds, taskId]
+      );
+    }
+  };
+
+  const handleClear = () => {
+    setTempSelectedIds([]);
+  };
+
+  const handleApply = () => {
+    onApply(tempSelectedIds);
+    onClose();
+  };
+
+  const selectedCount = tempSelectedIds.length;
+
+  return (
+    <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="task-selection-title">
+      <div ref={modalRef} className="admin-mobile-filter-modal">
+        <div className="admin-mobile-filter-header">
+          <h3 id="task-selection-title">
+            {mode === 'single' ? t('admin.task.prerequisites.modal.title') : t('admin.task.prerequisites.modal.titleMulti')}
+            {selectedCount > 0 && mode === 'multi' && ` (${selectedCount})`}
+          </h3>
+          <button
+            type="button"
+            className="admin-icon-button"
+            onClick={onClose}
+            aria-label={t('admin.filters.close')}
+          >
+            <Icon name="back" />
+          </button>
+        </div>
+        <div className="admin-mobile-filter-content">
+          {/* Search Input */}
+          <div className="admin-mobile-filter-section">
+            <h4>{mode === 'single' ? t('admin.task.prerequisites.modal.selectTask') : t('admin.task.prerequisites.modal.selectTasks')}</h4>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('admin.task.prerequisites.modal.searchPlaceholder')}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                fontSize: '1rem',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--border-radius)',
+                marginBottom: 'var(--spacing-sm)',
+              }}
+            />
+          </div>
+
+          {/* Task List */}
+          <div className="admin-mobile-filter-section">
+            <h4>{t('admin.task.prerequisites.modal.title')}</h4>
+            <div className="admin-mobile-filter-options">
+              {filteredAndSortedTasks.length === 0 ? (
+                <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
+                  {t('admin.task.prerequisites.modal.noTasksFound')}
+                </div>
+              ) : (
+                filteredAndSortedTasks.map((task) => {
+                  const isSelected = tempSelectedIds.includes(task.id);
+                  return (
+                    <button
+                      key={task.id}
+                      type="button"
+                      className={`admin-mobile-filter-option ${isSelected ? 'active' : ''}`}
+                      onClick={() => handleTaskToggle(task.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                      }}
+                    >
+                      <div style={{ flexShrink: 0 }}>
+                        <TaskTypeBadge type={task.type} />
+                      </div>
+                      <span style={{ flex: 1, textAlign: 'left' }}>{task.title}</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="admin-mobile-filter-footer">
+          <button
+            type="button"
+            className="admin-action-button secondary"
+            onClick={handleClear}
+            disabled={selectedCount === 0}
+          >
+            {t('admin.task.prerequisites.modal.clear')}
+          </button>
+          <button
+            type="button"
+            className="admin-action-button"
+            onClick={handleApply}
+          >
+            {t('admin.task.prerequisites.modal.apply')}
           </button>
         </div>
       </div>
@@ -728,6 +1168,9 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   target_latitude: type === 'visit_location' ? '' : undefined,
   target_longitude: type === 'visit_location' ? '' : undefined,
   target_address: type === 'visit_location' ? '' : undefined,
+  prerequisite_task_id: undefined,
+  prerequisite_task_count: undefined,
+  prerequisite_task_ids: undefined,
 });
 
 const defaultRewardForm = (type: RewardType): RewardFormState => ({
@@ -963,7 +1406,8 @@ const validateTaskFormState = ({
   selectedExistingTaskId,
   taskForm,
   isEditing = false,
-}: ValidateTaskFormParams): ValidationResult => {
+  t,
+}: ValidateTaskFormParams & { t: (key: string, options?: any) => string }): ValidationResult => {
   if (!taskSource && !isEditing) {
     return { isValid: false, message: 'Choose how you want to start creating your task.' };
   }
@@ -1063,6 +1507,34 @@ const validateTaskFormState = ({
     if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
       return { isValid: false, message: 'Invalid target location coordinates.' };
     }
+  }
+
+  // Validate prerequisites
+  if (taskForm.prerequisite_task_id) {
+    // Type 1 prerequisite is set - no additional validation needed (existence will be checked on backend)
+  }
+  
+  if (taskForm.prerequisite_task_ids) {
+    const taskIdsArray = Array.isArray(taskForm.prerequisite_task_ids) 
+      ? taskForm.prerequisite_task_ids 
+      : [];
+    
+    if (taskIdsArray.length === 0) {
+      return { isValid: false, message: t('admin.task.prerequisites.validation.idsEmpty') };
+    }
+    
+    if (taskForm.prerequisite_task_count !== undefined && taskForm.prerequisite_task_count !== null) {
+      if (!Number.isInteger(taskForm.prerequisite_task_count) || taskForm.prerequisite_task_count < 1) {
+        return { isValid: false, message: t('admin.task.prerequisites.validation.countInvalid') };
+      }
+      if (taskForm.prerequisite_task_count > taskIdsArray.length) {
+        return { isValid: false, message: t('admin.task.prerequisites.validation.countTooLarge', { count: taskForm.prerequisite_task_count, total: taskIdsArray.length }) };
+      }
+    } else {
+      return { isValid: false, message: t('admin.task.prerequisites.validation.countRequired') };
+    }
+  } else if (taskForm.prerequisite_task_count !== undefined && taskForm.prerequisite_task_count !== null) {
+    return { isValid: false, message: t('admin.task.prerequisites.validation.idsRequired') };
   }
 
   if (!taskForm.locationId) {
@@ -1218,7 +1690,7 @@ const MultiSelectDropdown = ({
         <div className="admin-multi-select-dropdown">
           <div className="admin-multi-select-actions">
             <button type="button" onClick={handleClear} className="admin-multi-select-clear">
-              Clear selection
+              {t('admin.filters.clearSelection')}
             </button>
           </div>
           <div className="admin-multi-select-options">
@@ -1387,7 +1859,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
       <div className="admin-quiz-builder">
         <p className="admin-quiz-empty">{t('admin.task.quiz.empty')}</p>
         <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
-          Add question
+          {t('admin.task.quiz.addQuestion')}
         </button>
       </div>
     );
@@ -1398,8 +1870,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
       <div className="admin-quiz-header">
         <h3>{t('admin.task.quiz.title')}</h3>
         <p>
-          Add multiple choice questions for this video. Each question needs at least two answers and
-          one correct answer.
+          {t('admin.task.quiz.description')}
         </p>
       </div>
 
@@ -1410,7 +1881,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
             <div key={question.id} className="admin-quiz-question">
               <div className="admin-quiz-question-header">
                 <h4>
-                  Question {question.order}
+                  {t('admin.task.quiz.question', { number: question.order })}
                   <span className="admin-quiz-question-controls">
                     <button
                       type="button"
@@ -1431,7 +1902,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                       onClick={() => removeQuestion(question.id)}
                       disabled={questions.length === 1}
                     >
-                      Remove
+                      {t('admin.task.quiz.remove')}
                     </button>
                   </span>
                 </h4>
@@ -1467,7 +1938,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                       onChange={(event) =>
                         handleAnswerTextChange(question.id, answer.id, event.target.value)
                       }
-                      placeholder={`Answer option ${answerIndex + 1}`}
+                      placeholder={t('admin.task.quiz.answerOption', { number: answerIndex + 1 })}
                     />
                     <div className="admin-quiz-answer-controls">
                       <button
@@ -1489,7 +1960,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                         onClick={() => removeAnswer(question.id, answer.id)}
                         disabled={question.answers.length <= 2}
                       >
-                        Remove
+                        {t('admin.task.quiz.remove')}
                       </button>
                     </div>
                   </div>
@@ -1501,7 +1972,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                 className="admin-quiz-add-answer"
                 onClick={() => addAnswer(question.id)}
               >
-                Add answer
+                {t('admin.task.quiz.addAnswer')}
               </button>
             </div>
           );
@@ -1509,7 +1980,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
       </div>
 
       <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
-        Add question
+        {t('admin.task.quiz.addQuestion')}
       </button>
     </div>
   );
@@ -1849,6 +2320,8 @@ function AdminPage() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskReturnMode, setTaskReturnMode] = useState<AdminMode | null>(null);
+  const [isPrerequisiteModalOpen, setIsPrerequisiteModalOpen] = useState(false);
+  const [prerequisiteModalMode, setPrerequisiteModalMode] = useState<'single' | 'multi'>('single');
   const [taskManagementMessage, setTaskManagementMessage] = useState<
     { type: 'error' | 'success'; text: string } | null
   >(null);
@@ -1859,7 +2332,10 @@ function AdminPage() {
   const [taskFilterStatus, setTaskFilterStatus] = useState<'active' | 'inactive' | null>(null);
   const [taskFilterRecurrence, setTaskFilterRecurrence] = useState<string | null>(null);
   const [taskFilterType, setTaskFilterType] = useState<string | null>(null);
-  const [taskFilterDropdown, setTaskFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | null>(null);
+  const [taskFilterTitle, setTaskFilterTitle] = useState<string>('');
+  const [taskFilterPointsMin, setTaskFilterPointsMin] = useState<string>('');
+  const [taskFilterPointsMax, setTaskFilterPointsMax] = useState<string>('');
+  const [taskFilterDropdown, setTaskFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'points' | null>(null);
   const [taskFilterDropdownPosition, setTaskFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const taskFilterDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileTaskFilterOpen, setIsMobileTaskFilterOpen] = useState(false);
@@ -1884,7 +2360,10 @@ function AdminPage() {
   const [rewardFilterStatus, setRewardFilterStatus] = useState<'active' | 'inactive' | null>(null);
   const [rewardFilterRecurrence, setRewardFilterRecurrence] = useState<string | null>(null);
   const [rewardFilterType, setRewardFilterType] = useState<string | null>(null);
-  const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | null>(null);
+  const [rewardFilterTitle, setRewardFilterTitle] = useState<string>('');
+  const [rewardFilterCostMin, setRewardFilterCostMin] = useState<string>('');
+  const [rewardFilterCostMax, setRewardFilterCostMax] = useState<string>('');
+  const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'cost' | null>(null);
   const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const rewardFilterDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileRewardFilterOpen, setIsMobileRewardFilterOpen] = useState(false);
@@ -1930,7 +2409,7 @@ function AdminPage() {
       const data = await api.getForestStats();
       setForestStats(data || []);
     } catch (error: any) {
-      console.error('Failed to load forest stats', error);
+      // Error already handled by setForestStatsError
       setForestStatsError('Failed to load forest stats.');
     } finally {
       setForestStatsLoading(false);
@@ -1954,7 +2433,7 @@ function AdminPage() {
           }
         }
       } catch (error: any) {
-        console.error('Failed to poll validation job status', error);
+        // Error handled by clearing poll interval
         clearInterval(pollInterval);
         setValidationJobStatus(null);
         setValidationJobId(null);
@@ -1975,7 +2454,7 @@ function AdminPage() {
       setValidationJobStatus({ status: 'pending', progress: { currentUser: 0, totalUsers: 0 } });
       setValidationConfirm({ ...defaultConfirmDialogState });
     } catch (error: any) {
-      console.error('Failed to start validation', error);
+      // Error handled by validation confirm state
       setValidationConfirm({
         ...defaultConfirmDialogState,
         visible: true,
@@ -2008,8 +2487,8 @@ function AdminPage() {
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
 
   const taskValidation = useMemo(
-    () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask }),
-    [taskSource, selectedExistingTaskId, taskForm, isEditingTask]
+    () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask, t }),
+    [taskSource, selectedExistingTaskId, taskForm, isEditingTask, t]
   );
 
   const {
@@ -2072,8 +2551,28 @@ function AdminPage() {
       filtered = filtered.filter((task) => task.type === taskFilterType);
     }
     
+    if (taskFilterTitle.trim()) {
+      const searchTerm = taskFilterTitle.toLowerCase().trim();
+      filtered = filtered.filter((task) => 
+        task.title?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (taskFilterPointsMin.trim() || taskFilterPointsMax.trim()) {
+      filtered = filtered.filter((task) => {
+        const points = task.points ?? 0;
+        const min = taskFilterPointsMin.trim() ? Number.parseFloat(taskFilterPointsMin) : -Infinity;
+        const max = taskFilterPointsMax.trim() ? Number.parseFloat(taskFilterPointsMax) : Infinity;
+        // Handle NaN cases
+        if (!Number.isFinite(min) && !Number.isFinite(max)) return true;
+        if (!Number.isFinite(min)) return points <= max;
+        if (!Number.isFinite(max)) return points >= min;
+        return points >= min && points <= max;
+      });
+    }
+    
     return filtered;
-  }, [existingTemplates, taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType]);
+  }, [existingTemplates, taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType, taskFilterTitle, taskFilterPointsMin, taskFilterPointsMax]);
 
   const taskFilterOptions = useMemo(() => {
     const locations = new Map<string, string>();
@@ -2152,8 +2651,28 @@ function AdminPage() {
       filtered = filtered.filter((reward) => reward.reward_type === rewardFilterType);
     }
     
+    if (rewardFilterTitle.trim()) {
+      const searchTerm = rewardFilterTitle.toLowerCase().trim();
+      filtered = filtered.filter((reward) => 
+        reward.title?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (rewardFilterCostMin.trim() || rewardFilterCostMax.trim()) {
+      filtered = filtered.filter((reward) => {
+        const cost = reward.points_cost ?? 0;
+        const min = rewardFilterCostMin.trim() ? Number.parseFloat(rewardFilterCostMin) : -Infinity;
+        const max = rewardFilterCostMax.trim() ? Number.parseFloat(rewardFilterCostMax) : Infinity;
+        // Handle NaN cases
+        if (!Number.isFinite(min) && !Number.isFinite(max)) return true;
+        if (!Number.isFinite(min)) return cost <= max;
+        if (!Number.isFinite(max)) return cost >= min;
+        return cost >= min && cost <= max;
+      });
+    }
+    
     return filtered;
-  }, [normalizedRewardTemplates, rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType]);
+  }, [normalizedRewardTemplates, rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType, rewardFilterTitle, rewardFilterCostMin, rewardFilterCostMax]);
 
   const rewardFilterOptions = useMemo(() => {
     const locations = new Map<string, string>();
@@ -2203,7 +2722,7 @@ function AdminPage() {
         label: `${location.name}${location.is_online ? ' (Online)' : ''}${
           location.active ? '' : ' (Inactive)'
         }`,
-        details: location.is_online ? 'Online location' : location.address || 'Physical location',
+        details: location.is_online ? t('admin.location.onlineLocation') : location.address || t('admin.location.physicalLocation'),
         location,
       })),
     [locationsList]
@@ -2413,6 +2932,9 @@ function AdminPage() {
       allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      prerequisite_task_id: (template as any).prerequisite_task_id ?? undefined,
+      prerequisite_task_count: (template as any).prerequisite_task_count ?? undefined,
+      prerequisite_task_ids: (template as any).prerequisite_task_ids ?? undefined,
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates, isEditingTask]);
 
@@ -2588,6 +3110,15 @@ function AdminPage() {
           payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
           payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
         }
+        
+        // Add prerequisite fields
+        if (taskForm.prerequisite_task_id) {
+          payload.prerequisite_task_id = taskForm.prerequisite_task_id;
+        }
+        if (taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0) {
+          payload.prerequisite_task_ids = taskForm.prerequisite_task_ids;
+          payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
+        }
 
         await updateTaskMutation.mutateAsync({ id: editingTaskId, payload });
         return;
@@ -2649,6 +3180,15 @@ function AdminPage() {
           payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
           payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
         }
+        
+        // Add prerequisite fields
+        if (taskForm.prerequisite_task_id) {
+          payload.prerequisite_task_id = taskForm.prerequisite_task_id;
+        }
+        if (taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0) {
+          payload.prerequisite_task_ids = taskForm.prerequisite_task_ids;
+          payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
+        }
 
         await publishTaskMutation.mutateAsync(payload);
         return;
@@ -2707,6 +3247,15 @@ function AdminPage() {
       if (taskSource === 'visit_location') {
         payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
         payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
+      }
+      
+      // Add prerequisite fields
+      if (taskForm.prerequisite_task_id) {
+        payload.prerequisite_task_id = taskForm.prerequisite_task_id;
+      }
+      if (taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0) {
+        payload.prerequisite_task_ids = taskForm.prerequisite_task_ids;
+        payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
       }
 
       await publishTaskMutation.mutateAsync(payload);
@@ -3250,10 +3799,55 @@ function AdminPage() {
       locationId: task.location_id ?? task.location?.id ?? '',
       active: task.active ?? true,
       recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
+      prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
+      prerequisite_task_ids: (task as any).prerequisite_task_ids ?? undefined,
     });
     setIsEditingTask(true);
     setEditingTaskId(task.id);
     setHasAttemptedPublish(false);
+  };
+
+  // Helper functions for prerequisite modal
+  const getSelectedTaskTitle = (taskId: string | undefined): string => {
+    if (!taskId) return t('admin.task.prerequisites.modal.noSelection');
+    const task = existingTemplates.find((t) => t.id === taskId);
+    return task?.title || t('admin.task.prerequisites.modal.noSelection');
+  };
+
+  const getSelectedTask = (taskId: string | undefined): AdminTaskTemplate | undefined => {
+    if (!taskId) return undefined;
+    return existingTemplates.find((t) => t.id === taskId);
+  };
+
+  const getSelectedTasksCount = (taskIds: string[] | undefined): string => {
+    if (!taskIds || taskIds.length === 0) {
+      return t('admin.task.prerequisites.modal.noSelectionMulti');
+    }
+    return t('admin.task.prerequisites.modal.selectedCount', { count: taskIds.length });
+  };
+
+  const handleOpenPrerequisiteModal = (mode: 'single' | 'multi') => {
+    setPrerequisiteModalMode(mode);
+    setIsPrerequisiteModalOpen(true);
+  };
+
+  const handlePrerequisiteModalApply = (selectedIds: string[]) => {
+    if (prerequisiteModalMode === 'single') {
+      setTaskForm((prev) => ({
+        ...prev,
+        prerequisite_task_id: selectedIds.length > 0 ? selectedIds[0] : undefined,
+      }));
+    } else {
+      setTaskForm((prev) => ({
+        ...prev,
+        prerequisite_task_ids: selectedIds.length > 0 ? selectedIds : undefined,
+        prerequisite_task_count:
+          selectedIds.length > 0 && prev.prerequisite_task_count
+            ? Math.min(prev.prerequisite_task_count, selectedIds.length)
+            : prev.prerequisite_task_count,
+      }));
+    }
   };
 
   const cancelTaskEdit = () => {
@@ -3450,20 +4044,20 @@ const goToRewardCreation = () => {
   const hasRewardSelection = selectedRewardIds.length > 0;
   const isTaskSaving = publishTaskMutation.isLoading || updateTaskMutation.isLoading;
   const taskSubmitLabel = isEditingTask
-     ? isTaskSaving
-      ? 'Saving…'
-      : 'Save Task Changes'
+    ? isTaskSaving
+      ? t('admin.task.saving')
+      : t('admin.task.saveChanges')
      : publishTaskMutation.isLoading
-     ? 'Publishing…'
-     : 'Publish Task';
+     ? t('admin.task.publishing')
+     : t('admin.task.publishButton');
   const isRewardSaving = createRewardMutation.isLoading || updateRewardMutation.isLoading;
   const rewardSubmitLabel = isEditingReward
     ? isRewardSaving
-      ? 'Saving…'
-      : 'Save Reward Changes'
+      ? t('admin.reward.saving')
+      : t('admin.reward.saveChanges')
     : createRewardMutation.isLoading
-    ? 'Publishing…'
-    : 'Publish Reward';
+    ? t('admin.reward.publishing')
+    : t('admin.reward.publishButton');
 
   if (!isAdmin) {
     return (
@@ -3989,7 +4583,7 @@ const goToRewardCreation = () => {
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Title" required />
+                      <FieldLabel label={t('admin.task.fields.title')} required />
                       <input
                         type="text"
                         value={taskForm.title}
@@ -3999,7 +4593,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Description" required />
+                      <FieldLabel label={t('admin.task.fields.description')} required />
                       <textarea
                         value={taskForm.description}
                         onChange={(event) =>
@@ -4009,7 +4603,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Points" required />
+                      <FieldLabel label={t('admin.task.fields.points')} required />
                       <input
                         type="number"
                         min={0}
@@ -4023,9 +4617,9 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Location" required />
+                      <FieldLabel label={t('admin.task.fields.location')} required />
                       {locationsLoading ? (
-                        <p className="admin-field-note">Loading locations…</p>
+                        <p className="admin-field-note">{t('admin.task.loadingLocations')}</p>
                       ) : hasTaskLocationOptions ? (
                         <select
                           value={taskForm.locationId}
@@ -4033,7 +4627,7 @@ const goToRewardCreation = () => {
                             setTaskForm((prev) => ({ ...prev, locationId: event.target.value }))
                           }
                         >
-                          <option value="">Select location</option>
+                          <option value="">{t('admin.task.selectLocation')}</option>
                           {taskLocationSelectOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
@@ -4044,13 +4638,109 @@ const goToRewardCreation = () => {
                         <div className="admin-field-note">
                           <p>{t('admin.task.noLocations')}</p>
                           <button type="button" className="link-button" onClick={goToLocationCreation}>
-                            Create a location
+                            {t('admin.task.createLocation')}
                           </button>
                         </div>
                       )}
                     </label>
                     <div className="admin-field">
-                      <FieldLabel label="Active" />
+                      <FieldLabel label={t('admin.task.prerequisites.type1.label')} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleOpenPrerequisiteModal('single');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          backgroundColor: '#fff',
+                          cursor: 'pointer',
+                          fontSize: '1rem',
+                          position: 'relative',
+                          zIndex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                        }}
+                      >
+                        {taskForm.prerequisite_task_id ? (
+                          <>
+                            <div style={{ flexShrink: 0 }}>
+                              {(() => {
+                                const selectedTask = getSelectedTask(taskForm.prerequisite_task_id);
+                                return selectedTask ? <TaskTypeBadge type={selectedTask.type} /> : null;
+                              })()}
+                            </div>
+                            <span style={{ flex: 1, textAlign: 'left' }}>
+                              {getSelectedTaskTitle(taskForm.prerequisite_task_id)}
+                            </span>
+                          </>
+                        ) : (
+                          <span>{t('admin.task.prerequisites.type1.noPrerequisite')}</span>
+                        )}
+                      </button>
+                      <p className="admin-field-note" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                        {t('admin.task.prerequisites.type1.description')}
+                      </p>
+                      <p className="admin-field-note" style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: '#666', fontStyle: 'italic' }}>
+                        {t('admin.task.prerequisites.type1.searchHint')}
+                      </p>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label={t('admin.task.prerequisites.type2.label')} />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleOpenPrerequisiteModal('multi');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          backgroundColor: '#fff',
+                          cursor: 'pointer',
+                          fontSize: '1rem',
+                          position: 'relative',
+                          zIndex: 1,
+                        }}
+                      >
+                        {taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0
+                          ? getSelectedTasksCount(taskForm.prerequisite_task_ids)
+                          : t('admin.task.prerequisites.type2.placeholder')}
+                      </button>
+                      <p className="admin-field-note" style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: '#666', fontStyle: 'italic' }}>
+                        {t('admin.task.prerequisites.type2.searchHint')}
+                      </p>
+                      {taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0 && (
+                        <label className="admin-field" style={{ marginTop: '0.5rem' }}>
+                          <FieldLabel label={t('admin.task.prerequisites.type2.minCountLabel')} required />
+                          <input
+                            type="number"
+                            min={1}
+                            max={taskForm.prerequisite_task_ids.length}
+                            value={taskForm.prerequisite_task_count || 1}
+                            onChange={(event) =>
+                              setTaskForm((prev) => ({
+                                ...prev,
+                                prerequisite_task_count: Number.parseInt(event.target.value || '1', 10),
+                              }))
+                            }
+                          />
+                          <p className="admin-field-note" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                            {t('admin.task.prerequisites.type2.description', { count: taskForm.prerequisite_task_ids.length })}
+                          </p>
+                        </label>
+                      )}
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label={t('admin.task.fields.active')} />
                       <div className="admin-toggle">
                         <input
                           id="task-active-toggle"
@@ -4063,12 +4753,12 @@ const goToRewardCreation = () => {
                           }
                         />
                         <label htmlFor="task-active-toggle">
-                          {taskForm.active ? 'Active' : 'Inactive'}
+                          {taskForm.active ? t('admin.task.fields.active') : t('admin.task.fields.inactive')}
                         </label>
                       </div>
                     </div>
                     <label className="admin-field">
-                      <FieldLabel label="CO₂ savings (kg)" />
+                      <FieldLabel label={t('admin.task.fields.co2Savings')} />
                       <input
                         type="number"
                         step="0.01"
@@ -4102,7 +4792,7 @@ const goToRewardCreation = () => {
                                   }))
                                 }
                               />
-                              <span>Use external video URL</span>
+                              <span>{t('admin.task.videoSource.url')}</span>
                             </label>
                             <label className="admin-video-option">
                               <input
@@ -4120,20 +4810,20 @@ const goToRewardCreation = () => {
                                   }))
                                 }
                               />
-                              <span>Upload video file</span>
+                              <span>{t('admin.task.videoSource.upload')}</span>
                             </label>
                           </div>
                         </div>
                         {taskForm.videoSource === 'url' && (
                           <label className="admin-field admin-field-span-2 admin-video-upload-block">
-                            <FieldLabel label="Video URL" required />
+                            <FieldLabel label={t('admin.task.fields.videoUrl')} required />
                             <input
                               type="url"
                               value={taskForm.video_url}
                               onChange={(event) =>
                                 setTaskForm((prev) => ({ ...prev, video_url: event.target.value }))
                               }
-                              placeholder="https://example.com/video.mp4"
+                              placeholder={t('admin.task.videoUrlPlaceholder')}
                             />
                           </label>
                         )}
@@ -4141,10 +4831,10 @@ const goToRewardCreation = () => {
                           <div className="admin-field admin-field-span-2 admin-video-upload-block">
                             <FieldLabel label={t('admin.fields.videoFile')} required />
                             <div className="admin-upload-field">
-                              <span>Select a video file to upload</span>
+                              <span>{t('admin.task.selectVideoFile')}</span>
                               <div className="admin-upload-control">
                                 <label className="admin-upload-button">
-                                  <span>Choose file</span>
+                                  <span>{t('admin.task.chooseFile')}</span>
                                   <input
                                     type="file"
                                     accept="video/*"
@@ -4159,7 +4849,7 @@ const goToRewardCreation = () => {
                                   />
                                 </label>
                                 <span className="admin-upload-filename">
-                                  {taskForm.videoFile ? taskForm.videoFile.name : 'No file selected'}
+                                  {taskForm.videoFile ? taskForm.videoFile.name : t('admin.task.noFileSelected')}
                                 </span>
                               </div>
                             </div>
@@ -4169,7 +4859,7 @@ const goToRewardCreation = () => {
                     )}
                     {taskForm.type === 'qr' && (
                       <label className="admin-field admin-field-span-2">
-                        <FieldLabel label="QR code value" required />
+                        <FieldLabel label={t('admin.task.fields.qrCodeValue')} required />
                         <input
                           type="text"
                           value={taskForm.qr_code}
@@ -4189,7 +4879,7 @@ const goToRewardCreation = () => {
                     )}
                     {taskForm.type === 'visit_location' && (
                       <div className="admin-form-full">
-                        <FieldLabel label="Target Location (GPS Coordinates)" required />
+                        <FieldLabel label={t('admin.task.fields.targetLocation')} required />
                         <p className="admin-field-note" style={{ marginBottom: '12px' }}>
                           Set the GPS coordinates of the location users need to visit. Users will see a map and must be within 50 meters to complete the task.
                         </p>
@@ -4208,19 +4898,19 @@ const goToRewardCreation = () => {
                           height="300px"
                         />
                         <label className="admin-field" style={{ marginTop: '12px' }}>
-                          <FieldLabel label="Address" />
+                          <FieldLabel label={t('admin.task.fields.address')} />
                           <textarea
                             rows={3}
                             value={taskForm.target_address || ''}
                             onChange={(e) =>
                               setTaskForm((prev) => ({ ...prev, target_address: e.target.value }))
                             }
-                            placeholder="Address will be auto-filled from map selection"
+                            placeholder={t('admin.task.targetLocation.addressPlaceholder')}
                           />
                         </label>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
                           <label className="admin-field">
-                            <FieldLabel label="Latitude" required />
+                            <FieldLabel label={t('admin.task.fields.latitude')} required />
                             <input
                               type="number"
                               step="any"
@@ -4228,13 +4918,13 @@ const goToRewardCreation = () => {
                               onChange={(e) =>
                                 setTaskForm((prev) => ({ ...prev, target_latitude: e.target.value }))
                               }
-                              placeholder="52.5200"
+                              placeholder={t('admin.task.targetLocation.latitudePlaceholder')}
                               min="-90"
                               max="90"
                             />
                           </label>
                           <label className="admin-field">
-                            <FieldLabel label="Longitude" required />
+                            <FieldLabel label={t('admin.task.fields.longitude')} required />
                             <input
                               type="number"
                               step="any"
@@ -4242,7 +4932,7 @@ const goToRewardCreation = () => {
                               onChange={(e) =>
                                 setTaskForm((prev) => ({ ...prev, target_longitude: e.target.value }))
                               }
-                              placeholder="13.4050"
+                              placeholder={t('admin.task.targetLocation.longitudePlaceholder')}
                               min="-180"
                               max="180"
                             />
@@ -4254,7 +4944,7 @@ const goToRewardCreation = () => {
                     {taskForm.type === 'article_quiz' && (
                       <>
                         <div className="admin-field admin-field-span-2">
-                          <FieldLabel label="Article Source" required />
+                          <FieldLabel label={t('admin.task.fields.articleSource')} required />
                           <div className="admin-video-source">
                             <label className="admin-video-option">
                               <input
@@ -4272,7 +4962,7 @@ const goToRewardCreation = () => {
                                   }))
                                 }
                               />
-                              <span>Use external article URL</span>
+                              <span>{t('admin.task.articleSource.url')}</span>
                             </label>
                             <label className="admin-video-option">
                               <input
@@ -4290,33 +4980,33 @@ const goToRewardCreation = () => {
                                   }))
                                 }
                               />
-                              <span>Enter article content</span>
+                              <span>{t('admin.task.articleSource.content')}</span>
                             </label>
                           </div>
                         </div>
                         {taskForm.articleSource === 'url' && (
                           <label className="admin-field admin-field-span-2">
-                            <FieldLabel label="Article URL" required />
+                            <FieldLabel label={t('admin.task.fields.articleUrl')} required />
                             <input
                               type="url"
                               value={taskForm.article_url}
                               onChange={(event) =>
                                 setTaskForm((prev) => ({ ...prev, article_url: event.target.value }))
                               }
-                              placeholder="https://example.com/article"
+                              placeholder={t('admin.task.articleUrlPlaceholder')}
                             />
                           </label>
                         )}
                         {taskForm.articleSource === 'content' && (
                           <label className="admin-field admin-field-span-2">
-                            <FieldLabel label="Article Content" required />
+                            <FieldLabel label={t('admin.task.fields.articleContent')} required />
                             <textarea
                               value={taskForm.article_content}
                               onChange={(event) =>
                                 setTaskForm((prev) => ({ ...prev, article_content: event.target.value }))
                               }
                               rows={10}
-                              placeholder="Enter the article content here..."
+                              placeholder={t('admin.task.articleContentPlaceholder')}
                             />
                           </label>
                         )}
@@ -4325,7 +5015,7 @@ const goToRewardCreation = () => {
                     {taskForm.type === 'survey' && (
                       <>
                         <div className="admin-field admin-field-span-2">
-                          <FieldLabel label="Survey Type" />
+                          <FieldLabel label={t('admin.task.fields.surveyType')} />
                           <select
                             value={taskForm.surveyType}
                             onChange={(e) =>
@@ -4375,8 +5065,8 @@ const goToRewardCreation = () => {
                 </section>
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Audience & access</h3>
-                    <p>Restrict visibility to specific roles, user types, or hotels.</p>
+                    <h3>{t('admin.task.audience.title')}</h3>
+                    <p>{t('admin.task.audience.subtitle')}</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
@@ -4416,12 +5106,12 @@ const goToRewardCreation = () => {
                 </section>
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Recurrence</h3>
-                    <p>Set how often this task should be automatically regenerated.</p>
+                    <h3>{t('admin.task.recurrence.title')}</h3>
+                    <p>{t('admin.task.recurrence.subtitle')}</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Recurrence Type" />
+                      <FieldLabel label={t('admin.task.recurrence.typeLabel')} />
                       <select
                         value={taskForm.recurrence}
                         onChange={(event) =>
@@ -4432,10 +5122,10 @@ const goToRewardCreation = () => {
                         }
                         className="admin-select"
                       >
-                        <option value="once">Once - Task is created once and disappears when finished</option>
-                        <option value="daily">Daily - Task appears once daily (if previous is finished, waits until next day)</option>
-                        <option value="weekly">Weekly - Task appears once weekly (if previous is finished, waits until next week)</option>
-                        <option value="monthly">Monthly - Task appears once monthly (if previous is finished, waits until next month)</option>
+                        <option value="once">{t('admin.task.recurrence.once')}</option>
+                        <option value="daily">{t('admin.task.recurrence.daily')}</option>
+                        <option value="weekly">{t('admin.task.recurrence.weekly')}</option>
+                        <option value="monthly">{t('admin.task.recurrence.monthly')}</option>
                       </select>
                     </div>
                   </div>
@@ -4447,9 +5137,9 @@ const goToRewardCreation = () => {
                         {taskMessage.text}
                       </p>
                     ) : isEditingTask ? (
-                      <p className="admin-publish-hint">Editing existing task.</p>
+                      <p className="admin-publish-hint">{t('admin.task.publishHint.editing')}</p>
                     ) : isUploadingVideo ? (
-                      <p className="admin-publish-hint">Uploading video file…</p>
+                      <p className="admin-publish-hint">{t('admin.task.publishHint.uploading')}</p>
                     ) : !taskValidation.isValid ? (
                       <p className="admin-publish-hint">
                         {hasAttemptedPublish && taskValidation.message
@@ -4489,11 +5179,11 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>{isEditingReward ? 'Edit Reward' : 'Publish Reward'}</h2>
+              <h2>{isEditingReward ? t('admin.reward.edit.title') : t('admin.reward.create.title')}</h2>
               <p>
                 {isEditingReward
-                  ? 'Update the selected reward using the form below.'
-                  : 'Use an existing reward as a template or start from scratch with a predefined type.'}
+                  ? t('admin.reward.edit.subtitle')
+                  : t('admin.reward.create.subtitle')}
               </p>
             </div>
             <div className="admin-actions">
@@ -4501,10 +5191,10 @@ const goToRewardCreation = () => {
                 <button
                   className="admin-icon-button"
                   onClick={() => refetchRewardTemplates()}
-                  title="Refresh rewards"
+                  title={t('admin.reward.refresh')}
                 >
                   <Icon name="refresh" />
-                  <span className="sr-only">Refresh rewards</span>
+                  <span className="sr-only">{t('admin.reward.refresh')}</span>
                 </button>
               )}
               <button
@@ -4530,20 +5220,20 @@ const goToRewardCreation = () => {
           )}
           {Boolean(locationsError) && (
             <p className="admin-error">
-              Failed to load locations. Create or refresh locations before publishing rewards.
+              {t('admin.reward.locationsError')}
             </p>
           )}
 
           <div className="admin-form-card">
             {!isEditingReward && (
               <label className="admin-field">
-                <span>Create from</span>
+                <span>{t('admin.reward.createFrom')}</span>
                 <select
                   value={rewardSource}
                   onChange={(event) => setRewardSource(event.target.value as RewardSource)}
                 >
-                  <option value="">Select option</option>
-                  <option value="existing">Existing reward</option>
+                  <option value="">{t('admin.reward.selectOption')}</option>
+                  <option value="existing">{t('admin.reward.existingReward')}</option>
                   {REWARD_TYPE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {`Start from scratch – ${option.label}`}
@@ -4560,7 +5250,7 @@ const goToRewardCreation = () => {
                   value={selectedRewardTemplate}
                   onChange={(event) => setSelectedRewardTemplate(event.target.value)}
                 >
-                  <option value="">Select reward</option>
+                  <option value="">{t('admin.reward.selectReward')}</option>
                   {normalizedRewardTemplates.map((template) => (
                     <option key={template.id} value={template.id}>
                       {template.title} ({formatRewardType(template.reward_type as RewardType)})
@@ -4583,14 +5273,14 @@ const goToRewardCreation = () => {
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
                     <div>
-                      <h3>Reward details</h3>
+                      <h3>{t('admin.reward.details.title')}</h3>
                       <p>Define the reward content and optional integrations.</p>
                     </div>
                     <RewardTypeBadge type={rewardForm.type} />
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Title" required />
+                      <FieldLabel label={t('admin.task.fields.title')} required />
                       <input
                         type="text"
                         value={rewardForm.title}
@@ -4600,7 +5290,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Description" required />
+                      <FieldLabel label={t('admin.task.fields.description')} required />
                       <textarea
                         value={rewardForm.description}
                         onChange={(event) =>
@@ -4610,7 +5300,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Points cost" required />
+                      <FieldLabel label={t('admin.reward.fields.pointsCost')} required />
                       <input
                         type="number"
                         min={0}
@@ -4624,9 +5314,9 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Location" required />
+                      <FieldLabel label={t('admin.task.fields.location')} required />
                       {locationsLoading ? (
-                        <p className="admin-field-note">Loading locations…</p>
+                        <p className="admin-field-note">{t('admin.task.loadingLocations')}</p>
                       ) : hasRewardLocationOptions ? (
                         <select
                           value={rewardForm.locationId}
@@ -4634,7 +5324,7 @@ const goToRewardCreation = () => {
                             setRewardForm((prev) => ({ ...prev, locationId: event.target.value }))
                           }
                         >
-                          <option value="">Select location</option>
+                          <option value="">{t('admin.task.selectLocation')}</option>
                           {rewardLocationSelectOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
@@ -4645,13 +5335,13 @@ const goToRewardCreation = () => {
                         <div className="admin-field-note">
                           <p>{t('admin.task.noLocations')}</p>
                           <button type="button" className="link-button" onClick={goToLocationCreation}>
-                            Create a location
+                            {t('admin.task.createLocation')}
                           </button>
                         </div>
                       )}
                     </label>
                     <div className="admin-field">
-                      <FieldLabel label="Active" />
+                      <FieldLabel label={t('admin.task.fields.active')} />
                       <div className="admin-toggle">
                         <input
                           id="reward-active-toggle"
@@ -4664,30 +5354,30 @@ const goToRewardCreation = () => {
                           }
                         />
                         <label htmlFor="reward-active-toggle">
-                          {rewardForm.active ? 'Active' : 'Inactive'}
+                          {rewardForm.active ? t('admin.task.fields.active') : t('admin.task.fields.inactive')}
                         </label>
                       </div>
                     </div>
                     <label className="admin-field">
-                      <FieldLabel label="Voucher code" />
+                      <FieldLabel label={t('admin.reward.fields.voucherCode')} />
                       <input
                         type="text"
                         value={rewardForm.voucherCode}
                         onChange={(event) =>
                           setRewardForm((prev) => ({ ...prev, voucherCode: event.target.value }))
                         }
-                        placeholder="Optional code for voucher-based rewards"
+                        placeholder={t('admin.reward.voucherCodePlaceholder')}
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="External API ID" />
+                      <FieldLabel label={t('admin.reward.fields.externalApiId')} />
                       <input
                         type="text"
                         value={rewardForm.externalApiId}
                         onChange={(event) =>
                           setRewardForm((prev) => ({ ...prev, externalApiId: event.target.value }))
                         }
-                        placeholder="Optional identifier for external integrations"
+                        placeholder={t('admin.reward.externalApiPlaceholder')}
                       />
                     </label>
                   </div>
@@ -4695,8 +5385,8 @@ const goToRewardCreation = () => {
 
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Audience & access</h3>
-                    <p>Limit the reward visibility to certain roles, user types, or hotels.</p>
+                    <h3>{t('admin.reward.audience.title')}</h3>
+                    <p>{t('admin.reward.audience.subtitle')}</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
@@ -4737,12 +5427,12 @@ const goToRewardCreation = () => {
 
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Recurrence</h3>
-                    <p>Set how often this reward should be automatically regenerated.</p>
+                    <h3>{t('admin.reward.recurrence.title')}</h3>
+                    <p>{t('admin.reward.recurrence.subtitle')}</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Recurrence Type" />
+                      <FieldLabel label={t('admin.reward.recurrence.typeLabel')} />
                       <select
                         value={rewardForm.recurrence}
                         onChange={(event) =>
@@ -4753,10 +5443,10 @@ const goToRewardCreation = () => {
                         }
                         className="admin-select"
                       >
-                        <option value="once">Once - Reward is created once and disappears when finished</option>
-                        <option value="daily">Daily - Reward appears once daily (if previous is finished, waits until next day)</option>
-                        <option value="weekly">Weekly - Reward appears once weekly (if previous is finished, waits until next week)</option>
-                        <option value="monthly">Monthly - Reward appears once monthly (if previous is finished, waits until next month)</option>
+                        <option value="once">{t('admin.reward.recurrence.once')}</option>
+                        <option value="daily">{t('admin.reward.recurrence.daily')}</option>
+                        <option value="weekly">{t('admin.reward.recurrence.weekly')}</option>
+                        <option value="monthly">{t('admin.reward.recurrence.monthly')}</option>
                       </select>
                     </div>
                   </div>
@@ -4769,7 +5459,7 @@ const goToRewardCreation = () => {
                         {rewardMessage.text}
                       </p>
                     ) : isEditingReward ? (
-                      <p className="admin-publish-hint">Editing existing reward.</p>
+                      <p className="admin-publish-hint">{t('admin.reward.publishHint.editing')}</p>
                     ) : !rewardValidation.isValid ? (
                       <p className="admin-publish-hint">
                         {hasAttemptedRewardPublish && rewardValidation.message
@@ -4809,10 +5499,9 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>{isEditingLocation ? 'Edit Location' : 'Create Location'}</h2>
+              <h2>{isEditingLocation ? t('admin.location.edit.title') : t('admin.location.create.title')}</h2>
               <p>
-                Define where tasks and rewards take place. Locations can be online or physical with an
-                address and GPS coordinates.
+                {isEditingLocation ? t('admin.location.edit.subtitle') : t('admin.location.create.subtitle')}
               </p>
             </div>
             <div className="admin-actions">
@@ -4828,10 +5517,10 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title="Back"
+                title={t('admin.location.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{t('admin.location.back')}</span>
               </button>
             </div>
           </header>
@@ -4841,13 +5530,13 @@ const goToRewardCreation = () => {
               <section className="admin-form-section">
                 <div className="admin-form-section-header">
                   <div>
-                    <h3>Location details</h3>
+                    <h3>{t('admin.location.details.title')}</h3>
                     <p>Provide the basic information for this location.</p>
                   </div>
                 </div>
                 <div className={`admin-form-grid admin-form-grid-two ${locationForm.mode === 'physical' ? 'admin-form-grid-location' : ''}`}>
                   <label className="admin-field admin-field-span-2">
-                    <FieldLabel label="Name" required />
+                    <FieldLabel label={t('admin.location.fields.name')} required />
                     <input
                       type="text"
                       value={locationForm.name}
@@ -4857,7 +5546,7 @@ const goToRewardCreation = () => {
                     />
                   </label>
                   <label className="admin-field admin-field-span-2">
-                    <FieldLabel label="Description" required />
+                    <FieldLabel label={t('admin.location.fields.description')} required />
                     <textarea
                       rows={3}
                       value={locationForm.description}
@@ -4867,7 +5556,7 @@ const goToRewardCreation = () => {
                     />
                   </label>
                   <div className="admin-field">
-                    <FieldLabel label="Active" />
+                    <FieldLabel label={t('admin.location.fields.active')} />
                     <div className="admin-toggle">
                       <input
                         id="location-active-toggle"
@@ -4880,12 +5569,12 @@ const goToRewardCreation = () => {
                         }
                       />
                       <label htmlFor="location-active-toggle">
-                        {locationForm.active ? 'Active' : 'Inactive'}
+                        {locationForm.active ? t('admin.location.fields.active') : t('admin.location.fields.inactive')}
                       </label>
                     </div>
                   </div>
                   <div className="admin-field admin-field-span-2">
-                    <FieldLabel label="Location type" required />
+                    <FieldLabel label={t('admin.location.fields.locationType')} required />
                     <div className="admin-toggle-group">
                       <label className="admin-radio-option">
                         <input
@@ -4971,30 +5660,30 @@ const goToRewardCreation = () => {
                     </div>
                   )}
                   <div className="admin-field admin-field-span-2">
-                    <FieldLabel label="Category" />
+                    <FieldLabel label={t('admin.location.fields.category')} />
                     <select
                       value={locationForm.category}
                       onChange={(event) =>
                         setLocationForm((prev) => ({ ...prev, category: event.target.value }))
                       }
                     >
-                      <option value="">Select a category (optional)</option>
-                      <option value="online">Online</option>
-                      <option value="hotel_reception">Hotel Reception</option>
-                      <option value="hotel_restaurant">Hotel Restaurant</option>
-                      <option value="external">External</option>
-                      <option value="physical">Physical</option>
+                      <option value="">{t('admin.location.categorySelect')}</option>
+                      <option value="online">{t('admin.location.categories.online')}</option>
+                      <option value="hotel_reception">{t('admin.location.categories.hotel_reception')}</option>
+                      <option value="hotel_restaurant">{t('admin.location.categories.hotel_restaurant')}</option>
+                      <option value="external">{t('admin.location.categories.external')}</option>
+                      <option value="physical">{t('admin.location.categories.physical')}</option>
                     </select>
                   </div>
                   <label className="admin-field admin-field-span-2">
-                    <FieldLabel label="Category Description" />
+                    <FieldLabel label={t('admin.location.fields.categoryDescription')} />
                     <textarea
                       rows={2}
                       value={locationForm.categoryDescription}
                       onChange={(event) =>
                         setLocationForm((prev) => ({ ...prev, categoryDescription: event.target.value }))
                       }
-                      placeholder="Optional additional description for the category"
+                      placeholder={t('admin.location.categoryDescriptionPlaceholder')}
                     />
                   </label>
                 </div>
@@ -5007,7 +5696,7 @@ const goToRewardCreation = () => {
                       {locationMessage.text}
                     </p>
                   ) : isEditingLocation ? (
-                    <p className="admin-publish-hint">Editing existing location.</p>
+                    <p className="admin-publish-hint">{t('admin.location.publishHint.editing')}</p>
                   ) : !locationValidation.isValid ? (
                     <p className="admin-publish-hint">
                       {hasAttemptedLocationSubmit && locationValidation.message
@@ -5033,7 +5722,7 @@ const goToRewardCreation = () => {
                     onClick={handleLocationSubmit}
                     disabled={isLocationSubmitDisabled}
                   >
-                    {isEditingLocation ? 'Update Location' : 'Create Location'}
+                    {isEditingLocation ? t('admin.location.updateButton') : t('admin.location.createButton')}
                   </button>
                 </div>
               </div>
@@ -5050,7 +5739,7 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Manage Locations</h2>
+              <h2>{t('admin.locationManage.title')}</h2>
               <p>Review existing locations, edit their details, or remove unused entries.</p>
             </div>
             <div className="admin-actions">
@@ -5213,7 +5902,7 @@ const goToRewardCreation = () => {
                           </td>
                           <td data-label="Details">
                             {location.is_online ? (
-                              <span className="admin-table-subtitle">Accessible online</span>
+                              <span className="admin-table-subtitle">{t('admin.locationManage.online')}</span>
                             ) : (
                               <div className="admin-table-secondary">
                                 {location.address && (
@@ -5274,8 +5963,8 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Manage Tasks</h2>
-              <p>Browse all tasks, toggle availability, or clean up unused entries.</p>
+              <h2>{t('admin.taskManage.title')}</h2>
+              <p>{t('admin.taskManage.subtitle')}</p>
             </div>
             <div className="admin-actions">
               {!isEditingTask && (
@@ -5343,9 +6032,9 @@ const goToRewardCreation = () => {
                   aria-label={t('admin.taskManage.openFilters')}
                 >
                   <Icon name="filter" />
-                  {(taskFilterLocation || taskFilterStatus || taskFilterRecurrence || taskFilterType) && (
+                  {(taskFilterLocation || taskFilterStatus || taskFilterRecurrence || taskFilterType || taskFilterTitle.trim() || taskFilterPointsMin.trim() || taskFilterPointsMax.trim()) && (
                     <span className="admin-mobile-filter-badge">
-                      {[taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType].filter(Boolean).length}
+                      {[taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType, taskFilterTitle.trim() ? 'title' : null, (taskFilterPointsMin.trim() || taskFilterPointsMax.trim()) ? 'points' : null].filter(Boolean).length}
                     </span>
                   )}
                 </button>
@@ -5415,7 +6104,17 @@ const goToRewardCreation = () => {
                         aria-label={t('admin.taskManage.selectAll')}
                       />
                     </th>
-                    <th>Task</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('title');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Task {taskFilterTitle && '✓'}
+                    </th>
                     <th
                       className="admin-filter-header"
                       onClick={(e) => {
@@ -5438,7 +6137,17 @@ const goToRewardCreation = () => {
                     >
                       Location {taskFilterLocation && '✓'}
                     </th>
-                    <th>Points</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('points');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Points {(taskFilterPointsMin || taskFilterPointsMax) && '✓'}
+                    </th>
                     <th
                       className="admin-filter-header"
                       onClick={(e) => {
@@ -5459,7 +6168,7 @@ const goToRewardCreation = () => {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Recurrence {taskFilterRecurrence && '✓'}
+                      {t('admin.filters.recurrence')} {taskFilterRecurrence && '✓'}
                     </th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
@@ -5491,7 +6200,7 @@ const goToRewardCreation = () => {
                           <td data-label="Task">
                             <div className="admin-table-primary">
                               <span className="admin-table-title">
-                                {task.title || 'Untitled task'}
+                                {task.title || t('admin.task.untitled')}
                               </span>
                               {task.description && (
                                 <span className="admin-table-subtitle">{task.description}</span>
@@ -5525,10 +6234,12 @@ const goToRewardCreation = () => {
                               {task.active ? 'Active' : 'Inactive'}
                             </span>
                           </td>
-                          <td data-label="Recurrence">
+                          <td data-label={t('admin.filters.recurrence')}>
                             <span className="admin-table-secondary">
-                              {((task as any).recurrence || 'once').charAt(0).toUpperCase() + 
-                               ((task as any).recurrence || 'once').slice(1)}
+                              {(() => {
+                                const recurrence = ((task as any).recurrence || 'once') as 'once' | 'daily' | 'weekly' | 'monthly';
+                                return t(`admin.task.recurrence.${recurrence}`).split(' - ')[0];
+                              })()}
                             </span>
                           </td>
                           <td data-label="Actions" className="admin-table-actions">
@@ -5572,7 +6283,9 @@ const goToRewardCreation = () => {
                       ? taskFilterOptions.statuses
                       : taskFilterDropdown === 'recurrence'
                       ? taskFilterOptions.recurrences
-                      : taskFilterOptions.types
+                      : taskFilterDropdown === 'type'
+                      ? taskFilterOptions.types
+                      : undefined
                   }
                   selectedValue={
                     taskFilterDropdown === 'location'
@@ -5581,7 +6294,9 @@ const goToRewardCreation = () => {
                       ? taskFilterStatus
                       : taskFilterDropdown === 'recurrence'
                       ? taskFilterRecurrence
-                      : taskFilterType
+                      : taskFilterDropdown === 'type'
+                      ? taskFilterType
+                      : undefined
                   }
                   onSelect={(value) => {
                     if (taskFilterDropdown === 'location') {
@@ -5590,11 +6305,17 @@ const goToRewardCreation = () => {
                       setTaskFilterStatus(value as 'active' | 'inactive' | null);
                     } else if (taskFilterDropdown === 'recurrence') {
                       setTaskFilterRecurrence(value);
-                    } else {
+                    } else if (taskFilterDropdown === 'type') {
                       setTaskFilterType(value);
                     }
                   }}
-                  type={taskFilterDropdown === 'type' ? 'type' : taskFilterDropdown}
+                  type={taskFilterDropdown}
+                  textValue={taskFilterDropdown === 'title' ? taskFilterTitle : undefined}
+                  onTextChange={taskFilterDropdown === 'title' ? setTaskFilterTitle : undefined}
+                  minValue={taskFilterDropdown === 'points' ? taskFilterPointsMin : undefined}
+                  maxValue={taskFilterDropdown === 'points' ? taskFilterPointsMax : undefined}
+                  onMinChange={taskFilterDropdown === 'points' ? setTaskFilterPointsMin : undefined}
+                  onMaxChange={taskFilterDropdown === 'points' ? setTaskFilterPointsMax : undefined}
                 />
               )}
             </div>
@@ -5608,6 +6329,9 @@ const goToRewardCreation = () => {
               status: taskFilterStatus,
               recurrence: taskFilterRecurrence,
               type: taskFilterType,
+              title: taskFilterTitle,
+              pointsMin: taskFilterPointsMin,
+              pointsMax: taskFilterPointsMax,
             }}
             onFilterChange={(filterType, value) => {
               if (filterType === 'location') {
@@ -5620,12 +6344,19 @@ const goToRewardCreation = () => {
                 setTaskFilterType(value);
               }
             }}
+            onTitleChange={setTaskFilterTitle}
+            onPointsMinChange={setTaskFilterPointsMin}
+            onPointsMaxChange={setTaskFilterPointsMax}
             onClearAll={() => {
               setTaskFilterLocation(null);
               setTaskFilterStatus(null);
               setTaskFilterRecurrence(null);
               setTaskFilterType(null);
+              setTaskFilterTitle('');
+              setTaskFilterPointsMin('');
+              setTaskFilterPointsMax('');
             }}
+            filterType="task"
           />
         </section>
       )}
@@ -5634,8 +6365,8 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Manage Rewards</h2>
-              <p>Review existing rewards and adjust their details or availability.</p>
+              <h2>{t('admin.rewardManage.title')}</h2>
+              <p>{t('admin.rewardManage.subtitle')}</p>
             </div>
             <div className="admin-actions">
               {!isEditingReward && (
@@ -5688,18 +6419,18 @@ const goToRewardCreation = () => {
                       setSelectedRewardIds([]);
                     }}
                   />
-                  <span>Show inactive</span>
+                  <span>{t('admin.taskManage.showInactive')}</span>
                 </label>
                 <button
                   className="admin-mobile-filter-button"
                   type="button"
                   onClick={() => setIsMobileRewardFilterOpen(true)}
-                  aria-label="Open filters"
+                  aria-label={t('admin.taskManage.openFilters')}
                 >
                   <Icon name="filter" />
-                  {(rewardFilterLocation || rewardFilterStatus || rewardFilterRecurrence || rewardFilterType) && (
+                  {(rewardFilterLocation || rewardFilterStatus || rewardFilterRecurrence || rewardFilterType || rewardFilterTitle.trim() || rewardFilterCostMin.trim() || rewardFilterCostMax.trim()) && (
                     <span className="admin-mobile-filter-badge">
-                      {[rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType].filter(Boolean).length}
+                      {[rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType, rewardFilterTitle.trim() ? 'title' : null, (rewardFilterCostMin.trim() || rewardFilterCostMax.trim()) ? 'cost' : null].filter(Boolean).length}
                     </span>
                   )}
                 </button>
@@ -5771,7 +6502,17 @@ const goToRewardCreation = () => {
                         aria-label={t('admin.rewardManage.selectAll')}
                       />
                     </th>
-                    <th>Reward</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('title');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Reward {rewardFilterTitle && '✓'}
+                    </th>
                     <th
                       className="admin-filter-header"
                       onClick={(e) => {
@@ -5815,7 +6556,7 @@ const goToRewardCreation = () => {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Recurrence {rewardFilterRecurrence && '✓'}
+                      {t('admin.filters.recurrence')} {rewardFilterRecurrence && '✓'}
                     </th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
@@ -5851,7 +6592,7 @@ const goToRewardCreation = () => {
                           <td data-label="Reward">
                              <div className="admin-table-primary">
                                <span className="admin-table-title">
-                                 {reward.title || 'Untitled reward'}
+                                 {reward.title || t('admin.reward.untitled')}
                                </span>
                                {reward.description && (
                                  <span className="admin-table-subtitle">{reward.description}</span>
@@ -5885,12 +6626,12 @@ const goToRewardCreation = () => {
                                {reward.active ? 'Active' : 'Inactive'}
                              </span>
                            </td>
-                          <td data-label="Recurrence">
+                          <td data-label={t('admin.filters.recurrence')}>
                              <span className="admin-table-type">
-                               {reward.recurrence === 'daily' && 'Daily'}
-                               {reward.recurrence === 'weekly' && 'Weekly'}
-                               {reward.recurrence === 'monthly' && 'Monthly'}
-                               {(!reward.recurrence || reward.recurrence === 'once') && 'Once'}
+                               {(() => {
+                                 const recurrence = (reward.recurrence || 'once') as 'once' | 'daily' | 'weekly' | 'monthly';
+                                 return t(`admin.reward.recurrence.${recurrence}`).split(' - ')[0];
+                               })()}
                              </span>
                            </td>
                           <td data-label="Actions" className="admin-table-actions">
@@ -5934,7 +6675,9 @@ const goToRewardCreation = () => {
                       ? rewardFilterOptions.statuses
                       : rewardFilterDropdown === 'recurrence'
                       ? rewardFilterOptions.recurrences
-                      : rewardFilterOptions.types
+                      : rewardFilterDropdown === 'type'
+                      ? rewardFilterOptions.types
+                      : undefined
                   }
                   selectedValue={
                     rewardFilterDropdown === 'location'
@@ -5943,7 +6686,9 @@ const goToRewardCreation = () => {
                       ? rewardFilterStatus
                       : rewardFilterDropdown === 'recurrence'
                       ? rewardFilterRecurrence
-                      : rewardFilterType
+                      : rewardFilterDropdown === 'type'
+                      ? rewardFilterType
+                      : undefined
                   }
                   onSelect={(value) => {
                     if (rewardFilterDropdown === 'location') {
@@ -5952,11 +6697,17 @@ const goToRewardCreation = () => {
                       setRewardFilterStatus(value as 'active' | 'inactive' | null);
                     } else if (rewardFilterDropdown === 'recurrence') {
                       setRewardFilterRecurrence(value);
-                    } else {
+                    } else if (rewardFilterDropdown === 'type') {
                       setRewardFilterType(value);
                     }
                   }}
-                  type={rewardFilterDropdown === 'type' ? 'type' : rewardFilterDropdown}
+                  type={rewardFilterDropdown}
+                  textValue={rewardFilterDropdown === 'title' ? rewardFilterTitle : undefined}
+                  onTextChange={rewardFilterDropdown === 'title' ? setRewardFilterTitle : undefined}
+                  minValue={rewardFilterDropdown === 'cost' ? rewardFilterCostMin : undefined}
+                  maxValue={rewardFilterDropdown === 'cost' ? rewardFilterCostMax : undefined}
+                  onMinChange={rewardFilterDropdown === 'cost' ? setRewardFilterCostMin : undefined}
+                  onMaxChange={rewardFilterDropdown === 'cost' ? setRewardFilterCostMax : undefined}
                 />
               )}
             </div>
@@ -5970,6 +6721,9 @@ const goToRewardCreation = () => {
               status: rewardFilterStatus,
               recurrence: rewardFilterRecurrence,
               type: rewardFilterType,
+              title: rewardFilterTitle,
+              costMin: rewardFilterCostMin,
+              costMax: rewardFilterCostMax,
             }}
             onFilterChange={(filterType, value) => {
               if (filterType === 'location') {
@@ -5982,12 +6736,19 @@ const goToRewardCreation = () => {
                 setRewardFilterType(value);
               }
             }}
+            onTitleChange={setRewardFilterTitle}
+            onCostMinChange={setRewardFilterCostMin}
+            onCostMaxChange={setRewardFilterCostMax}
             onClearAll={() => {
               setRewardFilterLocation(null);
               setRewardFilterStatus(null);
               setRewardFilterRecurrence(null);
               setRewardFilterType(null);
+              setRewardFilterTitle('');
+              setRewardFilterCostMin('');
+              setRewardFilterCostMax('');
             }}
+            filterType="reward"
           />
         </section>
       )}
@@ -6006,6 +6767,21 @@ const goToRewardCreation = () => {
       <ConfirmDialog
         {...validationConfirm}
         onCancel={() => setValidationConfirm(defaultConfirmDialogState)}
+      />
+          <TaskSelectionModal
+            isOpen={isPrerequisiteModalOpen}
+            onClose={() => setIsPrerequisiteModalOpen(false)}
+        mode={prerequisiteModalMode}
+        tasks={existingTemplates}
+        selectedTaskIds={
+          prerequisiteModalMode === 'single'
+            ? taskForm.prerequisite_task_id
+              ? [taskForm.prerequisite_task_id]
+              : []
+            : taskForm.prerequisite_task_ids || []
+        }
+        onApply={handlePrerequisiteModalApply}
+        excludeTaskId={isEditingTask ? editingTaskId || undefined : undefined}
       />
     </div>
   );

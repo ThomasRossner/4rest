@@ -176,10 +176,18 @@
     },
     "buttons": {
       "start": "Aufgabe starten",
-      "completed": "Abgeschlossen"
+      "completed": "Abgeschlossen",
+      "locked": "Gesperrt"
+    },
+    "status": {
+      "available": "Verfügbare Aufgabe"
     },
     "badges": {
-      "completed": "Aufgabe erledigt"
+      "completed": "Aufgabe erledigt",
+      "locked": "Vorbedingungen nicht erfüllt"
+    },
+    "prerequisites": {
+      "unlockMessage": "Vorbedingungs-Aufgaben erledigen, um freizuschalten"
     },
     "toast": {
       "completedTitle": "Aufgabe abgeschlossen",
@@ -517,6 +525,29 @@
       "selectLocation": "Standort auswählen",
       "noLocations": "Keine Standorte verfügbar.",
       "loadingLocations": "Standorte werden geladen…",
+      "fields": {
+        "title": "Titel",
+        "description": "Beschreibung",
+        "points": "Punkte",
+        "location": "Standort",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "co2Savings": "CO₂-Einsparung (kg)",
+        "articleSource": "Artikelquelle",
+        "articleUrl": "Artikel-URL",
+        "articleContent": "Artikelinhalt",
+        "videoUrl": "Video-URL",
+        "qrCodeValue": "QR-Code-Wert",
+        "targetLocation": "Zielstandort (GPS-Koordinaten)",
+        "address": "Adresse",
+        "latitude": "Breitengrad",
+        "longitude": "Längengrad",
+        "surveyType": "Umfragetyp"
+      },
+      "articleSource": {
+        "url": "Externe Artikel-URL verwenden",
+        "content": "Artikelinhalt eingeben"
+      },
       "videoSource": {
         "url": "Externe Video-URL verwenden",
         "upload": "Video-Datei hochladen"
@@ -524,6 +555,9 @@
       "videoUrlPlaceholder": "https://example.com/video.mp4",
       "selectVideoFile": "Wählen Sie eine Video-Datei zum Hochladen",
       "chooseFile": "Datei auswählen",
+      "noFileSelected": "Keine Datei ausgewählt",
+      "articleUrlPlaceholder": "https://example.com/article",
+      "articleContentPlaceholder": "Geben Sie hier den Artikelinhalt ein...",
       "targetLocation": {
         "title": "Zielstandort",
         "addressPlaceholder": "Adresse wird automatisch aus der Kartenauswahl ausgefüllt",
@@ -540,6 +574,7 @@
       "recurrence": {
         "title": "Wiederholung",
         "subtitle": "Legen Sie fest, wie oft diese Aufgabe automatisch neu erstellt werden soll.",
+        "typeLabel": "Wiederholungstyp",
         "once": "Einmal - Aufgabe wird einmal erstellt und verschwindet, wenn sie abgeschlossen ist",
         "daily": "Täglich - Aufgabe erscheint einmal täglich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Tag)",
         "weekly": "Wöchentlich - Aufgabe erscheint einmal wöchentlich (wenn die vorherige abgeschlossen ist, wartet bis zur nächsten Woche)",
@@ -556,7 +591,13 @@
         "empty": "Noch keine Fragen. Fügen Sie unten Ihre erste Frage hinzu.",
         "questionText": "Fragetext",
         "questionPlaceholder": "Geben Sie die Frageaufforderung ein",
-        "correct": "Richtig"
+        "correct": "Richtig",
+        "question": "Frage {{number}}",
+        "remove": "Entfernen",
+        "addAnswer": "Antwort hinzufügen",
+        "addQuestion": "Frage hinzufügen",
+        "answerOption": "Antwortoption {{number}}",
+        "description": "Fügen Sie Multiple-Choice-Fragen für dieses Video hinzu. Jede Frage benötigt mindestens zwei Antworten und eine richtige Antwort."
       },
       "survey": {
         "title": "Umfragefragen",
@@ -583,6 +624,42 @@
         "maxRating": "Höchstbewertung",
         "required": "Erforderlich",
         "remove": "Entfernen"
+      },
+      "prerequisites": {
+        "type1": {
+          "label": "Vorbedingung (Typ 1)",
+          "noPrerequisite": "Keine Vorbedingung",
+          "description": "Wählen Sie eine spezifische Aufgabe aus, die erledigt sein muss, bevor diese Aufgabe verfügbar wird.",
+          "searchHint": "Tipp: Suchen Sie nach Aufgabentyp (z.B. QUIZ, VIDEO, VISIT_LOCATION), um Aufgaben zu filtern."
+        },
+        "type2": {
+          "label": "Vorbedingungen (Typ 2)",
+          "placeholder": "Aufgaben für Vorbedingungs-Set auswählen",
+          "buttonLabel": "Vorbedingungs-Aufgaben auswählen",
+          "minCountLabel": "Mindestanzahl erforderlich",
+          "description": "Mindestanzahl von Aufgaben (von {{count}} ausgewählten), die erledigt sein müssen.",
+          "searchHint": "Tipp: Suchen Sie nach Aufgabentyp (z.B. QUIZ, VIDEO, VISIT_LOCATION), um Aufgaben zu filtern."
+        },
+        "validation": {
+          "idsEmpty": "prerequisite_task_ids muss mindestens eine Aufgaben-ID enthalten.",
+          "countInvalid": "prerequisite_task_count muss eine ganze Zahl >= 1 sein.",
+          "countTooLarge": "prerequisite_task_count ({{count}}) darf nicht größer sein als die Anzahl der Aufgaben in prerequisite_task_ids ({{total}}).",
+          "countRequired": "prerequisite_task_count ist erforderlich, wenn prerequisite_task_ids gesetzt ist.",
+          "idsRequired": "prerequisite_task_count erfordert, dass prerequisite_task_ids gesetzt ist."
+        },
+        "modal": {
+          "title": "Vorbedingung auswählen",
+          "titleMulti": "Vorbedingungen auswählen",
+          "searchPlaceholder": "Aufgaben suchen...",
+          "noTasksFound": "Keine Aufgaben gefunden",
+          "selectTask": "Aufgabe auswählen",
+          "selectTasks": "Aufgaben auswählen",
+          "selectedCount": "{{count}} ausgewählt",
+          "clear": "Löschen",
+          "apply": "Anwenden",
+          "noSelection": "Keine Aufgabe ausgewählt",
+          "noSelectionMulti": "Keine Aufgaben ausgewählt"
+        }
       },
       "refresh": "Aufgaben aktualisieren",
       "loading": "Aufgaben werden geladen…",
@@ -612,6 +689,11 @@
       "selectLocation": "Standort auswählen",
       "noLocations": "Keine Standorte verfügbar.",
       "loadingLocations": "Standorte werden geladen…",
+      "fields": {
+        "pointsCost": "Punktekosten",
+        "voucherCode": "Gutscheincode",
+        "externalApiId": "Externe API-ID"
+      },
       "voucherCodePlaceholder": "Optionaler Code für gutscheinbasierte Belohnungen",
       "externalApiPlaceholder": "Optionaler Bezeichner für externe Integrationen",
       "audience": {
@@ -624,6 +706,7 @@
       "recurrence": {
         "title": "Wiederholung",
         "subtitle": "Legen Sie fest, wie oft diese Belohnung automatisch neu erstellt werden soll.",
+        "typeLabel": "Wiederholungstyp",
         "once": "Einmal - Belohnung wird einmal erstellt und verschwindet, wenn sie abgeschlossen ist",
         "daily": "Täglich - Belohnung erscheint einmal täglich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Tag)",
         "weekly": "Wöchentlich - Belohnung erscheint einmal wöchentlich (wenn die vorherige abgeschlossen ist, wartet bis zur nächsten Woche)",
@@ -638,7 +721,13 @@
       "loading": "Belohnungsvorlagen werden geladen…",
       "loadError": "Belohnungsvorlagen konnten nicht geladen werden.",
       "cancelEditing": "Bearbeitung abbrechen",
-      "back": "Zurück zum Hauptmenü"
+      "back": "Zurück zum Hauptmenü",
+      "publishing": "Wird veröffentlicht…",
+      "publishButton": "Belohnung veröffentlichen",
+      "saving": "Wird gespeichert…",
+      "saveChanges": "Belohnungsänderungen speichern",
+      "locationsError": "Standorte konnten nicht geladen werden. Erstellen oder aktualisieren Sie Standorte, bevor Sie Belohnungen veröffentlichen.",
+      "untitled": "Unbenannte Belohnung"
     },
     "location": {
       "create": {
@@ -653,6 +742,28 @@
         "title": "Standortdetails",
         "subtitle": "Geben Sie die grundlegenden Informationen für diesen Standort an."
       },
+      "onlineLocation": "Online-Standort",
+      "physicalLocation": "Physischer Standort",
+      "fields": {
+        "name": "Name",
+        "description": "Beschreibung",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "locationType": "Standorttyp",
+        "category": "Kategorie",
+        "categoryDescription": "Kategoriebeschreibung"
+      },
+      "categorySelect": "Kategorie auswählen (optional)",
+      "categoryDescriptionPlaceholder": "Optionale zusätzliche Beschreibung für die Kategorie",
+      "categories": {
+        "online": "Online",
+        "hotel_reception": "Hotel-Rezeption",
+        "hotel_restaurant": "Hotel-Restaurant",
+        "external": "Extern",
+        "physical": "Physisch"
+      },
+      "createButton": "Standort erstellen",
+      "updateButton": "Standort aktualisieren",
       "addressPlaceholder": "Geben Sie die vollständige Adresse ein",
       "latitudePlaceholder": "z.B. 52.520008",
       "longitudePlaceholder": "z.B. 13.404954",
@@ -785,7 +896,23 @@
       "status": "Status",
       "recurrence": "Wiederholung",
       "type": "Typ",
-      "filterBy": "Nach {{type}} filtern"
+      "filterBy": "Nach {{type}} filtern",
+      "allRecurrences": "Alle Wiederholungen",
+      "allLocations": "Alle Standorte",
+      "allStatuses": "Alle Status",
+      "allTypes": "Alle Typen",
+      "clear": "Löschen",
+      "clearAll": "Alle löschen",
+      "applyFilters": "Filter anwenden",
+      "clearSelection": "Auswahl löschen",
+      "title": "Titel",
+      "points": "Punkte",
+      "cost": "Kosten",
+      "min": "Min",
+      "max": "Max",
+      "titlePlaceholder": "Nach Titel suchen...",
+      "minPlaceholder": "Mindestwert",
+      "maxPlaceholder": "Höchstwert"
     },
     "fields": {
       "required": "Pflichtfeld",

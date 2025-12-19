@@ -62,6 +62,7 @@ function TasksPage() {
 
   const handleTaskClick = (task: any) => {
     if (task.completed) return;
+    if (task.is_available === false) return; // Don't allow clicking locked tasks
     setSelectedTask(task.id);
   };
 
@@ -169,8 +170,11 @@ function TasksPage() {
         />
       ) : (
         <div className="tasks-grid">
-          {filteredTasks.map((task: any) => (
-            <div key={task.id} className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
+          {filteredTasks.map((task: any) => {
+            const isLocked = task.is_available === false;
+            const isCompleted = !!task.completed;
+            return (
+            <div key={task.id} className={`task-card ${isCompleted ? 'task-card-completed' : ''} ${isLocked ? 'task-card-locked' : ''}`}>
             <div className="task-header">
               <span className="task-icon">
                 {task.type === 'video' ? '🎥' : 
@@ -181,23 +185,34 @@ function TasksPage() {
                  task.type === 'visit_location' ? '📍' : '📷'}
               </span>
               <span className="task-points">{t('tasksComponents.points', { points: task.points })}</span>
-              {task.completed && (
+              {isCompleted && (
                 <span className="task-completed-badge" title={t('tasks.badges.completed')}>
                   ✓
+                </span>
+              )}
+              {isLocked && (
+                <span className="task-locked-badge" title={t('tasks.badges.locked')}>
+                  🔒
                 </span>
               )}
             </div>
             <h3 className="task-title">{task.title}</h3>
             <p className="task-description">{task.description}</p>
+            {isLocked && (
+              <p className="task-locked-message" style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                {t('tasks.prerequisites.unlockMessage')}
+              </p>
+            )}
             <button
               className="task-button"
               onClick={() => handleTaskClick(task)}
-              disabled={!!task.completed}
+              disabled={isCompleted || isLocked}
             >
-              {task.completed ? t('tasks.buttons.completed') : t('tasks.buttons.start')}
+              {isCompleted ? t('tasks.buttons.completed') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
             </button>
           </div>
-        ))}
+          );
+          })}
         </div>
       )}
     </div>

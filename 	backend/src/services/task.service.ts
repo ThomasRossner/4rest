@@ -32,6 +32,10 @@ export interface Task {
   article_content?: string;
   survey_questions?: any;
   survey_type?: string;
+  prerequisite_task_id?: string;
+  prerequisite_task_count?: number;
+  prerequisite_task_ids?: string[];
+  is_available?: boolean;
 }
 
 export async function getAllTasks(
@@ -68,6 +72,9 @@ export async function getAllTasks(
     from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex++}`;
     params.push(userId);
   }
+  
+  // Add prerequisite fields to select
+  select += ', t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids';
 
   const clauses: string[] = [];
   if (!includeInactive) {
@@ -113,7 +120,22 @@ export async function getAllTasks(
   for (const row of result.rows) {
     unique.set(row.id, row);
   }
-  return Array.from(unique.values());
+  
+  const tasks = Array.from(unique.values());
+  
+  // Check availability for each task if userId is provided
+  if (userId) {
+    for (const task of tasks) {
+      task.is_available = await checkPrerequisiteMet(task.id, userId);
+    }
+  } else {
+    // If no userId, all tasks are considered available (for admin views)
+    for (const task of tasks) {
+      task.is_available = true;
+    }
+  }
+  
+  return tasks;
 }
 
 export async function getTaskById(id: string): Promise<Task | null> {
@@ -137,6 +159,9 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
     : null;
 
   const recurrence = validateRecurrence((data as any).recurrence);
+  
+  // Validate prerequisites
+  await validatePrerequisites(data, null);
 
   // Validate task type-specific fields
   if (data.type === 'video' && data.video_url) {
@@ -185,6 +210,12 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
     }
   }
 
+  const prerequisiteTaskIdsArray = (data as any).prerequisite_task_ids 
+    ? Array.isArray((data as any).prerequisite_task_ids) 
+      ? (data as any).prerequisite_task_ids 
+      : JSON.parse((data as any).prerequisite_task_ids)
+    : null;
+
   const result = await db.query(
     `INSERT INTO tasks (
        title,
@@ -208,9 +239,12 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        article_url,
        article_content,
        survey_questions,
-       survey_type
+       survey_type,
+       prerequisite_task_id,
+       prerequisite_task_count,
+       prerequisite_task_ids
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
      RETURNING *`,
     [
       data.title,
@@ -235,6 +269,9 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       (data as any).article_content ?? null,
       surveyPayload,
       (data as any).survey_type ?? null,
+      (data as any).prerequisite_task_id ?? null,
+      (data as any).prerequisite_task_count ?? null,
+      prerequisiteTaskIdsArray,
     ]
   );
   return result.rows[0];
@@ -248,6 +285,9 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   if (!existingTask) {
     return null;
   }
+  
+  // Validate prerequisites
+  await validatePrerequisites(data, id);
   
   const taskType = data.type || existingTask.type;
   
@@ -305,6 +345,9 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       } else if (key === 'recurrence') {
         updates.push(`${key} = $${paramIndex++}`);
         values.push(validateRecurrence(value as string));
+      } else if (key === 'prerequisite_task_ids' && Array.isArray(value)) {
+        updates.push(`${key} = $${paramIndex++}`);
+        values.push(value);
       } else {
         updates.push(`${key} = $${paramIndex++}`);
         values.push(value);
@@ -433,4 +476,140 @@ export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
 export async function uploadVideo(file: Express.Multer.File): Promise<string> {
   const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
   return `${baseUrl}/uploads/${file.filename}`;
+}
+
+/**
+ * Validates prerequisite fields for a task
+ * @param data Task data with prerequisite fields
+ * @param taskId Current task ID (null for new tasks, set for updates)
+ */
+async function validatePrerequisites(data: Partial<Task>, taskId: string | null): Promise<void> {
+  const db = getPool();
+  const prerequisiteTaskId = (data as any).prerequisite_task_id;
+  const prerequisiteTaskCount = (data as any).prerequisite_task_count;
+  const prerequisiteTaskIds = (data as any).prerequisite_task_ids;
+  
+  // If no prerequisites are set, validation passes
+  if (!prerequisiteTaskId && !prerequisiteTaskIds) {
+    return;
+  }
+  
+  // Validate Type 1: prerequisite_task_id
+  if (prerequisiteTaskId) {
+    // Check if task exists
+    const taskCheck = await db.query('SELECT id FROM tasks WHERE id = $1', [prerequisiteTaskId]);
+    if (taskCheck.rows.length === 0) {
+      throw new Error(`Prerequisite task with ID ${prerequisiteTaskId} does not exist`);
+    }
+    
+    // Check for circular dependency (task cannot be its own prerequisite)
+    if (taskId && prerequisiteTaskId === taskId) {
+      throw new Error('Task cannot be its own prerequisite');
+    }
+  }
+  
+  // Validate Type 2: prerequisite_task_count and prerequisite_task_ids
+  if (prerequisiteTaskIds) {
+    const taskIdsArray = Array.isArray(prerequisiteTaskIds) 
+      ? prerequisiteTaskIds 
+      : (typeof prerequisiteTaskIds === 'string' ? JSON.parse(prerequisiteTaskIds) : []);
+    
+    if (!Array.isArray(taskIdsArray) || taskIdsArray.length === 0) {
+      throw new Error('prerequisite_task_ids must be a non-empty array');
+    }
+    
+    // Check if all tasks exist
+    const placeholders = taskIdsArray.map((_, i) => `$${i + 1}`).join(', ');
+    const taskCheck = await db.query(
+      `SELECT id FROM tasks WHERE id IN (${placeholders})`,
+      taskIdsArray
+    );
+    
+    if (taskCheck.rows.length !== taskIdsArray.length) {
+      const foundIds = new Set(taskCheck.rows.map((r: any) => r.id));
+      const missingIds = taskIdsArray.filter((id: string) => !foundIds.has(id));
+      throw new Error(`Prerequisite tasks with IDs ${missingIds.join(', ')} do not exist`);
+    }
+    
+    // Check for circular dependency
+    if (taskId && taskIdsArray.includes(taskId)) {
+      throw new Error('Task cannot be in its own prerequisite_task_ids array');
+    }
+    
+    // Validate prerequisite_task_count
+    if (prerequisiteTaskCount !== undefined && prerequisiteTaskCount !== null) {
+      if (!Number.isInteger(prerequisiteTaskCount) || prerequisiteTaskCount < 1) {
+        throw new Error('prerequisite_task_count must be an integer >= 1');
+      }
+      if (prerequisiteTaskCount > taskIdsArray.length) {
+        throw new Error(`prerequisite_task_count (${prerequisiteTaskCount}) cannot be greater than the number of tasks in prerequisite_task_ids (${taskIdsArray.length})`);
+      }
+    } else {
+      // If prerequisite_task_ids is set but count is not, default to requiring all
+      throw new Error('prerequisite_task_count is required when prerequisite_task_ids is set');
+    }
+  } else if (prerequisiteTaskCount !== undefined && prerequisiteTaskCount !== null) {
+    throw new Error('prerequisite_task_count requires prerequisite_task_ids to be set');
+  }
+}
+
+/**
+ * Checks if all prerequisites for a task are met by a user
+ * @param taskId Task ID to check prerequisites for
+ * @param userId User ID to check completion for
+ * @returns true if all prerequisites are met, false otherwise
+ */
+export async function checkPrerequisiteMet(taskId: string, userId: string): Promise<boolean> {
+  const db = getPool();
+  
+  // Get task with prerequisites
+  const taskResult = await db.query(
+    'SELECT prerequisite_task_id, prerequisite_task_count, prerequisite_task_ids FROM tasks WHERE id = $1',
+    [taskId]
+  );
+  
+  if (taskResult.rows.length === 0) {
+    return false;
+  }
+  
+  const task = taskResult.rows[0];
+  const prerequisiteTaskId = task.prerequisite_task_id;
+  const prerequisiteTaskCount = task.prerequisite_task_count;
+  const prerequisiteTaskIds = task.prerequisite_task_ids;
+  
+  // If no prerequisites, task is available
+  if (!prerequisiteTaskId && !prerequisiteTaskIds) {
+    return true;
+  }
+  
+  // Check Type 1: prerequisite_task_id
+  if (prerequisiteTaskId) {
+    const type1Check = await db.query(
+      'SELECT 1 FROM user_tasks WHERE user_id = $1 AND task_id = $2',
+      [userId, prerequisiteTaskId]
+    );
+    if (type1Check.rows.length === 0) {
+      return false;
+    }
+  }
+  
+  // Check Type 2: prerequisite_task_count from prerequisite_task_ids
+  if (prerequisiteTaskIds && Array.isArray(prerequisiteTaskIds) && prerequisiteTaskIds.length > 0) {
+    const requiredCount = prerequisiteTaskCount || prerequisiteTaskIds.length;
+    const placeholders = prerequisiteTaskIds.map((_, i) => `$${i + 2}`).join(', ');
+    const type2Check = await db.query(
+      `SELECT COUNT(*) as completed_count 
+       FROM user_tasks 
+       WHERE user_id = $1 AND task_id IN (${placeholders})`,
+      [userId, ...prerequisiteTaskIds]
+    );
+    
+    const completedCount = parseInt(type2Check.rows[0].completed_count, 10);
+    if (completedCount < requiredCount) {
+      return false;
+    }
+  }
+  
+  // All prerequisites met
+  return true;
 }

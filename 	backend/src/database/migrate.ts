@@ -40,6 +40,7 @@ async function runMigrations() {
       '023_survey_task',
       '024_reward_location_categories',
       '025_points_bonus_qr_tokens',
+      '026_task_prerequisites',
     ];
     
     // Read all migration files

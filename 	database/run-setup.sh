@@ -21,5 +21,15 @@ docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/m
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/014_allow_passwordless_accounts.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/015_locations.sql
 docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/016_locations_active.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/017_reward_qr_tokens.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/018_tree_growth_stages.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/019_reward_recurrence.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/020_task_recurrence.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/021_visit_location_task.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/022_article_quiz_task.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/023_survey_task.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/024_reward_location_categories.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/025_points_bonus_qr_tokens.sql
+docker exec -i roots-postgres psql -U roots_user -d roots_of_impact < database/migrations/026_task_prerequisites.sql
 
 echo "Database setup complete!"

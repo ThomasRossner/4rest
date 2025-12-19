@@ -176,10 +176,18 @@
     },
     "buttons": {
       "start": "Start task",
-      "completed": "Completed"
+      "completed": "Completed",
+      "locked": "Locked"
+    },
+    "status": {
+      "available": "Available task"
     },
     "badges": {
-      "completed": "Task completed"
+      "completed": "Task completed",
+      "locked": "Prerequisites not met"
+    },
+    "prerequisites": {
+      "unlockMessage": "Complete prerequisite tasks to unlock"
     },
     "toast": {
       "completedTitle": "Task completed",
@@ -517,6 +525,29 @@
       "selectLocation": "Select location",
       "noLocations": "No locations available.",
       "loadingLocations": "Loading locations…",
+      "fields": {
+        "title": "Title",
+        "description": "Description",
+        "points": "Points",
+        "location": "Location",
+        "active": "Active",
+        "inactive": "Inactive",
+        "co2Savings": "CO₂ savings (kg)",
+        "articleSource": "Article Source",
+        "articleUrl": "Article URL",
+        "articleContent": "Article Content",
+        "videoUrl": "Video URL",
+        "qrCodeValue": "QR code value",
+        "targetLocation": "Target Location (GPS Coordinates)",
+        "address": "Address",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "surveyType": "Survey Type"
+      },
+      "articleSource": {
+        "url": "Use external article URL",
+        "content": "Enter article content"
+      },
       "videoSource": {
         "url": "Use external video URL",
         "upload": "Upload video file"
@@ -524,6 +555,9 @@
       "videoUrlPlaceholder": "https://example.com/video.mp4",
       "selectVideoFile": "Select a video file to upload",
       "chooseFile": "Choose file",
+      "noFileSelected": "No file selected",
+      "articleUrlPlaceholder": "https://example.com/article",
+      "articleContentPlaceholder": "Enter the article content here...",
       "targetLocation": {
         "title": "Target Location",
         "addressPlaceholder": "Address will be auto-filled from map selection",
@@ -556,7 +590,13 @@
         "empty": "No questions yet. Add your first question below.",
         "questionText": "Question text",
         "questionPlaceholder": "Enter the question prompt",
-        "correct": "Correct"
+        "correct": "Correct",
+        "question": "Question {{number}}",
+        "remove": "Remove",
+        "addAnswer": "Add answer",
+        "addQuestion": "Add question",
+        "answerOption": "Answer option {{number}}",
+        "description": "Add multiple choice questions for this video. Each question needs at least two answers and one correct answer."
       },
       "survey": {
         "title": "Survey Questions",
@@ -584,12 +624,54 @@
         "required": "Required",
         "remove": "Remove"
       },
+      "prerequisites": {
+        "type1": {
+          "label": "Prerequisite Task (Type 1)",
+          "noPrerequisite": "No prerequisite task",
+          "description": "Select a specific task that must be completed before this task becomes available.",
+          "searchHint": "Tip: Search by task type (e.g., QUIZ, VIDEO, VISIT_LOCATION) to filter tasks."
+        },
+        "type2": {
+          "label": "Prerequisite Tasks (Type 2)",
+          "placeholder": "Select tasks for prerequisite set",
+          "buttonLabel": "Select prerequisite tasks",
+          "minCountLabel": "Minimum Required Count",
+          "description": "Minimum number of tasks (out of {{count}} selected) that must be completed.",
+          "searchHint": "Tip: Search by task type (e.g., QUIZ, VIDEO, VISIT_LOCATION) to filter tasks."
+        },
+        "validation": {
+          "idsEmpty": "prerequisite_task_ids must contain at least one task ID.",
+          "countInvalid": "prerequisite_task_count must be an integer >= 1.",
+          "countTooLarge": "prerequisite_task_count ({{count}}) cannot be greater than the number of tasks in prerequisite_task_ids ({{total}}).",
+          "countRequired": "prerequisite_task_count is required when prerequisite_task_ids is set.",
+          "idsRequired": "prerequisite_task_count requires prerequisite_task_ids to be set."
+        },
+        "modal": {
+          "title": "Select Prerequisite Task",
+          "titleMulti": "Select Prerequisite Tasks",
+          "searchPlaceholder": "Search tasks...",
+          "noTasksFound": "No tasks found",
+          "selectTask": "Select a task",
+          "selectTasks": "Select tasks",
+          "selectedCount": "{{count}} selected",
+          "clear": "Clear",
+          "apply": "Apply",
+          "noSelection": "No task selected",
+          "noSelectionMulti": "No tasks selected"
+        }
+      },
       "refresh": "Refresh tasks",
       "loading": "Loading tasks…",
       "loadError": "Failed to load existing tasks.",
       "locationsError": "Failed to load locations. Create or refresh locations before publishing tasks.",
       "cancelEditing": "Cancel editing",
-      "back": "Back to main menu"
+      "back": "Back to main menu",
+      "createLocation": "Create a location",
+      "publishing": "Publishing…",
+      "publishButton": "Publish Task",
+      "saving": "Saving…",
+      "saveChanges": "Save Task Changes",
+      "untitled": "Untitled task"
     },
     "reward": {
       "create": {
@@ -612,6 +694,11 @@
       "selectLocation": "Select location",
       "noLocations": "No locations available.",
       "loadingLocations": "Loading locations…",
+      "fields": {
+        "pointsCost": "Points cost",
+        "voucherCode": "Voucher code",
+        "externalApiId": "External API ID"
+      },
       "voucherCodePlaceholder": "Optional code for voucher-based rewards",
       "externalApiPlaceholder": "Optional identifier for external integrations",
       "audience": {
@@ -624,6 +711,7 @@
       "recurrence": {
         "title": "Recurrence",
         "subtitle": "Set how often this reward should be automatically regenerated.",
+        "typeLabel": "Recurrence Type",
         "once": "Once - Reward is created once and disappears when finished",
         "daily": "Daily - Reward appears once daily (if previous is finished, waits until next day)",
         "weekly": "Weekly - Reward appears once weekly (if previous is finished, waits until next week)",
@@ -638,12 +726,18 @@
       "loading": "Loading reward templates…",
       "loadError": "Failed to load reward templates.",
       "cancelEditing": "Cancel editing",
-      "back": "Back to main menu"
+      "back": "Back to main menu",
+      "publishing": "Publishing…",
+      "publishButton": "Publish Reward",
+      "saving": "Saving…",
+      "saveChanges": "Save Reward Changes",
+      "locationsError": "Failed to load locations. Create or refresh locations before publishing rewards.",
+      "untitled": "Untitled reward"
     },
     "location": {
       "create": {
         "title": "Create Location",
-        "subtitle": "Define a new location for tasks and rewards."
+        "subtitle": "Define where tasks and rewards take place. Locations can be online or physical with an address and GPS coordinates."
       },
       "edit": {
         "title": "Edit Location",
@@ -653,6 +747,28 @@
         "title": "Location details",
         "subtitle": "Provide the basic information for this location."
       },
+      "onlineLocation": "Online location",
+      "physicalLocation": "Physical location",
+      "fields": {
+        "name": "Name",
+        "description": "Description",
+        "active": "Active",
+        "inactive": "Inactive",
+        "locationType": "Location type",
+        "category": "Category",
+        "categoryDescription": "Category Description"
+      },
+      "categorySelect": "Select a category (optional)",
+      "categoryDescriptionPlaceholder": "Optional additional description for the category",
+      "categories": {
+        "online": "Online",
+        "hotel_reception": "Hotel Reception",
+        "hotel_restaurant": "Hotel Restaurant",
+        "external": "External",
+        "physical": "Physical"
+      },
+      "createButton": "Create Location",
+      "updateButton": "Update Location",
       "addressPlaceholder": "Enter the full address",
       "latitudePlaceholder": "e.g. 52.520008",
       "longitudePlaceholder": "e.g. 13.404954",
@@ -785,7 +901,23 @@
       "status": "Status",
       "recurrence": "Recurrence",
       "type": "Type",
-      "filterBy": "Filter by {{type}}"
+      "filterBy": "Filter by {{type}}",
+      "allRecurrences": "All Recurrences",
+      "allLocations": "All Locations",
+      "allStatuses": "All Statuses",
+      "allTypes": "All Types",
+      "clear": "Clear",
+      "clearAll": "Clear All",
+      "applyFilters": "Apply Filters",
+      "clearSelection": "Clear selection",
+      "title": "Title",
+      "points": "Points",
+      "cost": "Cost",
+      "min": "Min",
+      "max": "Max",
+      "titlePlaceholder": "Search by title...",
+      "minPlaceholder": "Min value",
+      "maxPlaceholder": "Max value"
     },
     "fields": {
       "required": "Required field",

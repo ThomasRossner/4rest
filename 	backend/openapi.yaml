@@ -1971,6 +1971,27 @@ components:
           $ref: '#/components/schemas/Location'
         active:
           type: boolean
+        prerequisite_task_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a specific task that must be completed before this task becomes available (Type 1 prerequisite)
+        prerequisite_task_count:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Minimum number of tasks from prerequisite_task_ids that must be completed (Type 2 prerequisite)
+        prerequisite_task_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Array of task IDs from which prerequisite_task_count must be completed (Type 2 prerequisite)
+        is_available:
+          type: boolean
+          nullable: true
+          description: Whether this task is available to the current user (based on prerequisite completion)
         created_at:
           type: string
           format: date-time
@@ -2029,6 +2050,20 @@ components:
           description: ID of the location associated with the task
         active:
           type: boolean
+        prerequisite_task_id:
+          type: string
+          format: uuid
+          description: ID of a specific task that must be completed before this task becomes available (Type 1 prerequisite)
+        prerequisite_task_count:
+          type: integer
+          minimum: 1
+          description: Minimum number of tasks from prerequisite_task_ids that must be completed (Type 2 prerequisite)
+        prerequisite_task_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Array of task IDs from which prerequisite_task_count must be completed (Type 2 prerequisite)
       required:
         - title
         - type
@@ -2079,6 +2114,20 @@ components:
           format: uuid
         active:
           type: boolean
+        prerequisite_task_id:
+          type: string
+          format: uuid
+          description: ID of a specific task that must be completed before this task becomes available (Type 1 prerequisite)
+        prerequisite_task_count:
+          type: integer
+          minimum: 1
+          description: Minimum number of tasks from prerequisite_task_ids that must be completed (Type 2 prerequisite)
+        prerequisite_task_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Array of task IDs from which prerequisite_task_count must be completed (Type 2 prerequisite)
 
     Reward:
       type: object
