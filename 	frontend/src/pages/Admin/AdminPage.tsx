@@ -84,6 +84,8 @@ type AdminLocation = {
   latitude?: number | null;
   longitude?: number | null;
   active: boolean;
+  category?: string | null;
+  category_description?: string | null;
 };
 
 type VideoSourceOption = 'url' | 'upload';
@@ -140,6 +142,8 @@ type LocationFormState = {
   latitude: string;
   longitude: string;
   active: boolean;
+  category: string;
+  categoryDescription: string;
 };
 
 type QuizAnswerDraft = {
@@ -749,6 +753,8 @@ const defaultLocationForm = (): LocationFormState => ({
   latitude: '',
   longitude: '',
   active: true,
+  category: '',
+  categoryDescription: '',
 });
 
 const isDefaultLocationRecord = (location: AdminLocation): boolean =>
@@ -2788,6 +2794,13 @@ function AdminPage() {
         payload.longitude = Number.parseFloat(locationForm.longitude);
       }
 
+      if (locationForm.category) {
+        payload.category = locationForm.category.trim();
+      }
+      if (locationForm.categoryDescription) {
+        payload.categoryDescription = locationForm.categoryDescription.trim();
+      }
+
       if (isEditingLocation && editingLocationId) {
         await updateLocationMutation.mutateAsync({ id: editingLocationId, payload });
       } else {
@@ -3328,6 +3341,8 @@ function AdminPage() {
           ? String(location.longitude)
           : '',
       active: location.active ?? true,
+      category: (location as any).category ?? '',
+      categoryDescription: (location as any).category_description ?? '',
     });
     setIsEditingLocation(true);
     setEditingLocationId(location.id);
@@ -4955,6 +4970,33 @@ const goToRewardCreation = () => {
                       </p>
                     </div>
                   )}
+                  <div className="admin-field admin-field-span-2">
+                    <FieldLabel label="Category" />
+                    <select
+                      value={locationForm.category}
+                      onChange={(event) =>
+                        setLocationForm((prev) => ({ ...prev, category: event.target.value }))
+                      }
+                    >
+                      <option value="">Select a category (optional)</option>
+                      <option value="online">Online</option>
+                      <option value="hotel_reception">Hotel Reception</option>
+                      <option value="hotel_restaurant">Hotel Restaurant</option>
+                      <option value="external">External</option>
+                      <option value="physical">Physical</option>
+                    </select>
+                  </div>
+                  <label className="admin-field admin-field-span-2">
+                    <FieldLabel label="Category Description" />
+                    <textarea
+                      rows={2}
+                      value={locationForm.categoryDescription}
+                      onChange={(event) =>
+                        setLocationForm((prev) => ({ ...prev, categoryDescription: event.target.value }))
+                      }
+                      placeholder="Optional additional description for the category"
+                    />
+                  </label>
                 </div>
               </section>
 

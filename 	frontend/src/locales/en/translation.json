@@ -35,7 +35,8 @@
     "admin": "Admin",
     "profile": "Profile",
     "logout": "Logout",
-    "points": "{{count}} Points"
+    "points": "{{count}} Points",
+    "pointsBonus": "Points Bonus"
   },
   "login": {
     "modes": {
@@ -237,7 +238,35 @@
         "title": "Reward Redeemed Successfully!",
         "message": "Your {{title}} has been verified and redeemed. Points have been deducted from your account."
       }
-    }
+    },
+    "pointsBonus": {
+      "scanTitle": "Scan Points Bonus QR Code",
+      "scanSubtitle": "Scan a QR code to receive bonus points",
+      "scanInstruction": "Point your camera at the QR code",
+      "scanning": "Scanning...",
+      "redeeming": "Redeeming...",
+      "redeemed": "Successfully redeemed {{points}} points! New balance: {{balance}}",
+      "redeemError": "Failed to redeem QR code",
+      "cameraError": "Failed to access camera",
+      "cameraHint": "Please allow camera access to scan QR codes",
+      "toast": {
+        "title": "Points Bonus Received!",
+        "message": "You received {{points}} bonus points! New balance: {{balance}} points",
+        "errorTitle": "Redemption Failed"
+      }
+    },
+    "swipe": {
+      "title": "Redeem Reward",
+      "cost": "{{count}} points",
+      "instruction": "Swipe right to confirm redemption",
+      "swipe": "Swipe to redeem",
+      "swipeRight": "Swipe right →",
+      "releasing": "Release to confirm",
+      "confirmed": "Confirmed!",
+      "cancel": "Cancel",
+      "warning": "This QR code is temporary. Please redeem it immediately in front of the person."
+    },
+    "scanPointsBonus": "📷 Scan Points Bonus QR Code"
   },
   "admin": {
     "title": "Administrator Area",
@@ -1038,6 +1067,24 @@
       "submitting": "Submitting...",
       "noQuestions": "This survey task has no questions configured.",
       "requiredQuestions": "Please answer all required questions before submitting."
+    }
+  },
+  "employee": {
+    "pointsBonus": {
+      "title": "Generate Points Bonus QR Code",
+      "description": "Enter the number of points to award and generate a QR code that guests can scan to receive the bonus points.",
+      "pointsAmount": "Points Amount",
+      "pointsPlaceholder": "Enter points amount",
+      "generate": "Generate QR Code",
+      "generating": "Generating...",
+      "qrGenerated": "QR code generated successfully",
+      "generateError": "Failed to generate QR code",
+      "invalidAmount": "Please enter a valid positive number",
+      "qrTitle": "QR Code Generated",
+      "qrInfo": "Points Amount: {{amount}}",
+      "expiresAt": "Expires at",
+      "instruction": "Guest should scan this QR code to receive the bonus points. This code will expire in 24 hours.",
+      "generateNew": "Generate New QR Code"
     }
   }
 }

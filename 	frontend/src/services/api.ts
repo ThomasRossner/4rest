@@ -213,6 +213,29 @@ export const api = {
     return response.data;
   },
 
+  async generatePointsBonusQr(pointsAmount: number) {
+    const response = await apiClient.post('/rewards/points-bonus/generate', { pointsAmount });
+    return response.data;
+  },
+
+  async redeemPointsBonusQr(qrToken: string) {
+    const response = await apiClient.post('/rewards/points-bonus/redeem', { qrToken });
+    // Update user points from response
+    if (response.data?.newPointsBalance !== undefined) {
+      try {
+        const store = useAuthStore.getState();
+        const currentUser = store.user;
+        if (currentUser) {
+          store.setUser({ ...currentUser, points: response.data.newPointsBalance });
+        }
+      } catch (error) {
+        // Silently fail if store update fails - points are already updated on server
+        console.warn('Failed to update user points in store:', error);
+      }
+    }
+    return response.data;
+  },
+
   // Statistics
   async getStatistics(params?: { startDate?: string; endDate?: string; useCache?: boolean }) {
     const response = await apiClient.get('/statistics', { params });

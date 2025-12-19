@@ -38,6 +38,8 @@ async function runMigrations() {
       '021_visit_location_task',
       '022_article_quiz_task',
       '023_survey_task',
+      '024_reward_location_categories',
+      '025_points_bonus_qr_tokens',
     ];
     
     // Read all migration files

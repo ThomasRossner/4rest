@@ -11,6 +11,7 @@ import AdminPage from './pages/Admin/AdminPage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import AuthCallbackPage from './pages/AuthCallbackPage/AuthCallbackPage';
+import PointsBonusPage from './pages/Employee/PointsBonusPage';
 
 function ProtectedApp() {
   const { isAuthenticated, user } = useAuthStore();
@@ -38,6 +39,9 @@ function ProtectedApp() {
         <Route path="rewards" element={<RewardsPage />} />
         <Route path="statistics" element={<StatisticsPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        {(user.role === 'employee' || user.role === 'administrator') && (
+          <Route path="points-bonus" element={<PointsBonusPage />} />
+        )}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

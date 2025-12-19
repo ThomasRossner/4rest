@@ -32,6 +32,8 @@ export const createLocationController: RequestHandler = asyncHandler(async (req,
     latitude: payload.latitude,
     longitude: payload.longitude,
     active: payload.active !== undefined ? Boolean(payload.active) : true,
+    category: payload.category || payload.categoryDescription ? payload.category : null,
+    category_description: payload.categoryDescription || null,
   });
   res.status(201).json(location);
 });
@@ -48,6 +50,8 @@ export const updateLocationController: RequestHandler = asyncHandler(async (req,
   const location = await updateLocation(req.params.id, {
     ...payload,
     active: payload.active,
+    category: payload.category !== undefined ? payload.category : undefined,
+    category_description: payload.categoryDescription !== undefined ? payload.categoryDescription : undefined,
   });
   res.json(location);
 });

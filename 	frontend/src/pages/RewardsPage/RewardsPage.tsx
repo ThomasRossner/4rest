@@ -6,8 +6,9 @@ import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { RewardCard } from '../../components/Rewards/RewardCard';
-import { RedemptionConfirmationModal } from '../../components/Rewards/RedemptionConfirmationModal';
+import { SwipeToRedeem } from '../../components/Rewards/SwipeToRedeem';
 import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
+import { PointsBonusScanner } from '../../components/Rewards/PointsBonusScanner';
 import { pushToast } from '../../components/Toaster/Toaster';
 import './RewardsPage.css';
 
@@ -18,8 +19,7 @@ function RewardsPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 
-  const [confirmationModal, setConfirmationModal] = useState<{
-    isOpen: boolean;
+  const [swipeModal, setSwipeModal] = useState<{
     rewardId: string;
     rewardTitle: string;
     pointsCost: number;
@@ -29,11 +29,11 @@ function RewardsPage() {
     redemptionId: string;
     rewardTitle: string;
   } | null>(null);
+  const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
 
   const handleRedeemClick = (rewardId: string, rewardTitle: string, cost: number) => {
     if (user && user.points >= cost) {
-      setConfirmationModal({
-        isOpen: true,
+      setSwipeModal({
         rewardId,
         rewardTitle,
         pointsCost: cost,
@@ -49,19 +49,19 @@ function RewardsPage() {
   };
 
   const handleConfirmRedeem = async () => {
-    if (!confirmationModal) return;
+    if (!swipeModal) return;
 
     try {
-      const res = await api.redeemReward(confirmationModal.rewardId, confirmationModal.pointsCost);
+      const res = await api.redeemReward(swipeModal.rewardId, swipeModal.pointsCost);
       const redemption = res?.redemption || res?.data?.redemption;
       
       if (redemption?.qrToken) {
         setActiveRedemption({
           qrToken: redemption.qrToken,
           redemptionId: redemption.id,
-          rewardTitle: confirmationModal.rewardTitle,
+          rewardTitle: swipeModal.rewardTitle,
         });
-        setConfirmationModal(null);
+        setSwipeModal(null);
       } else {
         throw new Error('No QR token received');
       }
@@ -72,12 +72,12 @@ function RewardsPage() {
       } else {
         alert(errorMessage);
       }
-      setConfirmationModal(null);
+      setSwipeModal(null);
     }
   };
 
   const handleCancelRedeem = () => {
-    setConfirmationModal(null);
+    setSwipeModal(null);
   };
 
   const handleQrStatusUpdate = (status: 'pending' | 'used' | 'expired') => {
@@ -100,6 +100,26 @@ function RewardsPage() {
         <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
         <span className="rewards-balance-value">{points}</span>
       </div>
+      {/* Only show scanner button for guests (not employees or administrators) */}
+      {user && (user.role === 'guest' || user.role === 'stakeholder') && (
+        <button
+          className="rewards-scan-bonus-button"
+          onClick={() => setShowPointsBonusScanner(true)}
+          style={{
+            marginTop: '1rem',
+            padding: '0.75rem 1.5rem',
+            backgroundColor: 'var(--color-primary, #3b82f6)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.375rem',
+            fontSize: '1rem',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          {t('rewards.scanPointsBonus') || '📷 Scan Points Bonus QR Code'}
+        </button>
+      )}
       {uiPolish && (
         <div className="rewards-filter-container">
           {(['all', 'discount', 'benefit', 'team_event'] as const).map((filter) => (
@@ -130,13 +150,22 @@ function RewardsPage() {
         />
             )}
 
-      {confirmationModal && (
-        <RedemptionConfirmationModal
-          isOpen={confirmationModal.isOpen}
-          rewardTitle={confirmationModal.rewardTitle}
-          pointsCost={confirmationModal.pointsCost}
+      {swipeModal && (
+        <SwipeToRedeem
+          rewardTitle={swipeModal.rewardTitle}
+          pointsCost={swipeModal.pointsCost}
           onConfirm={handleConfirmRedeem}
           onCancel={handleCancelRedeem}
+        />
+      )}
+
+      {showPointsBonusScanner && (
+        <PointsBonusScanner
+          onClose={() => setShowPointsBonusScanner(false)}
+          onSuccess={(pointsAwarded, newBalance) => {
+            // Points are already updated via API call
+            setShowPointsBonusScanner(false);
+          }}
         />
       )}
 

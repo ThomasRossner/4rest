@@ -2246,6 +2246,15 @@ components:
           nullable: true
         active:
           type: boolean
+        category:
+          type: string
+          nullable: true
+          enum: [online, hotel_reception, hotel_restaurant, external, physical]
+          description: Category indicating where rewards can be obtained
+        category_description:
+          type: string
+          nullable: true
+          description: Optional additional description for the category
         created_at:
           type: string
           format: date-time
@@ -2283,6 +2292,15 @@ components:
         active:
           type: boolean
           description: Whether the location is active
+        category:
+          type: string
+          nullable: true
+          enum: [online, hotel_reception, hotel_restaurant, external, physical]
+          description: Category indicating where rewards can be obtained
+        categoryDescription:
+          type: string
+          nullable: true
+          description: Optional additional description for the category
       required:
         - name
         - description
@@ -2308,6 +2326,15 @@ components:
           format: double
         active:
           type: boolean
+        category:
+          type: string
+          nullable: true
+          enum: [online, hotel_reception, hotel_restaurant, external, physical]
+          description: Category indicating where rewards can be obtained
+        categoryDescription:
+          type: string
+          nullable: true
+          description: Optional additional description for the category
 
     RewardRedemption:
       type: object

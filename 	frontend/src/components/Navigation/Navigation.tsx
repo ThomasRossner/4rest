@@ -77,10 +77,14 @@ function Navigation() {
     { path: '/rewards', label: t('navigation.rewards'), icon: '🎁' },
     { path: '/statistics', label: t('navigation.statistics'), icon: '📈' },
   ];
+  const employeeNavItems =
+    userRole === 'employee' || userRole === 'administrator'
+      ? [...baseNavItems, { path: '/points-bonus', label: t('navigation.pointsBonus') || 'Points Bonus', icon: '🎫' }]
+      : baseNavItems;
   const navItems =
     userRole === 'administrator'
-      ? [...baseNavItems, { path: '/admin', label: t('navigation.admin'), icon: '🛠️' }]
-      : baseNavItems;
+      ? [...employeeNavItems, { path: '/admin', label: t('navigation.admin'), icon: '🛠️' }]
+      : employeeNavItems;
 
   return (
     <>

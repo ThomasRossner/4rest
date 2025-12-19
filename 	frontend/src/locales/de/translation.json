@@ -35,7 +35,8 @@
     "admin": "Admin",
     "profile": "Profil",
     "logout": "Abmelden",
-    "points": "{{count}} Punkte"
+    "points": "{{count}} Punkte",
+    "pointsBonus": "Punkte-Bonus"
   },
   "login": {
     "modes": {
@@ -237,7 +238,35 @@
         "title": "Belohnung erfolgreich eingelöst!",
         "message": "Ihre {{title}} wurde verifiziert und eingelöst. Punkte wurden von Ihrem Konto abgezogen."
       }
-    }
+    },
+    "pointsBonus": {
+      "scanTitle": "Punkte-Bonus QR-Code scannen",
+      "scanSubtitle": "Scannen Sie einen QR-Code, um Bonus-Punkte zu erhalten",
+      "scanInstruction": "Richten Sie die Kamera auf den QR-Code",
+      "scanning": "Scannen...",
+      "redeeming": "Einlösen...",
+      "redeemed": "Erfolgreich {{points}} Punkte eingelöst! Neuer Kontostand: {{balance}}",
+      "redeemError": "QR-Code konnte nicht eingelöst werden",
+      "cameraError": "Kamera-Zugriff fehlgeschlagen",
+      "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff zum Scannen von QR-Codes",
+      "toast": {
+        "title": "Punkte-Bonus erhalten!",
+        "message": "Du hast {{points}} Bonus-Punkte erhalten! Neuer Kontostand: {{balance}} Punkte",
+        "errorTitle": "Einlösung fehlgeschlagen"
+      }
+    },
+    "swipe": {
+      "title": "Belohnung einlösen",
+      "cost": "{{count}} Punkte",
+      "instruction": "Nach rechts wischen, um die Einlösung zu bestätigen",
+      "swipe": "Zum Einlösen wischen",
+      "swipeRight": "Nach rechts wischen →",
+      "releasing": "Loslassen zum Bestätigen",
+      "confirmed": "Bestätigt!",
+      "cancel": "Abbrechen",
+      "warning": "Dieser QR-Code ist temporär. Bitte lösen Sie ihn unmittelbar vor der Person ein."
+    },
+    "scanPointsBonus": "📷 Punkte-Bonus QR-Code scannen"
   },
   "admin": {
     "title": "Administrator-Bereich",
@@ -1014,6 +1043,24 @@
       "submitting": "Wird übermittelt...",
       "noArticle": "Diese Artikel-Quiz-Aufgabe hat keinen konfigurierten Artikel.",
       "noQuestions": "Diese Artikel-Quiz-Aufgabe hat keine konfigurierten Fragen."
+    }
+  },
+  "employee": {
+    "pointsBonus": {
+      "title": "Punkte-Bonus QR-Code generieren",
+      "description": "Geben Sie die Anzahl der zu vergebenden Punkte ein und generieren Sie einen QR-Code, den Gäste scannen können, um die Bonus-Punkte zu erhalten.",
+      "pointsAmount": "Punkte-Anzahl",
+      "pointsPlaceholder": "Punkte-Anzahl eingeben",
+      "generate": "QR-Code generieren",
+      "generating": "Wird generiert...",
+      "qrGenerated": "QR-Code erfolgreich generiert",
+      "generateError": "QR-Code konnte nicht generiert werden",
+      "invalidAmount": "Bitte geben Sie eine gültige positive Zahl ein",
+      "qrTitle": "QR-Code generiert",
+      "qrInfo": "Punkte-Anzahl: {{amount}}",
+      "expiresAt": "Läuft ab am",
+      "instruction": "Der Gast sollte diesen QR-Code scannen, um die Bonus-Punkte zu erhalten. Dieser Code läuft in 24 Stunden ab.",
+      "generateNew": "Neuen QR-Code generieren"
     }
   }
 }

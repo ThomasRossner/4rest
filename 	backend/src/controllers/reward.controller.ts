@@ -10,6 +10,10 @@ import {
   setRewardsActiveState,
   bulkDeleteRewards,
 } from '../services/reward.service.js';
+import {
+  generatePointsBonusQr,
+  redeemPointsBonusQr,
+} from '../services/points-bonus.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const getRewards: RequestHandler = asyncHandler(async (req, res) => {
@@ -167,4 +171,42 @@ export const verifyQrCode: RequestHandler = asyncHandler(async (req, res) => {
 
   const result = await verifyQrCodeService(qrToken, authReq.user.id);
   res.json(result);
+});
+
+export const generatePointsBonusQrCode: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { pointsAmount } = req.body;
+  if (!Number.isInteger(pointsAmount) || pointsAmount <= 0) {
+    return res.status(400).json({ error: 'pointsAmount must be a positive integer' });
+  }
+
+  const qrToken = await generatePointsBonusQr(authReq.user.id, pointsAmount);
+  res.json({
+    qrToken: qrToken.qr_token,
+    expiresAt: qrToken.expires_at.toISOString(),
+    pointsAmount: qrToken.points_amount,
+  });
+});
+
+export const redeemPointsBonusQrCode: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { qrToken } = req.body;
+  if (!qrToken || typeof qrToken !== 'string') {
+    return res.status(400).json({ error: 'QR token is required' });
+  }
+
+  const result = await redeemPointsBonusQr(qrToken, authReq.user.id);
+  res.json({
+    success: true,
+    pointsAwarded: result.pointsAwarded,
+    newPointsBalance: result.newPointsBalance,
+  });
 });
