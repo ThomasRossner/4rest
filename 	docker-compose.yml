@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U roots_user"]
+      test: ["CMD-SHELL", "pg_isready -U roots_user -d roots_of_impact"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,8 +68,6 @@ services:
     container_name: roots-frontend
     ports:
       - "3000:3000"
-    environment:
-      VITE_API_URL: http://localhost:5001/api
     depends_on:
       - backend
     volumes:
