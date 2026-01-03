@@ -27,6 +27,20 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
 
     const startScanning = async () => {
       try {
+        // Check if mediaDevices API is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          // Check if it's a security issue (HTTP from non-localhost)
+          const isHttp = window.location.protocol === 'http:';
+          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isHttp && !isLocalhost) {
+            setError(t('rewards.pointsBonus.cameraRequiresHttps') || 'Camera access requires HTTPS when accessing from another device. Please use HTTPS or access from localhost.');
+          } else {
+            setError(t('rewards.pointsBonus.cameraNotSupported') || 'Camera access is not supported in this browser. Please use a modern browser with camera support.');
+          }
+          setIsScanning(false);
+          return;
+        }
+
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' },
         });

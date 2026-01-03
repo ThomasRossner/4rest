@@ -34,9 +34,11 @@ npm run install:all
 Oder manuell:
 ```bash
 npm install
-cd frontend && npm install && cd ..
-cd backend && npm install && cd ..
+cd frontend && npm install --no-workspaces && cd ..
+cd backend && npm install --no-workspaces && cd ..
 ```
+
+**Wichtig:** Verwende `--no-workspaces` beim Installieren im `frontend`-Verzeichnis, damit alle Dependencies (insbesondere `leaflet`) lokal in `frontend/node_modules` installiert werden.
 
 ## Schritt 3: Environment-Variablen konfigurieren
 
@@ -210,13 +212,25 @@ npm run build
 npm start
 ```
 
-### Module nicht gefunden
+### Module nicht gefunden (z.B. "Failed to resolve import 'leaflet'")
+
+**Wichtig:** Bei npm workspaces müssen Dependencies lokal in jedem Workspace installiert werden.
 
 ```bash
 # Lösche node_modules und installiere neu
 rm -rf node_modules frontend/node_modules backend/node_modules
-npm run install:all
+
+# Installiere im Root (für Workspace-Setup)
+npm install
+
+# Installiere lokal in frontend (WICHTIG für leaflet und andere Dependencies)
+cd frontend && npm install --no-workspaces && cd ..
+
+# Installiere lokal in backend
+cd backend && npm install --no-workspaces && cd ..
 ```
+
+**Alternative:** Verwende `npm run install:all` aus dem Root-Verzeichnis, aber stelle sicher, dass `frontend/node_modules` existiert.
 
 ## Nützliche Befehle
 

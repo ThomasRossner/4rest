@@ -36,7 +36,8 @@
     "profile": "Profil",
     "logout": "Abmelden",
     "points": "{{count}} Punkte",
-    "pointsBonus": "Punkte-Bonus"
+    "pointsBonus": "Punkte-Bonus",
+    "scanBonusQr": "Bonus-QR-Code scannen"
   },
   "login": {
     "modes": {
@@ -141,6 +142,12 @@
   },
   "tasks": {
     "title": "Verfügbare Aufgaben",
+    "locationButton": "Hier",
+    "onlineButton": "Online",
+    "showLocation": "Position anzeigen",
+    "showOnline": "Online-Aufgaben anzeigen",
+    "locationMapTitle": "Ihre Position",
+    "backToList": "Zurück zur Liste",
     "filters": {
       "type": {
         "label": "Typ",
@@ -196,6 +203,10 @@
   },
   "rewards": {
     "title": "Belohnungsmarkt",
+    "locationButton": "Hier",
+    "showLocation": "Position anzeigen",
+    "locationMapTitle": "Ihre Position",
+    "backToList": "Zurück zur Liste",
     "balanceLabel": "Deine Punkte",
     "filters": {
       "all": "Alle",
@@ -256,6 +267,8 @@
       "redeemed": "Erfolgreich {{points}} Punkte eingelöst! Neuer Kontostand: {{balance}}",
       "redeemError": "QR-Code konnte nicht eingelöst werden",
       "cameraError": "Kamera-Zugriff fehlgeschlagen",
+      "cameraNotSupported": "Kamera-Zugriff wird in diesem Browser nicht unterstützt. Bitte verwenden Sie einen modernen Browser mit Kamera-Unterstützung.",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.",
       "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff zum Scannen von QR-Codes",
       "toast": {
         "title": "Punkte-Bonus erhalten!",
@@ -324,6 +337,10 @@
       "debugTools": {
         "title": "Debug-Tools",
         "description": "Erweiterte Debugging-Tools zum Testen und zur Datenmanipulation."
+      },
+      "manageParameters": {
+        "title": "Parameter verwalten",
+        "description": "Auswahlwerte für Aufgaben und Belohnungen verwalten"
       }
     },
     "debugMode": {
@@ -508,13 +525,13 @@
       "selectOption": "Option auswählen",
       "existingTask": "Bestehende Aufgabe",
       "startFromScratch": {
-        "video": "Von Grund auf – Video-Quiz-Aufgabe",
-        "quiz": "Von Grund auf – Quiz-Aufgabe",
-        "articleQuiz": "Von Grund auf – Artikel-Quiz-Aufgabe",
-        "survey": "Von Grund auf – Umfrage-Aufgabe",
-        "qr": "Von Grund auf – QR-Aufgabe",
-        "photo": "Von Grund auf – Foto-Aufgabe",
-        "visitLocation": "Von Grund auf – Standort besuchen Aufgabe"
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
+        "articleQuiz": "Artikel-Quiz",
+        "survey": "Umfrage",
+        "qr": "QR",
+        "photo": "Foto",
+        "visitLocation": "Standort besuchen"
       },
       "selectExisting": "Bestehende Aufgabe auswählen",
       "selectTask": "Aufgabe auswählen",
@@ -526,6 +543,7 @@
       "noLocations": "Keine Standorte verfügbar.",
       "loadingLocations": "Standorte werden geladen…",
       "fields": {
+        "type": "Aufgabentyp",
         "title": "Titel",
         "description": "Beschreibung",
         "points": "Punkte",
@@ -690,6 +708,7 @@
       "noLocations": "Keine Standorte verfügbar.",
       "loadingLocations": "Standorte werden geladen…",
       "fields": {
+        "type": "Typ",
         "pointsCost": "Punktekosten",
         "voucherCode": "Gutscheincode",
         "externalApiId": "Externe API-ID"
@@ -887,7 +906,53 @@
       "textResponses_plural": "{{count}} Textantworten"
     },
     "common": {
-      "back": "Zurück"
+      "back": "Zurück",
+      "refresh": "Aktualisieren"
+    },
+    "parameterManage": {
+      "title": "Parameter verwalten",
+      "subtitle": "Auswahlwerte für Aufgaben und Belohnungen verwalten",
+      "loading": "Lade Parameter...",
+      "taskParameters": "Aufgaben-Parameter",
+      "rewardParameters": "Belohnungs-Parameter",
+      "parameterType": "Parameter-Typ",
+      "value": "Wert",
+      "displayOrder": "Reihenfolge",
+      "weight": "Gewicht",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "actions": "Aktionen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "newParameter": "Neuer Parameter",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "enterValue": "Wert eingeben",
+      "confirmDelete": "Möchten Sie diesen Parameter wirklich löschen?",
+      "created": "Parameter erfolgreich erstellt",
+      "updated": "Parameter erfolgreich aktualisiert",
+      "deleted": "Parameter erfolgreich gelöscht",
+      "error": "Fehler beim Laden der Parameter",
+      "createError": "Fehler beim Erstellen des Parameters",
+      "updateError": "Fehler beim Aktualisieren des Parameters",
+      "deleteError": "Fehler beim Löschen des Parameters",
+      "valueRequired": "Bitte geben Sie einen Wert ein",
+      "pointsCalculationFactor": "Punkteberechnungs-Faktor (Aufgaben)",
+      "pointsCalculationFactorDescription": "Der Faktor wird verwendet, um die Punkte für Aufgaben automatisch zu berechnen: (Schwierigkeitsgrad-Gewicht × Zeitaufwand-Gewicht) × Faktor",
+      "rewardCostCalculationFactor": "Kostenberechnungs-Faktor (Belohnungen)",
+      "rewardCostCalculationFactorDescription": "Der Faktor wird verwendet, um die Kosten für Belohnungen automatisch zu berechnen: Kosten-Gewicht × Faktor",
+      "factorUpdated": "Faktor erfolgreich aktualisiert",
+      "fieldNames": {
+        "type": "Typ",
+        "category": "Kategorie",
+        "difficulty": "Schwierigkeit",
+        "time_required": "Zeitaufwand",
+        "location_tool": "Ort/Werkzeug",
+        "zielgruppe": "Zielgruppe",
+        "reward_art": "Art",
+        "kategorie": "Kategorie",
+        "kosten": "Kosten"
+      }
     },
     "filters": {
       "title": "Filter",

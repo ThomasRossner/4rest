@@ -10,6 +10,7 @@ import { SwipeToRedeem } from '../../components/Rewards/SwipeToRedeem';
 import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
 import { PointsBonusScanner } from '../../components/Rewards/PointsBonusScanner';
 import { pushToast } from '../../components/Toaster/Toaster';
+import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import './RewardsPage.css';
 
 function RewardsPage() {
@@ -30,6 +31,7 @@ function RewardsPage() {
     rewardTitle: string;
   } | null>(null);
   const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
+  const [showLocationMap, setShowLocationMap] = useState(false);
 
   const handleRedeemClick = (rewardId: string, rewardTitle: string, cost: number) => {
     if (user && user.points >= cost) {
@@ -93,9 +95,39 @@ function RewardsPage() {
 
   const uiPolish = !!import.meta.env.VITE_UI_POLISH;
 
+  // Show map view if button was clicked
+  if (showLocationMap) {
+    return (
+      <div className="rewards-page">
+        <div className="rewards-header">
+          <h1 className="rewards-title">{t('rewards.title')}</h1>
+          <button
+            className="location-button"
+            onClick={() => setShowLocationMap(false)}
+            title={t('rewards.backToList') || 'Zurück zur Liste'}
+          >
+            {t('rewards.backToList') || 'Zurück zur Liste'}
+          </button>
+        </div>
+        <div style={{ marginTop: 'var(--spacing-md)' }}>
+          <UserLocationMap height="calc(100vh - 200px)" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rewards-page">
-      <h1 className="rewards-title">{t('rewards.title')}</h1>
+      <div className="rewards-header">
+        <h1 className="rewards-title">{t('rewards.title')}</h1>
+        <button
+          className="location-button"
+          onClick={() => setShowLocationMap(true)}
+          title={t('rewards.showLocation') || 'Hier'}
+        >
+          {t('rewards.locationButton') || 'Hier'}
+        </button>
+      </div>
       <div className="rewards-balance">
         <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
         <span className="rewards-balance-value">{points}</span>

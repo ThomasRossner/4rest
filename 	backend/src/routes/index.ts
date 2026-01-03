@@ -11,6 +11,8 @@ import sihotRoutes from './sihot.routes.js';
 import locationRoutes from './location.routes.js';
 import surveyRoutes from './survey.routes.js';
 import debugRoutes from './debug.routes.js';
+import parameterRoutes from './parameter.routes.js';
+import systemConfigRoutes from './system-config.routes.js';
 
 export function setupRoutes(): Router {
   const router = Router();
@@ -27,6 +29,8 @@ export function setupRoutes(): Router {
   router.use('/locations', locationRoutes);
   router.use('/admin/surveys', surveyRoutes);
   router.use('/admin/debug', debugRoutes);
+  router.use('/admin/parameters', parameterRoutes);
+  router.use('/admin/system-config', systemConfigRoutes);
 
   return router;
 }

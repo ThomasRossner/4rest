@@ -123,8 +123,15 @@ function LoginPage() {
 
     try {
       if (mode === 'login') {
-        await login(email, password);
-        navigate('/dashboard');
+        try {
+          await login(email, password);
+          navigate('/dashboard');
+        } catch (loginError: any) {
+          const serverMsg = loginError?.response?.data?.error || loginError?.response?.data?.message;
+          setError(serverMsg || loginError?.message || t('login.messages.loginFailed'));
+          setLoading(false);
+          return;
+        }
       } else if (mode === 'passwordless-login') {
         if (!codeSent) {
           await handleRequestCode();

@@ -1,8 +1,9 @@
 import { getPool } from '../database/connection.js';
+import { getTaskParameters } from './parameter.service.js';
+import { getPointsCalculationFactor } from './system-config.service.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
 import { UserRole, UserType, HotelId } from '../constants/enums.js';
 import { Location } from './location.service.js';
-import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
@@ -19,9 +20,6 @@ export interface Task {
   photo_required?: boolean;
   co2_savings_kg?: number;
   external_id?: string;
-  allowed_roles?: UserRole[];
-  allowed_user_types?: UserType[];
-  allowed_hotel_ids?: HotelId[];
   location_id: string;
   location?: Location;
   active?: boolean;
@@ -36,6 +34,12 @@ export interface Task {
   prerequisite_task_count?: number;
   prerequisite_task_ids?: string[];
   is_available?: boolean;
+  category?: 'Kommunikation & Netzwerke' | 'Mensch & soziales Umfeld' | 'Natur & Umweltschutz' | 'Ressourcenverbrauch & Materialeinsatz';
+  difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
+  time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
+  location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
+  event_group?: string;
+  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[];
 }
 
 export async function getAllTasks(
@@ -52,6 +56,9 @@ export async function getAllTasks(
   let applyAudienceFilters = !(options?.includeAll ?? false);
   const includeInactive = options?.includeInactive ?? false;
 
+  // Map user role to zielgruppe for filtering
+  let userZielgruppe: 'Mitarbeitende' | 'Gäste' | 'Stakeholder' | null = null;
+  
   if (userId) {
     const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
     if (userResult.rows[0]) {
@@ -59,11 +66,18 @@ export async function getAllTasks(
       userType = userResult.rows[0].user_type as UserType;
       if (userRole === 'administrator') {
         applyAudienceFilters = false;
+      } else {
+        // Map role to zielgruppe
+        if (userRole === 'employee') {
+          userZielgruppe = 'Mitarbeitende';
+        } else if (userRole === 'guest') {
+          userZielgruppe = 'Gäste';
+        } else if (userRole === 'stakeholder') {
+          userZielgruppe = 'Stakeholder';
+        }
       }
     }
   }
-
-  const hotelId = getConfiguredHotelId();
 
   let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
   let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
@@ -81,16 +95,18 @@ export async function getAllTasks(
     clauses.push('t.active = TRUE');
   }
 
+  // Filter by zielgruppe: Only show tasks that match user's zielgruppe
+  // NULL or empty array zielgruppe means accessible to all, otherwise must match user's zielgruppe
   if (applyAudienceFilters) {
-    const paramIndexObj = { current: paramIndex };
-    const audienceClauses = buildAudienceFilterClauses(
-      { userRole, userType, hotelId, applyFilters: true },
-      params,
-      paramIndexObj
-    );
-    // Prefix table alias for task-specific queries
-    clauses.push(...audienceClauses.map((clause) => clause.replace(/\b(allowed_\w+)\b/g, 't.$1')));
-    paramIndex = paramIndexObj.current;
+    if (userZielgruppe) {
+      // Show tasks with NULL/empty zielgruppe (accessible to all) OR tasks where user's zielgruppe is in the array
+      clauses.push('(t.zielgruppe IS NULL OR array_length(t.zielgruppe, 1) IS NULL OR $' + paramIndex + ' = ANY(t.zielgruppe))');
+      params.push(userZielgruppe);
+      paramIndex++;
+    } else {
+      // If user has no matching zielgruppe (e.g., unknown role), only show tasks with NULL or empty zielgruppe
+      clauses.push('(t.zielgruppe IS NULL OR array_length(t.zielgruppe, 1) IS NULL)');
+    }
   }
 
   if (filters?.type) {
@@ -148,6 +164,53 @@ export async function getTaskById(id: string): Promise<Task | null> {
     [id]
   );
   return result.rows[0] || null;
+}
+
+/**
+ * Calculate task points automatically based on difficulty and time_required weights
+ * Formula: (difficulty_weight * time_required_weight) / factor
+ * Returns the calculated points, or null if calculation is not possible
+ */
+export async function calculateTaskPoints(
+  difficulty?: string | null,
+  time_required?: string | null
+): Promise<number | null> {
+  // If either difficulty or time_required is missing, return null (points must be set manually)
+  if (!difficulty || !time_required) {
+    return null;
+  }
+
+  try {
+    // Get parameter weights
+    const difficultyParams = await getTaskParameters('difficulty');
+    const timeRequiredParams = await getTaskParameters('time_required');
+
+    const difficultyParam = difficultyParams.find(p => p.value === difficulty);
+    const timeRequiredParam = timeRequiredParams.find(p => p.value === time_required);
+
+    if (!difficultyParam || !timeRequiredParam) {
+      return null;
+    }
+
+    // Convert weights to numbers (they come from DB as strings for DECIMAL type)
+    const difficultyWeight = Number(difficultyParam.weight ?? difficultyParam.display_order ?? 1);
+    const timeRequiredWeight = Number(timeRequiredParam.weight ?? timeRequiredParam.display_order ?? 1);
+
+    // Get calculation factor
+    const factor = await getPointsCalculationFactor();
+    if (factor <= 0) {
+      throw new Error('Points calculation factor must be greater than 0');
+    }
+
+    // Calculate: (difficulty_weight * time_required_weight) * factor
+    const calculatedPoints = Math.round((difficultyWeight * timeRequiredWeight) * factor);
+
+    // Ensure minimum of 1 point
+    return Math.max(1, calculatedPoints);
+  } catch (error) {
+    console.error('[TaskService] Error calculating task points:', error);
+    return null;
+  }
 }
 
 export async function createTask(data: Partial<Task>): Promise<Task> {
@@ -216,6 +279,29 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       : JSON.parse((data as any).prerequisite_task_ids)
     : null;
 
+  // Handle zielgruppe array: allow null, empty array, or array of valid enum values
+  let zielgruppeValue: string[] | null = null;
+  if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
+    // Ensure it's an array
+    const zielgruppeArray = Array.isArray(data.zielgruppe) ? data.zielgruppe : [data.zielgruppe];
+    // Filter out empty strings and null values
+    zielgruppeValue = zielgruppeArray.filter((v: any) => v !== null && v !== undefined && v !== '');
+    // If resulting array is empty, set to null
+    if (zielgruppeValue.length === 0) {
+      zielgruppeValue = null;
+    }
+  }
+  
+  // Calculate points automatically if difficulty and time_required are provided
+  // Always use calculated points if both values are present, regardless of manually set points
+  let points = data.points ?? 0;
+  if (data.difficulty && data.time_required) {
+    const calculatedPoints = await calculateTaskPoints(data.difficulty, data.time_required);
+    if (calculatedPoints !== null) {
+      points = calculatedPoints; // Override manually set points with calculated value
+    }
+  }
+
   const result = await db.query(
     `INSERT INTO tasks (
        title,
@@ -228,9 +314,6 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        photo_required,
        co2_savings_kg,
        external_id,
-       allowed_roles,
-       allowed_user_types,
-       allowed_hotel_ids,
        location_id,
        active,
        recurrence,
@@ -242,24 +325,27 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        survey_type,
        prerequisite_task_id,
        prerequisite_task_count,
-       prerequisite_task_ids
+       prerequisite_task_ids,
+       category,
+       difficulty,
+       time_required,
+       location_tool,
+       event_group,
+       zielgruppe
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
      RETURNING *`,
     [
       data.title,
       data.description ?? null,
       data.type,
-      data.points ?? 0,
+      points,
       data.video_url ?? null,
       quizPayload,
       data.qr_code ?? null,
       data.photo_required ?? false,
       data.co2_savings_kg ?? 0,
       (data as any).external_id ?? null,
-      (data.allowed_roles ?? []) as UserRole[],
-      (data.allowed_user_types ?? []) as UserType[],
-      (data.allowed_hotel_ids ?? []) as HotelId[],
       data.location_id,
       data.active ?? true,
       recurrence,
@@ -272,6 +358,12 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       (data as any).prerequisite_task_id ?? null,
       (data as any).prerequisite_task_count ?? null,
       prerequisiteTaskIdsArray,
+      data.category ?? null,
+      data.difficulty ?? null,
+      data.time_required ?? null,
+      data.location_tool ?? null,
+      data.event_group ?? null,
+      zielgruppeValue, // PostgreSQL will automatically convert JavaScript arrays to PostgreSQL arrays
     ]
   );
   return result.rows[0];
@@ -290,34 +382,61 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   await validatePrerequisites(data, id);
   
   const taskType = data.type || existingTask.type;
+  const typeChanged = data.type !== undefined && data.type !== existingTask.type;
   
-  // Validate task type-specific fields
-  if (taskType === 'video' && data.video_url !== undefined) {
-    if (data.video_url) {
-      validateUrl(data.video_url, 'Video URL');
+  // Validate task type-specific fields for the new type (if type is being changed)
+  if (taskType === 'video') {
+    // For video tasks, validate video_url if provided
+    if (data.video_url !== undefined) {
+      if (data.video_url) {
+        validateUrl(data.video_url, 'Video URL');
+      }
+    } else if (typeChanged && !existingTask.video_url) {
+      // If type changed to video and no video_url provided, it's optional (can be added later)
+      // Don't throw error, just allow it
+    }
+    // Quiz questions are optional for video tasks (can be added later)
+  }
+  
+  if (taskType === 'qr') {
+    // For qr tasks, validate qr_code if provided
+    if (data.qr_code !== undefined) {
+      if (data.qr_code) {
+        validateQrCode(data.qr_code);
+      }
+    } else if (typeChanged && !existingTask.qr_code) {
+      // If type changed to qr and no qr_code provided, it's optional (can be added later)
+      // Don't throw error, just allow it
     }
   }
   
-  if (taskType === 'qr' && data.qr_code !== undefined) {
-    if (data.qr_code) {
-      validateQrCode(data.qr_code);
+  if (taskType === 'visit_location') {
+    // For visit_location tasks, validate coordinates if provided
+    if ((data as any).target_latitude !== undefined || (data as any).target_longitude !== undefined) {
+      const lat = (data as any).target_latitude !== undefined ? (data as any).target_latitude : existingTask.target_latitude;
+      const lng = (data as any).target_longitude !== undefined ? (data as any).target_longitude : existingTask.target_longitude;
+      const coords = validateGpsCoordinates(lat, lng);
+      if (!coords) {
+        throw new Error('Target latitude and longitude are required for visit_location tasks');
+      }
+    } else if (typeChanged && (!existingTask.target_latitude || !existingTask.target_longitude)) {
+      // If type changed to visit_location and no coordinates provided, require them
+      throw new Error('Target latitude and longitude are required when changing task type to visit_location');
     }
   }
   
-  if (taskType === 'visit_location' && ((data as any).target_latitude !== undefined || (data as any).target_longitude !== undefined)) {
-    const lat = (data as any).target_latitude !== undefined ? (data as any).target_latitude : existingTask.target_latitude;
-    const lng = (data as any).target_longitude !== undefined ? (data as any).target_longitude : existingTask.target_longitude;
-    const coords = validateGpsCoordinates(lat, lng);
-    if (!coords) {
-      throw new Error('Target latitude and longitude are required for visit_location tasks');
+  if (taskType === 'quiz') {
+    // For quiz tasks, quiz_questions are required
+    if (data.quiz_questions !== undefined && !data.quiz_questions) {
+      throw new Error('Quiz questions are required for quiz tasks');
+    } else if (typeChanged && !existingTask.quiz_questions) {
+      // If type changed to quiz and no quiz_questions provided, require them
+      throw new Error('Quiz questions are required when changing task type to quiz');
     }
-  }
-  
-  if (taskType === 'quiz' && data.quiz_questions !== undefined && !data.quiz_questions) {
-    throw new Error('Quiz questions are required for quiz tasks');
   }
   
   if (taskType === 'article_quiz') {
+    // For article_quiz tasks, article_url or article_content is required
     if ((data as any).article_url !== undefined || (data as any).article_content !== undefined) {
       const articleUrl = (data as any).article_url !== undefined ? (data as any).article_url : existingTask.article_url;
       const articleContent = (data as any).article_content !== undefined ? (data as any).article_content : existingTask.article_content;
@@ -327,33 +446,205 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       if (articleUrl) {
         validateUrl(articleUrl, 'Article URL');
       }
+    } else if (typeChanged && !existingTask.article_url && !existingTask.article_content) {
+      // If type changed to article_quiz and no article provided, require it
+      throw new Error('Article URL or article content is required when changing task type to article_quiz');
     }
+    // Quiz questions are required for article_quiz
     if (data.quiz_questions !== undefined && !data.quiz_questions) {
       throw new Error('Quiz questions are required for article_quiz tasks');
+    } else if (typeChanged && !existingTask.quiz_questions) {
+      throw new Error('Quiz questions are required when changing task type to article_quiz');
+    }
+  }
+  
+  if (taskType === 'survey') {
+    // For survey tasks, survey_questions are required
+    if (data.survey_questions !== undefined && !data.survey_questions) {
+      throw new Error('Survey questions are required for survey tasks');
+    } else if (typeChanged && !existingTask.survey_questions) {
+      // If type changed to survey and no survey_questions provided, require them
+      throw new Error('Survey questions are required when changing task type to survey');
     }
   }
   
   const updates: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
+  let pointsIndex = -1; // Track where points update is in the array
 
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && key !== 'id') {
-      if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
-        updates.push(`${key} = $${paramIndex++}`);
-        values.push(JSON.stringify(value));
-      } else if (key === 'recurrence') {
-        updates.push(`${key} = $${paramIndex++}`);
-        values.push(validateRecurrence(value as string));
-      } else if (key === 'prerequisite_task_ids' && Array.isArray(value)) {
-        updates.push(`${key} = $${paramIndex++}`);
-        values.push(value);
-      } else {
-        updates.push(`${key} = $${paramIndex++}`);
-        values.push(value);
+  // Whitelist of valid database columns to prevent SQL injection and invalid field errors
+  const validColumns = new Set([
+    'title', 'description', 'type', 'points', 'video_url', 'quiz_questions', 'qr_code',
+    'photo_required', 'co2_savings_kg', 'location_id', 'active', 'recurrence',
+    'target_latitude', 'target_longitude', 'article_url', 'article_content',
+    'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
+    'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
+    'event_group', 'zielgruppe'
+  ]);
+
+  // If type is being changed, reset type-specific fields of the old type
+  if (typeChanged) {
+    const oldType = existingTask.type;
+    const newType = data.type!;
+
+    // Reset fields that are specific to the old type but not to the new type
+    // Use parameters for NULL values to maintain proper parameter numbering
+    if (oldType === 'video' && newType !== 'video') {
+      // Reset video-specific fields if not provided in update
+      if (data.video_url === undefined) {
+        updates.push(`video_url = $${paramIndex++}`);
+        values.push(null);
+      }
+      if (data.quiz_questions === undefined && (newType !== 'quiz' && newType !== 'article_quiz')) {
+        updates.push(`quiz_questions = $${paramIndex++}`);
+        values.push(null);
       }
     }
+    
+    if (oldType === 'qr' && newType !== 'qr') {
+      if (data.qr_code === undefined) {
+        updates.push(`qr_code = $${paramIndex++}`);
+        values.push(null);
+      }
+    }
+    
+    if (oldType === 'photo' && newType !== 'photo') {
+      if (data.photo_required === undefined) {
+        updates.push(`photo_required = $${paramIndex++}`);
+        values.push(false);
+      }
+    }
+    
+    if (oldType === 'visit_location' && newType !== 'visit_location') {
+      if ((data as any).target_latitude === undefined) {
+        updates.push(`target_latitude = $${paramIndex++}`);
+        values.push(null);
+      }
+      if ((data as any).target_longitude === undefined) {
+        updates.push(`target_longitude = $${paramIndex++}`);
+        values.push(null);
+      }
+    }
+    
+    if (oldType === 'article_quiz' && newType !== 'article_quiz') {
+      if ((data as any).article_url === undefined) {
+        updates.push(`article_url = $${paramIndex++}`);
+        values.push(null);
+      }
+      if ((data as any).article_content === undefined) {
+        updates.push(`article_content = $${paramIndex++}`);
+        values.push(null);
+      }
+      if (data.quiz_questions === undefined && newType !== 'quiz' && newType !== 'video') {
+        updates.push(`quiz_questions = $${paramIndex++}`);
+        values.push(null);
+      }
+    }
+    
+    if (oldType === 'survey' && newType !== 'survey') {
+      if (data.survey_questions === undefined) {
+        updates.push(`survey_questions = $${paramIndex++}`);
+        values.push(null);
+      }
+      if ((data as any).survey_type === undefined) {
+        updates.push(`survey_type = $${paramIndex++}`);
+        values.push(null);
+      }
+    }
+    
+    if (oldType === 'quiz' && newType !== 'quiz' && newType !== 'article_quiz' && newType !== 'video') {
+      if (data.quiz_questions === undefined) {
+        updates.push(`quiz_questions = $${paramIndex++}`);
+        values.push(null);
+      }
+    }
+  }
+
+  Object.entries(data).forEach(([key, value]) => {
+    // Skip invalid fields and id
+    if (value === undefined || key === 'id' || !validColumns.has(key)) {
+      return;
+    }
+
+    if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
+      updates.push(`${key} = $${paramIndex++}`);
+      values.push(JSON.stringify(value));
+    } else if (key === 'recurrence') {
+      updates.push(`${key} = $${paramIndex++}`);
+      values.push(validateRecurrence(value as string));
+    } else if (key === 'prerequisite_task_ids' && Array.isArray(value)) {
+      updates.push(`${key} = $${paramIndex++}`);
+      values.push(value);
+    } else if (key === 'zielgruppe') {
+      // Handle zielgruppe array: allow null, empty array, or array of valid enum values
+      let zielgruppeValue: string[] | null = null;
+      if (value !== null && value !== undefined && value !== '') {
+        let zielgruppeArray: any[];
+        // Check if value is a string (might be JSON stringified array or PostgreSQL array string)
+        if (typeof value === 'string') {
+          // Try to parse as JSON first
+          try {
+            zielgruppeArray = JSON.parse(value);
+          } catch {
+            // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
+            // Remove curly braces and split by comma
+            const cleaned = value.replace(/^{|}$/g, '').trim();
+            zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];
+          }
+        } else if (Array.isArray(value)) {
+          zielgruppeArray = value;
+        } else {
+          zielgruppeArray = [value];
+        }
+        // Filter out empty strings and null values
+        zielgruppeValue = zielgruppeArray.filter((v: any) => v !== null && v !== undefined && v !== '');
+        // If resulting array is empty, set to null
+        if (zielgruppeValue.length === 0) {
+          zielgruppeValue = null;
+        }
+      }
+      updates.push(`${key} = $${paramIndex++}`);
+      values.push(zielgruppeValue);
+    } else {
+      if (key === 'points') {
+        pointsIndex = updates.length; // Remember where points update is
+      }
+      updates.push(`${key} = $${paramIndex++}`);
+      values.push(value);
+    }
   });
+
+  // Calculate points automatically if difficulty or time_required are being updated
+  const difficultyValue = (data.difficulty !== undefined) ? data.difficulty : existingTask.difficulty;
+  const timeRequiredValue = (data.time_required !== undefined) ? data.time_required : existingTask.time_required;
+  
+  // Check if difficulty or time_required changed
+  const difficultyChanged = data.difficulty !== undefined && data.difficulty !== existingTask.difficulty;
+  const timeRequiredChanged = data.time_required !== undefined && data.time_required !== existingTask.time_required;
+  
+  // Auto-calculate points if both values are present AND (difficulty or time_required changed, OR points not explicitly set)
+  if (difficultyValue && timeRequiredValue && (difficultyChanged || timeRequiredChanged || data.points === undefined)) {
+    const calculatedPoints = await calculateTaskPoints(difficultyValue, timeRequiredValue);
+    if (calculatedPoints !== null) {
+      // Remove existing points update if present
+      if (pointsIndex >= 0) {
+        updates.splice(pointsIndex, 1);
+        values.splice(pointsIndex, 1);
+        // Rebuild all parameter numbers since we removed one
+        paramIndex = 1;
+        updates.forEach((update, idx) => {
+          const match = update.match(/\$(\d+)/);
+          if (match) {
+            updates[idx] = update.replace(/\$\d+/, `$${paramIndex++}`);
+          }
+        });
+      }
+      // Add calculated points
+      updates.push(`points = $${paramIndex++}`);
+      values.push(calculatedPoints);
+    }
+  }
 
   if (updates.length === 0) {
     return getTaskById(id);

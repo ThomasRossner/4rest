@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
+import { PointsBonusScanner } from '../Rewards/PointsBonusScanner';
 import './Navigation.css';
 
 function Navigation() {
@@ -13,9 +15,11 @@ function Navigation() {
   const userRole = useAuthStore((s) => s.user?.role);
   const logout = useAuthStore((s) => s.logout);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
 
   // Generate user initials
@@ -30,7 +34,13 @@ function Navigation() {
   // Handle click outside and update menu position
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        userMenuRef.current && 
+        !userMenuRef.current.contains(target) &&
+        menuRef.current &&
+        !menuRef.current.contains(target)
+      ) {
         setIsUserMenuOpen(false);
       }
     }
@@ -42,7 +52,7 @@ function Navigation() {
           position: 'fixed',
           right: `${window.innerWidth - rect.right}px`,
           top: `${rect.bottom + 8}px`,
-          zIndex: 99999,
+          zIndex: 999999,
         });
       } else {
         setMenuStyle({});
@@ -69,6 +79,11 @@ function Navigation() {
   const handleProfileClick = () => {
     setIsUserMenuOpen(false);
     navigate('/profile');
+  };
+
+  const handleScanBonusQrClick = () => {
+    setIsUserMenuOpen(false);
+    setShowPointsBonusScanner(true);
   };
 
   const baseNavItems = [
@@ -130,8 +145,8 @@ function Navigation() {
                 {t('navigation.points', { count: points })}
               </span>
             </button>
-            {isUserMenuOpen && (
-              <div className="navigation-user-menu" style={menuStyle}>
+            {isUserMenuOpen && createPortal(
+              <div ref={menuRef} className="navigation-user-menu" style={menuStyle}>
                 <button
                   className="navigation-user-menu-item"
                   onClick={handleProfileClick}
@@ -140,13 +155,21 @@ function Navigation() {
                   <span>{t('navigation.profile')}</span>
                 </button>
                 <button
+                  className="navigation-user-menu-item"
+                  onClick={handleScanBonusQrClick}
+                >
+                  <span className="navigation-user-menu-icon">📷</span>
+                  <span>{t('navigation.scanBonusQr') || 'Bonus-QR-Code scannen'}</span>
+                </button>
+                <button
                   className="navigation-user-menu-item navigation-user-menu-item-logout"
                   onClick={handleLogout}
                 >
                   <span className="navigation-user-menu-icon">🚪</span>
                   <span>{t('navigation.logout')}</span>
                 </button>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
@@ -167,6 +190,18 @@ function Navigation() {
           ))}
         </div>
       </nav>
+      {showPointsBonusScanner && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999998, backgroundColor: 'var(--color-background, #f9fafb)' }}>
+          <PointsBonusScanner
+            onClose={() => setShowPointsBonusScanner(false)}
+            onSuccess={(pointsAwarded, newBalance) => {
+              // Points are already updated in the API call
+              setShowPointsBonusScanner(false);
+            }}
+          />
+        </div>,
+        document.body
+      )}
     </>
   );
 }

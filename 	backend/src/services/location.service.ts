@@ -139,34 +139,46 @@ function normalizeLocationInput(
   const isOnline = normalized.is_online ?? data.is_online;
 
   if (isOnline === true) {
-    if (!partial || data.address !== undefined) {
+    // For online locations, address, latitude, and longitude must be null
+    if (!partial) {
       normalized.address = null;
-    }
-    if (!partial || data.latitude !== undefined) {
       normalized.latitude = null;
-    }
-    if (!partial || data.longitude !== undefined) {
       normalized.longitude = null;
+    } else {
+      if (data.address !== undefined) normalized.address = null;
+      if (data.latitude !== undefined) normalized.latitude = null;
+      if (data.longitude !== undefined) normalized.longitude = null;
     }
   } else if (isOnline === false) {
-    if (!partial || data.address !== undefined) {
+    // For physical locations, address, latitude, and longitude are required
+    if (!partial) {
+      // Always set these fields for create operations
       const address = typeof data.address === 'string' ? data.address.trim() : '';
       if (!address) {
         throw new Error('Address is required for physical locations.');
       }
       normalized.address = address;
-    }
-    if (!partial || data.latitude !== undefined) {
-      normalized.latitude = parseCoordinate(
-        data.latitude ?? normalized.latitude,
-        'latitude'
-      );
-    }
-    if (!partial || data.longitude !== undefined) {
-      normalized.longitude = parseCoordinate(
-        data.longitude ?? normalized.longitude,
-        'longitude'
-      );
+      
+      if (data.latitude === undefined && data.longitude === undefined) {
+        throw new Error('Latitude and longitude are required for physical locations.');
+      }
+      normalized.latitude = parseCoordinate(data.latitude, 'latitude');
+      normalized.longitude = parseCoordinate(data.longitude, 'longitude');
+    } else {
+      // For update operations, only set if provided
+      if (data.address !== undefined) {
+        const address = typeof data.address === 'string' ? data.address.trim() : '';
+        if (!address) {
+          throw new Error('Address is required for physical locations.');
+        }
+        normalized.address = address;
+      }
+      if (data.latitude !== undefined) {
+        normalized.latitude = parseCoordinate(data.latitude, 'latitude');
+      }
+      if (data.longitude !== undefined) {
+        normalized.longitude = parseCoordinate(data.longitude, 'longitude');
+      }
     }
   }
 

@@ -13,6 +13,8 @@
     "validate-forest:dry-run": "tsx src/scripts/validateAndFixForest.ts --dry-run",
     "validate-forest:force": "tsx src/scripts/validateAndFixForest.ts --force",
     "complete-test-tasks": "tsx src/scripts/completeTasksForTestUser.ts",
+    "recalculate-task-points": "tsx src/scripts/recalculateTaskPoints.ts",
+    "recalculate-reward-costs": "tsx src/scripts/recalculateRewardCosts.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

@@ -49,12 +49,14 @@ export const createReward: RequestHandler = asyncHandler(async (req, res) => {
     rewardType: payload.rewardType ?? payload.reward_type,
     voucherCode: payload.voucherCode ?? payload.voucher_code,
     externalApiId: payload.externalApiId ?? payload.external_api_id,
-    allowed_roles: payload.allowed_roles ?? payload.allowedRoles ?? [],
-    allowed_user_types: payload.allowed_user_types ?? payload.allowedUserTypes ?? [],
-    allowed_hotel_ids: payload.allowed_hotel_ids ?? payload.allowedHotelIds ?? [],
+    zielgruppe: payload.zielgruppe ?? payload.Zielgruppe ?? null,
     location_id: location.id,
     active: payload.active,
     recurrence: payload.recurrence ?? null,
+    reward_art: payload.reward_art ?? payload.rewardArt ?? null,
+    kategorie: payload.kategorie ?? payload.category ?? null,
+    event_group: payload.event_group ?? payload.eventGroup ?? null,
+    moegliche_punkte: payload.moegliche_punkte ?? payload.possible_points ?? null,
   });
 
   res.status(201).json(reward);
@@ -82,16 +84,20 @@ export const updateReward: RequestHandler = asyncHandler(async (req, res) => {
     if (payload.externalApiId !== undefined || payload.external_api_id !== undefined) {
       updatePayload.externalApiId = payload.externalApiId ?? payload.external_api_id;
     }
-    if (payload.allowed_roles !== undefined || payload.allowedRoles !== undefined) {
-      updatePayload.allowed_roles = payload.allowed_roles ?? payload.allowedRoles ?? [];
+    if (payload.zielgruppe !== undefined || payload.Zielgruppe !== undefined) {
+      updatePayload.zielgruppe = payload.zielgruppe ?? payload.Zielgruppe ?? null;
     }
-    if (payload.allowed_user_types !== undefined || payload.allowedUserTypes !== undefined) {
-      updatePayload.allowed_user_types =
-        payload.allowed_user_types ?? payload.allowedUserTypes ?? [];
+    if (payload.reward_art !== undefined || payload.rewardArt !== undefined) {
+      updatePayload.reward_art = payload.reward_art ?? payload.rewardArt ?? null;
     }
-    if (payload.allowed_hotel_ids !== undefined || payload.allowedHotelIds !== undefined) {
-      updatePayload.allowed_hotel_ids =
-        payload.allowed_hotel_ids ?? payload.allowedHotelIds ?? [];
+    if (payload.kategorie !== undefined || payload.category !== undefined) {
+      updatePayload.kategorie = payload.kategorie ?? payload.category ?? null;
+    }
+    if (payload.event_group !== undefined || payload.eventGroup !== undefined) {
+      updatePayload.event_group = payload.event_group ?? payload.eventGroup ?? null;
+    }
+    if (payload.moegliche_punkte !== undefined || payload.possible_points !== undefined) {
+      updatePayload.moegliche_punkte = payload.moegliche_punkte ?? payload.possible_points ?? null;
     }
     if (payload.locationId !== undefined || payload.location_id !== undefined) {
       const locationId = payload.locationId ?? payload.location_id;

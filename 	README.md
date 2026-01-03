@@ -20,8 +20,33 @@ Roots of Impact encourages sustainable actions through gamification. Each comple
 - Node.js 18+ and npm 9+
 - PostgreSQL 14+
 - Redis 6+
+- Docker and Docker Compose (optional, for containerized setup)
 
 ### Installation
+
+#### Option 1: Docker (Recommended)
+
+```bash
+# Build and start all containers
+docker-compose up --build
+
+# Or run in detached mode
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop containers
+docker-compose down
+```
+
+The Docker setup includes:
+- **Postgres Container**: PostgreSQL 15 database
+- **Backend Container**: Node.js backend API (port 5001)
+- **Frontend Container**: React development server (port 3000)
+- **Redis Container**: Redis cache (port 6379)
+
+#### Option 2: Local Development
 
 ```bash
 # Install all dependencies

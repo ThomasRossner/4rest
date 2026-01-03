@@ -110,7 +110,15 @@ export const api = {
     includeAll?: boolean;
     includeInactive?: boolean;
   }) {
+    const apiStartTime = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:106',message:'getTasks API call started',data:{params},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     const response = await apiClient.get('/tasks', { params });
+    const apiEndTime = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:113',message:'getTasks API call completed',data:{duration:apiEndTime-apiStartTime,tasksCount:response.data?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     return response.data;
   },
 
@@ -431,6 +439,73 @@ export const api = {
 
   async clearDebugLogs() {
     const response = await apiClient.delete('/admin/debug/logs');
+    return response.data;
+  },
+
+  // Parameters
+  async getTaskParameters(type?: string) {
+    const response = await apiClient.get('/admin/parameters/tasks', { params: type ? { type } : {} });
+    return response.data;
+  },
+
+  async createTaskParameter(parameterType: string, value: string, displayOrder?: number, weight?: number) {
+    const response = await apiClient.post('/admin/parameters/tasks', { parameter_type: parameterType, value, display_order: displayOrder || 0, weight: weight ?? displayOrder ?? 0 });
+    return response.data;
+  },
+
+  async updateTaskParameter(id: string, payload: { value?: string; display_order?: number; weight?: number; active?: boolean }) {
+    const response = await apiClient.put(`/admin/parameters/tasks/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteTaskParameter(id: string) {
+    const response = await apiClient.delete(`/admin/parameters/tasks/${id}`);
+    return response.data;
+  },
+
+  async getRewardParameters(type?: string) {
+    const response = await apiClient.get('/admin/parameters/rewards', { params: type ? { type } : {} });
+    return response.data;
+  },
+
+  async createRewardParameter(parameterType: string, value: string, displayOrder?: number, weight?: number) {
+    const response = await apiClient.post('/admin/parameters/rewards', { parameter_type: parameterType, value, display_order: displayOrder || 0, weight: weight ?? displayOrder ?? 0 });
+    return response.data;
+  },
+
+  async updateRewardParameter(id: string, payload: { value?: string; display_order?: number; weight?: number; active?: boolean }) {
+    const response = await apiClient.put(`/admin/parameters/rewards/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteRewardParameter(id: string) {
+    const response = await apiClient.delete(`/admin/parameters/rewards/${id}`);
+    return response.data;
+  },
+
+  // System Config
+  async getSystemConfigs() {
+    const response = await apiClient.get('/admin/system-config');
+    return response.data;
+  },
+
+  async getSystemConfig(key: string) {
+    const response = await apiClient.get(`/admin/system-config/${key}`);
+    return response.data;
+  },
+
+  async setSystemConfig(key: string, value: string, description?: string) {
+    const response = await apiClient.put(`/admin/system-config/${key}`, { value, description });
+    return response.data;
+  },
+
+  async getPointsCalculationFactor() {
+    const response = await apiClient.get('/admin/system-config/points-calculation-factor');
+    return response.data;
+  },
+
+  async getRewardCostCalculationFactor() {
+    const response = await apiClient.get('/admin/system-config/reward-cost-calculation-factor');
     return response.data;
   },
 };

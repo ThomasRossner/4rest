@@ -386,7 +386,7 @@
   border: 2px solid rgba(102, 126, 234, 0.2);
   overflow: hidden;
   min-width: 160px;
-  z-index: 99999;
+  z-index: 999999 !important; /* Ensure it's always on top, even above AdminPage modals */
   animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

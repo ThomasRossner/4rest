@@ -36,7 +36,8 @@
     "profile": "Profile",
     "logout": "Logout",
     "points": "{{count}} Points",
-    "pointsBonus": "Points Bonus"
+    "pointsBonus": "Points Bonus",
+    "scanBonusQr": "Scan Bonus QR Code"
   },
   "login": {
     "modes": {
@@ -141,6 +142,12 @@
   },
   "tasks": {
     "title": "Available tasks",
+    "locationButton": "Here",
+    "onlineButton": "Online",
+    "showLocation": "Show location",
+    "showOnline": "Show online tasks",
+    "locationMapTitle": "Your Location",
+    "backToList": "Back to list",
     "filters": {
       "type": {
         "label": "Type",
@@ -196,6 +203,10 @@
   },
   "rewards": {
     "title": "Rewards marketplace",
+    "locationButton": "Here",
+    "showLocation": "Show location",
+    "locationMapTitle": "Your Location",
+    "backToList": "Back to list",
     "balanceLabel": "Your points",
     "filters": {
       "all": "All",
@@ -256,6 +267,8 @@
       "redeemed": "Successfully redeemed {{points}} points! New balance: {{balance}}",
       "redeemError": "Failed to redeem QR code",
       "cameraError": "Failed to access camera",
+      "cameraNotSupported": "Camera access is not supported in this browser. Please use a modern browser with camera support.",
+      "cameraRequiresHttps": "Camera access requires HTTPS when accessing from another device. Please use HTTPS or access from localhost.",
       "cameraHint": "Please allow camera access to scan QR codes",
       "toast": {
         "title": "Points Bonus Received!",
@@ -324,6 +337,10 @@
       "debugTools": {
         "title": "Debug Tools",
         "description": "Advanced debugging tools for testing and data manipulation."
+      },
+      "manageParameters": {
+        "title": "Manage Parameters",
+        "description": "Manage dropdown values for tasks and rewards"
       }
     },
     "debugMode": {
@@ -508,13 +525,13 @@
       "selectOption": "Select option",
       "existingTask": "Existing task",
       "startFromScratch": {
-        "video": "Start from scratch – Video-Quiz task",
-        "quiz": "Start from scratch – Quiz task",
-        "articleQuiz": "Start from scratch – Article Quiz task",
-        "survey": "Start from scratch – Survey task",
-        "qr": "Start from scratch – QR task",
-        "photo": "Start from scratch – Photo task",
-        "visitLocation": "Start from scratch – Visit location task"
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
+        "articleQuiz": "Article Quiz",
+        "survey": "Survey",
+        "qr": "QR",
+        "photo": "Photo",
+        "visitLocation": "Visit location"
       },
       "selectExisting": "Select existing task",
       "selectTask": "Select task",
@@ -526,6 +543,7 @@
       "noLocations": "No locations available.",
       "loadingLocations": "Loading locations…",
       "fields": {
+        "type": "Task type",
         "title": "Title",
         "description": "Description",
         "points": "Points",
@@ -695,6 +713,7 @@
       "noLocations": "No locations available.",
       "loadingLocations": "Loading locations…",
       "fields": {
+        "type": "Type",
         "pointsCost": "Points cost",
         "voucherCode": "Voucher code",
         "externalApiId": "External API ID"
@@ -892,7 +911,53 @@
       "textResponses_plural": "{{count}} Text Responses"
     },
     "common": {
-      "back": "Back"
+      "back": "Back",
+      "refresh": "Refresh"
+    },
+    "parameterManage": {
+      "title": "Manage Parameters",
+      "subtitle": "Manage dropdown values for tasks and rewards",
+      "loading": "Loading parameters...",
+      "taskParameters": "Task Parameters",
+      "rewardParameters": "Reward Parameters",
+      "parameterType": "Parameter Type",
+      "value": "Value",
+      "displayOrder": "Display Order",
+      "weight": "Weight",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "newParameter": "New Parameter",
+      "save": "Save",
+      "cancel": "Cancel",
+      "enterValue": "Enter value",
+      "confirmDelete": "Do you really want to delete this parameter?",
+      "created": "Parameter created successfully",
+      "updated": "Parameter updated successfully",
+      "deleted": "Parameter deleted successfully",
+      "error": "Error loading parameters",
+      "createError": "Error creating parameter",
+      "updateError": "Error updating parameter",
+      "deleteError": "Error deleting parameter",
+      "valueRequired": "Please enter a value",
+      "pointsCalculationFactor": "Points Calculation Factor (Tasks)",
+      "pointsCalculationFactorDescription": "The factor is used to automatically calculate task points: (difficulty_weight × time_required_weight) × factor",
+      "rewardCostCalculationFactor": "Cost Calculation Factor (Rewards)",
+      "rewardCostCalculationFactorDescription": "The factor is used to automatically calculate reward costs: kosten_weight × factor",
+      "factorUpdated": "Factor updated successfully",
+      "fieldNames": {
+        "type": "Type",
+        "category": "Category",
+        "difficulty": "Difficulty",
+        "time_required": "Time Required",
+        "location_tool": "Location/Tool",
+        "zielgruppe": "Target Group",
+        "reward_art": "Type",
+        "kategorie": "Category",
+        "kosten": "Cost"
+      }
     },
     "filters": {
       "title": "Filters",

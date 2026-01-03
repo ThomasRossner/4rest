@@ -34,6 +34,7 @@ type AdminMode =
   | 'forestStats'
   | 'surveyAnalytics'
   | 'debugTools'
+  | 'parameterManage'
   | null;
 type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
@@ -60,6 +61,12 @@ type AdminTaskTemplate = {
   prerequisite_task_id?: string | null;
   prerequisite_task_count?: number | null;
   prerequisite_task_ids?: string[] | null;
+  category?: string | null;
+  difficulty?: string | null;
+  time_required?: string | null;
+  location_tool?: string | null;
+  event_group?: string | null;
+  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
 };
 
 type RewardTemplate = {
@@ -77,6 +84,9 @@ type RewardTemplate = {
   location_id?: string | null;
   location?: AdminLocation | null;
   active?: boolean | null;
+  reward_art?: string | null;
+  kategorie?: string | null;
+  event_group?: string | null;
 };
 
 type AdminLocation = {
@@ -107,9 +117,6 @@ type TaskFormState = {
   qr_code: string;
   photo_required: boolean;
   co2_savings_kg: number;
-  allowedRoles: string[];
-  allowedUserTypes: string[];
-  allowedHotelIds: string[];
   locationId: string;
   active: boolean;
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
@@ -124,6 +131,12 @@ type TaskFormState = {
   prerequisite_task_id?: string;
   prerequisite_task_count?: number;
   prerequisite_task_ids?: string[];
+  category?: 'Kommunikation & Netzwerke' | 'Mensch & soziales Umfeld' | 'Natur & Umweltschutz' | 'Ressourcenverbrauch & Materialeinsatz';
+  difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
+  time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
+  location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
+  event_group?: string;
+  zielgruppe?: 'Mitarbeitende' | 'Gäste' | 'Stakeholder';
 };
 
 type RewardFormState = {
@@ -133,12 +146,14 @@ type RewardFormState = {
   pointsCost: number;
   voucherCode: string;
   externalApiId: string;
-  allowedRoles: string[];
-  allowedUserTypes: string[];
-  allowedHotelIds: string[];
+  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
   locationId: string;
   active: boolean;
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
+  reward_art?: string;
+  kategorie?: string;
+  event_group?: string | null;
+  moegliche_punkte?: number | null;
 };
 
 type LocationFormState = {
@@ -1135,6 +1150,11 @@ const reindexSurveyQuestions = (questions: SurveyQuestionDraft[]): SurveyQuestio
 const ROLE_OPTIONS = USER_ROLES.map((role) => ({ value: role, label: role }));
 const USER_TYPE_OPTIONS = USER_TYPES.map((type) => ({ value: type, label: type }));
 const HOTEL_OPTIONS = HOTEL_IDS.map((id) => ({ value: id, label: id }));
+// Combined role options for rewards (roles + user types)
+const REWARD_ROLE_OPTIONS = [
+  ...USER_ROLES.map((role) => ({ value: role, label: role })),
+  ...USER_TYPES.map((type) => ({ value: type, label: type })),
+];
 const formatRewardType = (type: RewardType) =>
   type.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
@@ -1154,9 +1174,6 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   qr_code: type === 'qr' ? '' : '',
   photo_required: type === 'photo',
   co2_savings_kg: 0,
-  allowedRoles: [],
-  allowedUserTypes: [],
-  allowedHotelIds: [],
   locationId: '',
   active: true,
   recurrence: 'once',
@@ -1171,6 +1188,12 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   prerequisite_task_id: undefined,
   prerequisite_task_count: undefined,
   prerequisite_task_ids: undefined,
+  category: undefined,
+  difficulty: undefined,
+  time_required: undefined,
+  location_tool: undefined,
+  event_group: undefined,
+  zielgruppe: undefined,
 });
 
 const defaultRewardForm = (type: RewardType): RewardFormState => ({
@@ -1180,12 +1203,14 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   pointsCost: 0,
   voucherCode: '',
   externalApiId: '',
-  allowedRoles: [],
-  allowedUserTypes: [],
-  allowedHotelIds: [],
+  zielgruppe: undefined,
   locationId: '',
   active: true,
   recurrence: 'once',
+  reward_art: undefined,
+  kategorie: undefined,
+  event_group: undefined,
+  moegliche_punkte: undefined,
 });
 
 const defaultLocationForm = (): LocationFormState => ({
@@ -2365,6 +2390,17 @@ function AdminPage() {
   const [rewardFilterCostMax, setRewardFilterCostMax] = useState<string>('');
   const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'cost' | null>(null);
   const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+
+  // Parameter management state
+  const [taskParameters, setTaskParameters] = useState<any[]>([]);
+  const [rewardParameters, setRewardParameters] = useState<any[]>([]);
+  const [parameterLoading, setParameterLoading] = useState(false);
+  const [parameterMessage, setParameterMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
+  const [editingParameter, setEditingParameter] = useState<{ id: string; type: 'task' | 'reward'; parameterType: string; value: string; displayOrder: number; weight?: number } | null>(null);
+  const [newParameter, setNewParameter] = useState<{ type: 'task' | 'reward'; parameterType: string; value: string; displayOrder: number; weight?: number } | null>(null);
+  const [pointsCalculationFactor, setPointsCalculationFactor] = useState<number>(1.0);
+  const [editingFactorValue, setEditingFactorValue] = useState<string>('1.0');
+  const [isEditingFactor, setIsEditingFactor] = useState(false);
   const rewardFilterDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileRewardFilterOpen, setIsMobileRewardFilterOpen] = useState(false);
 
@@ -2506,26 +2542,61 @@ function AdminPage() {
 
   const existingTemplates = useMemo<AdminTaskTemplate[]>(() => {
     const list = Array.isArray(adminTasks) ? adminTasks : [];
-    return list.map((task) => ({
-      ...task,
-      quiz_questions:
-        typeof task.quiz_questions === 'string'
-          ? (() => {
-              try {
-                return JSON.parse(task.quiz_questions);
-              } catch {
-                return [];
-              }
-            })()
-          : task.quiz_questions ?? [],
-      allowed_roles: normalizeEnumArray(task.allowed_roles) as UserRole[],
-      allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
-      allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
-      location_id: (task as any).location_id ?? (task as any).location?.id ?? null,
-      location: (task as any).location ?? null,
-      active: task.active ?? true,
-      recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
-    }));
+    return list.map((task) => {
+      // Normalize zielgruppe array (handle PostgreSQL array strings)
+      const z = (task as any).zielgruppe;
+      let normalizedZielgruppe: string[] | null = null;
+      if (z) {
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
+          } else {
+            normalizedZielgruppe = cleaned.length > 0 ? cleaned : null;
+          }
+        } else if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          } else {
+            normalizedZielgruppe = [z];
+          }
+        }
+      }
+      
+      return {
+        ...task,
+        quiz_questions:
+          typeof task.quiz_questions === 'string'
+            ? (() => {
+                try {
+                  return JSON.parse(task.quiz_questions);
+                } catch {
+                  return [];
+                }
+              })()
+            : task.quiz_questions ?? [],
+        allowed_roles: normalizeEnumArray(task.allowed_roles) as UserRole[],
+        allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
+        allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
+        zielgruppe: normalizedZielgruppe,
+        location_id: (task as any).location_id ?? (task as any).location?.id ?? null,
+        location: (task as any).location ?? null,
+        active: task.active ?? true,
+        recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      };
+    });
   }, [adminTasks]);
 
   const filteredTasks = useMemo(() => {
@@ -2616,16 +2687,51 @@ function AdminPage() {
 
   const rewardTemplates = rewardTemplatesData ?? [];
   const normalizedRewardTemplates = useMemo(() => {
-    return rewardTemplates.map((template) => ({
-      ...template,
-      allowed_roles: normalizeEnumArray(template.allowed_roles),
-      allowed_user_types: normalizeEnumArray(template.allowed_user_types),
-      allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
-      location_id: template.location_id ?? template.location?.id ?? null,
-      location: template.location ?? null,
-      active: template.active ?? true,
-      recurrence: ((template as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
-    }));
+    return rewardTemplates.map((template) => {
+      // Normalize zielgruppe array (handle PostgreSQL array strings)
+      const z = (template as any).zielgruppe;
+      let normalizedZielgruppe: string[] | null = null;
+      if (z) {
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
+          } else {
+            normalizedZielgruppe = cleaned.length > 0 ? cleaned : null;
+          }
+        } else if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          } else {
+            normalizedZielgruppe = [z];
+          }
+        }
+      }
+      
+      return {
+        ...template,
+        allowed_roles: normalizeEnumArray(template.allowed_roles),
+        allowed_user_types: normalizeEnumArray(template.allowed_user_types),
+        allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
+        zielgruppe: normalizedZielgruppe,
+        location_id: template.location_id ?? template.location?.id ?? null,
+        location: template.location ?? null,
+        active: template.active ?? true,
+        recurrence: ((template as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      };
+    });
   }, [rewardTemplates]);
 
   const filteredRewards = useMemo(() => {
@@ -2713,6 +2819,54 @@ function AdminPage() {
       enabled: isAdmin && mode !== null,
     }
   );
+
+  // Load parameters for dynamic dropdowns
+  const {
+    data: taskParametersData,
+    isLoading: taskParametersLoading,
+    refetch: refetchTaskParameters,
+  } = useQuery<any[]>(
+    ['taskParameters'],
+    () => api.getTaskParameters(),
+    {
+      enabled: isAdmin && (mode === 'task' || mode === 'taskManage' || mode === 'parameterManage'),
+    }
+  );
+
+  const {
+    data: rewardParametersData,
+    isLoading: rewardParametersLoading,
+    refetch: refetchRewardParameters,
+  } = useQuery<any[]>(
+    ['rewardParameters'],
+    () => api.getRewardParameters(),
+    {
+      enabled: isAdmin && (mode === 'reward' || mode === 'rewardManage' || mode === 'parameterManage'),
+    }
+  );
+
+  // Group parameters by type
+  const taskParametersByType = useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+    (taskParametersData || []).forEach((param) => {
+      if (!grouped[param.parameter_type]) {
+        grouped[param.parameter_type] = [];
+      }
+      grouped[param.parameter_type].push(param);
+    });
+    return grouped;
+  }, [taskParametersData]);
+
+  const rewardParametersByType = useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+    (rewardParametersData || []).forEach((param) => {
+      if (!grouped[param.parameter_type]) {
+        grouped[param.parameter_type] = [];
+      }
+      grouped[param.parameter_type].push(param);
+    });
+    return grouped;
+  }, [rewardParametersData]);
 
   const locationsList = locationsData ?? [];
   const locationOptions = useMemo(
@@ -2918,25 +3072,107 @@ function AdminPage() {
       video_url: template.video_url ?? '',
       videoSource: 'url',
       videoFile: null,
-    quizQuestions:
-      (template.type === 'video' || template.type === 'quiz' || template.type === 'article_quiz')
-        ? normalizeQuizQuestions(template.quiz_questions ?? [])
-        : [],
+      quizQuestions:
+        (template.type === 'video' || template.type === 'quiz' || template.type === 'article_quiz')
+          ? normalizeQuizQuestions(template.quiz_questions ?? [])
+          : [],
       surveyQuestions: template.type === 'survey' ? ((template as any).survey_questions ?? []) : [],
       surveyType: template.type === 'survey' ? ((template as any).survey_type ?? 'mixed') : 'mixed',
       qr_code: template.qr_code ?? '',
-    photo_required: template.type === 'photo',
+      photo_required: template.type === 'photo',
       co2_savings_kg: template.co2_savings_kg ?? 0,
-      allowedRoles: normalizeEnumArray(template.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      recurrence: ((template as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      article_url: (template as any).article_url ?? '',
+      article_content: (template as any).article_content ?? '',
+      articleSource: (template as any).article_url ? 'url' : 'content',
+      target_latitude: template.type === 'visit_location' ? String((template as any).target_latitude ?? '') : undefined,
+      target_longitude: template.type === 'visit_location' ? String((template as any).target_longitude ?? '') : undefined,
+      target_address: template.type === 'visit_location' ? (template as any).target_address ?? '' : undefined,
       prerequisite_task_id: (template as any).prerequisite_task_id ?? undefined,
       prerequisite_task_count: (template as any).prerequisite_task_count ?? undefined,
       prerequisite_task_ids: (template as any).prerequisite_task_ids ?? undefined,
+      category: (template as any).category ?? undefined,
+      difficulty: (template as any).difficulty ?? undefined,
+      time_required: (template as any).time_required ?? undefined,
+      location_tool: (template as any).location_tool ?? undefined,
+      event_group: (template as any).event_group ?? undefined,
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates, isEditingTask]);
+
+  useEffect(() => {
+    if (!isEditingTask || !editingTaskId) return;
+    const task = existingTemplates.find((t) => t.id === editingTaskId);
+    if (!task) return;
+    setTaskForm({
+      title: task.title ?? '',
+      description: task.description ?? '',
+      type: task.type,
+      points: task.points ?? 0,
+      video_url: task.video_url ?? '',
+      videoSource: 'url',
+      videoFile: null,
+      quizQuestions:
+        (task.type === 'video' || task.type === 'quiz' || task.type === 'article_quiz')
+          ? normalizeQuizQuestions(task.quiz_questions ?? [])
+          : [],
+      surveyQuestions: task.type === 'survey' ? ((task as any).survey_questions ?? []) : [],
+      surveyType: task.type === 'survey' ? ((task as any).survey_type ?? 'mixed') : 'mixed',
+      qr_code: task.qr_code ?? '',
+      photo_required: task.type === 'photo',
+      co2_savings_kg: task.co2_savings_kg ?? 0,
+      locationId: task.location_id ?? task.location?.id ?? '',
+      active: task.active ?? true,
+      recurrence: (task.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      article_url: (task as any).article_url ?? '',
+      article_content: (task as any).article_content ?? '',
+      articleSource: (task as any).article_url ? 'url' : 'content',
+      target_latitude: task.type === 'visit_location' ? String((task as any).target_latitude ?? '') : undefined,
+      target_longitude: task.type === 'visit_location' ? String((task as any).target_longitude ?? '') : undefined,
+      target_address: task.type === 'visit_location' ? (task as any).target_address ?? '' : undefined,
+      prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
+      prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
+      prerequisite_task_ids: (task as any).prerequisite_task_ids ?? undefined,
+      category: (task as any).category ?? undefined,
+      difficulty: (task as any).difficulty ?? undefined,
+      time_required: (task as any).time_required ?? undefined,
+      location_tool: (task as any).location_tool ?? undefined,
+      event_group: (task as any).event_group ?? undefined,
+      zielgruppe: (() => {
+        const z = (task as any).zielgruppe;
+        if (!z) return undefined;
+        // If it's already an array, check if it contains a PostgreSQL array string
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            return [...new Set([...parsed, ...cleaned])];
+          }
+          return cleaned.length > 0 ? cleaned : undefined;
+        }
+        // If it's a string, check if it's PostgreSQL array format
+        if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          }
+          return [z];
+        }
+        return undefined;
+      })(),
+    });
+  }, [isEditingTask, editingTaskId, existingTemplates]);
 
   useEffect(() => {
     if (isEditingReward) {
@@ -2957,6 +3193,12 @@ function AdminPage() {
       setRewardForm(defaultRewardForm(rewardSource));
     }
   }, [rewardSource, isEditingReward]);
+
+  useEffect(() => {
+    if (mode === 'parameterManage') {
+      void loadParameters();
+    }
+  }, [mode]);
 
   useEffect(() => {
     if (isEditingReward) {
@@ -2990,9 +3232,6 @@ function AdminPage() {
       pointsCost: normalizedPointsCost,
       voucherCode: template.voucher_code ?? '',
       externalApiId: template.external_api_id ?? '',
-      allowedRoles: normalizeEnumArray(template.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
       recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
@@ -3068,9 +3307,6 @@ function AdminPage() {
           type: taskForm.type,
           points: Number(taskForm.points) || 0,
           co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-          allowed_roles: ensureRoleList(taskForm.allowedRoles),
-          allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
-          allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
           active: Boolean(taskForm.active),
           recurrence: taskForm.recurrence,
         };
@@ -3120,6 +3356,25 @@ function AdminPage() {
           payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
         }
 
+        // Add metadata fields
+        if (taskForm.category) {
+          payload.category = taskForm.category;
+        }
+        if (taskForm.difficulty) {
+          payload.difficulty = taskForm.difficulty;
+        }
+        if (taskForm.time_required) {
+          payload.time_required = taskForm.time_required;
+        }
+        if (taskForm.location_tool) {
+          payload.location_tool = taskForm.location_tool;
+        }
+        if (taskForm.event_group) {
+          payload.event_group = taskForm.event_group.trim();
+        }
+        // Always include zielgruppe, even if undefined/null, so it can be cleared
+        payload.zielgruppe = taskForm.zielgruppe || null;
+
         await updateTaskMutation.mutateAsync({ id: editingTaskId, payload });
         return;
       }
@@ -3139,9 +3394,6 @@ function AdminPage() {
           type: template.type,
           points: Number(taskForm.points) || 0,
           co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-          allowed_roles: ensureRoleList(taskForm.allowedRoles),
-          allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
-          allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
           active: Boolean(taskForm.active),
         };
         payload.location_id = taskForm.locationId;
@@ -3190,6 +3442,25 @@ function AdminPage() {
           payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
         }
 
+        // Add metadata fields
+        if (taskForm.category) {
+          payload.category = taskForm.category;
+        }
+        if (taskForm.difficulty) {
+          payload.difficulty = taskForm.difficulty;
+        }
+        if (taskForm.time_required) {
+          payload.time_required = taskForm.time_required;
+        }
+        if (taskForm.location_tool) {
+          payload.location_tool = taskForm.location_tool;
+        }
+        if (taskForm.event_group) {
+          payload.event_group = taskForm.event_group.trim();
+        }
+        // Always include zielgruppe, even if undefined/null, so it can be cleared
+        payload.zielgruppe = taskForm.zielgruppe || null;
+
         await publishTaskMutation.mutateAsync(payload);
         return;
       }
@@ -3206,9 +3477,6 @@ function AdminPage() {
         type: taskForm.type,
         points: Number(taskForm.points) || 0,
         co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-        allowed_roles: ensureRoleList(taskForm.allowedRoles),
-        allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
-        allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
         active: Boolean(taskForm.active),
         recurrence: taskForm.recurrence,
       };
@@ -3258,6 +3526,25 @@ function AdminPage() {
         payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
       }
 
+      // Add metadata fields
+      if (taskForm.category) {
+        payload.category = taskForm.category;
+      }
+      if (taskForm.difficulty) {
+        payload.difficulty = taskForm.difficulty;
+      }
+      if (taskForm.time_required) {
+        payload.time_required = taskForm.time_required;
+      }
+      if (taskForm.location_tool) {
+        payload.location_tool = taskForm.location_tool;
+      }
+      if (taskForm.event_group) {
+        payload.event_group = taskForm.event_group.trim();
+      }
+      // Always include zielgruppe, even if undefined/null, so it can be cleared
+      payload.zielgruppe = taskForm.zielgruppe || null;
+
       await publishTaskMutation.mutateAsync(payload);
     } catch (error: any) {
       setIsUploadingVideo(false);
@@ -3278,9 +3565,6 @@ function AdminPage() {
         return;
       }
 
-      const allowedRoles = ensureRoleList(rewardForm.allowedRoles);
-      const allowedUserTypes = ensureUserTypeList(rewardForm.allowedUserTypes);
-      const allowedHotelIds = ensureHotelIdList(rewardForm.allowedHotelIds);
       const pointsCost = Number(rewardForm.pointsCost) || 0;
 
       const basePayload: any = {
@@ -3288,9 +3572,7 @@ function AdminPage() {
         description: rewardForm.description,
         pointsCost,
         rewardType: rewardForm.type,
-        allowed_roles: allowedRoles,
-        allowed_user_types: allowedUserTypes,
-        allowed_hotel_ids: allowedHotelIds,
+        zielgruppe: rewardForm.zielgruppe || null,
         active: Boolean(rewardForm.active),
         recurrence: rewardForm.recurrence,
       };
@@ -3301,6 +3583,18 @@ function AdminPage() {
       }
       if (rewardForm.externalApiId.trim()) {
         basePayload.externalApiId = rewardForm.externalApiId.trim();
+      }
+      if (rewardForm.reward_art) {
+        basePayload.reward_art = rewardForm.reward_art;
+      }
+      if (rewardForm.kategorie) {
+        basePayload.kategorie = rewardForm.kategorie;
+      }
+      if (rewardForm.event_group?.trim()) {
+        basePayload.event_group = rewardForm.event_group.trim();
+      }
+      if (rewardForm.moegliche_punkte !== undefined && rewardForm.moegliche_punkte !== null) {
+        basePayload.moegliche_punkte = Number(rewardForm.moegliche_punkte) || null;
       }
 
       if (isEditingReward && editingRewardId) {
@@ -3793,15 +4087,49 @@ function AdminPage() {
       target_latitude: task.target_latitude ? String(task.target_latitude) : '',
       target_longitude: task.target_longitude ? String(task.target_longitude) : '',
       target_address: '',
-      allowedRoles: normalizeEnumArray(task.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(task.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(task.allowed_hotel_ids),
       locationId: task.location_id ?? task.location?.id ?? '',
       active: task.active ?? true,
       recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
       prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
       prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
       prerequisite_task_ids: (task as any).prerequisite_task_ids ?? undefined,
+      category: (task as any).category ?? undefined,
+      difficulty: (task as any).difficulty ?? undefined,
+      time_required: (task as any).time_required ?? undefined,
+      location_tool: (task as any).location_tool ?? undefined,
+      event_group: (task as any).event_group ?? undefined,
+      zielgruppe: (() => {
+        const z = (task as any).zielgruppe;
+        if (!z) return undefined;
+        // If it's already an array, check if it contains a PostgreSQL array string
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            return [...new Set([...parsed, ...cleaned])];
+          }
+          return cleaned.length > 0 ? cleaned : undefined;
+        }
+        // If it's a string, check if it's PostgreSQL array format
+        if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          }
+          return [z];
+        }
+        return undefined;
+      })(),
     });
     setIsEditingTask(true);
     setEditingTaskId(task.id);
@@ -3888,12 +4216,45 @@ function AdminPage() {
       pointsCost: normalizedPointsCost,
       voucherCode: template.voucher_code ?? '',
       externalApiId: template.external_api_id ?? '',
-      allowedRoles: normalizeEnumArray(template.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      zielgruppe: (() => {
+        const z = (template as any).zielgruppe;
+        if (!z) return null;
+        // If it's already an array, check if it contains a PostgreSQL array string
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            return [...new Set([...parsed, ...cleaned])];
+          }
+          return cleaned.length > 0 ? cleaned : null;
+        }
+        // If it's a string, check if it's PostgreSQL array format
+        if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          }
+          return [z];
+        }
+        return null;
+      })(),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
       recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      reward_art: (template as any).reward_art ?? undefined,
+      kategorie: (template as any).kategorie ?? undefined,
+      event_group: (template as any).event_group ?? undefined,
+      moegliche_punkte: (template as any).moegliche_punkte ?? undefined,
     });
     setIsEditingReward(true);
     setEditingRewardId(template.id);
@@ -3991,6 +4352,90 @@ const goToRewardCreation = () => {
   setRewardForm(defaultRewardForm('discount'));
   setHasAttemptedRewardPublish(false);
 };
+
+  const loadParameters = async () => {
+    try {
+      setParameterLoading(true);
+      setParameterMessage(null);
+      const [taskParams, rewardParams, factorData] = await Promise.all([
+        api.getTaskParameters(),
+        api.getRewardParameters(),
+        api.getPointsCalculationFactor(),
+      ]);
+      setTaskParameters(taskParams);
+      setRewardParameters(rewardParams);
+      if (factorData?.factor !== undefined) {
+        setPointsCalculationFactor(factorData.factor);
+      }
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.error') });
+    } finally {
+      setParameterLoading(false);
+    }
+  };
+
+  const handleCreateParameter = async (type: 'task' | 'reward') => {
+    if (!newParameter || newParameter.type !== type || !newParameter.value.trim()) {
+      setParameterMessage({ type: 'error', text: t('admin.parameterManage.valueRequired') });
+      return;
+    }
+    try {
+      if (type === 'task') {
+        await api.createTaskParameter(newParameter.parameterType, newParameter.value, newParameter.displayOrder, newParameter.weight);
+      } else {
+        await api.createRewardParameter(newParameter.parameterType, newParameter.value, newParameter.displayOrder, newParameter.weight);
+      }
+      setParameterMessage({ type: 'success', text: t('admin.parameterManage.created') });
+      setNewParameter(null);
+      void loadParameters();
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.createError') });
+    }
+  };
+
+  const handleUpdateParameter = async (type: 'task' | 'reward') => {
+    if (!editingParameter || editingParameter.type !== type || !editingParameter.value.trim()) {
+      setParameterMessage({ type: 'error', text: t('admin.parameterManage.valueRequired') });
+      return;
+    }
+    try {
+      if (type === 'task') {
+        await api.updateTaskParameter(editingParameter.id, {
+          value: editingParameter.value,
+          display_order: editingParameter.displayOrder,
+          weight: editingParameter.weight,
+        });
+      } else {
+        await api.updateRewardParameter(editingParameter.id, {
+          value: editingParameter.value,
+          display_order: editingParameter.displayOrder,
+          weight: editingParameter.weight,
+        });
+      }
+      setParameterMessage({ type: 'success', text: t('admin.parameterManage.updated') });
+      setEditingParameter(null);
+      void loadParameters();
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.updateError') });
+    }
+  };
+
+  const handleDeleteParameter = async (type: 'task' | 'reward', id: string) => {
+    if (!confirm(t('admin.parameterManage.confirmDelete'))) {
+      return;
+    }
+    try {
+      if (type === 'task') {
+        await api.deleteTaskParameter(id);
+      } else {
+        await api.deleteRewardParameter(id);
+      }
+      setParameterMessage({ type: 'success', text: t('admin.parameterManage.deleted') });
+      void loadParameters();
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.deleteError') });
+    }
+  };
 
   const handleLocationDelete = (location: AdminLocation) => {
     const isDefaultLocation =
@@ -4167,6 +4612,11 @@ const goToRewardCreation = () => {
             <span className="admin-choice-icon">📊</span>
             <h2>{t('admin.actions.surveyAnalytics.title')}</h2>
             <p>{t('admin.actions.surveyAnalytics.description')}</p>
+          </button>
+          <button className="admin-choice-card" onClick={() => setMode('parameterManage')}>
+            <span className="admin-choice-icon">⚙️</span>
+            <h2>{t('admin.actions.manageParameters.title')}</h2>
+            <p>{t('admin.actions.manageParameters.description')}</p>
           </button>
         </div>
       )}
@@ -4486,6 +4936,474 @@ const goToRewardCreation = () => {
         </section>
       )}
 
+      {mode === 'parameterManage' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.actions.manageParameters.title')}</h2>
+              <p>{t('admin.actions.manageParameters.description')}</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => {
+                  void loadParameters();
+                  setParameterMessage(null);
+                }}
+                title={t('admin.common.refresh')}
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">{t('admin.common.refresh')}</span>
+              </button>
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+
+          {parameterLoading && <p>{t('admin.parameterManage.loading')}</p>}
+          {parameterMessage && (
+            <p className={parameterMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
+              {parameterMessage.text}
+            </p>
+          )}
+
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem' }}>{t('admin.parameterManage.taskParameters')}</h3>
+            
+            {['type', 'category', 'difficulty', 'time_required', 'location_tool', 'zielgruppe'].map((paramType) => {
+              const params = taskParameters.filter((p) => p.parameter_type === paramType);
+              const isEditing = editingParameter?.type === 'task' && editingParameter.parameterType === paramType;
+              const isCreating = newParameter?.type === 'task' && newParameter.parameterType === paramType;
+              
+              return (
+                <div key={paramType} className="admin-management-card" style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ marginBottom: '1rem' }}>
+                    {t(`admin.parameterManage.fieldNames.${paramType}`)}
+                  </h4>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>{t('admin.parameterManage.value')}</th>
+                          <th>{t('admin.parameterManage.displayOrder')}</th>
+                          {(paramType === 'difficulty' || paramType === 'time_required') && (
+                            <th>{t('admin.parameterManage.weight')}</th>
+                          )}
+                          <th>{t('admin.parameterManage.active')}</th>
+                          <th style={{ width: '12rem' }}>{t('admin.parameterManage.actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {params
+                          .filter((p) => !isEditing || editingParameter.id !== p.id)
+                          .map((param) => (
+                            <tr key={param.id}>
+                              <td>{param.value}</td>
+                              <td>{param.display_order}</td>
+                              {(paramType === 'difficulty' || paramType === 'time_required') && (
+                                <td>{param.weight ?? param.display_order}</td>
+                              )}
+                              <td>
+                                <span className={`admin-status-badge ${param.active ? 'active' : 'inactive'}`}>
+                                  {param.active ? t('admin.parameterManage.active') : t('admin.parameterManage.inactive')}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className="admin-action-button"
+                                  onClick={() =>
+                                    setEditingParameter({
+                                      id: param.id,
+                                      type: 'task',
+                                      parameterType: param.parameter_type,
+                                      value: param.value,
+                                      displayOrder: param.display_order,
+                                      weight: param.weight ?? param.display_order,
+                                    })
+                                  }
+                                >
+                                  {t('admin.parameterManage.edit')}
+                                </button>
+                                <button
+                                  className="admin-action-button danger"
+                                  onClick={() => handleDeleteParameter('task', param.id)}
+                                >
+                                  {t('admin.parameterManage.delete')}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        {isCreating && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={newParameter.value}
+                                onChange={(e) => setNewParameter({ ...newParameter, value: e.target.value })}
+                                placeholder={t('admin.parameterManage.enterValue')}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={newParameter.displayOrder}
+                                onChange={(e) =>
+                                  setNewParameter({ ...newParameter, displayOrder: Number.parseInt(e.target.value || '0', 10) })
+                                }
+                              />
+                            </td>
+                            {(paramType === 'difficulty' || paramType === 'time_required') && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={newParameter.weight ?? newParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setNewParameter({ ...newParameter, weight: Number.parseFloat(e.target.value || '0') })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={(paramType === 'difficulty' || paramType === 'time_required') ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleCreateParameter('task')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setNewParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                        {isEditing && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={editingParameter.value}
+                                onChange={(e) =>
+                                  setEditingParameter({ ...editingParameter, value: e.target.value })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={editingParameter.displayOrder}
+                                onChange={(e) =>
+                                  setEditingParameter({
+                                    ...editingParameter,
+                                    displayOrder: Number.parseInt(e.target.value || '0', 10),
+                                  })
+                                }
+                              />
+                            </td>
+                            {(paramType === 'difficulty' || paramType === 'time_required') && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editingParameter.weight ?? editingParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setEditingParameter({
+                                      ...editingParameter,
+                                      weight: Number.parseFloat(e.target.value || '0'),
+                                    })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={(paramType === 'difficulty' || paramType === 'time_required') ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleUpdateParameter('task')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setEditingParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => setNewParameter({ type: 'task', parameterType: paramType, value: '', displayOrder: 0, weight: (paramType === 'difficulty' || paramType === 'time_required') ? 0 : undefined })}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    {t('admin.parameterManage.newParameter')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div>
+            <h3 style={{ marginBottom: '1.5rem' }}>{t('admin.parameterManage.rewardParameters')}</h3>
+            
+            {['reward_art', 'kategorie'].map((paramType) => {
+              const params = rewardParameters.filter((p) => p.parameter_type === paramType);
+              const isEditing = editingParameter?.type === 'reward' && editingParameter.parameterType === paramType;
+              const isCreating = newParameter?.type === 'reward' && newParameter.parameterType === paramType;
+              
+              return (
+                <div key={paramType} className="admin-management-card" style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ marginBottom: '1rem' }}>
+                    {t(`admin.parameterManage.fieldNames.${paramType}`)}
+                  </h4>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>{t('admin.parameterManage.value')}</th>
+                          <th>{t('admin.parameterManage.displayOrder')}</th>
+                          {paramType === 'kosten' && (
+                            <th>{t('admin.parameterManage.weight')}</th>
+                          )}
+                          <th>{t('admin.parameterManage.active')}</th>
+                          <th style={{ width: '12rem' }}>{t('admin.parameterManage.actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {params
+                          .filter((p) => !isEditing || editingParameter.id !== p.id)
+                          .map((param) => (
+                            <tr key={param.id}>
+                              <td>{param.value}</td>
+                              <td>{param.display_order}</td>
+                              {paramType === 'kosten' && (
+                                <td>{param.weight ?? param.display_order}</td>
+                              )}
+                              <td>
+                                <span className={`admin-status-badge ${param.active ? 'active' : 'inactive'}`}>
+                                  {param.active ? t('admin.parameterManage.active') : t('admin.parameterManage.inactive')}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className="admin-action-button"
+                                  onClick={() =>
+                                    setEditingParameter({
+                                      id: param.id,
+                                      type: 'reward',
+                                      parameterType: param.parameter_type,
+                                      value: param.value,
+                                      displayOrder: param.display_order,
+                                      weight: paramType === 'kosten' ? (param.weight ?? param.display_order) : undefined,
+                                    })
+                                  }
+                                >
+                                  {t('admin.parameterManage.edit')}
+                                </button>
+                                <button
+                                  className="admin-action-button danger"
+                                  onClick={() => handleDeleteParameter('reward', param.id)}
+                                >
+                                  {t('admin.parameterManage.delete')}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        {isCreating && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={newParameter.value}
+                                onChange={(e) => setNewParameter({ ...newParameter, value: e.target.value })}
+                                placeholder={t('admin.parameterManage.enterValue')}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={newParameter.displayOrder}
+                                onChange={(e) =>
+                                  setNewParameter({ ...newParameter, displayOrder: Number.parseInt(e.target.value || '0', 10) })
+                                }
+                              />
+                            </td>
+                            {paramType === 'kosten' && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={newParameter.weight ?? newParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setNewParameter({ ...newParameter, weight: Number.parseFloat(e.target.value || '0') })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={paramType === 'kosten' ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleCreateParameter('reward')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setNewParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                        {isEditing && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={editingParameter.value}
+                                onChange={(e) =>
+                                  setEditingParameter({ ...editingParameter, value: e.target.value })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={editingParameter.displayOrder}
+                                onChange={(e) =>
+                                  setEditingParameter({
+                                    ...editingParameter,
+                                    displayOrder: Number.parseInt(e.target.value || '0', 10),
+                                  })
+                                }
+                              />
+                            </td>
+                            {paramType === 'kosten' && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editingParameter.weight ?? editingParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setEditingParameter({
+                                      ...editingParameter,
+                                      weight: Number.parseFloat(e.target.value || '0'),
+                                    })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={paramType === 'kosten' ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleUpdateParameter('reward')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setEditingParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => setNewParameter({ type: 'reward', parameterType: paramType, value: '', displayOrder: 0, weight: paramType === 'kosten' ? 0 : undefined })}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    {t('admin.parameterManage.newParameter')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Points Calculation Factor */}
+          <div style={{ marginTop: '3rem', marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem' }}>{t('admin.parameterManage.pointsCalculationFactor')}</h3>
+            <div className="admin-management-card">
+              <p style={{ marginBottom: '1rem' }}>
+                {t('admin.parameterManage.pointsCalculationFactorDescription')}
+              </p>
+              {isEditingFactor ? (
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={editingFactorValue}
+                    onChange={(e) => setEditingFactorValue(e.target.value)}
+                    style={{ width: '150px', padding: '0.5rem' }}
+                  />
+                  <button
+                    className="admin-action-button"
+                    onClick={async () => {
+                      try {
+                        const factorValue = Number.parseFloat(editingFactorValue);
+                        if (isNaN(factorValue) || factorValue <= 0) {
+                          setParameterMessage({ type: 'error', text: 'Faktor muss eine positive Zahl sein' });
+                          return;
+                        }
+                        await api.setSystemConfig('points_calculation_factor', String(factorValue), 'Factor for calculating task points: (difficulty_weight * time_required_weight) * factor');
+                        setPointsCalculationFactor(factorValue);
+                        setParameterMessage({ type: 'success', text: t('admin.parameterManage.factorUpdated') });
+                        setIsEditingFactor(false);
+                      } catch (error: any) {
+                        setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.updateError') });
+                      }
+                    }}
+                  >
+                    {t('admin.parameterManage.save')}
+                  </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => {
+                      setIsEditingFactor(false);
+                      setEditingFactorValue(String(pointsCalculationFactor)); // Reset to original value
+                    }}
+                  >
+                    {t('admin.parameterManage.cancel')}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{pointsCalculationFactor}</span>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => {
+                      setEditingFactorValue(String(pointsCalculationFactor));
+                      setIsEditingFactor(true);
+                    }}
+                  >
+                    {t('admin.parameterManage.edit')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </section>
+      )}
+
       {mode === 'task' && (
         <section className="admin-section">
           <header className="admin-section-header">
@@ -4571,7 +5489,7 @@ const goToRewardCreation = () => {
               </label>
             )}
 
-            {taskSource && (taskSource !== 'existing' || selectedExistingTaskId) && (
+            {(isEditingTask || (taskSource && (taskSource !== 'existing' || selectedExistingTaskId))) && (
               <div className="admin-form-layout">
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
@@ -4579,10 +5497,33 @@ const goToRewardCreation = () => {
                       <h3>{t('admin.task.basics.title')}</h3>
                       <p>{t('admin.task.basics.subtitle')}</p>
                     </div>
-                    <TaskTypeBadge type={taskForm.type} />
+                    {!isEditingTask && <TaskTypeBadge type={taskForm.type} />}
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
-                    <label className="admin-field admin-field-span-2">
+                    {isEditingTask && (
+                      <label className="admin-field">
+                        <FieldLabel label={t('admin.task.fields.type')} required />
+                        <select
+                          value={taskForm.type}
+                          onChange={(event) =>
+                            setTaskForm((prev) => ({
+                              ...prev,
+                              type: event.target.value as TaskFormState['type'],
+                            }))
+                          }
+                          className="admin-select"
+                        >
+                          <option value="video">{t('admin.task.startFromScratch.video')}</option>
+                          <option value="quiz">{t('admin.task.startFromScratch.quiz')}</option>
+                          <option value="article_quiz">{t('admin.task.startFromScratch.articleQuiz')}</option>
+                          <option value="survey">{t('admin.task.startFromScratch.survey')}</option>
+                          <option value="qr">{t('admin.task.startFromScratch.qr')}</option>
+                          <option value="photo">{t('admin.task.startFromScratch.photo')}</option>
+                          <option value="visit_location">{t('admin.task.startFromScratch.visitLocation')}</option>
+                        </select>
+                      </label>
+                    )}
+                    <label className={`admin-field ${isEditingTask ? '' : 'admin-field-span-2'}`}>
                       <FieldLabel label={t('admin.task.fields.title')} required />
                       <input
                         type="text"
@@ -5065,47 +6006,6 @@ const goToRewardCreation = () => {
                 </section>
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>{t('admin.task.audience.title')}</h3>
-                    <p>{t('admin.task.audience.subtitle')}</p>
-                  </div>
-                  <div className="admin-form-grid">
-                    <div className="admin-field">
-                      <FieldLabel label={t('admin.fields.allowedRoles')} />
-                      <MultiSelectDropdown
-                        options={ROLE_OPTIONS}
-                        selectedValues={taskForm.allowedRoles}
-                        onChange={(selected) =>
-                          setTaskForm((prev) => ({ ...prev, allowedRoles: selected }))
-                        }
-                        placeholder={t('admin.task.audience.allRoles')}
-                      />
-                    </div>
-                    <div className="admin-field">
-                      <FieldLabel label={t('admin.fields.allowedUserTypes')} />
-                      <MultiSelectDropdown
-                        options={USER_TYPE_OPTIONS}
-                        selectedValues={taskForm.allowedUserTypes}
-                        onChange={(selected) =>
-                          setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }))
-                        }
-                        placeholder={t('admin.task.audience.allUserTypes')}
-                      />
-                    </div>
-                    <div className="admin-field">
-                      <FieldLabel label={t('admin.fields.allowedHotels')} />
-                      <MultiSelectDropdown
-                        options={HOTEL_OPTIONS}
-                        selectedValues={taskForm.allowedHotelIds}
-                        onChange={(selected) =>
-                          setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }))
-                        }
-                        placeholder={t('admin.task.audience.allHotels')}
-                      />
-                    </div>
-                  </div>
-                </section>
-                <section className="admin-form-section">
-                  <div className="admin-form-section-header">
                     <h3>{t('admin.task.recurrence.title')}</h3>
                     <p>{t('admin.task.recurrence.subtitle')}</p>
                   </div>
@@ -5127,6 +6027,138 @@ const goToRewardCreation = () => {
                         <option value="weekly">{t('admin.task.recurrence.weekly')}</option>
                         <option value="monthly">{t('admin.task.recurrence.monthly')}</option>
                       </select>
+                    </div>
+                  </div>
+                </section>
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Zielgruppe & Zugriff</h3>
+                    <p>Zielgruppe, Metadaten und zusätzliche Informationen zur Aufgabe</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field">
+                      <FieldLabel label="Kategorie" />
+                      <select
+                        value={taskForm.category || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            category: event.target.value as TaskFormState['category'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['category'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Schwierigkeitsgrad" />
+                      <select
+                        value={taskForm.difficulty || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            difficulty: event.target.value as TaskFormState['difficulty'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['difficulty'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Zeitaufwand" />
+                      <select
+                        value={taskForm.time_required || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            time_required: event.target.value as TaskFormState['time_required'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['time_required'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Ort/Werkzeug" />
+                      <select
+                        value={taskForm.location_tool || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            location_tool: event.target.value as TaskFormState['location_tool'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['location_tool'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Zielgruppe" />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {(['Mitarbeitende', 'Gäste', 'Stakeholder'] as const).map((role) => (
+                          <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={(taskForm.zielgruppe || []).includes(role)}
+                              onChange={(e) => {
+                                const currentZielgruppe = taskForm.zielgruppe || [];
+                                if (e.target.checked) {
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: [...currentZielgruppe, role],
+                                  }));
+                                } else {
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: currentZielgruppe.filter((z) => z !== role).length > 0
+                                      ? currentZielgruppe.filter((z) => z !== role)
+                                      : undefined,
+                                  }));
+                                }
+                              }}
+                            />
+                            <span>{role}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Event/Gruppe" />
+                      <input
+                        type="text"
+                        value={taskForm.event_group || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            event_group: event.target.value || undefined,
+                          }))
+                        }
+                        placeholder="Optional: Event oder Gruppe zuordnen"
+                      />
                     </div>
                   </div>
                 </section>
@@ -5276,10 +6308,31 @@ const goToRewardCreation = () => {
                       <h3>{t('admin.reward.details.title')}</h3>
                       <p>Define the reward content and optional integrations.</p>
                     </div>
-                    <RewardTypeBadge type={rewardForm.type} />
+                    {!isEditingReward && <RewardTypeBadge type={rewardForm.type} />}
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
-                    <label className="admin-field admin-field-span-2">
+                    {isEditingReward && (
+                      <label className="admin-field">
+                        <FieldLabel label={t('admin.reward.fields.type')} required />
+                        <select
+                          value={rewardForm.type}
+                          onChange={(event) =>
+                            setRewardForm((prev) => ({
+                              ...prev,
+                              type: event.target.value as RewardType,
+                            }))
+                          }
+                          className="admin-select"
+                        >
+                          {REWARD_TYPE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    <label className={`admin-field ${isEditingReward ? '' : 'admin-field-span-2'}`}>
                       <FieldLabel label={t('admin.task.fields.title')} required />
                       <input
                         type="text"
@@ -5385,48 +6438,6 @@ const goToRewardCreation = () => {
 
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>{t('admin.reward.audience.title')}</h3>
-                    <p>{t('admin.reward.audience.subtitle')}</p>
-                  </div>
-                  <div className="admin-form-grid">
-                    <div className="admin-field">
-                      <FieldLabel label={t('admin.fields.allowedRoles')} />
-                      <MultiSelectDropdown
-                        options={ROLE_OPTIONS}
-                        selectedValues={rewardForm.allowedRoles}
-                        onChange={(selected) =>
-                          setRewardForm((prev) => ({ ...prev, allowedRoles: selected }))
-                        }
-                        placeholder={t('admin.reward.audience.allRoles')}
-                      />
-                    </div>
-                    <div className="admin-field">
-                      <FieldLabel label={t('admin.fields.allowedUserTypes')} />
-                      <MultiSelectDropdown
-                        options={USER_TYPE_OPTIONS}
-                        selectedValues={rewardForm.allowedUserTypes}
-                        onChange={(selected) =>
-                          setRewardForm((prev) => ({ ...prev, allowedUserTypes: selected }))
-                        }
-                        placeholder={t('admin.reward.audience.allUserTypes')}
-                      />
-                    </div>
-                    <div className="admin-field">
-                      <FieldLabel label={t('admin.fields.allowedHotels')} />
-                      <MultiSelectDropdown
-                        options={HOTEL_OPTIONS}
-                        selectedValues={rewardForm.allowedHotelIds}
-                        onChange={(selected) =>
-                          setRewardForm((prev) => ({ ...prev, allowedHotelIds: selected }))
-                        }
-                        placeholder={t('admin.reward.audience.allHotels')}
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                <section className="admin-form-section">
-                  <div className="admin-form-section-header">
                     <h3>{t('admin.reward.recurrence.title')}</h3>
                     <p>{t('admin.reward.recurrence.subtitle')}</p>
                   </div>
@@ -5448,6 +6459,114 @@ const goToRewardCreation = () => {
                         <option value="weekly">{t('admin.reward.recurrence.weekly')}</option>
                         <option value="monthly">{t('admin.reward.recurrence.monthly')}</option>
                       </select>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Zielgruppe & Zugriff</h3>
+                    <p>Zielgruppe, Metadaten und zusätzliche Informationen zur Belohnung</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field">
+                      <FieldLabel label="Zielgruppe" />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {(['Mitarbeitende', 'Gäste', 'Stakeholder'] as const).map((role) => (
+                          <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={(rewardForm.zielgruppe || []).includes(role)}
+                              onChange={(e) => {
+                                const currentZielgruppe = rewardForm.zielgruppe || [];
+                                if (e.target.checked) {
+                                  setRewardForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: [...currentZielgruppe, role],
+                                  }));
+                                } else {
+                                  setRewardForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: currentZielgruppe.filter((z) => z !== role).length > 0
+                                      ? currentZielgruppe.filter((z) => z !== role)
+                                      : null,
+                                  }));
+                                }
+                              }}
+                            />
+                            <span>{role}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Art" />
+                      <select
+                        value={rewardForm.reward_art || ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            reward_art: event.target.value as RewardFormState['reward_art'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(rewardParametersByType['reward_art'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Kategorie" />
+                      <select
+                        value={rewardForm.kategorie || ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            kategorie: event.target.value as RewardFormState['kategorie'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(rewardParametersByType['kategorie'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Event/Gruppe" />
+                      <input
+                        type="text"
+                        value={rewardForm.event_group || ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            event_group: event.target.value || undefined,
+                          }))
+                        }
+                        placeholder="Optional: Event oder Gruppe zuordnen"
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Mögliche Punkte" />
+                      <input
+                        type="number"
+                        min={0}
+                        value={rewardForm.moegliche_punkte !== undefined && rewardForm.moegliche_punkte !== null ? rewardForm.moegliche_punkte : ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            moegliche_punkte: event.target.value ? Number.parseInt(event.target.value || '0', 10) : undefined,
+                          }))
+                        }
+                        placeholder="Optional: Punkte beim Einlösen"
+                      />
                     </div>
                   </div>
                 </section>
@@ -6137,6 +7256,7 @@ const goToRewardCreation = () => {
                     >
                       Location {taskFilterLocation && '✓'}
                     </th>
+                    <th>Zielgruppe</th>
                     <th
                       className="admin-filter-header"
                       onClick={(e) => {
@@ -6170,13 +7290,18 @@ const goToRewardCreation = () => {
                     >
                       {t('admin.filters.recurrence')} {taskFilterRecurrence && '✓'}
                     </th>
+                    <th>Kategorie</th>
+                    <th>Schwierigkeit</th>
+                    <th>Zeitaufwand</th>
+                    <th>Ort/Werkzeug</th>
+                    <th>Event/Gruppe</th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredTasks.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="admin-table-empty">
+                      <td colSpan={14} className="admin-table-empty">
                         No tasks found.
                       </td>
                     </tr>
@@ -6224,6 +7349,13 @@ const goToRewardCreation = () => {
                               ) : null}
                             </div>
                           </td>
+                          <td data-label="Zielgruppe">
+                            <span className="admin-table-secondary">
+                              {Array.isArray((task as any).zielgruppe) && (task as any).zielgruppe.length > 0
+                                ? (task as any).zielgruppe.join(', ')
+                                : '—'}
+                            </span>
+                          </td>
                           <td data-label="Points">{task.points}</td>
                           <td data-label="Status">
                             <span
@@ -6240,6 +7372,31 @@ const goToRewardCreation = () => {
                                 const recurrence = ((task as any).recurrence || 'once') as 'once' | 'daily' | 'weekly' | 'monthly';
                                 return t(`admin.task.recurrence.${recurrence}`).split(' - ')[0];
                               })()}
+                            </span>
+                          </td>
+                          <td data-label="Kategorie">
+                            <span className="admin-table-secondary">
+                              {(task as any).category || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Schwierigkeit">
+                            <span className="admin-table-secondary">
+                              {(task as any).difficulty || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Zeitaufwand">
+                            <span className="admin-table-secondary">
+                              {(task as any).time_required || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Ort/Werkzeug">
+                            <span className="admin-table-secondary">
+                              {(task as any).location_tool || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Event/Gruppe">
+                            <span className="admin-table-secondary">
+                              {(task as any).event_group || '—'}
                             </span>
                           </td>
                           <td data-label="Actions" className="admin-table-actions">
@@ -6535,6 +7692,7 @@ const goToRewardCreation = () => {
                     >
                       Location {rewardFilterLocation && '✓'}
                     </th>
+                    <th>Zielgruppe</th>
                     <th>Cost</th>
                     <th
                       className="admin-filter-header"
@@ -6558,13 +7716,17 @@ const goToRewardCreation = () => {
                     >
                       {t('admin.filters.recurrence')} {rewardFilterRecurrence && '✓'}
                     </th>
+                    <th>Art</th>
+                    <th>Kategorie</th>
+                    <th>Event/Gruppe</th>
+                    <th>Mögliche Punkte</th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRewards.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="admin-table-empty">
+                      <td colSpan={14} className="admin-table-empty">
                         No rewards found.
                       </td>
                     </tr>
@@ -6616,6 +7778,13 @@ const goToRewardCreation = () => {
                               ) : null}
                             </div>
                           </td>
+                          <td data-label="Zielgruppe">
+                            <span className="admin-table-secondary">
+                              {Array.isArray((reward as any).zielgruppe) && (reward as any).zielgruppe.length > 0
+                                ? (reward as any).zielgruppe.join(', ')
+                                : '—'}
+                            </span>
+                          </td>
                           <td data-label="Cost">{cost}</td>
                           <td data-label="Status">
                              <span
@@ -6634,6 +7803,26 @@ const goToRewardCreation = () => {
                                })()}
                              </span>
                            </td>
+                          <td data-label="Art">
+                            <span className="admin-table-secondary">
+                              {(reward as any).reward_art || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Kategorie">
+                            <span className="admin-table-secondary">
+                              {(reward as any).kategorie || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Event/Gruppe">
+                            <span className="admin-table-secondary">
+                              {(reward as any).event_group || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Mögliche Punkte">
+                            <span className="admin-table-secondary">
+                              {(reward as any).moegliche_punkte !== undefined && (reward as any).moegliche_punkte !== null ? (reward as any).moegliche_punkte : '—'}
+                            </span>
+                          </td>
                           <td data-label="Actions" className="admin-table-actions">
                              <button
                                className="admin-action-button"

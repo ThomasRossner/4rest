@@ -17,22 +17,30 @@ export const listLocations: RequestHandler = asyncHandler(async (req, res) => {
 
 export const createLocationController: RequestHandler = asyncHandler(async (req, res) => {
   const payload = req.body ?? {};
+  
+  // Determine is_online from mode
+  let is_online: boolean;
   if (payload.mode === 'online') {
-    payload.is_online = true;
-  }
-  if (payload.mode === 'physical') {
-    payload.is_online = false;
+    is_online = true;
+  } else if (payload.mode === 'physical') {
+    is_online = false;
+  } else if (payload.is_online !== undefined) {
+    // Fallback to explicit is_online if mode is not provided
+    is_online = Boolean(payload.is_online);
+  } else {
+    // Default to false if neither mode nor is_online is provided
+    is_online = false;
   }
 
   const location = await createLocation({
     name: payload.name,
     description: payload.description,
-    is_online: payload.is_online,
+    is_online: is_online,
     address: payload.address,
     latitude: payload.latitude,
     longitude: payload.longitude,
     active: payload.active !== undefined ? Boolean(payload.active) : true,
-    category: payload.category || payload.categoryDescription ? payload.category : null,
+    category: payload.category ? payload.category : null,
     category_description: payload.categoryDescription || null,
   });
   res.status(201).json(location);
@@ -40,19 +48,29 @@ export const createLocationController: RequestHandler = asyncHandler(async (req,
 
 export const updateLocationController: RequestHandler = asyncHandler(async (req, res) => {
   const payload = req.body ?? {};
+  
+  // Determine is_online from mode if provided
+  let is_online: boolean | undefined;
   if (payload.mode === 'online') {
-    payload.is_online = true;
-  }
-  if (payload.mode === 'physical') {
-    payload.is_online = false;
+    is_online = true;
+  } else if (payload.mode === 'physical') {
+    is_online = false;
+  } else if (payload.is_online !== undefined) {
+    is_online = Boolean(payload.is_online);
   }
 
-  const location = await updateLocation(req.params.id, {
-    ...payload,
-    active: payload.active,
-    category: payload.category !== undefined ? payload.category : undefined,
-    category_description: payload.categoryDescription !== undefined ? payload.categoryDescription : undefined,
-  });
+  const updateData: any = {};
+  if (payload.name !== undefined) updateData.name = payload.name;
+  if (payload.description !== undefined) updateData.description = payload.description;
+  if (is_online !== undefined) updateData.is_online = is_online;
+  if (payload.address !== undefined) updateData.address = payload.address;
+  if (payload.latitude !== undefined) updateData.latitude = payload.latitude;
+  if (payload.longitude !== undefined) updateData.longitude = payload.longitude;
+  if (payload.active !== undefined) updateData.active = payload.active;
+  if (payload.category !== undefined) updateData.category = payload.category;
+  if (payload.categoryDescription !== undefined) updateData.category_description = payload.categoryDescription;
+
+  const location = await updateLocation(req.params.id, updateData);
   res.json(location);
 });
 

@@ -24,7 +24,7 @@ export async function processRecurringRewards(): Promise<{
     // Get all active rewards with recurrence != 'once'
     const recurringRewardsResult = await db.query(
       `SELECT id, title, description, points_cost, reward_type, voucher_code, 
-              external_api_id, allowed_roles, allowed_user_types, allowed_hotel_ids,
+              external_api_id, zielgruppe,
               location_id, recurrence, last_generated_at
        FROM rewards
        WHERE active = TRUE 
@@ -154,15 +154,13 @@ async function generateRecurringRewardInstance(template: any): Promise<void> {
        reward_type,
        voucher_code,
        external_api_id,
-       allowed_roles,
-       allowed_user_types,
-       allowed_hotel_ids,
+       zielgruppe,
        location_id,
        active,
        recurrence,
        last_generated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
      RETURNING id`,
     [
       template.title,
@@ -171,9 +169,7 @@ async function generateRecurringRewardInstance(template: any): Promise<void> {
       template.reward_type,
       template.voucher_code ?? null,
       template.external_api_id ?? null,
-      template.allowed_roles ?? [],
-      template.allowed_user_types ?? [],
-      template.allowed_hotel_ids ?? [],
+      template.zielgruppe ?? null,
       template.location_id,
       true, // Active
       template.recurrence, // Keep same recurrence setting

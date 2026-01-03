@@ -90,4 +90,3 @@ export function BarChart({ data, title, maxValue }: BarChartProps) {
     </div>
   );
 }
-

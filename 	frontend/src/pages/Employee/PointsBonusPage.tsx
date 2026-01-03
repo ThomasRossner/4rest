@@ -25,6 +25,10 @@ function PointsBonusPage() {
     setIsGenerating(true);
     try {
       const result = await api.generatePointsBonusQr(amount);
+      console.log('QR code generation result:', result);
+      if (!result || !result.qrToken) {
+        throw new Error('Invalid response from server: missing qrToken');
+      }
       setQrToken(result.qrToken);
       setExpiresAt(result.expiresAt);
       pushToast({
@@ -32,9 +36,11 @@ function PointsBonusPage() {
         message: t('employee.pointsBonus.qrGenerated') || 'QR code generated successfully',
       });
     } catch (error: any) {
+      console.error('Error generating QR code:', error);
+      const errorMessage = error?.response?.data?.error || error?.response?.statusText || error?.message || t('employee.pointsBonus.generateError') || 'Failed to generate QR code';
       pushToast({
         type: 'error',
-        message: error?.response?.data?.error || error?.message || t('employee.pointsBonus.generateError') || 'Failed to generate QR code',
+        message: errorMessage,
       });
     } finally {
       setIsGenerating(false);
@@ -95,7 +101,11 @@ function PointsBonusPage() {
             </p>
           )}
           <div className="points-bonus-qr-container">
-            <QRCodeSVG value={qrToken} size={256} level="M" includeMargin />
+            {qrToken ? (
+              <QRCodeSVG value={qrToken} size={256} level="M" includeMargin />
+            ) : (
+              <p>No QR token available</p>
+            )}
           </div>
           <p className="points-bonus-qr-instruction">
             {t('employee.pointsBonus.instruction') || 'Guest should scan this QR code to receive the bonus points. This code will expire in 24 hours.'}

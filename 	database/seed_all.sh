@@ -107,6 +107,33 @@ else
   exit 1
 fi
 
+echo "\n==> Seeding additional rewards into Postgres (container: ${PG_CONTAINER})"
+
+if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_additional_rewards.sql" >/dev/null; then
+  echo "   - additional rewards seeded (or already exist)"
+else
+  echo "ERROR: Failed to seed additional rewards. Is the Postgres container running?"
+  echo "       Start DBs with: docker-compose -f docker-compose.dev.yml up -d"
+  exit 1
+fi
+
+echo "\n==> Seeding additional tasks into Postgres (container: ${PG_CONTAINER})"
+
+if docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" < "${ROOT_DIR}/database/seed_additional_tasks.sql" >/dev/null; then
+  echo "   - additional tasks seeded (or already exist)"
+else
+  echo "ERROR: Failed to seed additional tasks. Is the Postgres container running?"
+  echo "       Start DBs with: docker-compose -f docker-compose.dev.yml up -d"
+  exit 1
+fi
+
+echo "\n==> Recalculating task points (container: ${PG_CONTAINER})"
+if cd "${ROOT_DIR}/backend" && npm run recalculate-task-points >/dev/null 2>&1; then
+  echo "   - task points recalculated"
+else
+  echo "WARN: Failed to recalculate task points. Points may need to be calculated manually."
+fi
+
 echo "\n✅ Seeding complete."
 echo "Users (password for all): Test123!"
 echo " - test@example.com (guest)"
