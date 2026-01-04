@@ -9,6 +9,8 @@ export interface Location {
   latitude: number | null;
   longitude: number | null;
   active: boolean;
+  category?: string | null;
+  category_description?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -21,6 +23,8 @@ interface LocationInput {
   latitude?: number | null;
   longitude?: number | null;
   active?: boolean;
+  category?: string | null;
+  category_description?: string | null;
 }
 
 interface LocationUpdateInput {
@@ -30,10 +34,12 @@ interface LocationUpdateInput {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  category?: string | null;
+  category_description?: string | null;
 }
 
 const SELECT_FIELDS =
-  'id, name, description, is_online, address, latitude, longitude, active, created_at, updated_at';
+  'id, name, description, is_online, address, latitude, longitude, active, category, category_description, created_at, updated_at';
 
 function mapLocation(row: any): Location {
   if (!row) return row;
@@ -46,6 +52,8 @@ function mapLocation(row: any): Location {
     latitude: row.latitude !== null ? Number(row.latitude) : row.latitude,
     longitude: row.longitude !== null ? Number(row.longitude) : row.longitude,
     active: row.active,
+    category: row.category ?? null,
+    category_description: row.category_description ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -67,6 +75,19 @@ function parseCoordinate(value: unknown, field: string): number {
     throw new Error('Longitude must be between -180 and 180.');
   }
   return Number(numeric.toFixed(6));
+}
+
+const VALID_CATEGORIES = ['online', 'hotel_reception', 'hotel_restaurant', 'external', 'physical'];
+
+function validateCategory(category: string | null | undefined): string | null {
+  if (category === null || category === undefined || category === '') {
+    return null;
+  }
+  const trimmed = category.trim();
+  if (trimmed && !VALID_CATEGORIES.includes(trimmed)) {
+    throw new Error(`Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}`);
+  }
+  return trimmed || null;
 }
 
 function normalizeLocationInput(
@@ -101,37 +122,63 @@ function normalizeLocationInput(
     normalized.is_online = data.is_online;
   }
 
+  if (!partial || data.category !== undefined) {
+    normalized.category = validateCategory(data.category);
+  }
+
+  if (!partial || data.category_description !== undefined) {
+    const catDesc =
+      data.category_description === null || data.category_description === undefined
+        ? null
+        : typeof data.category_description === 'string'
+        ? data.category_description.trim() || null
+        : String(data.category_description).trim() || null;
+    normalized.category_description = catDesc;
+  }
+
   const isOnline = normalized.is_online ?? data.is_online;
 
   if (isOnline === true) {
-    if (!partial || data.address !== undefined) {
+    // For online locations, address, latitude, and longitude must be null
+    if (!partial) {
       normalized.address = null;
-    }
-    if (!partial || data.latitude !== undefined) {
       normalized.latitude = null;
-    }
-    if (!partial || data.longitude !== undefined) {
       normalized.longitude = null;
+    } else {
+      if (data.address !== undefined) normalized.address = null;
+      if (data.latitude !== undefined) normalized.latitude = null;
+      if (data.longitude !== undefined) normalized.longitude = null;
     }
   } else if (isOnline === false) {
-    if (!partial || data.address !== undefined) {
+    // For physical locations, address, latitude, and longitude are required
+    if (!partial) {
+      // Always set these fields for create operations
       const address = typeof data.address === 'string' ? data.address.trim() : '';
       if (!address) {
         throw new Error('Address is required for physical locations.');
       }
       normalized.address = address;
-    }
-    if (!partial || data.latitude !== undefined) {
-      normalized.latitude = parseCoordinate(
-        data.latitude ?? normalized.latitude,
-        'latitude'
-      );
-    }
-    if (!partial || data.longitude !== undefined) {
-      normalized.longitude = parseCoordinate(
-        data.longitude ?? normalized.longitude,
-        'longitude'
-      );
+      
+      if (data.latitude === undefined && data.longitude === undefined) {
+        throw new Error('Latitude and longitude are required for physical locations.');
+      }
+      normalized.latitude = parseCoordinate(data.latitude, 'latitude');
+      normalized.longitude = parseCoordinate(data.longitude, 'longitude');
+    } else {
+      // For update operations, only set if provided
+      if (data.address !== undefined) {
+        const address = typeof data.address === 'string' ? data.address.trim() : '';
+        if (!address) {
+          throw new Error('Address is required for physical locations.');
+        }
+        normalized.address = address;
+      }
+      if (data.latitude !== undefined) {
+        normalized.latitude = parseCoordinate(data.latitude, 'latitude');
+      }
+      if (data.longitude !== undefined) {
+        normalized.longitude = parseCoordinate(data.longitude, 'longitude');
+      }
     }
   }
 
@@ -163,8 +210,8 @@ export async function createLocation(data: LocationInput & { active?: boolean })
   const payload = normalizeLocationInput(data);
 
   const result = await db.query(
-    `INSERT INTO locations (name, description, is_online, address, latitude, longitude, active)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO locations (name, description, is_online, address, latitude, longitude, active, category, category_description)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING ${SELECT_FIELDS}`,
     [
       payload.name,
@@ -174,6 +221,8 @@ export async function createLocation(data: LocationInput & { active?: boolean })
       payload.latitude ?? null,
       payload.longitude ?? null,
       data.active ?? true,
+      payload.category ?? null,
+      payload.category_description ?? null,
     ]
   );
 
@@ -197,6 +246,8 @@ export async function updateLocation(
     address: data.address !== undefined ? data.address : existing.address,
     latitude: data.latitude !== undefined ? data.latitude : existing.latitude,
     longitude: data.longitude !== undefined ? data.longitude : existing.longitude,
+    category: data.category !== undefined ? data.category : existing.category ?? null,
+    category_description: data.category_description !== undefined ? data.category_description : existing.category_description ?? null,
   };
 
   const payload = normalizeLocationInput(mergedInput);
@@ -210,8 +261,10 @@ export async function updateLocation(
          latitude = $5,
          longitude = $6,
          active = $7,
+         category = $8,
+         category_description = $9,
          updated_at = CURRENT_TIMESTAMP
-     WHERE id = $8
+     WHERE id = $10
      RETURNING ${SELECT_FIELDS}`,
     [
       payload.name,
@@ -221,6 +274,8 @@ export async function updateLocation(
       payload.latitude ?? null,
       payload.longitude ?? null,
       data.active ?? existing.active,
+      payload.category ?? null,
+      payload.category_description ?? null,
       id,
     ]
   );

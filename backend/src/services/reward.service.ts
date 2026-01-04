@@ -2,77 +2,20 @@ import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
-import {
-  USER_ROLES,
-  USER_TYPES,
-  HOTEL_IDS,
-  REWARD_TYPES,
-  UserRole,
-  UserType,
-  HotelId,
-  RewardType,
-} from '../constants/enums.js';
+import { UserRole, UserType } from '../constants/enums.js';
 import { Location } from './location.service.js';
-
-function validateRoleArray(values?: string[] | null): UserRole[] {
-  if (!values) return [];
-  const invalid = values.filter((value) => !(USER_ROLES as readonly string[]).includes(value));
-  if (invalid.length) {
-    throw new Error(`Invalid roles: ${invalid.join(', ')}`);
-  }
-  return values as UserRole[];
-}
-
-function validateUserTypeArray(values?: string[] | null): UserType[] {
-  if (!values) return [];
-  const invalid = values.filter((value) => !(USER_TYPES as readonly string[]).includes(value));
-  if (invalid.length) {
-    throw new Error(`Invalid user types: ${invalid.join(', ')}`);
-  }
-  return values as UserType[];
-}
-
-function validateHotelIdArray(values?: string[] | null): HotelId[] {
-  if (!values) return [];
-  const invalid = values.filter((value) => !(HOTEL_IDS as readonly string[]).includes(value));
-  if (invalid.length) {
-    throw new Error(`Invalid hotel IDs: ${invalid.join(', ')}`);
-  }
-  return values as HotelId[];
-}
-
-function validateRewardType(value?: string | null): RewardType {
-  if (!value) {
-    throw new Error('Reward type is required.');
-  }
-  if (!(REWARD_TYPES as readonly string[]).includes(value)) {
-    throw new Error(`Invalid reward type: ${value}`);
-  }
-  return value as RewardType;
-}
-
-function normalizePointsCost(value: unknown): number {
-  if (value === undefined || value === null || value === '') {
-    throw new Error('pointsCost must be zero or greater.');
-  }
-  const parsed =
-    typeof value === 'string' ? Number.parseFloat(value) : typeof value === 'number' ? value : NaN;
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error('pointsCost must be zero or greater.');
-  }
-  return parsed;
-}
+import {
+  validateRewardType,
+  validateRecurrence,
+  normalizePointsCost,
+} from '../utils/validation.js';
+import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 
 export async function getRewardsService(userId: string) {
   const db = getPool();
   const user = await getUserById(userId);
   const role: UserRole | null = user?.role ?? null;
   const userType: UserType | null = user?.user_type ?? null;
-  const configuredHotelId = process.env.HOTEL_ID;
-  const hotelId: HotelId | null =
-    configuredHotelId && (HOTEL_IDS as readonly string[]).includes(configuredHotelId)
-      ? (configuredHotelId as HotelId)
-      : null;
 
   const params: any[] = [];
   let paramIndex = 1;
@@ -80,25 +23,32 @@ export async function getRewardsService(userId: string) {
   let query =
     'SELECT r.*, row_to_json(l.*) AS location FROM rewards r JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE';
 
-  if (role) {
-    query += ` AND (r.allowed_roles IS NULL OR COALESCE(array_length(r.allowed_roles, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_roles))`;
-    params.push(role);
-  } else {
-    query += ' AND (r.allowed_roles IS NULL OR COALESCE(array_length(r.allowed_roles, 1), 0) = 0)';
+  // Map user role to zielgruppe for filtering (same logic as tasks)
+  let userZielgruppe: 'Mitarbeitende' | 'Gäste' | 'Stakeholder' | null = null;
+  
+  if (role === 'administrator') {
+    // Administrators see all rewards
+    userZielgruppe = null;
+  } else if (role === 'employee') {
+    userZielgruppe = 'Mitarbeitende';
+  } else if (role === 'guest') {
+    userZielgruppe = 'Gäste';
+  } else if (role === 'stakeholder') {
+    userZielgruppe = 'Stakeholder';
   }
 
-  if (userType) {
-    query += ` AND (r.allowed_user_types IS NULL OR COALESCE(array_length(r.allowed_user_types, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_user_types))`;
-    params.push(userType);
-  } else {
-    query += ' AND (r.allowed_user_types IS NULL OR COALESCE(array_length(r.allowed_user_types, 1), 0) = 0)';
-  }
-
-  if (hotelId) {
-    query += ` AND (r.allowed_hotel_ids IS NULL OR COALESCE(array_length(r.allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex++} = ANY(r.allowed_hotel_ids))`;
-    params.push(hotelId);
-  } else {
-    query += ' AND (r.allowed_hotel_ids IS NULL OR COALESCE(array_length(r.allowed_hotel_ids, 1), 0) = 0)';
+  // Filter by zielgruppe: Only show rewards that match user's zielgruppe
+  // NULL or empty array zielgruppe means accessible to all, otherwise must match user's zielgruppe
+  if (role !== 'administrator') {
+    if (userZielgruppe) {
+      // Show rewards with NULL/empty zielgruppe (accessible to all) OR rewards where user's zielgruppe is in the array
+      query += ` AND (r.zielgruppe IS NULL OR array_length(r.zielgruppe, 1) IS NULL OR $${paramIndex} = ANY(r.zielgruppe))`;
+      params.push(userZielgruppe);
+      paramIndex++;
+    } else {
+      // If user has no matching zielgruppe (e.g., unknown role), only show rewards with NULL or empty zielgruppe
+      query += ' AND (r.zielgruppe IS NULL OR array_length(r.zielgruppe, 1) IS NULL)';
+    }
   }
 
   query += ' ORDER BY r.points_cost ASC';
@@ -131,6 +81,7 @@ function getRewardIcon(type: string): string {
   return icons[type] || '🎁';
 }
 
+
 interface CreateCustomRewardInput {
   title?: string;
   description?: string | null;
@@ -138,11 +89,14 @@ interface CreateCustomRewardInput {
   rewardType?: string;
   voucherCode?: string | null;
   externalApiId?: string | null;
-  allowed_roles?: string[];
-  allowed_user_types?: string[];
-  allowed_hotel_ids?: string[];
+  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
   location_id: string;
   active?: boolean;
+  recurrence?: string | null;
+  reward_art?: string;
+  kategorie?: string;
+  event_group?: string | null;
+  moegliche_punkte?: number | null;
 }
 
 interface UpdateRewardInput {
@@ -152,11 +106,14 @@ interface UpdateRewardInput {
   rewardType?: string | null;
   voucherCode?: string | null;
   externalApiId?: string | null;
-  allowed_roles?: string[] | null;
-  allowed_user_types?: string[] | null;
-  allowed_hotel_ids?: string[] | null;
+  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
   location_id?: string | null;
   active?: boolean;
+  recurrence?: string | null;
+  reward_art?: string | null;
+  kategorie?: string | null;
+  event_group?: string | null;
+  moegliche_punkte?: number | null;
 }
 
 export async function createCustomReward(data: CreateCustomRewardInput) {
@@ -167,7 +124,21 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
   }
   const rewardType = validateRewardType(data.rewardType);
   const pointsCost = normalizePointsCost(data.pointsCost);
+  const recurrence = validateRecurrence(data.recurrence);
 
+  // Handle zielgruppe array: allow null, empty array, or array of valid enum values
+  let zielgruppeValue: string[] | null = null;
+  if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
+    // Ensure it's an array
+    const zielgruppeArray = Array.isArray(data.zielgruppe) ? data.zielgruppe : [data.zielgruppe];
+    // Filter out empty strings and null values
+    zielgruppeValue = zielgruppeArray.filter((v: any) => v !== null && v !== undefined && v !== '');
+    // If resulting array is empty, set to null
+    if (zielgruppeValue.length === 0) {
+      zielgruppeValue = null;
+    }
+  }
+  
   const result = await db.query(
     `INSERT INTO rewards (
        title,
@@ -176,13 +147,16 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        reward_type,
        voucher_code,
        external_api_id,
-       allowed_roles,
-       allowed_user_types,
-       allowed_hotel_ids,
+       zielgruppe,
        location_id,
-       active
+       active,
+       recurrence,
+       reward_art,
+       kategorie,
+       event_group,
+       moegliche_punkte
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`,
     [
       title,
@@ -191,11 +165,14 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       rewardType,
       data.voucherCode ?? null,
       data.externalApiId ?? null,
-      validateRoleArray(data.allowed_roles ?? []),
-      validateUserTypeArray(data.allowed_user_types ?? []),
-      validateHotelIdArray(data.allowed_hotel_ids ?? []),
+      zielgruppeValue, // PostgreSQL will automatically convert JavaScript arrays to PostgreSQL arrays
       data.location_id,
       data.active ?? true,
+      recurrence,
+      data.reward_art ?? null,
+      data.kategorie ?? null,
+      data.event_group ?? null,
+      data.moegliche_punkte ?? null,
     ]
   );
 
@@ -204,6 +181,20 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
 
 export async function updateReward(id: string, data: UpdateRewardInput) {
   const db = getPool();
+  
+  // Get existing reward
+  const existingReward = await getRewardById(id);
+  if (!existingReward) {
+    throw new Error('Reward not found');
+  }
+  
+  const rewardType = data.rewardType !== undefined ? validateRewardType(data.rewardType ?? undefined) : existingReward.reward_type;
+  const typeChanged = data.rewardType !== undefined && data.rewardType !== existingReward.reward_type;
+  
+  // Validate type-specific fields for the new type (if type is being changed)
+  // Note: For rewards, most fields are optional, but we can validate if needed
+  // For example, voucher_code might be required for voucher type, but it's optional for now
+  
   const updates: string[] = [];
   const values: any[] = [];
   let paramIndex = 1;
@@ -227,9 +218,28 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
     values.push(normalizePointsCost(data.pointsCost));
   }
 
+  // If type is being changed, reset type-specific fields of the old type
+  if (typeChanged) {
+    const oldType = existingReward.reward_type;
+    const newType = rewardType;
+
+    // Reset fields that are specific to the old type but not to the new type
+    // For voucher type, voucher_code might be relevant, but it's optional
+    // For external_api_id, it's typically used with voucher type but can be used with others
+    // We'll reset these fields if they're not explicitly provided in the update
+    if (oldType === 'voucher' && newType !== 'voucher') {
+      // Reset voucher-specific fields if not provided in update
+      if (data.voucherCode === undefined) {
+        updates.push(`voucher_code = $${paramIndex++}`);
+        values.push(null);
+      }
+      // external_api_id might still be relevant for other types, so we don't reset it automatically
+    }
+  }
+
   if (data.rewardType !== undefined) {
     updates.push(`reward_type = $${paramIndex++}`);
-    values.push(validateRewardType(data.rewardType ?? undefined));
+    values.push(rewardType);
   }
 
   if (data.voucherCode !== undefined) {
@@ -242,19 +252,36 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
     values.push(data.externalApiId ?? null);
   }
 
-  if (data.allowed_roles !== undefined) {
-    updates.push(`allowed_roles = $${paramIndex++}`);
-    values.push(validateRoleArray(data.allowed_roles ?? []));
-  }
-
-  if (data.allowed_user_types !== undefined) {
-    updates.push(`allowed_user_types = $${paramIndex++}`);
-    values.push(validateUserTypeArray(data.allowed_user_types ?? []));
-  }
-
-  if (data.allowed_hotel_ids !== undefined) {
-    updates.push(`allowed_hotel_ids = $${paramIndex++}`);
-    values.push(validateHotelIdArray(data.allowed_hotel_ids ?? []));
+  if (data.zielgruppe !== undefined) {
+    // Handle zielgruppe array: allow null, empty array, or array of valid enum values
+    let zielgruppeValue: string[] | null = null;
+    if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
+      let zielgruppeArray: any[];
+      // Check if value is a string (might be JSON stringified array or PostgreSQL array string)
+      if (typeof data.zielgruppe === 'string') {
+        // Try to parse as JSON first
+        try {
+          zielgruppeArray = JSON.parse(data.zielgruppe);
+        } catch {
+          // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
+          // Remove curly braces and split by comma
+          const cleaned = data.zielgruppe.replace(/^{|}$/g, '').trim();
+          zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];
+        }
+      } else if (Array.isArray(data.zielgruppe)) {
+        zielgruppeArray = data.zielgruppe;
+      } else {
+        zielgruppeArray = [data.zielgruppe];
+      }
+      // Filter out empty strings and null values
+      zielgruppeValue = zielgruppeArray.filter((v: any) => v !== null && v !== undefined && v !== '');
+      // If resulting array is empty, set to null
+      if (zielgruppeValue.length === 0) {
+        zielgruppeValue = null;
+      }
+    }
+    updates.push(`zielgruppe = $${paramIndex++}`);
+    values.push(zielgruppeValue);
   }
 
   if (data.location_id !== undefined) {
@@ -265,6 +292,31 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
   if (data.active !== undefined) {
     updates.push(`active = $${paramIndex++}`);
     values.push(data.active);
+  }
+
+  if (data.recurrence !== undefined) {
+    updates.push(`recurrence = $${paramIndex++}`);
+    values.push(validateRecurrence(data.recurrence));
+  }
+
+  if (data.reward_art !== undefined) {
+    updates.push(`reward_art = $${paramIndex++}`);
+    values.push(data.reward_art ?? null);
+  }
+
+  if (data.kategorie !== undefined) {
+    updates.push(`kategorie = $${paramIndex++}`);
+    values.push(data.kategorie ?? null);
+  }
+
+  if (data.event_group !== undefined) {
+    updates.push(`event_group = $${paramIndex++}`);
+    values.push(data.event_group ?? null);
+  }
+
+  if (data.moegliche_punkte !== undefined) {
+    updates.push(`moegliche_punkte = $${paramIndex++}`);
+    values.push(data.moegliche_punkte ?? null);
   }
 
   if (updates.length === 0) {
@@ -408,7 +460,7 @@ export async function verifyQrCodeService(qrToken: string, adminUserId: string) 
 
   // Find redemption by QR token
   const redemptionResult = await db.query(
-    `SELECT rr.*, r.points_cost, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
+    `SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
      JOIN users u ON rr.user_id = u.id
@@ -432,10 +484,11 @@ export async function verifyQrCodeService(qrToken: string, adminUserId: string) 
     throw new Error('User no longer has sufficient points for this redemption');
   }
 
-  // Deduct points now that QR code is verified
+  // Deduct points cost and add possible points (moegliche_punkte) now that QR code is verified
+  const pointsToAdd = redemption.moegliche_punkte || 0;
   await db.query(
-    'UPDATE users SET points = points - $1 WHERE id = $2',
-    [redemption.points_cost, redemption.user_id]
+    'UPDATE users SET points = points - $1 + $2 WHERE id = $3',
+    [redemption.points_cost, pointsToAdd, redemption.user_id]
   );
 
   // Update redemption status to 'used'

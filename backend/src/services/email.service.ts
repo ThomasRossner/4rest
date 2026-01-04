@@ -23,7 +23,13 @@ class EmailService {
   private mockOutputDir: string;
 
   constructor() {
-    this.isMockMode = process.env.EMAIL_MOCK_MODE === 'true' || process.env.NODE_ENV === 'development';
+    // If EMAIL_MOCK_MODE is explicitly set to 'false', disable mock mode even in development
+    // Otherwise, use mock mode if EMAIL_MOCK_MODE is 'true' or if NODE_ENV is 'development'
+    if (process.env.EMAIL_MOCK_MODE === 'false') {
+      this.isMockMode = false;
+    } else {
+      this.isMockMode = process.env.EMAIL_MOCK_MODE === 'true' || process.env.NODE_ENV === 'development';
+    }
     this.mockOutputDir = path.join(__dirname, '../../email-output');
 
     console.log(`[EMAIL SERVICE] Initializing...`);
@@ -54,6 +60,10 @@ class EmailService {
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',
+      // Disable certificate validation for local/internal SMTP servers
+      tls: {
+        rejectUnauthorized: false,
+      },
     };
 
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {

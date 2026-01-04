@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useQuery, useMutation } from 'react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
+import { useToastStore } from '../../stores/toastStore';
 import { useAuthStore } from '../../stores/authStore';
 import './AdminPage.css';
 import {
@@ -16,9 +18,25 @@ import {
 import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
 import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
 import QrScannerPage from './QrScannerPage';
+import { LocationMap } from '../../components/LocationMap/LocationMap';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
+import { SurveyAnalytics } from './SurveyAnalytics';
+import { DebugTools } from './DebugTools';
 
-type AdminMode = 'task' | 'reward' | 'taskManage' | 'rewardManage' | 'location' | 'locationManage' | 'qrScanner' | null;
-type TaskSource = '' | 'existing' | 'video' | 'qr' | 'photo';
+type AdminMode =
+  | 'task'
+  | 'reward'
+  | 'taskManage'
+  | 'rewardManage'
+  | 'location'
+  | 'locationManage'
+  | 'qrScanner'
+  | 'forestStats'
+  | 'surveyAnalytics'
+  | 'debugTools'
+  | 'parameterManage'
+  | null;
+type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
 type AdminTaskTemplate = {
   id: string;
@@ -35,8 +53,20 @@ type AdminTaskTemplate = {
   allowed_user_types?: UserType[] | null;
   allowed_hotel_ids?: HotelId[] | null;
   location_id?: string | null;
+  target_latitude?: number | null;
+  target_longitude?: number | null;
   location?: AdminLocation | null;
   active?: boolean | null;
+  created_at?: string | null;
+  prerequisite_task_id?: string | null;
+  prerequisite_task_count?: number | null;
+  prerequisite_task_ids?: string[] | null;
+  category?: string | null;
+  difficulty?: string | null;
+  time_required?: string | null;
+  location_tool?: string | null;
+  event_group?: string | null;
+  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
 };
 
 type RewardTemplate = {
@@ -54,6 +84,9 @@ type RewardTemplate = {
   location_id?: string | null;
   location?: AdminLocation | null;
   active?: boolean | null;
+  reward_art?: string | null;
+  kategorie?: string | null;
+  event_group?: string | null;
 };
 
 type AdminLocation = {
@@ -65,6 +98,8 @@ type AdminLocation = {
   latitude?: number | null;
   longitude?: number | null;
   active: boolean;
+  category?: string | null;
+  category_description?: string | null;
 };
 
 type VideoSourceOption = 'url' | 'upload';
@@ -82,11 +117,26 @@ type TaskFormState = {
   qr_code: string;
   photo_required: boolean;
   co2_savings_kg: number;
-  allowedRoles: string[];
-  allowedUserTypes: string[];
-  allowedHotelIds: string[];
   locationId: string;
   active: boolean;
+  recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
+  article_url: string;
+  article_content: string;
+  articleSource: 'url' | 'content';
+  surveyQuestions: any[];
+  surveyType: 'single_choice' | 'multiple_choice' | 'text' | 'rating' | 'mixed';
+  target_latitude?: string;
+  target_longitude?: string;
+  target_address?: string;
+  prerequisite_task_id?: string;
+  prerequisite_task_count?: number;
+  prerequisite_task_ids?: string[];
+  category?: 'Kommunikation & Netzwerke' | 'Mensch & soziales Umfeld' | 'Natur & Umweltschutz' | 'Ressourcenverbrauch & Materialeinsatz';
+  difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
+  time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
+  location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
+  event_group?: string;
+  zielgruppe?: 'Mitarbeitende' | 'Gäste' | 'Stakeholder';
 };
 
 type RewardFormState = {
@@ -96,11 +146,14 @@ type RewardFormState = {
   pointsCost: number;
   voucherCode: string;
   externalApiId: string;
-  allowedRoles: string[];
-  allowedUserTypes: string[];
-  allowedHotelIds: string[];
+  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
   locationId: string;
   active: boolean;
+  recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
+  reward_art?: string;
+  kategorie?: string;
+  event_group?: string | null;
+  moegliche_punkte?: number | null;
 };
 
 type LocationFormState = {
@@ -111,6 +164,8 @@ type LocationFormState = {
   latitude: string;
   longitude: string;
   active: boolean;
+  category: string;
+  categoryDescription: string;
 };
 
 type QuizAnswerDraft = {
@@ -123,6 +178,17 @@ type QuizQuestionDraft = {
   prompt: string;
   answers: QuizAnswerDraft[];
   correctAnswerId: string | null;
+  order: number;
+};
+
+type SurveyQuestionDraft = {
+  id: string;
+  question: string;
+  type: 'single_choice' | 'multiple_choice' | 'text' | 'rating';
+  options?: string[];
+  required: boolean;
+  minRating?: number;
+  maxRating?: number;
   order: number;
 };
 
@@ -178,8 +244,771 @@ const RewardTypeBadge = ({ type }: { type: RewardType }) => {
   );
 };
 
+type FilterDropdownProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  position: { top: number; left: number };
+  options?: Array<{ id: string; name?: string } | string>;
+  selectedValue?: string | null;
+  onSelect?: (value: string | null) => void;
+  type: 'location' | 'status' | 'recurrence' | 'type' | 'title' | 'points' | 'cost';
+  // For text filters
+  textValue?: string;
+  onTextChange?: (value: string) => void;
+  // For numeric filters
+  minValue?: string;
+  maxValue?: string;
+  onMinChange?: (value: string) => void;
+  onMaxChange?: (value: string) => void;
+};
+
+const FilterDropdown = ({
+  isOpen,
+  onClose,
+  position,
+  options,
+  selectedValue,
+  onSelect,
+  type,
+  textValue,
+  onTextChange,
+  minValue,
+  maxValue,
+  onMinChange,
+  onMaxChange,
+}: FilterDropdownProps) => {
+  const { t } = useTranslation();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  // Text input filter (for title)
+  if (type === 'title' && onTextChange !== undefined) {
+    return (
+      <div
+        ref={dropdownRef}
+        className="admin-filter-dropdown"
+        style={{
+          position: 'fixed',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          zIndex: 1000,
+          minWidth: '200px',
+        }}
+      >
+        <div className="admin-filter-dropdown-header">
+          <span>{t('admin.filters.filterBy', { type: t('admin.filters.title') })}</span>
+          <button
+            type="button"
+            onClick={() => {
+              onTextChange('');
+              onClose();
+            }}
+            className="admin-filter-clear"
+            style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
+          >
+            {t('admin.filters.clear')}
+          </button>
+        </div>
+        <div className="admin-filter-dropdown-content" style={{ padding: '0.75rem' }}>
+          <input
+            type="text"
+            value={textValue || ''}
+            onChange={(e) => onTextChange(e.target.value)}
+            placeholder={t('admin.filters.titlePlaceholder')}
+            style={{ width: '100%', padding: '0.5rem' }}
+            autoFocus
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Numeric range filter (for points/cost)
+  if ((type === 'points' || type === 'cost') && onMinChange !== undefined && onMaxChange !== undefined) {
+    return (
+      <div
+        ref={dropdownRef}
+        className="admin-filter-dropdown"
+        style={{
+          position: 'fixed',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          zIndex: 1000,
+          minWidth: '220px',
+        }}
+      >
+        <div className="admin-filter-dropdown-header">
+          <span>{t('admin.filters.filterBy', { type: t(`admin.filters.${type}`) })}</span>
+          <button
+            type="button"
+            onClick={() => {
+              onMinChange('');
+              onMaxChange('');
+              onClose();
+            }}
+            className="admin-filter-clear"
+            style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
+          >
+            {t('admin.filters.clear')}
+          </button>
+        </div>
+        <div className="admin-filter-dropdown-content" style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+              {t('admin.filters.min')}
+            </label>
+            <input
+              type="number"
+              value={minValue || ''}
+              onChange={(e) => onMinChange(e.target.value)}
+              placeholder={t('admin.filters.minPlaceholder')}
+              style={{ width: '100%', padding: '0.5rem' }}
+              min="0"
+              step="1"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+              {t('admin.filters.max')}
+            </label>
+            <input
+              type="number"
+              value={maxValue || ''}
+              onChange={(e) => onMaxChange(e.target.value)}
+              placeholder={t('admin.filters.maxPlaceholder')}
+              style={{ width: '100%', padding: '0.5rem' }}
+              min="0"
+              step="1"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Dropdown filter (existing behavior for location, status, recurrence, type)
+  const formatValue = (value: string): string => {
+    if (type === 'status') {
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    if (type === 'recurrence') {
+      const recurrenceKey = value as 'once' | 'daily' | 'weekly' | 'monthly';
+      return t(`admin.task.recurrence.${recurrenceKey}`).split(' - ')[0]; // Get just the first part before the dash
+    }
+    if (type === 'type') {
+      // Format task/reward types to be more readable
+      return value.toUpperCase().replace(/_/g, ' ');
+    }
+    return value;
+  };
+
+  const getOptionLabel = (option: { id: string; name?: string } | string): string => {
+    if (typeof option === 'string') {
+      return formatValue(option);
+    }
+    return option.name || option.id;
+  };
+
+  const getOptionValue = (option: { id: string; name?: string } | string): string => {
+    if (typeof option === 'string') {
+      return option;
+    }
+    return option.id;
+  };
+
+  return (
+    <div
+      ref={dropdownRef}
+      className="admin-filter-dropdown"
+      style={{
+        position: 'fixed',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        zIndex: 1000,
+      }}
+    >
+      <div className="admin-filter-dropdown-header">
+        <span>{t('admin.filters.filterBy', { type })}</span>
+        <button
+          type="button"
+          onClick={() => onSelect?.(null)}
+          className="admin-filter-clear"
+          style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
+        >
+          {t('admin.filters.clear')}
+        </button>
+      </div>
+      <div className="admin-filter-dropdown-list">
+        <button
+          type="button"
+          className={`admin-filter-option ${selectedValue === null ? 'active' : ''}`}
+          onClick={() => {
+            onSelect?.(null);
+            onClose();
+          }}
+        >
+          All
+        </button>
+        {options?.map((option) => {
+          const value = getOptionValue(option);
+          const label = getOptionLabel(option);
+          return (
+            <button
+              key={value}
+              type="button"
+              className={`admin-filter-option ${selectedValue === value ? 'active' : ''}`}
+              onClick={() => {
+                onSelect?.(value);
+                onClose();
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+type MobileFilterModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  filterOptions: {
+    locations: Array<{ id: string; name?: string } | string>;
+    statuses: Array<string>;
+    recurrences: Array<string>;
+    types: Array<string>;
+  };
+  filters: {
+    location: string | null;
+    status: 'active' | 'inactive' | null;
+    recurrence: string | null;
+    type: string | null;
+    title?: string;
+    pointsMin?: string;
+    pointsMax?: string;
+    costMin?: string;
+    costMax?: string;
+  };
+  onFilterChange: (filterType: 'location' | 'status' | 'recurrence' | 'type', value: string | null) => void;
+  onTitleChange?: (value: string) => void;
+  onPointsMinChange?: (value: string) => void;
+  onPointsMaxChange?: (value: string) => void;
+  onCostMinChange?: (value: string) => void;
+  onCostMaxChange?: (value: string) => void;
+  onClearAll: () => void;
+  filterType?: 'task' | 'reward';
+};
+
+const MobileFilterModal = ({
+  isOpen,
+  onClose,
+  filterOptions,
+  filters,
+  onFilterChange,
+  onTitleChange,
+  onPointsMinChange,
+  onPointsMaxChange,
+  onCostMinChange,
+  onCostMaxChange,
+  onClearAll,
+  filterType = 'task',
+}: MobileFilterModalProps) => {
+  const { t } = useTranslation();
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const formatValue = (value: string, type: string): string => {
+    if (type === 'status') {
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    if (type === 'recurrence') {
+      const recurrenceKey = value as 'once' | 'daily' | 'weekly' | 'monthly';
+      return t(`admin.task.recurrence.${recurrenceKey}`).split(' - ')[0]; // Get just the first part before the dash
+    }
+    if (type === 'type') {
+      return value.toUpperCase().replace(/_/g, ' ');
+    }
+    return value;
+  };
+
+  const getOptionLabel = (option: { id: string; name?: string } | string, type: string): string => {
+    if (typeof option === 'string') {
+      return formatValue(option, type);
+    }
+    return option.name || option.id;
+  };
+
+  const getOptionValue = (option: { id: string; name?: string } | string): string => {
+    if (typeof option === 'string') {
+      return option;
+    }
+    return option.id;
+  };
+
+  const activeFilterCount = [
+    filters.location,
+    filters.status,
+    filters.recurrence,
+    filters.type,
+    filters.title?.trim(),
+    filters.pointsMin?.trim() || filters.pointsMax?.trim(),
+    filters.costMin?.trim() || filters.costMax?.trim(),
+  ].filter(Boolean).length;
+
+  return (
+    <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="mobile-filter-title">
+      <div ref={modalRef} className="admin-mobile-filter-modal">
+        <div className="admin-mobile-filter-header">
+          <h3 id="mobile-filter-title">Filters {activeFilterCount > 0 && `(${activeFilterCount})`}</h3>
+          <button
+            type="button"
+            className="admin-icon-button"
+            onClick={onClose}
+            aria-label={t('admin.filters.close')}
+          >
+            <Icon name="back" />
+          </button>
+        </div>
+        <div className="admin-mobile-filter-content">
+          {/* Location Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>Location</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.location ? 'active' : ''}`}
+                onClick={() => onFilterChange('location', null)}
+              >
+                {t('admin.filters.allLocations')}
+              </button>
+              {filterOptions.locations.map((option) => {
+                const value = getOptionValue(option);
+                const label = getOptionLabel(option, 'location');
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`admin-mobile-filter-option ${filters.location === value ? 'active' : ''}`}
+                    onClick={() => onFilterChange('location', filters.location === value ? null : value)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>Status</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.status ? 'active' : ''}`}
+                onClick={() => onFilterChange('status', null)}
+              >
+                {t('admin.filters.allStatuses')}
+              </button>
+              {filterOptions.statuses.map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  className={`admin-mobile-filter-option ${filters.status === status ? 'active' : ''}`}
+                  onClick={() => onFilterChange('status', filters.status === status ? null : status as 'active' | 'inactive')}
+                >
+                  {formatValue(status, 'status')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Recurrence Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>{t('admin.filters.recurrence')}</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.recurrence ? 'active' : ''}`}
+                onClick={() => onFilterChange('recurrence', null)}
+              >
+                {t('admin.filters.allRecurrences')}
+              </button>
+              {filterOptions.recurrences.map((recurrence) => (
+                <button
+                  key={recurrence}
+                  type="button"
+                  className={`admin-mobile-filter-option ${filters.recurrence === recurrence ? 'active' : ''}`}
+                  onClick={() => onFilterChange('recurrence', filters.recurrence === recurrence ? null : recurrence)}
+                >
+                  {formatValue(recurrence, 'recurrence')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Type Filter */}
+          <div className="admin-mobile-filter-section">
+            <h4>Type</h4>
+            <div className="admin-mobile-filter-options">
+              <button
+                type="button"
+                className={`admin-mobile-filter-option ${!filters.type ? 'active' : ''}`}
+                onClick={() => onFilterChange('type', null)}
+              >
+                {t('admin.filters.allTypes')}
+              </button>
+              {filterOptions.types.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={`admin-mobile-filter-option ${filters.type === type ? 'active' : ''}`}
+                  onClick={() => onFilterChange('type', filters.type === type ? null : type)}
+                >
+                  {formatValue(type, 'type')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Title Filter */}
+          {onTitleChange && (
+            <div className="admin-mobile-filter-section">
+              <h4>{t('admin.filters.title')}</h4>
+              <div className="admin-mobile-filter-options">
+                <input
+                  type="text"
+                  value={filters.title || ''}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  placeholder={t('admin.filters.titlePlaceholder')}
+                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Points/Cost Filter */}
+          {(onPointsMinChange || onCostMinChange) && (
+            <div className="admin-mobile-filter-section">
+              <h4>{t(`admin.filters.${filterType === 'task' ? 'points' : 'cost'}`)}</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                    {t('admin.filters.min')}
+                  </label>
+                  <input
+                    type="number"
+                    value={filterType === 'task' ? (filters.pointsMin || '') : (filters.costMin || '')}
+                    onChange={(e) => {
+                      if (filterType === 'task' && onPointsMinChange) {
+                        onPointsMinChange(e.target.value);
+                      } else if (filterType === 'reward' && onCostMinChange) {
+                        onCostMinChange(e.target.value);
+                      }
+                    }}
+                    placeholder={t('admin.filters.minPlaceholder')}
+                    style={{ width: '100%', padding: '0.5rem' }}
+                    min="0"
+                    step="1"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                    {t('admin.filters.max')}
+                  </label>
+                  <input
+                    type="number"
+                    value={filterType === 'task' ? (filters.pointsMax || '') : (filters.costMax || '')}
+                    onChange={(e) => {
+                      if (filterType === 'task' && onPointsMaxChange) {
+                        onPointsMaxChange(e.target.value);
+                      } else if (filterType === 'reward' && onCostMaxChange) {
+                        onCostMaxChange(e.target.value);
+                      }
+                    }}
+                    placeholder={t('admin.filters.maxPlaceholder')}
+                    style={{ width: '100%', padding: '0.5rem' }}
+                    min="0"
+                    step="1"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="admin-mobile-filter-footer">
+          <button
+            type="button"
+            className="admin-action-button secondary"
+            onClick={onClearAll}
+            disabled={activeFilterCount === 0}
+          >
+            {t('admin.filters.clearAll')}
+          </button>
+          <button
+            type="button"
+            className="admin-action-button"
+            onClick={onClose}
+          >
+            {t('admin.filters.applyFilters')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type TaskSelectionModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  mode: 'single' | 'multi';
+  tasks: AdminTaskTemplate[];
+  selectedTaskIds: string[];
+  onApply: (selectedIds: string[]) => void;
+  excludeTaskId?: string;
+};
+
+const TaskSelectionModal = ({
+  isOpen,
+  onClose,
+  mode,
+  tasks,
+  selectedTaskIds,
+  onApply,
+  excludeTaskId,
+}: TaskSelectionModalProps) => {
+  const { t } = useTranslation();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tempSelectedIds, setTempSelectedIds] = useState<string[]>(selectedTaskIds);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+      // Reset temp selection when modal opens
+      setTempSelectedIds(selectedTaskIds);
+      setSearchTerm('');
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen, onClose, selectedTaskIds]);
+
+  // Filter and sort tasks - MUST be before early return (React Hooks rule)
+  const filteredAndSortedTasks = useMemo(() => {
+    let filtered = tasks.filter((task) => {
+      // Exclude the current task being edited
+      if (excludeTaskId && task.id === excludeTaskId) {
+        return false;
+      }
+      // Exclude tasks that have circular dependency (they already have this task as prerequisite)
+      if (excludeTaskId) {
+        if (task.prerequisite_task_id === excludeTaskId) {
+          return false;
+        }
+        if (task.prerequisite_task_ids?.includes(excludeTaskId)) {
+          return false;
+        }
+      }
+      // Filter by search term (title or type)
+      if (searchTerm.trim()) {
+        const searchLower = searchTerm.toLowerCase();
+        const searchUpper = searchTerm.toUpperCase();
+        const searchNormalized = searchUpper.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+        
+        const titleMatch = task.title.toLowerCase().includes(searchLower);
+        
+        // Check if search term matches task type
+        // Support: "quiz", "QUIZ", "visit_location", "VISIT_LOCATION", "VISIT LOCATION"
+        const taskTypeUpper = task.type.toUpperCase();
+        const taskTypeNormalized = taskTypeUpper.replace(/_/g, ' ');
+        const typeMatch = 
+          task.type.toLowerCase().includes(searchLower) ||
+          taskTypeUpper.includes(searchUpper) ||
+          taskTypeNormalized.includes(searchNormalized);
+        
+        return titleMatch || typeMatch;
+      }
+      return true;
+    });
+
+    // Sort by created_at DESC (newest first), then alphabetically by title
+    filtered.sort((a, b) => {
+      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (bCreated !== aCreated) {
+        return bCreated - aCreated; // DESC
+      }
+      return a.title.localeCompare(b.title);
+    });
+
+    return filtered;
+  }, [tasks, excludeTaskId, searchTerm]);
+
+  // Early return AFTER all hooks
+  if (!isOpen) {
+    return null;
+  }
+
+  const handleTaskToggle = (taskId: string) => {
+    if (mode === 'single') {
+      setTempSelectedIds(tempSelectedIds.includes(taskId) ? [] : [taskId]);
+    } else {
+      setTempSelectedIds(
+        tempSelectedIds.includes(taskId)
+          ? tempSelectedIds.filter((id) => id !== taskId)
+          : [...tempSelectedIds, taskId]
+      );
+    }
+  };
+
+  const handleClear = () => {
+    setTempSelectedIds([]);
+  };
+
+  const handleApply = () => {
+    onApply(tempSelectedIds);
+    onClose();
+  };
+
+  const selectedCount = tempSelectedIds.length;
+
+  return (
+    <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="task-selection-title">
+      <div ref={modalRef} className="admin-mobile-filter-modal">
+        <div className="admin-mobile-filter-header">
+          <h3 id="task-selection-title">
+            {mode === 'single' ? t('admin.task.prerequisites.modal.title') : t('admin.task.prerequisites.modal.titleMulti')}
+            {selectedCount > 0 && mode === 'multi' && ` (${selectedCount})`}
+          </h3>
+          <button
+            type="button"
+            className="admin-icon-button"
+            onClick={onClose}
+            aria-label={t('admin.filters.close')}
+          >
+            <Icon name="back" />
+          </button>
+        </div>
+        <div className="admin-mobile-filter-content">
+          {/* Search Input */}
+          <div className="admin-mobile-filter-section">
+            <h4>{mode === 'single' ? t('admin.task.prerequisites.modal.selectTask') : t('admin.task.prerequisites.modal.selectTasks')}</h4>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t('admin.task.prerequisites.modal.searchPlaceholder')}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                fontSize: '1rem',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--border-radius)',
+                marginBottom: 'var(--spacing-sm)',
+              }}
+            />
+          </div>
+
+          {/* Task List */}
+          <div className="admin-mobile-filter-section">
+            <h4>{t('admin.task.prerequisites.modal.title')}</h4>
+            <div className="admin-mobile-filter-options">
+              {filteredAndSortedTasks.length === 0 ? (
+                <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
+                  {t('admin.task.prerequisites.modal.noTasksFound')}
+                </div>
+              ) : (
+                filteredAndSortedTasks.map((task) => {
+                  const isSelected = tempSelectedIds.includes(task.id);
+                  return (
+                    <button
+                      key={task.id}
+                      type="button"
+                      className={`admin-mobile-filter-option ${isSelected ? 'active' : ''}`}
+                      onClick={() => handleTaskToggle(task.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                      }}
+                    >
+                      <div style={{ flexShrink: 0 }}>
+                        <TaskTypeBadge type={task.type} />
+                      </div>
+                      <span style={{ flex: 1, textAlign: 'left' }}>{task.title}</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="admin-mobile-filter-footer">
+          <button
+            type="button"
+            className="admin-action-button secondary"
+            onClick={handleClear}
+            disabled={selectedCount === 0}
+          >
+            {t('admin.task.prerequisites.modal.clear')}
+          </button>
+          <button
+            type="button"
+            className="admin-action-button"
+            onClick={handleApply}
+          >
+            {t('admin.task.prerequisites.modal.apply')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ICONS: Record<
-  'logout' | 'refresh' | 'back',
+  'logout' | 'refresh' | 'back' | 'filter',
   { viewBox: string; paths: string[]; strokeWidth?: number }
 > = {
   logout: {
@@ -204,6 +1033,13 @@ const ICONS: Record<
   back: {
     viewBox: '0 0 24 24',
     paths: ['M19 12H5', 'M12 19l-7-7 7-7'],
+    strokeWidth: 1.5,
+  },
+  filter: {
+    viewBox: '0 0 24 24',
+    paths: [
+      'M22 3H2l8 9.46V19l4 2v-8.54L22 3z',
+    ],
     strokeWidth: 1.5,
   },
 };
@@ -294,9 +1130,31 @@ const reindexQuestions = (questions: QuizQuestionDraft[]): QuizQuestionDraft[] =
     order: index + 1,
   }));
 
+const createEmptySurveyQuestion = (order = 1): SurveyQuestionDraft => {
+  return {
+    id: generateId(),
+    question: '',
+    type: 'single_choice',
+    options: ['', ''],
+    required: true,
+    order,
+  };
+};
+
+const reindexSurveyQuestions = (questions: SurveyQuestionDraft[]): SurveyQuestionDraft[] =>
+  questions.map((question, index) => ({
+    ...question,
+    order: index + 1,
+  }));
+
 const ROLE_OPTIONS = USER_ROLES.map((role) => ({ value: role, label: role }));
 const USER_TYPE_OPTIONS = USER_TYPES.map((type) => ({ value: type, label: type }));
 const HOTEL_OPTIONS = HOTEL_IDS.map((id) => ({ value: id, label: id }));
+// Combined role options for rewards (roles + user types)
+const REWARD_ROLE_OPTIONS = [
+  ...USER_ROLES.map((role) => ({ value: role, label: role })),
+  ...USER_TYPES.map((type) => ({ value: type, label: type })),
+];
 const formatRewardType = (type: RewardType) =>
   type.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
@@ -304,7 +1162,7 @@ const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
   label: formatRewardType(type),
 }));
 
-const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
+const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location'): TaskFormState => ({
   title: '',
   description: '',
   type,
@@ -312,15 +1170,30 @@ const defaultTaskForm = (type: 'video' | 'qr' | 'photo'): TaskFormState => ({
   video_url: '',
   videoSource: 'url',
   videoFile: null,
-  quizQuestions: type === 'video' ? [createEmptyQuestion(1)] : [],
+  quizQuestions: (type === 'video' || type === 'quiz' || type === 'article_quiz') ? [createEmptyQuestion(1)] : [],
   qr_code: type === 'qr' ? '' : '',
   photo_required: type === 'photo',
   co2_savings_kg: 0,
-  allowedRoles: [],
-  allowedUserTypes: [],
-  allowedHotelIds: [],
   locationId: '',
   active: true,
+  recurrence: 'once',
+  article_url: type === 'article_quiz' ? '' : '',
+  article_content: type === 'article_quiz' ? '' : '',
+  articleSource: 'url',
+  surveyQuestions: type === 'survey' ? [createEmptySurveyQuestion(1)] : [],
+  surveyType: 'mixed',
+  target_latitude: type === 'visit_location' ? '' : undefined,
+  target_longitude: type === 'visit_location' ? '' : undefined,
+  target_address: type === 'visit_location' ? '' : undefined,
+  prerequisite_task_id: undefined,
+  prerequisite_task_count: undefined,
+  prerequisite_task_ids: undefined,
+  category: undefined,
+  difficulty: undefined,
+  time_required: undefined,
+  location_tool: undefined,
+  event_group: undefined,
+  zielgruppe: undefined,
 });
 
 const defaultRewardForm = (type: RewardType): RewardFormState => ({
@@ -330,11 +1203,14 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   pointsCost: 0,
   voucherCode: '',
   externalApiId: '',
-  allowedRoles: [],
-  allowedUserTypes: [],
-  allowedHotelIds: [],
+  zielgruppe: undefined,
   locationId: '',
   active: true,
+  recurrence: 'once',
+  reward_art: undefined,
+  kategorie: undefined,
+  event_group: undefined,
+  moegliche_punkte: undefined,
 });
 
 const defaultLocationForm = (): LocationFormState => ({
@@ -345,6 +1221,8 @@ const defaultLocationForm = (): LocationFormState => ({
   latitude: '',
   longitude: '',
   active: true,
+  category: '',
+  categoryDescription: '',
 });
 
 const isDefaultLocationRecord = (location: AdminLocation): boolean =>
@@ -427,6 +1305,59 @@ const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
   return reindexQuestions(normalized);
 };
 
+const normalizeSurveyQuestions = (payload: unknown): SurveyQuestionDraft[] => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) {
+    return payload.map((q, index) => ({
+      id: q.id || generateId(),
+      question: q.question || '',
+      type: q.type || 'single_choice',
+      options: q.options || (q.type === 'single_choice' || q.type === 'multiple_choice' ? ['', ''] : undefined),
+      required: q.required !== undefined ? q.required : true,
+      minRating: q.minRating || 1,
+      maxRating: q.maxRating || 5,
+      order: q.order || index + 1,
+    }));
+  }
+  return [createEmptySurveyQuestion()];
+};
+
+const buildSurveyPayload = (questions: SurveyQuestionDraft[]) => {
+  if (!questions.length) {
+    throw new Error('Add at least one survey question for a survey task.');
+  }
+
+  return questions.map((question) => {
+    const q = {
+      id: question.id,
+      question: question.question.trim(),
+      type: question.type,
+      required: question.required,
+    };
+
+    if (question.type === 'single_choice' || question.type === 'multiple_choice') {
+      if (!question.options || question.options.length < 2) {
+        throw new Error(`Question "${question.question || 'Untitled'}" must have at least 2 options.`);
+      }
+      const validOptions = question.options.filter(opt => opt.trim() !== '');
+      if (validOptions.length < 2) {
+        throw new Error(`Question "${question.question || 'Untitled'}" must have at least 2 non-empty options.`);
+      }
+      return { ...q, options: validOptions };
+    }
+
+    if (question.type === 'rating') {
+      return {
+        ...q,
+        minRating: question.minRating || 1,
+        maxRating: question.maxRating || 5,
+      };
+    }
+
+    return q;
+  });
+};
+
 const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
   if (!questions.length) {
     throw new Error('Add at least one quiz question for a video task.');
@@ -500,7 +1431,8 @@ const validateTaskFormState = ({
   selectedExistingTaskId,
   taskForm,
   isEditing = false,
-}: ValidateTaskFormParams): ValidationResult => {
+  t,
+}: ValidateTaskFormParams & { t: (key: string, options?: any) => string }): ValidationResult => {
   if (!taskSource && !isEditing) {
     return { isValid: false, message: 'Choose how you want to start creating your task.' };
   }
@@ -545,8 +1477,89 @@ const validateTaskFormState = ({
     }
   }
 
+  if (taskForm.type === 'quiz') {
+    try {
+      buildQuizPayload(taskForm.quizQuestions);
+    } catch (error: any) {
+      return {
+        isValid: false,
+        message: error?.message ?? 'Check the quiz questions for missing details.',
+      };
+    }
+  }
+
+  if (taskForm.type === 'article_quiz') {
+    if (taskForm.articleSource === 'url') {
+      if (!taskForm.article_url.trim()) {
+        return { isValid: false, message: 'Article URL is required for article quiz tasks.' };
+      }
+    } else {
+      if (!taskForm.article_content.trim()) {
+        return { isValid: false, message: 'Article content is required for article quiz tasks.' };
+      }
+    }
+    try {
+      buildQuizPayload(taskForm.quizQuestions);
+    } catch (error: any) {
+      return {
+        isValid: false,
+        message: error?.message ?? 'Check the quiz questions for missing details.',
+      };
+    }
+  }
+
+  if (taskForm.type === 'survey') {
+    try {
+      buildSurveyPayload(taskForm.surveyQuestions);
+    } catch (error: any) {
+      return {
+        isValid: false,
+        message: error?.message ?? 'Check the survey questions for missing details.',
+      };
+    }
+  }
+
   if (taskForm.type === 'qr' && !taskForm.qr_code.trim()) {
     return { isValid: false, message: 'Enter the QR code value for QR tasks.' };
+  }
+
+  if (taskForm.type === 'visit_location') {
+    if (!taskForm.target_latitude || !taskForm.target_longitude) {
+      return { isValid: false, message: 'Target location coordinates are required for visit location tasks.' };
+    }
+    const lat = parseFloat(taskForm.target_latitude);
+    const lng = parseFloat(taskForm.target_longitude);
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return { isValid: false, message: 'Invalid target location coordinates.' };
+    }
+  }
+
+  // Validate prerequisites
+  if (taskForm.prerequisite_task_id) {
+    // Type 1 prerequisite is set - no additional validation needed (existence will be checked on backend)
+  }
+  
+  if (taskForm.prerequisite_task_ids) {
+    const taskIdsArray = Array.isArray(taskForm.prerequisite_task_ids) 
+      ? taskForm.prerequisite_task_ids 
+      : [];
+    
+    if (taskIdsArray.length === 0) {
+      return { isValid: false, message: t('admin.task.prerequisites.validation.idsEmpty') };
+    }
+    
+    if (taskForm.prerequisite_task_count !== undefined && taskForm.prerequisite_task_count !== null) {
+      if (!Number.isInteger(taskForm.prerequisite_task_count) || taskForm.prerequisite_task_count < 1) {
+        return { isValid: false, message: t('admin.task.prerequisites.validation.countInvalid') };
+      }
+      if (taskForm.prerequisite_task_count > taskIdsArray.length) {
+        return { isValid: false, message: t('admin.task.prerequisites.validation.countTooLarge', { count: taskForm.prerequisite_task_count, total: taskIdsArray.length }) };
+      }
+    } else {
+      return { isValid: false, message: t('admin.task.prerequisites.validation.countRequired') };
+    }
+  } else if (taskForm.prerequisite_task_count !== undefined && taskForm.prerequisite_task_count !== null) {
+    return { isValid: false, message: t('admin.task.prerequisites.validation.idsRequired') };
   }
 
   if (!taskForm.locationId) {
@@ -702,7 +1715,7 @@ const MultiSelectDropdown = ({
         <div className="admin-multi-select-dropdown">
           <div className="admin-multi-select-actions">
             <button type="button" onClick={handleClear} className="admin-multi-select-clear">
-              Clear selection
+              {t('admin.filters.clearSelection')}
             </button>
           </div>
           <div className="admin-multi-select-options">
@@ -734,17 +1747,20 @@ type FieldLabelProps = {
   readOnly?: boolean;
 };
 
-const FieldLabel = ({ label, required, readOnly }: FieldLabelProps) => (
-  <span className="admin-field-label">
-    <span>{label}</span>
-    {required && (
-      <span className="admin-field-required" aria-hidden="true" title="Required field">
-        *
-      </span>
-    )}
-    {readOnly && <span className="admin-field-readonly">Read only</span>}
-  </span>
-);
+const FieldLabel = ({ label, required, readOnly }: FieldLabelProps) => {
+  const { t } = useTranslation();
+  return (
+    <span className="admin-field-label">
+      <span>{label}</span>
+      {required && (
+        <span className="admin-field-required" aria-hidden="true" title={t('admin.fields.required')}>
+          *
+        </span>
+      )}
+      {readOnly && <span className="admin-field-readonly">{t('admin.fields.readOnly')}</span>}
+    </span>
+  );
+};
 
 const moveItem = <T,>(items: T[], index: number, offset: number): T[] => {
   const newIndex = index + offset;
@@ -763,6 +1779,8 @@ type QuizBuilderProps = {
 };
 
 const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
+  const { t } = useTranslation();
+
   const updateQuestions = (
     updater: (current: QuizQuestionDraft[]) => QuizQuestionDraft[]
   ): void => {
@@ -864,9 +1882,9 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
   if (!questions.length) {
     return (
       <div className="admin-quiz-builder">
-        <p className="admin-quiz-empty">No questions yet. Add your first question below.</p>
+        <p className="admin-quiz-empty">{t('admin.task.quiz.empty')}</p>
         <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
-          Add question
+          {t('admin.task.quiz.addQuestion')}
         </button>
       </div>
     );
@@ -875,10 +1893,9 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
   return (
     <div className="admin-quiz-builder">
       <div className="admin-quiz-header">
-        <h3>Quiz questions</h3>
+        <h3>{t('admin.task.quiz.title')}</h3>
         <p>
-          Add multiple choice questions for this video. Each question needs at least two answers and
-          one correct answer.
+          {t('admin.task.quiz.description')}
         </p>
       </div>
 
@@ -889,7 +1906,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
             <div key={question.id} className="admin-quiz-question">
               <div className="admin-quiz-question-header">
                 <h4>
-                  Question {question.order}
+                  {t('admin.task.quiz.question', { number: question.order })}
                   <span className="admin-quiz-question-controls">
                     <button
                       type="button"
@@ -910,19 +1927,19 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                       onClick={() => removeQuestion(question.id)}
                       disabled={questions.length === 1}
                     >
-                      Remove
+                      {t('admin.task.quiz.remove')}
                     </button>
                   </span>
                 </h4>
               </div>
 
               <label className="admin-field">
-                <span>Question text</span>
+                <span>{t('admin.task.quiz.questionText')}</span>
                 <input
                   type="text"
                   value={question.prompt}
                   onChange={(event) => handlePromptChange(question.id, event.target.value)}
-                  placeholder="Enter the question prompt"
+                  placeholder={t('admin.task.quiz.questionPlaceholder')}
                 />
               </label>
 
@@ -938,7 +1955,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                         checked={question.correctAnswerId === answer.id}
                         onChange={() => selectCorrectAnswer(question.id, answer.id)}
                       />
-                      <span>Correct</span>
+                      <span>{t('admin.task.quiz.correct')}</span>
                     </label>
                     <input
                       type="text"
@@ -946,7 +1963,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                       onChange={(event) =>
                         handleAnswerTextChange(question.id, answer.id, event.target.value)
                       }
-                      placeholder={`Answer option ${answerIndex + 1}`}
+                      placeholder={t('admin.task.quiz.answerOption', { number: answerIndex + 1 })}
                     />
                     <div className="admin-quiz-answer-controls">
                       <button
@@ -968,7 +1985,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                         onClick={() => removeAnswer(question.id, answer.id)}
                         disabled={question.answers.length <= 2}
                       >
-                        Remove
+                        {t('admin.task.quiz.remove')}
                       </button>
                     </div>
                   </div>
@@ -980,7 +1997,7 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
                 className="admin-quiz-add-answer"
                 onClick={() => addAnswer(question.id)}
               >
-                Add answer
+                {t('admin.task.quiz.addAnswer')}
               </button>
             </div>
           );
@@ -988,7 +2005,283 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
       </div>
 
       <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
-        Add question
+        {t('admin.task.quiz.addQuestion')}
+      </button>
+    </div>
+  );
+};
+
+type SurveyBuilderProps = {
+  questions: SurveyQuestionDraft[];
+  onChange: (questions: SurveyQuestionDraft[]) => void;
+};
+
+const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
+  const { t } = useTranslation();
+
+  const updateQuestions = (
+    updater: (current: SurveyQuestionDraft[]) => SurveyQuestionDraft[]
+  ): void => {
+    const next = reindexSurveyQuestions(updater(questions));
+    onChange(next);
+  };
+
+  const handleQuestionChange = (questionId: string, field: keyof SurveyQuestionDraft, value: any) => {
+    updateQuestions((current) =>
+      current.map((question) =>
+        question.id === questionId ? { ...question, [field]: value } : question
+      )
+    );
+  };
+
+  const addQuestion = () => {
+    updateQuestions((current) => [...current, createEmptySurveyQuestion(current.length + 1)]);
+  };
+
+  const removeQuestion = (questionId: string) => {
+    updateQuestions((current) => {
+      if (current.length === 1) {
+        return current;
+      }
+      return current.filter((question) => question.id !== questionId);
+    });
+  };
+
+  const moveQuestion = (questionId: string, offset: number) => {
+    updateQuestions((current) => {
+      const index = current.findIndex((question) => question.id === questionId);
+      if (index === -1) return current;
+      return moveItem(current, index, offset);
+    });
+  };
+
+  const handleOptionChange = (questionId: string, optionIndex: number, value: string) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId || !question.options) return question;
+        const newOptions = [...question.options];
+        newOptions[optionIndex] = value;
+        return { ...question, options: newOptions };
+      })
+    );
+  };
+
+  const addOption = (questionId: string) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId) return question;
+        return {
+          ...question,
+          options: [...(question.options || []), ''],
+        };
+      })
+    );
+  };
+
+  const removeOption = (questionId: string, optionIndex: number) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId || !question.options) return question;
+        if (question.options.length <= 2) return question;
+        const newOptions = question.options.filter((_, idx) => idx !== optionIndex);
+        return { ...question, options: newOptions };
+      })
+    );
+  };
+
+  const moveOption = (questionId: string, optionIndex: number, offset: number) => {
+    updateQuestions((current) =>
+      current.map((question) => {
+        if (question.id !== questionId || !question.options) return question;
+        return { ...question, options: moveItem(question.options, optionIndex, offset) };
+      })
+    );
+  };
+
+  if (!questions.length) {
+    return (
+      <div className="admin-quiz-builder">
+        <p className="admin-quiz-empty">{t('admin.task.survey.empty')}</p>
+        <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
+          {t('admin.task.survey.addQuestion')}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-quiz-builder">
+      <div className="admin-quiz-header">
+        <h3>{t('admin.task.survey.title')}</h3>
+        <p>{t('admin.task.survey.description')}</p>
+      </div>
+
+      <div className="admin-quiz-list">
+        {questions.map((question, questionIndex) => (
+          <div key={question.id} className="admin-quiz-question">
+            <div className="admin-quiz-question-header">
+              <h4>
+                {t('admin.task.survey.questionNumber', { number: question.order })}
+                <span className="admin-quiz-question-controls">
+                  <button
+                    type="button"
+                    onClick={() => moveQuestion(question.id, -1)}
+                    disabled={questionIndex === 0}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveQuestion(question.id, 1)}
+                    disabled={questionIndex === questions.length - 1}
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeQuestion(question.id)}
+                    disabled={questions.length === 1}
+                  >
+                    {t('admin.task.survey.remove')}
+                  </button>
+                </span>
+              </h4>
+            </div>
+
+            <label className="admin-field">
+              <span>{t('admin.task.survey.questionText')}</span>
+              <input
+                type="text"
+                value={question.question}
+                onChange={(e) => handleQuestionChange(question.id, 'question', e.target.value)}
+                placeholder={t('admin.task.survey.questionPlaceholder')}
+              />
+            </label>
+
+            <div className="admin-field">
+              <span>{t('admin.task.survey.questionType')}</span>
+              <select
+                value={question.type}
+                onChange={(e) => {
+                  const newType = e.target.value as SurveyQuestionDraft['type'];
+                  const updates: Partial<SurveyQuestionDraft> = { type: newType };
+                  if (newType === 'single_choice' || newType === 'multiple_choice') {
+                    updates.options = question.options && question.options.length >= 2 
+                      ? question.options 
+                      : ['', ''];
+                  } else if (newType === 'rating') {
+                    updates.minRating = 1;
+                    updates.maxRating = 5;
+                    updates.options = undefined;
+                  } else {
+                    updates.options = undefined;
+                  }
+                  updateQuestions((current) =>
+                    current.map((q) =>
+                      q.id === question.id ? { ...q, ...updates } : q
+                    )
+                  );
+                }}
+              >
+                <option value="single_choice">{t('admin.task.survey.typeSingleChoice')}</option>
+                <option value="multiple_choice">{t('admin.task.survey.typeMultipleChoice')}</option>
+                <option value="text">{t('admin.task.survey.typeText')}</option>
+                <option value="rating">{t('admin.task.survey.typeRating')}</option>
+              </select>
+            </div>
+
+            {(question.type === 'single_choice' || question.type === 'multiple_choice') && (
+              <div className="admin-quiz-answers">
+                <label className="admin-field">
+                  <span>{t('admin.task.survey.options')}</span>
+                </label>
+                {question.options?.map((option, optionIndex) => (
+                  <div key={optionIndex} className="admin-quiz-answer-row">
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(question.id, optionIndex, e.target.value)}
+                      placeholder={t('admin.task.survey.optionPlaceholder', { number: optionIndex + 1 })}
+                    />
+                    <div className="admin-quiz-answer-controls">
+                      <button
+                        type="button"
+                        onClick={() => moveOption(question.id, optionIndex, -1)}
+                        disabled={optionIndex === 0}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveOption(question.id, optionIndex, 1)}
+                        disabled={optionIndex === (question.options?.length || 0) - 1}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeOption(question.id, optionIndex)}
+                        disabled={(question.options?.length || 0) <= 2}
+                      >
+                        {t('admin.task.survey.remove')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="admin-quiz-add-answer"
+                  onClick={() => addOption(question.id)}
+                >
+                  {t('admin.task.survey.addOption')}
+                </button>
+              </div>
+            )}
+
+            {question.type === 'rating' && (
+              <div className="admin-field" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <label>
+                  <span>{t('admin.task.survey.minRating')}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={question.minRating ?? 1}
+                    onChange={(e) =>
+                      handleQuestionChange(question.id, 'minRating', parseInt(e.target.value) || 1)
+                    }
+                  />
+                </label>
+                <label>
+                  <span>{t('admin.task.survey.maxRating')}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={question.maxRating ?? 5}
+                    onChange={(e) =>
+                      handleQuestionChange(question.id, 'maxRating', parseInt(e.target.value) || 5)
+                    }
+                  />
+                </label>
+              </div>
+            )}
+
+            <label className="admin-field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={question.required}
+                onChange={(e) => handleQuestionChange(question.id, 'required', e.target.checked)}
+                style={COMPACT_TOGGLE_STYLE}
+              />
+              <span>{t('admin.task.survey.required')}</span>
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <button type="button" className="admin-quiz-add-question" onClick={addQuestion}>
+        {t('admin.task.survey.addQuestion')}
       </button>
     </div>
   );
@@ -1003,6 +2296,7 @@ const ConfirmDialog = ({
   onCancel,
   onConfirm,
 }: ConfirmDialogState & { onCancel: () => void }) => {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -1016,7 +2310,7 @@ const ConfirmDialog = ({
         </div>
         <div className="admin-modal-footer">
           <button type="button" className="admin-action-button secondary" onClick={onCancel}>
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             type="button"
@@ -1032,10 +2326,13 @@ const ConfirmDialog = ({
 };
 
 function AdminPage() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const showToast = useToastStore((s) => s.showToast);
   const isAdmin = user?.role === 'administrator';
   const [mode, setMode] = useState<AdminMode>(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   const [taskSource, setTaskSource] = useState<TaskSource>('');
   const [selectedExistingTaskId, setSelectedExistingTaskId] = useState<string>('');
@@ -1048,12 +2345,25 @@ function AdminPage() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskReturnMode, setTaskReturnMode] = useState<AdminMode | null>(null);
+  const [isPrerequisiteModalOpen, setIsPrerequisiteModalOpen] = useState(false);
+  const [prerequisiteModalMode, setPrerequisiteModalMode] = useState<'single' | 'multi'>('single');
   const [taskManagementMessage, setTaskManagementMessage] = useState<
     { type: 'error' | 'success'; text: string } | null
   >(null);
   const [includeInactiveTasks, setIncludeInactiveTasks] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [taskConfirm, setTaskConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+  const [taskFilterLocation, setTaskFilterLocation] = useState<string | null>(null);
+  const [taskFilterStatus, setTaskFilterStatus] = useState<'active' | 'inactive' | null>(null);
+  const [taskFilterRecurrence, setTaskFilterRecurrence] = useState<string | null>(null);
+  const [taskFilterType, setTaskFilterType] = useState<string | null>(null);
+  const [taskFilterTitle, setTaskFilterTitle] = useState<string>('');
+  const [taskFilterPointsMin, setTaskFilterPointsMin] = useState<string>('');
+  const [taskFilterPointsMax, setTaskFilterPointsMax] = useState<string>('');
+  const [taskFilterDropdown, setTaskFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'points' | null>(null);
+  const [taskFilterDropdownPosition, setTaskFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const taskFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileTaskFilterOpen, setIsMobileTaskFilterOpen] = useState(false);
 
   const [rewardSource, setRewardSource] = useState<RewardSource>('');
   const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
@@ -1071,6 +2381,28 @@ function AdminPage() {
   const [includeInactiveRewards, setIncludeInactiveRewards] = useState(false);
   const [selectedRewardIds, setSelectedRewardIds] = useState<string[]>([]);
   const [rewardConfirm, setRewardConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+  const [rewardFilterLocation, setRewardFilterLocation] = useState<string | null>(null);
+  const [rewardFilterStatus, setRewardFilterStatus] = useState<'active' | 'inactive' | null>(null);
+  const [rewardFilterRecurrence, setRewardFilterRecurrence] = useState<string | null>(null);
+  const [rewardFilterType, setRewardFilterType] = useState<string | null>(null);
+  const [rewardFilterTitle, setRewardFilterTitle] = useState<string>('');
+  const [rewardFilterCostMin, setRewardFilterCostMin] = useState<string>('');
+  const [rewardFilterCostMax, setRewardFilterCostMax] = useState<string>('');
+  const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'cost' | null>(null);
+  const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+
+  // Parameter management state
+  const [taskParameters, setTaskParameters] = useState<any[]>([]);
+  const [rewardParameters, setRewardParameters] = useState<any[]>([]);
+  const [parameterLoading, setParameterLoading] = useState(false);
+  const [parameterMessage, setParameterMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
+  const [editingParameter, setEditingParameter] = useState<{ id: string; type: 'task' | 'reward'; parameterType: string; value: string; displayOrder: number; weight?: number } | null>(null);
+  const [newParameter, setNewParameter] = useState<{ type: 'task' | 'reward'; parameterType: string; value: string; displayOrder: number; weight?: number } | null>(null);
+  const [pointsCalculationFactor, setPointsCalculationFactor] = useState<number>(1.0);
+  const [editingFactorValue, setEditingFactorValue] = useState<string>('1.0');
+  const [isEditingFactor, setIsEditingFactor] = useState(false);
+  const rewardFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileRewardFilterOpen, setIsMobileRewardFilterOpen] = useState(false);
 
   const [locationForm, setLocationForm] = useState<LocationFormState>(defaultLocationForm);
   const [locationMessage, setLocationMessage] = useState<
@@ -1083,13 +2415,116 @@ function AdminPage() {
     { type: 'error' | 'success'; text: string } | null
   >(null);
   const [locationConfirm, setLocationConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+
+  // Forest debug stats (admin-only)
+  const [forestStats, setForestStats] = useState<
+    Array<{
+      id: string;
+      email: string;
+      points: number;
+      tree_count: number;
+      completed_tasks: number;
+      is_count_consistent: boolean;
+    }>
+  >([]);
+  const [forestStatsLoading, setForestStatsLoading] = useState(false);
+  const [forestStatsError, setForestStatsError] = useState<string | null>(null);
+
+  // Forest validation
+  const [validationDryRun, setValidationDryRun] = useState(true);
+  const [validationForceGeometry, setValidationForceGeometry] = useState(false);
+  const [validationUserFilter, setValidationUserFilter] = useState('');
+  const [validationJobId, setValidationJobId] = useState<string | null>(null);
+  const [validationJobStatus, setValidationJobStatus] = useState<any>(null);
+  const [validationConfirm, setValidationConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+
+  const loadForestStats = async () => {
+    try {
+      setForestStatsLoading(true);
+      setForestStatsError(null);
+      const data = await api.getForestStats();
+      setForestStats(data || []);
+    } catch (error: any) {
+      // Error already handled by setForestStatsError
+      setForestStatsError('Failed to load forest stats.');
+    } finally {
+      setForestStatsLoading(false);
+    }
+  };
+
+  // Poll validation job status
+  useEffect(() => {
+    if (!validationJobId) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await api.getValidationJobStatus(validationJobId);
+        setValidationJobStatus(status);
+        
+        if (status.status === 'completed' || status.status === 'failed') {
+          clearInterval(pollInterval);
+          // Refresh forest stats after completion
+          if (status.status === 'completed') {
+            await loadForestStats();
+          }
+        }
+      } catch (error: any) {
+        // Error handled by clearing poll interval
+        clearInterval(pollInterval);
+        setValidationJobStatus(null);
+        setValidationJobId(null);
+      }
+    }, 1000); // Poll every second
+
+    return () => clearInterval(pollInterval);
+  }, [validationJobId]);
+
+  const startValidation = async () => {
+    try {
+      const result = await api.validateAndFixForest({
+        dryRun: validationDryRun,
+        forceGeometry: validationForceGeometry,
+        userFilter: validationUserFilter || undefined,
+      });
+      setValidationJobId(result.jobId);
+      setValidationJobStatus({ status: 'pending', progress: { currentUser: 0, totalUsers: 0 } });
+      setValidationConfirm({ ...defaultConfirmDialogState });
+    } catch (error: any) {
+      // Error handled by validation confirm state
+      setValidationConfirm({
+        ...defaultConfirmDialogState,
+        visible: true,
+        title: t('admin.forestStats.validation.error'),
+        description: error?.message || t('admin.forestStats.validation.startFailed'),
+        confirmLabel: t('common.actions.close'),
+        onConfirm: () => setValidationConfirm(defaultConfirmDialogState),
+      });
+    }
+  };
+
+  const handleValidationConfirm = () => {
+    setValidationConfirm({
+      ...defaultConfirmDialogState,
+      visible: true,
+      title: validationDryRun
+        ? t('admin.forestStats.validation.confirmDryRun.title')
+        : t('admin.forestStats.validation.confirmLive.title'),
+      description: validationDryRun
+        ? t('admin.forestStats.validation.confirmDryRun.description')
+        : t('admin.forestStats.validation.confirmLive.description'),
+      confirmLabel: t('admin.forestStats.validation.run'),
+      onConfirm: () => {
+        void startValidation();
+      },
+    });
+  };
   const [locationReturnMode, setLocationReturnMode] = useState<AdminMode | null>(null);
   const [includeInactiveLocations, setIncludeInactiveLocations] = useState(false);
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
 
   const taskValidation = useMemo(
-    () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask }),
-    [taskSource, selectedExistingTaskId, taskForm, isEditingTask]
+    () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask, t }),
+    [taskSource, selectedExistingTaskId, taskForm, isEditingTask, t]
   );
 
   const {
@@ -1107,26 +2542,135 @@ function AdminPage() {
 
   const existingTemplates = useMemo<AdminTaskTemplate[]>(() => {
     const list = Array.isArray(adminTasks) ? adminTasks : [];
-    return list.map((task) => ({
-      ...task,
-      quiz_questions:
-        typeof task.quiz_questions === 'string'
-          ? (() => {
-              try {
-                return JSON.parse(task.quiz_questions);
-              } catch {
-                return [];
-              }
-            })()
-          : task.quiz_questions ?? [],
-      allowed_roles: normalizeEnumArray(task.allowed_roles) as UserRole[],
-      allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
-      allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
-      location_id: (task as any).location_id ?? (task as any).location?.id ?? null,
-      location: (task as any).location ?? null,
-      active: task.active ?? true,
-    }));
+    return list.map((task) => {
+      // Normalize zielgruppe array (handle PostgreSQL array strings)
+      const z = (task as any).zielgruppe;
+      let normalizedZielgruppe: string[] | null = null;
+      if (z) {
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
+          } else {
+            normalizedZielgruppe = cleaned.length > 0 ? cleaned : null;
+          }
+        } else if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          } else {
+            normalizedZielgruppe = [z];
+          }
+        }
+      }
+      
+      return {
+        ...task,
+        quiz_questions:
+          typeof task.quiz_questions === 'string'
+            ? (() => {
+                try {
+                  return JSON.parse(task.quiz_questions);
+                } catch {
+                  return [];
+                }
+              })()
+            : task.quiz_questions ?? [],
+        allowed_roles: normalizeEnumArray(task.allowed_roles) as UserRole[],
+        allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
+        allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
+        zielgruppe: normalizedZielgruppe,
+        location_id: (task as any).location_id ?? (task as any).location?.id ?? null,
+        location: (task as any).location ?? null,
+        active: task.active ?? true,
+        recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      };
+    });
   }, [adminTasks]);
+
+  const filteredTasks = useMemo(() => {
+    let filtered = existingTemplates;
+    
+    if (taskFilterLocation) {
+      filtered = filtered.filter((task) => task.location?.id === taskFilterLocation);
+    }
+    
+    if (taskFilterStatus) {
+      filtered = filtered.filter((task) => 
+        taskFilterStatus === 'active' ? task.active : !task.active
+      );
+    }
+    
+    if (taskFilterRecurrence) {
+      filtered = filtered.filter((task) => 
+        ((task as any).recurrence || 'once') === taskFilterRecurrence
+      );
+    }
+    
+    if (taskFilterType) {
+      filtered = filtered.filter((task) => task.type === taskFilterType);
+    }
+    
+    if (taskFilterTitle.trim()) {
+      const searchTerm = taskFilterTitle.toLowerCase().trim();
+      filtered = filtered.filter((task) => 
+        task.title?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (taskFilterPointsMin.trim() || taskFilterPointsMax.trim()) {
+      filtered = filtered.filter((task) => {
+        const points = task.points ?? 0;
+        const min = taskFilterPointsMin.trim() ? Number.parseFloat(taskFilterPointsMin) : -Infinity;
+        const max = taskFilterPointsMax.trim() ? Number.parseFloat(taskFilterPointsMax) : Infinity;
+        // Handle NaN cases
+        if (!Number.isFinite(min) && !Number.isFinite(max)) return true;
+        if (!Number.isFinite(min)) return points <= max;
+        if (!Number.isFinite(max)) return points >= min;
+        return points >= min && points <= max;
+      });
+    }
+    
+    return filtered;
+  }, [existingTemplates, taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType, taskFilterTitle, taskFilterPointsMin, taskFilterPointsMax]);
+
+  const taskFilterOptions = useMemo(() => {
+    const locations = new Map<string, string>();
+    const statuses = new Set<'active' | 'inactive'>();
+    const recurrences = new Set<string>();
+    const types = new Set<string>();
+    
+    existingTemplates.forEach((task) => {
+      if (task.location?.id && task.location?.name) {
+        locations.set(task.location.id, task.location.name);
+      }
+      if (task.active) {
+        statuses.add('active');
+      } else {
+        statuses.add('inactive');
+      }
+      recurrences.add((task as any).recurrence || 'once');
+      types.add(task.type);
+    });
+    
+    return {
+      locations: Array.from(locations.entries()).map(([id, name]) => ({ id, name })),
+      statuses: Array.from(statuses),
+      recurrences: Array.from(recurrences),
+      types: Array.from(types),
+    };
+  }, [existingTemplates]);
 
   const {
     data: rewardTemplatesData,
@@ -1143,16 +2687,125 @@ function AdminPage() {
 
   const rewardTemplates = rewardTemplatesData ?? [];
   const normalizedRewardTemplates = useMemo(() => {
-    return rewardTemplates.map((template) => ({
-      ...template,
-      allowed_roles: normalizeEnumArray(template.allowed_roles),
-      allowed_user_types: normalizeEnumArray(template.allowed_user_types),
-      allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
-      location_id: template.location_id ?? template.location?.id ?? null,
-      location: template.location ?? null,
-      active: template.active ?? true,
-    }));
+    return rewardTemplates.map((template) => {
+      // Normalize zielgruppe array (handle PostgreSQL array strings)
+      const z = (template as any).zielgruppe;
+      let normalizedZielgruppe: string[] | null = null;
+      if (z) {
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
+          } else {
+            normalizedZielgruppe = cleaned.length > 0 ? cleaned : null;
+          }
+        } else if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          } else {
+            normalizedZielgruppe = [z];
+          }
+        }
+      }
+      
+      return {
+        ...template,
+        allowed_roles: normalizeEnumArray(template.allowed_roles),
+        allowed_user_types: normalizeEnumArray(template.allowed_user_types),
+        allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
+        zielgruppe: normalizedZielgruppe,
+        location_id: template.location_id ?? template.location?.id ?? null,
+        location: template.location ?? null,
+        active: template.active ?? true,
+        recurrence: ((template as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      };
+    });
   }, [rewardTemplates]);
+
+  const filteredRewards = useMemo(() => {
+    let filtered = normalizedRewardTemplates;
+    
+    if (rewardFilterLocation) {
+      filtered = filtered.filter((reward) => reward.location?.id === rewardFilterLocation);
+    }
+    
+    if (rewardFilterStatus) {
+      filtered = filtered.filter((reward) => 
+        rewardFilterStatus === 'active' ? reward.active : !reward.active
+      );
+    }
+    
+    if (rewardFilterRecurrence) {
+      filtered = filtered.filter((reward) => 
+        ((reward as any).recurrence || 'once') === rewardFilterRecurrence
+      );
+    }
+    
+    if (rewardFilterType) {
+      filtered = filtered.filter((reward) => reward.reward_type === rewardFilterType);
+    }
+    
+    if (rewardFilterTitle.trim()) {
+      const searchTerm = rewardFilterTitle.toLowerCase().trim();
+      filtered = filtered.filter((reward) => 
+        reward.title?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (rewardFilterCostMin.trim() || rewardFilterCostMax.trim()) {
+      filtered = filtered.filter((reward) => {
+        const cost = reward.points_cost ?? 0;
+        const min = rewardFilterCostMin.trim() ? Number.parseFloat(rewardFilterCostMin) : -Infinity;
+        const max = rewardFilterCostMax.trim() ? Number.parseFloat(rewardFilterCostMax) : Infinity;
+        // Handle NaN cases
+        if (!Number.isFinite(min) && !Number.isFinite(max)) return true;
+        if (!Number.isFinite(min)) return cost <= max;
+        if (!Number.isFinite(max)) return cost >= min;
+        return cost >= min && cost <= max;
+      });
+    }
+    
+    return filtered;
+  }, [normalizedRewardTemplates, rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType, rewardFilterTitle, rewardFilterCostMin, rewardFilterCostMax]);
+
+  const rewardFilterOptions = useMemo(() => {
+    const locations = new Map<string, string>();
+    const statuses = new Set<'active' | 'inactive'>();
+    const recurrences = new Set<string>();
+    const types = new Set<string>();
+    
+    normalizedRewardTemplates.forEach((reward) => {
+      if (reward.location?.id && reward.location?.name) {
+        locations.set(reward.location.id, reward.location.name);
+      }
+      if (reward.active) {
+        statuses.add('active');
+      } else {
+        statuses.add('inactive');
+      }
+      recurrences.add((reward as any).recurrence || 'once');
+      types.add(reward.reward_type);
+    });
+    
+    return {
+      locations: Array.from(locations.entries()).map(([id, name]) => ({ id, name })),
+      statuses: Array.from(statuses),
+      recurrences: Array.from(recurrences),
+      types: Array.from(types),
+    };
+  }, [normalizedRewardTemplates]);
 
   const {
     data: locationsData,
@@ -1167,6 +2820,54 @@ function AdminPage() {
     }
   );
 
+  // Load parameters for dynamic dropdowns
+  const {
+    data: taskParametersData,
+    isLoading: taskParametersLoading,
+    refetch: refetchTaskParameters,
+  } = useQuery<any[]>(
+    ['taskParameters'],
+    () => api.getTaskParameters(),
+    {
+      enabled: isAdmin && (mode === 'task' || mode === 'taskManage' || mode === 'parameterManage'),
+    }
+  );
+
+  const {
+    data: rewardParametersData,
+    isLoading: rewardParametersLoading,
+    refetch: refetchRewardParameters,
+  } = useQuery<any[]>(
+    ['rewardParameters'],
+    () => api.getRewardParameters(),
+    {
+      enabled: isAdmin && (mode === 'reward' || mode === 'rewardManage' || mode === 'parameterManage'),
+    }
+  );
+
+  // Group parameters by type
+  const taskParametersByType = useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+    (taskParametersData || []).forEach((param) => {
+      if (!grouped[param.parameter_type]) {
+        grouped[param.parameter_type] = [];
+      }
+      grouped[param.parameter_type].push(param);
+    });
+    return grouped;
+  }, [taskParametersData]);
+
+  const rewardParametersByType = useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+    (rewardParametersData || []).forEach((param) => {
+      if (!grouped[param.parameter_type]) {
+        grouped[param.parameter_type] = [];
+      }
+      grouped[param.parameter_type].push(param);
+    });
+    return grouped;
+  }, [rewardParametersData]);
+
   const locationsList = locationsData ?? [];
   const locationOptions = useMemo(
     () =>
@@ -1175,7 +2876,7 @@ function AdminPage() {
         label: `${location.name}${location.is_online ? ' (Online)' : ''}${
           location.active ? '' : ' (Inactive)'
         }`,
-        details: location.is_online ? 'Online location' : location.address || 'Physical location',
+        details: location.is_online ? t('admin.location.onlineLocation') : location.address || t('admin.location.physicalLocation'),
         location,
       })),
     [locationsList]
@@ -1221,6 +2922,11 @@ function AdminPage() {
   const publishTaskMutation = useMutation((payload: any) => api.createCustomTask(payload), {
     onSuccess: () => {
       setTaskMessage({ type: 'success', text: 'Task published successfully.' });
+      showToast({
+        type: 'success',
+        title: t('admin.toasts.taskCreatedTitle'),
+        message: t('admin.toasts.taskCreatedMessage'),
+      });
       setTaskSource('');
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
@@ -1257,6 +2963,11 @@ function AdminPage() {
   const createRewardMutation = useMutation((payload: any) => api.createReward(payload), {
     onSuccess: () => {
       setRewardMessage({ type: 'success', text: 'Reward published successfully.' });
+      showToast({
+        type: 'success',
+        title: t('admin.toasts.rewardCreatedTitle'),
+        message: t('admin.toasts.rewardCreatedMessage'),
+      });
       setHasAttemptedRewardPublish(false);
       setRewardSource('');
       setSelectedRewardTemplate('');
@@ -1341,7 +3052,7 @@ function AdminPage() {
     if (taskSource === 'existing') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
-    } else if (taskSource === 'video' || taskSource === 'qr' || taskSource === 'photo') {
+    } else if (taskSource === 'video' || taskSource === 'quiz' || taskSource === 'article_quiz' || taskSource === 'survey' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm(taskSource));
     }
@@ -1361,20 +3072,107 @@ function AdminPage() {
       video_url: template.video_url ?? '',
       videoSource: 'url',
       videoFile: null,
-    quizQuestions:
-      template.type === 'video'
-        ? normalizeQuizQuestions(template.quiz_questions ?? [])
-        : [],
+      quizQuestions:
+        (template.type === 'video' || template.type === 'quiz' || template.type === 'article_quiz')
+          ? normalizeQuizQuestions(template.quiz_questions ?? [])
+          : [],
+      surveyQuestions: template.type === 'survey' ? ((template as any).survey_questions ?? []) : [],
+      surveyType: template.type === 'survey' ? ((template as any).survey_type ?? 'mixed') : 'mixed',
       qr_code: template.qr_code ?? '',
-    photo_required: template.type === 'photo',
+      photo_required: template.type === 'photo',
       co2_savings_kg: template.co2_savings_kg ?? 0,
-      allowedRoles: normalizeEnumArray(template.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      recurrence: ((template as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      article_url: (template as any).article_url ?? '',
+      article_content: (template as any).article_content ?? '',
+      articleSource: (template as any).article_url ? 'url' : 'content',
+      target_latitude: template.type === 'visit_location' ? String((template as any).target_latitude ?? '') : undefined,
+      target_longitude: template.type === 'visit_location' ? String((template as any).target_longitude ?? '') : undefined,
+      target_address: template.type === 'visit_location' ? (template as any).target_address ?? '' : undefined,
+      prerequisite_task_id: (template as any).prerequisite_task_id ?? undefined,
+      prerequisite_task_count: (template as any).prerequisite_task_count ?? undefined,
+      prerequisite_task_ids: (template as any).prerequisite_task_ids ?? undefined,
+      category: (template as any).category ?? undefined,
+      difficulty: (template as any).difficulty ?? undefined,
+      time_required: (template as any).time_required ?? undefined,
+      location_tool: (template as any).location_tool ?? undefined,
+      event_group: (template as any).event_group ?? undefined,
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates, isEditingTask]);
+
+  useEffect(() => {
+    if (!isEditingTask || !editingTaskId) return;
+    const task = existingTemplates.find((t) => t.id === editingTaskId);
+    if (!task) return;
+    setTaskForm({
+      title: task.title ?? '',
+      description: task.description ?? '',
+      type: task.type,
+      points: task.points ?? 0,
+      video_url: task.video_url ?? '',
+      videoSource: 'url',
+      videoFile: null,
+      quizQuestions:
+        (task.type === 'video' || task.type === 'quiz' || task.type === 'article_quiz')
+          ? normalizeQuizQuestions(task.quiz_questions ?? [])
+          : [],
+      surveyQuestions: task.type === 'survey' ? ((task as any).survey_questions ?? []) : [],
+      surveyType: task.type === 'survey' ? ((task as any).survey_type ?? 'mixed') : 'mixed',
+      qr_code: task.qr_code ?? '',
+      photo_required: task.type === 'photo',
+      co2_savings_kg: task.co2_savings_kg ?? 0,
+      locationId: task.location_id ?? task.location?.id ?? '',
+      active: task.active ?? true,
+      recurrence: (task.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      article_url: (task as any).article_url ?? '',
+      article_content: (task as any).article_content ?? '',
+      articleSource: (task as any).article_url ? 'url' : 'content',
+      target_latitude: task.type === 'visit_location' ? String((task as any).target_latitude ?? '') : undefined,
+      target_longitude: task.type === 'visit_location' ? String((task as any).target_longitude ?? '') : undefined,
+      target_address: task.type === 'visit_location' ? (task as any).target_address ?? '' : undefined,
+      prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
+      prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
+      prerequisite_task_ids: (task as any).prerequisite_task_ids ?? undefined,
+      category: (task as any).category ?? undefined,
+      difficulty: (task as any).difficulty ?? undefined,
+      time_required: (task as any).time_required ?? undefined,
+      location_tool: (task as any).location_tool ?? undefined,
+      event_group: (task as any).event_group ?? undefined,
+      zielgruppe: (() => {
+        const z = (task as any).zielgruppe;
+        if (!z) return undefined;
+        // If it's already an array, check if it contains a PostgreSQL array string
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            return [...new Set([...parsed, ...cleaned])];
+          }
+          return cleaned.length > 0 ? cleaned : undefined;
+        }
+        // If it's a string, check if it's PostgreSQL array format
+        if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          }
+          return [z];
+        }
+        return undefined;
+      })(),
+    });
+  }, [isEditingTask, editingTaskId, existingTemplates]);
 
   useEffect(() => {
     if (isEditingReward) {
@@ -1395,6 +3193,12 @@ function AdminPage() {
       setRewardForm(defaultRewardForm(rewardSource));
     }
   }, [rewardSource, isEditingReward]);
+
+  useEffect(() => {
+    if (mode === 'parameterManage') {
+      void loadParameters();
+    }
+  }, [mode]);
 
   useEffect(() => {
     if (isEditingReward) {
@@ -1428,11 +3232,9 @@ function AdminPage() {
       pointsCost: normalizedPointsCost,
       voucherCode: template.voucher_code ?? '',
       externalApiId: template.external_api_id ?? '',
-      allowedRoles: normalizeEnumArray(template.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
     });
   }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates, isEditingReward]);
 
@@ -1462,6 +3264,11 @@ function AdminPage() {
       }
 
       const prepareVideoData = async (taskType: string) => {
+        if (taskType === 'quiz' || taskType === 'article_quiz') {
+          const quizPayload = buildQuizPayload(taskForm.quizQuestions);
+          return { videoUrl: undefined as string | undefined, quizPayload };
+        }
+        
         if (taskType !== 'video') {
           return { videoUrl: undefined as string | undefined, quizPayload: undefined as any };
         }
@@ -1500,10 +3307,8 @@ function AdminPage() {
           type: taskForm.type,
           points: Number(taskForm.points) || 0,
           co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-          allowed_roles: ensureRoleList(taskForm.allowedRoles),
-          allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
-          allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
           active: Boolean(taskForm.active),
+          recurrence: taskForm.recurrence,
         };
         payload.location_id = taskForm.locationId;
 
@@ -1514,12 +3319,61 @@ function AdminPage() {
           payload.video_url = videoUrl;
           payload.quiz_questions = quizPayload;
         }
+        if (taskForm.type === 'quiz') {
+          payload.quiz_questions = quizPayload;
+        }
+        if (taskForm.type === 'article_quiz') {
+          if (taskForm.articleSource === 'url') {
+            payload.article_url = taskForm.article_url.trim();
+            payload.article_content = null;
+          } else {
+            payload.article_content = taskForm.article_content.trim();
+            payload.article_url = null;
+          }
+          payload.quiz_questions = quizPayload;
+        }
+        if (taskForm.type === 'survey') {
+          payload.survey_questions = buildSurveyPayload(taskForm.surveyQuestions);
+          payload.survey_type = taskForm.surveyType;
+        }
         if (taskForm.type === 'qr') {
           payload.qr_code = taskForm.qr_code.trim();
         }
         if (taskForm.type === 'photo') {
           payload.photo_required = true;
         }
+        if (taskForm.type === 'visit_location') {
+          payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
+          payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
+        }
+        
+        // Add prerequisite fields
+        if (taskForm.prerequisite_task_id) {
+          payload.prerequisite_task_id = taskForm.prerequisite_task_id;
+        }
+        if (taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0) {
+          payload.prerequisite_task_ids = taskForm.prerequisite_task_ids;
+          payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
+        }
+
+        // Add metadata fields
+        if (taskForm.category) {
+          payload.category = taskForm.category;
+        }
+        if (taskForm.difficulty) {
+          payload.difficulty = taskForm.difficulty;
+        }
+        if (taskForm.time_required) {
+          payload.time_required = taskForm.time_required;
+        }
+        if (taskForm.location_tool) {
+          payload.location_tool = taskForm.location_tool;
+        }
+        if (taskForm.event_group) {
+          payload.event_group = taskForm.event_group.trim();
+        }
+        // Always include zielgruppe, even if undefined/null, so it can be cleared
+        payload.zielgruppe = taskForm.zielgruppe || null;
 
         await updateTaskMutation.mutateAsync({ id: editingTaskId, payload });
         return;
@@ -1540,9 +3394,6 @@ function AdminPage() {
           type: template.type,
           points: Number(taskForm.points) || 0,
           co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-          allowed_roles: ensureRoleList(taskForm.allowedRoles),
-          allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
-          allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
           active: Boolean(taskForm.active),
         };
         payload.location_id = taskForm.locationId;
@@ -1554,12 +3405,61 @@ function AdminPage() {
           payload.video_url = videoUrl;
           payload.quiz_questions = quizPayload;
         }
+        if (template.type === 'quiz') {
+          payload.quiz_questions = quizPayload;
+        }
+        if (template.type === 'article_quiz') {
+          if (taskForm.articleSource === 'url') {
+            payload.article_url = taskForm.article_url.trim();
+            payload.article_content = null;
+          } else {
+            payload.article_content = taskForm.article_content.trim();
+            payload.article_url = null;
+          }
+          payload.quiz_questions = quizPayload;
+        }
+        if (template.type === 'survey') {
+          payload.survey_questions = buildSurveyPayload(taskForm.surveyQuestions);
+          payload.survey_type = taskForm.surveyType;
+        }
         if (template.type === 'qr') {
           payload.qr_code = taskForm.qr_code.trim();
         }
         if (template.type === 'photo') {
           payload.photo_required = true;
         }
+        if (template.type === 'visit_location') {
+          payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
+          payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
+        }
+        
+        // Add prerequisite fields
+        if (taskForm.prerequisite_task_id) {
+          payload.prerequisite_task_id = taskForm.prerequisite_task_id;
+        }
+        if (taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0) {
+          payload.prerequisite_task_ids = taskForm.prerequisite_task_ids;
+          payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
+        }
+
+        // Add metadata fields
+        if (taskForm.category) {
+          payload.category = taskForm.category;
+        }
+        if (taskForm.difficulty) {
+          payload.difficulty = taskForm.difficulty;
+        }
+        if (taskForm.time_required) {
+          payload.time_required = taskForm.time_required;
+        }
+        if (taskForm.location_tool) {
+          payload.location_tool = taskForm.location_tool;
+        }
+        if (taskForm.event_group) {
+          payload.event_group = taskForm.event_group.trim();
+        }
+        // Always include zielgruppe, even if undefined/null, so it can be cleared
+        payload.zielgruppe = taskForm.zielgruppe || null;
 
         await publishTaskMutation.mutateAsync(payload);
         return;
@@ -1577,10 +3477,8 @@ function AdminPage() {
         type: taskForm.type,
         points: Number(taskForm.points) || 0,
         co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
-        allowed_roles: ensureRoleList(taskForm.allowedRoles),
-        allowed_user_types: ensureUserTypeList(taskForm.allowedUserTypes),
-        allowed_hotel_ids: ensureHotelIdList(taskForm.allowedHotelIds),
         active: Boolean(taskForm.active),
+        recurrence: taskForm.recurrence,
       };
       payload.location_id = taskForm.locationId;
 
@@ -1591,12 +3489,61 @@ function AdminPage() {
         payload.video_url = videoUrl;
         payload.quiz_questions = quizPayload;
       }
+      if (taskSource === 'quiz') {
+        payload.quiz_questions = quizPayload;
+      }
+      if (taskSource === 'article_quiz') {
+        if (taskForm.articleSource === 'url') {
+          payload.article_url = taskForm.article_url.trim();
+          payload.article_content = null;
+        } else {
+          payload.article_content = taskForm.article_content.trim();
+          payload.article_url = null;
+        }
+        payload.quiz_questions = quizPayload;
+      }
+      if (taskSource === 'survey') {
+        payload.survey_questions = buildSurveyPayload(taskForm.surveyQuestions);
+        payload.survey_type = taskForm.surveyType;
+      }
       if (taskSource === 'qr') {
         payload.qr_code = taskForm.qr_code.trim();
       }
       if (taskSource === 'photo') {
         payload.photo_required = true;
       }
+      if (taskSource === 'visit_location') {
+        payload.target_latitude = parseFloat(taskForm.target_latitude || '0');
+        payload.target_longitude = parseFloat(taskForm.target_longitude || '0');
+      }
+      
+      // Add prerequisite fields
+      if (taskForm.prerequisite_task_id) {
+        payload.prerequisite_task_id = taskForm.prerequisite_task_id;
+      }
+      if (taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0) {
+        payload.prerequisite_task_ids = taskForm.prerequisite_task_ids;
+        payload.prerequisite_task_count = taskForm.prerequisite_task_count || taskForm.prerequisite_task_ids.length;
+      }
+
+      // Add metadata fields
+      if (taskForm.category) {
+        payload.category = taskForm.category;
+      }
+      if (taskForm.difficulty) {
+        payload.difficulty = taskForm.difficulty;
+      }
+      if (taskForm.time_required) {
+        payload.time_required = taskForm.time_required;
+      }
+      if (taskForm.location_tool) {
+        payload.location_tool = taskForm.location_tool;
+      }
+      if (taskForm.event_group) {
+        payload.event_group = taskForm.event_group.trim();
+      }
+      // Always include zielgruppe, even if undefined/null, so it can be cleared
+      payload.zielgruppe = taskForm.zielgruppe || null;
 
       await publishTaskMutation.mutateAsync(payload);
     } catch (error: any) {
@@ -1618,9 +3565,6 @@ function AdminPage() {
         return;
       }
 
-      const allowedRoles = ensureRoleList(rewardForm.allowedRoles);
-      const allowedUserTypes = ensureUserTypeList(rewardForm.allowedUserTypes);
-      const allowedHotelIds = ensureHotelIdList(rewardForm.allowedHotelIds);
       const pointsCost = Number(rewardForm.pointsCost) || 0;
 
       const basePayload: any = {
@@ -1628,10 +3572,9 @@ function AdminPage() {
         description: rewardForm.description,
         pointsCost,
         rewardType: rewardForm.type,
-        allowed_roles: allowedRoles,
-        allowed_user_types: allowedUserTypes,
-        allowed_hotel_ids: allowedHotelIds,
+        zielgruppe: rewardForm.zielgruppe || null,
         active: Boolean(rewardForm.active),
+        recurrence: rewardForm.recurrence,
       };
       basePayload.location_id = rewardForm.locationId;
 
@@ -1640,6 +3583,18 @@ function AdminPage() {
       }
       if (rewardForm.externalApiId.trim()) {
         basePayload.externalApiId = rewardForm.externalApiId.trim();
+      }
+      if (rewardForm.reward_art) {
+        basePayload.reward_art = rewardForm.reward_art;
+      }
+      if (rewardForm.kategorie) {
+        basePayload.kategorie = rewardForm.kategorie;
+      }
+      if (rewardForm.event_group?.trim()) {
+        basePayload.event_group = rewardForm.event_group.trim();
+      }
+      if (rewardForm.moegliche_punkte !== undefined && rewardForm.moegliche_punkte !== null) {
+        basePayload.moegliche_punkte = Number(rewardForm.moegliche_punkte) || null;
       }
 
       if (isEditingReward && editingRewardId) {
@@ -1652,6 +3607,39 @@ function AdminPage() {
       setRewardMessage({
         type: 'error',
         text: error?.message || 'Failed to prepare reward payload.',
+      });
+    }
+  };
+
+  const handleGeocodeAddress = async () => {
+    if (!locationForm.address || !locationForm.address.trim()) {
+      setLocationMessage({
+        type: 'error',
+        text: 'Please enter an address first.',
+      });
+      return;
+    }
+
+    try {
+      setLocationMessage({ type: 'info', text: 'Looking up coordinates...' });
+      const result = await api.geocodeAddress(locationForm.address.trim());
+      
+      setLocationForm((prev) => ({
+        ...prev,
+        latitude: String(result.latitude),
+        longitude: String(result.longitude),
+        // Optionally update address with the formatted version from geocoding
+        address: result.display_name || prev.address,
+      }));
+
+      setLocationMessage({
+        type: 'success',
+        text: `Coordinates found: ${result.latitude}, ${result.longitude}`,
+      });
+    } catch (error: any) {
+      setLocationMessage({
+        type: 'error',
+        text: error?.message || 'Failed to geocode address. Please enter coordinates manually.',
       });
     }
   };
@@ -1682,6 +3670,13 @@ function AdminPage() {
         payload.longitude = Number.parseFloat(locationForm.longitude);
       }
 
+      if (locationForm.category) {
+        payload.category = locationForm.category.trim();
+      }
+      if (locationForm.categoryDescription) {
+        payload.categoryDescription = locationForm.categoryDescription.trim();
+      }
+
       if (isEditingLocation && editingLocationId) {
         await updateLocationMutation.mutateAsync({ id: editingLocationId, payload });
       } else {
@@ -1699,23 +3694,83 @@ function AdminPage() {
     }
   };
 
+  // Track previous template/location IDs to avoid infinite loops
+  const prevTaskTemplateIdsRef = useRef<string>('');
+  const prevRewardTemplateIdsRef = useRef<string>('');
+  const prevLocationIdsRef = useRef<string>('');
+
+  // Store latest arrays in refs to avoid dependency issues
+  const existingTemplatesRef = useRef(existingTemplates);
+  const normalizedRewardTemplatesRef = useRef(normalizedRewardTemplates);
+  const locationsListRef = useRef(locationsList);
+
   useEffect(() => {
-    setSelectedTaskIds((prev) =>
-      prev.filter((id) => existingTemplates.some((task) => task.id === id))
-    );
+    existingTemplatesRef.current = existingTemplates;
   }, [existingTemplates]);
 
   useEffect(() => {
-    setSelectedRewardIds((prev) =>
-      prev.filter((id) => normalizedRewardTemplates.some((reward) => reward.id === id))
-    );
+    normalizedRewardTemplatesRef.current = normalizedRewardTemplates;
   }, [normalizedRewardTemplates]);
 
   useEffect(() => {
-    setSelectedLocationIds((prev) =>
-      prev.filter((id) => locationsList.some((location) => location.id === id))
-    );
+    locationsListRef.current = locationsList;
   }, [locationsList]);
+
+  // Create stable ID strings for dependency tracking
+  const taskTemplateIdsKey = useMemo(() => existingTemplates.map((t) => t.id).sort().join(','), [existingTemplates]);
+  const rewardTemplateIdsKey = useMemo(() => normalizedRewardTemplates.map((r) => r.id).sort().join(','), [normalizedRewardTemplates]);
+  const locationIdsKey = useMemo(() => locationsList.map((l) => l.id).sort().join(','), [locationsList]);
+
+  useEffect(() => {
+    if (prevTaskTemplateIdsRef.current === taskTemplateIdsKey) {
+      return; // No change in template IDs
+    }
+    prevTaskTemplateIdsRef.current = taskTemplateIdsKey;
+
+    setSelectedTaskIds((prev) => {
+      const validIds = new Set(existingTemplatesRef.current.map((task) => task.id));
+      const filtered = prev.filter((id) => validIds.has(id));
+      // Only update if changed
+      if (filtered.length !== prev.length || !filtered.every((id, idx) => prev[idx] === id)) {
+        return filtered;
+      }
+      return prev;
+    });
+  }, [taskTemplateIdsKey]);
+
+  useEffect(() => {
+    if (prevRewardTemplateIdsRef.current === rewardTemplateIdsKey) {
+      return; // No change in template IDs
+    }
+    prevRewardTemplateIdsRef.current = rewardTemplateIdsKey;
+
+    setSelectedRewardIds((prev) => {
+      const validIds = new Set(normalizedRewardTemplatesRef.current.map((reward) => reward.id));
+      const filtered = prev.filter((id) => validIds.has(id));
+      // Only update if changed
+      if (filtered.length !== prev.length || !filtered.every((id, idx) => prev[idx] === id)) {
+        return filtered;
+      }
+      return prev;
+    });
+  }, [rewardTemplateIdsKey]);
+
+  useEffect(() => {
+    if (prevLocationIdsRef.current === locationIdsKey) {
+      return; // No change in location IDs
+    }
+    prevLocationIdsRef.current = locationIdsKey;
+
+    setSelectedLocationIds((prev) => {
+      const validIds = new Set(locationsListRef.current.map((location) => location.id));
+      const filtered = prev.filter((id) => validIds.has(id));
+      // Only update if changed
+      if (filtered.length !== prev.length || !filtered.every((id, idx) => prev[idx] === id)) {
+        return filtered;
+      }
+      return prev;
+    });
+  }, [locationIdsKey]);
 
   useEffect(() => {
     if (
@@ -1775,7 +3830,7 @@ function AdminPage() {
       await api.bulkUpdateTasksStatus(selectedTaskIds, active);
       setTaskManagementMessage({
         type: 'success',
-        text: active ? 'Selected tasks activated.' : 'Selected tasks deactivated.',
+        text: active ? t('admin.messages.selectedTasksActivated') : t('admin.messages.selectedTasksDeactivated'),
       });
       setSelectedTaskIds([]);
       void refetchTasks();
@@ -1791,9 +3846,9 @@ function AdminPage() {
     if (!selectedTaskIds.length) return;
     setTaskConfirm({
       visible: true,
-      title: 'Delete selected tasks',
-      description: 'Are you sure you want to permanently delete the selected tasks? This action cannot be undone.',
-      confirmLabel: 'Delete tasks',
+      title: t('admin.confirm.deleteSelectedTasks.title'),
+      description: t('admin.confirm.deleteSelectedTasks.description'),
+      confirmLabel: t('admin.confirm.deleteTasks'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -1801,14 +3856,14 @@ function AdminPage() {
           await api.bulkDeleteTasks(selectedTaskIds);
           setTaskManagementMessage({
             type: 'success',
-            text: 'Selected tasks deleted.',
+            text: t('admin.messages.selectedTasksDeleted'),
           });
           setSelectedTaskIds([]);
           void refetchTasks();
         } catch (error: any) {
           setTaskManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete selected tasks.',
+            text: error?.message || t('admin.messages.failedToDeleteTasks'),
           });
         } finally {
           setTaskConfirm(defaultConfirmDialogState);
@@ -1823,13 +3878,13 @@ function AdminPage() {
       await api.bulkUpdateTasksStatus([taskId], active);
       setTaskManagementMessage({
         type: 'success',
-        text: active ? 'Task activated.' : 'Task deactivated.',
+        text: active ? t('admin.messages.taskActivated') : t('admin.messages.taskDeactivated'),
       });
       void refetchTasks();
     } catch (error: any) {
       setTaskManagementMessage({
         type: 'error',
-        text: error?.message || 'Failed to update task.',
+        text: error?.message || t('admin.messages.failedToUpdateTask'),
       });
     }
   };
@@ -1837,9 +3892,9 @@ function AdminPage() {
   const handleTaskDelete = async (taskId: string) => {
     setTaskConfirm({
       visible: true,
-      title: 'Delete task',
-      description: 'Are you sure you want to permanently delete this task? This action cannot be undone.',
-      confirmLabel: 'Delete task',
+      title: t('admin.confirm.deleteTaskSingle.title'),
+      description: t('admin.confirm.deleteTaskSingle.description'),
+      confirmLabel: t('admin.confirm.deleteTask'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -1856,7 +3911,7 @@ function AdminPage() {
         } catch (error: any) {
           setTaskManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete task.',
+            text: error?.message || t('admin.messages.failedToDeleteTask'),
           });
         } finally {
           setTaskConfirm(defaultConfirmDialogState);
@@ -1872,7 +3927,7 @@ function AdminPage() {
       await api.bulkUpdateRewardsStatus(selectedRewardIds, active);
       setRewardManagementMessage({
         type: 'success',
-        text: active ? 'Selected rewards activated.' : 'Selected rewards deactivated.',
+        text: active ? t('admin.messages.selectedRewardsActivated') : t('admin.messages.selectedRewardsDeactivated'),
       });
       setSelectedRewardIds([]);
       void refetchRewardTemplates();
@@ -1888,9 +3943,9 @@ function AdminPage() {
     if (!selectedRewardIds.length) return;
     setRewardConfirm({
       visible: true,
-      title: 'Delete selected rewards',
-      description: 'Are you sure you want to permanently delete the selected rewards? This action cannot be undone.',
-      confirmLabel: 'Delete rewards',
+      title: t('admin.confirm.deleteSelectedRewards.title'),
+      description: t('admin.confirm.deleteSelectedRewards.description'),
+      confirmLabel: t('admin.confirm.deleteRewards'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -1898,14 +3953,14 @@ function AdminPage() {
           await api.bulkDeleteRewards(selectedRewardIds);
           setRewardManagementMessage({
             type: 'success',
-            text: 'Selected rewards deleted.',
+            text: t('admin.messages.selectedRewardsDeleted'),
           });
           setSelectedRewardIds([]);
           void refetchRewardTemplates();
         } catch (error: any) {
           setRewardManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete selected rewards.',
+            text: error?.message || t('admin.messages.failedToDeleteRewards'),
           });
         } finally {
           setRewardConfirm(defaultConfirmDialogState);
@@ -1920,7 +3975,7 @@ function AdminPage() {
       await api.bulkUpdateRewardsStatus([rewardId], active);
       setRewardManagementMessage({
         type: 'success',
-        text: active ? 'Reward activated.' : 'Reward deactivated.',
+        text: active ? t('admin.messages.rewardActivated') : t('admin.messages.rewardDeactivated'),
       });
       void refetchRewardTemplates();
     } catch (error: any) {
@@ -1934,9 +3989,9 @@ function AdminPage() {
   const handleRewardDelete = async (rewardId: string) => {
     setRewardConfirm({
       visible: true,
-      title: 'Delete reward',
-      description: 'Are you sure you want to permanently delete this reward? This action cannot be undone.',
-      confirmLabel: 'Delete reward',
+      title: t('admin.confirm.deleteRewardSingle.title'),
+      description: t('admin.confirm.deleteRewardSingle.description'),
+      confirmLabel: t('admin.confirm.deleteReward'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -1953,7 +4008,7 @@ function AdminPage() {
         } catch (error: any) {
           setRewardManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete reward.',
+            text: error?.message || t('admin.messages.failedToDeleteReward'),
           });
         } finally {
           setRewardConfirm(defaultConfirmDialogState);
@@ -1968,7 +4023,7 @@ function AdminPage() {
       await api.bulkUpdateLocationsStatus([locationId], active);
       setLocationManagementMessage({
         type: 'success',
-        text: active ? 'Location activated.' : 'Location deactivated.',
+        text: active ? t('admin.messages.locationActivated') : t('admin.messages.locationDeactivated'),
       });
       void refetchLocations();
     } catch (error: any) {
@@ -1986,7 +4041,7 @@ function AdminPage() {
       await api.bulkUpdateLocationsStatus(selectedLocationIds, active);
       setLocationManagementMessage({
         type: 'success',
-        text: active ? 'Selected locations activated.' : 'Selected locations deactivated.',
+        text: active ? t('admin.messages.selectedLocationsActivated') : t('admin.messages.selectedLocationsDeactivated'),
       });
       setSelectedLocationIds([]);
       void refetchLocations();
@@ -2002,10 +4057,9 @@ function AdminPage() {
     if (!selectedLocationIds.length) return;
     setLocationConfirm({
       visible: true,
-      title: 'Delete selected locations',
-      description:
-        'Are you sure you want to permanently delete the selected locations? Tasks and rewards referencing them will need to be updated.',
-      confirmLabel: 'Delete locations',
+      title: t('admin.confirm.deleteSelectedLocations.title'),
+      description: t('admin.confirm.deleteSelectedLocations.description'),
+      confirmLabel: t('admin.confirm.deleteLocations'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2013,14 +4067,14 @@ function AdminPage() {
           await api.bulkDeleteLocations(selectedLocationIds);
           setLocationManagementMessage({
             type: 'success',
-            text: 'Selected locations deleted.',
+            text: t('admin.messages.selectedLocationsDeleted'),
           });
           setSelectedLocationIds([]);
           void refetchLocations();
         } catch (error: any) {
           setLocationManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete selected locations.',
+            text: error?.message || t('admin.messages.failedToDeleteLocations'),
           });
         } finally {
           setLocationConfirm(defaultConfirmDialogState);
@@ -2035,7 +4089,14 @@ function AdminPage() {
     setTaskManagementMessage(null);
     setTaskMessage(null);
     const source: TaskSource =
-      task.type === 'video' ? 'video' : task.type === 'qr' ? 'qr' : task.type === 'photo' ? 'photo' : '';
+      task.type === 'video' ? 'video' 
+      : task.type === 'quiz' ? 'quiz'
+      : task.type === 'article_quiz' ? 'article_quiz'
+      : task.type === 'survey' ? 'survey'
+      : task.type === 'qr' ? 'qr' 
+      : task.type === 'photo' ? 'photo'
+      : task.type === 'visit_location' ? 'visit_location'
+      : '';
     setTaskSource(source);
     setSelectedExistingTaskId('');
     setTaskForm({
@@ -2047,19 +4108,107 @@ function AdminPage() {
       videoSource: 'url',
       videoFile: null,
       quizQuestions:
-        task.type === 'video' ? normalizeQuizQuestions(task.quiz_questions ?? []) : [],
+        (task.type === 'video' || task.type === 'quiz' || task.type === 'article_quiz') ? normalizeQuizQuestions(task.quiz_questions ?? []) : [],
+      article_url: (task as any).article_url ?? '',
+      article_content: (task as any).article_content ?? '',
+      articleSource: (task as any).article_url ? 'url' : 'content',
+      surveyQuestions: (task as any).survey_questions ?? [],
+      surveyType: (task as any).survey_type ?? 'mixed',
       qr_code: task.qr_code ?? '',
       photo_required: task.type === 'photo',
       co2_savings_kg: task.co2_savings_kg ?? 0,
-      allowedRoles: normalizeEnumArray(task.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(task.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(task.allowed_hotel_ids),
+      target_latitude: task.target_latitude ? String(task.target_latitude) : '',
+      target_longitude: task.target_longitude ? String(task.target_longitude) : '',
+      target_address: '',
       locationId: task.location_id ?? task.location?.id ?? '',
       active: task.active ?? true,
+      recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
+      prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
+      prerequisite_task_ids: (task as any).prerequisite_task_ids ?? undefined,
+      category: (task as any).category ?? undefined,
+      difficulty: (task as any).difficulty ?? undefined,
+      time_required: (task as any).time_required ?? undefined,
+      location_tool: (task as any).location_tool ?? undefined,
+      event_group: (task as any).event_group ?? undefined,
+      zielgruppe: (() => {
+        const z = (task as any).zielgruppe;
+        if (!z) return undefined;
+        // If it's already an array, check if it contains a PostgreSQL array string
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            return [...new Set([...parsed, ...cleaned])];
+          }
+          return cleaned.length > 0 ? cleaned : undefined;
+        }
+        // If it's a string, check if it's PostgreSQL array format
+        if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          }
+          return [z];
+        }
+        return undefined;
+      })(),
     });
     setIsEditingTask(true);
     setEditingTaskId(task.id);
     setHasAttemptedPublish(false);
+  };
+
+  // Helper functions for prerequisite modal
+  const getSelectedTaskTitle = (taskId: string | undefined): string => {
+    if (!taskId) return t('admin.task.prerequisites.modal.noSelection');
+    const task = existingTemplates.find((t) => t.id === taskId);
+    return task?.title || t('admin.task.prerequisites.modal.noSelection');
+  };
+
+  const getSelectedTask = (taskId: string | undefined): AdminTaskTemplate | undefined => {
+    if (!taskId) return undefined;
+    return existingTemplates.find((t) => t.id === taskId);
+  };
+
+  const getSelectedTasksCount = (taskIds: string[] | undefined): string => {
+    if (!taskIds || taskIds.length === 0) {
+      return t('admin.task.prerequisites.modal.noSelectionMulti');
+    }
+    return t('admin.task.prerequisites.modal.selectedCount', { count: taskIds.length });
+  };
+
+  const handleOpenPrerequisiteModal = (mode: 'single' | 'multi') => {
+    setPrerequisiteModalMode(mode);
+    setIsPrerequisiteModalOpen(true);
+  };
+
+  const handlePrerequisiteModalApply = (selectedIds: string[]) => {
+    if (prerequisiteModalMode === 'single') {
+      setTaskForm((prev) => ({
+        ...prev,
+        prerequisite_task_id: selectedIds.length > 0 ? selectedIds[0] : undefined,
+      }));
+    } else {
+      setTaskForm((prev) => ({
+        ...prev,
+        prerequisite_task_ids: selectedIds.length > 0 ? selectedIds : undefined,
+        prerequisite_task_count:
+          selectedIds.length > 0 && prev.prerequisite_task_count
+            ? Math.min(prev.prerequisite_task_count, selectedIds.length)
+            : prev.prerequisite_task_count,
+      }));
+    }
   };
 
   const cancelTaskEdit = () => {
@@ -2100,11 +4249,45 @@ function AdminPage() {
       pointsCost: normalizedPointsCost,
       voucherCode: template.voucher_code ?? '',
       externalApiId: template.external_api_id ?? '',
-      allowedRoles: normalizeEnumArray(template.allowed_roles),
-      allowedUserTypes: normalizeEnumArray(template.allowed_user_types),
-      allowedHotelIds: normalizeEnumArray(template.allowed_hotel_ids),
+      zielgruppe: (() => {
+        const z = (template as any).zielgruppe;
+        if (!z) return null;
+        // If it's already an array, check if it contains a PostgreSQL array string
+        if (Array.isArray(z)) {
+          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          const cleaned = z.filter((item: any) => {
+            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
+              return false; // This is a PostgreSQL array string, skip it
+            }
+            return true;
+          });
+          // If we found a PostgreSQL array string, parse it
+          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
+          if (pgString) {
+            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Merge with existing cleaned array and remove duplicates
+            return [...new Set([...parsed, ...cleaned])];
+          }
+          return cleaned.length > 0 ? cleaned : null;
+        }
+        // If it's a string, check if it's PostgreSQL array format
+        if (typeof z === 'string') {
+          if (z.startsWith('{') && z.endsWith('}')) {
+            // Parse PostgreSQL array format
+            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+          }
+          return [z];
+        }
+        return null;
+      })(),
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      reward_art: (template as any).reward_art ?? undefined,
+      kategorie: (template as any).kategorie ?? undefined,
+      event_group: (template as any).event_group ?? undefined,
+      moegliche_punkte: (template as any).moegliche_punkte ?? undefined,
     });
     setIsEditingReward(true);
     setEditingRewardId(template.id);
@@ -2146,6 +4329,8 @@ function AdminPage() {
           ? String(location.longitude)
           : '',
       active: location.active ?? true,
+      category: (location as any).category ?? '',
+      categoryDescription: (location as any).category_description ?? '',
     });
     setIsEditingLocation(true);
     setEditingLocationId(location.id);
@@ -2201,6 +4386,90 @@ const goToRewardCreation = () => {
   setHasAttemptedRewardPublish(false);
 };
 
+  const loadParameters = async () => {
+    try {
+      setParameterLoading(true);
+      setParameterMessage(null);
+      const [taskParams, rewardParams, factorData] = await Promise.all([
+        api.getTaskParameters(),
+        api.getRewardParameters(),
+        api.getPointsCalculationFactor(),
+      ]);
+      setTaskParameters(taskParams);
+      setRewardParameters(rewardParams);
+      if (factorData?.factor !== undefined) {
+        setPointsCalculationFactor(factorData.factor);
+      }
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.error') });
+    } finally {
+      setParameterLoading(false);
+    }
+  };
+
+  const handleCreateParameter = async (type: 'task' | 'reward') => {
+    if (!newParameter || newParameter.type !== type || !newParameter.value.trim()) {
+      setParameterMessage({ type: 'error', text: t('admin.parameterManage.valueRequired') });
+      return;
+    }
+    try {
+      if (type === 'task') {
+        await api.createTaskParameter(newParameter.parameterType, newParameter.value, newParameter.displayOrder, newParameter.weight);
+      } else {
+        await api.createRewardParameter(newParameter.parameterType, newParameter.value, newParameter.displayOrder, newParameter.weight);
+      }
+      setParameterMessage({ type: 'success', text: t('admin.parameterManage.created') });
+      setNewParameter(null);
+      void loadParameters();
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.createError') });
+    }
+  };
+
+  const handleUpdateParameter = async (type: 'task' | 'reward') => {
+    if (!editingParameter || editingParameter.type !== type || !editingParameter.value.trim()) {
+      setParameterMessage({ type: 'error', text: t('admin.parameterManage.valueRequired') });
+      return;
+    }
+    try {
+      if (type === 'task') {
+        await api.updateTaskParameter(editingParameter.id, {
+          value: editingParameter.value,
+          display_order: editingParameter.displayOrder,
+          weight: editingParameter.weight,
+        });
+      } else {
+        await api.updateRewardParameter(editingParameter.id, {
+          value: editingParameter.value,
+          display_order: editingParameter.displayOrder,
+          weight: editingParameter.weight,
+        });
+      }
+      setParameterMessage({ type: 'success', text: t('admin.parameterManage.updated') });
+      setEditingParameter(null);
+      void loadParameters();
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.updateError') });
+    }
+  };
+
+  const handleDeleteParameter = async (type: 'task' | 'reward', id: string) => {
+    if (!confirm(t('admin.parameterManage.confirmDelete'))) {
+      return;
+    }
+    try {
+      if (type === 'task') {
+        await api.deleteTaskParameter(id);
+      } else {
+        await api.deleteRewardParameter(id);
+      }
+      setParameterMessage({ type: 'success', text: t('admin.parameterManage.deleted') });
+      void loadParameters();
+    } catch (error: any) {
+      setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.deleteError') });
+    }
+  };
+
   const handleLocationDelete = (location: AdminLocation) => {
     const isDefaultLocation =
       location.is_online &&
@@ -2215,10 +4484,9 @@ const goToRewardCreation = () => {
     }
     setLocationConfirm({
       visible: true,
-      title: `Delete ${location.name}?`,
-      description:
-        'Are you sure you want to delete this location? Tasks and rewards using it will need to be reassigned.',
-      confirmLabel: 'Delete location',
+      title: t('admin.confirm.deleteLocationWithName.title', { name: location.name }),
+      description: t('admin.confirm.deleteLocationWithName.description'),
+      confirmLabel: t('admin.confirm.deleteLocation'),
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
@@ -2226,7 +4494,7 @@ const goToRewardCreation = () => {
           await api.deleteLocation(location.id);
           setLocationManagementMessage({
             type: 'success',
-            text: 'Location deleted successfully.',
+            text: t('admin.messages.locationDeletedSuccessfully'),
           });
           if (isEditingLocation && editingLocationId === location.id) {
             cancelLocationEdit();
@@ -2236,7 +4504,7 @@ const goToRewardCreation = () => {
         } catch (error: any) {
           setLocationManagementMessage({
             type: 'error',
-            text: error?.message || 'Failed to delete location.',
+            text: error?.message || t('admin.messages.failedToDeleteLocation'),
           });
         } finally {
           setLocationConfirm(defaultConfirmDialogState);
@@ -2246,34 +4514,34 @@ const goToRewardCreation = () => {
   };
 
   const allTasksSelected =
-    existingTemplates.length > 0 && selectedTaskIds.length === existingTemplates.length;
+    filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length;
   const allRewardsSelected =
-    normalizedRewardTemplates.length > 0 &&
-    selectedRewardIds.length === normalizedRewardTemplates.length;
+    filteredRewards.length > 0 &&
+    selectedRewardIds.length === filteredRewards.length;
   const hasTaskSelection = selectedTaskIds.length > 0;
   const hasRewardSelection = selectedRewardIds.length > 0;
   const isTaskSaving = publishTaskMutation.isLoading || updateTaskMutation.isLoading;
   const taskSubmitLabel = isEditingTask
-     ? isTaskSaving
-      ? 'Saving…'
-      : 'Save Task Changes'
+    ? isTaskSaving
+      ? t('admin.task.saving')
+      : t('admin.task.saveChanges')
      : publishTaskMutation.isLoading
-     ? 'Publishing…'
-     : 'Publish Task';
+     ? t('admin.task.publishing')
+     : t('admin.task.publishButton');
   const isRewardSaving = createRewardMutation.isLoading || updateRewardMutation.isLoading;
   const rewardSubmitLabel = isEditingReward
     ? isRewardSaving
-      ? 'Saving…'
-      : 'Save Reward Changes'
+      ? t('admin.reward.saving')
+      : t('admin.reward.saveChanges')
     : createRewardMutation.isLoading
-    ? 'Publishing…'
-    : 'Publish Reward';
+    ? t('admin.reward.publishing')
+    : t('admin.reward.publishButton');
 
   if (!isAdmin) {
     return (
       <div className="admin-page">
-        <h1 className="admin-title">Administrator Area</h1>
-        <p className="admin-info">You need administrator privileges to access this page.</p>
+        <h1 className="admin-title">{t('admin.title')}</h1>
+        <p className="admin-info">{t('admin.requiresPrivileges')}</p>
       </div>
     );
   }
@@ -2283,15 +4551,24 @@ const goToRewardCreation = () => {
       <header className="admin-header">
         <nav className="admin-navbar">
           <div className="admin-navbar-space" aria-hidden="true" />
-          <button className="admin-icon-button admin-navbar-action" onClick={logout} title="Logout">
+          <LanguageSwitcher compact className="admin-navbar-language" />
+          <button
+            className={`admin-debug-toggle ${debugMode ? 'active' : ''}`}
+            onClick={() => setDebugMode(!debugMode)}
+            title={debugMode ? t('admin.debugMode.disable') : t('admin.debugMode.enable')}
+          >
+            🔧
+            <span className="sr-only">{debugMode ? t('admin.debugMode.disable') : t('admin.debugMode.enable')}</span>
+          </button>
+          <button className="admin-icon-button admin-navbar-action" onClick={logout} title={t('admin.logout')}>
             <Icon name="logout" />
-            <span className="sr-only">Logout</span>
+            <span className="sr-only">{t('admin.logout')}</span>
           </button>
         </nav>
 
         <div className="admin-hero">
-          <h1 className="admin-hero-title">Administrator Home</h1>
-          <p className="admin-hero-subtitle">Curate experiences for guests, employees, and partners.</p>
+          <h1 className="admin-hero-title">{t('admin.home.title')}</h1>
+          <p className="admin-hero-subtitle">{t('admin.home.subtitle')}</p>
         </div>
       </header>
 
@@ -2299,23 +4576,23 @@ const goToRewardCreation = () => {
         <div className="admin-choice-grid">
           <button className="admin-choice-card" onClick={() => setMode('task')}>
             <span className="admin-choice-icon">✅</span>
-            <h2>Create Task</h2>
-            <p>Use an existing task or start from scratch.</p>
+            <h2>{t('admin.actions.createTask.title')}</h2>
+            <p>{t('admin.actions.createTask.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('reward')}>
             <span className="admin-choice-icon">🎁</span>
-            <h2>Create Reward</h2>
-            <p>Publish a new reward for the marketplace.</p>
+            <h2>{t('admin.actions.createReward.title')}</h2>
+            <p>{t('admin.actions.createReward.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
             <span className="admin-choice-icon">🗂️</span>
-            <h2>Manage Tasks</h2>
-            <p>Browse, edit, activate, deactivate, or delete existing tasks.</p>
+            <h2>{t('admin.actions.manageTasks.title')}</h2>
+            <p>{t('admin.actions.manageTasks.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('rewardManage')}>
             <span className="admin-choice-icon">🧾</span>
-            <h2>Manage Rewards</h2>
-            <p>Review and maintain rewards available to users.</p>
+            <h2>{t('admin.actions.manageRewards.title')}</h2>
+            <p>{t('admin.actions.manageRewards.description')}</p>
           </button>
           <button
             className="admin-choice-card"
@@ -2325,31 +4602,850 @@ const goToRewardCreation = () => {
             }}
           >
             <span className="admin-choice-icon">📍</span>
-            <h2>Create Location</h2>
-            <p>Define an online or physical location for tasks and rewards.</p>
+            <h2>{t('admin.actions.createLocation.title')}</h2>
+            <p>{t('admin.actions.createLocation.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('locationManage')}>
             <span className="admin-choice-icon">🗺️</span>
-            <h2>Manage Locations</h2>
-            <p>Update or remove available locations.</p>
+            <h2>{t('admin.actions.manageLocations.title')}</h2>
+            <p>{t('admin.actions.manageLocations.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('qrScanner')}>
             <span className="admin-choice-icon">📷</span>
-            <h2>Redeem Rewards</h2>
-            <p>Scan QR codes to verify and redeem rewards.</p>
+            <h2>{t('admin.actions.redeemRewards.title')}</h2>
+            <p>{t('admin.actions.redeemRewards.description')}</p>
+          </button>
+          {debugMode && (
+            <button
+              className="admin-choice-card"
+              onClick={() => {
+                void loadForestStats();
+                setMode('forestStats');
+              }}
+            >
+              <span className="admin-choice-icon">🌲</span>
+              <h2>{t('admin.actions.forestDebugStats.title')}</h2>
+              <p>{t('admin.actions.forestDebugStats.description')}</p>
+            </button>
+          )}
+          {debugMode && (
+            <button
+              className="admin-choice-card"
+              onClick={() => setMode('debugTools')}
+            >
+              <span className="admin-choice-icon">🔧</span>
+              <h2>{t('admin.actions.debugTools.title')}</h2>
+              <p>{t('admin.actions.debugTools.description')}</p>
+            </button>
+          )}
+          <button
+            className="admin-choice-card"
+            onClick={() => setMode('surveyAnalytics')}
+          >
+            <span className="admin-choice-icon">📊</span>
+            <h2>{t('admin.actions.surveyAnalytics.title')}</h2>
+            <p>{t('admin.actions.surveyAnalytics.description')}</p>
+          </button>
+          <button className="admin-choice-card" onClick={() => setMode('parameterManage')}>
+            <span className="admin-choice-icon">⚙️</span>
+            <h2>{t('admin.actions.manageParameters.title')}</h2>
+            <p>{t('admin.actions.manageParameters.description')}</p>
           </button>
         </div>
+      )}
+
+      {mode === 'surveyAnalytics' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.surveyAnalytics.title')}</h2>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+          <SurveyAnalytics />
+        </section>
+      )}
+
+      {mode === 'debugTools' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.debugTools.title')}</h2>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+          <DebugTools />
+        </section>
+      )}
+
+      {mode === 'forestStats' && debugMode && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.forestStats.title')}</h2>
+              <p>{t('admin.forestStats.subtitle')}</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => void loadForestStats()}
+                title={t('admin.forestStats.refresh')}
+                disabled={forestStatsLoading}
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">{t('admin.forestStats.refresh')}</span>
+              </button>
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.forestStats.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.forestStats.back')}</span>
+              </button>
+            </div>
+          </header>
+
+          {forestStatsLoading && <p>{t('admin.forestStats.loading')}</p>}
+          {forestStatsError && <p className="admin-error">{forestStatsError}</p>}
+          {!forestStatsLoading && !forestStatsError && forestStats.length === 0 && (
+            <p className="admin-field-note">{t('admin.forestStats.noUsers')}</p>
+          )}
+          {!forestStatsLoading && !forestStatsError && forestStats.length > 0 && (
+            <div className="admin-form-card">
+              <div className="admin-form-section-header">
+                <div>
+                  <h3>{t('admin.forestStats.table.title')}</h3>
+                  <p className="admin-field-note">{t('admin.forestStats.table.subtitle')}</p>
+                </div>
+              </div>
+              <div className="admin-table-wrapper" style={{ marginTop: '0.75rem' }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>{t('admin.forestStats.table.email')}</th>
+                      <th>{t('admin.forestStats.table.points')}</th>
+                      <th>{t('admin.forestStats.table.trees')}</th>
+                      <th>{t('admin.forestStats.table.completedTasks')}</th>
+                      <th>{t('admin.forestStats.table.consistent')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {forestStats.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>{row.email || '(no email)'}</span>
+                            <span className="admin-field-note" style={{ fontSize: '0.75rem' }}>
+                              {row.id}
+                            </span>
+                          </div>
+                        </td>
+                        <td>{row.points}</td>
+                        <td>{row.tree_count}</td>
+                        <td>{row.completed_tasks}</td>
+                        <td>
+                          {row.is_count_consistent ? (
+                            <span style={{ color: '#15803d', fontWeight: 500 }}>Yes</span>
+                          ) : (
+                            <span style={{ color: '#b91c1c', fontWeight: 500 }}>No (check user)</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Forest Validation Section */}
+          <div className="admin-form-card" style={{ marginTop: '1.5rem' }}>
+            <div className="admin-form-section-header">
+              <div>
+                <h3>{t('admin.forestStats.validation.title')}</h3>
+                <p className="admin-field-note">{t('admin.forestStats.validation.subtitle')}</p>
+              </div>
+            </div>
+
+            {validationJobId && validationJobStatus ? (
+              <div style={{ marginTop: '1rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: 500 }}>
+                      {validationJobStatus.status === 'pending' && t('admin.forestStats.validation.status.pending')}
+                      {validationJobStatus.status === 'running' && t('admin.forestStats.validation.status.running')}
+                      {validationJobStatus.status === 'completed' && t('admin.forestStats.validation.status.completed')}
+                      {validationJobStatus.status === 'failed' && t('admin.forestStats.validation.status.failed')}
+                    </span>
+                    {validationJobStatus.status === 'running' && (
+                      <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                        {validationJobStatus.progress.currentUser} / {validationJobStatus.progress.totalUsers}
+                        {validationJobStatus.progress.currentUserEmail && ` (${validationJobStatus.progress.currentUserEmail})`}
+                      </span>
+                    )}
+                  </div>
+                  {validationJobStatus.status === 'running' && (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '8px',
+                        backgroundColor: 'var(--color-border)',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${validationJobStatus.progress.totalUsers > 0 ? (validationJobStatus.progress.currentUser / validationJobStatus.progress.totalUsers) * 100 : 0}%`,
+                          height: '100%',
+                          backgroundColor: 'var(--color-primary)',
+                          transition: 'width 0.3s ease',
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {validationJobStatus.status === 'completed' && validationJobStatus.result && (
+                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--color-bg-secondary)', borderRadius: '8px' }}>
+                    <h4 style={{ marginBottom: '0.75rem', fontSize: '1rem', fontWeight: 600 }}>
+                      {t('admin.forestStats.validation.results.title')}
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.usersProcessed')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.usersProcessed}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.treesMoved')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.totalMoved}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.treesDeleted')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.totalDeleted}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.totalFixed')}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                          {validationJobStatus.result.totalFixed}
+                        </div>
+                      </div>
+                    </div>
+                    {validationJobStatus.result.errors && validationJobStatus.result.errors.length > 0 && (
+                      <div style={{ marginTop: '1rem' }}>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.forestStats.validation.results.errors')}: {validationJobStatus.result.totalErrors}
+                        </span>
+                        <details style={{ marginTop: '0.5rem' }}>
+                          <summary style={{ cursor: 'pointer', fontSize: '0.875rem' }}>
+                            {t('admin.forestStats.validation.results.showErrors')}
+                          </summary>
+                          <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem', fontSize: '0.875rem' }}>
+                            {validationJobStatus.result.errors.slice(0, 10).map((err: string, idx: number) => (
+                              <li key={idx}>{err}</li>
+                            ))}
+                            {validationJobStatus.result.errors.length > 10 && (
+                              <li>... and {validationJobStatus.result.errors.length - 10} more</li>
+                            )}
+                          </ul>
+                        </details>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="admin-button admin-button-secondary"
+                      style={{ marginTop: '1rem' }}
+                      onClick={() => {
+                        setValidationJobId(null);
+                        setValidationJobStatus(null);
+                      }}
+                    >
+                      {t('admin.forestStats.validation.closeResults')}
+                    </button>
+                  </div>
+                )}
+
+                {validationJobStatus.status === 'failed' && (
+                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
+                    <p className="admin-error">{validationJobStatus.error || t('admin.forestStats.validation.failed')}</p>
+                    <button
+                      type="button"
+                      className="admin-button admin-button-secondary"
+                      style={{ marginTop: '0.5rem' }}
+                      onClick={() => {
+                        setValidationJobId(null);
+                        setValidationJobStatus(null);
+                      }}
+                    >
+                      {t('common.actions.close')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="admin-form-section" style={{ marginTop: '1rem' }}>
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={validationDryRun}
+                      onChange={(e) => setValidationDryRun(e.target.checked)}
+                    />
+                    <span>{t('admin.forestStats.validation.dryRun')}</span>
+                  </label>
+                  <p className="admin-field-note">{t('admin.forestStats.validation.dryRunHint')}</p>
+                </div>
+
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={validationForceGeometry}
+                      onChange={(e) => setValidationForceGeometry(e.target.checked)}
+                    />
+                    <span>{t('admin.forestStats.validation.forceGeometry')}</span>
+                  </label>
+                  <p className="admin-field-note">{t('admin.forestStats.validation.forceGeometryHint')}</p>
+                </div>
+
+                <div className="admin-field">
+                  <label>
+                    <span>{t('admin.forestStats.validation.userFilter')}</span>
+                    <input
+                      type="text"
+                      value={validationUserFilter}
+                      onChange={(e) => setValidationUserFilter(e.target.value)}
+                      placeholder={t('admin.forestStats.validation.userFilterPlaceholder')}
+                    />
+                  </label>
+                  <p className="admin-field-note">{t('admin.forestStats.validation.userFilterHint')}</p>
+                </div>
+
+                <div style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className="admin-button admin-button-primary"
+                    onClick={handleValidationConfirm}
+                  >
+                    {t('admin.forestStats.validation.run')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {mode === 'parameterManage' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.actions.manageParameters.title')}</h2>
+              <p>{t('admin.actions.manageParameters.description')}</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => {
+                  void loadParameters();
+                  setParameterMessage(null);
+                }}
+                title={t('admin.common.refresh')}
+              >
+                <Icon name="refresh" />
+                <span className="sr-only">{t('admin.common.refresh')}</span>
+              </button>
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+
+          {parameterLoading && <p>{t('admin.parameterManage.loading')}</p>}
+          {parameterMessage && (
+            <p className={parameterMessage.type === 'error' ? 'admin-error' : 'admin-success'}>
+              {parameterMessage.text}
+            </p>
+          )}
+
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem' }}>{t('admin.parameterManage.taskParameters')}</h3>
+            
+            {['type', 'category', 'difficulty', 'time_required', 'location_tool', 'zielgruppe'].map((paramType) => {
+              const params = taskParameters.filter((p) => p.parameter_type === paramType);
+              const isEditing = editingParameter?.type === 'task' && editingParameter.parameterType === paramType;
+              const isCreating = newParameter?.type === 'task' && newParameter.parameterType === paramType;
+              
+              return (
+                <div key={paramType} className="admin-management-card" style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ marginBottom: '1rem' }}>
+                    {t(`admin.parameterManage.fieldNames.${paramType}`)}
+                  </h4>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>{t('admin.parameterManage.value')}</th>
+                          <th>{t('admin.parameterManage.displayOrder')}</th>
+                          {(paramType === 'difficulty' || paramType === 'time_required') && (
+                            <th>{t('admin.parameterManage.weight')}</th>
+                          )}
+                          <th>{t('admin.parameterManage.active')}</th>
+                          <th style={{ width: '12rem' }}>{t('admin.parameterManage.actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {params
+                          .filter((p) => !isEditing || editingParameter.id !== p.id)
+                          .map((param) => (
+                            <tr key={param.id}>
+                              <td>{param.value}</td>
+                              <td>{param.display_order}</td>
+                              {(paramType === 'difficulty' || paramType === 'time_required') && (
+                                <td>{param.weight ?? param.display_order}</td>
+                              )}
+                              <td>
+                                <span className={`admin-status-badge ${param.active ? 'active' : 'inactive'}`}>
+                                  {param.active ? t('admin.parameterManage.active') : t('admin.parameterManage.inactive')}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className="admin-action-button"
+                                  onClick={() =>
+                                    setEditingParameter({
+                                      id: param.id,
+                                      type: 'task',
+                                      parameterType: param.parameter_type,
+                                      value: param.value,
+                                      displayOrder: param.display_order,
+                                      weight: param.weight ?? param.display_order,
+                                    })
+                                  }
+                                >
+                                  {t('admin.parameterManage.edit')}
+                                </button>
+                                <button
+                                  className="admin-action-button danger"
+                                  onClick={() => handleDeleteParameter('task', param.id)}
+                                >
+                                  {t('admin.parameterManage.delete')}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        {isCreating && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={newParameter.value}
+                                onChange={(e) => setNewParameter({ ...newParameter, value: e.target.value })}
+                                placeholder={t('admin.parameterManage.enterValue')}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={newParameter.displayOrder}
+                                onChange={(e) =>
+                                  setNewParameter({ ...newParameter, displayOrder: Number.parseInt(e.target.value || '0', 10) })
+                                }
+                              />
+                            </td>
+                            {(paramType === 'difficulty' || paramType === 'time_required') && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={newParameter.weight ?? newParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setNewParameter({ ...newParameter, weight: Number.parseFloat(e.target.value || '0') })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={(paramType === 'difficulty' || paramType === 'time_required') ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleCreateParameter('task')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setNewParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                        {isEditing && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={editingParameter.value}
+                                onChange={(e) =>
+                                  setEditingParameter({ ...editingParameter, value: e.target.value })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={editingParameter.displayOrder}
+                                onChange={(e) =>
+                                  setEditingParameter({
+                                    ...editingParameter,
+                                    displayOrder: Number.parseInt(e.target.value || '0', 10),
+                                  })
+                                }
+                              />
+                            </td>
+                            {(paramType === 'difficulty' || paramType === 'time_required') && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editingParameter.weight ?? editingParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setEditingParameter({
+                                      ...editingParameter,
+                                      weight: Number.parseFloat(e.target.value || '0'),
+                                    })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={(paramType === 'difficulty' || paramType === 'time_required') ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleUpdateParameter('task')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setEditingParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => setNewParameter({ type: 'task', parameterType: paramType, value: '', displayOrder: 0, weight: (paramType === 'difficulty' || paramType === 'time_required') ? 0 : undefined })}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    {t('admin.parameterManage.newParameter')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div>
+            <h3 style={{ marginBottom: '1.5rem' }}>{t('admin.parameterManage.rewardParameters')}</h3>
+            
+            {['reward_art', 'kategorie'].map((paramType) => {
+              const params = rewardParameters.filter((p) => p.parameter_type === paramType);
+              const isEditing = editingParameter?.type === 'reward' && editingParameter.parameterType === paramType;
+              const isCreating = newParameter?.type === 'reward' && newParameter.parameterType === paramType;
+              
+              return (
+                <div key={paramType} className="admin-management-card" style={{ marginBottom: '1.5rem' }}>
+                  <h4 style={{ marginBottom: '1rem' }}>
+                    {t(`admin.parameterManage.fieldNames.${paramType}`)}
+                  </h4>
+                  <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>{t('admin.parameterManage.value')}</th>
+                          <th>{t('admin.parameterManage.displayOrder')}</th>
+                          {paramType === 'kosten' && (
+                            <th>{t('admin.parameterManage.weight')}</th>
+                          )}
+                          <th>{t('admin.parameterManage.active')}</th>
+                          <th style={{ width: '12rem' }}>{t('admin.parameterManage.actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {params
+                          .filter((p) => !isEditing || editingParameter.id !== p.id)
+                          .map((param) => (
+                            <tr key={param.id}>
+                              <td>{param.value}</td>
+                              <td>{param.display_order}</td>
+                              {paramType === 'kosten' && (
+                                <td>{param.weight ?? param.display_order}</td>
+                              )}
+                              <td>
+                                <span className={`admin-status-badge ${param.active ? 'active' : 'inactive'}`}>
+                                  {param.active ? t('admin.parameterManage.active') : t('admin.parameterManage.inactive')}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className="admin-action-button"
+                                  onClick={() =>
+                                    setEditingParameter({
+                                      id: param.id,
+                                      type: 'reward',
+                                      parameterType: param.parameter_type,
+                                      value: param.value,
+                                      displayOrder: param.display_order,
+                                      weight: paramType === 'kosten' ? (param.weight ?? param.display_order) : undefined,
+                                    })
+                                  }
+                                >
+                                  {t('admin.parameterManage.edit')}
+                                </button>
+                                <button
+                                  className="admin-action-button danger"
+                                  onClick={() => handleDeleteParameter('reward', param.id)}
+                                >
+                                  {t('admin.parameterManage.delete')}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        {isCreating && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={newParameter.value}
+                                onChange={(e) => setNewParameter({ ...newParameter, value: e.target.value })}
+                                placeholder={t('admin.parameterManage.enterValue')}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={newParameter.displayOrder}
+                                onChange={(e) =>
+                                  setNewParameter({ ...newParameter, displayOrder: Number.parseInt(e.target.value || '0', 10) })
+                                }
+                              />
+                            </td>
+                            {paramType === 'kosten' && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={newParameter.weight ?? newParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setNewParameter({ ...newParameter, weight: Number.parseFloat(e.target.value || '0') })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={paramType === 'kosten' ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleCreateParameter('reward')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setNewParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                        {isEditing && (
+                          <tr>
+                            <td>
+                              <input
+                                type="text"
+                                value={editingParameter.value}
+                                onChange={(e) =>
+                                  setEditingParameter({ ...editingParameter, value: e.target.value })
+                                }
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                value={editingParameter.displayOrder}
+                                onChange={(e) =>
+                                  setEditingParameter({
+                                    ...editingParameter,
+                                    displayOrder: Number.parseInt(e.target.value || '0', 10),
+                                  })
+                                }
+                              />
+                            </td>
+                            {paramType === 'kosten' && (
+                              <td>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={editingParameter.weight ?? editingParameter.displayOrder}
+                                  onChange={(e) =>
+                                    setEditingParameter({
+                                      ...editingParameter,
+                                      weight: Number.parseFloat(e.target.value || '0'),
+                                    })
+                                  }
+                                />
+                              </td>
+                            )}
+                            <td colSpan={paramType === 'kosten' ? 1 : 2}>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => handleUpdateParameter('reward')}
+                              >
+                                {t('admin.parameterManage.save')}
+                              </button>
+                              <button
+                                className="admin-action-button"
+                                onClick={() => setEditingParameter(null)}
+                              >
+                                {t('admin.parameterManage.cancel')}
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => setNewParameter({ type: 'reward', parameterType: paramType, value: '', displayOrder: 0, weight: paramType === 'kosten' ? 0 : undefined })}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    {t('admin.parameterManage.newParameter')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Points Calculation Factor */}
+          <div style={{ marginTop: '3rem', marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1.5rem' }}>{t('admin.parameterManage.pointsCalculationFactor')}</h3>
+            <div className="admin-management-card">
+              <p style={{ marginBottom: '1rem' }}>
+                {t('admin.parameterManage.pointsCalculationFactorDescription')}
+              </p>
+              {isEditingFactor ? (
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={editingFactorValue}
+                    onChange={(e) => setEditingFactorValue(e.target.value)}
+                    style={{ width: '150px', padding: '0.5rem' }}
+                  />
+                  <button
+                    className="admin-action-button"
+                    onClick={async () => {
+                      try {
+                        const factorValue = Number.parseFloat(editingFactorValue);
+                        if (isNaN(factorValue) || factorValue <= 0) {
+                          setParameterMessage({ type: 'error', text: 'Faktor muss eine positive Zahl sein' });
+                          return;
+                        }
+                        await api.setSystemConfig('points_calculation_factor', String(factorValue), 'Factor for calculating task points: (difficulty_weight * time_required_weight) * factor');
+                        setPointsCalculationFactor(factorValue);
+                        setParameterMessage({ type: 'success', text: t('admin.parameterManage.factorUpdated') });
+                        setIsEditingFactor(false);
+                      } catch (error: any) {
+                        setParameterMessage({ type: 'error', text: error?.message || t('admin.parameterManage.updateError') });
+                      }
+                    }}
+                  >
+                    {t('admin.parameterManage.save')}
+                  </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => {
+                      setIsEditingFactor(false);
+                      setEditingFactorValue(String(pointsCalculationFactor)); // Reset to original value
+                    }}
+                  >
+                    {t('admin.parameterManage.cancel')}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{pointsCalculationFactor}</span>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => {
+                      setEditingFactorValue(String(pointsCalculationFactor));
+                      setIsEditingFactor(true);
+                    }}
+                  >
+                    {t('admin.parameterManage.edit')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </section>
       )}
 
       {mode === 'task' && (
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>{isEditingTask ? 'Edit Task' : 'Publish Task'}</h2>
+              <h2>{isEditingTask ? t('admin.task.edit.title') : t('admin.task.publish.title')}</h2>
               <p>
                 {isEditingTask
-                  ? 'Update the selected task using the form below.'
-                  : 'Select an existing task or start from scratch depending on the task type.'}
+                  ? t('admin.task.edit.subtitle')
+                  : t('admin.task.publish.subtitle')}
               </p>
             </div>
             <div className="admin-actions">
@@ -2357,10 +5453,10 @@ const goToRewardCreation = () => {
                 <button
                   className="admin-icon-button"
                   onClick={() => refetchTasks()}
-                  title="Refresh tasks"
+                  title={t('admin.task.refresh')}
                 >
                   <Icon name="refresh" />
-                  <span className="sr-only">Refresh tasks</span>
+                  <span className="sr-only">{t('admin.task.refresh')}</span>
                 </button>
               )}
               <button
@@ -2372,47 +5468,51 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title={isEditingTask ? 'Cancel editing' : 'Back to main menu'}
+                title={isEditingTask ? t('admin.task.cancelEditing') : t('admin.task.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingTask ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{isEditingTask ? t('admin.task.cancelEditing') : t('admin.task.back')}</span>
               </button>
             </div>
           </header>
 
-          {tasksLoading && <p>Loading tasks…</p>}
-          {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
+          {tasksLoading && <p>{t('admin.task.loading')}</p>}
+          {Boolean(tasksError) && <p className="admin-error">{t('admin.task.loadError')}</p>}
           {Boolean(locationsError) && (
-            <p className="admin-error">
-              Failed to load locations. Create or refresh locations before publishing tasks.
-            </p>
+            <p className="admin-error">{t('admin.task.locationsError')}</p>
           )}
 
           <div className="admin-form-card">
             {!isEditingTask && (
               <label className="admin-field">
-                <span>Create from</span>
+                <span>{t('admin.task.createFrom')}</span>
                 <select
                   value={taskSource}
-                  onChange={(event) => setTaskSource(event.target.value as TaskSource)}
+                  onChange={(event) => {
+                    setTaskSource(event.target.value as TaskSource);
+                  }}
                 >
-                  <option value="">Select option</option>
-                  <option value="existing">Existing task</option>
-                  <option value="video">Start from scratch – Video task</option>
-                  <option value="qr">Start from scratch – QR task</option>
-                  <option value="photo">Start from scratch – Photo task</option>
+                  <option value="">{t('admin.task.selectOption')}</option>
+                  <option value="existing">{t('admin.task.existingTask')}</option>
+                  <option value="video">{t('admin.task.startFromScratch.video')}</option>
+                  <option value="quiz">{t('admin.task.startFromScratch.quiz')}</option>
+                  <option value="article_quiz">{t('admin.task.startFromScratch.articleQuiz')}</option>
+                  <option value="survey">{t('admin.task.startFromScratch.survey')}</option>
+                  <option value="qr">{t('admin.task.startFromScratch.qr')}</option>
+                  <option value="photo">{t('admin.task.startFromScratch.photo')}</option>
+                  <option value="visit_location">{t('admin.task.startFromScratch.visitLocation')}</option>
                 </select>
               </label>
             )}
 
             {!isEditingTask && taskSource === 'existing' && (
               <label className="admin-field">
-                <span>Select existing task</span>
+                <span>{t('admin.task.selectExisting')}</span>
                 <select
                   value={selectedExistingTaskId}
                   onChange={(event) => setSelectedExistingTaskId(event.target.value)}
                 >
-                  <option value="">Select task</option>
+                  <option value="">{t('admin.task.selectTask')}</option>
                   {existingTemplates.map((template) => (
                     <option key={template.id} value={template.id}>
                       {template.title} ({template.type})
@@ -2422,19 +5522,42 @@ const goToRewardCreation = () => {
               </label>
             )}
 
-            {taskSource && (taskSource !== 'existing' || selectedExistingTaskId) && (
+            {(isEditingTask || (taskSource && (taskSource !== 'existing' || selectedExistingTaskId))) && (
               <div className="admin-form-layout">
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
                     <div>
-                      <h3>Task basics</h3>
-                      <p>Provide the essential details for this task.</p>
+                      <h3>{t('admin.task.basics.title')}</h3>
+                      <p>{t('admin.task.basics.subtitle')}</p>
                     </div>
-                    <TaskTypeBadge type={taskForm.type} />
+                    {!isEditingTask && <TaskTypeBadge type={taskForm.type} />}
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
-                    <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Title" required />
+                    {isEditingTask && (
+                      <label className="admin-field">
+                        <FieldLabel label={t('admin.task.fields.type')} required />
+                        <select
+                          value={taskForm.type}
+                          onChange={(event) =>
+                            setTaskForm((prev) => ({
+                              ...prev,
+                              type: event.target.value as TaskFormState['type'],
+                            }))
+                          }
+                          className="admin-select"
+                        >
+                          <option value="video">{t('admin.task.startFromScratch.video')}</option>
+                          <option value="quiz">{t('admin.task.startFromScratch.quiz')}</option>
+                          <option value="article_quiz">{t('admin.task.startFromScratch.articleQuiz')}</option>
+                          <option value="survey">{t('admin.task.startFromScratch.survey')}</option>
+                          <option value="qr">{t('admin.task.startFromScratch.qr')}</option>
+                          <option value="photo">{t('admin.task.startFromScratch.photo')}</option>
+                          <option value="visit_location">{t('admin.task.startFromScratch.visitLocation')}</option>
+                        </select>
+                      </label>
+                    )}
+                    <label className={`admin-field ${isEditingTask ? '' : 'admin-field-span-2'}`}>
+                      <FieldLabel label={t('admin.task.fields.title')} required />
                       <input
                         type="text"
                         value={taskForm.title}
@@ -2444,7 +5567,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Description" required />
+                      <FieldLabel label={t('admin.task.fields.description')} required />
                       <textarea
                         value={taskForm.description}
                         onChange={(event) =>
@@ -2454,7 +5577,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Points" required />
+                      <FieldLabel label={t('admin.task.fields.points')} required />
                       <input
                         type="number"
                         min={0}
@@ -2468,9 +5591,9 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Location" required />
+                      <FieldLabel label={t('admin.task.fields.location')} required />
                       {locationsLoading ? (
-                        <p className="admin-field-note">Loading locations…</p>
+                        <p className="admin-field-note">{t('admin.task.loadingLocations')}</p>
                       ) : hasTaskLocationOptions ? (
                         <select
                           value={taskForm.locationId}
@@ -2478,7 +5601,7 @@ const goToRewardCreation = () => {
                             setTaskForm((prev) => ({ ...prev, locationId: event.target.value }))
                           }
                         >
-                          <option value="">Select location</option>
+                          <option value="">{t('admin.task.selectLocation')}</option>
                           {taskLocationSelectOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
@@ -2487,15 +5610,111 @@ const goToRewardCreation = () => {
                         </select>
                       ) : (
                         <div className="admin-field-note">
-                          <p>No locations available.</p>
+                          <p>{t('admin.task.noLocations')}</p>
                           <button type="button" className="link-button" onClick={goToLocationCreation}>
-                            Create a location
+                            {t('admin.task.createLocation')}
                           </button>
                         </div>
                       )}
                     </label>
                     <div className="admin-field">
-                      <FieldLabel label="Active" />
+                      <FieldLabel label={t('admin.task.prerequisites.type1.label')} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleOpenPrerequisiteModal('single');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          backgroundColor: '#fff',
+                          cursor: 'pointer',
+                          fontSize: '1rem',
+                          position: 'relative',
+                          zIndex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                        }}
+                      >
+                        {taskForm.prerequisite_task_id ? (
+                          <>
+                            <div style={{ flexShrink: 0 }}>
+                              {(() => {
+                                const selectedTask = getSelectedTask(taskForm.prerequisite_task_id);
+                                return selectedTask ? <TaskTypeBadge type={selectedTask.type} /> : null;
+                              })()}
+                            </div>
+                            <span style={{ flex: 1, textAlign: 'left' }}>
+                              {getSelectedTaskTitle(taskForm.prerequisite_task_id)}
+                            </span>
+                          </>
+                        ) : (
+                          <span>{t('admin.task.prerequisites.type1.noPrerequisite')}</span>
+                        )}
+                      </button>
+                      <p className="admin-field-note" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                        {t('admin.task.prerequisites.type1.description')}
+                      </p>
+                      <p className="admin-field-note" style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: '#666', fontStyle: 'italic' }}>
+                        {t('admin.task.prerequisites.type1.searchHint')}
+                      </p>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label={t('admin.task.prerequisites.type2.label')} />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleOpenPrerequisiteModal('multi');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          backgroundColor: '#fff',
+                          cursor: 'pointer',
+                          fontSize: '1rem',
+                          position: 'relative',
+                          zIndex: 1,
+                        }}
+                      >
+                        {taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0
+                          ? getSelectedTasksCount(taskForm.prerequisite_task_ids)
+                          : t('admin.task.prerequisites.type2.placeholder')}
+                      </button>
+                      <p className="admin-field-note" style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: '#666', fontStyle: 'italic' }}>
+                        {t('admin.task.prerequisites.type2.searchHint')}
+                      </p>
+                      {taskForm.prerequisite_task_ids && taskForm.prerequisite_task_ids.length > 0 && (
+                        <label className="admin-field" style={{ marginTop: '0.5rem' }}>
+                          <FieldLabel label={t('admin.task.prerequisites.type2.minCountLabel')} required />
+                          <input
+                            type="number"
+                            min={1}
+                            max={taskForm.prerequisite_task_ids.length}
+                            value={taskForm.prerequisite_task_count || 1}
+                            onChange={(event) =>
+                              setTaskForm((prev) => ({
+                                ...prev,
+                                prerequisite_task_count: Number.parseInt(event.target.value || '1', 10),
+                              }))
+                            }
+                          />
+                          <p className="admin-field-note" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                            {t('admin.task.prerequisites.type2.description', { count: taskForm.prerequisite_task_ids.length })}
+                          </p>
+                        </label>
+                      )}
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label={t('admin.task.fields.active')} />
                       <div className="admin-toggle">
                         <input
                           id="task-active-toggle"
@@ -2508,12 +5727,12 @@ const goToRewardCreation = () => {
                           }
                         />
                         <label htmlFor="task-active-toggle">
-                          {taskForm.active ? 'Active' : 'Inactive'}
+                          {taskForm.active ? t('admin.task.fields.active') : t('admin.task.fields.inactive')}
                         </label>
                       </div>
                     </div>
                     <label className="admin-field">
-                      <FieldLabel label="CO₂ savings (kg)" />
+                      <FieldLabel label={t('admin.task.fields.co2Savings')} />
                       <input
                         type="number"
                         step="0.01"
@@ -2529,7 +5748,7 @@ const goToRewardCreation = () => {
                     {taskForm.type === 'video' && (
                       <>
                         <div className="admin-field admin-field-span-2">
-                          <FieldLabel label="Video source" required />
+                          <FieldLabel label={t('admin.fields.videoSource')} required />
                           <div className="admin-video-source">
                             <label className="admin-video-option">
                               <input
@@ -2547,7 +5766,7 @@ const goToRewardCreation = () => {
                                   }))
                                 }
                               />
-                              <span>Use external video URL</span>
+                              <span>{t('admin.task.videoSource.url')}</span>
                             </label>
                             <label className="admin-video-option">
                               <input
@@ -2565,31 +5784,31 @@ const goToRewardCreation = () => {
                                   }))
                                 }
                               />
-                              <span>Upload video file</span>
+                              <span>{t('admin.task.videoSource.upload')}</span>
                             </label>
                           </div>
                         </div>
                         {taskForm.videoSource === 'url' && (
                           <label className="admin-field admin-field-span-2 admin-video-upload-block">
-                            <FieldLabel label="Video URL" required />
+                            <FieldLabel label={t('admin.task.fields.videoUrl')} required />
                             <input
                               type="url"
                               value={taskForm.video_url}
                               onChange={(event) =>
                                 setTaskForm((prev) => ({ ...prev, video_url: event.target.value }))
                               }
-                              placeholder="https://example.com/video.mp4"
+                              placeholder={t('admin.task.videoUrlPlaceholder')}
                             />
                           </label>
                         )}
                         {taskForm.videoSource === 'upload' && (
                           <div className="admin-field admin-field-span-2 admin-video-upload-block">
-                            <FieldLabel label="Video file" required />
+                            <FieldLabel label={t('admin.fields.videoFile')} required />
                             <div className="admin-upload-field">
-                              <span>Select a video file to upload</span>
+                              <span>{t('admin.task.selectVideoFile')}</span>
                               <div className="admin-upload-control">
                                 <label className="admin-upload-button">
-                                  <span>Choose file</span>
+                                  <span>{t('admin.task.chooseFile')}</span>
                                   <input
                                     type="file"
                                     accept="video/*"
@@ -2604,7 +5823,7 @@ const goToRewardCreation = () => {
                                   />
                                 </label>
                                 <span className="admin-upload-filename">
-                                  {taskForm.videoFile ? taskForm.videoFile.name : 'No file selected'}
+                                  {taskForm.videoFile ? taskForm.videoFile.name : t('admin.task.noFileSelected')}
                                 </span>
                               </div>
                             </div>
@@ -2614,7 +5833,7 @@ const goToRewardCreation = () => {
                     )}
                     {taskForm.type === 'qr' && (
                       <label className="admin-field admin-field-span-2">
-                        <FieldLabel label="QR code value" required />
+                        <FieldLabel label={t('admin.task.fields.qrCodeValue')} required />
                         <input
                           type="text"
                           value={taskForm.qr_code}
@@ -2626,16 +5845,186 @@ const goToRewardCreation = () => {
                     )}
                     {taskForm.type === 'photo' && (
                       <div className="admin-form-full">
-                        <FieldLabel label="Photo requirement" readOnly />
+                        <FieldLabel label={t('admin.fields.photoRequirement')} readOnly />
                         <p className="admin-field-note">
                           A photo is always required for this task type.
                         </p>
                       </div>
                     )}
+                    {taskForm.type === 'visit_location' && (
+                      <div className="admin-form-full">
+                        <FieldLabel label={t('admin.task.fields.targetLocation')} required />
+                        <p className="admin-field-note" style={{ marginBottom: '12px' }}>
+                          Set the GPS coordinates of the location users need to visit. Users will see a map and must be within 50 meters to complete the task.
+                        </p>
+                        <LocationMap
+                          latitude={taskForm.target_latitude || ''}
+                          longitude={taskForm.target_longitude || ''}
+                          address={taskForm.target_address}
+                          onLocationSelect={(lat, lng, address) => {
+                            setTaskForm((prev) => ({
+                              ...prev,
+                              target_latitude: String(lat),
+                              target_longitude: String(lng),
+                              target_address: address || '',
+                            }));
+                          }}
+                          height="300px"
+                        />
+                        <label className="admin-field" style={{ marginTop: '12px' }}>
+                          <FieldLabel label={t('admin.task.fields.address')} />
+                          <textarea
+                            rows={3}
+                            value={taskForm.target_address || ''}
+                            onChange={(e) =>
+                              setTaskForm((prev) => ({ ...prev, target_address: e.target.value }))
+                            }
+                            placeholder={t('admin.task.targetLocation.addressPlaceholder')}
+                          />
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                          <label className="admin-field">
+                            <FieldLabel label={t('admin.task.fields.latitude')} required />
+                            <input
+                              type="number"
+                              step="any"
+                              value={taskForm.target_latitude || ''}
+                              onChange={(e) =>
+                                setTaskForm((prev) => ({ ...prev, target_latitude: e.target.value }))
+                              }
+                              placeholder={t('admin.task.targetLocation.latitudePlaceholder')}
+                              min="-90"
+                              max="90"
+                            />
+                          </label>
+                          <label className="admin-field">
+                            <FieldLabel label={t('admin.task.fields.longitude')} required />
+                            <input
+                              type="number"
+                              step="any"
+                              value={taskForm.target_longitude || ''}
+                              onChange={(e) =>
+                                setTaskForm((prev) => ({ ...prev, target_longitude: e.target.value }))
+                              }
+                              placeholder={t('admin.task.targetLocation.longitudePlaceholder')}
+                              min="-180"
+                              max="180"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                {taskForm.type === 'video' && (
+                    {taskForm.type === 'article_quiz' && (
+                      <>
+                        <div className="admin-field admin-field-span-2">
+                          <FieldLabel label={t('admin.task.fields.articleSource')} required />
+                          <div className="admin-video-source">
+                            <label className="admin-video-option">
+                              <input
+                                type="radio"
+                                className="admin-radio"
+                                style={COMPACT_TOGGLE_STYLE}
+                                name="article-source"
+                                value="url"
+                                checked={taskForm.articleSource === 'url'}
+                                onChange={() =>
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    articleSource: 'url',
+                                    article_content: '',
+                                  }))
+                                }
+                              />
+                              <span>{t('admin.task.articleSource.url')}</span>
+                            </label>
+                            <label className="admin-video-option">
+                              <input
+                                type="radio"
+                                className="admin-radio"
+                                style={COMPACT_TOGGLE_STYLE}
+                                name="article-source"
+                                value="content"
+                                checked={taskForm.articleSource === 'content'}
+                                onChange={() =>
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    articleSource: 'content',
+                                    article_url: '',
+                                  }))
+                                }
+                              />
+                              <span>{t('admin.task.articleSource.content')}</span>
+                            </label>
+                          </div>
+                        </div>
+                        {taskForm.articleSource === 'url' && (
+                          <label className="admin-field admin-field-span-2">
+                            <FieldLabel label={t('admin.task.fields.articleUrl')} required />
+                            <input
+                              type="url"
+                              value={taskForm.article_url}
+                              onChange={(event) =>
+                                setTaskForm((prev) => ({ ...prev, article_url: event.target.value }))
+                              }
+                              placeholder={t('admin.task.articleUrlPlaceholder')}
+                            />
+                          </label>
+                        )}
+                        {taskForm.articleSource === 'content' && (
+                          <label className="admin-field admin-field-span-2">
+                            <FieldLabel label={t('admin.task.fields.articleContent')} required />
+                            <textarea
+                              value={taskForm.article_content}
+                              onChange={(event) =>
+                                setTaskForm((prev) => ({ ...prev, article_content: event.target.value }))
+                              }
+                              rows={10}
+                              placeholder={t('admin.task.articleContentPlaceholder')}
+                            />
+                          </label>
+                        )}
+                      </>
+                    )}
+                    {taskForm.type === 'survey' && (
+                      <>
+                        <div className="admin-field admin-field-span-2">
+                          <FieldLabel label={t('admin.task.fields.surveyType')} />
+                          <select
+                            value={taskForm.surveyType}
+                            onChange={(e) =>
+                              setTaskForm((prev) => ({
+                                ...prev,
+                                surveyType: e.target.value as 'single_choice' | 'multiple_choice' | 'text' | 'rating' | 'mixed',
+                              }))
+                            }
+                          >
+                            <option value="mixed">{t('admin.task.survey.typeMixed')}</option>
+                            <option value="single_choice">{t('admin.task.survey.typeSingleChoiceOnly')}</option>
+                            <option value="multiple_choice">{t('admin.task.survey.typeMultipleChoiceOnly')}</option>
+                            <option value="text">{t('admin.task.survey.typeTextOnly')}</option>
+                            <option value="rating">{t('admin.task.survey.typeRatingOnly')}</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                {taskForm.type === 'survey' && (
                   <div className="admin-form-full admin-quiz-block">
-                      <FieldLabel label="Quiz questions" required />
+                    <FieldLabel label={t('admin.task.survey.title')} required />
+                    <SurveyBuilder
+                      questions={taskForm.surveyQuestions}
+                      onChange={(questions) =>
+                        setTaskForm((prev) => ({
+                          ...prev,
+                          surveyQuestions: questions,
+                        }))
+                      }
+                    />
+                  </div>
+                )}
+                {(taskForm.type === 'video' || taskForm.type === 'quiz' || taskForm.type === 'article_quiz') && (
+                  <div className="admin-form-full admin-quiz-block">
+                      <FieldLabel label={t('admin.task.quiz.title')} required />
                       <QuizBuilder
                         questions={taskForm.quizQuestions}
                         onChange={(questions) =>
@@ -2650,41 +6039,158 @@ const goToRewardCreation = () => {
                 </section>
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Audience & access</h3>
-                    <p>Restrict visibility to specific roles, user types, or hotels.</p>
+                    <h3>{t('admin.task.recurrence.title')}</h3>
+                    <p>{t('admin.task.recurrence.subtitle')}</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label={t('admin.task.recurrence.typeLabel')} />
+                      <select
+                        value={taskForm.recurrence}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            recurrence: event.target.value as 'once' | 'daily' | 'weekly' | 'monthly',
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="once">{t('admin.task.recurrence.once')}</option>
+                        <option value="daily">{t('admin.task.recurrence.daily')}</option>
+                        <option value="weekly">{t('admin.task.recurrence.weekly')}</option>
+                        <option value="monthly">{t('admin.task.recurrence.monthly')}</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Zielgruppe & Zugriff</h3>
+                    <p>Zielgruppe, Metadaten und zusätzliche Informationen zur Aufgabe</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
-                      <FieldLabel label="Allowed roles" />
-                      <MultiSelectDropdown
-                        options={ROLE_OPTIONS}
-                        selectedValues={taskForm.allowedRoles}
-                        onChange={(selected) =>
-                          setTaskForm((prev) => ({ ...prev, allowedRoles: selected }))
+                      <FieldLabel label="Kategorie" />
+                      <select
+                        value={taskForm.category || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            category: event.target.value as TaskFormState['category'] || undefined,
+                          }))
                         }
-                        placeholder="All roles"
-                      />
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['category'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Allowed user types" />
-                      <MultiSelectDropdown
-                        options={USER_TYPE_OPTIONS}
-                        selectedValues={taskForm.allowedUserTypes}
-                        onChange={(selected) =>
-                          setTaskForm((prev) => ({ ...prev, allowedUserTypes: selected }))
+                      <FieldLabel label="Schwierigkeitsgrad" />
+                      <select
+                        value={taskForm.difficulty || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            difficulty: event.target.value as TaskFormState['difficulty'] || undefined,
+                          }))
                         }
-                        placeholder="All user types"
-                      />
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['difficulty'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Allowed hotel IDs" />
-                      <MultiSelectDropdown
-                        options={HOTEL_OPTIONS}
-                        selectedValues={taskForm.allowedHotelIds}
-                        onChange={(selected) =>
-                          setTaskForm((prev) => ({ ...prev, allowedHotelIds: selected }))
+                      <FieldLabel label="Zeitaufwand" />
+                      <select
+                        value={taskForm.time_required || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            time_required: event.target.value as TaskFormState['time_required'] || undefined,
+                          }))
                         }
-                        placeholder="All hotels"
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['time_required'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Ort/Werkzeug" />
+                      <select
+                        value={taskForm.location_tool || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            location_tool: event.target.value as TaskFormState['location_tool'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(taskParametersByType['location_tool'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Zielgruppe" />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {(['Mitarbeitende', 'Gäste', 'Stakeholder'] as const).map((role) => (
+                          <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={(taskForm.zielgruppe || []).includes(role)}
+                              onChange={(e) => {
+                                const currentZielgruppe = taskForm.zielgruppe || [];
+                                if (e.target.checked) {
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: [...currentZielgruppe, role],
+                                  }));
+                                } else {
+                                  setTaskForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: currentZielgruppe.filter((z) => z !== role).length > 0
+                                      ? currentZielgruppe.filter((z) => z !== role)
+                                      : undefined,
+                                  }));
+                                }
+                              }}
+                            />
+                            <span>{role}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Event/Gruppe" />
+                      <input
+                        type="text"
+                        value={taskForm.event_group || ''}
+                        onChange={(event) =>
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            event_group: event.target.value || undefined,
+                          }))
+                        }
+                        placeholder="Optional: Event oder Gruppe zuordnen"
                       />
                     </div>
                   </div>
@@ -2696,17 +6202,17 @@ const goToRewardCreation = () => {
                         {taskMessage.text}
                       </p>
                     ) : isEditingTask ? (
-                      <p className="admin-publish-hint">Editing existing task.</p>
+                      <p className="admin-publish-hint">{t('admin.task.publishHint.editing')}</p>
                     ) : isUploadingVideo ? (
-                      <p className="admin-publish-hint">Uploading video file…</p>
+                      <p className="admin-publish-hint">{t('admin.task.publishHint.uploading')}</p>
                     ) : !taskValidation.isValid ? (
                       <p className="admin-publish-hint">
                         {hasAttemptedPublish && taskValidation.message
                           ? taskValidation.message
-                          : 'Complete required fields to enable publish.'}
+                          : t('admin.task.publishHint.completeRequired')}
                       </p>
                     ) : (
-                      <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                      <p className="admin-publish-hint">{t('admin.task.publishHint.ready')}</p>
                     )}
                   </div>
                   <div className="admin-form-actions-buttons">
@@ -2716,7 +6222,7 @@ const goToRewardCreation = () => {
                         className="admin-action-button secondary"
                         onClick={cancelTaskEdit}
                       >
-                        Cancel
+                        {t('common.actions.cancel')}
                       </button>
                     )}
                     <button
@@ -2738,11 +6244,11 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>{isEditingReward ? 'Edit Reward' : 'Publish Reward'}</h2>
+              <h2>{isEditingReward ? t('admin.reward.edit.title') : t('admin.reward.create.title')}</h2>
               <p>
                 {isEditingReward
-                  ? 'Update the selected reward using the form below.'
-                  : 'Use an existing reward as a template or start from scratch with a predefined type.'}
+                  ? t('admin.reward.edit.subtitle')
+                  : t('admin.reward.create.subtitle')}
               </p>
             </div>
             <div className="admin-actions">
@@ -2750,10 +6256,10 @@ const goToRewardCreation = () => {
                 <button
                   className="admin-icon-button"
                   onClick={() => refetchRewardTemplates()}
-                  title="Refresh rewards"
+                  title={t('admin.reward.refresh')}
                 >
                   <Icon name="refresh" />
-                  <span className="sr-only">Refresh rewards</span>
+                  <span className="sr-only">{t('admin.reward.refresh')}</span>
                 </button>
               )}
               <button
@@ -2765,10 +6271,10 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title={isEditingReward ? 'Cancel editing' : 'Back to main menu'}
+                title={isEditingReward ? t('admin.reward.cancelEditing') : t('admin.reward.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingReward ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{isEditingReward ? t('admin.reward.cancelEditing') : t('admin.reward.back')}</span>
               </button>
             </div>
           </header>
@@ -2779,20 +6285,20 @@ const goToRewardCreation = () => {
           )}
           {Boolean(locationsError) && (
             <p className="admin-error">
-              Failed to load locations. Create or refresh locations before publishing rewards.
+              {t('admin.reward.locationsError')}
             </p>
           )}
 
           <div className="admin-form-card">
             {!isEditingReward && (
               <label className="admin-field">
-                <span>Create from</span>
+                <span>{t('admin.reward.createFrom')}</span>
                 <select
                   value={rewardSource}
                   onChange={(event) => setRewardSource(event.target.value as RewardSource)}
                 >
-                  <option value="">Select option</option>
-                  <option value="existing">Existing reward</option>
+                  <option value="">{t('admin.reward.selectOption')}</option>
+                  <option value="existing">{t('admin.reward.existingReward')}</option>
                   {REWARD_TYPE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {`Start from scratch – ${option.label}`}
@@ -2809,7 +6315,7 @@ const goToRewardCreation = () => {
                   value={selectedRewardTemplate}
                   onChange={(event) => setSelectedRewardTemplate(event.target.value)}
                 >
-                  <option value="">Select reward</option>
+                  <option value="">{t('admin.reward.selectReward')}</option>
                   {normalizedRewardTemplates.map((template) => (
                     <option key={template.id} value={template.id}>
                       {template.title} ({formatRewardType(template.reward_type as RewardType)})
@@ -2832,14 +6338,35 @@ const goToRewardCreation = () => {
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
                     <div>
-                      <h3>Reward details</h3>
+                      <h3>{t('admin.reward.details.title')}</h3>
                       <p>Define the reward content and optional integrations.</p>
                     </div>
-                    <RewardTypeBadge type={rewardForm.type} />
+                    {!isEditingReward && <RewardTypeBadge type={rewardForm.type} />}
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
-                    <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Title" required />
+                    {isEditingReward && (
+                      <label className="admin-field">
+                        <FieldLabel label={t('admin.reward.fields.type')} required />
+                        <select
+                          value={rewardForm.type}
+                          onChange={(event) =>
+                            setRewardForm((prev) => ({
+                              ...prev,
+                              type: event.target.value as RewardType,
+                            }))
+                          }
+                          className="admin-select"
+                        >
+                          {REWARD_TYPE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    <label className={`admin-field ${isEditingReward ? '' : 'admin-field-span-2'}`}>
+                      <FieldLabel label={t('admin.task.fields.title')} required />
                       <input
                         type="text"
                         value={rewardForm.title}
@@ -2849,7 +6376,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="Description" required />
+                      <FieldLabel label={t('admin.task.fields.description')} required />
                       <textarea
                         value={rewardForm.description}
                         onChange={(event) =>
@@ -2859,7 +6386,7 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Points cost" required />
+                      <FieldLabel label={t('admin.reward.fields.pointsCost')} required />
                       <input
                         type="number"
                         min={0}
@@ -2873,9 +6400,9 @@ const goToRewardCreation = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <FieldLabel label="Location" required />
+                      <FieldLabel label={t('admin.task.fields.location')} required />
                       {locationsLoading ? (
-                        <p className="admin-field-note">Loading locations…</p>
+                        <p className="admin-field-note">{t('admin.task.loadingLocations')}</p>
                       ) : hasRewardLocationOptions ? (
                         <select
                           value={rewardForm.locationId}
@@ -2883,7 +6410,7 @@ const goToRewardCreation = () => {
                             setRewardForm((prev) => ({ ...prev, locationId: event.target.value }))
                           }
                         >
-                          <option value="">Select location</option>
+                          <option value="">{t('admin.task.selectLocation')}</option>
                           {rewardLocationSelectOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
@@ -2892,15 +6419,15 @@ const goToRewardCreation = () => {
                         </select>
                       ) : (
                         <div className="admin-field-note">
-                          <p>No locations available.</p>
+                          <p>{t('admin.task.noLocations')}</p>
                           <button type="button" className="link-button" onClick={goToLocationCreation}>
-                            Create a location
+                            {t('admin.task.createLocation')}
                           </button>
                         </div>
                       )}
                     </label>
                     <div className="admin-field">
-                      <FieldLabel label="Active" />
+                      <FieldLabel label={t('admin.task.fields.active')} />
                       <div className="admin-toggle">
                         <input
                           id="reward-active-toggle"
@@ -2913,30 +6440,30 @@ const goToRewardCreation = () => {
                           }
                         />
                         <label htmlFor="reward-active-toggle">
-                          {rewardForm.active ? 'Active' : 'Inactive'}
+                          {rewardForm.active ? t('admin.task.fields.active') : t('admin.task.fields.inactive')}
                         </label>
                       </div>
                     </div>
                     <label className="admin-field">
-                      <FieldLabel label="Voucher code" />
+                      <FieldLabel label={t('admin.reward.fields.voucherCode')} />
                       <input
                         type="text"
                         value={rewardForm.voucherCode}
                         onChange={(event) =>
                           setRewardForm((prev) => ({ ...prev, voucherCode: event.target.value }))
                         }
-                        placeholder="Optional code for voucher-based rewards"
+                        placeholder={t('admin.reward.voucherCodePlaceholder')}
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
-                      <FieldLabel label="External API ID" />
+                      <FieldLabel label={t('admin.reward.fields.externalApiId')} />
                       <input
                         type="text"
                         value={rewardForm.externalApiId}
                         onChange={(event) =>
                           setRewardForm((prev) => ({ ...prev, externalApiId: event.target.value }))
                         }
-                        placeholder="Optional identifier for external integrations"
+                        placeholder={t('admin.reward.externalApiPlaceholder')}
                       />
                     </label>
                   </div>
@@ -2944,41 +6471,134 @@ const goToRewardCreation = () => {
 
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Audience & access</h3>
-                    <p>Limit the reward visibility to certain roles, user types, or hotels.</p>
+                    <h3>{t('admin.reward.recurrence.title')}</h3>
+                    <p>{t('admin.reward.recurrence.subtitle')}</p>
+                  </div>
+                  <div className="admin-form-grid">
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label={t('admin.reward.recurrence.typeLabel')} />
+                      <select
+                        value={rewardForm.recurrence}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            recurrence: event.target.value as 'once' | 'daily' | 'weekly' | 'monthly',
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="once">{t('admin.reward.recurrence.once')}</option>
+                        <option value="daily">{t('admin.reward.recurrence.daily')}</option>
+                        <option value="weekly">{t('admin.reward.recurrence.weekly')}</option>
+                        <option value="monthly">{t('admin.reward.recurrence.monthly')}</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="admin-form-section">
+                  <div className="admin-form-section-header">
+                    <h3>Zielgruppe & Zugriff</h3>
+                    <p>Zielgruppe, Metadaten und zusätzliche Informationen zur Belohnung</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
-                      <FieldLabel label="Allowed roles" />
-                      <MultiSelectDropdown
-                        options={ROLE_OPTIONS}
-                        selectedValues={rewardForm.allowedRoles}
-                        onChange={(selected) =>
-                          setRewardForm((prev) => ({ ...prev, allowedRoles: selected }))
+                      <FieldLabel label="Zielgruppe" />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {(['Mitarbeitende', 'Gäste', 'Stakeholder'] as const).map((role) => (
+                          <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={(rewardForm.zielgruppe || []).includes(role)}
+                              onChange={(e) => {
+                                const currentZielgruppe = rewardForm.zielgruppe || [];
+                                if (e.target.checked) {
+                                  setRewardForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: [...currentZielgruppe, role],
+                                  }));
+                                } else {
+                                  setRewardForm((prev) => ({
+                                    ...prev,
+                                    zielgruppe: currentZielgruppe.filter((z) => z !== role).length > 0
+                                      ? currentZielgruppe.filter((z) => z !== role)
+                                      : null,
+                                  }));
+                                }
+                              }}
+                            />
+                            <span>{role}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Art" />
+                      <select
+                        value={rewardForm.reward_art || ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            reward_art: event.target.value as RewardFormState['reward_art'] || undefined,
+                          }))
                         }
-                        placeholder="All roles"
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(rewardParametersByType['reward_art'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field">
+                      <FieldLabel label="Kategorie" />
+                      <select
+                        value={rewardForm.kategorie || ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            kategorie: event.target.value as RewardFormState['kategorie'] || undefined,
+                          }))
+                        }
+                        className="admin-select"
+                      >
+                        <option value="">-- Keine Auswahl --</option>
+                        {(rewardParametersByType['kategorie'] || []).map((param) => (
+                          <option key={param.id} value={param.value}>
+                            {param.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Event/Gruppe" />
+                      <input
+                        type="text"
+                        value={rewardForm.event_group || ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            event_group: event.target.value || undefined,
+                          }))
+                        }
+                        placeholder="Optional: Event oder Gruppe zuordnen"
                       />
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Allowed user types" />
-                      <MultiSelectDropdown
-                        options={USER_TYPE_OPTIONS}
-                        selectedValues={rewardForm.allowedUserTypes}
-                        onChange={(selected) =>
-                          setRewardForm((prev) => ({ ...prev, allowedUserTypes: selected }))
+                      <FieldLabel label="Mögliche Punkte" />
+                      <input
+                        type="number"
+                        min={0}
+                        value={rewardForm.moegliche_punkte !== undefined && rewardForm.moegliche_punkte !== null ? rewardForm.moegliche_punkte : ''}
+                        onChange={(event) =>
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            moegliche_punkte: event.target.value ? Number.parseInt(event.target.value || '0', 10) : undefined,
+                          }))
                         }
-                        placeholder="All user types"
-                      />
-                    </div>
-                    <div className="admin-field">
-                      <FieldLabel label="Allowed hotel IDs" />
-                      <MultiSelectDropdown
-                        options={HOTEL_OPTIONS}
-                        selectedValues={rewardForm.allowedHotelIds}
-                        onChange={(selected) =>
-                          setRewardForm((prev) => ({ ...prev, allowedHotelIds: selected }))
-                        }
-                        placeholder="All hotels"
+                        placeholder="Optional: Punkte beim Einlösen"
                       />
                     </div>
                   </div>
@@ -2991,15 +6611,15 @@ const goToRewardCreation = () => {
                         {rewardMessage.text}
                       </p>
                     ) : isEditingReward ? (
-                      <p className="admin-publish-hint">Editing existing reward.</p>
+                      <p className="admin-publish-hint">{t('admin.reward.publishHint.editing')}</p>
                     ) : !rewardValidation.isValid ? (
                       <p className="admin-publish-hint">
                         {hasAttemptedRewardPublish && rewardValidation.message
                           ? rewardValidation.message
-                          : 'Complete required fields to enable publish.'}
+                          : t('admin.reward.publishHint.completeRequired')}
                       </p>
                     ) : (
-                      <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                      <p className="admin-publish-hint">{t('admin.reward.publishHint.ready')}</p>
                     )}
                   </div>
                   <div className="admin-form-actions-buttons">
@@ -3009,7 +6629,7 @@ const goToRewardCreation = () => {
                         className="admin-action-button secondary"
                         onClick={cancelRewardEdit}
                       >
-                        Cancel
+                        {t('common.actions.cancel')}
                       </button>
                     )}
                     <button
@@ -3031,10 +6651,9 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>{isEditingLocation ? 'Edit Location' : 'Create Location'}</h2>
+              <h2>{isEditingLocation ? t('admin.location.edit.title') : t('admin.location.create.title')}</h2>
               <p>
-                Define where tasks and rewards take place. Locations can be online or physical with an
-                address and GPS coordinates.
+                {isEditingLocation ? t('admin.location.edit.subtitle') : t('admin.location.create.subtitle')}
               </p>
             </div>
             <div className="admin-actions">
@@ -3050,10 +6669,10 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title="Back"
+                title={t('admin.location.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{t('admin.location.back')}</span>
               </button>
             </div>
           </header>
@@ -3063,13 +6682,13 @@ const goToRewardCreation = () => {
               <section className="admin-form-section">
                 <div className="admin-form-section-header">
                   <div>
-                    <h3>Location details</h3>
+                    <h3>{t('admin.location.details.title')}</h3>
                     <p>Provide the basic information for this location.</p>
                   </div>
                 </div>
-                <div className="admin-form-grid admin-form-grid-two">
+                <div className={`admin-form-grid admin-form-grid-two ${locationForm.mode === 'physical' ? 'admin-form-grid-location' : ''}`}>
                   <label className="admin-field admin-field-span-2">
-                    <FieldLabel label="Name" required />
+                    <FieldLabel label={t('admin.location.fields.name')} required />
                     <input
                       type="text"
                       value={locationForm.name}
@@ -3079,7 +6698,7 @@ const goToRewardCreation = () => {
                     />
                   </label>
                   <label className="admin-field admin-field-span-2">
-                    <FieldLabel label="Description" required />
+                    <FieldLabel label={t('admin.location.fields.description')} required />
                     <textarea
                       rows={3}
                       value={locationForm.description}
@@ -3088,8 +6707,26 @@ const goToRewardCreation = () => {
                       }
                     />
                   </label>
+                  <div className="admin-field">
+                    <FieldLabel label={t('admin.location.fields.active')} />
+                    <div className="admin-toggle">
+                      <input
+                        id="location-active-toggle"
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={locationForm.active}
+                        onChange={(event) =>
+                          setLocationForm((prev) => ({ ...prev, active: event.target.checked }))
+                        }
+                      />
+                      <label htmlFor="location-active-toggle">
+                        {locationForm.active ? t('admin.location.fields.active') : t('admin.location.fields.inactive')}
+                      </label>
+                    </div>
+                  </div>
                   <div className="admin-field admin-field-span-2">
-                    <FieldLabel label="Location type" required />
+                    <FieldLabel label={t('admin.location.fields.locationType')} required />
                     <div className="admin-toggle-group">
                       <label className="admin-radio-option">
                         <input
@@ -3128,35 +6765,30 @@ const goToRewardCreation = () => {
                       </label>
                     </div>
                   </div>
-                  <div className="admin-field">
-                    <FieldLabel label="Active" />
-                    <div className="admin-toggle">
-                      <input
-                        id="location-active-toggle"
-                        type="checkbox"
-                        className="admin-checkbox"
-                        style={COMPACT_TOGGLE_STYLE}
-                        checked={locationForm.active}
-                        onChange={(event) =>
-                          setLocationForm((prev) => ({ ...prev, active: event.target.checked }))
-                        }
-                      />
-                      <label htmlFor="location-active-toggle">
-                        {locationForm.active ? 'Active' : 'Inactive'}
-                      </label>
-                    </div>
-                  </div>
                   {locationForm.mode === 'physical' && (
                     <>
-                      <label className="admin-field admin-field-span-2">
+                      <label className="admin-field">
                         <FieldLabel label="Address" required />
-                        <textarea
-                          rows={2}
-                          value={locationForm.address}
-                          onChange={(event) =>
-                            setLocationForm((prev) => ({ ...prev, address: event.target.value }))
-                          }
-                        />
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                          <textarea
+                            rows={3}
+                            value={locationForm.address}
+                            onChange={(event) =>
+                              setLocationForm((prev) => ({ ...prev, address: event.target.value }))
+                            }
+                            placeholder="Enter the full address"
+                            style={{ flex: 1 }}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleGeocodeAddress}
+                            className="admin-action-button"
+                            style={{ whiteSpace: 'nowrap', padding: '0.5rem 1rem', marginTop: 0 }}
+                            title="Generate coordinates from address"
+                          >
+                            📍 Geocode
+                          </button>
+                        </div>
                       </label>
                       <label className="admin-field">
                         <FieldLabel label="Latitude" required />
@@ -3191,6 +6823,33 @@ const goToRewardCreation = () => {
                       </p>
                     </div>
                   )}
+                  <div className="admin-field admin-field-span-2">
+                    <FieldLabel label={t('admin.location.fields.category')} />
+                    <select
+                      value={locationForm.category}
+                      onChange={(event) =>
+                        setLocationForm((prev) => ({ ...prev, category: event.target.value }))
+                      }
+                    >
+                      <option value="">{t('admin.location.categorySelect')}</option>
+                      <option value="online">{t('admin.location.categories.online')}</option>
+                      <option value="hotel_reception">{t('admin.location.categories.hotel_reception')}</option>
+                      <option value="hotel_restaurant">{t('admin.location.categories.hotel_restaurant')}</option>
+                      <option value="external">{t('admin.location.categories.external')}</option>
+                      <option value="physical">{t('admin.location.categories.physical')}</option>
+                    </select>
+                  </div>
+                  <label className="admin-field admin-field-span-2">
+                    <FieldLabel label={t('admin.location.fields.categoryDescription')} />
+                    <textarea
+                      rows={2}
+                      value={locationForm.categoryDescription}
+                      onChange={(event) =>
+                        setLocationForm((prev) => ({ ...prev, categoryDescription: event.target.value }))
+                      }
+                      placeholder={t('admin.location.categoryDescriptionPlaceholder')}
+                    />
+                  </label>
                 </div>
               </section>
 
@@ -3201,15 +6860,15 @@ const goToRewardCreation = () => {
                       {locationMessage.text}
                     </p>
                   ) : isEditingLocation ? (
-                    <p className="admin-publish-hint">Editing existing location.</p>
+                    <p className="admin-publish-hint">{t('admin.location.publishHint.editing')}</p>
                   ) : !locationValidation.isValid ? (
                     <p className="admin-publish-hint">
                       {hasAttemptedLocationSubmit && locationValidation.message
                         ? locationValidation.message
-                        : 'Complete required fields to enable save.'}
+                        : t('admin.location.publishHint.completeRequired')}
                     </p>
                   ) : (
-                    <p className="admin-publish-hint">All mandatory fields are complete.</p>
+                    <p className="admin-publish-hint">{t('admin.location.publishHint.ready')}</p>
                   )}
                 </div>
                 <div className="admin-form-actions-buttons">
@@ -3219,7 +6878,7 @@ const goToRewardCreation = () => {
                       className="admin-action-button secondary"
                       onClick={cancelLocationEdit}
                     >
-                      Cancel
+                      {t('common.actions.cancel')}
                     </button>
                   )}
                   <button
@@ -3227,7 +6886,7 @@ const goToRewardCreation = () => {
                     onClick={handleLocationSubmit}
                     disabled={isLocationSubmitDisabled}
                   >
-                    {isEditingLocation ? 'Update Location' : 'Create Location'}
+                    {isEditingLocation ? t('admin.location.updateButton') : t('admin.location.createButton')}
                   </button>
                 </div>
               </div>
@@ -3244,39 +6903,39 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Manage Locations</h2>
+              <h2>{t('admin.locationManage.title')}</h2>
               <p>Review existing locations, edit their details, or remove unused entries.</p>
             </div>
             <div className="admin-actions">
               <button
                 className="admin-icon-button"
                 onClick={() => refetchLocations()}
-                title="Refresh locations"
+                title={t('admin.locationManage.refresh')}
               >
                 <Icon name="refresh" />
-                <span className="sr-only">Refresh locations</span>
+                <span className="sr-only">{t('admin.locationManage.refresh')}</span>
               </button>
               <button
                 className="admin-icon-button"
                 onClick={() => setMode(null)}
-                title="Back to main menu"
+                title={t('admin.locationManage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">Back</span>
+                <span className="sr-only">{t('admin.locationManage.back')}</span>
               </button>
             </div>
           </header>
 
-          {locationsLoading && <p>Loading locations…</p>}
+          {locationsLoading && <p>{t('admin.locationManage.loading')}</p>}
           {Boolean(locationsError) && (
-            <p className="admin-error">Failed to load locations. Please try again.</p>
+            <p className="admin-error">{t('admin.locationManage.loadError')}</p>
           )}
 
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
-                <h3>Existing locations</h3>
-                <p>Each task and reward references one of these locations.</p>
+                <h3>{t('admin.locationManage.existing.title')}</h3>
+                <p>{t('admin.locationManage.existing.subtitle')}</p>
               </div>
               <div className="admin-management-controls">
                 <label className="admin-toggle">
@@ -3290,7 +6949,7 @@ const goToRewardCreation = () => {
                       setSelectedLocationIds([]);
                     }}
                   />
-                  <span>Show inactive</span>
+                  <span>{t('admin.locationManage.showInactive')}</span>
                 </label>
                 <button className="admin-action-button" type="button" onClick={goToLocationCreation}>
                   New location
@@ -3357,7 +7016,7 @@ const goToRewardCreation = () => {
                               : []
                           )
                         }
-                        aria-label="Select all locations"
+                        aria-label={t('admin.locationManage.selectAll')}
                       />
                     </th>
                     <th>Name</th>
@@ -3407,7 +7066,7 @@ const goToRewardCreation = () => {
                           </td>
                           <td data-label="Details">
                             {location.is_online ? (
-                              <span className="admin-table-subtitle">Accessible online</span>
+                              <span className="admin-table-subtitle">{t('admin.locationManage.online')}</span>
                             ) : (
                               <div className="admin-table-secondary">
                                 {location.address && (
@@ -3468,18 +7127,18 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Manage Tasks</h2>
-              <p>Browse all tasks, toggle availability, or clean up unused entries.</p>
+              <h2>{t('admin.taskManage.title')}</h2>
+              <p>{t('admin.taskManage.subtitle')}</p>
             </div>
             <div className="admin-actions">
               {!isEditingTask && (
                 <button
                   className="admin-icon-button"
                   onClick={() => refetchTasks()}
-                  title="Refresh tasks"
+                  title={t('admin.taskManage.refresh')}
                 >
                   <Icon name="refresh" />
-                  <span className="sr-only">Refresh tasks</span>
+                  <span className="sr-only">{t('admin.taskManage.refresh')}</span>
                 </button>
               )}
               <button
@@ -3491,21 +7150,29 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title={isEditingTask ? 'Cancel editing' : 'Back to main menu'}
+                title={isEditingTask ? t('admin.task.cancelEditing') : t('admin.taskManage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingTask ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{isEditingTask ? t('admin.task.cancelEditing') : t('admin.taskManage.back')}</span>
               </button>
             </div>
           </header>
 
-          {tasksLoading && <p>Loading tasks…</p>}
-          {Boolean(tasksError) && <p className="admin-error">Failed to load existing tasks.</p>}
+          {tasksLoading && <p>{t('admin.taskManage.loading')}</p>}
+          {Boolean(tasksError) && <p className="admin-error">{t('admin.taskManage.loadError')}</p>}
+
+          <button 
+            className="admin-action-button admin-mobile-new-task-button" 
+            type="button" 
+            onClick={goToTaskCreation}
+          >
+            New task
+          </button>
 
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
-                <h3>Existing tasks</h3>
+                <h3>{t('admin.taskManage.existing.title')}</h3>
                 <p>Review, edit, activate, deactivate, or delete tasks directly.</p>
               </div>
               <div className="admin-management-controls">
@@ -3520,9 +7187,22 @@ const goToRewardCreation = () => {
                       setSelectedTaskIds([]);
                     }}
                   />
-                  <span>Show inactive</span>
+                  <span>{t('admin.taskManage.showInactive')}</span>
                 </label>
-                <button className="admin-action-button" type="button" onClick={goToTaskCreation}>
+                <button
+                  className="admin-mobile-filter-button"
+                  type="button"
+                  onClick={() => setIsMobileTaskFilterOpen(true)}
+                  aria-label={t('admin.taskManage.openFilters')}
+                >
+                  <Icon name="filter" />
+                  {(taskFilterLocation || taskFilterStatus || taskFilterRecurrence || taskFilterType || taskFilterTitle.trim() || taskFilterPointsMin.trim() || taskFilterPointsMax.trim()) && (
+                    <span className="admin-mobile-filter-badge">
+                      {[taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType, taskFilterTitle.trim() ? 'title' : null, (taskFilterPointsMin.trim() || taskFilterPointsMax.trim()) ? 'points' : null].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+                <button className="admin-action-button admin-desktop-new-task-button" type="button" onClick={goToTaskCreation}>
                   New task
                 </button>
               </div>
@@ -3576,35 +7256,102 @@ const goToRewardCreation = () => {
                         type="checkbox"
                         className="admin-checkbox"
                         style={COMPACT_TOGGLE_STYLE}
-                        checked={allTasksSelected && existingTemplates.length > 0}
-                        disabled={!existingTemplates.length}
+                        checked={allTasksSelected && filteredTasks.length > 0}
+                        disabled={!filteredTasks.length}
                         onChange={(event) =>
                           setSelectedTaskIds(
                             event.target.checked
-                              ? existingTemplates.map((task) => task.id)
+                              ? filteredTasks.map((task) => task.id)
                               : []
                           )
                         }
-                        aria-label="Select all tasks"
+                        aria-label={t('admin.taskManage.selectAll')}
                       />
                     </th>
-                    <th>Task</th>
-                    <th>Type</th>
-                    <th>Location</th>
-                    <th>Points</th>
-                    <th>Status</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('title');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Task {taskFilterTitle && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('type');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Type {taskFilterType && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('location');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Location {taskFilterLocation && '✓'}
+                    </th>
+                    <th>Zielgruppe</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('points');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Points {(taskFilterPointsMin || taskFilterPointsMax) && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('status');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Status {taskFilterStatus && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTaskFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTaskFilterDropdown('recurrence');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.filters.recurrence')} {taskFilterRecurrence && '✓'}
+                    </th>
+                    <th>Kategorie</th>
+                    <th>Schwierigkeit</th>
+                    <th>Zeitaufwand</th>
+                    <th>Ort/Werkzeug</th>
+                    <th>Event/Gruppe</th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {existingTemplates.length === 0 ? (
+                  {filteredTasks.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="admin-table-empty">
+                      <td colSpan={14} className="admin-table-empty">
                         No tasks found.
                       </td>
                     </tr>
                   ) : (
-                    existingTemplates.map((task) => {
+                    filteredTasks.map((task) => {
                       const isSelected = selectedTaskIds.includes(task.id);
                       return (
                         <tr key={task.id}>
@@ -3623,7 +7370,7 @@ const goToRewardCreation = () => {
                           <td data-label="Task">
                             <div className="admin-table-primary">
                               <span className="admin-table-title">
-                                {task.title || 'Untitled task'}
+                                {task.title || t('admin.task.untitled')}
                               </span>
                               {task.description && (
                                 <span className="admin-table-subtitle">{task.description}</span>
@@ -3647,6 +7394,13 @@ const goToRewardCreation = () => {
                               ) : null}
                             </div>
                           </td>
+                          <td data-label="Zielgruppe">
+                            <span className="admin-table-secondary">
+                              {Array.isArray((task as any).zielgruppe) && (task as any).zielgruppe.length > 0
+                                ? (task as any).zielgruppe.join(', ')
+                                : '—'}
+                            </span>
+                          </td>
                           <td data-label="Points">{task.points}</td>
                           <td data-label="Status">
                             <span
@@ -3655,6 +7409,39 @@ const goToRewardCreation = () => {
                               }`}
                             >
                               {task.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td data-label={t('admin.filters.recurrence')}>
+                            <span className="admin-table-secondary">
+                              {(() => {
+                                const recurrence = ((task as any).recurrence || 'once') as 'once' | 'daily' | 'weekly' | 'monthly';
+                                return t(`admin.task.recurrence.${recurrence}`).split(' - ')[0];
+                              })()}
+                            </span>
+                          </td>
+                          <td data-label="Kategorie">
+                            <span className="admin-table-secondary">
+                              {(task as any).category || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Schwierigkeit">
+                            <span className="admin-table-secondary">
+                              {(task as any).difficulty || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Zeitaufwand">
+                            <span className="admin-table-secondary">
+                              {(task as any).time_required || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Ort/Werkzeug">
+                            <span className="admin-table-secondary">
+                              {(task as any).location_tool || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Event/Gruppe">
+                            <span className="admin-table-secondary">
+                              {(task as any).event_group || '—'}
                             </span>
                           </td>
                           <td data-label="Actions" className="admin-table-actions">
@@ -3686,8 +7473,93 @@ const goToRewardCreation = () => {
                   )}
                 </tbody>
               </table>
+              {taskFilterDropdown && taskFilterDropdownPosition && (
+                <FilterDropdown
+                  isOpen={true}
+                  onClose={() => setTaskFilterDropdown(null)}
+                  position={taskFilterDropdownPosition}
+                  options={
+                    taskFilterDropdown === 'location'
+                      ? taskFilterOptions.locations
+                      : taskFilterDropdown === 'status'
+                      ? taskFilterOptions.statuses
+                      : taskFilterDropdown === 'recurrence'
+                      ? taskFilterOptions.recurrences
+                      : taskFilterDropdown === 'type'
+                      ? taskFilterOptions.types
+                      : undefined
+                  }
+                  selectedValue={
+                    taskFilterDropdown === 'location'
+                      ? taskFilterLocation
+                      : taskFilterDropdown === 'status'
+                      ? taskFilterStatus
+                      : taskFilterDropdown === 'recurrence'
+                      ? taskFilterRecurrence
+                      : taskFilterDropdown === 'type'
+                      ? taskFilterType
+                      : undefined
+                  }
+                  onSelect={(value) => {
+                    if (taskFilterDropdown === 'location') {
+                      setTaskFilterLocation(value);
+                    } else if (taskFilterDropdown === 'status') {
+                      setTaskFilterStatus(value as 'active' | 'inactive' | null);
+                    } else if (taskFilterDropdown === 'recurrence') {
+                      setTaskFilterRecurrence(value);
+                    } else if (taskFilterDropdown === 'type') {
+                      setTaskFilterType(value);
+                    }
+                  }}
+                  type={taskFilterDropdown}
+                  textValue={taskFilterDropdown === 'title' ? taskFilterTitle : undefined}
+                  onTextChange={taskFilterDropdown === 'title' ? setTaskFilterTitle : undefined}
+                  minValue={taskFilterDropdown === 'points' ? taskFilterPointsMin : undefined}
+                  maxValue={taskFilterDropdown === 'points' ? taskFilterPointsMax : undefined}
+                  onMinChange={taskFilterDropdown === 'points' ? setTaskFilterPointsMin : undefined}
+                  onMaxChange={taskFilterDropdown === 'points' ? setTaskFilterPointsMax : undefined}
+                />
+              )}
             </div>
           </div>
+          <MobileFilterModal
+            isOpen={isMobileTaskFilterOpen}
+            onClose={() => setIsMobileTaskFilterOpen(false)}
+            filterOptions={taskFilterOptions}
+            filters={{
+              location: taskFilterLocation,
+              status: taskFilterStatus,
+              recurrence: taskFilterRecurrence,
+              type: taskFilterType,
+              title: taskFilterTitle,
+              pointsMin: taskFilterPointsMin,
+              pointsMax: taskFilterPointsMax,
+            }}
+            onFilterChange={(filterType, value) => {
+              if (filterType === 'location') {
+                setTaskFilterLocation(value);
+              } else if (filterType === 'status') {
+                setTaskFilterStatus(value as 'active' | 'inactive' | null);
+              } else if (filterType === 'recurrence') {
+                setTaskFilterRecurrence(value);
+              } else if (filterType === 'type') {
+                setTaskFilterType(value);
+              }
+            }}
+            onTitleChange={setTaskFilterTitle}
+            onPointsMinChange={setTaskFilterPointsMin}
+            onPointsMaxChange={setTaskFilterPointsMax}
+            onClearAll={() => {
+              setTaskFilterLocation(null);
+              setTaskFilterStatus(null);
+              setTaskFilterRecurrence(null);
+              setTaskFilterType(null);
+              setTaskFilterTitle('');
+              setTaskFilterPointsMin('');
+              setTaskFilterPointsMax('');
+            }}
+            filterType="task"
+          />
         </section>
       )}
 
@@ -3695,18 +7567,18 @@ const goToRewardCreation = () => {
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
-              <h2>Manage Rewards</h2>
-              <p>Review existing rewards and adjust their details or availability.</p>
+              <h2>{t('admin.rewardManage.title')}</h2>
+              <p>{t('admin.rewardManage.subtitle')}</p>
             </div>
             <div className="admin-actions">
               {!isEditingReward && (
                 <button
                   className="admin-icon-button"
                   onClick={() => refetchRewardTemplates()}
-                  title="Refresh rewards"
+                  title={t('admin.rewardManage.refresh')}
                 >
                   <Icon name="refresh" />
-                  <span className="sr-only">Refresh rewards</span>
+                  <span className="sr-only">{t('admin.rewardManage.refresh')}</span>
                 </button>
               )}
               <button
@@ -3718,24 +7590,24 @@ const goToRewardCreation = () => {
                     setMode(null);
                   }
                 }}
-                title={isEditingReward ? 'Cancel editing' : 'Back to main menu'}
+                title={isEditingReward ? t('admin.reward.cancelEditing') : t('admin.rewardManage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{isEditingReward ? 'Cancel editing' : 'Back'}</span>
+                <span className="sr-only">{isEditingReward ? t('admin.reward.cancelEditing') : t('admin.rewardManage.back')}</span>
               </button>
             </div>
           </header>
 
-          {rewardTemplatesLoading && <p>Loading rewards…</p>}
+          {rewardTemplatesLoading && <p>{t('admin.rewardManage.loading')}</p>}
           {Boolean(rewardTemplatesError) && (
-            <p className="admin-error">Failed to load rewards.</p>
+            <p className="admin-error">{t('admin.rewardManage.loadError')}</p>
           )}
 
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
-                <h3>Existing rewards</h3>
-                <p>Maintain active rewards, edit their details, or clean up inactive entries.</p>
+                <h3>{t('admin.rewardManage.existing.title')}</h3>
+                <p>{t('admin.rewardManage.existing.subtitle')}</p>
               </div>
               <div className="admin-management-controls">
                 <label className="admin-toggle">
@@ -3749,8 +7621,21 @@ const goToRewardCreation = () => {
                       setSelectedRewardIds([]);
                     }}
                   />
-                  <span>Show inactive</span>
+                  <span>{t('admin.taskManage.showInactive')}</span>
                 </label>
+                <button
+                  className="admin-mobile-filter-button"
+                  type="button"
+                  onClick={() => setIsMobileRewardFilterOpen(true)}
+                  aria-label={t('admin.taskManage.openFilters')}
+                >
+                  <Icon name="filter" />
+                  {(rewardFilterLocation || rewardFilterStatus || rewardFilterRecurrence || rewardFilterType || rewardFilterTitle.trim() || rewardFilterCostMin.trim() || rewardFilterCostMax.trim()) && (
+                    <span className="admin-mobile-filter-badge">
+                      {[rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType, rewardFilterTitle.trim() ? 'title' : null, (rewardFilterCostMin.trim() || rewardFilterCostMax.trim()) ? 'cost' : null].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
                 <button className="admin-action-button" type="button" onClick={goToRewardCreation}>
                   New reward
                 </button>
@@ -3807,35 +7692,91 @@ const goToRewardCreation = () => {
                         type="checkbox"
                         className="admin-checkbox"
                         style={COMPACT_TOGGLE_STYLE}
-                        checked={allRewardsSelected && normalizedRewardTemplates.length > 0}
-                        disabled={!normalizedRewardTemplates.length}
+                        checked={allRewardsSelected && filteredRewards.length > 0}
+                        disabled={!filteredRewards.length}
                         onChange={(event) =>
                           setSelectedRewardIds(
                             event.target.checked
-                              ? normalizedRewardTemplates.map((reward) => reward.id)
+                              ? filteredRewards.map((reward) => reward.id)
                               : []
                           )
                         }
-                        aria-label="Select all rewards"
+                        aria-label={t('admin.rewardManage.selectAll')}
                       />
                     </th>
-                    <th>Reward</th>
-                    <th>Type</th>
-                    <th>Location</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('title');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Reward {rewardFilterTitle && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('type');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Type {rewardFilterType && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('location');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Location {rewardFilterLocation && '✓'}
+                    </th>
+                    <th>Zielgruppe</th>
                     <th>Cost</th>
-                    <th>Status</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('status');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      Status {rewardFilterStatus && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setRewardFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setRewardFilterDropdown('recurrence');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.filters.recurrence')} {rewardFilterRecurrence && '✓'}
+                    </th>
+                    <th>Art</th>
+                    <th>Kategorie</th>
+                    <th>Event/Gruppe</th>
+                    <th>Mögliche Punkte</th>
                     <th style={{ width: '24rem' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {normalizedRewardTemplates.length === 0 ? (
+                  {filteredRewards.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="admin-table-empty">
+                      <td colSpan={14} className="admin-table-empty">
                         No rewards found.
                       </td>
                     </tr>
                   ) : (
-                    normalizedRewardTemplates.map((reward) => {
+                    filteredRewards.map((reward) => {
                       const isSelected = selectedRewardIds.includes(reward.id);
                       const cost =
                         reward.points_cost !== undefined && reward.points_cost !== null
@@ -3858,7 +7799,7 @@ const goToRewardCreation = () => {
                           <td data-label="Reward">
                              <div className="admin-table-primary">
                                <span className="admin-table-title">
-                                 {reward.title || 'Untitled reward'}
+                                 {reward.title || t('admin.reward.untitled')}
                                </span>
                                {reward.description && (
                                  <span className="admin-table-subtitle">{reward.description}</span>
@@ -3882,6 +7823,13 @@ const goToRewardCreation = () => {
                               ) : null}
                             </div>
                           </td>
+                          <td data-label="Zielgruppe">
+                            <span className="admin-table-secondary">
+                              {Array.isArray((reward as any).zielgruppe) && (reward as any).zielgruppe.length > 0
+                                ? (reward as any).zielgruppe.join(', ')
+                                : '—'}
+                            </span>
+                          </td>
                           <td data-label="Cost">{cost}</td>
                           <td data-label="Status">
                              <span
@@ -3892,6 +7840,34 @@ const goToRewardCreation = () => {
                                {reward.active ? 'Active' : 'Inactive'}
                              </span>
                            </td>
+                          <td data-label={t('admin.filters.recurrence')}>
+                             <span className="admin-table-type">
+                               {(() => {
+                                 const recurrence = (reward.recurrence || 'once') as 'once' | 'daily' | 'weekly' | 'monthly';
+                                 return t(`admin.reward.recurrence.${recurrence}`).split(' - ')[0];
+                               })()}
+                             </span>
+                           </td>
+                          <td data-label="Art">
+                            <span className="admin-table-secondary">
+                              {(reward as any).reward_art || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Kategorie">
+                            <span className="admin-table-secondary">
+                              {(reward as any).kategorie || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Event/Gruppe">
+                            <span className="admin-table-secondary">
+                              {(reward as any).event_group || '—'}
+                            </span>
+                          </td>
+                          <td data-label="Mögliche Punkte">
+                            <span className="admin-table-secondary">
+                              {(reward as any).moegliche_punkte !== undefined && (reward as any).moegliche_punkte !== null ? (reward as any).moegliche_punkte : '—'}
+                            </span>
+                          </td>
                           <td data-label="Actions" className="admin-table-actions">
                              <button
                                className="admin-action-button"
@@ -3921,8 +7897,93 @@ const goToRewardCreation = () => {
                   )}
                 </tbody>
               </table>
+              {rewardFilterDropdown && rewardFilterDropdownPosition && (
+                <FilterDropdown
+                  isOpen={true}
+                  onClose={() => setRewardFilterDropdown(null)}
+                  position={rewardFilterDropdownPosition}
+                  options={
+                    rewardFilterDropdown === 'location'
+                      ? rewardFilterOptions.locations
+                      : rewardFilterDropdown === 'status'
+                      ? rewardFilterOptions.statuses
+                      : rewardFilterDropdown === 'recurrence'
+                      ? rewardFilterOptions.recurrences
+                      : rewardFilterDropdown === 'type'
+                      ? rewardFilterOptions.types
+                      : undefined
+                  }
+                  selectedValue={
+                    rewardFilterDropdown === 'location'
+                      ? rewardFilterLocation
+                      : rewardFilterDropdown === 'status'
+                      ? rewardFilterStatus
+                      : rewardFilterDropdown === 'recurrence'
+                      ? rewardFilterRecurrence
+                      : rewardFilterDropdown === 'type'
+                      ? rewardFilterType
+                      : undefined
+                  }
+                  onSelect={(value) => {
+                    if (rewardFilterDropdown === 'location') {
+                      setRewardFilterLocation(value);
+                    } else if (rewardFilterDropdown === 'status') {
+                      setRewardFilterStatus(value as 'active' | 'inactive' | null);
+                    } else if (rewardFilterDropdown === 'recurrence') {
+                      setRewardFilterRecurrence(value);
+                    } else if (rewardFilterDropdown === 'type') {
+                      setRewardFilterType(value);
+                    }
+                  }}
+                  type={rewardFilterDropdown}
+                  textValue={rewardFilterDropdown === 'title' ? rewardFilterTitle : undefined}
+                  onTextChange={rewardFilterDropdown === 'title' ? setRewardFilterTitle : undefined}
+                  minValue={rewardFilterDropdown === 'cost' ? rewardFilterCostMin : undefined}
+                  maxValue={rewardFilterDropdown === 'cost' ? rewardFilterCostMax : undefined}
+                  onMinChange={rewardFilterDropdown === 'cost' ? setRewardFilterCostMin : undefined}
+                  onMaxChange={rewardFilterDropdown === 'cost' ? setRewardFilterCostMax : undefined}
+                />
+              )}
             </div>
           </div>
+          <MobileFilterModal
+            isOpen={isMobileRewardFilterOpen}
+            onClose={() => setIsMobileRewardFilterOpen(false)}
+            filterOptions={rewardFilterOptions}
+            filters={{
+              location: rewardFilterLocation,
+              status: rewardFilterStatus,
+              recurrence: rewardFilterRecurrence,
+              type: rewardFilterType,
+              title: rewardFilterTitle,
+              costMin: rewardFilterCostMin,
+              costMax: rewardFilterCostMax,
+            }}
+            onFilterChange={(filterType, value) => {
+              if (filterType === 'location') {
+                setRewardFilterLocation(value);
+              } else if (filterType === 'status') {
+                setRewardFilterStatus(value as 'active' | 'inactive' | null);
+              } else if (filterType === 'recurrence') {
+                setRewardFilterRecurrence(value);
+              } else if (filterType === 'type') {
+                setRewardFilterType(value);
+              }
+            }}
+            onTitleChange={setRewardFilterTitle}
+            onCostMinChange={setRewardFilterCostMin}
+            onCostMaxChange={setRewardFilterCostMax}
+            onClearAll={() => {
+              setRewardFilterLocation(null);
+              setRewardFilterStatus(null);
+              setRewardFilterRecurrence(null);
+              setRewardFilterType(null);
+              setRewardFilterTitle('');
+              setRewardFilterCostMin('');
+              setRewardFilterCostMax('');
+            }}
+            filterType="reward"
+          />
         </section>
       )}
       <ConfirmDialog
@@ -3936,6 +7997,25 @@ const goToRewardCreation = () => {
       <ConfirmDialog
         {...locationConfirm}
         onCancel={() => setLocationConfirm(defaultConfirmDialogState)}
+      />
+      <ConfirmDialog
+        {...validationConfirm}
+        onCancel={() => setValidationConfirm(defaultConfirmDialogState)}
+      />
+          <TaskSelectionModal
+            isOpen={isPrerequisiteModalOpen}
+            onClose={() => setIsPrerequisiteModalOpen(false)}
+        mode={prerequisiteModalMode}
+        tasks={existingTemplates}
+        selectedTaskIds={
+          prerequisiteModalMode === 'single'
+            ? taskForm.prerequisite_task_id
+              ? [taskForm.prerequisite_task_id]
+              : []
+            : taskForm.prerequisite_task_ids || []
+        }
+        onApply={handlePrerequisiteModalApply}
+        excludeTaskId={isEditingTask ? editingTaskId || undefined : undefined}
       />
     </div>
   );

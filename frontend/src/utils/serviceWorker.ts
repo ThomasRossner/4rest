@@ -1,5 +1,29 @@
 // Service Worker registration for offline QR code functionality
 export function registerServiceWorker() {
+  // COMPLETELY DISABLED in development to prevent reload loops
+  // Service Worker causes infinite reloads in development mode
+  if (import.meta.env.DEV) {
+    // Aggressively unregister any existing service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          registration.unregister().then(() => {
+            console.log('[ServiceWorker] Unregistered:', registration.scope);
+          });
+        });
+      });
+      // Also try to unregister by scope
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration) {
+          registration.unregister().then(() => {
+            console.log('[ServiceWorker] Unregistered by scope');
+          });
+        }
+      });
+    }
+    return;
+  }
+  
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker

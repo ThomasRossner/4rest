@@ -105,9 +105,18 @@ export async function createUser(data: CreateUserData): Promise<User> {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const db = getPool();
-  const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-  return result.rows[0] || null;
+  try {
+    const db = getPool();
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    return result.rows[0] || null;
+  } catch (error: any) {
+    console.error('[getUserByEmail] Database error:', {
+      message: error.message,
+      code: error.code,
+      email,
+    });
+    throw error;
+  }
 }
 
 export async function getUserById(id: string): Promise<User | null> {
@@ -312,4 +321,43 @@ export async function updateUserPassword(userId: string, passwordHash: string): 
     'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
     [passwordHash, userId]
   );
+}
+
+/**
+ * Delete user_tasks entries for a user (oldest first)
+ */
+export async function deleteUserTasks(userId: string, count: number): Promise<number> {
+  const db = getPool();
+  const result = await db.query(
+    `DELETE FROM user_tasks 
+     WHERE user_id = $1 
+     AND id IN (
+       SELECT id FROM user_tasks 
+       WHERE user_id = $1 
+       ORDER BY completed_at ASC 
+       LIMIT $2
+     )
+     RETURNING id`,
+    [userId, count]
+  );
+  return result.rows.length;
+}
+
+/**
+ * Adjust user points directly
+ */
+export async function adjustUserPoints(userId: string, pointsDelta: number): Promise<number> {
+  const db = getPool();
+  const result = await db.query(
+    `UPDATE users 
+     SET points = GREATEST(0, points + $1), 
+         updated_at = CURRENT_TIMESTAMP 
+     WHERE id = $2 
+     RETURNING points`,
+    [pointsDelta, userId]
+  );
+  if (!result.rows[0]) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+  return result.rows[0].points;
 }

@@ -110,7 +110,15 @@ export const api = {
     includeAll?: boolean;
     includeInactive?: boolean;
   }) {
+    const apiStartTime = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:106',message:'getTasks API call started',data:{params},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     const response = await apiClient.get('/tasks', { params });
+    const apiEndTime = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:113',message:'getTasks API call completed',data:{duration:apiEndTime-apiStartTime,tasksCount:response.data?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     return response.data;
   },
 
@@ -162,6 +170,26 @@ export const api = {
     return response.data;
   },
 
+  async getForestStats() {
+    const response = await apiClient.get('/forest/stats');
+    return response.data;
+  },
+
+  async validateAndFixForest(options: { dryRun?: boolean; forceGeometry?: boolean; userFilter?: string }) {
+    const response = await apiClient.post('/forest/validate-fix', options);
+    return response.data;
+  },
+
+  async getValidationJobStatus(jobId: string) {
+    const response = await apiClient.get(`/forest/validate-fix/${jobId}`);
+    return response.data;
+  },
+
+  async visitForest() {
+    const response = await apiClient.post('/forest/visit');
+    return response.data;
+  },
+
   async getUserForest(userId: string) {
     const response = await apiClient.get(`/forest/users/${userId}`);
     return response.data;
@@ -189,7 +217,30 @@ export const api = {
       if (currentUser) {
         store.setUser({ ...currentUser, points: response.data.user.points });
       }
+    }
+    return response.data;
+  },
+
+  async generatePointsBonusQr(pointsAmount: number) {
+    const response = await apiClient.post('/rewards/points-bonus/generate', { pointsAmount });
+    return response.data;
+  },
+
+  async redeemPointsBonusQr(qrToken: string) {
+    const response = await apiClient.post('/rewards/points-bonus/redeem', { qrToken });
+    // Update user points from response
+    if (response.data?.newPointsBalance !== undefined) {
+      try {
+        const store = useAuthStore.getState();
+        const currentUser = store.user;
+        if (currentUser) {
+          store.setUser({ ...currentUser, points: response.data.newPointsBalance });
+        }
+      } catch (error) {
+        // Silently fail if store update fails - points are already updated on server
+        console.warn('Failed to update user points in store:', error);
       }
+    }
     return response.data;
   },
 
@@ -272,6 +323,16 @@ export const api = {
     return response.data;
   },
 
+  async geocodeAddress(address: string) {
+    const response = await apiClient.post('/locations/geocode', { address });
+    return response.data;
+  },
+
+  async reverseGeocode(latitude: number, longitude: number) {
+    const response = await apiClient.post('/locations/reverse-geocode', { latitude, longitude });
+    return response.data;
+  },
+
   async bulkUpdateLocationsStatus(ids: string[], active: boolean) {
     const response = await apiClient.post('/locations/bulk/status', { ids, active });
     return response.data;
@@ -284,6 +345,177 @@ export const api = {
 
   async deleteLocation(id: string) {
     const response = await apiClient.delete(`/locations/${id}`);
+    return response.data;
+  },
+
+  // Survey Analytics
+  async getSurveyAnalytics(taskId?: string) {
+    const params = taskId ? { taskId } : {};
+    const response = await apiClient.get('/admin/surveys/analytics', { params });
+    return response.data;
+  },
+
+  // Debug Tools (Admin only)
+  async createBulkTasks(userEmail: string, count?: number) {
+    const response = await apiClient.post('/admin/debug/create-tasks', { userEmail, count });
+    return response.data;
+  },
+
+  async completeBulkTasks(userEmail: string, count?: number) {
+    const response = await apiClient.post('/admin/debug/complete-tasks', { userEmail, count });
+    return response.data;
+  },
+
+  async deleteUserData(userEmail: string, taskCount: number, pointsToRemove: number) {
+    const response = await apiClient.post('/admin/debug/delete-user-data', {
+      userEmail,
+      taskCount,
+      pointsToRemove,
+    });
+    return response.data;
+  },
+
+  async createSurveyWithParticipants(surveyData: any, participantCount: number) {
+    const response = await apiClient.post('/admin/debug/create-survey', {
+      surveyData,
+      participantCount,
+    });
+    return response.data;
+  },
+
+  async simulateTimeActivity(userEmail: string, taskCount: number, startDate: string, endDate: string, distribution?: 'uniform' | 'random') {
+    const response = await apiClient.post('/admin/debug/simulate-time-activity', {
+      userEmail,
+      taskCount,
+      startDate,
+      endDate,
+      distribution: distribution || 'uniform',
+    });
+    return response.data;
+  },
+
+  async simulateRewardRedemption(userEmail: string, rewardId?: string, autoVerify?: boolean) {
+    const response = await apiClient.post('/admin/debug/simulate-reward-redemption', {
+      userEmail,
+      rewardId,
+      autoVerify: autoVerify || false,
+    });
+    return response.data;
+  },
+
+  async resetUserData(userEmail: string, resetOptions: { tasks?: boolean; trees?: boolean; points?: boolean; redemptions?: boolean }) {
+    const response = await apiClient.post('/admin/debug/reset-user-data', {
+      userEmail,
+      resetOptions,
+    });
+    return response.data;
+  },
+
+  async generateStatisticsData(
+    startDate: string,
+    endDate: string,
+    targetUserCount: number,
+    tasksPerUserMin?: number,
+    tasksPerUserMax?: number,
+    co2PerTaskMin?: number,
+    co2PerTaskMax?: number
+  ) {
+    const response = await apiClient.post('/admin/debug/generate-statistics-data', {
+      startDate,
+      endDate,
+      targetUserCount,
+      tasksPerUserMin,
+      tasksPerUserMax,
+      co2PerTaskMin,
+      co2PerTaskMax,
+    });
+    return response.data;
+  },
+
+  async simulateForestVisits(userEmail: string, days: number) {
+    const response = await apiClient.post('/admin/debug/simulate-forest-visits', { userEmail, days });
+    return response.data;
+  },
+
+  async recalculateTreeSizes(userEmail: string) {
+    const response = await apiClient.post('/admin/debug/recalculate-tree-sizes', { userEmail });
+    return response.data;
+  },
+
+  async getDebugLogs(params?: { limit?: number; level?: 'info' | 'warn' | 'error'; operation?: string }) {
+    const response = await apiClient.get('/admin/debug/logs', { params });
+    return response.data;
+  },
+
+  async clearDebugLogs() {
+    const response = await apiClient.delete('/admin/debug/logs');
+    return response.data;
+  },
+
+  // Parameters
+  async getTaskParameters(type?: string) {
+    const response = await apiClient.get('/admin/parameters/tasks', { params: type ? { type } : {} });
+    return response.data;
+  },
+
+  async createTaskParameter(parameterType: string, value: string, displayOrder?: number, weight?: number) {
+    const response = await apiClient.post('/admin/parameters/tasks', { parameter_type: parameterType, value, display_order: displayOrder || 0, weight: weight ?? displayOrder ?? 0 });
+    return response.data;
+  },
+
+  async updateTaskParameter(id: string, payload: { value?: string; display_order?: number; weight?: number; active?: boolean }) {
+    const response = await apiClient.put(`/admin/parameters/tasks/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteTaskParameter(id: string) {
+    const response = await apiClient.delete(`/admin/parameters/tasks/${id}`);
+    return response.data;
+  },
+
+  async getRewardParameters(type?: string) {
+    const response = await apiClient.get('/admin/parameters/rewards', { params: type ? { type } : {} });
+    return response.data;
+  },
+
+  async createRewardParameter(parameterType: string, value: string, displayOrder?: number, weight?: number) {
+    const response = await apiClient.post('/admin/parameters/rewards', { parameter_type: parameterType, value, display_order: displayOrder || 0, weight: weight ?? displayOrder ?? 0 });
+    return response.data;
+  },
+
+  async updateRewardParameter(id: string, payload: { value?: string; display_order?: number; weight?: number; active?: boolean }) {
+    const response = await apiClient.put(`/admin/parameters/rewards/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteRewardParameter(id: string) {
+    const response = await apiClient.delete(`/admin/parameters/rewards/${id}`);
+    return response.data;
+  },
+
+  // System Config
+  async getSystemConfigs() {
+    const response = await apiClient.get('/admin/system-config');
+    return response.data;
+  },
+
+  async getSystemConfig(key: string) {
+    const response = await apiClient.get(`/admin/system-config/${key}`);
+    return response.data;
+  },
+
+  async setSystemConfig(key: string, value: string, description?: string) {
+    const response = await apiClient.put(`/admin/system-config/${key}`, { value, description });
+    return response.data;
+  },
+
+  async getPointsCalculationFactor() {
+    const response = await apiClient.get('/admin/system-config/points-calculation-factor');
+    return response.data;
+  },
+
+  async getRewardCostCalculationFactor() {
+    const response = await apiClient.get('/admin/system-config/reward-cost-calculation-factor');
     return response.data;
   },
 };

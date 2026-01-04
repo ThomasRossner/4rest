@@ -5,18 +5,14 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enTranslation from './locales/en/translation.json';
 import deTranslation from './locales/de/translation.json';
 
-// Ensure translations are properly loaded
-const resources = {
-  en: { translation: enTranslation as Record<string, unknown> },
-  de: { translation: deTranslation as Record<string, unknown> },
-};
-
-// Initialize i18n synchronously to ensure translations are available immediately
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
+    resources: {
+      en: { translation: enTranslation },
+      de: { translation: deTranslation },
+    },
     fallbackLng: 'en',
     supportedLngs: ['en', 'de'],
     defaultNS: 'translation',
@@ -31,8 +27,9 @@ i18n
     react: {
       useSuspense: false,
     },
-    // Ensure i18n is ready before rendering
-    initImmediate: false,
+  })
+  .catch((error) => {
+    console.error('i18n initialization error:', error);
   });
 
 export default i18n;

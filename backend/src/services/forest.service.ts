@@ -1,9 +1,19 @@
 import { getPool } from '../database/connection.js';
+import {
+  FOREST_AREA_SPACING,
+  FOREST_MAX_TREES_PER_BLOCK,
+  calculateGridSize,
+  generateBlockOrigins,
+} from './forestLayout.js';
 
-export async function getForestService() {
+/**
+ * Get forest data for a specific user
+ * Each user has their own unique forest with trees positioned in a grid layout
+ */
+export async function getForestService(userId: string) {
   const db = getPool();
   
-  // Get all trees with anonymized user data
+  // Get all trees for this specific user
   const result = await db.query(
     `SELECT 
        ft.id,
@@ -12,105 +22,202 @@ export async function getForestService() {
        ft.position_y,
        ft.position_z,
        ft.planted_at,
-       u.id as user_id -- In production, this would be anonymized
+       ft.growth_points,
+       ft.stage,
+       ft.size
      FROM forest_trees ft
-     JOIN users u ON ft.user_id = u.id
-     ORDER BY ft.planted_at DESC
-     LIMIT 1000`
+     WHERE ft.user_id = $1
+     ORDER BY ft.planted_at DESC`,
+    [userId]
   );
 
-  // Ensure every user has an area, even if they have no trees yet
+
+  // Get user index to calculate primary origin
   const usersResult = await db.query(
     `SELECT id FROM users ORDER BY created_at ASC LIMIT 1000`
   );
   const userIds: string[] = usersResult.rows.map((r: any) => r.id);
-  const userToIndex = new Map<string, number>();
-  userIds.forEach((id, idx) => userToIndex.set(id, idx));
-
-  const gridCols = Math.max(1, Math.ceil(Math.sqrt(Math.max(1, userIds.length))));
-  const areaSpacing = 20; // match tile size to remove gaps between areas
-
-  const areas = userIds.map((userId, i) => {
-    const col = i % gridCols;
-    const rowIdx = Math.floor(i / gridCols);
-    const origin: [number, number, number] = [col * areaSpacing, 0, rowIdx * areaSpacing];
-    return { userId, origin, trees: [] as any[] };
-  });
-
-  // Group trees by user and by the area block they belong to
-  // Trees are stored with absolute positions, so we need to determine which area block they're in
-  // This will automatically create new 20x20 blocks for trees outside the initially assigned blocks
-  const userAreaBlocks = new Map<string, Map<string, { origin: [number, number, number]; trees: any[] }>>();
+  const userIndex = userIds.indexOf(userId);
   
-  const flatTrees: any[] = [];
+  if (userIndex === -1) {
+    // User not found, return empty forest
+    return {
+      areas: [],
+      trees: [],
+      totalTrees: 0,
+      totalAreas: 0,
+    };
+  }
+
+  const areaSpacing = FOREST_AREA_SPACING; // match tile size
+  const gridCols = Math.max(1, Math.ceil(Math.sqrt(Math.max(1, userIds.length))));
+  
+  // Calculate primary origin for this user
+  const col = userIndex % gridCols;
+  const rowIdx = Math.floor(userIndex / gridCols);
+  const primaryOrigin: [number, number, number] = [col * areaSpacing, 0, rowIdx * areaSpacing];
+
+  // Process trees
+  const trees: any[] = [];
   for (const row of result.rows) {
-    // Skip trees for users not in the first N users (safety)
-    if (!userToIndex.has(row.user_id)) continue;
-    
-    // Tree position is already absolute (stored in database as absolute)
     const absolutePosition: [number, number, number] = [
       parseFloat(row.position_x),
       parseFloat(row.position_y || 0),
       parseFloat(row.position_z),
     ];
     
-    // Calculate which 20x20 area block this tree belongs to
-    // Handle negative positions correctly: Math.floor rounds down, so -8/20 = -0.4 -> -1 -> -20
-    const areaX = Math.floor(absolutePosition[0] / areaSpacing) * areaSpacing;
-    const areaZ = Math.floor(absolutePosition[2] / areaSpacing) * areaSpacing;
-    const areaKey = `${areaX},${areaZ}`;
-    const areaOrigin: [number, number, number] = [areaX, 0, areaZ];
-    
-    // Calculate local position relative to the area block (within 0-20 range)
-    const localPosition: [number, number, number] = [
-      absolutePosition[0] - areaOrigin[0],
-      absolutePosition[1] - areaOrigin[1],
-      absolutePosition[2] - areaOrigin[2],
-    ];
-    
-    const tree = {
+    trees.push({
       id: row.id,
-      userId: row.user_id,
       treeType: row.tree_type,
       position: absolutePosition,
-      localPosition,
       plantedAt: row.planted_at,
-    };
-    
-    // Group by user and area block - this automatically creates new blocks for trees outside initial bounds
-    if (!userAreaBlocks.has(row.user_id)) {
-      userAreaBlocks.set(row.user_id, new Map());
+      growthPoints: row.growth_points || 1,
+      stage: row.stage || 'sapling',
+      size: parseFloat(row.size || 0.035),
+    });
+  }
+
+  // First, collect all blocks that actually contain trees and store tree block info
+  const actualBlocksSet = new Set<string>();
+  const treeBlockInfo = new Map<string, { areaX: number; areaZ: number; areaKey: string }>();
+  for (const tree of trees) {
+    const areaX = Math.floor(tree.position[0] / areaSpacing) * areaSpacing;
+    const areaZ = Math.floor(tree.position[2] / areaSpacing) * areaSpacing;
+    const areaKey = `${areaX},${areaZ}`;
+    actualBlocksSet.add(areaKey);
+    // Store block info with tree to avoid recalculating later
+    if (!treeBlockInfo.has(tree.id)) {
+      treeBlockInfo.set(tree.id, { areaX, areaZ, areaKey });
     }
-    const userAreas = userAreaBlocks.get(row.user_id)!;
-    if (!userAreas.has(areaKey)) {
-      // Create a new 20x20 block at this location
-      userAreas.set(areaKey, { origin: areaOrigin, trees: [] });
-    }
-    userAreas.get(areaKey)!.trees.push(tree);
-    flatTrees.push(tree);
   }
   
-  // Create areas for all blocks that contain trees - this ensures all trees have their blocks rendered
-  const expandedAreas: Array<{ userId: string; origin: [number, number, number]; trees: any[] }> = [];
-  for (const [userId, areaBlocks] of userAreaBlocks.entries()) {
-    for (const areaBlock of areaBlocks.values()) {
-      expandedAreas.push({
-        userId,
-        origin: areaBlock.origin,
-        trees: areaBlock.trees,
+  // Calculate the grid size needed to include all blocks with trees
+  // Find the min/max block coordinates relative to primary origin
+  let minBlockX = Infinity;
+  let maxBlockX = -Infinity;
+  let minBlockZ = Infinity;
+  let maxBlockZ = -Infinity;
+  
+  for (const blockKey of actualBlocksSet) {
+    const [x, z] = blockKey.split(',').map(Number);
+    minBlockX = Math.min(minBlockX, x);
+    maxBlockX = Math.max(maxBlockX, x);
+    minBlockZ = Math.min(minBlockZ, z);
+    maxBlockZ = Math.max(maxBlockZ, z);
+  }
+  
+  // Initialize blocks map - start with all blocks that actually contain trees
+  const blocksMap = new Map<string, { origin: [number, number, number]; trees: any[] }>();
+  
+  // Add all blocks that contain trees - this ensures ALL trees are included
+  for (const blockKey of actualBlocksSet) {
+    const [x, z] = blockKey.split(',').map(Number);
+    blocksMap.set(blockKey, { origin: [x, 0, z], trees: [] });
+  }
+  
+  // Optionally: Add empty blocks in a grid around the trees for better visualization
+  // This is optional - the important part is that all blocks with trees are included above
+  if (actualBlocksSet.size > 0 && minBlockX !== Infinity) {
+    // Calculate a square grid that covers all tree blocks
+    const minGridCol = Math.floor((minBlockX - primaryOrigin[0]) / areaSpacing);
+    const maxGridCol = Math.floor((maxBlockX - primaryOrigin[0]) / areaSpacing);
+    const minGridRow = Math.floor((minBlockZ - primaryOrigin[2]) / areaSpacing);
+    const maxGridRow = Math.floor((maxBlockZ - primaryOrigin[2]) / areaSpacing);
+    
+    // Calculate grid size needed
+    const treeGridCols = maxGridCol - minGridCol + 1;
+    const treeGridRows = maxGridRow - minGridRow + 1;
+    const gridSize = Math.max(treeGridCols, treeGridRows);
+    
+    // Generate block origins for a grid that covers the tree blocks
+    // Use the actual min/max bounds, not a centered grid
+    const startX = primaryOrigin[0] + minGridCol * areaSpacing;
+    const startZ = primaryOrigin[2] + minGridRow * areaSpacing;
+    
+    // Add all blocks in the bounding grid (including empty ones)
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const blockX = startX + col * areaSpacing;
+        const blockZ = startZ + row * areaSpacing;
+        const areaKey = `${blockX},${blockZ}`;
+        
+        // Only add if it doesn't already exist (trees are already added above)
+        if (!blocksMap.has(areaKey)) {
+          blocksMap.set(areaKey, { origin: [blockX, 0, blockZ], trees: [] });
+        }
+      }
+    }
+  }
+  
+  // Assign trees to blocks based on their positions
+  // Include ALL trees, even if they're in blocks outside the "expected" grid
+  // Reuse pre-calculated block info to avoid duplicate calculations
+  for (const tree of trees) {
+    let blockInfo = treeBlockInfo.get(tree.id);
+    if (!blockInfo) {
+      // Fallback: calculate if not found (shouldn't happen, but safe)
+      const areaX = Math.floor(tree.position[0] / areaSpacing) * areaSpacing;
+      const areaZ = Math.floor(tree.position[2] / areaSpacing) * areaSpacing;
+      const areaKey = `${areaX},${areaZ}`;
+      blockInfo = { areaX, areaZ, areaKey };
+    }
+    
+    const { areaX, areaZ, areaKey } = blockInfo;
+    
+    // Get or create the block
+    if (!blocksMap.has(areaKey)) {
+      blocksMap.set(areaKey, { origin: [areaX, 0, areaZ], trees: [] });
+    }
+    
+    // Calculate local position relative to block origin
+    // Frontend calculates world position as: origin + localPosition
+    // So localPosition should be: tree.position - blockOrigin
+    // This ensures trees appear at their correct absolute positions
+    const localPosition: [number, number, number] = [
+      tree.position[0] - areaX, // Position relative to block origin (0-20 range)
+      tree.position[1],
+      tree.position[2] - areaZ, // Position relative to block origin (0-20 range)
+    ];
+    
+    const block = blocksMap.get(areaKey)!;
+    block.trees.push({
+      ...tree,
+      localPosition,
+    });
+  }
+
+  // Create areas for all blocks (including empty ones)
+  const expandedAreas: Array<{ origin: [number, number, number]; trees: any[] }> = [];
+  let totalTreesInAreas = 0;
+  const blocksWithTrees: Array<{ origin: string; count: number }> = [];
+  
+  for (const areaBlock of blocksMap.values()) {
+    expandedAreas.push({
+      origin: areaBlock.origin,
+      trees: areaBlock.trees,
+    });
+    totalTreesInAreas += areaBlock.trees.length;
+    if (areaBlock.trees.length > 0) {
+      blocksWithTrees.push({
+        origin: `${areaBlock.origin[0]},${areaBlock.origin[2]}`,
+        count: areaBlock.trees.length,
       });
     }
   }
-  
-  // Use expanded areas (which includes all blocks with trees) instead of just user primary areas
-  // This ensures trees outside the initially assigned blocks get their own 20x20 blocks rendered
-  const finalAreas = expandedAreas.length > 0 ? expandedAreas : areas;
+
+  // Verify all trees are included in areas (only log on mismatch)
+  if (totalTreesInAreas !== trees.length) {
+    console.warn(
+      `Forest service (userId: ${userId}): Tree count mismatch! Total trees: ${trees.length}, Trees in areas: ${totalTreesInAreas}. ` +
+      `Blocks with trees: ${blocksWithTrees.length}. This may indicate trees in blocks outside the calculated grid.`
+    );
+  }
 
   return {
-    areas: finalAreas,
-    trees: flatTrees, // backwards-compatible flat list
-    totalTrees: flatTrees.length,
-    totalAreas: finalAreas.length,
+    areas: expandedAreas,
+    trees: trees, // backwards-compatible flat list
+    totalTrees: trees.length,
+    totalAreas: expandedAreas.length,
   };
 }
 
@@ -125,6 +232,9 @@ export async function getUserForestService(userId: string) {
        ft.position_y,
        ft.position_z,
        ft.planted_at,
+       ft.growth_points,
+       ft.stage,
+       ft.size,
        t.title as task_title
      FROM forest_trees ft
      LEFT JOIN tasks t ON ft.task_id = t.id
@@ -139,8 +249,52 @@ export async function getUserForestService(userId: string) {
       treeType: row.tree_type,
       position: [row.position_x, row.position_y, row.position_z],
       plantedAt: row.planted_at,
+      growthPoints: row.growth_points || 1,
+      stage: row.stage || 'sapling',
+      size: parseFloat(row.size || 0.035),
       taskTitle: row.task_title,
     })),
     totalTrees: result.rows.length,
   };
+}
+
+/**
+ * Get aggregated forest statistics for all users.
+ * Used for admin/debug views so we can avoid manual psql inspection.
+ */
+export async function getForestStatsService() {
+  const db = getPool();
+
+  const result = await db.query(
+    `WITH tree_counts AS (
+       SELECT user_id, COUNT(*) AS tree_count
+       FROM forest_trees
+       GROUP BY user_id
+     ),
+     completed_counts AS (
+       SELECT user_id, COUNT(*) AS completed_tasks
+       FROM user_tasks
+       WHERE completed_at IS NOT NULL
+         AND task_id IS NOT NULL
+       GROUP BY user_id
+     )
+     SELECT
+       u.id,
+       u.email,
+       u.points,
+       COALESCE(tc.tree_count, 0) AS tree_count,
+       COALESCE(cc.completed_tasks, 0) AS completed_tasks
+     FROM users u
+     LEFT JOIN tree_counts tc ON tc.user_id = u.id
+     LEFT JOIN completed_counts cc ON cc.user_id = u.id
+     ORDER BY u.created_at ASC`
+  );
+
+  // Add a simple consistency flag based on counts (not full task_id set comparison)
+  const rowsWithConsistency = result.rows.map((row: any) => ({
+    ...row,
+    is_count_consistent: Number(row.tree_count) === Number(row.completed_tasks),
+  }));
+
+  return rowsWithConsistency;
 }

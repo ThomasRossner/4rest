@@ -5,36 +5,79 @@ import { api } from '../../services/api';
 import { VideoTask } from '../../components/Tasks/VideoTask';
 import { QRCodeTask } from '../../components/Tasks/QRCodeTask';
 import { PhotoTask } from '../../components/Tasks/PhotoTask';
+import { VisitLocationTask } from '../../components/Tasks/VisitLocationTask';
+import { QuizTask } from '../../components/Tasks/QuizTask';
+import { ArticleQuizTask } from '../../components/Tasks/ArticleQuizTask';
+import { SurveyTask } from '../../components/Tasks/SurveyTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
 import { QRCodeIcon } from '../../components/Icons/QRCodeIcon';
+import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import './TasksPage.css';
+
+// Map task types to icons and translation keys
+const getTaskTypeIcon = (type: string) => {
+  switch (type) {
+    case 'video': return '🎥';
+    case 'quiz': return '❓';
+    case 'article_quiz': return '📄';
+    case 'survey': return '📋';
+    case 'qr': return <QRCodeIcon size={20} />;
+    case 'photo': return '📷';
+    case 'visit_location': return '📍';
+    default: return '📝';
+  }
+};
 
 function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
-  const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'qr' | 'photo'>('all');
-  const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed'>('all');
-  const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed'>('not_completed');
+  const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('recent');
+  const [showLocationMap, setShowLocationMap] = useState(false);
+  const [showOnlineTasks, setShowOnlineTasks] = useState(false);
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
+  const { data: taskTypeParameters } = useQuery('taskTypeParameters', () => api.getTaskParameters('type'), {
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: true, // Always try to load
+  });
   const { t } = useTranslation();
+
+  // Extract unique task types from loaded tasks as fallback
+  const taskTypesFromTasks = useMemo(() => {
+    if (!tasks || tasks.length === 0) return [];
+    const uniqueTypes = new Set(tasks.map((task: any) => task.type).filter(Boolean));
+    return Array.from(uniqueTypes);
+  }, [tasks]);
 
   // All hooks must be called before any conditional returns
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
-    
+
     let filtered = [...tasks];
-    
+
+    // Filter by online status
+    if (showOnlineTasks) {
+      filtered = filtered.filter((task: any) => {
+        if (!task.location) return false;
+        const location = typeof task.location === 'string' ? JSON.parse(task.location) : task.location;
+        const isOnline = location.is_online === true || location.is_online === 'true' || String(location.is_online).toLowerCase() === 'true';
+        return isOnline;
+      });
+    }
+
     // Filter by type
     if (typeFilter !== 'all') {
       filtered = filtered.filter((task: any) => task.type === typeFilter);
     }
-    
+
     // Filter by completion
     if (completionFilter === 'not_completed') {
       filtered = filtered.filter((task: any) => !task.completed);
     }
-    
+
     // Filter by time (recent = last 7 days)
     if (timeFilter === 'recent') {
       const sevenDaysAgo = new Date();
@@ -44,12 +87,21 @@ function TasksPage() {
         return taskDate >= sevenDaysAgo;
       });
     }
-    
+
+    // Always show unfinished tasks first
+    filtered.sort((a: any, b: any) => {
+      const aCompleted = !!a.completed;
+      const bCompleted = !!b.completed;
+      if (aCompleted === bCompleted) return 0;
+      return aCompleted ? 1 : -1;
+    });
+
     return filtered;
-  }, [tasks, typeFilter, completionFilter, timeFilter]);
+  }, [tasks, typeFilter, completionFilter, timeFilter, showOnlineTasks]);
 
   const handleTaskClick = (task: any) => {
     if (task.completed) return;
+    if (task.is_available === false) return; // Don't allow clicking locked tasks
     setSelectedTask(task.id);
   };
 
@@ -75,6 +127,15 @@ function TasksPage() {
     if (task.type === 'video') {
       return <VideoTask taskId={task.id} onComplete={handleTaskComplete} />;
     }
+    if (task.type === 'quiz') {
+      return <QuizTask taskId={task.id} onComplete={handleTaskComplete} />;
+    }
+    if (task.type === 'article_quiz') {
+      return <ArticleQuizTask taskId={task.id} onComplete={handleTaskComplete} />;
+    }
+    if (task.type === 'survey') {
+      return <SurveyTask taskId={task.id} onComplete={handleTaskComplete} />;
+    }
     if (task.type === 'qr') {
       return (
         <QRCodeTask
@@ -86,6 +147,9 @@ function TasksPage() {
     }
     if (task.type === 'photo') {
       return <PhotoTask taskId={task.id} onComplete={handleTaskComplete} />;
+    }
+    if (task.type === 'visit_location') {
+      return <VisitLocationTask taskId={task.id} onComplete={handleTaskComplete} />;
     }
   }
 
@@ -101,19 +165,94 @@ function TasksPage() {
     );
   }
 
+  // Show map view if button was clicked
+  if (showLocationMap) {
+    return (
+      <div className="tasks-page">
+        <div className="tasks-header">
+          <h1 className="tasks-title">{t('tasks.title')}</h1>
+          <button
+            className="location-button"
+            onClick={() => setShowLocationMap(false)}
+            title={t('tasks.backToList') || 'Zurück zur Liste'}
+          >
+            {t('tasks.backToList') || 'Zurück zur Liste'}
+          </button>
+        </div>
+        <div style={{ marginTop: 'var(--spacing-md)' }}>
+          <UserLocationMap
+            height="calc(100vh - 200px)"
+            tasks={tasks || []}
+            onTaskClick={(taskId) => {
+              setShowLocationMap(false);
+              setSelectedTask(taskId);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="tasks-page">
-      <h1 className="tasks-title">{t('tasks.title')}</h1>
+      <div className="tasks-header">
+        <h1 className="tasks-title">{t('tasks.title')}</h1>
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+          <button
+            className="location-button"
+            onClick={() => {
+              setShowLocationMap(true);
+              setShowOnlineTasks(false);
+            }}
+            title={t('tasks.showLocation') || 'Hier'}
+          >
+            {t('tasks.locationButton') || 'Hier'}
+          </button>
+          <button
+            className="location-button"
+            onClick={() => {
+              setShowLocationMap(false);
+              setShowOnlineTasks(!showOnlineTasks);
+            }}
+            title={t('tasks.showOnline') || 'Online'}
+            style={{
+              backgroundColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.2)' : undefined,
+              borderColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.4)' : undefined,
+            }}
+          >
+            {t('tasks.onlineButton') || 'Online'}
+          </button>
+        </div>
+      </div>
       
       <div className="tasks-filters-row">
         <FilterDropdown
           value={typeFilter}
-          onChange={(value) => setTypeFilter(value as typeof typeFilter)}
+          onChange={(value) => setTypeFilter(value)}
           options={[
             { value: 'all', label: t('tasks.filters.type.all') },
-            { value: 'video', label: t('tasks.filters.type.video'), icon: '🎥' },
-            { value: 'qr', label: t('tasks.filters.type.qr'), icon: <QRCodeIcon size={20} /> },
-            { value: 'photo', label: t('tasks.filters.type.photo'), icon: '📷' },
+            ...(taskTypeParameters && Array.isArray(taskTypeParameters) && taskTypeParameters.length > 0
+              ? taskTypeParameters.map((param: any) => ({
+                  value: param.value,
+                  label: t(`tasks.filters.type.${param.value}`, { defaultValue: param.value }),
+                  icon: getTaskTypeIcon(param.value),
+                }))
+              : taskTypesFromTasks.length > 0
+              ? taskTypesFromTasks.map((type: string) => ({
+                  value: type,
+                  label: t(`tasks.filters.type.${type}`, { defaultValue: type }),
+                  icon: getTaskTypeIcon(type),
+                }))
+              : [
+                  // Final fallback to hardcoded types
+                  { value: 'video', label: t('tasks.filters.type.video'), icon: '🎥' },
+                  { value: 'quiz', label: t('tasks.filters.type.quiz'), icon: '❓' },
+                  { value: 'article_quiz', label: t('tasks.filters.type.article_quiz'), icon: '📄' },
+                  { value: 'survey', label: t('tasks.filters.type.survey'), icon: '📋' },
+                  { value: 'qr', label: t('tasks.filters.type.qr'), icon: <QRCodeIcon size={20} /> },
+                  { value: 'photo', label: t('tasks.filters.type.photo'), icon: '📷' },
+                  { value: 'visit_location', label: t('tasks.filters.type.visit_location'), icon: '📍' },
+                ]),
           ]}
         />
         <FilterDropdown
@@ -141,30 +280,49 @@ function TasksPage() {
         />
       ) : (
         <div className="tasks-grid">
-          {filteredTasks.map((task: any) => (
-            <div key={task.id} className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
+          {filteredTasks.map((task: any) => {
+            const isLocked = task.is_available === false;
+            const isCompleted = !!task.completed;
+            return (
+            <div key={task.id} className={`task-card ${isCompleted ? 'task-card-completed' : ''} ${isLocked ? 'task-card-locked' : ''}`}>
             <div className="task-header">
               <span className="task-icon">
-                {task.type === 'video' ? '🎥' : task.type === 'qr' ? <QRCodeIcon size={48} /> : '📷'}
+                {task.type === 'video' ? '🎥' : 
+                 task.type === 'quiz' ? '❓' : 
+                 task.type === 'article_quiz' ? '📄' :
+                 task.type === 'survey' ? '📋' :
+                 task.type === 'qr' ? <QRCodeIcon size={48} /> : 
+                 task.type === 'visit_location' ? '📍' : '📷'}
               </span>
               <span className="task-points">{t('tasksComponents.points', { points: task.points })}</span>
-              {task.completed && (
+              {isCompleted && (
                 <span className="task-completed-badge" title={t('tasks.badges.completed')}>
                   ✓
+                </span>
+              )}
+              {isLocked && (
+                <span className="task-locked-badge" title={t('tasks.badges.locked')}>
+                  🔒
                 </span>
               )}
             </div>
             <h3 className="task-title">{task.title}</h3>
             <p className="task-description">{task.description}</p>
+            {isLocked && (
+              <p className="task-locked-message" style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                {t('tasks.prerequisites.unlockMessage')}
+              </p>
+            )}
             <button
               className="task-button"
               onClick={() => handleTaskClick(task)}
-              disabled={!!task.completed}
+              disabled={isCompleted || isLocked}
             >
-              {task.completed ? t('tasks.buttons.completed') : t('tasks.buttons.start')}
+              {isCompleted ? t('tasks.buttons.completed') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
             </button>
           </div>
-        ))}
+          );
+          })}
         </div>
       )}
     </div>

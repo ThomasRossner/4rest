@@ -5,8 +5,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies without workspaces to ensure all deps are in local node_modules
+RUN npm install --no-workspaces
 
 # Copy source code
 COPY . .

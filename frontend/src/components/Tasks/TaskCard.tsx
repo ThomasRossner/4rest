@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 type Task = {
   id: string;
   title: string;
@@ -6,18 +7,21 @@ type Task = {
   points: number;
   type?: 'video' | 'photo' | 'qr' | string;
   completed?: boolean;
+  is_available?: boolean;
 };
 
 type TaskCardProps = {
   task: Task;
   onSelect?: (task: Task) => void;
   disabled?: boolean;
+  isAvailable?: boolean;
 };
 
 const typeEmoji: Record<string, string> = {
   video: '🎬',
   photo: '📸',
   qr: '📱',
+  visit_location: '📍',
 };
 
 function getTaskEmoji(taskType?: string): string {
@@ -102,24 +106,28 @@ const disabledButtonStyle: CSSProperties = {
   cursor: 'not-allowed',
 };
 
-function TaskCard({ task, onSelect, disabled }: TaskCardProps) {
+function TaskCard({ task, onSelect, disabled, isAvailable }: TaskCardProps) {
+  const { t } = useTranslation();
+  
   const handleSelect = () => {
-    if (!disabled) {
+    if (!disabled && isAvailable !== false) {
       onSelect?.(task);
     }
   };
 
   const pointsLabel = formatPoints(task.points);
   const emoji = getTaskEmoji(task.type);
+  const isLocked = isAvailable === false || task.is_available === false;
+  const isDisabled = disabled || isLocked || task.completed;
 
   return (
     <article
       className="task-card"
       style={{
         ...containerStyle,
-        opacity: disabled ? 0.75 : 1,
+        opacity: isDisabled ? 0.75 : 1,
       }}
-      aria-disabled={disabled}
+      aria-disabled={isDisabled}
     >
       <header style={headerStyle}>
         <h3 style={titleStyle}>
@@ -127,20 +135,30 @@ function TaskCard({ task, onSelect, disabled }: TaskCardProps) {
           <span>{task.title}</span>
         </h3>
         <span style={badgeStyle}>{pointsLabel}</span>
+        {isLocked && (
+          <span style={{ fontSize: 18 }} title={t('tasks.badges.locked')} aria-label={t('tasks.buttons.locked')}>
+            🔒
+          </span>
+        )}
       </header>
       {task.description && <p style={descriptionStyle}>{task.description}</p>}
+      {isLocked && (
+        <p style={{ fontSize: 13, color: 'var(--color-text-light, #6b7280)', margin: 0 }}>
+          {t('tasks.prerequisites.unlockMessage')}
+        </p>
+      )}
       <footer style={footerStyle}>
         <span style={{ fontSize: 13, color: 'var(--color-text-light, #6b7280)' }}>
-          {task.completed ? 'Completed' : 'Available task'}
+          {task.completed ? t('common.status.completed') : isLocked ? t('tasks.buttons.locked') : t('tasks.status.available')}
         </span>
         <button
           type="button"
-          style={disabled ? disabledButtonStyle : buttonStyle}
+          style={isDisabled ? disabledButtonStyle : buttonStyle}
           onClick={handleSelect}
-          disabled={disabled}
+          disabled={isDisabled}
           aria-label={`Select task ${task.title}`}
         >
-          {disabled ? 'Locked' : 'Start task'}
+          {task.completed ? t('common.status.completed') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
         </button>
       </footer>
     </article>

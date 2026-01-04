@@ -8,6 +8,12 @@ type Reward = {
   rewardType?: 'discount' | 'benefit' | 'team_event' | string;
   voucherCode?: string | null;
   active?: boolean;
+  location?: {
+    id: string;
+    name: string;
+    category?: string | null;
+    category_description?: string | null;
+  } | null;
 };
 
 type RewardCardProps = {
@@ -51,6 +57,27 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
       </div>
       {reward.description && (
         <p className="reward-description">{reward.description}</p>
+      )}
+      {reward.location?.category && (
+        <div style={{ marginTop: '8px', marginBottom: '8px' }}>
+          <span
+            style={{
+              display: 'inline-block',
+              fontSize: 11,
+              color: '#6b7280',
+              backgroundColor: '#f3f4f6',
+              padding: '4px 8px',
+              borderRadius: 4,
+            }}
+          >
+            {reward.location.category === 'online' && '🌐 Online'}
+            {reward.location.category === 'hotel_reception' && '🏨 Hotel Reception'}
+            {reward.location.category === 'hotel_restaurant' && '🍽️ Hotel Restaurant'}
+            {reward.location.category === 'external' && '📍 External'}
+            {reward.location.category === 'physical' && '📍 Physical Location'}
+            {reward.location.category_description && ` - ${reward.location.category_description}`}
+          </span>
+        </div>
       )}
       <div className="reward-footer">
         <span className="reward-cost">{t('rewards.card.cost', { count: reward.pointsCost })}</span>

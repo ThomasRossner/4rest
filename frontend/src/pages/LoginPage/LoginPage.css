@@ -13,7 +13,8 @@
   box-shadow: var(--shadow-lg);
   padding: var(--spacing-xl);
   width: 100%;
-  max-width: 400px;
+  max-width: 600px;
+  min-width: 500px;
 }
 
 .login-header {
@@ -22,10 +23,20 @@
   align-items: center;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-xl);
+  flex-wrap: nowrap !important;
+  min-width: 0;
+  width: 100%;
 }
 
 .login-header-info {
   text-align: left;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  min-width: fit-content !important;
+  flex-shrink: 0 !important;
+  flex: 1 1 auto;
+  max-width: none !important;
+  width: auto !important;
 }
 
 .login-logo {
@@ -35,9 +46,19 @@
 }
 
 .login-header h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   color: var(--color-primary);
   margin-bottom: var(--spacing-sm);
+  white-space: nowrap !important;
+  overflow: visible !important;
+  word-break: keep-all !important;
+  line-height: 1.2;
+  display: inline-block !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: fit-content;
+  word-spacing: normal !important;
+  letter-spacing: normal;
 }
 
 .login-header p {
@@ -47,16 +68,31 @@
 
 .login-language-switcher {
   align-self: flex-start;
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
   .login-header {
     flex-direction: column;
     text-align: center;
+    flex-wrap: nowrap !important;
   }
 
   .login-header-info {
     text-align: center;
+    white-space: nowrap !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  
+  .login-header h1 {
+    white-space: nowrap !important;
+    font-size: 1.5rem !important;
+  }
+  
+  .login-container {
+    max-width: 100% !important;
+    min-width: 320px !important;
   }
 
   .login-language-switcher {

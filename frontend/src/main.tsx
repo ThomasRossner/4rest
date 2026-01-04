@@ -16,19 +16,18 @@ const queryClient = new QueryClient({
   },
 });
 
-// Register service worker for offline functionality
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+    {import.meta.env.VITE_UI_POLISH ? <Toaster /> : null}
+  </QueryClientProvider>
+);
+
+// Register PWA service worker (disabled automatically in development by the helper)
 registerServiceWorker();
 
-// Sync offline QR codes when coming back online
+// Try to sync any offline QR codes when the app starts and whenever we come back online
+syncOfflineQRCodes();
 window.addEventListener('online', () => {
   syncOfflineQRCodes();
 });
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-      {import.meta.env.VITE_UI_POLISH ? <Toaster /> : null}
-    </QueryClientProvider>
-  </React.StrictMode>
-);

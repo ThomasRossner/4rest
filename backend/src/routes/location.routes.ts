@@ -9,6 +9,10 @@ import {
   listLocations,
   updateLocationController,
 } from '../controllers/location.controller.js';
+import {
+  geocodeAddressController,
+  reverseGeocodeController,
+} from '../controllers/geocoding.controller.js';
 
 const router = Router();
 
@@ -20,6 +24,10 @@ router.post('/bulk/status', bulkUpdateLocationStatus);
 router.post('/bulk/delete', bulkDeleteLocationController);
 router.put('/:id', updateLocationController);
 router.delete('/:id', deleteLocationController);
+
+// Geocoding endpoints
+router.post('/geocode', geocodeAddressController);
+router.post('/reverse-geocode', reverseGeocodeController);
 
 export default router;
 

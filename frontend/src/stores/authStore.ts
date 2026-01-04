@@ -28,7 +28,7 @@ function deriveWebSocketUrl(): string {
     }
   }
 
-  return 'ws://localhost:5000/ws';
+  return 'ws://localhost:5001/ws';
 }
 
 function scheduleReconnect() {
@@ -52,12 +52,14 @@ function handleSihotMessage(event: MessageEvent) {
       return;
     }
 
-    const state = useAuthStore.getState();
-    if (!state.user || state.user.id !== payload.userId) {
-      return;
-    }
+    // Use setTimeout to avoid circular dependency during initialization
+    setTimeout(() => {
+      const state = useAuthStore.getState();
+      if (!state.user || state.user.id !== payload.userId) {
+        return;
+      }
 
-    useAuthStore.setState((current) => {
+      useAuthStore.setState((current) => {
       if (!current.user) {
         return current;
       }
@@ -75,8 +77,9 @@ function handleSihotMessage(event: MessageEvent) {
         sihotReservations: payload.payload?.reservations ?? current.user.sihotReservations ?? [],
       };
 
-      return { ...current, user: updated };
-    });
+        return { ...current, user: updated };
+      });
+    }, 0);
   } catch (error) {
     console.warn('[SIHOT] Failed to process realtime message:', error);
   }
@@ -86,9 +89,11 @@ function startSihotSocket() {
   if (typeof window === 'undefined') {
     return;
   }
-  if (sihotSocket || !useAuthStore.getState().token) {
-    return;
-  }
+  // Use setTimeout to avoid circular dependency during initialization
+  setTimeout(() => {
+    if (sihotSocket || !useAuthStore.getState().token) {
+      return;
+    }
 
   const url = deriveWebSocketUrl();
 
@@ -113,10 +118,11 @@ function startSihotSocket() {
     console.warn('[SIHOT] WebSocket error:', error);
   };
 
-  sihotSocket.onclose = () => {
-    sihotSocket = null;
-    scheduleReconnect();
-  };
+    sihotSocket.onclose = () => {
+      sihotSocket = null;
+      scheduleReconnect();
+    };
+  }, 0);
 }
 
 function stopSihotSocket() {
@@ -262,7 +268,8 @@ export const useAuthStore = create<AuthState>()(
           });
           startSihotSocket();
         } else {
-          useAuthStore.setState({ token, isAuthenticated: true });
+          // Only set token, but not isAuthenticated if no user is provided
+          useAuthStore.setState({ token, isAuthenticated: false });
         }
       },
       incrementPoints: (delta: number) =>
@@ -278,20 +285,32 @@ export const useAuthStore = create<AuthState>()(
           console.warn('[AuthStore] rehydrate error', error);
           return;
         }
-        if (state?.user) {
-          const normalizedRole: UserRole = USER_ROLES.includes(state.user.role)
-            ? state.user.role
-            : 'stakeholder';
-          const normalizedUserType: UserType = USER_TYPES.includes(state.user.userType)
-            ? state.user.userType
-            : 'explorer';
+        // Use setTimeout to avoid circular dependency during initialization
+        setTimeout(() => {
+          // Only set isAuthenticated to true if both token and user exist
+          if (state?.user && state?.token) {
+            const normalizedRole: UserRole = USER_ROLES.includes(state.user.role)
+              ? state.user.role
+              : 'stakeholder';
+            const normalizedUserType: UserType = USER_TYPES.includes(state.user.userType)
+              ? state.user.userType
+              : 'explorer';
 
-          useAuthStore.setState({
-            ...state,
-            user: { ...state.user, role: normalizedRole, userType: normalizedUserType },
-          });
-          startSihotSocket();
-        }
+            useAuthStore.setState({
+              ...state,
+              user: { ...state.user, role: normalizedRole, userType: normalizedUserType },
+              isAuthenticated: true,
+            });
+            startSihotSocket();
+          } else {
+            // Clear invalid state if token exists but no user, or vice versa
+            useAuthStore.setState({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+            });
+          }
+        }, 0);
       },
     }
   )

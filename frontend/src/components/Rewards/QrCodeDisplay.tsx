@@ -59,7 +59,7 @@ export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpda
           // fallback
         }
       }
-      return 'ws://localhost:5000/ws';
+      return 'ws://localhost:5001/ws';
     })();
 
     let ws: WebSocket | null = null;

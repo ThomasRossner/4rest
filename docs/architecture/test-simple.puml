@@ -1,0 +1,4 @@
+@startuml Simple Test
+Alice -> Bob: Hello
+Bob --> Alice: Hi
+@enduml
