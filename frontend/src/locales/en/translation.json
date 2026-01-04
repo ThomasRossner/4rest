@@ -1,0 +1,377 @@
+{
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "de": "German",
+    "switch": "Switch language"
+  },
+  "common": {
+    "appName": "Roots of Impact",
+    "loading": "Loading...",
+    "points": "{{count}} Points",
+    "pointsShort": "{{count}} pts",
+    "actions": {
+      "back": "Back",
+      "close": "Close",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "show": "Show",
+      "hide": "Hide"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "completed": "Completed"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "tasks": "Tasks",
+    "forest": "Forest",
+    "rewards": "Rewards",
+    "statistics": "Statistics",
+    "admin": "Admin",
+    "profile": "Profile",
+    "logout": "Logout",
+    "points": "{{count}} Points"
+  },
+  "login": {
+    "modes": {
+      "login": { "title": "Sign in to continue" },
+      "register": { "title": "Create your account" },
+      "forgot-password": { "title": "Reset your password" },
+      "reset-password": { "title": "Choose a new password" },
+      "passwordless-login": { "title": "Sign in with a one-time code" }
+    },
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "loginCode": "Login code",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password"
+    },
+    "placeholders": {
+      "name": "Your name",
+      "email": "you@example.com",
+      "password": "••••••••",
+      "loginCode": "000000"
+    },
+    "passwordlessHint": "Enter the 6-digit code sent to your email",
+    "actions": {
+      "signIn": "Sign in",
+      "register": "Create account",
+      "sendReset": "Send reset link",
+      "resetPassword": "Reset password",
+      "getCode": "Get code",
+      "submitCode": "Sign in"
+    },
+    "divider": "or",
+    "links": {
+      "noAccount": "Don't have an account?",
+      "alreadyHaveAccount": "Already have an account?",
+      "forgotPassword": "Forgot your password?",
+      "passwordless": "Sign in with email code",
+      "requestNewCode": "Request a new code",
+      "backToPassword": "Back to password login",
+      "rememberPassword": "Remember your password?",
+      "backToLogin": "Back to sign in"
+    },
+    "messages": {
+      "verificationSuccess": "Email verified successfully! You can now sign in.",
+      "verificationFailed": "Email verification failed. The link may have expired.",
+      "codeSent": "If an account exists with this email, a login code has been sent.",
+      "accountCreated": "Account created successfully! Please verify your email.",
+      "passwordReset": "Password reset successfully! You can now sign in.",
+      "passwordSetup": "Password set successfully! You can now sign in.",
+      "passwordlessSetup": "Password setup email sent! Please check your inbox.",
+      "loginCodeRequired": "Please enter the login code",
+      "loginCodeRequested": "Please enter your email address",
+      "nameRequired": "Please enter your name",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "passwordMismatch": "Passwords do not match",
+      "missingResetToken": "Reset token is missing",
+      "emailVerificationRequired": "Email verification required. Please check your inbox ({{email}}).",
+      "passwordSetupRequired": "This account uses passwordless login. A password setup link has been sent to {{email}}.",
+      "requestFailed": "Operation failed. Please try again.",
+      "oauthFailed": "Social authentication failed. Please try again.",
+      "oauthTokenFailed": "Authentication succeeded but token generation failed. Please try again.",
+      "oauthNotConfigured": "Social login is not configured. Please use email/password login.",
+      "defaultError": "An error occurred during authentication.",
+      "loginFailed": "Invalid email or password",
+      "resetLinkSent": "If an account exists with this email, a password reset link has been sent."
+    },
+    "social": {
+      "google": "Continue with Google",
+      "facebook": "Continue with Facebook",
+      "apple": "Continue with Apple",
+      "github": "Continue with GitHub"
+    }
+  },
+  "home": {
+    "title": "Welcome to Roots of Impact",
+    "subtitle": "Grow your virtual forest through sustainable actions",
+    "impactTitle": "Your Impact",
+    "impactSubtitle": "Track your sustainability progress",
+    "stats": {
+      "totalPoints": "Total points",
+      "treesPlanted": "Trees planted",
+      "tasksCompleted": "Tasks completed",
+      "co2Saved": "CO₂ saved"
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "subtitle": "Continue your sustainability journey",
+      "tasks": {
+        "title": "Complete tasks",
+        "description": "Earn points by completing sustainability challenges"
+      },
+      "forest": {
+        "title": "Visit forest",
+        "description": "Watch your trees grow in the virtual forest"
+      },
+      "rewards": {
+        "title": "Redeem rewards",
+        "description": "Exchange points for discounts and benefits"
+      }
+    }
+  },
+  "tasks": {
+    "title": "Available tasks",
+    "filters": {
+      "type": {
+        "label": "Type",
+        "all": "All types",
+        "video": "Video",
+        "qr": "QR code",
+        "photo": "Photo"
+      },
+      "completion": {
+        "label": "Completion",
+        "all": "All tasks",
+        "not_completed": "Not completed"
+      },
+      "time": {
+        "label": "Time",
+        "all": "All time",
+        "recent": "Recent (7 days)"
+      }
+    },
+    "empty": {
+      "all": {
+        "title": "No tasks available",
+        "description": "Check back later for new sustainability tasks."
+      },
+      "filtered": {
+        "title": "No tasks match your filters",
+        "description": "Try adjusting your filter settings."
+      }
+    },
+    "buttons": {
+      "start": "Start task",
+      "completed": "Completed"
+    },
+    "badges": {
+      "completed": "Task completed"
+    }
+  },
+  "rewards": {
+    "title": "Rewards marketplace",
+    "balanceLabel": "Your points",
+    "filters": {
+      "all": "All",
+      "discount": "🏷️ Discounts",
+      "benefit": "✨ Benefits",
+      "team_event": "🤝 Team events"
+    },
+    "empty": {
+      "title": "No rewards available",
+      "description": "Please check back later or change the filter."
+    },
+    "receipt": {
+      "title": "Redemption receipt",
+      "voucherCode": "Voucher code",
+      "expires": "Expires",
+      "reward": "Reward"
+    },
+    "card": {
+      "cost": "{{count}} points",
+      "redeem": "Redeem",
+      "insufficient": "Insufficient"
+    },
+    "messages": {
+      "redeemSuccess": "Reward redeemed successfully",
+      "redeemError": "Failed to redeem reward",
+      "notEnoughPoints": "Not enough points"
+    },
+    "confirm": {
+      "title": "Confirm Redemption",
+      "message": "Are you sure you want to redeem {{title}} for {{cost}} points?",
+      "warning": "This QR code is temporary and will disappear if you leave this page. Points will only be deducted after an administrator scans and verifies the QR code.",
+      "yes": "Yes, redeem",
+      "no": "No, cancel"
+    },
+    "qr": {
+      "title": "QR Code for {{title}}",
+      "instruction": "Show this QR code to an administrator for verification",
+      "status": "Status: {{status}}",
+      "statuses": {
+        "pending": "Pending verification",
+        "used": "Verified and redeemed",
+        "expired": "Expired"
+      },
+      "warning": "Do not close this page until the QR code is verified",
+      "confirmed": "Successfully Verified!",
+      "confirmedMessage": "Your reward has been verified and redeemed. Points have been deducted.",
+      "successModal": {
+        "title": "Reward Redeemed Successfully!",
+        "message": "Your {{title}} has been verified and redeemed. Points have been deducted from your account."
+      }
+    }
+  },
+  "admin": {
+    "qrScanner": {
+      "title": "Redeem Rewards",
+      "subtitle": "Scan QR codes to verify and redeem user rewards",
+      "instruction": "Position the QR code within the frame",
+      "scanning": "Scanning...",
+      "cameraError": "Failed to access camera",
+      "cameraHint": "Please allow camera access and ensure you're using a device with a camera",
+      "verificationSuccess": "QR code verified successfully",
+      "verificationError": "Failed to verify QR code",
+      "backToMain": "Back to main",
+      "successModal": {
+        "title": "QR Code Verified!",
+        "message": "Successfully verified and redeemed reward for {{userName}}.",
+        "reward": "Reward: {{title}}"
+      }
+    }
+  },
+  "common": {
+    "ok": "OK"
+  },
+  "forest": {
+    "title": "Virtual forest",
+    "subtitle": "Watch your trees grow as you complete sustainable actions",
+    "loading": "Loading forest..."
+  },
+  "statistics": {
+    "title": "Statistics & impact",
+    "emptyTitle": "No statistics available",
+    "emptyDescription": "Statistics will appear here once tasks are completed.",
+    "cards": {
+      "co2Saved": "CO₂ saved",
+      "co2PerTask": "~{{value}} kg per task",
+      "trees": "Total trees",
+      "activeUsers": "Active users",
+      "activeUsersSubtitle": "Last 30 days",
+      "tasksCompleted": "Tasks completed",
+      "avgPoints": "Avg points/user"
+    },
+    "dailyProgress": "Daily progress (last 30 days)",
+    "teamLeaderboard": "Team leaderboard",
+    "leaderboard": {
+      "tasks": "{{count}} tasks",
+      "points": "{{count}} pts",
+      "co2": "{{value}} kg CO₂"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "noEmail": "No email provided",
+    "role": "Role: {{role}}",
+    "stats": {
+      "points": "Total points",
+      "trees": "Your trees"
+    },
+    "privacy": {
+      "show": "Show privacy settings",
+      "hide": "Hide privacy settings"
+    },
+    "sihot": {
+      "title": "SIHOT guest profile",
+      "guestId": "Guest ID: {{id}}",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "loyaltyLevel": "Loyalty level",
+        "language": "Preferred language",
+        "preferences": "Preferences",
+        "notes": "Notes"
+      },
+      "reservations": {
+        "title": "Recent reservations",
+        "room": "Room {{room}}",
+        "confirmation": "Confirmation: {{number}}",
+        "balance": "Balance: {{amount}}"
+      },
+      "missing": "—"
+    }
+  },
+  "consent": {
+    "title": "Privacy & data management",
+    "preferences": "Consent preferences",
+    "dataProcessing": {
+      "label": "Data processing (required)",
+      "description": "Allow processing of your data for core functionality"
+    },
+    "analytics": {
+      "label": "Analytics",
+      "description": "Allow collection of anonymous usage statistics"
+    },
+    "marketing": {
+      "label": "Marketing",
+      "description": "Allow promotional emails and notifications"
+    },
+    "save": "Save preferences",
+    "saved": "✓ Saved",
+    "dataRights": "Your data rights",
+    "export": "Export my data",
+    "delete": "Delete my account",
+    "alerts": {
+      "saveError": "Failed to save consent preferences",
+      "exportError": "Failed to export data",
+      "deleteConfirm": "Are you sure you want to delete all your data? This cannot be undone.",
+      "deleteSuccess": "Your data has been deleted. You will be logged out.",
+      "deleteError": "Failed to delete data"
+    }
+  },
+  "tasksComponents": {
+    "loading": "Loading task...",
+    "notFound": "Task not found",
+    "points": "+{{points}} points",
+    "video": {
+      "notSupported": "Your browser does not support the video tag.",
+      "quizTitle": "Quiz questions",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "complete": "Complete task",
+      "submitting": "Submitting..."
+    },
+    "qr": {
+      "scanned": "Scanned: {{value}}",
+      "completing": "Completing task...",
+      "manualPrompt": "Enter the QR code manually:",
+      "manualPlaceholder": "Enter QR code",
+      "verify": "Verify & complete",
+      "invalid": "Invalid QR code",
+      "success": "Task completed successfully!"
+    },
+    "photo": {
+      "fileTooLarge": "File size must be less than 5MB",
+      "invalidFile": "Please select an image file",
+      "change": "Change photo",
+      "upload": "Upload & complete",
+      "uploading": "Uploading...",
+      "success": "Photo uploaded and task completed successfully!",
+      "clickToSelect": "Click to select a photo",
+      "hint": "Max 5MB • JPG, PNG, WebP",
+      "uploadFailed": "Failed to upload photo"
+    }
+  }
+}
+

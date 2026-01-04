@@ -1,0 +1,328 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2d5016 0%, #3f6f20 100%);
+  padding: var(--spacing-md);
+}
+
+.login-container {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-xl);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.login-header-info {
+  text-align: left;
+}
+
+.login-logo {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: var(--spacing-md);
+}
+
+.login-header h1 {
+  font-size: 2rem;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.login-header p {
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.login-language-switcher {
+  align-self: flex-start;
+}
+
+@media (max-width: 480px) {
+  .login-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .login-header-info {
+    text-align: center;
+  }
+
+  .login-language-switcher {
+    align-self: center;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.login-field label {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.login-field input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.login-field input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.login-button {
+  padding: var(--spacing-md);
+  background-color: var(--color-primary);
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: var(--spacing-md);
+}
+
+.login-button:hover:not(:disabled) {
+  background-color: var(--color-primary-light);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-error {
+  padding: var(--spacing-sm);
+  background-color: #ffebee;
+  color: var(--color-error);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.login-success {
+  padding: var(--spacing-sm);
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.login-footer {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.login-footer p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+  font-family: inherit;
+  min-height: auto;
+}
+
+.link-button:hover {
+  color: var(--color-primary-light);
+  text-decoration-thickness: 2px;
+}
+
+.link-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  margin: var(--spacing-lg) 0;
+  text-align: center;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.login-divider span {
+  padding: 0 var(--spacing-md);
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.social-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.social-login-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  background: white;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  overflow: hidden;
+}
+
+.social-login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.social-login-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.social-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* Tooltip styles */
+.social-login-button::before {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+.social-login-button::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+.social-login-button:hover::before,
+.social-login-button:hover::after {
+  opacity: 1;
+}
+
+.google-button {
+  border-color: #4285F4;
+}
+
+.google-button:hover {
+  background: #4285F4;
+  border-color: #4285F4;
+}
+
+.google-button:hover .social-icon {
+  filter: brightness(0) invert(1);
+}
+
+.facebook-button {
+  border-color: #1877F2;
+}
+
+.facebook-button:hover {
+  background: #1877F2;
+  border-color: #1877F2;
+}
+
+.facebook-button:hover .social-icon {
+  filter: brightness(0) invert(1);
+}
+
+.apple-button {
+  border-color: #000000;
+}
+
+.apple-button:hover {
+  background: #000000;
+  border-color: #000000;
+}
+
+.apple-button:hover .social-icon {
+  filter: brightness(0) invert(1);
+}
+
+.github-button {
+  border-color: #24292e;
+}
+
+.github-button:hover {
+  background: #24292e;
+  border-color: #24292e;
+}
+
+.github-button:hover .social-icon {
+  filter: brightness(0) invert(1);
+}

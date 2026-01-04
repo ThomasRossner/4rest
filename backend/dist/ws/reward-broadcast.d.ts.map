@@ -1,0 +1,1 @@
+{"version":3,"file":"reward-broadcast.d.ts","sourceRoot":"","sources":["../../src/ws/reward-broadcast.ts"],"names":[],"mappings":"AAEA,UAAU,6BAA6B;IACrC,MAAM,EAAE,MAAM,CAAC;IACf,YAAY,EAAE,MAAM,CAAC;IACrB,MAAM,EAAE,SAAS,GAAG,MAAM,GAAG,SAAS,CAAC;IACvC,MAAM,CAAC,EAAE,MAAM,CAAC;CACjB;AAED,wBAAgB,yBAAyB,CAAC,EAAE,MAAM,EAAE,YAAY,EAAE,MAAM,EAAE,MAAM,EAAE,EAAE,6BAA6B,GAAG,IAAI,CASvH"}

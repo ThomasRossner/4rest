@@ -1,0 +1,377 @@
+{
+  "language": {
+    "label": "Sprache",
+    "en": "Englisch",
+    "de": "Deutsch",
+    "switch": "Sprache ändern"
+  },
+  "common": {
+    "appName": "Roots of Impact",
+    "loading": "Laden...",
+    "points": "{{count}} Punkte",
+    "pointsShort": "{{count}} Pkt",
+    "actions": {
+      "back": "Zurück",
+      "close": "Schließen",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "delete": "Löschen",
+      "edit": "Bearbeiten",
+      "show": "Anzeigen",
+      "hide": "Ausblenden"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "completed": "Abgeschlossen"
+    }
+  },
+  "navigation": {
+    "home": "Start",
+    "tasks": "Aufgaben",
+    "forest": "Wald",
+    "rewards": "Belohnungen",
+    "statistics": "Statistiken",
+    "admin": "Admin",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "points": "{{count}} Punkte"
+  },
+  "login": {
+    "modes": {
+      "login": { "title": "Melde dich an, um fortzufahren" },
+      "register": { "title": "Erstelle dein Konto" },
+      "forgot-password": { "title": "Setze dein Passwort zurück" },
+      "reset-password": { "title": "Wähle ein neues Passwort" },
+      "passwordless-login": { "title": "Melde dich mit einem Einmal-Code an" }
+    },
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "loginCode": "Login-Code",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort bestätigen"
+    },
+    "placeholders": {
+      "name": "Dein Name",
+      "email": "du@example.com",
+      "password": "••••••••",
+      "loginCode": "000000"
+    },
+    "passwordlessHint": "Gib den 6-stelligen Code aus deiner E-Mail ein",
+    "actions": {
+      "signIn": "Anmelden",
+      "register": "Konto erstellen",
+      "sendReset": "Link senden",
+      "resetPassword": "Passwort zurücksetzen",
+      "getCode": "Code anfordern",
+      "submitCode": "Anmelden"
+    },
+    "divider": "oder",
+    "links": {
+      "noAccount": "Noch kein Konto?",
+      "alreadyHaveAccount": "Du hast bereits ein Konto?",
+      "forgotPassword": "Passwort vergessen?",
+      "passwordless": "Mit E-Mail-Code anmelden",
+      "requestNewCode": "Neuen Code anfordern",
+      "backToPassword": "Zurück zum Passwort-Login",
+      "rememberPassword": "Passwort wieder eingefallen?",
+      "backToLogin": "Zurück zur Anmeldung"
+    },
+    "messages": {
+      "verificationSuccess": "E-Mail erfolgreich verifiziert! Du kannst dich jetzt anmelden.",
+      "verificationFailed": "E-Mail-Bestätigung fehlgeschlagen. Der Link ist möglicherweise abgelaufen.",
+      "codeSent": "Falls ein Konto existiert, wurde ein Login-Code gesendet.",
+      "accountCreated": "Konto erstellt! Bitte bestätige deine E-Mail.",
+      "passwordReset": "Passwort zurückgesetzt! Du kannst dich jetzt anmelden.",
+      "passwordSetup": "Passwort gespeichert! Du kannst dich jetzt anmelden.",
+      "passwordlessSetup": "Link zum Setzen eines Passworts wurde gesendet.",
+      "loginCodeRequired": "Bitte gib den Login-Code ein",
+      "loginCodeRequested": "Bitte gib deine E-Mail-Adresse ein",
+      "nameRequired": "Bitte gib deinen Namen ein",
+      "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen haben",
+      "passwordMismatch": "Die Passwörter stimmen nicht überein",
+      "missingResetToken": "Reset-Token fehlt",
+      "emailVerificationRequired": "E-Mail-Bestätigung erforderlich. Prüfe dein Postfach ({{email}}).",
+      "passwordSetupRequired": "Dieses Konto verwendet Passwort-lose Anmeldung. Ein Link zum Setzen eines Passworts wurde an {{email}} gesendet.",
+      "requestFailed": "Aktion fehlgeschlagen. Bitte versuche es erneut.",
+      "oauthFailed": "Social Login fehlgeschlagen. Bitte erneut versuchen.",
+      "oauthTokenFailed": "Anmeldung erfolgreich, aber Token konnte nicht erstellt werden. Bitte erneut versuchen.",
+      "oauthNotConfigured": "Social Login ist nicht konfiguriert. Bitte E-Mail/Passwort nutzen.",
+      "defaultError": "Während der Anmeldung ist ein Fehler aufgetreten.",
+      "loginFailed": "Ungültige E-Mail oder ungültiges Passwort",
+      "resetLinkSent": "Falls ein Konto existiert, wurde ein Reset-Link gesendet."
+    },
+    "social": {
+      "google": "Mit Google fortfahren",
+      "facebook": "Mit Facebook fortfahren",
+      "apple": "Mit Apple fortfahren",
+      "github": "Mit GitHub fortfahren"
+    }
+  },
+  "home": {
+    "title": "Willkommen bei Roots of Impact",
+    "subtitle": "Lass deinen virtuellen Wald mit nachhaltigen Aktionen wachsen",
+    "impactTitle": "Dein Impact",
+    "impactSubtitle": "Verfolge deinen Fortschritt",
+    "stats": {
+      "totalPoints": "Gesamtpunkte",
+      "treesPlanted": "Gepflanzte Bäume",
+      "tasksCompleted": "Abgeschlossene Aufgaben",
+      "co2Saved": "Eingespartes CO₂"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "subtitle": "Setze deine Reise fort",
+      "tasks": {
+        "title": "Aufgaben erledigen",
+        "description": "Sammle Punkte durch nachhaltige Challenges"
+      },
+      "forest": {
+        "title": "Wald besuchen",
+        "description": "Sieh zu, wie deine Bäume wachsen"
+      },
+      "rewards": {
+        "title": "Belohnungen einlösen",
+        "description": "Tausche Punkte gegen Vorteile"
+      }
+    }
+  },
+  "tasks": {
+    "title": "Verfügbare Aufgaben",
+    "filters": {
+      "type": {
+        "label": "Typ",
+        "all": "Alle Typen",
+        "video": "Video",
+        "qr": "QR-Code",
+        "photo": "Foto"
+      },
+      "completion": {
+        "label": "Status",
+        "all": "Alle Aufgaben",
+        "not_completed": "Nicht abgeschlossen"
+      },
+      "time": {
+        "label": "Zeit",
+        "all": "Gesamte Zeit",
+        "recent": "Aktuell (7 Tage)"
+      }
+    },
+    "empty": {
+      "all": {
+        "title": "Keine Aufgaben verfügbar",
+        "description": "Schau später erneut vorbei."
+      },
+      "filtered": {
+        "title": "Keine Aufgaben für diese Filter",
+        "description": "Passe deine Filtereinstellungen an."
+      }
+    },
+    "buttons": {
+      "start": "Aufgabe starten",
+      "completed": "Abgeschlossen"
+    },
+    "badges": {
+      "completed": "Aufgabe erledigt"
+    }
+  },
+  "rewards": {
+    "title": "Belohnungsmarkt",
+    "balanceLabel": "Deine Punkte",
+    "filters": {
+      "all": "Alle",
+      "discount": "🏷️ Rabatte",
+      "benefit": "✨ Vorteile",
+      "team_event": "🤝 Team-Events"
+    },
+    "empty": {
+      "title": "Keine Belohnungen verfügbar",
+      "description": "Bitte später erneut prüfen oder Filter ändern."
+    },
+    "receipt": {
+      "title": "Einlöserbeleg",
+      "voucherCode": "Gutscheincode",
+      "expires": "Gültig bis",
+      "reward": "Belohnung"
+    },
+    "card": {
+      "cost": "{{count}} Punkte",
+      "redeem": "Einlösen",
+      "insufficient": "Zu wenig Punkte"
+    },
+    "messages": {
+      "redeemSuccess": "Belohnung erfolgreich eingelöst",
+      "redeemError": "Belohnung konnte nicht eingelöst werden",
+      "notEnoughPoints": "Nicht genug Punkte"
+    },
+    "confirm": {
+      "title": "Einlösung bestätigen",
+      "message": "Möchten Sie {{title}} wirklich für {{cost}} Punkte einlösen?",
+      "warning": "Dieser QR-Code ist temporär und verschwindet, wenn Sie diese Seite verlassen. Punkte werden nur abgezogen, nachdem ein Administrator den QR-Code gescannt und verifiziert hat.",
+      "yes": "Ja, einlösen",
+      "no": "Nein, abbrechen"
+    },
+    "qr": {
+      "title": "QR-Code für {{title}}",
+      "instruction": "Zeigen Sie diesen QR-Code einem Administrator zur Verifizierung",
+      "status": "Status: {{status}}",
+      "statuses": {
+        "pending": "Ausstehende Verifizierung",
+        "used": "Verifiziert und eingelöst",
+        "expired": "Abgelaufen"
+      },
+      "warning": "Schließen Sie diese Seite nicht, bis der QR-Code verifiziert wurde",
+      "confirmed": "Erfolgreich verifiziert!",
+      "confirmedMessage": "Ihre Belohnung wurde verifiziert und eingelöst. Punkte wurden abgezogen.",
+      "successModal": {
+        "title": "Belohnung erfolgreich eingelöst!",
+        "message": "Ihre {{title}} wurde verifiziert und eingelöst. Punkte wurden von Ihrem Konto abgezogen."
+      }
+    }
+  },
+  "admin": {
+    "qrScanner": {
+      "title": "Belohnungen einlösen",
+      "subtitle": "QR-Codes scannen, um Benutzerbelohnungen zu verifizieren und einzulösen",
+      "instruction": "Positionieren Sie den QR-Code im Rahmen",
+      "scanning": "Scannen...",
+      "cameraError": "Kamera konnte nicht aufgerufen werden",
+      "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff und stellen Sie sicher, dass Sie ein Gerät mit Kamera verwenden",
+      "verificationSuccess": "QR-Code erfolgreich verifiziert",
+      "verificationError": "QR-Code konnte nicht verifiziert werden",
+      "backToMain": "Zurück zur Hauptseite",
+      "successModal": {
+        "title": "QR-Code verifiziert!",
+        "message": "Belohnung für {{userName}} erfolgreich verifiziert und eingelöst.",
+        "reward": "Belohnung: {{title}}"
+      }
+    }
+  },
+  "common": {
+    "ok": "OK"
+  },
+  "forest": {
+    "title": "Virtueller Wald",
+    "subtitle": "Sieh zu, wie deine Bäume durch nachhaltige Aktionen wachsen",
+    "loading": "Wald wird geladen..."
+  },
+  "statistics": {
+    "title": "Statistiken & Impact",
+    "emptyTitle": "Keine Statistiken verfügbar",
+    "emptyDescription": "Sobald Aufgaben erledigt sind, erscheinen hier Daten.",
+    "cards": {
+      "co2Saved": "Eingespartes CO₂",
+      "co2PerTask": "~{{value}} kg pro Aufgabe",
+      "trees": "Gesamtbäume",
+      "activeUsers": "Aktive Nutzer",
+      "activeUsersSubtitle": "Letzte 30 Tage",
+      "tasksCompleted": "Abgeschlossene Aufgaben",
+      "avgPoints": "Ø Punkte/Nutzer"
+    },
+    "dailyProgress": "Tagesfortschritt (30 Tage)",
+    "teamLeaderboard": "Team-Rangliste",
+    "leaderboard": {
+      "tasks": "{{count}} Aufgaben",
+      "points": "{{count}} Pkt",
+      "co2": "{{value}} kg CO₂"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "noEmail": "Keine E-Mail hinterlegt",
+    "role": "Rolle: {{role}}",
+    "stats": {
+      "points": "Gesamtpunkte",
+      "trees": "Deine Bäume"
+    },
+    "privacy": {
+      "show": "Privatsphäre-Einstellungen anzeigen",
+      "hide": "Privatsphäre-Einstellungen ausblenden"
+    },
+    "sihot": {
+      "title": "SIHOT-Gastprofil",
+      "guestId": "Gast-ID: {{id}}",
+      "fields": {
+        "name": "Name",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "loyaltyLevel": "Loyalitätslevel",
+        "language": "Bevorzugte Sprache",
+        "preferences": "Präferenzen",
+        "notes": "Notizen"
+      },
+      "reservations": {
+        "title": "Letzte Reservierungen",
+        "room": "Zimmer {{room}}",
+        "confirmation": "Bestätigung: {{number}}",
+        "balance": "Saldo: {{amount}}"
+      },
+      "missing": "—"
+    }
+  },
+  "consent": {
+    "title": "Privatsphäre & Datenverwaltung",
+    "preferences": "Einwilligungen",
+    "dataProcessing": {
+      "label": "Datenverarbeitung (erforderlich)",
+      "description": "Erlaubt die Verarbeitung für Kernfunktionen"
+    },
+    "analytics": {
+      "label": "Analyse",
+      "description": "Erlaubt anonyme Nutzungsstatistiken"
+    },
+    "marketing": {
+      "label": "Marketing",
+      "description": "Erlaubt Benachrichtigungen und Angebote"
+    },
+    "save": "Einstellungen speichern",
+    "saved": "✓ Gespeichert",
+    "dataRights": "Deine Datenrechte",
+    "export": "Meine Daten exportieren",
+    "delete": "Mein Konto löschen",
+    "alerts": {
+      "saveError": "Einwilligungen konnten nicht gespeichert werden",
+      "exportError": "Daten konnten nicht exportiert werden",
+      "deleteConfirm": "Möchtest du wirklich alle Daten löschen? Dies kann nicht rückgängig gemacht werden.",
+      "deleteSuccess": "Deine Daten wurden gelöscht. Du wirst abgemeldet.",
+      "deleteError": "Daten konnten nicht gelöscht werden"
+    }
+  },
+  "tasksComponents": {
+    "loading": "Aufgabe wird geladen...",
+    "notFound": "Aufgabe nicht gefunden",
+    "points": "+{{points}} Punkte",
+    "video": {
+      "notSupported": "Dein Browser unterstützt dieses Video nicht.",
+      "quizTitle": "Quizfragen",
+      "questionProgress": "Frage {{current}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "complete": "Aufgabe abschließen",
+      "submitting": "Wird gesendet..."
+    },
+    "qr": {
+      "scanned": "Gelesen: {{value}}",
+      "completing": "Aufgabe wird abgeschlossen...",
+      "manualPrompt": "QR-Code manuell eingeben:",
+      "manualPlaceholder": "QR-Code eingeben",
+      "verify": "Prüfen & abschließen",
+      "invalid": "Ungültiger QR-Code",
+      "success": "Aufgabe erfolgreich abgeschlossen!"
+    },
+    "photo": {
+      "fileTooLarge": "Datei darf maximal 5 MB haben",
+      "invalidFile": "Bitte wähle eine Bilddatei",
+      "change": "Foto wechseln",
+      "upload": "Hochladen & abschließen",
+      "uploading": "Wird hochgeladen...",
+      "success": "Foto hochgeladen – Aufgabe erledigt!",
+      "clickToSelect": "Klicke, um ein Foto auszuwählen",
+      "hint": "Max. 5 MB • JPG, PNG, WebP",
+      "uploadFailed": "Foto konnte nicht hochgeladen werden"
+    }
+  }
+}
+

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roots of Impact API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin: 0;
+      background: #fafafa;
+    }
+    .swagger-ui .topbar {
+      background-color: #667eea;
+    }
+    .swagger-ui .topbar .download-url-wrapper {
+      display: none;
+    }
+    .swagger-ui .info {
+      margin: 50px 0;
+    }
+    .swagger-ui .info .title {
+      color: #3b4151;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      // Initialize Swagger UI with the OpenAPI YAML file
+      // Swagger UI can load YAML files directly via URL
+      // This will automatically include all endpoints including:
+      // - Authentication (login, register, password reset, password setup, email verification, passwordless login)
+      // - Tasks, Rewards, Locations, Users, Forest, Statistics, GDPR, HotelKit, Sihot
+      window.ui = SwaggerUIBundle({
+        url: './openapi.yaml',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        validatorUrl: null,
+        tryItOutEnabled: true,
+        supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch', 'options', 'head'],
+        requestInterceptor: function(request) {
+          // Add JWT token from localStorage if available
+          // To set a token for testing: localStorage.setItem('jwt_token', 'your-token-here')
+          const token = localStorage.getItem('jwt_token');
+          if (token && request.headers) {
+            request.headers['Authorization'] = 'Bearer ' + token;
+          }
+          return request;
+        },
+        responseInterceptor: function(response) {
+          // Store JWT token from login/register responses
+          if (response.url && (response.url.includes('/auth/login') || response.url.includes('/auth/register'))) {
+            try {
+              const data = JSON.parse(response.body);
+              if (data.token) {
+                localStorage.setItem('jwt_token', data.token);
+                console.log('JWT token stored in localStorage');
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+          return response;
+        },
+        onComplete: function() {
+          console.log('Swagger UI loaded successfully');
+        },
+        onFailure: function(data) {
+          console.error('Failed to load API spec:', data);
+          document.getElementById('swagger-ui').innerHTML = 
+            '<div style="padding: 40px; text-align: center; font-family: sans-serif;">' +
+            '<h2 style="color: #3b4151;">Failed to load API documentation</h2>' +
+            '<p style="color: #666; margin: 20px 0;">Please ensure that <code>openapi.yaml</code> is in the same directory as this HTML file.</p>' +
+            '<p style="color: #d32f2f; font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 4px;">' +
+            'Error: ' + (data.message || 'Unknown error') + 
+            '</p>' +
+            '<p style="color: #666; margin-top: 20px;">' +
+            'If you are opening this file directly from the file system, you may need to serve it through a web server ' +
+            'due to CORS restrictions. You can use a simple HTTP server like Python\'s http.server or Node\'s http-server.' +
+            '</p>' +
+            '</div>';
+        }
+      });
+    };
+  </script>
+</body>
+</html>
+

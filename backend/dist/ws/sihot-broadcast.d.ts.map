@@ -1,0 +1,1 @@
+{"version":3,"file":"sihot-broadcast.d.ts","sourceRoot":"","sources":["../../src/ws/sihot-broadcast.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,QAAQ,EAAE,MAAM,uBAAuB,CAAC;AAEjD,UAAU,kBAAkB;IAC1B,MAAM,EAAE,MAAM,CAAC;IACf,OAAO,EAAE,GAAG,GAAG,IAAI,CAAC;IACpB,IAAI,CAAC,EAAE,QAAQ,CAAC;CACjB;AAED,wBAAgB,oBAAoB,CAAC,EAAE,MAAM,EAAE,OAAO,EAAE,IAAI,EAAE,EAAE,kBAAkB,GAAG,IAAI,CAQxF"}
