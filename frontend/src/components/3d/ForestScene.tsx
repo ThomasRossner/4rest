@@ -135,18 +135,19 @@ function ForestScene() {
 
   useEffect(() => {
     if (!myOrigin) return;
-    // Position camera offset from the center and look at the center
-    camera.position.set(myOrigin[0] + 10, 10, myOrigin[2] + 10);
+    // Position camera closer to ground with a more horizontal viewing angle
+    // Camera positioned at a lower height (3 units) and further back for a better ground-level view
+    camera.position.set(myOrigin[0] + 8, 3, myOrigin[2] + 8);
     camera.updateProjectionMatrix();
     if (controlsRef.current) {
-      controlsRef.current.target.set(myOrigin[0], 0, myOrigin[2]);
+      controlsRef.current.target.set(myOrigin[0], 1, myOrigin[2]); // Look slightly above ground
       controlsRef.current.update();
     }
   }, [myOrigin, camera]);
 
   // Clamp camera position to prevent going below ground surface
   useFrame(() => {
-    const minY = 0.5; // Minimum height above ground
+    const minY = 0.3; // Minimum height above ground (reduced for closer ground view)
     if (camera.position.y < minY) {
       camera.position.y = minY;
       if (controlsRef.current) {
@@ -311,7 +312,7 @@ function ForestScene() {
         enablePan
         enableZoom
         enableRotate
-        minDistance={5}
+        minDistance={3}
         maxDistance={75}
         maxPolarAngle={Math.PI / 2}
         minPolarAngle={0}
