@@ -1,0 +1,90 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: roots-postgres
+    environment:
+      POSTGRES_USER: roots_user
+      POSTGRES_PASSWORD: roots_password
+      POSTGRES_DB: roots_of_impact
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roots_user -d roots_of_impact"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - roots-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: roots-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - roots-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: roots-backend
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://roots_user:roots_password@postgres:5432/roots_of_impact
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: development-secret-change-in-production
+      CORS_ORIGIN: https://localhost:3000,http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - roots-network
+    restart: unless-stopped
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: roots-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: /api
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - roots-network
+    restart: unless-stopped
+    command: npm run dev -- --host
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  roots-network:
+    driver: bridge
+
