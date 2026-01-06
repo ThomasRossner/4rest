@@ -287,7 +287,33 @@
       "cancel": "Abbrechen",
       "warning": "Dieser QR-Code ist temporär. Bitte lösen Sie ihn unmittelbar vor der Person ein."
     },
-    "scanPointsBonus": "📷 Punkte-Bonus QR-Code scannen"
+    "scanPointsBonus": "📷 Punkte-Bonus QR-Code scannen",
+    "scanner": {
+      "button": "Belohnung von Gast einlösen",
+      "title": "Belohnung von Gast einlösen",
+      "subtitle": "Scannen Sie den QR-Code der Belohnung",
+      "instruction": "Richten Sie die Kamera auf den QR-Code",
+      "scanning": "Scannen...",
+      "verifying": "Wird überprüft...",
+      "cameraError": "Kamera-Zugriff fehlgeschlagen",
+      "cameraNotSupported": "Kamera-Zugriff wird in diesem Browser nicht unterstützt. Bitte verwenden Sie einen modernen Browser mit Kamera-Unterstützung.",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.",
+      "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff zum Scannen von QR-Codes",
+      "invalidQr": "Ungültiger QR-Code",
+      "errorTitle": "Fehler",
+      "redeemSuccess": "Belohnung eingelöst",
+      "redeemMessage": "Belohnung \"{{reward}}\" wurde für {{guest}} eingelöst.",
+      "redeemError": "Belohnung konnte nicht eingelöst werden"
+    },
+    "redemption": {
+      "title": "Belohnung gefunden",
+      "reward": "Belohnung",
+      "guest": "Gast",
+      "pointsCost": "{{count}} Punkte",
+      "unknownGuest": "Unbekannter Gast",
+      "redeem": "Belohnung eingelöst",
+      "redeeming": "Wird eingelöst..."
+    }
   },
   "admin": {
     "title": "Administrator-Bereich",
