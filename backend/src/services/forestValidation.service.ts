@@ -156,8 +156,8 @@ async function fixTreeGeometryForUser(
 
   async function generateRandomPositionInBlock(block: BlockState): Promise<{ x: number; z: number }> {
     const areaSpacing = FOREST_AREA_SPACING;
-    const edgePadding = 0.5;
-    const minDistance = 1.5;
+    const edgePadding = 2.0; // Increased from 0.5 to keep trees in smaller area
+    const minDistance = 1.2; // Slightly reduced from 1.5
 
     const blockMinX = block.originX + edgePadding;
     const blockMaxX = block.originX + areaSpacing - edgePadding;

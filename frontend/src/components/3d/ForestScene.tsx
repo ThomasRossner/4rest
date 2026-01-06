@@ -170,12 +170,12 @@ function ForestScene() {
         const uniqueKey = `${origin[0]}-${origin[2]}`;
         return (
           <group key={uniqueKey} position={origin}>
-            {/* Area ground tile - positioned to cover 0-20 range (not centered) */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[10, 0.001, 10]}>
-              <planeGeometry args={[20, 20]} />
+            {/* Area ground tile - positioned to cover 0-12 range (not centered) */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[6, 0.001, 6]}>
+              <planeGeometry args={[12, 12]} />
               <meshStandardMaterial color="#5b8f69" />
             </mesh>
-            {/* Area border (perimeter only) - covers 0-20 range, aligned with ground tile */}
+            {/* Area border (perimeter only) - covers 0-12 range, aligned with ground tile */}
             <lineSegments position={[0, 0.012, 0]}>
               <bufferGeometry>
                 <bufferAttribute
@@ -183,12 +183,12 @@ function ForestScene() {
                   count={8}
                   array={new Float32Array([
                     0, 0, 0,    // Top-left (at block origin)
-                    20, 0, 0,   // Top-right
-                    20, 0, 0,   // Top-right
-                    20, 0, 20,  // Bottom-right
-                    20, 0, 20,  // Bottom-right
-                    0, 0, 20,   // Bottom-left
-                    0, 0, 20,   // Bottom-left
+                    12, 0, 0,   // Top-right
+                    12, 0, 0,   // Top-right
+                    12, 0, 12,  // Bottom-right
+                    12, 0, 12,  // Bottom-right
+                    0, 0, 12,   // Bottom-left
+                    0, 0, 12,   // Bottom-left
                     0, 0, 0,    // Top-left (close the square)
                   ])}
                   itemSize={3}

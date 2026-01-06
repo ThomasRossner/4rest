@@ -104,8 +104,8 @@ export async function plantTree(userId: string, taskId: string) {
   
   if (userIndex === -1) {
     // Fallback: use simple random position
-    const positionX = (Math.random() - 0.5) * 20;
-    const positionZ = (Math.random() - 0.5) * 20;
+    const positionX = (Math.random() - 0.5) * 12; // Updated to match new areaSpacing
+    const positionZ = (Math.random() - 0.5) * 12; // Updated to match new areaSpacing
     const initialStage = 'sapling';
     const initialGrowthPoints = 1;
     const initialSize = generateSizeForStage(initialStage);
@@ -120,7 +120,7 @@ export async function plantTree(userId: string, taskId: string) {
     return insertResult.rows[0].id as string;
   }
   
-  const areaSpacing = 20;
+  const areaSpacing = 12; // Reduced from 20 to make forests more compact
   const gridCols = Math.max(1, Math.ceil(Math.sqrt(Math.max(1, userIds.length))));
   const col = userIndex % gridCols;
   const rowIdx = Math.floor(userIndex / gridCols);
@@ -149,13 +149,13 @@ export async function plantTree(userId: string, taskId: string) {
   // Get tree counts per block
   const blockCounts = await db.query(
     `SELECT 
-       FLOOR(position_x / 20.0) * 20 as block_x,
-       FLOOR(position_z / 20.0) * 20 as block_z,
+       FLOOR(position_x / $2) * $2 as block_x,
+       FLOOR(position_z / $2) * $2 as block_z,
        COUNT(*) as tree_count
      FROM forest_trees
      WHERE user_id = $1
-     GROUP BY FLOOR(position_x / 20.0) * 20, FLOOR(position_z / 20.0) * 20`,
-    [userId]
+     GROUP BY FLOOR(position_x / $2) * $2, FLOOR(position_z / $2) * $2`,
+    [userId, areaSpacing]
   );
   
   const blockCountMap = new Map<string, number>();
@@ -194,8 +194,9 @@ export async function plantTree(userId: string, taskId: string) {
   const selectedBlock = bestBlocks[Math.floor(Math.random() * bestBlocks.length)];
   
   // Generate position within selected block
-  const edgePadding = 0.5;
-  const minDistance = 1.5;
+  // Increased edgePadding to keep trees in a smaller area within each block
+  const edgePadding = 2.0; // Increased from 0.5 to 2.0
+  const minDistance = 1.2; // Slightly reduced from 1.5 to allow closer placement
   const blockMinX = selectedBlock.x + edgePadding;
   const blockMaxX = selectedBlock.x + areaSpacing - edgePadding;
   const blockMinZ = selectedBlock.z + edgePadding;

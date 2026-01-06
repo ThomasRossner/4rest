@@ -6,7 +6,8 @@ import { getPool } from '../database/connection.js';
  */
 
 // Distance between area origins, matches tile size in the 3D scene
-export const FOREST_AREA_SPACING = 20;
+// Reduced from 20 to 12 to make forests more compact
+export const FOREST_AREA_SPACING = 12;
 
 // Maximum number of trees per 20x20 block
 export const FOREST_MAX_TREES_PER_BLOCK = 8;
