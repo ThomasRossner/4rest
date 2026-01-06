@@ -159,18 +159,20 @@ function RewardsPage() {
       {/* Only show scanner button for guests (not employees or administrators) */}
       {user && (user.role === 'guest' || user.role === 'stakeholder') && (
         <button
-          className="rewards-scan-bonus-button"
+          className="rewards-scan-button"
           onClick={() => setShowPointsBonusScanner(true)}
           style={{
+            width: '100%',
             marginTop: '1rem',
-            padding: '0.75rem 1.5rem',
+            padding: '1rem 1.5rem',
             backgroundColor: 'var(--color-primary, #3b82f6)',
             color: 'white',
             border: 'none',
             borderRadius: '0.375rem',
-            fontSize: '1rem',
-            fontWeight: 500,
+            fontSize: '1.125rem',
+            fontWeight: 600,
             cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           }}
         >
           {t('rewards.scanPointsBonus') || '📷 Scan Points Bonus QR Code'}
