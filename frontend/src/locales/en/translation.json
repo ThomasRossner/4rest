@@ -287,7 +287,33 @@
       "cancel": "Cancel",
       "warning": "This QR code is temporary. Please redeem it immediately in front of the person."
     },
-    "scanPointsBonus": "📷 Scan Points Bonus QR Code"
+    "scanPointsBonus": "📷 Scan Points Bonus QR Code",
+    "scanner": {
+      "button": "Redeem Guest Reward",
+      "title": "Redeem Guest Reward",
+      "subtitle": "Scan the reward QR code",
+      "instruction": "Point your camera at the QR code",
+      "scanning": "Scanning...",
+      "verifying": "Verifying...",
+      "cameraError": "Failed to access camera",
+      "cameraNotSupported": "Camera access is not supported in this browser. Please use a modern browser with camera support.",
+      "cameraRequiresHttps": "Camera access requires HTTPS when accessing from another device. Please use HTTPS or access from localhost.",
+      "cameraHint": "Please allow camera access to scan QR codes",
+      "invalidQr": "Invalid QR code",
+      "errorTitle": "Error",
+      "redeemSuccess": "Reward redeemed",
+      "redeemMessage": "Reward \"{{reward}}\" has been redeemed for {{guest}}.",
+      "redeemError": "Failed to redeem reward"
+    },
+    "redemption": {
+      "title": "Reward Found",
+      "reward": "Reward",
+      "guest": "Guest",
+      "pointsCost": "{{count}} points",
+      "unknownGuest": "Unknown guest",
+      "redeem": "Redeem reward",
+      "redeeming": "Redeeming..."
+    }
   },
   "admin": {
     "title": "Administrator Area",
