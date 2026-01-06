@@ -473,11 +473,8 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         return true;
       });
       
-      // #region agent log
       const logData = {totalRewards:rewards.length,physicalRewardsLength:physicalRewards.length,physicalRewards:physicalRewards.map((r:any)=>({id:r.id,title:r.title}))};
       console.log('[DEBUG] Physical rewards filter result:', logData);
-      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:476',message:'Physical rewards filter result',data:logData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       console.log(`Found ${physicalRewards.length} physical rewards out of ${rewards.length} total rewards`, physicalRewards.map(r => ({ id: r.id, title: r.title })));
 
       // Group rewards by location to handle overlapping markers

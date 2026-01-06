@@ -17,11 +17,9 @@ function RewardsPage() {
   const user = useAuthStore((s) => s.user);
   const points = useAuthStore((s) => s.user?.points || 0);
   const { data: rewards, isLoading, isError } = useQuery('rewards', () => api.getRewards());
-  // #region agent log
   if (rewards !== undefined) {
-    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:19',message:'Rewards API response',data:{rewardsLength:rewards?.length,isLoading,isError,rewards:rewards?.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    console.log('[DEBUG] Rewards API response:', {rewardsLength:rewards?.length,isLoading,isError,rewards:rewards?.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,location:r.location}))});
   }
-  // #endregion
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 
@@ -93,13 +91,9 @@ function RewardsPage() {
   };
 
   const filteredRewards = useMemo(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:90',message:'filteredRewards entry',data:{hasRewards:!!rewards,rewardsLength:rewards?.length,typeFilter},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    console.log('[DEBUG] filteredRewards entry:', {hasRewards:!!rewards,rewardsLength:rewards?.length,typeFilter});
     if (!rewards) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:93',message:'filteredRewards early return - no rewards',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
+      console.log('[DEBUG] filteredRewards early return - no rewards');
       return [];
     }
     let filtered = [...rewards];
