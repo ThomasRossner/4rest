@@ -17,6 +17,11 @@ function RewardsPage() {
   const user = useAuthStore((s) => s.user);
   const points = useAuthStore((s) => s.user?.points || 0);
   const { data: rewards, isLoading, isError } = useQuery('rewards', () => api.getRewards());
+  // #region agent log
+  if (rewards !== undefined) {
+    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:19',message:'Rewards API response',data:{rewardsLength:rewards?.length,isLoading,isError,rewards:rewards?.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  }
+  // #endregion
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 
@@ -88,7 +93,15 @@ function RewardsPage() {
   };
 
   const filteredRewards = useMemo(() => {
-    if (!rewards) return [];
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:90',message:'filteredRewards entry',data:{hasRewards:!!rewards,rewardsLength:rewards?.length,typeFilter},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    if (!rewards) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:93',message:'filteredRewards early return - no rewards',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      return [];
+    }
     let filtered = [...rewards];
     
     // Filter by type
@@ -96,6 +109,9 @@ function RewardsPage() {
       filtered = filtered.filter((r: any) => r.rewardType === typeFilter);
     }
     
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:100',message:'filteredRewards result',data:{filteredLength:filtered.length,filtered:filtered.map((r:any)=>({id:r.id,title:r.title,rewardType:r.rewardType}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     return filtered;
   }, [rewards, typeFilter]);
 
