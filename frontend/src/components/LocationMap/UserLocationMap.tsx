@@ -413,24 +413,16 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
     });
 
     // Process rewards similar to tasks
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:415',message:'Rewards processing entry',data:{hasRewards:!!rewards,rewardsLength:rewards?.length,rewardsType:typeof rewards},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
+    console.log('[DEBUG] Rewards processing entry:', {hasRewards:!!rewards,rewardsLength:rewards?.length,rewardsType:typeof rewards});
     if (rewards && rewards.length > 0) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:417',message:'Rewards received',data:{rewardsLength:rewards.length,rewards:rewards.map((r:any)=>({id:r.id,title:r.title,hasLocation:!!r.location,locationType:typeof r.location,locationValue:r.location}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
+      console.log('[DEBUG] Rewards received:', {rewardsLength:rewards.length,rewards:rewards.map((r:any)=>({id:r.id,title:r.title,hasLocation:!!r.location,locationType:typeof r.location,location:r.location}))});
 
       // Filter rewards: only rewards with physical locations
       const physicalRewards = rewards.filter((reward) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:421',message:'Reward filter entry',data:{rewardId:reward.id,rewardTitle:reward.title,hasLocation:!!reward.location,locationType:typeof reward.location},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
+        console.log('[DEBUG] Reward filter entry:', {rewardId:reward.id,rewardTitle:reward.title,hasLocation:!!reward.location,locationType:typeof reward.location,location:reward.location});
         // Check if location exists
         if (!reward.location) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:424',message:'Reward has no location',data:{rewardId:reward.id,rewardTitle:reward.title},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
+          console.log('[DEBUG] Reward has no location:', {rewardId:reward.id,rewardTitle:reward.title});
           return false;
         }
         
@@ -439,31 +431,21 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         if (typeof location === 'string') {
           try {
             location = JSON.parse(location);
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:432',message:'Location parsed from string',data:{rewardId:reward.id,parsedLocation:location},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
+            console.log('[DEBUG] Location parsed from string:', {rewardId:reward.id,parsedLocation:location});
           } catch (e) {
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:435',message:'Failed to parse location JSON',data:{rewardId:reward.id,error:String(e)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
+            console.log('[DEBUG] Failed to parse location JSON:', {rewardId:reward.id,error:String(e)});
             return false;
           }
         }
         
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:438',message:'Reward location data',data:{rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online,is_onlineType:typeof location.is_online,latitude:location.latitude,longitude:location.longitude},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
+        console.log('[DEBUG] Reward location data:', {rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online,is_onlineType:typeof location.is_online,latitude:location.latitude,longitude:location.longitude});
         
         // Check if location is online
         // Handle boolean false, string "false", and null/undefined
         const isOnline = location.is_online === true || location.is_online === 'true' || (typeof location.is_online === 'string' && location.is_online.toLowerCase() === 'true');
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:447',message:'is_online check result',data:{rewardId:reward.id,is_online:location.is_online,is_onlineType:typeof location.is_online,isOnlineResult:isOnline},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
+        console.log('[DEBUG] is_online check result:', {rewardId:reward.id,is_online:location.is_online,is_onlineType:typeof location.is_online,isOnlineResult:isOnline});
         if (isOnline) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:450',message:'Reward location is online - filtered out',data:{rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
+          console.log('[DEBUG] Reward location is online - filtered out:', {rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online});
           return false;
         }
         
@@ -471,9 +453,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         const lat = location.latitude;
         const lng = location.longitude;
         if (lat === null || lat === undefined || lng === null || lng === undefined) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:457',message:'Reward location has no coordinates',data:{rewardId:reward.id,lat,lng},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
+          console.log('[DEBUG] Reward location has no coordinates:', {rewardId:reward.id,lat,lng});
           return false;
         }
         
@@ -482,18 +462,14 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         const longitude = typeof lng === 'string' ? parseFloat(lng) : Number(lng);
         
         if (isNaN(latitude) || isNaN(longitude)) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:465',message:'Reward location has invalid coordinates',data:{rewardId:reward.id,latitude,longitude},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
+          console.log('[DEBUG] Reward location has invalid coordinates:', {rewardId:reward.id,latitude,longitude});
           return false;
         }
         
         // Store parsed coordinates back in reward for use below
         reward.location = { ...location, latitude, longitude };
         
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:472',message:'Reward passed physical location filter',data:{rewardId:reward.id,rewardTitle:reward.title,latitude,longitude},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
+        console.log('[DEBUG] Reward passed physical location filter:', {rewardId:reward.id,rewardTitle:reward.title,latitude,longitude});
         return true;
       });
       

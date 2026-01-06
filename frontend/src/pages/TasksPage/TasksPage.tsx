@@ -182,7 +182,16 @@ function TasksPage() {
         <div style={{ marginTop: 'var(--spacing-md)' }}>
           <UserLocationMap
             height="calc(100vh - 200px)"
-            tasks={tasks || []}
+            tasks={filteredTasks.filter((task: any) => {
+              // Only show available, non-completed tasks with physical locations
+              if (task.completed) return false;
+              if (task.is_available === false) return false;
+              if (!task.location) return false;
+              // Check if location is physical (not online)
+              const location = typeof task.location === 'string' ? JSON.parse(task.location) : task.location;
+              const isOnline = location.is_online === true || location.is_online === 'true' || String(location.is_online).toLowerCase() === 'true';
+              return !isOnline && location.latitude && location.longitude;
+            })}
             onTaskClick={(taskId) => {
               setShowLocationMap(false);
               setSelectedTask(taskId);

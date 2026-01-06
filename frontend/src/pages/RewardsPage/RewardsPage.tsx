@@ -109,33 +109,23 @@ function RewardsPage() {
       filtered = filtered.filter((r: any) => r.rewardType === typeFilter);
     }
     
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:100',message:'filteredRewards result',data:{filteredLength:filtered.length,filtered:filtered.map((r:any)=>({id:r.id,title:r.title,rewardType:r.rewardType}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    console.log('[DEBUG] filteredRewards result:', {filteredLength:filtered.length,filtered:filtered.map((r:any)=>({id:r.id,title:r.title,rewardType:r.rewardType}))});
     return filtered;
   }, [rewards, typeFilter]);
 
   // Filter rewards that are redeemable (user has enough points)
   const redeemableRewards = useMemo(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:103',message:'redeemableRewards filter entry',data:{filteredRewardsLength:filteredRewards?.length,userPoints:user?.points,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    console.log('[DEBUG] redeemableRewards filter entry:', {filteredRewardsLength:filteredRewards?.length,userPoints:user?.points,userId:user?.id});
     if (!filteredRewards || !user) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:106',message:'redeemableRewards early return',data:{hasFilteredRewards:!!filteredRewards,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
+      console.log('[DEBUG] redeemableRewards early return:', {hasFilteredRewards:!!filteredRewards,hasUser:!!user});
       return [];
     }
     const result = filteredRewards.filter((r: any) => {
       const canAfford = user.points >= r.pointsCost;
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:111',message:'reward filter check',data:{rewardId:r.id,rewardTitle:r.title,pointsCost:r.pointsCost,userPoints:user.points,canAfford,hasLocation:!!r.location},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
+      console.log('[DEBUG] reward filter check:', {rewardId:r.id,rewardTitle:r.title,pointsCost:r.pointsCost,userPoints:user.points,canAfford,hasLocation:!!r.location,location:r.location});
       return canAfford;
     });
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:116',message:'redeemableRewards result',data:{resultLength:result.length,resultRewards:result.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
+    console.log('[DEBUG] redeemableRewards result:', {resultLength:result.length,resultRewards:result.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,location:r.location}))});
     return result;
   }, [filteredRewards, user]);
 
@@ -156,14 +146,7 @@ function RewardsPage() {
           </button>
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
-          {/* #region agent log */}
-          {(() => {
-            const logData = {rewardsLength:redeemableRewards.length,rewards:redeemableRewards.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,locationType:typeof r.location,location:r.location}))};
-            console.log('[DEBUG] UserLocationMap props before render:', logData);
-            fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:125',message:'UserLocationMap props before render',data:logData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            return null;
-          })()}
-          {/* #endregion */}
+          {console.log('[DEBUG] UserLocationMap props before render:', {rewardsLength:redeemableRewards.length,rewards:redeemableRewards.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,locationType:typeof r.location,location:r.location}))})}
           <UserLocationMap
             height="calc(100vh - 200px)"
             rewards={redeemableRewards}
