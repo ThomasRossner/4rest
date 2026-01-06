@@ -82,10 +82,10 @@ export default defineConfig({
     })(),
     hmr: {
       overlay: false, // Disable overlay to prevent EPIPE errors
-      // HMR runs through Caddy reverse proxy, so use external domain without port
+      // HMR runs through Caddy reverse proxy (HTTPS), so use external domain
       host: process.env.VITE_HMR_HOST || 'roots.rossner.synology.me',
-      clientPort: 443, // Caddy runs on port 443
-      protocol: 'wss', // Use secure WebSocket for HMR when HTTPS is enabled
+      clientPort: 443, // Caddy runs on port 443 (HTTPS)
+      protocol: 'wss', // Use secure WebSocket since Caddy serves HTTPS
     },
     watch: {
       // Enable polling for better file watching on WSL/Windows
