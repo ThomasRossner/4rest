@@ -175,7 +175,7 @@ function RewardsPage() {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           }}
         >
-          {t('rewards.scanPointsBonus') || '📷 Scan Points Bonus QR Code'}
+          {t('rewards.scanPointsBonus') || '📷 Punkte-Bonus QR-Code scannen'}
         </button>
       )}
       {uiPolish && (
