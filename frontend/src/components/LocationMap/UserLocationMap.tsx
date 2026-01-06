@@ -254,12 +254,9 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
     });
     rewardMarkersRef.current = [];
 
-    if (!tasks || tasks.length === 0) {
-      console.log('No tasks provided to UserLocationMap');
-      return;
-    }
-
-    console.log('Tasks received:', tasks.length, tasks.map(t => ({ id: t.id, title: t.title, hasLocation: !!t.location, locationType: typeof t.location })));
+    // Process tasks if provided
+    if (tasks && tasks.length > 0) {
+      console.log('Tasks received:', tasks.length, tasks.map(t => ({ id: t.id, title: t.title, hasLocation: !!t.location, locationType: typeof t.location })));
 
     // Filter tasks: only available, non-completed tasks with physical locations
     const physicalTasks = tasks.filter((task) => {
@@ -415,6 +412,9 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       taskMarker.bindPopup(popupDiv);
       taskMarkersRef.current.push(taskMarker);
     });
+    } else {
+      console.log('No tasks provided to UserLocationMap');
+    }
 
     // Process rewards similar to tasks
     console.log('[DEBUG] Rewards processing entry:', {hasRewards:!!rewards,rewardsLength:rewards?.length,rewardsType:typeof rewards});
