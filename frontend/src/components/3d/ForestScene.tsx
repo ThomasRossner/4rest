@@ -137,7 +137,7 @@ function ForestScene() {
     if (!myOrigin) return;
     // Position camera closer to ground with a more horizontal viewing angle
     // Camera positioned at a lower height (3 units) and further back for a better ground-level view
-    camera.position.set(myOrigin[0] + 8, 3, myOrigin[2] + 8);
+    camera.position.set(myOrigin[0] + 15, 3, myOrigin[2] + 15);
     camera.updateProjectionMatrix();
     if (controlsRef.current) {
       controlsRef.current.target.set(myOrigin[0], 1, myOrigin[2]); // Look slightly above ground
