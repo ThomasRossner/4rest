@@ -47,6 +47,28 @@ const TaskIcon = L.divIcon({
   popupAnchor: [0, -15],
 });
 
+// Reward marker icon (different color - green/gold)
+const RewardIcon = L.divIcon({
+  className: 'reward-marker-icon',
+  html: `<div style="
+    width: 30px;
+    height: 30px;
+    background: #10b981;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+  ">🎁</div>`,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+  popupAnchor: [0, -15],
+});
+
 interface Task {
   id: string;
   title: string;
@@ -63,17 +85,38 @@ interface Task {
   };
 }
 
+interface Reward {
+  id: string;
+  title: string;
+  description?: string;
+  pointsCost: number;
+  rewardType?: string;
+  location?: {
+    id: string;
+    name: string;
+    is_online: boolean;
+    latitude: number | null;
+    longitude: number | null;
+    address?: string | null;
+    category?: string | null;
+    category_description?: string | null;
+  };
+}
+
 interface UserLocationMapProps {
   height?: string;
   tasks?: Task[];
+  rewards?: Reward[];
   onTaskClick?: (taskId: string) => void;
+  onRewardClick?: (rewardId: string) => void;
 }
 
-export function UserLocationMap({ height = '500px', tasks = [], onTaskClick }: UserLocationMapProps) {
+export function UserLocationMap({ height = '500px', tasks = [], rewards = [], onTaskClick, onRewardClick }: UserLocationMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const taskMarkersRef = useRef<L.Marker[]>([]);
+  const rewardMarkersRef = useRef<L.Marker[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -173,24 +216,25 @@ export function UserLocationMap({ height = '500px', tasks = [], onTaskClick }: U
     markerRef.current = marker;
     marker.bindPopup('Ihre aktuelle Position');
 
-    // If there are task markers, fit bounds to include user location
+    // If there are task or reward markers, fit bounds to include user location
     // Otherwise, center on user location
-    if (taskMarkersRef.current.length > 0) {
-      // Create bounds from all task markers and user location
+    if (taskMarkersRef.current.length > 0 || rewardMarkersRef.current.length > 0) {
+      // Create bounds from all markers and user location
       const bounds = L.latLngBounds(
         [userLocation.lat, userLocation.lng],
-        ...taskMarkersRef.current.map(m => m.getLatLng())
+        ...taskMarkersRef.current.map(m => m.getLatLng()),
+        ...rewardMarkersRef.current.map(m => m.getLatLng())
       );
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
     } else {
-      // No tasks yet, center on user location
+      // No tasks or rewards yet, center on user location
       mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 15);
       marker.openPopup(); // Open popup when centering on user location
     }
   }, [userLocation, isMapReady]);
 
 
-  // Add task markers to map
+  // Add task and reward markers to map
   useEffect(() => {
     if (!mapInstanceRef.current || !isMapReady) return;
 
@@ -200,6 +244,12 @@ export function UserLocationMap({ height = '500px', tasks = [], onTaskClick }: U
     });
     taskMarkersRef.current = [];
 
+    // Remove existing reward markers
+    rewardMarkersRef.current.forEach((marker) => {
+      mapInstanceRef.current?.removeLayer(marker);
+    });
+    rewardMarkersRef.current = [];
+
     if (!tasks || tasks.length === 0) {
       console.log('No tasks provided to UserLocationMap');
       return;
@@ -207,11 +257,17 @@ export function UserLocationMap({ height = '500px', tasks = [], onTaskClick }: U
 
     console.log('Tasks received:', tasks.length, tasks.map(t => ({ id: t.id, title: t.title, hasLocation: !!t.location, locationType: typeof t.location })));
 
-    // Filter tasks: only non-completed tasks with physical locations
+    // Filter tasks: only available, non-completed tasks with physical locations
     const physicalTasks = tasks.filter((task) => {
       // Skip completed tasks
       if (task.completed) {
         console.debug('Task completed:', task.id, task.title);
+        return false;
+      }
+      
+      // Skip locked/unavailable tasks
+      if ((task as any).is_available === false) {
+        console.debug('Task not available:', task.id, task.title);
         return false;
       }
       
@@ -356,10 +412,185 @@ export function UserLocationMap({ height = '500px', tasks = [], onTaskClick }: U
       taskMarkersRef.current.push(taskMarker);
     });
 
-    // Fit map to show all markers if there are tasks
-    if (taskMarkersRef.current.length > 0) {
+    // Process rewards similar to tasks
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:415',message:'Rewards processing entry',data:{hasRewards:!!rewards,rewardsLength:rewards?.length,rewardsType:typeof rewards},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    if (rewards && rewards.length > 0) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:417',message:'Rewards received',data:{rewardsLength:rewards.length,rewards:rewards.map((r:any)=>({id:r.id,title:r.title,hasLocation:!!r.location,locationType:typeof r.location,locationValue:r.location}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+
+      // Filter rewards: only rewards with physical locations
+      const physicalRewards = rewards.filter((reward) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:421',message:'Reward filter entry',data:{rewardId:reward.id,rewardTitle:reward.title,hasLocation:!!reward.location,locationType:typeof reward.location},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        // Check if location exists
+        if (!reward.location) {
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:424',message:'Reward has no location',data:{rewardId:reward.id,rewardTitle:reward.title},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
+          return false;
+        }
+        
+        // Location might be a string (JSON) or an object
+        let location = reward.location;
+        if (typeof location === 'string') {
+          try {
+            location = JSON.parse(location);
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:432',message:'Location parsed from string',data:{rewardId:reward.id,parsedLocation:location},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+          } catch (e) {
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:435',message:'Failed to parse location JSON',data:{rewardId:reward.id,error:String(e)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            return false;
+          }
+        }
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:438',message:'Reward location data',data:{rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online,is_onlineType:typeof location.is_online,latitude:location.latitude,longitude:location.longitude},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
+        // Check if location is online
+        // Handle boolean false, string "false", and null/undefined
+        const isOnline = location.is_online === true || location.is_online === 'true' || (typeof location.is_online === 'string' && location.is_online.toLowerCase() === 'true');
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:447',message:'is_online check result',data:{rewardId:reward.id,is_online:location.is_online,is_onlineType:typeof location.is_online,isOnlineResult:isOnline},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        if (isOnline) {
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:450',message:'Reward location is online - filtered out',data:{rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
+          return false;
+        }
+        
+        // Check if coordinates exist
+        const lat = location.latitude;
+        const lng = location.longitude;
+        if (lat === null || lat === undefined || lng === null || lng === undefined) {
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:457',message:'Reward location has no coordinates',data:{rewardId:reward.id,lat,lng},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
+          return false;
+        }
+        
+        // Convert to numbers if they're strings
+        const latitude = typeof lat === 'string' ? parseFloat(lat) : Number(lat);
+        const longitude = typeof lng === 'string' ? parseFloat(lng) : Number(lng);
+        
+        if (isNaN(latitude) || isNaN(longitude)) {
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:465',message:'Reward location has invalid coordinates',data:{rewardId:reward.id,latitude,longitude},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
+          return false;
+        }
+        
+        // Store parsed coordinates back in reward for use below
+        reward.location = { ...location, latitude, longitude };
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:472',message:'Reward passed physical location filter',data:{rewardId:reward.id,rewardTitle:reward.title,latitude,longitude},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        return true;
+      });
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserLocationMap.tsx:476',message:'Physical rewards filter result',data:{totalRewards:rewards.length,physicalRewardsLength:physicalRewards.length,physicalRewards:physicalRewards.map((r:any)=>({id:r.id,title:r.title}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      console.log(`Found ${physicalRewards.length} physical rewards out of ${rewards.length} total rewards`, physicalRewards.map(r => ({ id: r.id, title: r.title })));
+
+      // Group rewards by location to handle overlapping markers
+      const rewardLocationGroups = new Map<string, typeof physicalRewards>();
+      physicalRewards.forEach((reward) => {
+        const location = reward.location;
+        if (!location || typeof location !== 'object') return;
+        
+        const latitude = location.latitude;
+        const longitude = location.longitude;
+        
+        if (latitude === null || latitude === undefined || longitude === null || longitude === undefined || isNaN(latitude) || isNaN(longitude)) return;
+        
+        // Create a key for this location (rounded to 6 decimal places to group nearby markers)
+        const locationKey = `${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+        if (!rewardLocationGroups.has(locationKey)) {
+          rewardLocationGroups.set(locationKey, []);
+        }
+        rewardLocationGroups.get(locationKey)!.push(reward);
+      });
+
+      // Add one marker per location group (at exact coordinates, no offset)
+      rewardLocationGroups.forEach((rewardsAtLocation, locationKey) => {
+        const [latitude, longitude] = locationKey.split(',').map(Number);
+        
+        console.debug(`Adding marker for ${rewardsAtLocation.length} reward(s) at (${latitude}, ${longitude})`, {
+          rewards: rewardsAtLocation.map(r => ({ id: r.id, title: r.title }))
+        });
+
+        // Create one marker at the exact location
+        const rewardMarker = L.marker(
+          [latitude, longitude],
+          { icon: RewardIcon }
+        ).addTo(mapInstanceRef.current!);
+
+        // Create popup content element showing all rewards at this location
+        const popupDiv = document.createElement('div');
+        popupDiv.style.minWidth = '250px';
+        popupDiv.style.maxWidth = '400px';
+        
+        // If multiple rewards, show count in header
+        const headerText = rewardsAtLocation.length > 1 
+          ? `${rewardsAtLocation.length} Belohnungen an diesem Ort`
+          : escapeHtml(rewardsAtLocation[0].title);
+        
+        let popupHTML = `
+          <div style="max-height: 400px; overflow-y: auto;">
+            <h3 style="margin: 0 0 12px 0; font-size: 1.1rem; font-weight: 600; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">${headerText}</h3>
+        `;
+        
+        // Add each reward to the popup
+        rewardsAtLocation.forEach((reward, index) => {
+          popupHTML += `
+            <div style="margin-bottom: ${index < rewardsAtLocation.length - 1 ? '16px' : '0'}; padding-bottom: ${index < rewardsAtLocation.length - 1 ? '16px' : '0'}; border-bottom: ${index < rewardsAtLocation.length - 1 ? '1px solid #e5e7eb' : 'none'};">
+              ${rewardsAtLocation.length > 1 ? `<h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 600; color: #1f2937;">${escapeHtml(reward.title)}</h4>` : ''}
+              ${reward.description ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 0.9rem;">${escapeHtml(reward.description)}</p>` : ''}
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <span style="font-weight: 600; color: #f59e0b;">💰 ${reward.pointsCost} Punkte</span>
+                ${onRewardClick ? `<button class="reward-popup-button" data-reward-id="${reward.id}" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">Details</button>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        
+        popupHTML += `</div>`;
+        popupDiv.innerHTML = popupHTML;
+
+        // Add click handlers to all buttons
+        if (onRewardClick) {
+          const buttons = popupDiv.querySelectorAll('.reward-popup-button');
+          buttons.forEach((button) => {
+            button.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const rewardId = (button as HTMLElement).getAttribute('data-reward-id');
+              if (rewardId) {
+                onRewardClick(rewardId);
+              }
+            });
+          });
+        }
+
+        rewardMarker.bindPopup(popupDiv);
+        rewardMarkersRef.current.push(rewardMarker);
+      });
+    }
+
+    // Fit map to show all markers if there are tasks or rewards
+    if (taskMarkersRef.current.length > 0 || rewardMarkersRef.current.length > 0) {
       const bounds = L.latLngBounds(
-        taskMarkersRef.current.map(marker => marker.getLatLng())
+        [...taskMarkersRef.current.map(marker => marker.getLatLng()),
+         ...rewardMarkersRef.current.map(marker => marker.getLatLng())]
       );
       
       // Add user location to bounds if available
@@ -369,13 +600,13 @@ export function UserLocationMap({ height = '500px', tasks = [], onTaskClick }: U
       
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
     } else if (userLocation) {
-      // If no tasks but user location available, center on user
+      // If no tasks/rewards but user location available, center on user
       mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 15);
-    } else if (taskMarkersRef.current.length === 0 && !userLocation) {
-      // If no tasks and no user location, keep default view (Berlin)
+    } else if (taskMarkersRef.current.length === 0 && rewardMarkersRef.current.length === 0 && !userLocation) {
+      // If no tasks/rewards and no user location, keep default view (Berlin)
       // Map is already initialized with default center
     }
-  }, [tasks, isMapReady, userLocation, onTaskClick]);
+  }, [tasks, rewards, isMapReady, userLocation, onTaskClick, onRewardClick]);
 
   return (
     <div style={{ width: '100%', minHeight: height }}>

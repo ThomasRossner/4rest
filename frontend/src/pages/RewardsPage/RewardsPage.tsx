@@ -89,9 +89,39 @@ function RewardsPage() {
 
   const filteredRewards = useMemo(() => {
     if (!rewards) return [];
-    if (typeFilter === 'all') return rewards;
-    return rewards.filter((r: any) => r.rewardType === typeFilter);
+    let filtered = [...rewards];
+    
+    // Filter by type
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter((r: any) => r.rewardType === typeFilter);
+    }
+    
+    return filtered;
   }, [rewards, typeFilter]);
+
+  // Filter rewards that are redeemable (user has enough points)
+  const redeemableRewards = useMemo(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:103',message:'redeemableRewards filter entry',data:{filteredRewardsLength:filteredRewards?.length,userPoints:user?.points,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    if (!filteredRewards || !user) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:106',message:'redeemableRewards early return',data:{hasFilteredRewards:!!filteredRewards,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      return [];
+    }
+    const result = filteredRewards.filter((r: any) => {
+      const canAfford = user.points >= r.pointsCost;
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:111',message:'reward filter check',data:{rewardId:r.id,rewardTitle:r.title,pointsCost:r.pointsCost,userPoints:user.points,canAfford,hasLocation:!!r.location},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      return canAfford;
+    });
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:116',message:'redeemableRewards result',data:{resultLength:result.length,resultRewards:result.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    return result;
+  }, [filteredRewards, user]);
 
   const uiPolish = !!import.meta.env.VITE_UI_POLISH;
 
@@ -110,7 +140,24 @@ function RewardsPage() {
           </button>
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
-          <UserLocationMap height="calc(100vh - 200px)" />
+          {/* #region agent log */}
+          {(() => {
+            fetch('http://127.0.0.1:7245/ingest/777120f3-a2db-46da-9e9b-36ae9830e8c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'RewardsPage.tsx:125',message:'UserLocationMap props before render',data:{rewardsLength:redeemableRewards.length,rewards:redeemableRewards.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,locationType:typeof r.location}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            return null;
+          })()}
+          {/* #endregion */}
+          <UserLocationMap
+            height="calc(100vh - 200px)"
+            rewards={redeemableRewards}
+            onRewardClick={(rewardId) => {
+              setShowLocationMap(false);
+              // Find the reward and trigger redeem if user can afford it
+              const reward = redeemableRewards.find((r: any) => r.id === rewardId);
+              if (reward && user && user.points >= reward.pointsCost) {
+                handleRedeemClick(reward.id, reward.title, reward.pointsCost);
+              }
+            }}
+          />
         </div>
       </div>
     );
