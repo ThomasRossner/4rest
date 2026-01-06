@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U roots_user"]
+      test: ["CMD-SHELL", "pg_isready -U roots_user -d roots_of_impact"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,7 +44,7 @@ services:
       - "5001:5001"
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgresql://roots_user:roots_password@postgres:5432/roots_of_impact
+      DATABASE_URL: postgresql://roots_user:roots_password@roots-postgres:5432/roots_of_impact
       REDIS_URL: redis://redis:6379
       JWT_SECRET: development-secret-change-in-production
       CORS_ORIGIN: https://localhost:3000,http://localhost:3000
