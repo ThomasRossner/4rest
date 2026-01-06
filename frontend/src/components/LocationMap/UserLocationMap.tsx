@@ -236,7 +236,11 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
 
   // Add task and reward markers to map
   useEffect(() => {
-    if (!mapInstanceRef.current || !isMapReady) return;
+    console.log('[DEBUG] UserLocationMap useEffect entry:', {hasMap:!!mapInstanceRef.current,isMapReady,tasksLength:tasks?.length,rewardsLength:rewards?.length});
+    if (!mapInstanceRef.current || !isMapReady) {
+      console.log('[DEBUG] UserLocationMap useEffect early return:', {hasMap:!!mapInstanceRef.current,isMapReady});
+      return;
+    }
 
     // Remove existing task markers
     taskMarkersRef.current.forEach((marker) => {
