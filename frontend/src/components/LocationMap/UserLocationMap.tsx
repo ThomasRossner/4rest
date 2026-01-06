@@ -236,9 +236,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
 
   // Add task and reward markers to map
   useEffect(() => {
-    console.log('[DEBUG] UserLocationMap useEffect entry:', {hasMap:!!mapInstanceRef.current,isMapReady,tasksLength:tasks?.length,rewardsLength:rewards?.length});
     if (!mapInstanceRef.current || !isMapReady) {
-      console.log('[DEBUG] UserLocationMap useEffect early return:', {hasMap:!!mapInstanceRef.current,isMapReady});
       return;
     }
 
@@ -417,16 +415,11 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
     }
 
     // Process rewards similar to tasks
-    console.log('[DEBUG] Rewards processing entry:', {hasRewards:!!rewards,rewardsLength:rewards?.length,rewardsType:typeof rewards});
     if (rewards && rewards.length > 0) {
-      console.log('[DEBUG] Rewards received:', {rewardsLength:rewards.length,rewards:rewards.map((r:any)=>({id:r.id,title:r.title,hasLocation:!!r.location,locationType:typeof r.location,location:r.location}))});
-
       // Filter rewards: only rewards with physical locations
       const physicalRewards = rewards.filter((reward) => {
-        console.log('[DEBUG] Reward filter entry:', {rewardId:reward.id,rewardTitle:reward.title,hasLocation:!!reward.location,locationType:typeof reward.location,location:reward.location});
         // Check if location exists
         if (!reward.location) {
-          console.log('[DEBUG] Reward has no location:', {rewardId:reward.id,rewardTitle:reward.title});
           return false;
         }
         
@@ -435,21 +428,15 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         if (typeof location === 'string') {
           try {
             location = JSON.parse(location);
-            console.log('[DEBUG] Location parsed from string:', {rewardId:reward.id,parsedLocation:location});
           } catch (e) {
-            console.log('[DEBUG] Failed to parse location JSON:', {rewardId:reward.id,error:String(e)});
             return false;
           }
         }
         
-        console.log('[DEBUG] Reward location data:', {rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online,is_onlineType:typeof location.is_online,latitude:location.latitude,longitude:location.longitude});
-        
         // Check if location is online
         // Handle boolean false, string "false", and null/undefined
         const isOnline = location.is_online === true || location.is_online === 'true' || (typeof location.is_online === 'string' && location.is_online.toLowerCase() === 'true');
-        console.log('[DEBUG] is_online check result:', {rewardId:reward.id,is_online:location.is_online,is_onlineType:typeof location.is_online,isOnlineResult:isOnline});
         if (isOnline) {
-          console.log('[DEBUG] Reward location is online - filtered out:', {rewardId:reward.id,rewardTitle:reward.title,is_online:location.is_online});
           return false;
         }
         
@@ -457,7 +444,6 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         const lat = location.latitude;
         const lng = location.longitude;
         if (lat === null || lat === undefined || lng === null || lng === undefined) {
-          console.log('[DEBUG] Reward location has no coordinates:', {rewardId:reward.id,lat,lng});
           return false;
         }
         
@@ -466,19 +452,15 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         const longitude = typeof lng === 'string' ? parseFloat(lng) : Number(lng);
         
         if (isNaN(latitude) || isNaN(longitude)) {
-          console.log('[DEBUG] Reward location has invalid coordinates:', {rewardId:reward.id,latitude,longitude});
           return false;
         }
         
         // Store parsed coordinates back in reward for use below
         reward.location = { ...location, latitude, longitude };
         
-        console.log('[DEBUG] Reward passed physical location filter:', {rewardId:reward.id,rewardTitle:reward.title,latitude,longitude});
         return true;
       });
       
-      const logData = {totalRewards:rewards.length,physicalRewardsLength:physicalRewards.length,physicalRewards:physicalRewards.map((r:any)=>({id:r.id,title:r.title}))};
-      console.log('[DEBUG] Physical rewards filter result:', logData);
       console.log(`Found ${physicalRewards.length} physical rewards out of ${rewards.length} total rewards`, physicalRewards.map(r => ({ id: r.id, title: r.title })));
 
       // Group rewards by location to handle overlapping markers

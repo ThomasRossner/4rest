@@ -17,9 +17,6 @@ function RewardsPage() {
   const user = useAuthStore((s) => s.user);
   const points = useAuthStore((s) => s.user?.points || 0);
   const { data: rewards, isLoading, isError } = useQuery('rewards', () => api.getRewards());
-  if (rewards !== undefined) {
-    console.log('[DEBUG] Rewards API response:', {rewardsLength:rewards?.length,isLoading,isError,rewards:rewards?.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,location:r.location}))});
-  }
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 
@@ -91,9 +88,7 @@ function RewardsPage() {
   };
 
   const filteredRewards = useMemo(() => {
-    console.log('[DEBUG] filteredRewards entry:', {hasRewards:!!rewards,rewardsLength:rewards?.length,typeFilter});
     if (!rewards) {
-      console.log('[DEBUG] filteredRewards early return - no rewards');
       return [];
     }
     let filtered = [...rewards];
@@ -103,24 +98,17 @@ function RewardsPage() {
       filtered = filtered.filter((r: any) => r.rewardType === typeFilter);
     }
     
-    console.log('[DEBUG] filteredRewards result:', {filteredLength:filtered.length,filtered:filtered.map((r:any)=>({id:r.id,title:r.title,rewardType:r.rewardType}))});
     return filtered;
   }, [rewards, typeFilter]);
 
   // Filter rewards that are redeemable (user has enough points)
   const redeemableRewards = useMemo(() => {
-    console.log('[DEBUG] redeemableRewards filter entry:', {filteredRewardsLength:filteredRewards?.length,userPoints:user?.points,userId:user?.id});
     if (!filteredRewards || !user) {
-      console.log('[DEBUG] redeemableRewards early return:', {hasFilteredRewards:!!filteredRewards,hasUser:!!user});
       return [];
     }
-    const result = filteredRewards.filter((r: any) => {
-      const canAfford = user.points >= r.pointsCost;
-      console.log('[DEBUG] reward filter check:', {rewardId:r.id,rewardTitle:r.title,pointsCost:r.pointsCost,userPoints:user.points,canAfford,hasLocation:!!r.location,location:r.location});
-      return canAfford;
+    return filteredRewards.filter((r: any) => {
+      return user.points >= r.pointsCost;
     });
-    console.log('[DEBUG] redeemableRewards result:', {resultLength:result.length,resultRewards:result.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,location:r.location}))});
-    return result;
   }, [filteredRewards, user]);
 
   const uiPolish = !!import.meta.env.VITE_UI_POLISH;
@@ -140,7 +128,6 @@ function RewardsPage() {
           </button>
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
-          {console.log('[DEBUG] UserLocationMap props before render:', {rewardsLength:redeemableRewards.length,rewards:redeemableRewards.map((r:any)=>({id:r.id,title:r.title,pointsCost:r.pointsCost,hasLocation:!!r.location,locationType:typeof r.location,location:r.location}))})}
           <UserLocationMap
             height="calc(100vh - 200px)"
             rewards={redeemableRewards}
