@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuthStore } from '../../stores/authStore';
-import { api } from '../../services/api';
 import './RewardCard.css';
 
 type Reward = {
