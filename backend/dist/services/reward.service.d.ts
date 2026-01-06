@@ -15,13 +15,14 @@ interface CreateCustomRewardInput {
     rewardType?: string;
     voucherCode?: string | null;
     externalApiId?: string | null;
-    zielgruppe?: 'Mitarbeitende' | 'Gäste' | 'Stakeholder' | null;
+    zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
     location_id: string;
     active?: boolean;
     recurrence?: string | null;
     reward_art?: string;
     kategorie?: string;
     event_group?: string | null;
+    moegliche_punkte?: number | null;
 }
 interface UpdateRewardInput {
     title?: string | null;
@@ -30,13 +31,14 @@ interface UpdateRewardInput {
     rewardType?: string | null;
     voucherCode?: string | null;
     externalApiId?: string | null;
-    zielgruppe?: 'Mitarbeitende' | 'Gäste' | 'Stakeholder' | null;
+    zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
     location_id?: string | null;
     active?: boolean;
     recurrence?: string | null;
     reward_art?: string | null;
     kategorie?: string | null;
     event_group?: string | null;
+    moegliche_punkte?: number | null;
 }
 export declare function createCustomReward(data: CreateCustomRewardInput): Promise<any>;
 export declare function updateReward(id: string, data: UpdateRewardInput): Promise<any>;

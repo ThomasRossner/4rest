@@ -4,6 +4,8 @@ import {
   getRewardsService,
   redeemRewardService,
   verifyQrCodeService,
+  getRewardInfoFromQrCode,
+  redeemRewardQrCodeService,
   createCustomReward,
   listRewardsForAdmin,
   updateReward as updateRewardService,
@@ -215,4 +217,34 @@ export const redeemPointsBonusQrCode: RequestHandler = asyncHandler(async (req, 
     pointsAwarded: result.pointsAwarded,
     newPointsBalance: result.newPointsBalance,
   });
+});
+
+export const getRewardInfoFromQr: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { qrToken } = req.body;
+  if (!qrToken || typeof qrToken !== 'string') {
+    return res.status(400).json({ error: 'QR token is required' });
+  }
+
+  const result = await getRewardInfoFromQrCode(qrToken, authReq.user.id);
+  res.json(result);
+});
+
+export const redeemRewardQrCode: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { qrToken } = req.body;
+  if (!qrToken || typeof qrToken !== 'string') {
+    return res.status(400).json({ error: 'QR token is required' });
+  }
+
+  const result = await redeemRewardQrCodeService(qrToken, authReq.user.id);
+  res.json(result);
 });

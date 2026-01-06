@@ -449,13 +449,65 @@ export async function redeemRewardService(rewardId: string, userId: string) {
   };
 }
 
+/**
+ * Get reward information from QR code without redeeming it
+ * Used by employees to preview the reward before redeeming
+ */
+export async function getRewardInfoFromQrCode(qrToken: string, employeeUserId: string) {
+  const db = getPool();
+
+  // Verify employee user
+  const employee = await getUserById(employeeUserId);
+  if (!employee || (employee.role !== 'administrator' && employee.role !== 'employee')) {
+    throw new Error('Unauthorized: Only administrators and employees can view QR code information');
+  }
+
+  // Find redemption by QR token
+  const redemptionResult = await db.query(
+    `SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+            u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
+     FROM reward_redemptions rr
+     JOIN rewards r ON rr.reward_id = r.id
+     JOIN users u ON rr.user_id = u.id
+     WHERE rr.qr_token = $1 AND rr.status = 'pending'`,
+    [qrToken]
+  );
+
+  if (redemptionResult.rows.length === 0) {
+    throw new Error('QR code not found or already used');
+  }
+
+  const redemption = redemptionResult.rows[0];
+
+  // Check if user still has enough points (in case they spent them elsewhere)
+  if (redemption.user_points < redemption.points_cost) {
+    throw new Error('User no longer has sufficient points for this redemption');
+  }
+
+  return {
+    success: true,
+    redemption: {
+      id: redemption.id,
+      rewardId: redemption.reward_id,
+      rewardTitle: redemption.reward_title,
+      rewardDescription: redemption.reward_description,
+      userId: redemption.user_id,
+      userName: redemption.user_name,
+      userEmail: redemption.user_email,
+      pointsCost: redemption.points_cost,
+      status: redemption.status,
+    },
+    message: 'QR code information retrieved successfully',
+  };
+}
+
 export async function verifyQrCodeService(qrToken: string, adminUserId: string) {
   const db = getPool();
 
-  // Verify admin user
+  // Verify admin or employee user
   const admin = await getUserById(adminUserId);
-  if (!admin || admin.role !== 'administrator') {
-    throw new Error('Unauthorized: Only administrators can verify QR codes');
+  if (!admin || (admin.role !== 'administrator' && admin.role !== 'employee')) {
+    throw new Error('Unauthorized: Only administrators and employees can verify QR codes');
   }
 
   // Find redemption by QR token
@@ -528,6 +580,89 @@ export async function verifyQrCodeService(qrToken: string, adminUserId: string) 
       title: redemption.reward_title,
     },
     message: 'QR code verified and reward redeemed successfully',
+  };
+}
+
+/**
+ * Redeem a reward QR code for a guest (employee action)
+ * This marks the redemption as 'used' and deducts points from the guest
+ */
+export async function redeemRewardQrCodeService(qrToken: string, employeeUserId: string) {
+  const db = getPool();
+
+  // Verify employee user
+  const employee = await getUserById(employeeUserId);
+  if (!employee || employee.role !== 'employee') {
+    throw new Error('Unauthorized: Only employees can redeem reward QR codes');
+  }
+
+  // Find redemption by QR token
+  const redemptionResult = await db.query(
+    `SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+            u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
+     FROM reward_redemptions rr
+     JOIN rewards r ON rr.reward_id = r.id
+     JOIN users u ON rr.user_id = u.id
+     WHERE rr.qr_token = $1 AND rr.status = 'pending'`,
+    [qrToken]
+  );
+
+  if (redemptionResult.rows.length === 0) {
+    throw new Error('QR code not found or already used');
+  }
+
+  const redemption = redemptionResult.rows[0];
+
+  // Check if user still has enough points (in case they spent them elsewhere)
+  if (redemption.user_points < redemption.points_cost) {
+    // Mark as expired if user doesn't have enough points
+    await db.query(
+      `UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`,
+      [redemption.id]
+    );
+    throw new Error('User no longer has sufficient points for this redemption');
+  }
+
+  // Deduct points cost and add possible points (moegliche_punkte) now that QR code is redeemed
+  const pointsToAdd = redemption.moegliche_punkte || 0;
+  await db.query(
+    'UPDATE users SET points = points - $1 + $2 WHERE id = $3',
+    [redemption.points_cost, pointsToAdd, redemption.user_id]
+  );
+
+  // Update redemption status to 'used'
+  await db.query(
+    `UPDATE reward_redemptions SET status = 'used' WHERE id = $1`,
+    [redemption.id]
+  );
+
+  // Get updated user points
+  const updatedUserResult = await db.query('SELECT points FROM users WHERE id = $1', [redemption.user_id]);
+  const updatedPoints = updatedUserResult.rows[0]?.points || 0;
+
+  // Broadcast update to user via WebSocket
+  broadcastRedemptionUpdate({
+    userId: redemption.user_id,
+    redemptionId: redemption.id,
+    status: 'used',
+    points: updatedPoints,
+  });
+
+  return {
+    success: true,
+    redemption: {
+      id: redemption.id,
+      rewardId: redemption.reward_id,
+      rewardTitle: redemption.reward_title,
+      rewardDescription: redemption.reward_description,
+      userId: redemption.user_id,
+      userName: redemption.user_name,
+      userEmail: redemption.user_email,
+      pointsCost: redemption.points_cost,
+      status: 'used',
+    },
+    guestPoints: updatedPoints,
+    message: 'Reward redeemed successfully',
   };
 }
 

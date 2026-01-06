@@ -5,6 +5,8 @@ import {
   getRewards,
   redeemReward,
   verifyQrCode,
+  getRewardInfoFromQr,
+  redeemRewardQrCode,
   createReward,
   getRewardTemplates,
   updateReward,
@@ -21,7 +23,9 @@ router.get('/templates', authenticate, requireRole('administrator'), getRewardTe
 router.post('/', authenticate, requireRole('administrator'), createReward);
 router.post('/bulk/status', authenticate, requireRole('administrator'), bulkUpdateRewardStatus);
 router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDeleteRewardsController);
-router.post('/verify-qr', authenticate, requireRole('administrator'), verifyQrCode);
+router.post('/verify-qr', authenticate, requireRole('employee', 'administrator'), verifyQrCode);
+router.post('/get-reward-info', authenticate, requireRole('employee', 'administrator'), getRewardInfoFromQr);
+router.post('/redeem-qr', authenticate, requireRole('employee'), redeemRewardQrCode);
 // Points bonus routes must come before /:id routes to avoid route conflicts
 router.post('/points-bonus/generate', authenticate, requireRole('employee', 'administrator'), generatePointsBonusQrCode);
 router.post('/points-bonus/redeem', authenticate, redeemPointsBonusQrCode);

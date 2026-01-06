@@ -221,6 +221,11 @@ export const api = {
     return response.data;
   },
 
+  async getRewardInfoFromQr(qrToken: string) {
+    const response = await apiClient.post('/rewards/get-reward-info', { qrToken });
+    return response.data;
+  },
+
   async generatePointsBonusQr(pointsAmount: number) {
     const response = await apiClient.post('/rewards/points-bonus/generate', { pointsAmount });
     return response.data;
@@ -241,6 +246,11 @@ export const api = {
         console.warn('Failed to update user points in store:', error);
       }
     }
+    return response.data;
+  },
+
+  async redeemRewardQrCode(qrToken: string) {
+    const response = await apiClient.post('/rewards/redeem-qr', { qrToken });
     return response.data;
   },
 

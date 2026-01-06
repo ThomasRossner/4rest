@@ -26,15 +26,19 @@ export async function getRewardsService(userId) {
     else if (role === 'stakeholder') {
         userZielgruppe = 'Stakeholder';
     }
-    // Filter by zielgruppe: NULL means accessible to all, otherwise must match user's zielgruppe
-    if (userZielgruppe) {
-        query += ` AND (r.zielgruppe IS NULL OR r.zielgruppe = $${paramIndex})`;
-        params.push(userZielgruppe);
-        paramIndex++;
-    }
-    else if (role !== 'administrator') {
-        // If user has no matching zielgruppe, only show rewards with zielgruppe = NULL
-        query += ' AND r.zielgruppe IS NULL';
+    // Filter by zielgruppe: Only show rewards that match user's zielgruppe
+    // NULL or empty array zielgruppe means accessible to all, otherwise must match user's zielgruppe
+    if (role !== 'administrator') {
+        if (userZielgruppe) {
+            // Show rewards with NULL/empty zielgruppe (accessible to all) OR rewards where user's zielgruppe is in the array
+            query += ` AND (r.zielgruppe IS NULL OR array_length(r.zielgruppe, 1) IS NULL OR $${paramIndex} = ANY(r.zielgruppe))`;
+            params.push(userZielgruppe);
+            paramIndex++;
+        }
+        else {
+            // If user has no matching zielgruppe (e.g., unknown role), only show rewards with NULL or empty zielgruppe
+            query += ' AND (r.zielgruppe IS NULL OR array_length(r.zielgruppe, 1) IS NULL)';
+        }
     }
     query += ' ORDER BY r.points_cost ASC';
     const result = await db.query(query, params);
@@ -71,6 +75,18 @@ export async function createCustomReward(data) {
     const rewardType = validateRewardType(data.rewardType);
     const pointsCost = normalizePointsCost(data.pointsCost);
     const recurrence = validateRecurrence(data.recurrence);
+    // Handle zielgruppe array: allow null, empty array, or array of valid enum values
+    let zielgruppeValue = null;
+    if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
+        // Ensure it's an array
+        const zielgruppeArray = Array.isArray(data.zielgruppe) ? data.zielgruppe : [data.zielgruppe];
+        // Filter out empty strings and null values
+        zielgruppeValue = zielgruppeArray.filter((v) => v !== null && v !== undefined && v !== '');
+        // If resulting array is empty, set to null
+        if (zielgruppeValue.length === 0) {
+            zielgruppeValue = null;
+        }
+    }
     const result = await db.query(`INSERT INTO rewards (
        title,
        description,
@@ -84,9 +100,10 @@ export async function createCustomReward(data) {
        recurrence,
        reward_art,
        kategorie,
-       event_group
+       event_group,
+       moegliche_punkte
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`, [
         title,
         data.description ?? null,
@@ -94,13 +111,14 @@ export async function createCustomReward(data) {
         rewardType,
         data.voucherCode ?? null,
         data.externalApiId ?? null,
-        data.zielgruppe ?? null,
+        zielgruppeValue, // PostgreSQL will automatically convert JavaScript arrays to PostgreSQL arrays
         data.location_id,
         data.active ?? true,
         recurrence,
         data.reward_art ?? null,
         data.kategorie ?? null,
         data.event_group ?? null,
+        data.moegliche_punkte ?? null,
     ]);
     return result.rows[0];
 }
@@ -111,6 +129,11 @@ export async function updateReward(id, data) {
     if (!existingReward) {
         throw new Error('Reward not found');
     }
+    const rewardType = data.rewardType !== undefined ? validateRewardType(data.rewardType ?? undefined) : existingReward.reward_type;
+    const typeChanged = data.rewardType !== undefined && data.rewardType !== existingReward.reward_type;
+    // Validate type-specific fields for the new type (if type is being changed)
+    // Note: For rewards, most fields are optional, but we can validate if needed
+    // For example, voucher_code might be required for voucher type, but it's optional for now
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -130,9 +153,26 @@ export async function updateReward(id, data) {
         updates.push(`points_cost = $${paramIndex++}`);
         values.push(normalizePointsCost(data.pointsCost));
     }
+    // If type is being changed, reset type-specific fields of the old type
+    if (typeChanged) {
+        const oldType = existingReward.reward_type;
+        const newType = rewardType;
+        // Reset fields that are specific to the old type but not to the new type
+        // For voucher type, voucher_code might be relevant, but it's optional
+        // For external_api_id, it's typically used with voucher type but can be used with others
+        // We'll reset these fields if they're not explicitly provided in the update
+        if (oldType === 'voucher' && newType !== 'voucher') {
+            // Reset voucher-specific fields if not provided in update
+            if (data.voucherCode === undefined) {
+                updates.push(`voucher_code = $${paramIndex++}`);
+                values.push(null);
+            }
+            // external_api_id might still be relevant for other types, so we don't reset it automatically
+        }
+    }
     if (data.rewardType !== undefined) {
         updates.push(`reward_type = $${paramIndex++}`);
-        values.push(validateRewardType(data.rewardType ?? undefined));
+        values.push(rewardType);
     }
     if (data.voucherCode !== undefined) {
         updates.push(`voucher_code = $${paramIndex++}`);
@@ -143,8 +183,38 @@ export async function updateReward(id, data) {
         values.push(data.externalApiId ?? null);
     }
     if (data.zielgruppe !== undefined) {
+        // Handle zielgruppe array: allow null, empty array, or array of valid enum values
+        let zielgruppeValue = null;
+        if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
+            let zielgruppeArray;
+            // Check if value is a string (might be JSON stringified array or PostgreSQL array string)
+            if (typeof data.zielgruppe === 'string') {
+                // Try to parse as JSON first
+                try {
+                    zielgruppeArray = JSON.parse(data.zielgruppe);
+                }
+                catch {
+                    // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
+                    // Remove curly braces and split by comma
+                    const cleaned = data.zielgruppe.replace(/^{|}$/g, '').trim();
+                    zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];
+                }
+            }
+            else if (Array.isArray(data.zielgruppe)) {
+                zielgruppeArray = data.zielgruppe;
+            }
+            else {
+                zielgruppeArray = [data.zielgruppe];
+            }
+            // Filter out empty strings and null values
+            zielgruppeValue = zielgruppeArray.filter((v) => v !== null && v !== undefined && v !== '');
+            // If resulting array is empty, set to null
+            if (zielgruppeValue.length === 0) {
+                zielgruppeValue = null;
+            }
+        }
         updates.push(`zielgruppe = $${paramIndex++}`);
-        values.push(data.zielgruppe ?? null);
+        values.push(zielgruppeValue);
     }
     if (data.location_id !== undefined) {
         updates.push(`location_id = $${paramIndex++}`);
@@ -169,6 +239,10 @@ export async function updateReward(id, data) {
     if (data.event_group !== undefined) {
         updates.push(`event_group = $${paramIndex++}`);
         values.push(data.event_group ?? null);
+    }
+    if (data.moegliche_punkte !== undefined) {
+        updates.push(`moegliche_punkte = $${paramIndex++}`);
+        values.push(data.moegliche_punkte ?? null);
     }
     if (updates.length === 0) {
         const reward = await getRewardById(id);
@@ -274,7 +348,7 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
         throw new Error('Unauthorized: Only administrators can verify QR codes');
     }
     // Find redemption by QR token
-    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
+    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
      JOIN users u ON rr.user_id = u.id
@@ -289,8 +363,9 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
         await db.query(`UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`, [redemption.id]);
         throw new Error('User no longer has sufficient points for this redemption');
     }
-    // Deduct points now that QR code is verified
-    await db.query('UPDATE users SET points = points - $1 WHERE id = $2', [redemption.points_cost, redemption.user_id]);
+    // Deduct points cost and add possible points (moegliche_punkte) now that QR code is verified
+    const pointsToAdd = redemption.moegliche_punkte || 0;
+    await db.query('UPDATE users SET points = points - $1 + $2 WHERE id = $3', [redemption.points_cost, pointsToAdd, redemption.user_id]);
     // Update redemption status to 'used'
     await db.query(`UPDATE reward_redemptions SET status = 'used' WHERE id = $1`, [redemption.id]);
     // Get updated user points

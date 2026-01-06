@@ -4,23 +4,26 @@ import { getPool } from '../database/connection.js';
  * Keep these values in sync across the forest service and maintenance scripts.
  */
 // Distance between area origins, matches tile size in the 3D scene
-export const FOREST_AREA_SPACING = 20;
-// Maximum number of trees per 20x20 block
-export const FOREST_MAX_TREES_PER_BLOCK = 8;
+// Reduced from 20 to 12 to make forests more compact
+export const FOREST_AREA_SPACING = 12;
+// Maximum number of trees per block
+// Increased to 10 so that up to 10 trees fit in a single block before expanding
+export const FOREST_MAX_TREES_PER_BLOCK = 10;
 /**
  * Calculate the required grid size for blocks based on tree count
  * Each block can hold max FOREST_MAX_TREES_PER_BLOCK trees
- * Grid sizes: 2x2 (4 blocks, 32 trees max), 3x3 (9 blocks, 72 trees max), 4x4 (16 blocks, 128 trees max), etc.
+ * Strategy: Start with 1x1 (single block), expand to 2x2 when needed
+ * Grid sizes: 1x1 (1 block, 10 trees max), 2x2 (4 blocks, 40 trees max), 3x3 (9 blocks, 90 trees max), etc.
  */
 export function calculateGridSize(treeCount, maxTreesPerBlock = FOREST_MAX_TREES_PER_BLOCK) {
     if (treeCount === 0)
-        return 2; // Default 2x2 grid
-    // Start with 2x2 (4 blocks)
-    let gridSize = 2;
+        return 1; // Start with single block
+    // Start with 1x1 (single block) - all trees in one block
+    let gridSize = 1;
     let maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock;
     // Expand grid when all blocks are full
     // Note: We use > (not >=) so grid expands BEFORE reaching capacity
-    // e.g., with 32 trees in 2x2, we stay at 2x2. At 33 trees, expand to 3x3
+    // e.g., with 10 trees in 1x1, we stay at 1x1. At 11 trees, expand to 2x2
     while (treeCount > maxTreesForGrid) {
         gridSize++;
         maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock;

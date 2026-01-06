@@ -9,6 +9,7 @@ import { RewardCard } from '../../components/Rewards/RewardCard';
 import { SwipeToRedeem } from '../../components/Rewards/SwipeToRedeem';
 import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
 import { PointsBonusScanner } from '../../components/Rewards/PointsBonusScanner';
+import { RewardScanner } from '../../components/Rewards/RewardScanner';
 import { pushToast } from '../../components/Toaster/Toaster';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import './RewardsPage.css';
@@ -31,6 +32,7 @@ function RewardsPage() {
     rewardTitle: string;
   } | null>(null);
   const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
+  const [showRewardScanner, setShowRewardScanner] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
 
   const handleRedeemClick = (rewardId: string, rewardTitle: string, cost: number) => {
@@ -161,6 +163,28 @@ function RewardsPage() {
         <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
         <span className="rewards-balance-value">{points}</span>
       </div>
+      {/* Show reward scanner button for employees */}
+      {user && user.role === 'employee' && (
+        <button
+          className="rewards-scan-button"
+          onClick={() => setShowRewardScanner(true)}
+          style={{
+            width: '100%',
+            marginTop: '1rem',
+            padding: '1rem 1.5rem',
+            backgroundColor: 'var(--color-primary, #3b82f6)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.375rem',
+            fontSize: '1.125rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          {t('rewards.scanner.button') || 'Belohnung von Gast einlösen'}
+        </button>
+      )}
       {/* Only show scanner button for guests (not employees or administrators) */}
       {user && (user.role === 'guest' || user.role === 'stakeholder') && (
         <button
@@ -226,6 +250,15 @@ function RewardsPage() {
           onSuccess={(pointsAwarded, newBalance) => {
             // Points are already updated via API call
             setShowPointsBonusScanner(false);
+          }}
+        />
+      )}
+
+      {showRewardScanner && (
+        <RewardScanner
+          onClose={() => setShowRewardScanner(false)}
+          onSuccess={() => {
+            setShowRewardScanner(false);
           }}
         />
       )}

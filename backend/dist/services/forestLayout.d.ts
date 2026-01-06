@@ -2,12 +2,13 @@
  * Shared forest layout configuration and helpers.
  * Keep these values in sync across the forest service and maintenance scripts.
  */
-export declare const FOREST_AREA_SPACING = 20;
-export declare const FOREST_MAX_TREES_PER_BLOCK = 8;
+export declare const FOREST_AREA_SPACING = 12;
+export declare const FOREST_MAX_TREES_PER_BLOCK = 10;
 /**
  * Calculate the required grid size for blocks based on tree count
  * Each block can hold max FOREST_MAX_TREES_PER_BLOCK trees
- * Grid sizes: 2x2 (4 blocks, 32 trees max), 3x3 (9 blocks, 72 trees max), 4x4 (16 blocks, 128 trees max), etc.
+ * Strategy: Start with 1x1 (single block), expand to 2x2 when needed
+ * Grid sizes: 1x1 (1 block, 10 trees max), 2x2 (4 blocks, 40 trees max), 3x3 (9 blocks, 90 trees max), etc.
  */
 export declare function calculateGridSize(treeCount: number, maxTreesPerBlock?: number): number;
 /**

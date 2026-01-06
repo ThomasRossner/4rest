@@ -3,8 +3,8 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { getTaskParameters, getRewardParameters, createTaskParameter, createRewardParameter, updateTaskParameter, updateRewardParameter, deleteTaskParameter, deleteRewardParameter, } from '../services/parameter.service.js';
 const router = express.Router();
-// Task parameters
-router.get('/tasks', authenticate, requireRole('administrator'), async (req, res) => {
+// Task parameters - public read access for filtering
+router.get('/tasks', authenticate, async (req, res) => {
     try {
         const { type } = req.query;
         const parameters = await getTaskParameters(type);
@@ -48,8 +48,8 @@ router.delete('/tasks/:id', authenticate, requireRole('administrator'), async (r
         res.status(500).json({ error: error.message });
     }
 });
-// Reward parameters
-router.get('/rewards', authenticate, requireRole('administrator'), async (req, res) => {
+// Reward parameters - public read access for filtering
+router.get('/rewards', authenticate, async (req, res) => {
     try {
         const { type } = req.query;
         const parameters = await getRewardParameters(type);
