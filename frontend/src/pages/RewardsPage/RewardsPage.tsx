@@ -6,7 +6,6 @@ import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { RewardCard } from '../../components/Rewards/RewardCard';
-import { SwipeToRedeem } from '../../components/Rewards/SwipeToRedeem';
 import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
 import { PointsBonusScanner } from '../../components/Rewards/PointsBonusScanner';
 import { RewardScanner } from '../../components/Rewards/RewardScanner';
@@ -21,11 +20,7 @@ function RewardsPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 
-  const [swipeModal, setSwipeModal] = useState<{
-    rewardId: string;
-    rewardTitle: string;
-    pointsCost: number;
-  } | null>(null);
+  // Keep activeRedemption for backward compatibility (if needed elsewhere)
   const [activeRedemption, setActiveRedemption] = useState<{
     qrToken: string;
     redemptionId: string;
@@ -35,40 +30,20 @@ function RewardsPage() {
   const [showRewardScanner, setShowRewardScanner] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
 
-  const handleRedeemClick = (rewardId: string, rewardTitle: string, cost: number) => {
-    if (user && user.points >= cost) {
-      setSwipeModal({
-        rewardId,
-        rewardTitle,
-        pointsCost: cost,
-      });
-    } else {
+  const handleRedeemClick = async (rewardId: string, cost: number) => {
+    if (!user || user.points < cost) {
       const infoMessage = t('rewards.messages.notEnoughPoints');
       if (import.meta.env.VITE_UI_POLISH) {
         pushToast({ type: 'info', message: infoMessage });
       } else {
         alert(infoMessage);
       }
+      throw new Error('Insufficient points');
     }
-  };
-
-  const handleConfirmRedeem = async () => {
-    if (!swipeModal) return;
 
     try {
-      const res = await api.redeemReward(swipeModal.rewardId, swipeModal.pointsCost);
-      const redemption = res?.redemption || res?.data?.redemption;
-      
-      if (redemption?.qrToken) {
-        setActiveRedemption({
-          qrToken: redemption.qrToken,
-          redemptionId: redemption.id,
-          rewardTitle: swipeModal.rewardTitle,
-        });
-        setSwipeModal(null);
-      } else {
-        throw new Error('No QR token received');
-      }
+      const res = await api.redeemReward(rewardId, cost);
+      return res;
     } catch (error: any) {
       const errorMessage = error?.message || t('rewards.messages.redeemError');
       if (import.meta.env.VITE_UI_POLISH) {
@@ -76,12 +51,8 @@ function RewardsPage() {
       } else {
         alert(errorMessage);
       }
-      setSwipeModal(null);
+      throw error;
     }
-  };
-
-  const handleCancelRedeem = () => {
-    setSwipeModal(null);
   };
 
   const handleQrStatusUpdate = (status: 'pending' | 'used' | 'expired') => {
@@ -225,6 +196,7 @@ function RewardsPage() {
         <EmptyState title={t('rewards.empty.title')} description={t('rewards.empty.description')} />
       )}
 
+      {/* Keep QrCodeDisplay for backward compatibility if needed */}
       {activeRedemption && (
         <QrCodeDisplay
           qrToken={activeRedemption.qrToken}
@@ -232,15 +204,6 @@ function RewardsPage() {
           rewardTitle={activeRedemption.rewardTitle}
           onStatusUpdate={handleQrStatusUpdate}
           onClose={() => setActiveRedemption(null)}
-        />
-            )}
-
-      {swipeModal && (
-        <SwipeToRedeem
-          rewardTitle={swipeModal.rewardTitle}
-          pointsCost={swipeModal.pointsCost}
-          onConfirm={handleConfirmRedeem}
-          onCancel={handleCancelRedeem}
         />
       )}
 
@@ -265,32 +228,12 @@ function RewardsPage() {
 
       <div className="rewards-grid">
         {!isLoading && !isError && filteredRewards.map((reward: any) => (
-          uiPolish ? (
-            <RewardCard
-              key={reward.id}
-              reward={reward}
-              canAfford={!!user && user.points >= reward.pointsCost}
-              onRedeem={(id, cost) => handleRedeemClick(id, reward.title, cost)}
-            />
-          ) : (
-            <div key={reward.id} className="reward-card">
-              <div className="reward-icon">{reward.icon || '🎁'}</div>
-              <h3 className="reward-title">{reward.title}</h3>
-              <p className="reward-description">{reward.description}</p>
-              <div className="reward-footer">
-                <span className="reward-cost">
-                  {t('rewards.card.cost', { count: reward.pointsCost })}
-                </span>
-                <button
-                  className="reward-button"
-                  onClick={() => handleRedeemClick(reward.id, reward.title, reward.pointsCost)}
-                  disabled={!user || user.points < reward.pointsCost}
-                >
-                  {t('rewards.card.redeem')}
-                </button>
-              </div>
-            </div>
-          )
+          <RewardCard
+            key={reward.id}
+            reward={reward}
+            canAfford={!!user && user.points >= reward.pointsCost}
+            onRedeem={handleRedeemClick}
+          />
         ))}
       </div>
     </div>

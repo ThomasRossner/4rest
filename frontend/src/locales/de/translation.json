@@ -280,9 +280,10 @@
       "title": "Belohnung einlösen",
       "cost": "{{count}} Punkte",
       "instruction": "Nach rechts wischen, um die Einlösung zu bestätigen",
-      "swipe": "Zum Einlösen wischen",
+      "swipe": "Wischen zum Einlösen",
       "swipeRight": "Nach rechts wischen →",
       "releasing": "Loslassen zum Bestätigen",
+      "redeeming": "Wird eingelöst...",
       "confirmed": "Bestätigt!",
       "cancel": "Abbrechen",
       "warning": "Dieser QR-Code ist temporär. Bitte lösen Sie ihn unmittelbar vor der Person ein."
