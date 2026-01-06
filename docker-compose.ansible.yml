@@ -39,7 +39,7 @@ services:
     image: roots-of-impact-backend:latest
     container_name: roots-backend
     ports:
-      - "5001:5001"
+      - "5002:5001"
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://roots_user:roots_password@roots-postgres:5432/roots_of_impact
