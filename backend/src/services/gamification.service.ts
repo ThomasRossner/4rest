@@ -1,4 +1,10 @@
 import { getPool } from '../database/connection.js';
+import {
+  FOREST_AREA_SPACING,
+  FOREST_MAX_TREES_PER_BLOCK,
+  calculateGridSize,
+  generateBlockOrigins,
+} from './forestLayout.js';
 
 /**
  * Calculate tree stage based on growth points
@@ -27,26 +33,7 @@ function generateSizeForStage(stage: 'sapling' | 'young' | 'mature'): number {
   }
 }
 
-/**
- * Calculate the required grid size for blocks based on tree count
- * Each block can hold max 8 trees
- * Grid sizes: 2x2 (4 blocks, 32 trees max), 3x3 (9 blocks, 72 trees max), 4x4 (16 blocks, 128 trees max), etc.
- */
-function calculateGridSize(treeCount: number, maxTreesPerBlock: number = 8): number {
-  if (treeCount === 0) return 2; // Default 2x2 grid
-  
-  // Start with 2x2 (4 blocks)
-  let gridSize = 2;
-  let maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock;
-  
-  // Expand grid when all blocks are full
-  while (treeCount > maxTreesForGrid) {
-    gridSize++;
-    maxTreesForGrid = gridSize * gridSize * maxTreesPerBlock;
-  }
-  
-  return gridSize;
-}
+// calculateGridSize and generateBlockOrigins are now imported from forestLayout.ts
 
 /**
  * Generate block origins for a square grid centered around [0,0]
@@ -120,7 +107,7 @@ export async function plantTree(userId: string, taskId: string) {
     return insertResult.rows[0].id as string;
   }
   
-  const areaSpacing = 12; // Reduced from 20 to make forests more compact
+  const areaSpacing = FOREST_AREA_SPACING;
   const gridCols = Math.max(1, Math.ceil(Math.sqrt(Math.max(1, userIds.length))));
   const col = userIndex % gridCols;
   const rowIdx = Math.floor(userIndex / gridCols);
@@ -135,7 +122,7 @@ export async function plantTree(userId: string, taskId: string) {
   const currentTreeCount = parseInt(treeCountResult.rows[0].count);
   
   // Calculate required grid size (includes the tree we're about to add)
-  const maxTreesPerBlock = 8;
+  const maxTreesPerBlock = FOREST_MAX_TREES_PER_BLOCK;
   const gridSize = calculateGridSize(currentTreeCount + 1, maxTreesPerBlock);
   
   // Generate all block origins for this grid
@@ -143,7 +130,7 @@ export async function plantTree(userId: string, taskId: string) {
     primaryAreaOriginX,
     primaryAreaOriginZ,
     gridSize,
-    areaSpacing
+    FOREST_AREA_SPACING
   );
   
   // Get tree counts per block
@@ -164,7 +151,8 @@ export async function plantTree(userId: string, taskId: string) {
     blockCountMap.set(key, parseInt(row.tree_count));
   });
   
-  // Find available blocks (less than 8 trees) from the generated grid
+  // Find available blocks (less than maxTreesPerBlock trees) from the generated grid
+  // Prefer blocks that already have trees (to keep forests compact)
   const availableBlocks = blockOrigins
     .map((block) => {
       const key = `${block.x},${block.z}`;
@@ -185,12 +173,13 @@ export async function plantTree(userId: string, taskId: string) {
         count: blockCountMap.get(`${block.x},${block.z}`) || 0,
       }));
   
-  // Sort by tree count (ascending) to prefer less populated blocks
-  candidateBlocks.sort((a, b) => a.count - b.count);
+  // Sort by tree count (descending) to prefer blocks that already have trees
+  // This keeps forests compact - fill existing blocks before creating new ones
+  candidateBlocks.sort((a, b) => b.count - a.count);
   
-  // Select a block
-  const minCount = candidateBlocks[0].count;
-  const bestBlocks = candidateBlocks.filter(b => b.count === minCount);
+  // Select a block - prefer blocks with most trees (but not full)
+  const maxCount = candidateBlocks[0].count;
+  const bestBlocks = candidateBlocks.filter(b => b.count === maxCount);
   const selectedBlock = bestBlocks[Math.floor(Math.random() * bestBlocks.length)];
   
   // Generate position within selected block
