@@ -82,8 +82,9 @@ export default defineConfig({
     })(),
     hmr: {
       overlay: false, // Disable overlay to prevent EPIPE errors
-      port: 3000,
-      clientPort: 3000, // Ensure HMR uses the same port
+      // HMR runs through Caddy reverse proxy, so use external domain without port
+      host: process.env.VITE_HMR_HOST || 'roots.rossner.synology.me',
+      clientPort: 443, // Caddy runs on port 443
       protocol: 'wss', // Use secure WebSocket for HMR when HTTPS is enabled
     },
     watch: {
@@ -93,7 +94,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://backend:5001',
+        target: 'http://roots-backend:5001',
         changeOrigin: true,
         secure: false, // Allow self-signed certificates
         ws: true
