@@ -477,6 +477,31 @@ export async function redeemRewardService(rewardId: string, userId: string, useT
 }
 
 /**
+ * Get redemption status by QR token (for polling)
+ */
+export async function getRedemptionStatus(qrToken: string, userId: string) {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT rr.id, rr.status, rr.user_id, u.points as user_points
+     FROM reward_redemptions rr
+     JOIN users u ON u.id = rr.user_id
+     WHERE rr.qr_token = $1 AND rr.user_id = $2`,
+    [qrToken, userId]
+  );
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  return {
+    id: result.rows[0].id,
+    status: result.rows[0].status,
+    points: parseInt(result.rows[0].user_points || '0', 10),
+  };
+}
+
+/**
  * Get reward information from QR code without redeeming it
  * Used by employees to preview the reward before redeeming
  */

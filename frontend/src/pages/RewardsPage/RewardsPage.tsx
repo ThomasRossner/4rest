@@ -38,6 +38,7 @@ function RewardsPage() {
   const [showRewardScanner, setShowRewardScanner] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineRewards, setShowOnlineRewards] = useState(false);
+  const [warningShownForReward, setWarningShownForReward] = useState<string | null>(null);
 
   const handleRedeemClick = async (rewardId: string, cost: number, useTeamPoints: boolean = false) => {
     if (!user) {
@@ -62,18 +63,27 @@ function RewardsPage() {
       throw new Error('Insufficient points');
     }
 
-    // Show warning if exceeding personal points
-    if (exceedsPersonalPoints) {
+    // Show warning if exceeding personal points (only once per reward)
+    if (exceedsPersonalPoints && warningShownForReward !== rewardId) {
       const warningMessage = t('rewards.messages.exceedsPersonalPoints', { points: user.points });
       if (!window.confirm(warningMessage)) {
         throw new Error('Redemption cancelled by user');
       }
+      setWarningShownForReward(rewardId);
     }
 
     try {
       const res = await api.redeemReward(rewardId, cost, shouldUseTeamPoints);
+      // Reset warning flag after successful redemption
+      if (warningShownForReward === rewardId) {
+        setWarningShownForReward(null);
+      }
       return res;
     } catch (error: any) {
+      // Reset warning flag on error so it can be shown again
+      if (warningShownForReward === rewardId) {
+        setWarningShownForReward(null);
+      }
       const errorMessage = error?.message || t('rewards.messages.redeemError');
       if (import.meta.env.VITE_UI_POLISH) {
         pushToast({ type: 'error', message: errorMessage });

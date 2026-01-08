@@ -275,6 +275,11 @@ export const api = {
     return response.data;
   },
 
+  async getRedemptionStatus(qrToken: string) {
+    const response = await apiClient.get('/rewards/redemption-status', { params: { qrToken } });
+    return response.data;
+  },
+
   async generatePointsBonusQr(pointsAmount: number) {
     const response = await apiClient.post('/rewards/points-bonus/generate', { pointsAmount });
     return response.data;

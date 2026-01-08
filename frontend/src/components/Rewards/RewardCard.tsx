@@ -76,11 +76,41 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
     })();
 
     let reconnectTimer: NodeJS.Timeout | null = null;
+    let pollingInterval: NodeJS.Timeout | null = null;
+    let wsConnected = false;
+
+    const checkStatus = async () => {
+      if (!redemption || redemption.status !== 'pending') return;
+      
+      try {
+        const { api } = await import('../../services/api');
+        const status = await api.getRedemptionStatus(redemption.qrToken);
+        if (status && status.status !== redemption.status) {
+          setRedemption((prev) => {
+            if (!prev) return null;
+            return { ...prev, status: status.status };
+          });
+          if (status.status === 'used' && status.points !== undefined) {
+            const store = useAuthStore.getState();
+            const currentUser = store.user;
+            if (currentUser) {
+              store.setUser({ ...currentUser, points: status.points });
+            }
+          }
+        }
+      } catch (error) {
+        // Ignore polling errors
+      }
+    };
 
     const connect = () => {
       try {
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
+
+        ws.onopen = () => {
+          wsConnected = true;
+        };
 
         ws.onmessage = (event: MessageEvent) => {
           try {
@@ -104,11 +134,13 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
         };
 
         ws.onerror = () => {
+          wsConnected = false;
           // Error handled by onclose
         };
 
         ws.onclose = () => {
           wsRef.current = null;
+          wsConnected = false;
           if (redemption && redemption.status === 'pending') {
             reconnectTimer = setTimeout(() => {
               connect();
@@ -117,6 +149,7 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
         };
       } catch (error) {
         console.error('Failed to create WebSocket:', error);
+        wsConnected = false;
         reconnectTimer = setTimeout(() => {
           connect();
         }, 5000);
@@ -125,16 +158,27 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
 
     connect();
 
+    // Start polling as fallback (every 3 seconds)
+    // Polling runs regardless of WebSocket status to ensure status updates
+    pollingInterval = setInterval(() => {
+      if (redemption && redemption.status === 'pending') {
+        checkStatus();
+      }
+    }, 3000);
+
     return () => {
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
+      }
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
       }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
       }
     };
-  }, [redemption?.redemptionId]);
+  }, [redemption?.redemptionId, redemption?.qrToken, redemption?.status]);
 
   const handleStart = (clientX: number) => {
     if (isConfirmed || isRedeeming || redemption || !canAfford) return;

@@ -14,6 +14,7 @@ import {
   bulkDeleteRewardsController,
   generatePointsBonusQrCode,
   redeemPointsBonusQrCode,
+  getRedemptionStatusController,
 } from '../controllers/reward.controller.js';
 
 const router = Router();
@@ -26,6 +27,7 @@ router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDele
 router.post('/verify-qr', authenticate, requireRole('employee', 'administrator'), verifyQrCode);
 router.post('/get-reward-info', authenticate, requireRole('employee', 'administrator'), getRewardInfoFromQr);
 router.post('/redeem-qr', authenticate, requireRole('employee'), redeemRewardQrCode);
+router.get('/redemption-status', authenticate, getRedemptionStatusController);
 // Points bonus routes must come before /:id routes to avoid route conflicts
 router.post('/points-bonus/generate', authenticate, requireRole('employee', 'administrator'), generatePointsBonusQrCode);
 router.post('/points-bonus/redeem', authenticate, redeemPointsBonusQrCode);

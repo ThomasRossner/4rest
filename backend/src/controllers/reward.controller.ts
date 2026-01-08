@@ -11,6 +11,7 @@ import {
   updateReward as updateRewardService,
   setRewardsActiveState,
   bulkDeleteRewards,
+  getRedemptionStatus,
 } from '../services/reward.service.js';
 import {
   generatePointsBonusQr,
@@ -233,6 +234,25 @@ export const getRewardInfoFromQr: RequestHandler = asyncHandler(async (req, res)
 
   const result = await getRewardInfoFromQrCode(qrToken, authReq.user.id);
   res.json(result);
+});
+
+export const getRedemptionStatusController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { qrToken } = req.query;
+  if (!qrToken || typeof qrToken !== 'string') {
+    return res.status(400).json({ error: 'QR token is required' });
+  }
+
+  const status = await getRedemptionStatus(qrToken, authReq.user.id);
+  if (!status) {
+    return res.status(404).json({ error: 'Redemption not found' });
+  }
+
+  res.json(status);
 });
 
 export const redeemRewardQrCode: RequestHandler = asyncHandler(async (req, res) => {

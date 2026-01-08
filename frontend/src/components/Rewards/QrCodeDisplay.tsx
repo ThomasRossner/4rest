@@ -64,16 +64,49 @@ export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpda
 
     let ws: WebSocket | null = null;
     let reconnectTimer: NodeJS.Timeout | null = null;
+    let pollingInterval: NodeJS.Timeout | null = null;
+    let wsConnected = false;
+
+    const checkStatus = async () => {
+      if (status !== 'pending') return;
+      
+      try {
+        const { api } = await import('../../services/api');
+        const redemptionStatus = await api.getRedemptionStatus(qrToken);
+        if (redemptionStatus && redemptionStatus.status !== status) {
+          setStatus(redemptionStatus.status);
+          if (redemptionStatus.status === 'used') {
+            setIsConfirmed(true);
+            setShowSuccessModal(true);
+            if (redemptionStatus.points !== undefined) {
+              const store = useAuthStore.getState();
+              const currentUser = store.user;
+              if (currentUser) {
+                store.setUser({ ...currentUser, points: redemptionStatus.points });
+              }
+            }
+            onStatusUpdate?.(redemptionStatus.status);
+          }
+        }
+      } catch (error) {
+        // Ignore polling errors
+      }
+    };
 
     const connect = () => {
       try {
         ws = new WebSocket(wsUrl);
+        ws.onopen = () => {
+          wsConnected = true;
+        };
         ws.onmessage = handleMessage;
         ws.onerror = () => {
+          wsConnected = false;
           // Error handled by onclose
         };
         ws.onclose = () => {
           ws = null;
+          wsConnected = false;
           // Attempt to reconnect after a delay
           reconnectTimer = setTimeout(() => {
             connect();
@@ -81,6 +114,7 @@ export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpda
         };
       } catch (error) {
         console.error('Failed to create WebSocket:', error);
+        wsConnected = false;
         reconnectTimer = setTimeout(() => {
           connect();
         }, 5000);
@@ -89,15 +123,26 @@ export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpda
 
     connect();
 
+    // Start polling as fallback (every 3 seconds)
+    // Polling runs regardless of WebSocket status to ensure status updates
+    pollingInterval = setInterval(() => {
+      if (status === 'pending') {
+        checkStatus();
+      }
+    }, 3000);
+
     return () => {
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
+      }
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
       }
       if (ws) {
         ws.close();
       }
     };
-  }, [redemptionId, onStatusUpdate]);
+  }, [redemptionId, qrToken, status, onStatusUpdate]);
 
   return (
     <>

@@ -596,8 +596,11 @@ export async function getTeamMembers(teamId: string): Promise<string[]> {
 
 /**
  * Zieht Punkte von Team-Mitgliedern ab (gleichmäßig verteilt)
- * Wenn der Benutzer nicht genug eigene Punkte hat, werden die überschreitenden Punkte
- * gleichmäßig auf die übrigen Teammitglieder verteilt und abgezogen.
+ * Regeln:
+ * 1. Wenn der eigene Punktestand ausreicht: Nur eigene Punkte abziehen
+ * 2. Wenn der eigene Punktestand nicht ausreicht: Alle eigenen Punkte abziehen (auf 0),
+ *    fehlende Punkte gleichmäßig auf andere Teammitglieder verteilen
+ * 3. Wenn ein Teammitglied nicht genug hat: Rest wieder gleichmäßig auf die anderen verteilen
  */
 export async function deductTeamPoints(teamId: string, userId: string, totalPoints: number): Promise<void> {
   const db = getPool();
@@ -612,50 +615,71 @@ export async function deductTeamPoints(teamId: string, userId: string, totalPoin
     throw new Error('User is not a member of this team');
   }
   
-  // Hole alle Mitglieder mit ihren aktuellen Punkten
-  const membersResult = await db.query(
-    `SELECT u.id, u.points 
-     FROM team_members tm
-     INNER JOIN users u ON u.id = tm.user_id
-     WHERE tm.team_id = $1`,
-    [teamId]
-  );
-  
-  const members = membersResult.rows;
-  const userMember = members.find((m: any) => m.id === userId);
-  
-  if (!userMember) {
-    throw new Error('User not found in team');
-  }
-  
-  // Berechne wie viele Punkte vom Benutzer abgezogen werden können
-  const userPoints = parseInt(userMember.points || '0', 10);
-  const pointsFromUser = Math.min(userPoints, totalPoints);
-  const remainingPoints = totalPoints - pointsFromUser;
-  
   // Beginne Transaktion
   await db.query('BEGIN');
   
   try {
-    // Ziehe Punkte vom Benutzer ab (alle verfügbaren)
-    if (pointsFromUser > 0) {
+    // Hole aktuellen Punktestand des Benutzers
+    const userResult = await db.query(
+      'SELECT points FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      throw new Error('User not found');
+    }
+    
+    const userPoints = parseInt(userResult.rows[0].points || '0', 10);
+    
+    // Regel 1: Wenn der eigene Punktestand ausreicht, nur eigene Punkte abziehen
+    if (userPoints >= totalPoints) {
       await db.query(
         'UPDATE users SET points = points - $1 WHERE id = $2',
-        [pointsFromUser, userId]
+        [totalPoints, userId]
+      );
+      await db.query('COMMIT');
+      return;
+    }
+    
+    // Regel 2: Eigene Punkte vollständig abziehen (auf 0 setzen)
+    if (userPoints > 0) {
+      await db.query(
+        'UPDATE users SET points = 0 WHERE id = $1',
+        [userId]
       );
     }
     
-    // Wenn noch Punkte übrig sind, verteile sie gleichmäßig auf die anderen Mitglieder
-    if (remainingPoints > 0) {
-      const otherMembers = members.filter((m: any) => m.id !== userId);
+    // Berechne fehlende Punkte
+    let remainingPoints = totalPoints - userPoints;
+    
+    // Regel 3: Fehlende Punkte gleichmäßig auf andere Teammitglieder verteilen
+    // Wiederhole solange noch Punkte übrig sind und es noch Mitglieder gibt
+    while (remainingPoints > 0) {
+      // Hole aktuelle Punktestände aller anderen Mitglieder
+      const otherMembersResult = await db.query(
+        `SELECT u.id, u.points 
+         FROM team_members tm
+         INNER JOIN users u ON u.id = tm.user_id
+         WHERE tm.team_id = $1 AND u.id != $2 AND u.points > 0`,
+        [teamId, userId]
+      );
+      
+      const otherMembers = otherMembersResult.rows;
       
       if (otherMembers.length === 0) {
-        throw new Error('No other team members to distribute points to');
+        // Keine anderen Mitglieder mehr mit Punkten
+        throw new Error('Insufficient team points: Not enough points available from team members');
       }
       
       // Berechne Punkte pro Mitglied (gleichmäßig verteilen)
       const pointsPerMember = Math.floor(remainingPoints / otherMembers.length);
       const remainder = remainingPoints % otherMembers.length;
+      
+      if (pointsPerMember === 0 && remainder === 0) {
+        break; // Keine Punkte mehr zu verteilen
+      }
+      
+      let newRemainingPoints = 0;
       
       // Ziehe Punkte von jedem anderen Mitglied ab
       for (let i = 0; i < otherMembers.length; i++) {
@@ -663,21 +687,36 @@ export async function deductTeamPoints(teamId: string, userId: string, totalPoin
         let pointsToDeduct = pointsPerMember;
         
         // Erster Benutzer bekommt den Rest
-        if (i === 0) {
+        if (i === 0 && remainder > 0) {
           pointsToDeduct += remainder;
         }
         
-        // Stelle sicher, dass wir nicht mehr abziehen als der Benutzer hat
+        // Hole aktuellen Punktestand des Mitglieds
         const memberPoints = parseInt(member.points || '0', 10);
-        const actualDeduction = Math.min(pointsToDeduct, memberPoints);
         
-        if (actualDeduction > 0) {
+        if (memberPoints >= pointsToDeduct) {
+          // Mitglied hat genug Punkte
           await db.query(
             'UPDATE users SET points = points - $1 WHERE id = $2',
-            [actualDeduction, member.id]
+            [pointsToDeduct, member.id]
           );
+        } else {
+          // Mitglied hat nicht genug Punkte - ziehe alle verfügbaren ab
+          if (memberPoints > 0) {
+            await db.query(
+              'UPDATE users SET points = 0 WHERE id = $1',
+              [member.id]
+            );
+            newRemainingPoints += (pointsToDeduct - memberPoints);
+          } else {
+            // Mitglied hat bereits 0 Punkte - füge den Anteil zum Rest hinzu
+            newRemainingPoints += pointsToDeduct;
+          }
         }
       }
+      
+      // Wenn noch Punkte übrig sind, wiederhole den Prozess
+      remainingPoints = newRemainingPoints;
     }
     
     await db.query('COMMIT');
