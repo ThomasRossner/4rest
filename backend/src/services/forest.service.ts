@@ -290,11 +290,5 @@ export async function getForestStatsService() {
      ORDER BY u.created_at ASC`
   );
 
-  // Add a simple consistency flag based on counts (not full task_id set comparison)
-  const rowsWithConsistency = result.rows.map((row: any) => ({
-    ...row,
-    is_count_consistent: Number(row.tree_count) === Number(row.completed_tasks),
-  }));
-
-  return rowsWithConsistency;
+  return result.rows;
 }

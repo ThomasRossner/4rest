@@ -4749,7 +4749,6 @@ const goToRewardCreation = () => {
                       <th>{t('admin.forestStats.table.points')}</th>
                       <th>{t('admin.forestStats.table.trees')}</th>
                       <th>{t('admin.forestStats.table.completedTasks')}</th>
-                      <th>{t('admin.forestStats.table.consistent')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -4766,13 +4765,6 @@ const goToRewardCreation = () => {
                         <td>{row.points}</td>
                         <td>{row.tree_count}</td>
                         <td>{row.completed_tasks}</td>
-                        <td>
-                          {row.is_count_consistent ? (
-                            <span style={{ color: '#15803d', fontWeight: 500 }}>Yes</span>
-                          ) : (
-                            <span style={{ color: '#b91c1c', fontWeight: 500 }}>No (check user)</span>
-                          )}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -4849,14 +4841,6 @@ const goToRewardCreation = () => {
                         </span>
                         <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
                           {validationJobStatus.result.totalMoved}
-                        </div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
-                          {t('admin.forestStats.validation.results.treesDeleted')}
-                        </span>
-                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                          {validationJobStatus.result.totalDeleted}
                         </div>
                       </div>
                       <div>

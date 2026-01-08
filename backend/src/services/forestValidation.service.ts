@@ -295,48 +295,7 @@ async function validateAndFixUserForest(
       .map((row: any) => row.task_id)
       .filter((id: string | null) => !!id);
 
-    const targetCount = completedTaskIds.length;
-
-    if (existingCount === 0 && targetCount === 0) {
-      return stats;
-    }
-
-    let isConsistent = false;
-
-    if (existingCount === targetCount && targetCount > 0) {
-      const treeTasksResult = await db.query(
-        `SELECT task_id
-           FROM forest_trees
-          WHERE user_id = $1`,
-        [userId]
-      );
-      const treeTaskIds: string[] = treeTasksResult.rows
-        .map((row: any) => row.task_id)
-        .filter((id: string | null) => !!id);
-
-      const completedSet = new Set(completedTaskIds);
-      const treeSet = new Set(treeTaskIds);
-
-      const sameSize = completedSet.size === treeSet.size;
-      const allMatch =
-        sameSize &&
-        [...completedSet].every((tid) => treeSet.has(tid));
-
-      isConsistent = allMatch;
-    }
-
     if (dryRun) {
-      if (!isConsistent) {
-        stats.deleted = existingCount;
-        stats.moved = targetCount;
-        stats.fixed = stats.deleted + stats.moved;
-        if (existingCount > 0 || targetCount > 0) {
-          stats.errors.push(
-            `Dry-run: would delete ${existingCount} existing tree(s) and recreate ${targetCount} tree(s) from completed tasks.`
-          );
-        }
-      }
-
       const geometryDryRun = await fixTreeGeometryForUser(db, userId, true, forceGeometry);
       if (geometryDryRun.repositioned > 0) {
         stats.moved += geometryDryRun.repositioned;
@@ -347,20 +306,6 @@ async function validateAndFixUserForest(
       }
 
       return stats;
-    }
-
-    if (!isConsistent) {
-      await db.query('BEGIN');
-      if (existingCount > 0) {
-        await db.query(`DELETE FROM forest_trees WHERE user_id = $1`, [userId]);
-        stats.deleted = existingCount;
-      }
-      for (const taskId of completedTaskIds) {
-        await plantTree(userId, taskId);
-        stats.moved += 1;
-      }
-      await db.query('COMMIT');
-      stats.fixed = stats.deleted + stats.moved;
     }
 
     const geometryFix = await fixTreeGeometryForUser(db, userId, false, forceGeometry);
