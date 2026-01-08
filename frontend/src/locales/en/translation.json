@@ -1438,6 +1438,11 @@
         "errorMessage": "Failed to dissolve contest"
       },
       "ranking": {
+        "title": "Final Ranking",
+        "empty": "No participants",
+        "rewardsAwarded": "Rewards have been awarded"
+      },
+      "ranking": {
         "title": "Contest Ranking",
         "timeRemaining": "Time remaining",
         "days": "days",
