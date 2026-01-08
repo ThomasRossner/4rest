@@ -119,6 +119,7 @@
     "impactSubtitle": "Track your sustainability progress",
     "stats": {
       "totalPoints": "Total points",
+      "teamPoints": "Team / Own Points",
       "treesPlanted": "Trees planted",
       "tasksCompleted": "Tasks completed",
       "co2Saved": "CO₂ saved"
@@ -1270,6 +1271,7 @@
     "role": "Role: {{role}}",
     "stats": {
       "points": "Total points",
+      "teamPoints": "Team / Own Points",
       "trees": "Your trees"
     },
     "privacy": {

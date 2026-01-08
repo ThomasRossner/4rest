@@ -183,7 +183,15 @@ function RewardsPage() {
       </div>
       <div className="rewards-balance">
         <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
-        <span className="rewards-balance-value">{points}</span>
+        <span className="rewards-balance-value">
+          {activeTeam?.totalPoints !== undefined ? (
+            <>
+              {activeTeam.totalPoints} / {points}
+            </>
+          ) : (
+            points
+          )}
+        </span>
       </div>
       {/* Show reward scanner button for employees */}
       {user && user.role === 'employee' && (

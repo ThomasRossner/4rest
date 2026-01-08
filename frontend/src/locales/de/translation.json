@@ -119,6 +119,7 @@
     "impactSubtitle": "Verfolge deinen Fortschritt",
     "stats": {
       "totalPoints": "Gesamtpunkte",
+      "teamPoints": "Team / Eigene Punkte",
       "treesPlanted": "Gepflanzte Bäume",
       "tasksCompleted": "Abgeschlossene Aufgaben",
       "co2Saved": "Eingespartes CO₂"
@@ -1260,6 +1261,7 @@
     "role": "Rolle: {{role}}",
     "stats": {
       "points": "Gesamtpunkte",
+      "teamPoints": "Team / Eigene Punkte",
       "trees": "Deine Bäume"
     },
     "privacy": {

@@ -101,7 +101,7 @@ function HomePage() {
                 </span>
                 <span className="home-stat-label">
                   {activeTeam?.totalPoints !== undefined 
-                    ? t('home.stats.teamPoints') || 'Team / Eigene Punkte'
+                    ? t('home.stats.teamPoints')
                     : t('home.stats.totalPoints')
                   }
                 </span>

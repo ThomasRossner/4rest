@@ -91,7 +91,7 @@ function ProfilePage() {
             </span>
             <span className="profile-stat-label">
               {activeTeam?.totalPoints !== undefined 
-                ? t('profile.stats.teamPoints') || 'Team / Eigene Punkte'
+                ? t('profile.stats.teamPoints')
                 : t('profile.stats.points')
               }
             </span>
