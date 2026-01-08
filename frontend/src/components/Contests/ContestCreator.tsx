@@ -50,8 +50,6 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           limit: 1000 // Get all users
         });
         
-        console.log('[ContestCreator] Users data:', data); // Debug log
-        
         // If onlyEmployeeParticipants is true, filter out guests and stakeholders
         if (onlyEmployeeParticipants && data?.users) {
           return {
@@ -71,11 +69,6 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
   );
 
   const users = usersData?.users || [];
-  
-  // Debug log
-  if (isEmployee) {
-    console.log('[ContestCreator] isEmployee:', isEmployee, 'usersLoading:', usersLoading, 'users:', users, 'usersError:', usersError);
-  }
 
   // Calculate minimum date (tomorrow)
   const tomorrow = new Date();
