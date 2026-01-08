@@ -355,7 +355,7 @@ export async function dissolveTeam(teamId: string, userId: string): Promise<void
   
   // Prüfe ob Benutzer der Ersteller ist
   const teamResult = await db.query(
-    'SELECT created_by, points_pool FROM teams WHERE id = $1',
+    'SELECT created_by FROM teams WHERE id = $1',
     [teamId]
   );
   
@@ -369,46 +369,12 @@ export async function dissolveTeam(teamId: string, userId: string): Promise<void
     throw new Error('Only the team creator can dissolve the team');
   }
   
-  // Hole alle Mitglieder
-  const membersResult = await db.query(
-    'SELECT user_id FROM team_members WHERE team_id = $1',
-    [teamId]
-  );
-  
-  const members = membersResult.rows;
-  const memberCount = members.length;
-  
-  if (memberCount === 0) {
-    throw new Error('Team has no members');
-  }
-  
-  // Berechne Punkte pro Mitglied (gleichmäßig verteilen)
-  const pointsPerMember = Math.floor(team.points_pool / memberCount);
-  const remainder = team.points_pool % memberCount;
-  
   // Beginne Transaktion
   await db.query('BEGIN');
   
   try {
-    // Verteile Punkte an Mitglieder
-    for (let i = 0; i < members.length; i++) {
-      const memberUserId = members[i].user_id;
-      let pointsToAdd = pointsPerMember;
-      
-      // Erster Benutzer bekommt den Rest
-      if (i === 0) {
-        pointsToAdd += remainder;
-      }
-      
-      if (pointsToAdd > 0) {
-        await db.query(
-          'UPDATE users SET points = points + $1 WHERE id = $2',
-          [pointsToAdd, memberUserId]
-        );
-      }
-    }
-    
     // Entferne alle Mitglieder (CASCADE sollte das automatisch machen, aber zur Sicherheit)
+    // Mitglieder behalten ihre eigenen Punkte - keine Umverteilung
     await db.query(
       'DELETE FROM team_members WHERE team_id = $1',
       [teamId]

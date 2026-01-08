@@ -77,7 +77,7 @@ export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
           onClick={onClose}
           disabled={isCreating}
         >
-          {t('common.actions.cancel') || 'Cancel'}
+          {t('common.actions.cancel', 'Abbrechen')}
         </button>
         <button
           type="button"
