@@ -32,6 +32,7 @@
     "forest": "Wald",
     "rewards": "Belohnungen",
     "statistics": "Statistiken",
+    "rankings": "Rankings",
     "admin": "Admin",
     "profile": "Profil",
     "logout": "Abmelden",
@@ -1679,6 +1680,35 @@
       "subtitle": "Verwalten Sie Contests für Gäste und Stakeholder",
       "createButton": "Neuen Contest anlegen",
       "empty": "Noch keine Contests für Gäste und Stakeholder"
+    }
+  },
+  "rankings": {
+    "title": "Rankings",
+    "points": "Punkte",
+    "contests": {
+      "title": "Aktive Contests",
+      "unnamed": "Unbenannter Contest",
+      "duration": "Laufzeit",
+      "remainingDays": "{{count}} Tage verbleibend",
+      "remainingDays_plural": "{{count}} Tage verbleibend",
+      "showAll": "Alle {{count}} Teilnehmer anzeigen",
+      "showLess": "Weniger anzeigen"
+    },
+    "team": {
+      "title": "Mein Team",
+      "unnamed": "Unbenanntes Team",
+      "showAll": "Alle {{count}} Mitglieder anzeigen",
+      "showLess": "Weniger anzeigen"
+    },
+    "timeline": {
+      "title": "Mein Fortschritt",
+      "noData": "Keine Daten verfügbar",
+      "points": "Punkte",
+      "trees": "Bäume",
+      "co2": "CO₂ (kg)",
+      "maxPoints": "Max. Punkte",
+      "maxTrees": "Max. Bäume",
+      "maxCo2": "Max. CO₂"
     }
   }
 }

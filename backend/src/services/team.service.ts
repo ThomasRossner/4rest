@@ -533,6 +533,36 @@ export async function getUserActiveTeam(userId: string): Promise<Team | null> {
 /**
  * Ruft alle Mitglieder eines Teams ab
  */
+/**
+ * Ruft das Ranking eines Teams ab (sortiert nach Punkten)
+ */
+export async function getTeamRanking(teamId: string): Promise<Array<{ user_id: string; user_name: string; user_email: string | null; points: number; rank: number }>> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT 
+       tm.user_id,
+       u.name as user_name,
+       u.email as user_email,
+       u.points,
+       ROW_NUMBER() OVER (ORDER BY u.points DESC, tm.joined_at ASC) as rank
+     FROM team_members tm
+     INNER JOIN users u ON u.id = tm.user_id
+     INNER JOIN teams t ON t.id = tm.team_id
+     WHERE tm.team_id = $1 AND t.active = TRUE
+     ORDER BY u.points DESC, tm.joined_at ASC`,
+    [teamId]
+  );
+  
+  return result.rows.map((row) => ({
+    user_id: row.user_id,
+    user_name: row.user_name,
+    user_email: row.user_email,
+    points: row.points,
+    rank: parseInt(row.rank, 10),
+  }));
+}
+
 export async function getTeamMembers(teamId: string): Promise<string[]> {
   const db = getPool();
   

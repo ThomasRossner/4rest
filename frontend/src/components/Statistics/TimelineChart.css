@@ -1,0 +1,132 @@
+.timeline-chart {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.timeline-chart-legend {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.timeline-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9rem;
+}
+
+.timeline-legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.timeline-legend-points {
+  background-color: #3b82f6;
+}
+
+.timeline-legend-trees {
+  background-color: #10b981;
+}
+
+.timeline-legend-co2 {
+  background-color: #f59e0b;
+}
+
+.timeline-chart-container {
+  position: relative;
+}
+
+.timeline-chart-bars {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: flex-end;
+  height: 300px;
+  padding: var(--spacing-md) 0;
+  overflow-x: auto;
+}
+
+.timeline-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 40px;
+}
+
+.timeline-bar-label {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-xs);
+  writing-mode: horizontal-tb;
+  text-align: center;
+}
+
+.timeline-bars {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+}
+
+.timeline-bar {
+  flex: 1;
+  min-height: 4px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.timeline-bar:hover {
+  opacity: 0.8;
+  transform: scaleY(1.05);
+}
+
+.timeline-bar-points {
+  background-color: #3b82f6;
+}
+
+.timeline-bar-trees {
+  background-color: #10b981;
+}
+
+.timeline-bar-co2 {
+  background-color: #f59e0b;
+}
+
+.timeline-chart-values {
+  display: flex;
+  justify-content: space-around;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.timeline-chart-empty {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-light);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .timeline-chart-bars {
+    height: 200px;
+  }
+  
+  .timeline-bar-group {
+    min-width: 30px;
+  }
+  
+  .timeline-bar-label {
+    font-size: 0.65rem;
+  }
+}
+

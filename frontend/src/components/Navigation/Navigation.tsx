@@ -116,7 +116,11 @@ function Navigation() {
     { path: '/tasks', label: t('navigation.tasks'), icon: '✅' },
     { path: '/forest', label: t('navigation.forest'), icon: '🌲' },
     { path: '/rewards', label: t('navigation.rewards'), icon: '🎁' },
-    { path: '/statistics', label: t('navigation.statistics'), icon: '📈' },
+    { 
+      path: '/statistics', 
+      label: userRole === 'guest' ? t('navigation.rankings', 'Rankings') : t('navigation.statistics'), 
+      icon: '📈' 
+    },
   ];
   
   // Navigation items for bottom bar (all non-admin users)

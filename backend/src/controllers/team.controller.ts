@@ -12,6 +12,7 @@ import {
   getTeamQrCode,
   getTeamTotalPoints,
   getUserActiveTeam,
+  getTeamRanking,
 } from '../services/team.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -233,5 +234,27 @@ export const getUserActiveTeamController: RequestHandler = asyncHandler(async (r
     ...team,
     totalPoints,
   });
+});
+
+/**
+ * GET /api/teams/:id/ranking
+ * Ruft das Ranking eines Teams ab (sortiert nach Punkten)
+ */
+export const getTeamRankingController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const teamDetails = await getTeamDetails(id, authReq.user.id);
+  if (!teamDetails) {
+    return res.status(404).json({ error: 'Team not found or access denied' });
+  }
+  
+  const ranking = await getTeamRanking(id);
+  res.json(ranking);
 });
 

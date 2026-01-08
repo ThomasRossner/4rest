@@ -213,6 +213,16 @@ export const api = {
     return response.data;
   },
 
+  async getUserTimeline(userId: string, days: number = 30) {
+    const response = await apiClient.get(`/users/${userId}/timeline`, { params: { days } });
+    return response.data;
+  },
+
+  async getTeamRanking(teamId: string) {
+    const response = await apiClient.get(`/teams/${teamId}/ranking`);
+    return response.data;
+  },
+
   // Forest
   async getForest() {
     const response = await apiClient.get('/forest');

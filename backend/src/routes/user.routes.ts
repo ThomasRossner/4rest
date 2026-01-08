@@ -14,6 +14,7 @@ import {
   resetUserPassword,
   deleteUser,
   getUserStatistics,
+  getUserTimeline,
 } from '../controllers/user.controller.js';
 
 const router = Router();
@@ -21,6 +22,7 @@ const router = Router();
 // Public routes (authenticated users)
 router.get('/me', authenticate, getMe);
 router.get('/:id/progress', authenticate, getUserProgress);
+router.get('/:id/timeline', authenticate, getUserTimeline);
 router.get('/:id/profile', authenticate, getUserProfile);
 router.put('/:id/profile', authenticate, updateUserProfile);
 

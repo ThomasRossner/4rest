@@ -13,6 +13,7 @@ import {
   resetUserPasswordService,
   deleteUserService,
   getUserStatisticsService,
+  getUserTimelineService,
 } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -154,4 +155,24 @@ export const getUserStatistics: RequestHandler = asyncHandler(async (req, res) =
 
   const statistics = await getUserStatisticsService(req.params.id);
   res.json(statistics);
+});
+
+/**
+ * GET /api/users/:id/timeline
+ * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
+ */
+export const getUserTimeline: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Benutzer kann nur seinen eigenen Timeline abrufen
+  if (authReq.user.id !== req.params.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only view your own timeline' });
+  }
+
+  const days = req.query.days ? parseInt(req.query.days as string, 10) : 30;
+  const timeline = await getUserTimelineService(req.params.id, days);
+  res.json(timeline);
 });

@@ -32,6 +32,7 @@
     "forest": "Forest",
     "rewards": "Rewards",
     "statistics": "Statistics",
+    "rankings": "Rankings",
     "admin": "Admin",
     "profile": "Profile",
     "logout": "Logout",
@@ -1699,6 +1700,33 @@
       "subtitle": "Manage contests for guests and stakeholders",
       "createButton": "Create New Contest",
       "empty": "No contests for guests and stakeholders yet"
+    }
+  },
+  "rankings": {
+    "title": "Rankings",
+    "points": "Points",
+    "contests": {
+      "title": "Active Contests",
+      "unnamed": "Unnamed Contest",
+      "duration": "Duration",
+      "showAll": "Show all {{count}} participants",
+      "showLess": "Show less"
+    },
+    "team": {
+      "title": "My Team",
+      "unnamed": "Unnamed Team",
+      "showAll": "Show all {{count}} members",
+      "showLess": "Show less"
+    },
+    "timeline": {
+      "title": "My Progress",
+      "noData": "No data available",
+      "points": "Points",
+      "trees": "Trees",
+      "co2": "CO₂ (kg)",
+      "maxPoints": "Max. Points",
+      "maxTrees": "Max. Trees",
+      "maxCo2": "Max. CO₂"
     }
   }
 }

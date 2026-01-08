@@ -1,16 +1,31 @@
+import { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
+import { TimelineChart } from '../../components/Statistics/TimelineChart';
 import './StatisticsPage.css';
 
 function StatisticsPage() {
-  const { data: stats, isLoading } = useQuery('statistics', () => api.getStatistics(), {
-    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
-  });
+  const user = useAuthStore((s) => s.user);
+  const userId = useAuthStore((s) => s.user?.id);
+  const userRole = useAuthStore((s) => s.user?.role);
+  const isGuest = userRole === 'guest';
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
+
+  // For guests: show rankings view
+  // For others: show statistics view
+  if (isGuest) {
+    return <RankingsPage />;
+  }
+
+  // Original statistics view for non-guests
+  const { data: stats, isLoading } = useQuery('statistics', () => api.getStatistics(), {
+    refetchInterval: 30000,
+  });
 
   if (isLoading) {
     return (
@@ -129,6 +144,170 @@ function StatisticsPage() {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// Rankings page for guests
+function RankingsPage() {
+  const userId = useAuthStore((s) => s.user?.id);
+  const { t } = useTranslation();
+  const [expandedContests, setExpandedContests] = useState<Set<string>>(new Set());
+  const [expandedTeam, setExpandedTeam] = useState(false);
+
+  // Get user's active contests
+  const { data: contests } = useQuery(
+    ['userContests', userId],
+    () => api.getUserContests(),
+    { enabled: !!userId, refetchInterval: 5000 }
+  );
+
+  const activeContests = contests?.filter((c: any) => {
+    const endDate = new Date(c.end_date);
+    return endDate > new Date() && c.active;
+  }) || [];
+
+  // Get user's active team
+  const { data: activeTeam } = useQuery(
+    ['userActiveTeam', userId],
+    () => api.getUserActiveTeam(),
+    { enabled: !!userId, refetchInterval: 5000 }
+  );
+
+  // Get rankings for each active contest
+  const contestRankingsQueries = useQuery(
+    ['contestRankings', activeContests.map((c: any) => c.id)],
+    async () => {
+      const rankings = await Promise.all(
+        activeContests.map(async (contest: any) => {
+          const ranking = await api.getContestRanking(contest.id);
+          return {
+            ...contest,
+            ranking,
+          };
+        })
+      );
+      return rankings;
+    },
+    { enabled: activeContests.length > 0, refetchInterval: 5000 }
+  );
+
+  const contestsWithRankings = contestRankingsQueries.data || [];
+
+  // Get team ranking if user is in a team
+  const { data: teamRanking } = useQuery(
+    ['teamRanking', activeTeam?.id],
+    () => api.getTeamRanking(activeTeam!.id),
+    { enabled: !!activeTeam?.id, refetchInterval: 5000 }
+  );
+
+  // Get timeline data
+  const { data: timeline } = useQuery(
+    ['userTimeline', userId],
+    () => api.getUserTimeline(userId!, 30),
+    { enabled: !!userId }
+  );
+
+  const toggleContestExpanded = (contestId: string) => {
+    const newSet = new Set(expandedContests);
+    if (newSet.has(contestId)) {
+      newSet.delete(contestId);
+    } else {
+      newSet.add(contestId);
+    }
+    setExpandedContests(newSet);
+  };
+
+  return (
+    <div className="rankings-page">
+      <h1 className="rankings-title">{t('rankings.title', 'Rankings')}</h1>
+
+      {/* Active Contests */}
+      {contestsWithRankings.length > 0 && (
+        <section className="rankings-section">
+          <h2 className="rankings-section-title">{t('rankings.contests.title', 'Aktive Contests')}</h2>
+          {contestsWithRankings.map((contest: any) => {
+            const isExpanded = expandedContests.has(contest.id);
+            const top5 = contest.ranking.slice(0, 5);
+            const hasMore = contest.ranking.length > 5;
+            const displayRanking = isExpanded ? contest.ranking : top5;
+
+            const startDate = new Date(contest.start_date);
+            const endDate = new Date(contest.end_date);
+
+            return (
+              <div key={contest.id} className="rankings-contest-card">
+                <div className="rankings-contest-header">
+                  <h3 className="rankings-contest-name">{contest.name || t('rankings.contests.unnamed', 'Unbenannter Contest')}</h3>
+                  <div className="rankings-contest-duration">
+                    {t('rankings.contests.duration', 'Laufzeit')}: {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="rankings-list">
+                  {displayRanking.map((entry: any) => (
+                    <div key={entry.user_id} className="rankings-item">
+                      <div className="rankings-rank">#{entry.rank}</div>
+                      <div className="rankings-name">{entry.user_name}</div>
+                      <div className="rankings-points">{entry.points} {t('rankings.points', 'Punkte')}</div>
+                    </div>
+                  ))}
+                </div>
+                {hasMore && (
+                  <button
+                    className="rankings-expand-button"
+                    onClick={() => toggleContestExpanded(contest.id)}
+                  >
+                    {isExpanded
+                      ? t('rankings.contests.showLess', 'Weniger anzeigen')
+                      : t('rankings.contests.showAll', `Alle ${contest.ranking.length} Teilnehmer anzeigen`)}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {/* Team Ranking */}
+      {activeTeam && teamRanking && (
+        <section className="rankings-section">
+          <h2 className="rankings-section-title">{t('rankings.team.title', 'Mein Team')}</h2>
+          <div className="rankings-team-card">
+            <div className="rankings-team-header">
+              <h3 className="rankings-team-name">{activeTeam.name || t('rankings.team.unnamed', 'Unbenanntes Team')}</h3>
+            </div>
+            <div className="rankings-list">
+              {(expandedTeam ? teamRanking : teamRanking.slice(0, 5)).map((entry: any) => (
+                <div key={entry.user_id} className="rankings-item">
+                  <div className="rankings-rank">#{entry.rank}</div>
+                  <div className="rankings-name">{entry.user_name}</div>
+                  <div className="rankings-points">{entry.points} {t('rankings.points', 'Punkte')}</div>
+                </div>
+              ))}
+            </div>
+            {teamRanking.length > 5 && (
+              <button
+                className="rankings-expand-button"
+                onClick={() => setExpandedTeam(!expandedTeam)}
+              >
+                {expandedTeam
+                  ? t('rankings.team.showLess', 'Weniger anzeigen')
+                  : t('rankings.team.showAll', `Alle ${teamRanking.length} Mitglieder anzeigen`)}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Timeline Chart */}
+      {timeline && timeline.length > 0 && (
+        <section className="rankings-section">
+          <h2 className="rankings-section-title">{t('rankings.timeline.title', 'Mein Fortschritt')}</h2>
+          <div className="rankings-timeline-card">
+            <TimelineChart data={timeline} />
+          </div>
+        </section>
       )}
     </div>
   );

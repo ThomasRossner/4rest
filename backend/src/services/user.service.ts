@@ -614,6 +614,90 @@ export async function deleteUserService(userId: string, adminUserId: string, har
   }
 }
 
+/**
+ * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
+ */
+export async function getUserTimelineService(userId: string, days: number = 30): Promise<Array<{ date: string; points: number; trees: number; co2: number }>> {
+  const db = getPool();
+  
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  
+  // Hole alle abgeschlossenen Aufgaben mit Datum und Punkten
+  const tasksResult = await db.query(
+    `SELECT 
+       DATE(ut.completed_at) as date,
+       SUM(ut.points_earned) as points,
+       COUNT(DISTINCT ut.id) as task_count
+     FROM user_tasks ut
+     WHERE ut.user_id = $1 AND ut.completed_at >= $2
+     GROUP BY DATE(ut.completed_at)
+     ORDER BY DATE(ut.completed_at) ASC`,
+    [userId, startDate]
+  );
+  
+  // Hole alle gepflanzten Bäume mit Datum
+  const treesResult = await db.query(
+    `SELECT 
+       DATE(ft.planted_at) as date,
+       COUNT(*) as tree_count
+     FROM forest_trees ft
+     WHERE ft.user_id = $1 AND ft.planted_at >= $2
+     GROUP BY DATE(ft.planted_at)
+     ORDER BY DATE(ft.planted_at) ASC`,
+    [userId, startDate]
+  );
+  
+  // Hole CO2-Einsparungen aus abgeschlossenen Aufgaben
+  const co2Result = await db.query(
+    `SELECT 
+       DATE(ut.completed_at) as date,
+       SUM(t.co2_savings_kg) as co2
+     FROM user_tasks ut
+     INNER JOIN tasks t ON t.id = ut.task_id
+     WHERE ut.user_id = $1 AND ut.completed_at >= $2 AND t.co2_savings_kg > 0
+     GROUP BY DATE(ut.completed_at)
+     ORDER BY DATE(ut.completed_at) ASC`,
+    [userId, startDate]
+  );
+  
+  // Erstelle ein Set aller Daten
+  const allDates = new Set<string>();
+  tasksResult.rows.forEach((row: any) => allDates.add(row.date));
+  treesResult.rows.forEach((row: any) => allDates.add(row.date));
+  co2Result.rows.forEach((row: any) => allDates.add(row.date));
+  
+  // Erstelle Map für schnellen Zugriff
+  const tasksMap = new Map(tasksResult.rows.map((row: any) => [row.date, { points: parseInt(row.points || 0, 10), tasks: parseInt(row.task_count || 0, 10) }]));
+  const treesMap = new Map(treesResult.rows.map((row: any) => [row.date, parseInt(row.tree_count || 0, 10)]));
+  const co2Map = new Map(co2Result.rows.map((row: any) => [row.date, parseFloat(row.co2 || 0)]));
+  
+  // Erstelle Timeline mit kumulativen Werten
+  const sortedDates = Array.from(allDates).sort();
+  let cumulativePoints = 0;
+  let cumulativeTrees = 0;
+  let cumulativeCo2 = 0;
+  
+  const timeline = sortedDates.map((date) => {
+    const dayPoints = tasksMap.get(date)?.points || 0;
+    const dayTrees = treesMap.get(date) || 0;
+    const dayCo2 = co2Map.get(date) || 0;
+    
+    cumulativePoints += dayPoints;
+    cumulativeTrees += dayTrees;
+    cumulativeCo2 += dayCo2;
+    
+    return {
+      date,
+      points: cumulativePoints,
+      trees: cumulativeTrees,
+      co2: cumulativeCo2,
+    };
+  });
+  
+  return timeline;
+}
+
 export async function getUserStatisticsService(userId: string): Promise<any> {
   const db = getPool();
   
