@@ -214,42 +214,42 @@ function TasksPage() {
       <div className="tasks-page">
         <div className="tasks-header">
           <h1 className="tasks-title">{t('tasks.title')}</h1>
-          {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 && (
+          {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
             <button
               className="location-button"
               onClick={() => setPrerequisiteTaskIdsFilter(null)}
-              style={{ marginRight: 'var(--spacing-sm)' }}
             >
               {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
             </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button
+                className="location-button"
+                onClick={() => {
+                  setShowLocationMap(true);
+                  setShowOnlineTasks(false);
+                }}
+                title={t('tasks.showLocation') || 'Hier'}
+              >
+                {t('tasks.locationButton') || 'Hier'}
+              </button>
+              <button
+                className="location-button"
+                onClick={() => {
+                  setShowLocationMap(false);
+                  setShowOnlineTasks(!showOnlineTasks);
+                }}
+                title={t('tasks.showOnline') || 'Online'}
+                style={{
+                  backgroundColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.2)' : undefined,
+                  borderColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.4)' : undefined,
+                }}
+              >
+                {t('tasks.onlineButton') || 'Online'}
+              </button>
+            </div>
           )}
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-          <button
-            className="location-button"
-            onClick={() => {
-              setShowLocationMap(true);
-              setShowOnlineTasks(false);
-            }}
-            title={t('tasks.showLocation') || 'Hier'}
-          >
-            {t('tasks.locationButton') || 'Hier'}
-          </button>
-          <button
-            className="location-button"
-            onClick={() => {
-              setShowLocationMap(false);
-              setShowOnlineTasks(!showOnlineTasks);
-            }}
-            title={t('tasks.showOnline') || 'Online'}
-            style={{
-              backgroundColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.2)' : undefined,
-              borderColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.4)' : undefined,
-            }}
-          >
-            {t('tasks.onlineButton') || 'Online'}
-          </button>
         </div>
-      </div>
       
       <div className="tasks-filters-row">
         <FilterDropdown
