@@ -29,10 +29,10 @@ function deriveWebSocketUrl(): string {
   }
 
   // Fallback: try to derive from VITE_API_URL or use environment variable
-  const apiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_WS_URL;
-  if (apiUrl) {
+  const fallbackApiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_WS_URL;
+  if (fallbackApiUrl) {
     try {
-      const url = new URL(apiUrl);
+      const url = new URL(fallbackApiUrl);
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
       url.pathname = '/ws';
       return url.toString();
