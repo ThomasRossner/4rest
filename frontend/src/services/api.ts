@@ -585,8 +585,8 @@ export const api = {
   },
 
   // Teams
-  async createTeam(scannedUserId: string) {
-    const response = await apiClient.post('/teams/create', { scannedUserId });
+  async createTeam(teamName?: string) {
+    const response = await apiClient.post('/teams/create', { teamName });
     return response.data;
   },
 
@@ -630,8 +630,8 @@ export const api = {
   },
 
   // Contests
-  async createContest(scannedUserId: string, endDate: string, rewards?: { reward_first_place?: number; reward_second_place?: number; reward_third_place?: number }) {
-    const response = await apiClient.post('/contests/create', { scannedUserId, endDate, rewards });
+  async createContest(endDate: string, contestName?: string, rewards?: { reward_first_place?: number; reward_second_place?: number; reward_third_place?: number }) {
+    const response = await apiClient.post('/contests/create', { endDate, contestName, rewards });
     return response.data;
   },
 

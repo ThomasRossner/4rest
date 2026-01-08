@@ -14,8 +14,8 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 /**
  * POST /api/teams/create
- * Erstellt ein neues Team durch Scannen des QR-Codes eines anderen Benutzers
- * Body: { scannedUserId: string }
+ * Erstellt ein neues Team
+ * Body: { teamName?: string }
  */
 export const createTeamController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -23,13 +23,9 @@ export const createTeamController: RequestHandler = asyncHandler(async (req, res
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const { scannedUserId } = req.body;
+  const { teamName } = req.body;
   
-  if (!scannedUserId || typeof scannedUserId !== 'string') {
-    return res.status(400).json({ error: 'scannedUserId is required' });
-  }
-  
-  const team = await createTeam(authReq.user.id, scannedUserId);
+  const team = await createTeam(authReq.user.id, teamName);
   res.status(201).json(team);
 });
 

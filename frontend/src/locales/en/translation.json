@@ -846,7 +846,8 @@
       },
       "showInactive": "Show inactive",
       "selectAll": "Select all locations",
-      "online": "Accessible online"
+      "online": "Accessible online",
+      "newButton": "New location"
     },
     "taskManage": {
       "title": "Manage Tasks",
@@ -860,7 +861,8 @@
       },
       "showInactive": "Show inactive",
       "openFilters": "Open filters",
-      "selectAll": "Select all tasks"
+      "selectAll": "Select all tasks",
+      "newButton": "New task"
     },
     "rewardManage": {
       "title": "Manage Rewards",
@@ -875,7 +877,8 @@
       },
       "showInactive": "Show inactive",
       "openFilters": "Open filters",
-      "selectAll": "Select all rewards"
+      "selectAll": "Select all rewards",
+      "newButton": "New reward"
     },
     "forestStats": {
       "title": "Forest Debug Stats",
@@ -1291,15 +1294,31 @@
     "teams": {
       "title": "My Teams",
       "createButton": "Create Team",
-      "empty": "No teams yet. Create one by scanning another user's QR code!",
+      "joinButton": "Join Team",
+      "empty": "No teams yet. Create one or join one!",
       "create": {
         "title": "Create Team",
-        "subtitle": "Scan another user's QR code to create a team",
+        "teamName": "Team Name",
+        "teamNamePlaceholder": "Enter team name (optional)",
+        "hint": "If no name is provided, your name will be used as the team name.",
+        "createButton": "Create Team",
         "creating": "Creating team...",
         "success": "Team created",
         "successMessage": "Team created successfully",
         "error": "Failed to create team",
         "errorTitle": "Error"
+      },
+      "join": {
+        "title": "Join Team",
+        "subtitle": "Scan a team QR code to join",
+        "joining": "Joining team...",
+        "success": "Team joined",
+        "successMessage": "Successfully joined team",
+        "error": "Failed to join team",
+        "errorTitle": "Error",
+        "cameraRequiresHttps": "Camera access requires HTTPS",
+        "cameraNotSupported": "Camera not supported",
+        "cameraError": "Failed to access camera"
       },
       "scanner": {
         "cameraRequiresHttps": "Camera access requires HTTPS",
@@ -1326,10 +1345,13 @@
     "contests": {
       "title": "My Contests",
       "createButton": "Create Contest",
-      "empty": "No contests yet. Create one by scanning another user's QR code!",
+      "joinButton": "Join Contest",
+      "empty": "No contests yet. Create one or join one!",
       "create": {
         "title": "Create Contest",
-        "subtitle": "Scan another user's QR code to create a contest",
+        "contestName": "Contest Name",
+        "contestNamePlaceholder": "Enter contest name (optional)",
+        "nameHint": "If no name is provided, your name will be used as the contest name.",
         "formTitle": "Contest Details",
         "endDate": "End Date",
         "rewardsTitle": "Rewards (Optional)",
@@ -1344,6 +1366,18 @@
         "errorTitle": "Error",
         "missingFields": "Please fill in all required fields",
         "invalidEndDate": "End date must be in the future"
+      },
+      "join": {
+        "title": "Join Contest",
+        "subtitle": "Scan a contest QR code to join",
+        "joining": "Joining contest...",
+        "success": "Contest joined",
+        "successMessage": "Successfully joined contest",
+        "error": "Failed to join contest",
+        "errorTitle": "Error",
+        "cameraRequiresHttps": "Camera access requires HTTPS",
+        "cameraNotSupported": "Camera not supported",
+        "cameraError": "Failed to access camera"
       },
       "scanner": {
         "cameraRequiresHttps": "Camera access requires HTTPS",

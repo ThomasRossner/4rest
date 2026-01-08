@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { ConsentManager } from '../../components/GDPR/ConsentManager';
-import { UserQrCodeDisplay } from '../../components/Teams/UserQrCodeDisplay';
 import { TeamCreator } from '../../components/Teams/TeamCreator';
+import { TeamJoiner } from '../../components/Teams/TeamJoiner';
 import { ContestCreator } from '../../components/Contests/ContestCreator';
+import { ContestJoiner } from '../../components/Contests/ContestJoiner';
 import { TeamQrCodeCarousel } from '../../components/Teams/TeamQrCodeCarousel';
 import { ContestQrCodeCarousel } from '../../components/Contests/ContestQrCodeCarousel';
 import './ProfilePage.css';
@@ -38,7 +39,9 @@ function ProfilePage() {
   );
 
   const [showTeamCreator, setShowTeamCreator] = useState(false);
+  const [showTeamJoiner, setShowTeamJoiner] = useState(false);
   const [showContestCreator, setShowContestCreator] = useState(false);
+  const [showContestJoiner, setShowContestJoiner] = useState(false);
 
   const sihotGuest = user?.sihotGuest;
   const sihotReservations = user?.sihotReservations ?? [];
@@ -189,23 +192,26 @@ function ProfilePage() {
         </section>
       )}
 
-      {/* Personal QR Code */}
-      <section className="profile-section">
-        <h2>{t('profile.qrCode.sectionTitle') || 'Personal QR Code'}</h2>
-        <UserQrCodeDisplay />
-      </section>
-
       {/* Teams */}
       <section className="profile-section">
         <div className="profile-section-header">
           <h2>{t('profile.teams.title') || 'My Teams'}</h2>
-          <button
-            type="button"
-            className="profile-action-button"
-            onClick={() => setShowTeamCreator(true)}
-          >
-            {t('profile.teams.createButton') || 'Create Team'}
-          </button>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            <button
+              type="button"
+              className="profile-action-button"
+              onClick={() => setShowTeamJoiner(true)}
+            >
+              {t('profile.teams.joinButton') || 'Team beitreten'}
+            </button>
+            <button
+              type="button"
+              className="profile-action-button"
+              onClick={() => setShowTeamCreator(true)}
+            >
+              {t('profile.teams.createButton') || 'Team anlegen'}
+            </button>
+          </div>
         </div>
         {showTeamCreator && (
           <TeamCreator
@@ -214,6 +220,15 @@ function ProfilePage() {
               setShowTeamCreator(false);
             }}
             onClose={() => setShowTeamCreator(false)}
+          />
+        )}
+        {showTeamJoiner && (
+          <TeamJoiner
+            onSuccess={() => {
+              refetchTeams();
+              setShowTeamJoiner(false);
+            }}
+            onClose={() => setShowTeamJoiner(false)}
           />
         )}
         {teams && teams.length > 0 ? (
@@ -229,7 +244,7 @@ function ProfilePage() {
             ))}
           </div>
         ) : (
-          <p className="profile-empty-state">{t('profile.teams.empty') || 'No teams yet. Create one by scanning another user\'s QR code!'}</p>
+          <p className="profile-empty-state">{t('profile.teams.empty') || 'Noch keine Teams. Erstelle eines oder trete einem bei!'}</p>
         )}
       </section>
 
@@ -237,13 +252,22 @@ function ProfilePage() {
       <section className="profile-section">
         <div className="profile-section-header">
           <h2>{t('profile.contests.title') || 'My Contests'}</h2>
-          <button
-            type="button"
-            className="profile-action-button"
-            onClick={() => setShowContestCreator(true)}
-          >
-            {t('profile.contests.createButton') || 'Create Contest'}
-          </button>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            <button
+              type="button"
+              className="profile-action-button"
+              onClick={() => setShowContestJoiner(true)}
+            >
+              {t('profile.contests.joinButton') || 'Contest beitreten'}
+            </button>
+            <button
+              type="button"
+              className="profile-action-button"
+              onClick={() => setShowContestCreator(true)}
+            >
+              {t('profile.contests.createButton') || 'Contest anlegen'}
+            </button>
+          </div>
         </div>
         {showContestCreator && (
           <ContestCreator
@@ -252,6 +276,15 @@ function ProfilePage() {
               setShowContestCreator(false);
             }}
             onClose={() => setShowContestCreator(false)}
+          />
+        )}
+        {showContestJoiner && (
+          <ContestJoiner
+            onSuccess={() => {
+              refetchContests();
+              setShowContestJoiner(false);
+            }}
+            onClose={() => setShowContestJoiner(false)}
           />
         )}
         {contests && contests.length > 0 ? (
@@ -267,7 +300,7 @@ function ProfilePage() {
             ))}
           </div>
         ) : (
-          <p className="profile-empty-state">{t('profile.contests.empty') || 'No contests yet. Create one by scanning another user\'s QR code!'}</p>
+          <p className="profile-empty-state">{t('profile.contests.empty') || 'Noch keine Contests. Erstelle einen oder trete einem bei!'}</p>
         )}
       </section>
     </div>

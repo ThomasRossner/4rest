@@ -850,7 +850,8 @@
       },
       "showInactive": "Inaktive anzeigen",
       "selectAll": "Alle Standorte auswählen",
-      "online": "Online zugänglich"
+      "online": "Online zugänglich",
+      "newButton": "Neuer Standort"
     },
     "taskManage": {
       "title": "Aufgaben verwalten",
@@ -864,7 +865,8 @@
       },
       "showInactive": "Inaktive anzeigen",
       "openFilters": "Filter öffnen",
-      "selectAll": "Alle Aufgaben auswählen"
+      "selectAll": "Alle Aufgaben auswählen",
+      "newButton": "Neue Aufgabe"
     },
     "rewardManage": {
       "title": "Belohnungen verwalten",
@@ -879,7 +881,8 @@
       },
       "showInactive": "Inaktive anzeigen",
       "openFilters": "Filter öffnen",
-      "selectAll": "Alle Belohnungen auswählen"
+      "selectAll": "Alle Belohnungen auswählen",
+      "newButton": "Neue Belohnung"
     },
     "forestStats": {
       "title": "Wald-Debug-Statistiken",
@@ -1280,16 +1283,32 @@
     },
     "teams": {
       "title": "Meine Teams",
-      "createButton": "Team erstellen",
-      "empty": "Noch keine Teams. Erstellen Sie eines, indem Sie den QR-Code eines anderen Benutzers scannen!",
+      "createButton": "Team anlegen",
+      "joinButton": "Team beitreten",
+      "empty": "Noch keine Teams. Erstelle eines oder trete einem bei!",
       "create": {
-        "title": "Team erstellen",
-        "subtitle": "Scannen Sie den QR-Code eines anderen Benutzers, um ein Team zu erstellen",
+        "title": "Team anlegen",
+        "teamName": "Team-Name",
+        "teamNamePlaceholder": "Team-Name eingeben (optional)",
+        "hint": "Wenn kein Name angegeben wird, wird Ihr Name als Team-Name verwendet.",
+        "createButton": "Team erstellen",
         "creating": "Team wird erstellt...",
         "success": "Team erstellt",
         "successMessage": "Team erfolgreich erstellt",
         "error": "Team konnte nicht erstellt werden",
         "errorTitle": "Fehler"
+      },
+      "join": {
+        "title": "Team beitreten",
+        "subtitle": "Scannen Sie einen Team-QR-Code, um beizutreten",
+        "joining": "Team wird beigetreten...",
+        "success": "Team beigetreten",
+        "successMessage": "Erfolgreich dem Team beigetreten",
+        "error": "Team konnte nicht beigetreten werden",
+        "errorTitle": "Fehler",
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
       },
       "scanner": {
         "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
@@ -1315,11 +1334,14 @@
     },
     "contests": {
       "title": "Meine Contests",
-      "createButton": "Contest erstellen",
-      "empty": "Noch keine Contests. Erstellen Sie einen, indem Sie den QR-Code eines anderen Benutzers scannen!",
+      "createButton": "Contest anlegen",
+      "joinButton": "Contest beitreten",
+      "empty": "Noch keine Contests. Erstelle einen oder trete einem bei!",
       "create": {
-        "title": "Contest erstellen",
-        "subtitle": "Scannen Sie den QR-Code eines anderen Benutzers, um einen Contest zu erstellen",
+        "title": "Contest anlegen",
+        "contestName": "Contest-Name",
+        "contestNamePlaceholder": "Contest-Name eingeben (optional)",
+        "nameHint": "Wenn kein Name angegeben wird, wird Ihr Name als Contest-Name verwendet.",
         "formTitle": "Contest-Details",
         "endDate": "Enddatum",
         "rewardsTitle": "Belohnungen (Optional)",
@@ -1334,6 +1356,18 @@
         "errorTitle": "Fehler",
         "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
         "invalidEndDate": "Enddatum muss in der Zukunft liegen"
+      },
+      "join": {
+        "title": "Contest beitreten",
+        "subtitle": "Scannen Sie einen Contest-QR-Code, um beizutreten",
+        "joining": "Contest wird beigetreten...",
+        "success": "Contest beigetreten",
+        "successMessage": "Erfolgreich dem Contest beigetreten",
+        "error": "Contest konnte nicht beigetreten werden",
+        "errorTitle": "Fehler",
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
       },
       "scanner": {
         "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",

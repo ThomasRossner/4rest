@@ -6956,7 +6956,7 @@ const goToRewardCreation = () => {
                   <span>{t('admin.locationManage.showInactive')}</span>
                 </label>
                 <button className="admin-action-button" type="button" onClick={goToLocationCreation}>
-                  New location
+                  {t('admin.locationManage.newButton')}
                 </button>
               </div>
             </div>
@@ -7170,7 +7170,7 @@ const goToRewardCreation = () => {
             type="button" 
             onClick={goToTaskCreation}
           >
-            New task
+            {t('admin.taskManage.newButton')}
           </button>
 
           <div className="admin-management-card">
@@ -7207,7 +7207,7 @@ const goToRewardCreation = () => {
                   )}
                 </button>
                 <button className="admin-action-button admin-desktop-new-task-button" type="button" onClick={goToTaskCreation}>
-                  New task
+                  {t('admin.taskManage.newButton')}
                 </button>
               </div>
             </div>
@@ -7641,7 +7641,7 @@ const goToRewardCreation = () => {
                   )}
                 </button>
                 <button className="admin-action-button" type="button" onClick={goToRewardCreation}>
-                  New reward
+                  {t('admin.rewardManage.newButton')}
                 </button>
               </div>
             </div>

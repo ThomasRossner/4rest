@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
-import jsQR from 'jsqr';
-import '../../pages/Admin/QrScannerPage.css';
+import './TeamCreator.css';
 
 type TeamCreatorProps = {
   onSuccess?: (teamId: string) => void;
@@ -13,100 +12,15 @@ type TeamCreatorProps = {
 export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastScanned, setLastScanned] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    let animationFrameId: number | null = null;
+  const handleCreate = async () => {
+    if (isCreating) return;
 
-    const startScanning = async () => {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          const isHttp = window.location.protocol === 'http:';
-          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-          if (isHttp && !isLocalhost) {
-            setError(t('teams.scanner.cameraRequiresHttps') || 'Camera access requires HTTPS');
-          } else {
-            setError(t('teams.scanner.cameraNotSupported') || 'Camera not supported');
-          }
-          setIsScanning(false);
-          return;
-        }
-
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-        });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setIsScanning(true);
-          setError(null);
-        }
-
-        const scan = () => {
-          if (videoRef.current && canvasRef.current && !isCreating) {
-            const video = videoRef.current;
-            const canvas = canvasRef.current;
-            const context = canvas.getContext('2d');
-
-            if (video.readyState === video.HAVE_ENOUGH_DATA && context) {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              context.drawImage(video, 0, 0, canvas.width, canvas.height);
-              const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-              const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-              if (code && code.data) {
-                handleQrCodeDetected(code.data);
-              }
-            }
-          }
-          animationFrameId = requestAnimationFrame(scan);
-        };
-
-        scan();
-      } catch (err: any) {
-        console.error('Error accessing camera:', err);
-        setError(err.message || t('teams.scanner.cameraError') || 'Failed to access camera');
-        setIsScanning(false);
-      }
-    };
-
-    startScanning();
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [t, isCreating]);
-
-  const handleQrCodeDetected = async (qrData: string) => {
-    if (lastScanned === qrData || isCreating) {
-      return;
-    }
-
-    setLastScanned(qrData);
     setIsCreating(true);
-
     try {
-      // First, scan the QR code to get the user ID
-      const scanResult = await api.scanUserQrCode(qrData);
-      if (!scanResult.userId) {
-        throw new Error('Invalid QR code');
-      }
-
-      // Create team with the scanned user
-      const team = await api.createTeam(scanResult.userId);
+      const team = await api.createTeam(teamName || undefined);
       
       showToast({
         type: 'success',
@@ -123,17 +37,15 @@ export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
         title: t('teams.create.errorTitle') || 'Error',
         message: errorMessage,
       });
-      setTimeout(() => {
-        setLastScanned(null);
-        setIsCreating(false);
-      }, 2000);
+    } finally {
+      setIsCreating(false);
     }
   };
 
   return (
-    <div className="qr-scanner-page">
-      <div className="qr-scanner-header">
-        <h1 className="qr-scanner-title">{t('teams.create.title') || 'Create Team'}</h1>
+    <div className="team-creator-form">
+      <div className="team-creator-header">
+        <h2>{t('teams.create.title') || 'Create Team'}</h2>
         {onClose && (
           <button
             type="button"
@@ -145,21 +57,36 @@ export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
           </button>
         )}
       </div>
-      <p className="qr-scanner-subtitle">{t('teams.create.subtitle') || 'Scan another user\'s QR code to create a team'}</p>
-      
-      {error && <div className="qr-scanner-error">{error}</div>}
-      
-      <div className="qr-scanner-video-container">
-        <video ref={videoRef} className="qr-scanner-video" playsInline muted />
-        <canvas ref={canvasRef} className="qr-scanner-canvas" />
+
+      <div className="team-form-field">
+        <label>
+          {t('teams.create.teamName') || 'Team Name'} (optional)
+          <input
+            type="text"
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
+            placeholder={t('teams.create.teamNamePlaceholder') || 'Enter team name (optional)'}
+          />
+        </label>
+        <p className="team-form-hint">{t('teams.create.hint') || 'If no name is provided, your name will be used as the team name.'}</p>
       </div>
-      
-      {isCreating && (
-        <div className="qr-scanner-loading">
-          {t('teams.create.creating') || 'Creating team...'}
-        </div>
-      )}
+
+      <div className="team-form-actions">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isCreating}
+        >
+          {t('common.actions.cancel') || 'Cancel'}
+        </button>
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={isCreating}
+        >
+          {isCreating ? (t('teams.create.creating') || 'Creating...') : (t('teams.create.createButton') || 'Create Team')}
+        </button>
+      </div>
     </div>
   );
 }
-

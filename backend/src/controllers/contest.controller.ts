@@ -13,8 +13,8 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 /**
  * POST /api/contests/create
- * Erstellt einen neuen Contest durch Scannen des QR-Codes eines anderen Benutzers
- * Body: { scannedUserId: string, endDate: string (ISO), rewards?: { reward_first_place?: number, reward_second_place?: number, reward_third_place?: number } }
+ * Erstellt einen neuen Contest
+ * Body: { endDate: string (ISO), contestName?: string, rewards?: { reward_first_place?: number, reward_second_place?: number, reward_third_place?: number } }
  */
 export const createContestController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -22,11 +22,7 @@ export const createContestController: RequestHandler = asyncHandler(async (req, 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const { scannedUserId, endDate, rewards } = req.body;
-  
-  if (!scannedUserId || typeof scannedUserId !== 'string') {
-    return res.status(400).json({ error: 'scannedUserId is required' });
-  }
+  const { endDate, contestName, rewards } = req.body;
   
   if (!endDate || typeof endDate !== 'string') {
     return res.status(400).json({ error: 'endDate is required (ISO string)' });
@@ -39,8 +35,8 @@ export const createContestController: RequestHandler = asyncHandler(async (req, 
   
   const contest = await createContest(
     authReq.user.id,
-    scannedUserId,
     endDateObj,
+    contestName,
     rewards
   );
   

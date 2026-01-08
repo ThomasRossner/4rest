@@ -30,45 +30,45 @@ export interface TeamDetails extends Team {
 }
 
 /**
- * Erstellt ein neues Team durch Scannen des QR-Codes eines anderen Benutzers
+ * Erstellt ein neues Team (nur Ersteller als Mitglied)
  */
-export async function createTeam(creatorId: string, scannedUserId: string): Promise<Team> {
+export async function createTeam(creatorId: string, teamName?: string): Promise<Team> {
   const db = getPool();
   
-  // Prüfe ob beide Benutzer existieren
+  // Prüfe ob Benutzer existiert
   const creator = await getUserById(creatorId);
-  const scannedUser = await getUserById(scannedUserId);
   
   if (!creator) {
     throw new Error('Creator user not found');
   }
-  if (!scannedUser) {
-    throw new Error('Scanned user not found');
-  }
   
-  if (creatorId === scannedUserId) {
-    throw new Error('Cannot create team with yourself');
+  // Prüfe ob Benutzer bereits in einem Team ist
+  const existingTeam = await db.query(
+    `SELECT tm.team_id FROM team_members tm
+     INNER JOIN teams t ON t.id = tm.team_id
+     WHERE tm.user_id = $1 AND t.active = true`,
+    [creatorId]
+  );
+  
+  if (existingTeam.rows.length > 0) {
+    throw new Error('User is already a member of a team');
   }
   
   // Erstelle Team
+  const finalTeamName = teamName || `Team ${creator.name}`;
   const teamResult = await db.query(
     `INSERT INTO teams (created_by, name) 
      VALUES ($1, $2) 
      RETURNING *`,
-    [creatorId, `Team ${creator.name} & ${scannedUser.name}`]
+    [creatorId, finalTeamName]
   );
   
   const team = teamResult.rows[0];
   
-  // Füge beide Benutzer als Mitglieder hinzu
+  // Füge Ersteller als Mitglied hinzu
   await db.query(
     'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
     [team.id, creatorId]
-  );
-  
-  await db.query(
-    'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
-    [team.id, scannedUserId]
   );
   
   // Generiere QR-Code für Team
@@ -103,6 +103,18 @@ export async function joinTeam(userId: string, teamQrToken: string): Promise<Tea
   
   if (existingMember.rows.length > 0) {
     throw new Error('User is already a member of this team');
+  }
+  
+  // Prüfe ob Benutzer bereits in einem anderen Team ist
+  const existingTeam = await db.query(
+    `SELECT tm.team_id FROM team_members tm
+     INNER JOIN teams t ON t.id = tm.team_id
+     WHERE tm.user_id = $1 AND t.active = true AND tm.team_id != $2`,
+    [userId, teamId]
+  );
+  
+  if (existingTeam.rows.length > 0) {
+    throw new Error('User is already a member of another team');
   }
   
   // Prüfe ob Team aktiv ist

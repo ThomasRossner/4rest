@@ -49,29 +49,21 @@ export interface ContestRewards {
 }
 
 /**
- * Erstellt einen neuen Contest durch Scannen des QR-Codes eines anderen Benutzers
+ * Erstellt einen neuen Contest (nur Ersteller als Teilnehmer)
  */
 export async function createContest(
   creatorId: string,
-  scannedUserId: string,
   endDate: Date,
+  contestName?: string,
   rewards?: ContestRewards
 ): Promise<Contest> {
   const db = getPool();
   
-  // Prüfe ob beide Benutzer existieren
+  // Prüfe ob Benutzer existiert
   const creator = await getUserById(creatorId);
-  const scannedUser = await getUserById(scannedUserId);
   
   if (!creator) {
     throw new Error('Creator user not found');
-  }
-  if (!scannedUser) {
-    throw new Error('Scanned user not found');
-  }
-  
-  if (creatorId === scannedUserId) {
-    throw new Error('Cannot create contest with yourself');
   }
   
   // Prüfe ob Enddatum in der Zukunft liegt
@@ -87,13 +79,14 @@ export async function createContest(
   }
   
   // Erstelle Contest
+  const finalContestName = contestName || `Contest ${creator.name}`;
   const contestResult = await db.query(
     `INSERT INTO contests (created_by, name, end_date, reward_first_place, reward_second_place, reward_third_place) 
      VALUES ($1, $2, $3, $4, $5, $6) 
      RETURNING *`,
     [
       creatorId,
-      `Contest ${creator.name} & ${scannedUser.name}`,
+      finalContestName,
       endDate,
       rewards?.reward_first_place || null,
       rewards?.reward_second_place || null,
@@ -103,15 +96,10 @@ export async function createContest(
   
   const contest = contestResult.rows[0];
   
-  // Füge beide Benutzer als Teilnehmer hinzu
+  // Füge Ersteller als Teilnehmer hinzu
   await db.query(
     'INSERT INTO contest_participants (contest_id, user_id) VALUES ($1, $2)',
     [contest.id, creatorId]
-  );
-  
-  await db.query(
-    'INSERT INTO contest_participants (contest_id, user_id) VALUES ($1, $2)',
-    [contest.id, scannedUserId]
   );
   
   // Generiere QR-Code für Contest
