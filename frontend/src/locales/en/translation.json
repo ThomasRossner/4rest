@@ -626,6 +626,7 @@
       "recurrence": {
         "title": "Recurrence",
         "subtitle": "Set how often this task should be automatically regenerated.",
+        "typeLabel": "Recurrence type",
         "once": "Once - Task is created once and disappears when finished",
         "daily": "Daily - Task appears once daily (if previous is finished, waits until next day)",
         "weekly": "Weekly - Task appears once weekly (if previous is finished, waits until next week)",

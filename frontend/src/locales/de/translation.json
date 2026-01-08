@@ -722,7 +722,13 @@
       "loadError": "Aufgaben konnten nicht geladen werden.",
       "locationsError": "Standorte konnten nicht geladen werden. Erstellen oder aktualisieren Sie Standorte, bevor Sie Aufgaben veröffentlichen.",
       "cancelEditing": "Bearbeitung abbrechen",
-      "back": "Zurück zum Hauptmenü"
+      "back": "Zurück zum Hauptmenü",
+      "createLocation": "Standort erstellen",
+      "publishing": "Wird veröffentlicht…",
+      "publishButton": "Aufgabe veröffentlichen",
+      "saving": "Wird gespeichert…",
+      "saveChanges": "Änderungen speichern",
+      "untitled": "Unbenannte Aufgabe"
     },
     "reward": {
       "create": {
