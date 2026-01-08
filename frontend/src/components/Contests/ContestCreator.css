@@ -90,3 +90,54 @@
   cursor: not-allowed;
 }
 
+.contest-role-filter {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+  margin-top: var(--spacing-xs);
+}
+
+.contest-participants-list {
+  margin-top: var(--spacing-md);
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+  background: var(--color-background);
+}
+
+.contest-participants-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.contest-participant-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s;
+}
+
+.contest-participant-checkbox:hover {
+  background-color: var(--color-surface-secondary);
+}
+
+.contest-participant-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.contest-participant-checkbox span {
+  flex: 1;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+

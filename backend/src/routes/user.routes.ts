@@ -25,7 +25,7 @@ router.get('/:id/profile', authenticate, getUserProfile);
 router.put('/:id/profile', authenticate, updateUserProfile);
 
 // Admin-only routes
-router.get('/', authenticate, requireRole('administrator'), listUsers);
+router.get('/', authenticate, requireRole(['administrator', 'employee']), listUsers);
 router.get('/:id', authenticate, requireRole('administrator'), getUserDetails);
 router.put('/:id/role', authenticate, requireRole('administrator'), updateUserRole);
 router.put('/:id/points', authenticate, requireRole('administrator'), updateUserPoints);

@@ -55,7 +55,8 @@ export async function createContest(
   creatorId: string,
   endDate: Date,
   contestName?: string,
-  rewards?: ContestRewards
+  rewards?: ContestRewards,
+  participantIds?: string[]
 ): Promise<Contest> {
   const db = getPool();
   
@@ -96,11 +97,18 @@ export async function createContest(
   
   const contest = contestResult.rows[0];
   
-  // Füge Ersteller als Teilnehmer hinzu
-  await db.query(
-    'INSERT INTO contest_participants (contest_id, user_id) VALUES ($1, $2)',
-    [contest.id, creatorId]
-  );
+  // Füge Ersteller als Teilnehmer hinzu (falls noch nicht in participantIds)
+  const allParticipantIds = participantIds && participantIds.length > 0
+    ? [...new Set([creatorId, ...participantIds])] // Ersteller immer hinzufügen, Duplikate entfernen
+    : [creatorId];
+  
+  // Füge alle Teilnehmer hinzu
+  for (const userId of allParticipantIds) {
+    await db.query(
+      'INSERT INTO contest_participants (contest_id, user_id, points) VALUES ($1, $2, 0) ON CONFLICT (contest_id, user_id) DO NOTHING',
+      [contest.id, userId]
+    );
+  }
   
   // Generiere QR-Code für Contest
   await generateContestQrCode(contest.id);

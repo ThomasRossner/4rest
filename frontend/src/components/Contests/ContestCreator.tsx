@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -20,8 +21,19 @@ export function ContestCreator({ onSuccess, onClose }: ContestCreatorProps) {
   const [rewardSecond, setRewardSecond] = useState('');
   const [rewardThird, setRewardThird] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
+  const [roleFilter, setRoleFilter] = useState<string>('all');
 
   const isEmployee = user?.role === 'employee' || user?.role === 'administrator';
+
+  // Load users for employee/admin
+  const { data: usersData, isLoading: usersLoading } = useQuery(
+    ['users', roleFilter],
+    () => api.listUsers({ role: roleFilter === 'all' ? undefined : roleFilter, active: true }),
+    { enabled: isEmployee }
+  );
+
+  const users = usersData?.users || [];
 
   // Calculate minimum date (tomorrow)
   const tomorrow = new Date();
@@ -59,7 +71,8 @@ export function ContestCreator({ onSuccess, onClose }: ContestCreatorProps) {
           }
         : undefined;
 
-      const contest = await api.createContest(endDate, contestName || undefined, rewards);
+      const participantIds = selectedParticipants.size > 0 ? Array.from(selectedParticipants) : undefined;
+      const contest = await api.createContest(endDate, contestName || undefined, rewards, participantIds);
       
       showToast({
         type: 'success',
@@ -162,6 +175,62 @@ export function ContestCreator({ onSuccess, onClose }: ContestCreatorProps) {
               />
             </label>
           </div>
+        </>
+      )}
+
+      {isEmployee && (
+        <>
+          <h3>{t('contests.create.participantsTitle', 'Teilnehmer hinzufügen')}</h3>
+          <div className="contest-form-field">
+            <label>
+              {t('contests.create.filterByRole', 'Nach Typ filtern')}
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="contest-role-filter"
+              >
+                <option value="all">{t('contests.create.allRoles', 'Alle Typen')}</option>
+                <option value="guest">{t('contests.create.roleGuest', 'Gast')}</option>
+                <option value="employee">{t('contests.create.roleEmployee', 'Mitarbeiter')}</option>
+                <option value="administrator">{t('contests.create.roleAdministrator', 'Administrator')}</option>
+              </select>
+            </label>
+          </div>
+          <div className="contest-participants-list">
+            {usersLoading ? (
+              <p>{t('contests.create.loadingUsers', 'Benutzer werden geladen...')}</p>
+            ) : users.length === 0 ? (
+              <p>{t('contests.create.noUsers', 'Keine Benutzer gefunden')}</p>
+            ) : (
+              <div className="contest-participants-checkboxes">
+                {users.map((userItem: any) => (
+                  <label key={userItem.id} className="contest-participant-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedParticipants.has(userItem.id)}
+                      onChange={(e) => {
+                        const newSet = new Set(selectedParticipants);
+                        if (e.target.checked) {
+                          newSet.add(userItem.id);
+                        } else {
+                          newSet.delete(userItem.id);
+                        }
+                        setSelectedParticipants(newSet);
+                      }}
+                    />
+                    <span>
+                      {userItem.name} ({userItem.email || t('contests.create.noEmail', 'keine E-Mail')}) - {t(`admin.users.roles.${userItem.role}`, userItem.role)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          {selectedParticipants.size > 0 && (
+            <p className="contest-form-hint">
+              {t('contests.create.selectedParticipants', { count: selectedParticipants.size }, `${selectedParticipants.size} Teilnehmer ausgewählt`)}
+            </p>
+          )}
         </>
       )}
 

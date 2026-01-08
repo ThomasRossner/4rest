@@ -652,8 +652,8 @@ export const api = {
   },
 
   // Contests
-  async createContest(endDate: string, contestName?: string, rewards?: { reward_first_place?: number; reward_second_place?: number; reward_third_place?: number }) {
-    const response = await apiClient.post('/contests/create', { endDate, contestName, rewards });
+  async createContest(endDate: string, contestName?: string, rewards?: { reward_first_place?: number; reward_second_place?: number; reward_third_place?: number }, participantIds?: string[]) {
+    const response = await apiClient.post('/contests/create', { endDate, contestName, rewards, participantIds });
     return response.data;
   },
 

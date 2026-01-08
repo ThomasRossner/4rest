@@ -23,7 +23,7 @@ export const createContestController: RequestHandler = asyncHandler(async (req, 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const { endDate, contestName, rewards } = req.body;
+  const { endDate, contestName, rewards, participantIds } = req.body;
   
   if (!endDate || typeof endDate !== 'string') {
     return res.status(400).json({ error: 'endDate is required (ISO string)' });
@@ -34,11 +34,22 @@ export const createContestController: RequestHandler = asyncHandler(async (req, 
     return res.status(400).json({ error: 'Invalid endDate format' });
   }
   
+  // Validate participantIds if provided
+  if (participantIds !== undefined) {
+    if (!Array.isArray(participantIds)) {
+      return res.status(400).json({ error: 'participantIds must be an array' });
+    }
+    if (!participantIds.every((id: any) => typeof id === 'string')) {
+      return res.status(400).json({ error: 'All participantIds must be strings' });
+    }
+  }
+  
   const contest = await createContest(
     authReq.user.id,
     endDateObj,
     contestName,
-    rewards
+    rewards,
+    participantIds
   );
   
   res.status(201).json(contest);
