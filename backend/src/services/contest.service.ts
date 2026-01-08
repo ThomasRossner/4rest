@@ -105,13 +105,34 @@ export async function createContest(
   
   const contest = contestResult.rows[0];
   
-  // Füge Ersteller immer als Teilnehmer hinzu
-  // Sammle alle Teilnehmer-IDs (Ersteller + optionale Teilnehmer)
-  const allParticipantIds = new Set<string>([creatorId]);
+  // Sammle alle Teilnehmer-IDs
+  const allParticipantIds = new Set<string>();
   
   // Füge optionale Teilnehmer hinzu, falls vorhanden
   if (participantIds && Array.isArray(participantIds) && participantIds.length > 0) {
     participantIds.forEach((id: string) => allParticipantIds.add(id));
+  }
+  
+  // Prüfe ob alle Teilnehmer Mitarbeiter oder Administratoren sind
+  // Wenn ja, füge den Ersteller auch hinzu (interner Contest)
+  // Wenn nein, füge den Ersteller NICHT hinzu (Contest für Gäste/Stakeholder)
+  if (allParticipantIds.size > 0) {
+    const participantRoles = await db.query(
+      `SELECT role FROM users WHERE id = ANY($1::uuid[])`,
+      [Array.from(allParticipantIds)]
+    );
+    
+    const allAreEmployees = participantRoles.rows.every(
+      (row: any) => row.role === 'employee' || row.role === 'administrator'
+    );
+    
+    // Nur wenn alle Teilnehmer Mitarbeiter/Administratoren sind, füge den Ersteller hinzu
+    if (allAreEmployees) {
+      allParticipantIds.add(creatorId);
+    }
+  } else {
+    // Wenn keine Teilnehmer angegeben wurden, füge nur den Ersteller hinzu (interner Contest)
+    allParticipantIds.add(creatorId);
   }
   
   // Füge alle Teilnehmer hinzu
