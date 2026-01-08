@@ -63,7 +63,7 @@ services:
     image: roots-of-impact-frontend:latest
     container_name: roots-frontend
     ports:
-      - "3000:3000"
+      - "3003:3000"
     environment:
       VITE_API_URL: /api
     depends_on:
