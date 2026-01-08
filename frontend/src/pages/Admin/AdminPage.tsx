@@ -4584,11 +4584,6 @@ const goToRewardCreation = () => {
               <h2>{t('admin.actions.manageLocations.title')}</h2>
               <p>{t('admin.actions.manageLocations.description')}</p>
             </button>
-            <button className="admin-choice-card" onClick={() => setMode('qrScanner')}>
-              <span className="admin-choice-icon">📷</span>
-              <h2>{t('admin.actions.redeemRewards.title')}</h2>
-              <p>{t('admin.actions.redeemRewards.description')}</p>
-            </button>
             <button className="admin-choice-card" onClick={() => setMode('parameterManage')}>
               <span className="admin-choice-icon">⚙️</span>
               <h2>{t('admin.actions.manageParameters.title')}</h2>
@@ -4622,7 +4617,7 @@ const goToRewardCreation = () => {
               <p>{t('admin.actions.debugTools.description')}</p>
             </button>
           </div>
-          {/* 3. Reihe: Umfrage-Analysen */}
+          {/* 3. Reihe: Umfrage-Analysen und Belohnungen einlösen */}
           <div className="admin-choice-grid">
             <button
               className="admin-choice-card"
@@ -4631,6 +4626,11 @@ const goToRewardCreation = () => {
               <span className="admin-choice-icon">📊</span>
               <h2>{t('admin.actions.surveyAnalytics.title')}</h2>
               <p>{t('admin.actions.surveyAnalytics.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('qrScanner')}>
+              <span className="admin-choice-icon">📷</span>
+              <h2>{t('admin.actions.redeemRewards.title')}</h2>
+              <p>{t('admin.actions.redeemRewards.description')}</p>
             </button>
           </div>
         </>
