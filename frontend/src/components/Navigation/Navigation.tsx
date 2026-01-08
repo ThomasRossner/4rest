@@ -134,7 +134,7 @@ function Navigation() {
     <>
       <nav className="navigation navigation-top">
         <div className="navigation-container">
-          {userRole !== 'administrator' && (
+          {userRole !== 'administrator' && employeeTopItems.length > 0 && (
             <div className="navigation-items navigation-items-top">
               {employeeTopItems.map((item) => (
                 <Link
