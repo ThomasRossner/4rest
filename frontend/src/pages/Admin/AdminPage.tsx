@@ -4576,16 +4576,6 @@ const goToRewardCreation = () => {
 
       {mode === null && (
         <div className="admin-choice-grid">
-          <button className="admin-choice-card" onClick={() => setMode('task')}>
-            <span className="admin-choice-icon">✅</span>
-            <h2>{t('admin.actions.createTask.title')}</h2>
-            <p>{t('admin.actions.createTask.description')}</p>
-          </button>
-          <button className="admin-choice-card" onClick={() => setMode('reward')}>
-            <span className="admin-choice-icon">🎁</span>
-            <h2>{t('admin.actions.createReward.title')}</h2>
-            <p>{t('admin.actions.createReward.description')}</p>
-          </button>
           <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
             <span className="admin-choice-icon">🗂️</span>
             <h2>{t('admin.actions.manageTasks.title')}</h2>
@@ -4595,17 +4585,6 @@ const goToRewardCreation = () => {
             <span className="admin-choice-icon">🧾</span>
             <h2>{t('admin.actions.manageRewards.title')}</h2>
             <p>{t('admin.actions.manageRewards.description')}</p>
-          </button>
-          <button
-            className="admin-choice-card"
-            onClick={() => {
-              setLocationReturnMode(null);
-              setMode('location');
-            }}
-          >
-            <span className="admin-choice-icon">📍</span>
-            <h2>{t('admin.actions.createLocation.title')}</h2>
-            <p>{t('admin.actions.createLocation.description')}</p>
           </button>
           <button className="admin-choice-card" onClick={() => setMode('locationManage')}>
             <span className="admin-choice-icon">🗺️</span>
