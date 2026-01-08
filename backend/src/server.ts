@@ -25,7 +25,7 @@ import passport from './config/passport.js';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Middleware
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));

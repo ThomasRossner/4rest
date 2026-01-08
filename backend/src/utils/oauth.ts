@@ -6,7 +6,7 @@ import { signUserToken } from './jwt.js';
  * Gets the frontend URL from environment or defaults to localhost
  */
 export function getFrontendUrl(): string {
-  return process.env.FRONTEND_URL || 'http://localhost:3000';
+  return process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:3000';
 }
 
 /**

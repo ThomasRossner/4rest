@@ -28,7 +28,23 @@ function deriveWebSocketUrl(): string {
     }
   }
 
-  return 'ws://localhost:5001/ws';
+  // Fallback: try to derive from VITE_API_URL or use environment variable
+  const apiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_WS_URL;
+  if (apiUrl) {
+    try {
+      const url = new URL(apiUrl);
+      url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+      url.pathname = '/ws';
+      return url.toString();
+    } catch {
+      // fallback
+    }
+  }
+  // Last resort: use window location
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.hostname;
+  const port = import.meta.env.VITE_BACKEND_PORT || '5001';
+  return `${protocol}//${host}:${port}/ws`;
 }
 
 function scheduleReconnect() {
