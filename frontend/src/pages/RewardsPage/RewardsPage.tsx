@@ -29,6 +29,7 @@ function RewardsPage() {
   const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
   const [showRewardScanner, setShowRewardScanner] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
+  const [showOnlineRewards, setShowOnlineRewards] = useState(false);
 
   const handleRedeemClick = async (rewardId: string, cost: number) => {
     if (!user || user.points < cost) {
@@ -66,13 +67,23 @@ function RewardsPage() {
     }
     let filtered = [...rewards];
     
+    // Filter by online status
+    if (showOnlineRewards) {
+      filtered = filtered.filter((r: any) => {
+        if (!r.location) return false;
+        const location = typeof r.location === 'string' ? JSON.parse(r.location) : r.location;
+        const isOnline = location.is_online === true || location.is_online === 'true' || String(location.is_online).toLowerCase() === 'true';
+        return isOnline;
+      });
+    }
+    
     // Filter by type
     if (typeFilter !== 'all') {
       filtered = filtered.filter((r: any) => r.rewardType === typeFilter);
     }
     
     return filtered;
-  }, [rewards, typeFilter]);
+  }, [rewards, typeFilter, showOnlineRewards]);
 
   // Filter rewards that are redeemable (user has enough points)
   const redeemableRewards = useMemo(() => {
@@ -95,9 +106,9 @@ function RewardsPage() {
           <button
             className="location-button"
             onClick={() => setShowLocationMap(false)}
-            title={t('rewards.backToList') || 'Zurück zur Liste'}
+            title={t('rewards.prerequisites.clearFilter') || 'Filter zurücksetzen'}
           >
-            {t('rewards.backToList') || 'Zurück zur Liste'}
+            {t('rewards.prerequisites.clearFilter') || 'Filter zurücksetzen'}
           </button>
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
@@ -122,13 +133,40 @@ function RewardsPage() {
     <div className="rewards-page">
       <div className="rewards-header">
         <h1 className="rewards-title">{t('rewards.title')}</h1>
-        <button
-          className="location-button"
-          onClick={() => setShowLocationMap(true)}
-          title={t('rewards.showLocation') || 'Hier'}
-        >
-          {t('rewards.locationButton') || 'Hier'}
-        </button>
+        {showOnlineRewards ? (
+          <button
+            className="location-button"
+            onClick={() => {
+              setShowLocationMap(false);
+              setShowOnlineRewards(false);
+            }}
+          >
+            {t('rewards.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+          </button>
+        ) : (
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            <button
+              className="location-button"
+              onClick={() => {
+                setShowLocationMap(true);
+                setShowOnlineRewards(false);
+              }}
+              title={t('rewards.showLocation') || 'Hier'}
+            >
+              {t('rewards.locationButton') || 'Hier'}
+            </button>
+            <button
+              className="location-button"
+              onClick={() => {
+                setShowLocationMap(false);
+                setShowOnlineRewards(true);
+              }}
+              title={t('rewards.showOnline') || 'Online'}
+            >
+              {t('rewards.onlineButton') || 'Online'}
+            </button>
+          </div>
+        )}
       </div>
       <div className="rewards-balance">
         <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
