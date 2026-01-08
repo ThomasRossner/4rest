@@ -15,10 +15,18 @@ import './RewardsPage.css';
 
 function RewardsPage() {
   const user = useAuthStore((s) => s.user);
+  const userId = useAuthStore((s) => s.user?.id);
   const points = useAuthStore((s) => s.user?.points || 0);
   const { data: rewards, isLoading, isError } = useQuery('rewards', () => api.getRewards());
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
+
+  // Get active team and total points
+  const { data: activeTeam } = useQuery(
+    ['userActiveTeam', userId],
+    () => api.getUserActiveTeam(),
+    { enabled: !!userId, refetchInterval: 30000 }
+  );
 
   // Keep activeRedemption for backward compatibility (if needed elsewhere)
   const [activeRedemption, setActiveRedemption] = useState<{
@@ -85,15 +93,17 @@ function RewardsPage() {
     return filtered;
   }, [rewards, typeFilter, showOnlineRewards]);
 
-  // Filter rewards that are redeemable (user has enough points)
+  // Filter rewards that are redeemable (user has enough points or team has enough)
   const redeemableRewards = useMemo(() => {
     if (!filteredRewards || !user) {
       return [];
     }
+    const teamTotalPoints = activeTeam?.totalPoints || 0;
     return filteredRewards.filter((r: any) => {
-      return user.points >= r.pointsCost;
+      // Can redeem if user has enough points OR team has enough points
+      return user.points >= r.pointsCost || (activeTeam && teamTotalPoints >= r.pointsCost);
     });
-  }, [filteredRewards, user]);
+  }, [filteredRewards, user, activeTeam]);
 
   const uiPolish = !!import.meta.env.VITE_UI_POLISH;
 
@@ -119,8 +129,11 @@ function RewardsPage() {
               setShowLocationMap(false);
               // Find the reward and trigger redeem if user can afford it
               const reward = redeemableRewards.find((r: any) => r.id === rewardId);
-              if (reward && user && user.points >= reward.pointsCost) {
-                handleRedeemClick(reward.id, reward.title, reward.pointsCost);
+              const teamTotalPoints = activeTeam?.totalPoints || 0;
+              const canAfford = user && (user.points >= reward.pointsCost || (activeTeam && teamTotalPoints >= reward.pointsCost));
+              if (reward && canAfford) {
+                const useTeamPoints = activeTeam && user.points < reward.pointsCost;
+                handleRedeemClick(reward.id, reward.pointsCost, useTeamPoints);
               }
             }}
           />
@@ -271,8 +284,11 @@ function RewardsPage() {
           <RewardCard
             key={reward.id}
             reward={reward}
-            canAfford={!!user && user.points >= reward.pointsCost}
-            onRedeem={handleRedeemClick}
+            canAfford={!!user && (user.points >= reward.pointsCost || (activeTeam && (activeTeam.totalPoints || 0) >= reward.pointsCost))}
+            onRedeem={(id, cost) => {
+              const useTeamPoints = activeTeam && user && user.points < cost;
+              return handleRedeemClick(id, cost, useTeamPoints);
+            }}
           />
         ))}
       </div>

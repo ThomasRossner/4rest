@@ -14,6 +14,13 @@ function HomePage() {
   const userPoints = useAuthStore((s) => s.user?.points || 0);
   const { t } = useTranslation();
 
+  // Get active team and total points
+  const { data: activeTeam } = useQuery(
+    ['userActiveTeam', userId],
+    () => api.getUserActiveTeam(),
+    { enabled: !!userId, refetchInterval: 30000 }
+  );
+
   // Preload 3D tree models in background when user is on homepage
   // This ensures models are ready when user navigates to ForestPage
   useEffect(() => {
@@ -83,8 +90,21 @@ function HomePage() {
             <div className="home-stats">
               <div className="home-stat">
                 <div className="home-stat-icon">⭐</div>
-                <span className="home-stat-value">{userPoints}</span>
-                <span className="home-stat-label">{t('home.stats.totalPoints')}</span>
+                <span className="home-stat-value">
+                  {activeTeam?.totalPoints !== undefined ? (
+                    <>
+                      {activeTeam.totalPoints} / {userPoints}
+                    </>
+                  ) : (
+                    userPoints
+                  )}
+                </span>
+                <span className="home-stat-label">
+                  {activeTeam?.totalPoints !== undefined 
+                    ? t('home.stats.teamPoints') || 'Team / Eigene Punkte'
+                    : t('home.stats.totalPoints')
+                  }
+                </span>
               </div>
               <div className="home-stat">
                 <div className="home-stat-icon">🌲</div>

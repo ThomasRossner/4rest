@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
+import { api } from '../../services/api';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { PointsBonusScanner } from '../Rewards/PointsBonusScanner';
 import './Navigation.css';
@@ -13,6 +15,7 @@ function Navigation() {
   const userName = useAuthStore((s) => s.user?.name || 'User');
   const points = useAuthStore((s) => s.user?.points || 0);
   const userRole = useAuthStore((s) => s.user?.role);
+  const userId = useAuthStore((s) => s.user?.id);
   const logout = useAuthStore((s) => s.logout);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
@@ -21,6 +24,13 @@ function Navigation() {
   const userButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+
+  // Get active team and total points
+  const { data: activeTeam } = useQuery(
+    ['userActiveTeam', userId],
+    () => api.getUserActiveTeam(),
+    { enabled: !!userId, refetchInterval: 30000 } // Refetch every 30 seconds to keep team total updated
+  );
 
   // Generate user initials
   const getUserInitials = (name: string): string => {
@@ -142,7 +152,13 @@ function Navigation() {
                 <span className="navigation-user-initials">{getUserInitials(userName)}</span>
               </div>
               <span className="navigation-user-points">
-                {t('navigation.points', { count: points })}
+                {activeTeam?.totalPoints !== undefined ? (
+                  <>
+                    {t('navigation.points', { count: activeTeam.totalPoints })} / {t('navigation.points', { count: points })}
+                  </>
+                ) : (
+                  t('navigation.points', { count: points })
+                )}
               </span>
             </button>
             {isUserMenuOpen && createPortal(

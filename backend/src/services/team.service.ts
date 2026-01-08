@@ -542,3 +542,148 @@ export async function getTeamQrCode(teamId: string): Promise<string | null> {
   return result.rows[0].qr_token;
 }
 
+/**
+ * Berechnet den Gesamtbetrag aller Mitglieder eines Teams (Summe aller Punkte)
+ */
+export async function getTeamTotalPoints(teamId: string): Promise<number> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT COALESCE(SUM(u.points), 0) as total_points
+     FROM team_members tm
+     INNER JOIN users u ON u.id = tm.user_id
+     WHERE tm.team_id = $1`,
+    [teamId]
+  );
+  
+  return parseInt(result.rows[0]?.total_points || '0', 10);
+}
+
+/**
+ * Ruft das aktive Team eines Benutzers ab (falls vorhanden)
+ */
+export async function getUserActiveTeam(userId: string): Promise<Team | null> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT t.* FROM teams t
+     INNER JOIN team_members tm ON tm.team_id = t.id
+     WHERE tm.user_id = $1 AND t.active = TRUE
+     LIMIT 1`,
+    [userId]
+  );
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  return result.rows[0];
+}
+
+/**
+ * Ruft alle Mitglieder eines Teams ab
+ */
+export async function getTeamMembers(teamId: string): Promise<string[]> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT user_id FROM team_members WHERE team_id = $1',
+    [teamId]
+  );
+  
+  return result.rows.map((row: any) => row.user_id);
+}
+
+/**
+ * Zieht Punkte von Team-Mitgliedern ab (gleichmäßig verteilt)
+ * Wenn der Benutzer nicht genug eigene Punkte hat, werden die überschreitenden Punkte
+ * gleichmäßig auf die übrigen Teammitglieder verteilt und abgezogen.
+ */
+export async function deductTeamPoints(teamId: string, userId: string, totalPoints: number): Promise<void> {
+  const db = getPool();
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const memberCheck = await db.query(
+    'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
+    [teamId, userId]
+  );
+  
+  if (memberCheck.rows.length === 0) {
+    throw new Error('User is not a member of this team');
+  }
+  
+  // Hole alle Mitglieder mit ihren aktuellen Punkten
+  const membersResult = await db.query(
+    `SELECT u.id, u.points 
+     FROM team_members tm
+     INNER JOIN users u ON u.id = tm.user_id
+     WHERE tm.team_id = $1`,
+    [teamId]
+  );
+  
+  const members = membersResult.rows;
+  const userMember = members.find((m: any) => m.id === userId);
+  
+  if (!userMember) {
+    throw new Error('User not found in team');
+  }
+  
+  // Berechne wie viele Punkte vom Benutzer abgezogen werden können
+  const userPoints = parseInt(userMember.points || '0', 10);
+  const pointsFromUser = Math.min(userPoints, totalPoints);
+  const remainingPoints = totalPoints - pointsFromUser;
+  
+  // Beginne Transaktion
+  await db.query('BEGIN');
+  
+  try {
+    // Ziehe Punkte vom Benutzer ab (alle verfügbaren)
+    if (pointsFromUser > 0) {
+      await db.query(
+        'UPDATE users SET points = points - $1 WHERE id = $2',
+        [pointsFromUser, userId]
+      );
+    }
+    
+    // Wenn noch Punkte übrig sind, verteile sie gleichmäßig auf die anderen Mitglieder
+    if (remainingPoints > 0) {
+      const otherMembers = members.filter((m: any) => m.id !== userId);
+      
+      if (otherMembers.length === 0) {
+        throw new Error('No other team members to distribute points to');
+      }
+      
+      // Berechne Punkte pro Mitglied (gleichmäßig verteilen)
+      const pointsPerMember = Math.floor(remainingPoints / otherMembers.length);
+      const remainder = remainingPoints % otherMembers.length;
+      
+      // Ziehe Punkte von jedem anderen Mitglied ab
+      for (let i = 0; i < otherMembers.length; i++) {
+        const member = otherMembers[i];
+        let pointsToDeduct = pointsPerMember;
+        
+        // Erster Benutzer bekommt den Rest
+        if (i === 0) {
+          pointsToDeduct += remainder;
+        }
+        
+        // Stelle sicher, dass wir nicht mehr abziehen als der Benutzer hat
+        const memberPoints = parseInt(member.points || '0', 10);
+        const actualDeduction = Math.min(pointsToDeduct, memberPoints);
+        
+        if (actualDeduction > 0) {
+          await db.query(
+            'UPDATE users SET points = points - $1 WHERE id = $2',
+            [actualDeduction, member.id]
+          );
+        }
+      }
+    }
+    
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  }
+}
+

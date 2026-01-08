@@ -133,7 +133,8 @@ export const redeemReward: RequestHandler = asyncHandler(async (req, res) => {
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  const result = await redeemRewardService(req.params.id, authReq.user.id);
+  const useTeamPoints = req.body?.useTeamPoints === true;
+  const result = await redeemRewardService(req.params.id, authReq.user.id, useTeamPoints);
   res.json(result);
 });
 

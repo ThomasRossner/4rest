@@ -250,8 +250,8 @@ export const api = {
     return response.data;
   },
 
-  async redeemReward(rewardId: string, fallbackCost?: number) {
-    const response = await apiClient.post(`/rewards/${rewardId}/redeem`);
+  async redeemReward(rewardId: string, fallbackCost?: number, useTeamPoints?: boolean) {
+    const response = await apiClient.post(`/rewards/${rewardId}/redeem`, { useTeamPoints });
     // Don't deduct points yet - they will be deducted when QR code is verified
     // Just return the redemption data with QR token
     return response.data;
@@ -633,6 +633,16 @@ export const api = {
 
   async getTeamQrCode(teamId: string) {
     const response = await apiClient.get(`/teams/${teamId}/qr-code`);
+    return response.data;
+  },
+
+  async getUserActiveTeam() {
+    const response = await apiClient.get('/teams/active');
+    return response.data;
+  },
+
+  async getTeamTotalPoints(teamId: string) {
+    const response = await apiClient.get(`/teams/${teamId}/total-points`);
     return response.data;
   },
 

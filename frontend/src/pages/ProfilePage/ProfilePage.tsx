@@ -38,6 +38,13 @@ function ProfilePage() {
     { enabled: !!userId }
   );
 
+  // Get active team and total points
+  const { data: activeTeam } = useQuery(
+    ['userActiveTeam', userId],
+    () => api.getUserActiveTeam(),
+    { enabled: !!userId, refetchInterval: 30000 }
+  );
+
   const [showTeamCreator, setShowTeamCreator] = useState(false);
   const [showTeamJoiner, setShowTeamJoiner] = useState(false);
   const [showContestCreator, setShowContestCreator] = useState(false);
@@ -73,8 +80,21 @@ function ProfilePage() {
         </div>
           <div className="profile-stats">
           <div className="profile-stat">
-            <span className="profile-stat-value">{points}</span>
-            <span className="profile-stat-label">{t('profile.stats.points')}</span>
+            <span className="profile-stat-value">
+              {activeTeam?.totalPoints !== undefined ? (
+                <>
+                  {activeTeam.totalPoints} / {points}
+                </>
+              ) : (
+                points
+              )}
+            </span>
+            <span className="profile-stat-label">
+              {activeTeam?.totalPoints !== undefined 
+                ? t('profile.stats.teamPoints') || 'Team / Eigene Punkte'
+                : t('profile.stats.points')
+              }
+            </span>
           </div>
           <div className="profile-stat">
             <span className="profile-stat-value">

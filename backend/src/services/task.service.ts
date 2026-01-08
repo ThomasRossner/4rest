@@ -6,6 +6,7 @@ import { UserRole, UserType, HotelId } from '../constants/enums.js';
 import { Location } from './location.service.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 import { updateContestPoints } from './contest.service.js';
+import { getUserActiveTeam, getTeamMembers } from './team.service.js';
 
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
 
@@ -744,25 +745,30 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
     ]
   );
 
-  // Award points and plant tree
-  await addUserPoints(userId, task.points);
-  const newTreeId = await plantTree(userId, taskId);
+  // Check if user is in a team
+  const userTeam = await getUserActiveTeam(userId);
+  const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
   
-  // Distribute task points to growth of a random existing tree (not the newly planted one)
-  await addGrowthPointsToRandomTree(userId, task.points, newTreeId);
-
-  // Update contest points for all active contests the user participates in
-  // Get all active contests for this user
-  const activeContests = await db.query(
-    `SELECT c.id FROM contests c
-     INNER JOIN contest_participants cp ON cp.contest_id = c.id
-     WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`,
-    [userId]
-  );
-  
-  // Update points for each active contest
-  for (const contest of activeContests.rows) {
-    await updateContestPoints(userId, contest.id, task.points);
+  // Award points and plant tree for all team members
+  for (const memberId of teamMembers) {
+    await addUserPoints(memberId, task.points);
+    const newTreeId = await plantTree(memberId, taskId);
+    
+    // Distribute task points to growth of a random existing tree (not the newly planted one)
+    await addGrowthPointsToRandomTree(memberId, task.points, newTreeId);
+    
+    // Update contest points for all active contests this member participates in
+    const activeContests = await db.query(
+      `SELECT c.id FROM contests c
+       INNER JOIN contest_participants cp ON cp.contest_id = c.id
+       WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`,
+      [memberId]
+    );
+    
+    // Update points for each active contest
+    for (const contest of activeContests.rows) {
+      await updateContestPoints(memberId, contest.id, task.points);
+    }
   }
 
   return {

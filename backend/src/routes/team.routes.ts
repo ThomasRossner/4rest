@@ -10,6 +10,8 @@ import {
   dissolveTeamController,
   leaveTeamController,
   getTeamQrCodeController,
+  getTeamTotalPointsController,
+  getUserActiveTeamController,
 } from '../controllers/team.controller.js';
 
 const router = Router();
@@ -17,7 +19,9 @@ const router = Router();
 router.post('/create', authenticate, createTeamController);
 router.post('/join', authenticate, joinTeamController);
 router.get('/', authenticate, getUserTeamsController);
+router.get('/active', authenticate, getUserActiveTeamController);
 router.get('/:id', authenticate, getTeamDetailsController);
+router.get('/:id/total-points', authenticate, getTeamTotalPointsController);
 router.post('/:id/contribute', authenticate, contributePointsController);
 router.post('/:id/redeem', authenticate, redeemRewardController);
 router.post('/:id/leave', authenticate, leaveTeamController);

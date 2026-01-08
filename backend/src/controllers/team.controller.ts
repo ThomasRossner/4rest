@@ -10,6 +10,8 @@ import {
   dissolveTeam,
   leaveTeam,
   getTeamQrCode,
+  getTeamTotalPoints,
+  getUserActiveTeam,
 } from '../services/team.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -184,5 +186,52 @@ export const getTeamQrCodeController: RequestHandler = asyncHandler(async (req, 
   }
   
   res.json({ qrToken });
+});
+
+/**
+ * GET /api/teams/:id/total-points
+ * Ruft den Gesamtbetrag aller Mitglieder eines Teams ab
+ */
+export const getTeamTotalPointsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const teamDetails = await getTeamDetails(id, authReq.user.id);
+  if (!teamDetails) {
+    return res.status(404).json({ error: 'Team not found or access denied' });
+  }
+  
+  const totalPoints = await getTeamTotalPoints(id);
+  res.json({ totalPoints });
+});
+
+/**
+ * GET /api/teams/active
+ * Ruft das aktive Team des angemeldeten Benutzers ab (falls vorhanden)
+ */
+export const getUserActiveTeamController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const team = await getUserActiveTeam(authReq.user.id);
+  
+  if (!team) {
+    return res.json(null);
+  }
+  
+  // Berechne Gesamtbetrag
+  const totalPoints = await getTeamTotalPoints(team.id);
+  
+  res.json({
+    ...team,
+    totalPoints,
+  });
 });
 

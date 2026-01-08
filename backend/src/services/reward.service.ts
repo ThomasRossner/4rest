@@ -10,7 +10,7 @@ import {
   normalizePointsCost,
 } from '../utils/validation.js';
 import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
-import { redeemRewardFromTeam } from './team.service.js';
+import { redeemRewardFromTeam, getUserActiveTeam, getTeamTotalPoints, deductTeamPoints } from './team.service.js';
 
 export async function getRewardsService(userId: string) {
   const db = getPool();
@@ -391,7 +391,7 @@ export async function listRewardsForAdmin(includeInactive = false) {
   return result.rows;
 }
 
-export async function redeemRewardService(rewardId: string, userId: string) {
+export async function redeemRewardService(rewardId: string, userId: string, useTeamPoints: boolean = false) {
   const db = getPool();
 
   // Get user and reward
@@ -407,8 +407,27 @@ export async function redeemRewardService(rewardId: string, userId: string) {
     throw new Error('Reward not found');
   }
 
-  if (user.points < reward.points_cost) {
-    throw new Error('Insufficient points');
+  // Check if user is in a team
+  const userTeam = await getUserActiveTeam(userId);
+  const teamTotalPoints = userTeam ? await getTeamTotalPoints(userTeam.id) : 0;
+  
+  // Determine if we should use team points
+  const shouldUseTeamPoints = useTeamPoints && userTeam !== null;
+  
+  // Check if user has enough points (either personal or team total)
+  if (shouldUseTeamPoints) {
+    if (teamTotalPoints < reward.points_cost) {
+      throw new Error('Insufficient team points');
+    }
+    // Check if user exceeds their personal points (warning case)
+    if (user.points < reward.points_cost) {
+      // This is allowed but should trigger a warning in the frontend
+      // We'll return a flag indicating this
+    }
+  } else {
+    if (user.points < reward.points_cost) {
+      throw new Error('Insufficient points');
+    }
   }
 
   // Generate unique QR token
@@ -429,12 +448,17 @@ export async function redeemRewardService(rewardId: string, userId: string) {
     }
   }
 
+  // Check if user exceeds personal points (warning case)
+  const exceedsPersonalPoints = shouldUseTeamPoints && user.points < reward.points_cost;
+  
   // Create redemption record with QR token (points NOT deducted yet - will be deducted on verification)
+  // Store whether team points should be used in a JSON metadata field
+  const metadata = shouldUseTeamPoints && userTeam ? { useTeamPoints: true, teamId: userTeam.id } : null;
   const redemptionResult = await db.query(
-    `INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
      RETURNING *`,
-    [userId, rewardId, voucherCode || null, 'pending', qrToken]
+    [userId, rewardId, voucherCode || null, 'pending', qrToken, metadata]
   );
 
   return {
@@ -446,6 +470,8 @@ export async function redeemRewardService(rewardId: string, userId: string) {
       status: redemptionResult.rows[0].status,
     },
     remainingPoints: user.points, // Points not deducted yet
+    teamTotalPoints: shouldUseTeamPoints ? teamTotalPoints : undefined,
+    exceedsPersonalPoints: exceedsPersonalPoints,
     message: 'QR code generated. Please show it to an administrator for verification.',
   };
 }
@@ -613,23 +639,64 @@ export async function redeemRewardQrCodeService(qrToken: string, employeeUserId:
   }
 
   const redemption = redemptionResult.rows[0];
+  
+  // Parse metadata to check if team points should be used
+  let useTeamPoints = false;
+  let teamId: string | null = null;
+  if (redemption.metadata) {
+    try {
+      const metadata = typeof redemption.metadata === 'string' ? JSON.parse(redemption.metadata) : redemption.metadata;
+      useTeamPoints = metadata?.useTeamPoints === true;
+      teamId = metadata?.teamId || null;
+    } catch (e) {
+      // If metadata parsing fails, assume no team points
+      console.warn('Failed to parse redemption metadata:', e);
+    }
+  }
 
-  // Check if user still has enough points (in case they spent them elsewhere)
-  if (redemption.user_points < redemption.points_cost) {
-    // Mark as expired if user doesn't have enough points
-    await db.query(
-      `UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`,
-      [redemption.id]
-    );
-    throw new Error('User no longer has sufficient points for this redemption');
+  // Check if user still has enough points (either personal or team total)
+  if (useTeamPoints && teamId) {
+    const teamTotalPoints = await getTeamTotalPoints(teamId);
+    if (teamTotalPoints < redemption.points_cost) {
+      // Mark as expired if team doesn't have enough points
+      await db.query(
+        `UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`,
+        [redemption.id]
+      );
+      throw new Error('Team no longer has sufficient points for this redemption');
+    }
+  } else {
+    if (redemption.user_points < redemption.points_cost) {
+      // Mark as expired if user doesn't have enough points
+      await db.query(
+        `UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`,
+        [redemption.id]
+      );
+      throw new Error('User no longer has sufficient points for this redemption');
+    }
   }
 
   // Deduct points cost and add possible points (moegliche_punkte) now that QR code is redeemed
   const pointsToAdd = redemption.moegliche_punkte || 0;
-  await db.query(
-    'UPDATE users SET points = points - $1 + $2 WHERE id = $3',
-    [redemption.points_cost, pointsToAdd, redemption.user_id]
-  );
+  
+  if (useTeamPoints && teamId) {
+    // Deduct points from team members (user's points first, then distribute remainder)
+    await deductTeamPoints(teamId, redemption.user_id, redemption.points_cost);
+    
+    // Add possible points to the user
+    if (pointsToAdd > 0) {
+      await db.query(
+        'UPDATE users SET points = points + $1 WHERE id = $2',
+        [pointsToAdd, redemption.user_id]
+      );
+    }
+  } else {
+    // Deduct points from user only
+    await db.query(
+      'UPDATE users SET points = points - $1 + $2 WHERE id = $3',
+      [redemption.points_cost, pointsToAdd, redemption.user_id]
+    );
+  }
 
   // Update redemption status to 'used'
   await db.query(
