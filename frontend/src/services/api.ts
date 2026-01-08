@@ -309,11 +309,6 @@ export const api = {
     return response.data;
   },
 
-  async getUserStatistics(userId: string) {
-    const response = await apiClient.get(`/statistics/users/${userId}`);
-    return response.data;
-  },
-
   // Admin - Tasks
   async createCustomTask(payload: any) {
     const response = await apiClient.post('/tasks', payload);
