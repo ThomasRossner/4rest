@@ -6,11 +6,17 @@ import { pushToast } from '../../components/Toaster/Toaster';
 import './PointsBonusPage.css';
 
 function PointsBonusPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [pointsAmount, setPointsAmount] = useState<string>('');
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Ensure translations are loaded
+  const getTranslation = (key: string, fallback: string) => {
+    const translation = t(key);
+    return translation !== key ? translation : fallback;
+  };
 
   const handleGenerate = async () => {
     const amount = Number.parseInt(pointsAmount, 10);
@@ -55,16 +61,18 @@ function PointsBonusPage() {
 
   return (
     <div className="points-bonus-page">
-      <h1 className="points-bonus-title">{t('employee.pointsBonus.title')}</h1>
+      <h1 className="points-bonus-title">
+        {getTranslation('employee.pointsBonus.title', 'Punkte-Bonus QR-Code generieren')}
+      </h1>
       <p className="points-bonus-description">
-        {t('employee.pointsBonus.description')}
+        {getTranslation('employee.pointsBonus.description', 'Geben Sie die Anzahl der zu vergebenden Punkte ein und generieren Sie einen QR-Code, den Gäste scannen können, um die Bonus-Punkte zu erhalten.')}
       </p>
 
       {!qrToken ? (
         <div className="points-bonus-form">
           <label className="points-bonus-field">
             <span className="points-bonus-label">
-              {t('employee.pointsBonus.pointsAmount')} *
+              {getTranslation('employee.pointsBonus.pointsAmount', 'Punkte-Anzahl')} *
             </span>
             <input
               type="number"
@@ -72,7 +80,7 @@ function PointsBonusPage() {
               step="1"
               value={pointsAmount}
               onChange={(e) => setPointsAmount(e.target.value)}
-              placeholder={t('employee.pointsBonus.pointsPlaceholder')}
+              placeholder={getTranslation('employee.pointsBonus.pointsPlaceholder', 'Punkte-Anzahl eingeben')}
               disabled={isGenerating}
             />
           </label>
@@ -82,21 +90,21 @@ function PointsBonusPage() {
             disabled={isGenerating || !pointsAmount}
           >
             {isGenerating
-              ? t('employee.pointsBonus.generating')
-              : t('employee.pointsBonus.generate')}
+              ? getTranslation('employee.pointsBonus.generating', 'Wird generiert...')
+              : getTranslation('employee.pointsBonus.generate', 'QR-Code generieren')}
           </button>
         </div>
       ) : (
         <div className="points-bonus-qr-display">
           <h2 className="points-bonus-qr-title">
-            {t('employee.pointsBonus.qrTitle')}
+            {getTranslation('employee.pointsBonus.qrTitle', 'QR-Code generiert')}
           </h2>
           <p className="points-bonus-qr-info">
-            {t('employee.pointsBonus.qrInfo', { amount: pointsAmount })}
+            {getTranslation('employee.pointsBonus.qrInfo', `Punkte-Anzahl: ${pointsAmount}`)}
           </p>
           {expiresAt && (
             <p className="points-bonus-qr-expiry">
-              {t('employee.pointsBonus.expiresAt')}: {new Date(expiresAt).toLocaleString()}
+              {getTranslation('employee.pointsBonus.expiresAt', 'Läuft ab am')}: {new Date(expiresAt).toLocaleString()}
             </p>
           )}
           <div className="points-bonus-qr-container">
@@ -107,10 +115,10 @@ function PointsBonusPage() {
             )}
           </div>
           <p className="points-bonus-qr-instruction">
-            {t('employee.pointsBonus.instruction')}
+            {getTranslation('employee.pointsBonus.instruction', 'Der Gast sollte diesen QR-Code scannen, um die Bonus-Punkte zu erhalten. Dieser Code läuft in 24 Stunden ab.')}
           </p>
           <button className="points-bonus-button" onClick={handleReset}>
-            {t('employee.pointsBonus.generateNew')}
+            {getTranslation('employee.pointsBonus.generateNew', 'Neuen QR-Code generieren')}
           </button>
         </div>
       )}
