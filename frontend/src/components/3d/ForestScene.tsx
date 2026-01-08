@@ -176,27 +176,6 @@ function ForestScene() {
               <planeGeometry args={[12, 12]} />
               <meshStandardMaterial color="#5b8f69" />
             </mesh>
-            {/* Area border (perimeter only) - covers 0-12 range, aligned with ground tile */}
-            <lineSegments position={[0, 0.012, 0]}>
-              <bufferGeometry>
-                <bufferAttribute
-                  attach="attributes-position"
-                  count={8}
-                  array={new Float32Array([
-                    0, 0, 0,    // Top-left (at block origin)
-                    12, 0, 0,   // Top-right
-                    12, 0, 0,   // Top-right
-                    12, 0, 12,  // Bottom-right
-                    12, 0, 12,  // Bottom-right
-                    0, 0, 12,   // Bottom-left
-                    0, 0, 12,   // Bottom-left
-                    0, 0, 0,    // Top-left (close the square)
-                  ])}
-                  itemSize={3}
-                />
-              </bufferGeometry>
-              <lineBasicMaterial color="#e9f2ec" transparent opacity={0.7} />
-            </lineSegments>
             {/* Trees in this area should use local positions (relative to origin) */}
             {area.trees?.map((t: any) => {
               const treeLocalPos = (t.localPosition || t.position) as [number, number, number];
