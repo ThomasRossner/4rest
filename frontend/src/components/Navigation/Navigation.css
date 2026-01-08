@@ -289,14 +289,16 @@
   padding: 0 var(--spacing-xs);
 }
 
-/* Hide navigation items from top bar for non-employee users (show only in bottom navigation) */
+/* Hide navigation items from top bar by default (show only in bottom navigation) */
 .navigation-top .navigation-items-top {
   display: none;
 }
 
-/* Show navigation items in top bar for employees */
-.navigation-top .navigation-items-top:has(.navigation-item) {
+/* Show navigation items in top bar for employees (when items exist) */
+.navigation-top .navigation-items-top:not(:empty) {
   display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
 }
 
 .navigation-item {
