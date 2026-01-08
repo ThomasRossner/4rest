@@ -422,7 +422,7 @@ export async function leaveTeam(userId: string, teamId: string): Promise<void> {
   
   // Prüfe ob Benutzer Mitglied ist
   const memberCheck = await db.query(
-    'SELECT id, points_contributed FROM team_members WHERE team_id = $1 AND user_id = $2',
+    'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
     [teamId, userId]
   );
   
@@ -430,28 +430,12 @@ export async function leaveTeam(userId: string, teamId: string): Promise<void> {
     throw new Error('User is not a member of this team');
   }
   
-  const member = memberCheck.rows[0];
-  const pointsContributed = member.points_contributed || 0;
-  
   // Beginne Transaktion
   await db.query('BEGIN');
   
   try {
-    // Gebe beigetragene Punkte zurück an den Benutzer
-    if (pointsContributed > 0) {
-      await db.query(
-        'UPDATE users SET points = points + $1 WHERE id = $2',
-        [pointsContributed, userId]
-      );
-      
-      // Entferne Punkte vom Team-Pool
-      await db.query(
-        'UPDATE teams SET points_pool = points_pool - $1, updated_at = NOW() WHERE id = $2',
-        [pointsContributed, teamId]
-      );
-    }
-    
     // Entferne Benutzer aus Team
+    // Benutzer behält seine eigenen Punkte - keine Umverteilung
     await db.query(
       'DELETE FROM team_members WHERE team_id = $1 AND user_id = $2',
       [teamId, userId]

@@ -1341,18 +1341,18 @@
       "dissolve": {
         "button": "Team auflösen",
         "dissolving": "Team wird aufgelöst...",
-        "confirm": "Möchten Sie dieses Team wirklich auflösen? Die Punkte werden gleichmäßig auf die Mitglieder verteilt.",
+        "confirm": "Möchten Sie dieses Team wirklich auflösen? Jedes Mitglied behält seine eigenen Punkte.",
         "success": "Team aufgelöst",
-        "successMessage": "Team wurde aufgelöst und Punkte verteilt",
+        "successMessage": "Team wurde aufgelöst. Jedes Mitglied behält seine eigenen Punkte.",
         "error": "Team konnte nicht aufgelöst werden",
         "errorMessage": "Team konnte nicht aufgelöst werden"
       },
       "leave": {
         "button": "Aus Team austreten",
         "leaving": "Austreten...",
-        "confirm": "Möchten Sie wirklich aus diesem Team austreten? Ihre beigetragenen Punkte werden Ihnen zurückgegeben.",
+        "confirm": "Möchten Sie wirklich aus diesem Team austreten? Sie behalten Ihre eigenen Punkte.",
         "success": "Aus Team ausgetreten",
-        "successMessage": "Sie sind aus dem Team ausgetreten und Ihre beigetragenen Punkte wurden zurückgegeben",
+        "successMessage": "Sie sind aus dem Team ausgetreten. Sie behalten Ihre eigenen Punkte.",
         "error": "Austritt fehlgeschlagen",
         "errorMessage": "Austritt aus dem Team konnte nicht durchgeführt werden"
       }

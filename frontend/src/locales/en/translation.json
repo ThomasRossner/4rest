@@ -1351,18 +1351,18 @@
       "dissolve": {
         "button": "Dissolve Team",
         "dissolving": "Dissolving team...",
-        "confirm": "Are you sure you want to dissolve this team? Points will be distributed equally among members.",
+        "confirm": "Are you sure you want to dissolve this team? Each member will keep their own points.",
         "success": "Team dissolved",
-        "successMessage": "Team has been dissolved and points distributed",
+        "successMessage": "Team has been dissolved. Each member keeps their own points.",
         "error": "Failed to dissolve team",
         "errorMessage": "Failed to dissolve team"
       },
       "leave": {
         "button": "Leave Team",
         "leaving": "Leaving...",
-        "confirm": "Are you sure you want to leave this team? Your contributed points will be returned to you.",
+        "confirm": "Are you sure you want to leave this team? You will keep your own points.",
         "success": "Left team",
-        "successMessage": "You have left the team and your contributed points have been returned",
+        "successMessage": "You have left the team. You keep your own points.",
         "error": "Failed to leave team",
         "errorMessage": "Failed to leave team"
       }
