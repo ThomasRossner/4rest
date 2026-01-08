@@ -8,6 +8,55 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.profile-section {
+  margin-top: var(--spacing-xl);
+  background: white;
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.profile-section h2 {
+  font-size: 1.25rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.profile-action-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.profile-action-button:hover {
+  background: var(--color-primary-dark);
+}
+
+.profile-teams-list,
+.profile-contests-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.profile-empty-state {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
 .profile-card {
   background: white;
   padding: var(--spacing-xl);

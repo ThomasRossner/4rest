@@ -13,6 +13,9 @@ import surveyRoutes from './survey.routes.js';
 import debugRoutes from './debug.routes.js';
 import parameterRoutes from './parameter.routes.js';
 import systemConfigRoutes from './system-config.routes.js';
+import userQrRoutes from './user-qr.routes.js';
+import teamRoutes from './team.routes.js';
+import contestRoutes from './contest.routes.js';
 
 export function setupRoutes(): Router {
   const router = Router();
@@ -31,6 +34,9 @@ export function setupRoutes(): Router {
   router.use('/admin/debug', debugRoutes);
   router.use('/admin/parameters', parameterRoutes);
   router.use('/admin/system-config', systemConfigRoutes);
+  router.use('/user/qr-code', userQrRoutes);
+  router.use('/teams', teamRoutes);
+  router.use('/contests', contestRoutes);
 
   return router;
 }

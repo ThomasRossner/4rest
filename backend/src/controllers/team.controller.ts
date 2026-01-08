@@ -1,0 +1,176 @@
+import { RequestHandler } from 'express';
+import { AuthRequest } from '../middleware/authenticate.js';
+import {
+  createTeam,
+  joinTeam,
+  getUserTeams,
+  getTeamDetails,
+  contributePointsToTeam,
+  redeemRewardFromTeam,
+  dissolveTeam,
+  getTeamQrCode,
+} from '../services/team.service.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+
+/**
+ * POST /api/teams/create
+ * Erstellt ein neues Team durch Scannen des QR-Codes eines anderen Benutzers
+ * Body: { scannedUserId: string }
+ */
+export const createTeamController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { scannedUserId } = req.body;
+  
+  if (!scannedUserId || typeof scannedUserId !== 'string') {
+    return res.status(400).json({ error: 'scannedUserId is required' });
+  }
+  
+  const team = await createTeam(authReq.user.id, scannedUserId);
+  res.status(201).json(team);
+});
+
+/**
+ * POST /api/teams/join
+ * Tritt einem Team bei durch Scannen des Team-QR-Codes
+ * Body: { teamQrToken: string }
+ */
+export const joinTeamController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { teamQrToken } = req.body;
+  
+  if (!teamQrToken || typeof teamQrToken !== 'string') {
+    return res.status(400).json({ error: 'teamQrToken is required' });
+  }
+  
+  const team = await joinTeam(authReq.user.id, teamQrToken);
+  res.json(team);
+});
+
+/**
+ * GET /api/teams
+ * Ruft alle Teams des angemeldeten Benutzers ab
+ */
+export const getUserTeamsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const teams = await getUserTeams(authReq.user.id);
+  res.json(teams);
+});
+
+/**
+ * GET /api/teams/:id
+ * Ruft Team-Details ab
+ */
+export const getTeamDetailsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  const teamDetails = await getTeamDetails(id, authReq.user.id);
+  
+  if (!teamDetails) {
+    return res.status(404).json({ error: 'Team not found or access denied' });
+  }
+  
+  res.json(teamDetails);
+});
+
+/**
+ * POST /api/teams/:id/contribute
+ * Trägt Punkte zum Team-Pool bei
+ * Body: { points: number }
+ */
+export const contributePointsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  const { points } = req.body;
+  
+  if (!points || typeof points !== 'number' || points <= 0) {
+    return res.status(400).json({ error: 'Valid points amount is required' });
+  }
+  
+  await contributePointsToTeam(authReq.user.id, id, points);
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/teams/:id/redeem
+ * Löst eine Belohnung mit Team-Punkten ein
+ * Body: { rewardId: string }
+ */
+export const redeemRewardController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  const { rewardId } = req.body;
+  
+  if (!rewardId || typeof rewardId !== 'string') {
+    return res.status(400).json({ error: 'rewardId is required' });
+  }
+  
+  const result = await redeemRewardFromTeam(id, rewardId, authReq.user.id);
+  res.json(result);
+});
+
+/**
+ * DELETE /api/teams/:id
+ * Löst ein Team auf (nur Ersteller)
+ */
+export const dissolveTeamController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  await dissolveTeam(id, authReq.user.id);
+  res.json({ success: true });
+});
+
+/**
+ * GET /api/teams/:id/qr-code
+ * Ruft den QR-Code eines Teams ab
+ */
+export const getTeamQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const teamDetails = await getTeamDetails(id, authReq.user.id);
+  if (!teamDetails) {
+    return res.status(404).json({ error: 'Team not found or access denied' });
+  }
+  
+  const qrToken = await getTeamQrCode(id);
+  
+  if (!qrToken) {
+    return res.status(404).json({ error: 'QR code not found' });
+  }
+  
+  res.json({ qrToken });
+});
+

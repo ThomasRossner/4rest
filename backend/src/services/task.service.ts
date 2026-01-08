@@ -5,6 +5,7 @@ import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamific
 import { UserRole, UserType, HotelId } from '../constants/enums.js';
 import { Location } from './location.service.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
+import { updateContestPoints } from './contest.service.js';
 
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
 
@@ -749,6 +750,20 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
   
   // Distribute task points to growth of a random existing tree (not the newly planted one)
   await addGrowthPointsToRandomTree(userId, task.points, newTreeId);
+
+  // Update contest points for all active contests the user participates in
+  // Get all active contests for this user
+  const activeContests = await db.query(
+    `SELECT c.id FROM contests c
+     INNER JOIN contest_participants cp ON cp.contest_id = c.id
+     WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`,
+    [userId]
+  );
+  
+  // Update points for each active contest
+  for (const contest of activeContests.rows) {
+    await updateContestPoints(userId, contest.id, task.points);
+  }
 
   return {
     success: true,

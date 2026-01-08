@@ -44,6 +44,17 @@ function HomePage() {
     { enabled: !!userId }
   );
 
+  const { data: contests } = useQuery(
+    ['userContests', userId],
+    () => api.getUserContests(),
+    { enabled: !!userId }
+  );
+
+  const activeContests = contests?.filter((c: any) => {
+    const endDate = new Date(c.end_date);
+    return endDate > new Date() && c.active;
+  }) || [];
+
   if (progressLoading && !progress) {
     return (
       <div className="home-page">
@@ -116,6 +127,28 @@ function HomePage() {
               </Link>
             </div>
           </section>
+
+          {activeContests.length > 0 && (
+            <section className="home-section home-section-contests">
+              <div className="home-section-header">
+                <h2 className="home-section-title">{t('home.contests.title') || 'Active Contests'}</h2>
+                <p className="home-section-subtitle">{t('home.contests.subtitle') || 'You are participating in contests'}</p>
+              </div>
+              <div className="home-contests-list">
+                {activeContests.map((contest: any) => (
+                  <div key={contest.id} className="home-contest-card">
+                    <h3>{contest.name || t('home.contests.unnamed') || 'Unnamed Contest'}</h3>
+                    <p className="home-contest-end-date">
+                      {t('home.contests.endDate') || 'Ends'}: {new Date(contest.end_date).toLocaleDateString()}
+                    </p>
+                    <Link to="/profile" className="home-contest-link">
+                      {t('home.contests.viewProfile') || 'View in Profile'}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </div>

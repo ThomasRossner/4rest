@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { ConsentManager } from '../../components/GDPR/ConsentManager';
+import { UserQrCodeDisplay } from '../../components/Teams/UserQrCodeDisplay';
+import { TeamCreator } from '../../components/Teams/TeamCreator';
+import { ContestCreator } from '../../components/Contests/ContestCreator';
+import { TeamQrCodeCarousel } from '../../components/Teams/TeamQrCodeCarousel';
+import { ContestQrCodeCarousel } from '../../components/Contests/ContestQrCodeCarousel';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -19,6 +24,21 @@ function ProfilePage() {
     () => api.getUserProgress(userId as string),
     { enabled: !!userId }
   );
+
+  const { data: teams, refetch: refetchTeams } = useQuery(
+    ['userTeams', userId],
+    () => api.getUserTeams(),
+    { enabled: !!userId }
+  );
+
+  const { data: contests, refetch: refetchContests } = useQuery(
+    ['userContests', userId],
+    () => api.getUserContests(),
+    { enabled: !!userId }
+  );
+
+  const [showTeamCreator, setShowTeamCreator] = useState(false);
+  const [showContestCreator, setShowContestCreator] = useState(false);
 
   const sihotGuest = user?.sihotGuest;
   const sihotReservations = user?.sihotReservations ?? [];
@@ -168,6 +188,88 @@ function ProfilePage() {
           )}
         </section>
       )}
+
+      {/* Personal QR Code */}
+      <section className="profile-section">
+        <h2>{t('profile.qrCode.sectionTitle') || 'Personal QR Code'}</h2>
+        <UserQrCodeDisplay />
+      </section>
+
+      {/* Teams */}
+      <section className="profile-section">
+        <div className="profile-section-header">
+          <h2>{t('profile.teams.title') || 'My Teams'}</h2>
+          <button
+            type="button"
+            className="profile-action-button"
+            onClick={() => setShowTeamCreator(true)}
+          >
+            {t('profile.teams.createButton') || 'Create Team'}
+          </button>
+        </div>
+        {showTeamCreator && (
+          <TeamCreator
+            onSuccess={(teamId) => {
+              refetchTeams();
+              setShowTeamCreator(false);
+            }}
+            onClose={() => setShowTeamCreator(false)}
+          />
+        )}
+        {teams && teams.length > 0 ? (
+          <div className="profile-teams-list">
+            {teams.map((team: any) => (
+              <TeamQrCodeCarousel
+                key={team.id}
+                teamId={team.id}
+                teamName={team.name}
+                isCreator={team.created_by === userId}
+                onDissolve={() => refetchTeams()}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="profile-empty-state">{t('profile.teams.empty') || 'No teams yet. Create one by scanning another user\'s QR code!'}</p>
+        )}
+      </section>
+
+      {/* Contests */}
+      <section className="profile-section">
+        <div className="profile-section-header">
+          <h2>{t('profile.contests.title') || 'My Contests'}</h2>
+          <button
+            type="button"
+            className="profile-action-button"
+            onClick={() => setShowContestCreator(true)}
+          >
+            {t('profile.contests.createButton') || 'Create Contest'}
+          </button>
+        </div>
+        {showContestCreator && (
+          <ContestCreator
+            onSuccess={(contestId) => {
+              refetchContests();
+              setShowContestCreator(false);
+            }}
+            onClose={() => setShowContestCreator(false)}
+          />
+        )}
+        {contests && contests.length > 0 ? (
+          <div className="profile-contests-list">
+            {contests.map((contest: any) => (
+              <ContestQrCodeCarousel
+                key={contest.id}
+                contestId={contest.id}
+                contestName={contest.name}
+                isCreator={contest.created_by === userId}
+                onDissolve={() => refetchContests()}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="profile-empty-state">{t('profile.contests.empty') || 'No contests yet. Create one by scanning another user\'s QR code!'}</p>
+        )}
+      </section>
     </div>
   );
 }

@@ -1,0 +1,455 @@
+import { getPool } from '../database/connection.js';
+import { getUserById } from './user.service.js';
+import { generateQrToken } from './user-qr.service.js';
+import { getOrCreateUserQrCode } from './user-qr.service.js';
+
+export interface Team {
+  id: string;
+  name: string | null;
+  created_by: string;
+  points_pool: number;
+  created_at: Date;
+  updated_at: Date;
+  active: boolean;
+}
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  user_id: string;
+  joined_at: Date;
+  points_contributed: number;
+  user_name?: string;
+  user_email?: string | null;
+}
+
+export interface TeamDetails extends Team {
+  members: TeamMember[];
+  creator_name: string;
+  creator_email: string | null;
+}
+
+/**
+ * Erstellt ein neues Team durch Scannen des QR-Codes eines anderen Benutzers
+ */
+export async function createTeam(creatorId: string, scannedUserId: string): Promise<Team> {
+  const db = getPool();
+  
+  // Prüfe ob beide Benutzer existieren
+  const creator = await getUserById(creatorId);
+  const scannedUser = await getUserById(scannedUserId);
+  
+  if (!creator) {
+    throw new Error('Creator user not found');
+  }
+  if (!scannedUser) {
+    throw new Error('Scanned user not found');
+  }
+  
+  if (creatorId === scannedUserId) {
+    throw new Error('Cannot create team with yourself');
+  }
+  
+  // Erstelle Team
+  const teamResult = await db.query(
+    `INSERT INTO teams (created_by, name) 
+     VALUES ($1, $2) 
+     RETURNING *`,
+    [creatorId, `Team ${creator.name} & ${scannedUser.name}`]
+  );
+  
+  const team = teamResult.rows[0];
+  
+  // Füge beide Benutzer als Mitglieder hinzu
+  await db.query(
+    'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
+    [team.id, creatorId]
+  );
+  
+  await db.query(
+    'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
+    [team.id, scannedUserId]
+  );
+  
+  // Generiere QR-Code für Team
+  await generateTeamQrCode(team.id);
+  
+  return team;
+}
+
+/**
+ * Tritt einem Team bei durch Scannen des Team-QR-Codes
+ */
+export async function joinTeam(userId: string, teamQrToken: string): Promise<Team> {
+  const db = getPool();
+  
+  // Finde Team über QR-Token
+  const qrResult = await db.query(
+    'SELECT team_id FROM team_qr_codes WHERE qr_token = $1',
+    [teamQrToken]
+  );
+  
+  if (qrResult.rows.length === 0) {
+    throw new Error('Invalid team QR code');
+  }
+  
+  const teamId = qrResult.rows[0].team_id;
+  
+  // Prüfe ob Benutzer bereits Mitglied ist
+  const existingMember = await db.query(
+    'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
+    [teamId, userId]
+  );
+  
+  if (existingMember.rows.length > 0) {
+    throw new Error('User is already a member of this team');
+  }
+  
+  // Prüfe ob Team aktiv ist
+  const teamResult = await db.query(
+    'SELECT * FROM teams WHERE id = $1 AND active = TRUE',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found or inactive');
+  }
+  
+  // Füge Benutzer als Mitglied hinzu
+  await db.query(
+    'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
+    [teamId, userId]
+  );
+  
+  return teamResult.rows[0];
+}
+
+/**
+ * Ruft alle Teams eines Benutzers ab
+ */
+export async function getUserTeams(userId: string): Promise<Team[]> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT t.* FROM teams t
+     INNER JOIN team_members tm ON tm.team_id = t.id
+     WHERE tm.user_id = $1 AND t.active = TRUE
+     ORDER BY t.created_at DESC`,
+    [userId]
+  );
+  
+  return result.rows;
+}
+
+/**
+ * Ruft Team-Details mit Mitgliedern ab
+ */
+export async function getTeamDetails(teamId: string, userId: string): Promise<TeamDetails | null> {
+  const db = getPool();
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const memberCheck = await db.query(
+    'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
+    [teamId, userId]
+  );
+  
+  if (memberCheck.rows.length === 0) {
+    return null;
+  }
+  
+  // Hole Team-Informationen
+  const teamResult = await db.query(
+    'SELECT * FROM teams WHERE id = $1',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    return null;
+  }
+  
+  const team = teamResult.rows[0];
+  
+  // Hole Ersteller-Informationen
+  const creatorResult = await db.query(
+    'SELECT name, email FROM users WHERE id = $1',
+    [team.created_by]
+  );
+  const creator = creatorResult.rows[0];
+  
+  // Hole Mitglieder
+  const membersResult = await db.query(
+    `SELECT tm.*, u.name as user_name, u.email as user_email
+     FROM team_members tm
+     INNER JOIN users u ON u.id = tm.user_id
+     WHERE tm.team_id = $1
+     ORDER BY tm.joined_at ASC`,
+    [teamId]
+  );
+  
+  return {
+    ...team,
+    members: membersResult.rows,
+    creator_name: creator?.name || 'Unknown',
+    creator_email: creator?.email || null,
+  };
+}
+
+/**
+ * Trägt Punkte zum Team-Pool bei
+ */
+export async function contributePointsToTeam(userId: string, teamId: string, points: number): Promise<void> {
+  const db = getPool();
+  
+  if (points <= 0) {
+    throw new Error('Points must be positive');
+  }
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const memberCheck = await db.query(
+    'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
+    [teamId, userId]
+  );
+  
+  if (memberCheck.rows.length === 0) {
+    throw new Error('User is not a member of this team');
+  }
+  
+  // Prüfe ob Benutzer genug Punkte hat
+  const userResult = await db.query(
+    'SELECT points FROM users WHERE id = $1',
+    [userId]
+  );
+  
+  if (userResult.rows.length === 0) {
+    throw new Error('User not found');
+  }
+  
+  const userPoints = userResult.rows[0].points;
+  if (userPoints < points) {
+    throw new Error('Insufficient points');
+  }
+  
+  // Beginne Transaktion
+  await db.query('BEGIN');
+  
+  try {
+    // Deduziere Punkte vom Benutzer
+    await db.query(
+      'UPDATE users SET points = points - $1 WHERE id = $2',
+      [points, userId]
+    );
+    
+    // Füge Punkte zum Team-Pool hinzu
+    await db.query(
+      'UPDATE teams SET points_pool = points_pool + $1, updated_at = NOW() WHERE id = $2',
+      [points, teamId]
+    );
+    
+    // Aktualisiere beigetragene Punkte des Mitglieds
+    await db.query(
+      'UPDATE team_members SET points_contributed = points_contributed + $1 WHERE team_id = $2 AND user_id = $3',
+      [points, teamId, userId]
+    );
+    
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  }
+}
+
+/**
+ * Löst eine Belohnung mit Team-Punkten ein
+ */
+export async function redeemRewardFromTeam(teamId: string, rewardId: string, userId: string): Promise<any> {
+  const db = getPool();
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const memberCheck = await db.query(
+    'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
+    [teamId, userId]
+  );
+  
+  if (memberCheck.rows.length === 0) {
+    throw new Error('User is not a member of this team');
+  }
+  
+  // Hole Belohnungs-Informationen
+  const rewardResult = await db.query(
+    'SELECT points_cost FROM rewards WHERE id = $1 AND active = TRUE',
+    [rewardId]
+  );
+  
+  if (rewardResult.rows.length === 0) {
+    throw new Error('Reward not found or inactive');
+  }
+  
+  const pointsCost = rewardResult.rows[0].points_cost;
+  
+  // Hole Team-Punktepool
+  const teamResult = await db.query(
+    'SELECT points_pool FROM teams WHERE id = $1 AND active = TRUE',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found or inactive');
+  }
+  
+  const teamPointsPool = teamResult.rows[0].points_pool;
+  
+  if (teamPointsPool < pointsCost) {
+    throw new Error('Insufficient team points');
+  }
+  
+  // Beginne Transaktion
+  await db.query('BEGIN');
+  
+  try {
+    // Deduziere Punkte vom Team-Pool
+    await db.query(
+      'UPDATE teams SET points_pool = points_pool - $1, updated_at = NOW() WHERE id = $2',
+      [pointsCost, teamId]
+    );
+    
+    // Erstelle Redemption (ohne Punkte vom Benutzer zu deduzieren, da Team-Punkte verwendet werden)
+    const redemptionResult = await db.query(
+      `INSERT INTO reward_redemptions (user_id, reward_id, status)
+       VALUES ($1, $2, 'used')
+       RETURNING *`,
+      [userId, rewardId]
+    );
+    
+    await db.query('COMMIT');
+    
+    return {
+      redemption: redemptionResult.rows[0],
+      team: {
+        id: teamId,
+        points_pool: teamPointsPool - pointsCost,
+      },
+    };
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  }
+}
+
+/**
+ * Löst ein Team auf und verteilt Punkte gleichmäßig
+ */
+export async function dissolveTeam(teamId: string, userId: string): Promise<void> {
+  const db = getPool();
+  
+  // Prüfe ob Benutzer der Ersteller ist
+  const teamResult = await db.query(
+    'SELECT created_by, points_pool FROM teams WHERE id = $1',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found');
+  }
+  
+  const team = teamResult.rows[0];
+  
+  if (team.created_by !== userId) {
+    throw new Error('Only the team creator can dissolve the team');
+  }
+  
+  // Hole alle Mitglieder
+  const membersResult = await db.query(
+    'SELECT user_id FROM team_members WHERE team_id = $1',
+    [teamId]
+  );
+  
+  const members = membersResult.rows;
+  const memberCount = members.length;
+  
+  if (memberCount === 0) {
+    throw new Error('Team has no members');
+  }
+  
+  // Berechne Punkte pro Mitglied (gleichmäßig verteilen)
+  const pointsPerMember = Math.floor(team.points_pool / memberCount);
+  const remainder = team.points_pool % memberCount;
+  
+  // Beginne Transaktion
+  await db.query('BEGIN');
+  
+  try {
+    // Verteile Punkte an Mitglieder
+    for (let i = 0; i < members.length; i++) {
+      const memberUserId = members[i].user_id;
+      let pointsToAdd = pointsPerMember;
+      
+      // Erster Benutzer bekommt den Rest
+      if (i === 0) {
+        pointsToAdd += remainder;
+      }
+      
+      if (pointsToAdd > 0) {
+        await db.query(
+          'UPDATE users SET points = points + $1 WHERE id = $2',
+          [pointsToAdd, memberUserId]
+        );
+      }
+    }
+    
+    // Deaktiviere Team
+    await db.query(
+      'UPDATE teams SET active = FALSE, updated_at = NOW() WHERE id = $1',
+      [teamId]
+    );
+    
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  }
+}
+
+/**
+ * Generiert einen QR-Code für ein Team
+ */
+export async function generateTeamQrCode(teamId: string): Promise<string> {
+  const db = getPool();
+  
+  // Prüfe ob bereits ein QR-Code existiert
+  const existing = await db.query(
+    'SELECT qr_token FROM team_qr_codes WHERE team_id = $1',
+    [teamId]
+  );
+  
+  if (existing.rows.length > 0) {
+    return existing.rows[0].qr_token;
+  }
+  
+  // Erstelle neuen QR-Code
+  const qrToken = generateQrToken();
+  await db.query(
+    'INSERT INTO team_qr_codes (team_id, qr_token) VALUES ($1, $2)',
+    [teamId, qrToken]
+  );
+  
+  return qrToken;
+}
+
+/**
+ * Ruft den QR-Code eines Teams ab
+ */
+export async function getTeamQrCode(teamId: string): Promise<string | null> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT qr_token FROM team_qr_codes WHERE team_id = $1',
+    [teamId]
+  );
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  return result.rows[0].qr_token;
+}
+

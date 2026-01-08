@@ -1270,6 +1270,96 @@
         "balance": "Saldo: {{amount}}"
       },
       "missing": "—"
+    },
+    "qrCode": {
+      "sectionTitle": "Persönlicher QR-Code",
+      "title": "Ihr persönlicher QR-Code",
+      "description": "Teilen Sie diesen QR-Code, um Teams oder Contests mit anderen zu erstellen",
+      "loading": "QR-Code wird geladen...",
+      "error": "QR-Code konnte nicht geladen werden"
+    },
+    "teams": {
+      "title": "Meine Teams",
+      "createButton": "Team erstellen",
+      "empty": "Noch keine Teams. Erstellen Sie eines, indem Sie den QR-Code eines anderen Benutzers scannen!",
+      "create": {
+        "title": "Team erstellen",
+        "subtitle": "Scannen Sie den QR-Code eines anderen Benutzers, um ein Team zu erstellen",
+        "creating": "Team wird erstellt...",
+        "success": "Team erstellt",
+        "successMessage": "Team erfolgreich erstellt",
+        "error": "Team konnte nicht erstellt werden",
+        "errorTitle": "Fehler"
+      },
+      "scanner": {
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
+      },
+      "qrCode": {
+        "title": "Team QR-Code",
+        "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Team beitreten können",
+        "loading": "QR-Code wird geladen...",
+        "error": "QR-Code konnte nicht geladen werden",
+        "errorMessage": "QR-Code konnte nicht geladen werden"
+      },
+      "dissolve": {
+        "button": "Team auflösen",
+        "dissolving": "Team wird aufgelöst...",
+        "confirm": "Möchten Sie dieses Team wirklich auflösen? Die Punkte werden gleichmäßig auf die Mitglieder verteilt.",
+        "success": "Team aufgelöst",
+        "successMessage": "Team wurde aufgelöst und Punkte verteilt",
+        "error": "Team konnte nicht aufgelöst werden",
+        "errorMessage": "Team konnte nicht aufgelöst werden"
+      }
+    },
+    "contests": {
+      "title": "Meine Contests",
+      "createButton": "Contest erstellen",
+      "empty": "Noch keine Contests. Erstellen Sie einen, indem Sie den QR-Code eines anderen Benutzers scannen!",
+      "create": {
+        "title": "Contest erstellen",
+        "subtitle": "Scannen Sie den QR-Code eines anderen Benutzers, um einen Contest zu erstellen",
+        "formTitle": "Contest-Details",
+        "endDate": "Enddatum",
+        "rewardsTitle": "Belohnungen (Optional)",
+        "rewardFirst": "Punkte für 1. Platz",
+        "rewardSecond": "Punkte für 2. Platz",
+        "rewardThird": "Punkte für 3. Platz",
+        "createButton": "Contest erstellen",
+        "creating": "Contest wird erstellt...",
+        "success": "Contest erstellt",
+        "successMessage": "Contest erfolgreich erstellt",
+        "error": "Contest konnte nicht erstellt werden",
+        "errorTitle": "Fehler",
+        "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+        "invalidEndDate": "Enddatum muss in der Zukunft liegen"
+      },
+      "scanner": {
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
+      },
+      "scan": {
+        "error": "QR-Code konnte nicht gescannt werden",
+        "errorTitle": "Fehler"
+      },
+      "qrCode": {
+        "title": "Contest QR-Code",
+        "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Contest beitreten können",
+        "loading": "QR-Code wird geladen...",
+        "error": "QR-Code konnte nicht geladen werden",
+        "errorMessage": "QR-Code konnte nicht geladen werden"
+      },
+      "dissolve": {
+        "button": "Contest auflösen",
+        "dissolving": "Contest wird aufgelöst...",
+        "confirm": "Möchten Sie diesen Contest wirklich auflösen?",
+        "success": "Contest aufgelöst",
+        "successMessage": "Contest wurde aufgelöst",
+        "error": "Contest konnte nicht aufgelöst werden",
+        "errorMessage": "Contest konnte nicht aufgelöst werden"
+      }
     }
   },
   "consent": {

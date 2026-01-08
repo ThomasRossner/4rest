@@ -572,4 +572,96 @@ export const api = {
     const response = await apiClient.get('/admin/system-config/reward-cost-calculation-factor');
     return response.data;
   },
+
+  // User QR Codes
+  async getUserQrCode() {
+    const response = await apiClient.get('/user/qr-code');
+    return response.data;
+  },
+
+  async scanUserQrCode(qrToken: string) {
+    const response = await apiClient.post('/user/qr-code/scan', { qrToken });
+    return response.data;
+  },
+
+  // Teams
+  async createTeam(scannedUserId: string) {
+    const response = await apiClient.post('/teams/create', { scannedUserId });
+    return response.data;
+  },
+
+  async joinTeam(teamQrToken: string) {
+    const response = await apiClient.post('/teams/join', { teamQrToken });
+    return response.data;
+  },
+
+  async getUserTeams() {
+    const response = await apiClient.get('/teams');
+    return response.data;
+  },
+
+  async getTeamDetails(teamId: string) {
+    const response = await apiClient.get(`/teams/${teamId}`);
+    return response.data;
+  },
+
+  async contributePointsToTeam(teamId: string, points: number) {
+    const response = await apiClient.post(`/teams/${teamId}/contribute`, { points });
+    // Update user points after contribution
+    await api.refreshMe();
+    return response.data;
+  },
+
+  async redeemRewardWithTeamPoints(teamId: string, rewardId: string) {
+    const response = await apiClient.post(`/teams/${teamId}/redeem`, { rewardId });
+    return response.data;
+  },
+
+  async dissolveTeam(teamId: string) {
+    const response = await apiClient.delete(`/teams/${teamId}`);
+    // Update user points after dissolution (points are distributed)
+    await api.refreshMe();
+    return response.data;
+  },
+
+  async getTeamQrCode(teamId: string) {
+    const response = await apiClient.get(`/teams/${teamId}/qr-code`);
+    return response.data;
+  },
+
+  // Contests
+  async createContest(scannedUserId: string, endDate: string, rewards?: { reward_first_place?: number; reward_second_place?: number; reward_third_place?: number }) {
+    const response = await apiClient.post('/contests/create', { scannedUserId, endDate, rewards });
+    return response.data;
+  },
+
+  async joinContest(contestQrToken: string) {
+    const response = await apiClient.post('/contests/join', { contestQrToken });
+    return response.data;
+  },
+
+  async getUserContests() {
+    const response = await apiClient.get('/contests');
+    return response.data;
+  },
+
+  async getContestDetails(contestId: string) {
+    const response = await apiClient.get(`/contests/${contestId}`);
+    return response.data;
+  },
+
+  async getContestRanking(contestId: string) {
+    const response = await apiClient.get(`/contests/${contestId}/ranking`);
+    return response.data;
+  },
+
+  async dissolveContest(contestId: string) {
+    const response = await apiClient.delete(`/contests/${contestId}`);
+    return response.data;
+  },
+
+  async getContestQrCode(contestId: string) {
+    const response = await apiClient.get(`/contests/${contestId}/qr-code`);
+    return response.data;
+  },
 };

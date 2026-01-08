@@ -10,6 +10,7 @@ import {
   normalizePointsCost,
 } from '../utils/validation.js';
 import { buildAudienceFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
+import { redeemRewardFromTeam } from './team.service.js';
 
 export async function getRewardsService(userId: string) {
   const db = getPool();
