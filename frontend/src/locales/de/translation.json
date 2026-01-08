@@ -1696,6 +1696,7 @@
       "expired": "Abgeschlossene Contests",
       "unnamed": "Unbenannter Contest",
       "duration": "Laufzeit",
+      "noParticipants": "Keine Teilnehmer",
       "remainingDays": "{{count}} Tage verbleibend",
       "remainingDays_plural": "{{count}} Tage verbleibend",
       "showAll": "Alle {{count}} Teilnehmer anzeigen",

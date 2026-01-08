@@ -292,6 +292,41 @@ function RankingsPage() {
         </section>
       )}
 
+      {/* Expired Contests */}
+      {expiredContestsWithRankings.length > 0 && (
+        <section className="rankings-section">
+          <h2 className="rankings-section-title">{t('rankings.contests.expired', 'Abgeschlossene Contests')}</h2>
+          {expiredContestsWithRankings.map((contest: any) => {
+            const startDate = new Date(contest.start_date);
+            const endDate = new Date(contest.end_date);
+
+            return (
+              <div key={contest.id} className="rankings-contest-card">
+                <div className="rankings-contest-header">
+                  <h3 className="rankings-contest-name">{contest.name || t('rankings.contests.unnamed', 'Unbenannter Contest')}</h3>
+                  <div className="rankings-contest-duration">
+                    {t('rankings.contests.duration', 'Laufzeit')}: {startDate.toLocaleDateString('de-DE')} - {endDate.toLocaleDateString('de-DE')}
+                  </div>
+                </div>
+                <div className="rankings-list">
+                  {contest.ranking && contest.ranking.length > 0 ? (
+                    contest.ranking.map((entry: any) => (
+                      <div key={entry.user_id} className="rankings-item">
+                        <div className="rankings-rank">#{entry.rank}</div>
+                        <div className="rankings-name">{entry.user_name}</div>
+                        <div className="rankings-points">{entry.points} {t('rankings.points', 'Punkte')}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="rankings-empty">{t('rankings.contests.noParticipants', 'Keine Teilnehmer')}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       {/* Team Ranking */}
       {activeTeam && teamRanking && (
         <section className="rankings-section">
