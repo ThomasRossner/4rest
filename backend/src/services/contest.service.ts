@@ -105,10 +105,14 @@ export async function createContest(
   
   const contest = contestResult.rows[0];
   
-  // Füge Ersteller als Teilnehmer hinzu (falls noch nicht in participantIds)
-  const allParticipantIds = participantIds && participantIds.length > 0
-    ? [...new Set([creatorId, ...participantIds])] // Ersteller immer hinzufügen, Duplikate entfernen
-    : [creatorId];
+  // Füge Ersteller immer als Teilnehmer hinzu
+  // Sammle alle Teilnehmer-IDs (Ersteller + optionale Teilnehmer)
+  const allParticipantIds = new Set<string>([creatorId]);
+  
+  // Füge optionale Teilnehmer hinzu, falls vorhanden
+  if (participantIds && Array.isArray(participantIds) && participantIds.length > 0) {
+    participantIds.forEach((id: string) => allParticipantIds.add(id));
+  }
   
   // Füge alle Teilnehmer hinzu
   for (const userId of allParticipantIds) {
