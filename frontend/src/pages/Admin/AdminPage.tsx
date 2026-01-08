@@ -6971,35 +6971,35 @@ const goToRewardCreation = () => {
             )}
             <div className="admin-management-actions">
               <div className="admin-bulk-buttons">
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleLocationBulkStatus(true)}
-                  disabled={!hasLocationSelection}
-                  type="button"
-                >
-                  Activate
-                </button>
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleLocationBulkStatus(false)}
-                  disabled={!hasLocationSelection}
-                  type="button"
-                >
-                  Deactivate
-                </button>
-                <button
-                  className="admin-action-button danger"
-                  onClick={handleLocationBulkDelete}
-                  disabled={!hasLocationSelection}
-                  type="button"
-                >
-                  Delete
-                </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => handleLocationBulkStatus(true)}
+                    disabled={!hasLocationSelection}
+                    type="button"
+                  >
+                    {t('admin.locationManage.activate')}
+                  </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => handleLocationBulkStatus(false)}
+                    disabled={!hasLocationSelection}
+                    type="button"
+                  >
+                    {t('admin.locationManage.deactivate')}
+                  </button>
+                  <button
+                    className="admin-action-button danger"
+                    onClick={handleLocationBulkDelete}
+                    disabled={!hasLocationSelection}
+                    type="button"
+                  >
+                    {t('common.actions.delete')}
+                  </button>
               </div>
               <span className="admin-selection-count">
                 {hasLocationSelection
-                  ? `${selectedLocationIds.length} selected`
-                  : 'No locations selected'}
+                  ? t('admin.locationManage.selectedCount', { count: selectedLocationIds.length })
+                  : t('admin.locationManage.noSelection')}
               </span>
             </div>
             <div className="admin-table-wrapper">
@@ -7097,7 +7097,7 @@ const goToRewardCreation = () => {
                               type="button"
                               onClick={() => startLocationEdit(location)}
                             >
-                              Edit
+                              {t('common.actions.edit')}
                             </button>
                             <button
                               className="admin-action-button"
@@ -7105,7 +7105,7 @@ const goToRewardCreation = () => {
                               onClick={() => handleLocationStatusChange(location.id, !location.active)}
                               disabled={isDefaultLocation}
                             >
-                              {location.active ? 'Deactivate' : 'Activate'}
+                              {location.active ? t('admin.locationManage.deactivate') : t('admin.locationManage.activate')}
                             </button>
                             <button
                               className="admin-action-button danger"
@@ -7113,7 +7113,7 @@ const goToRewardCreation = () => {
                               onClick={() => handleLocationDelete(location)}
                               disabled={isDefaultLocation}
                             >
-                              Delete
+                              {t('common.actions.delete')}
                             </button>
                           </td>
                         </tr>
@@ -7222,33 +7222,33 @@ const goToRewardCreation = () => {
             )}
             <div className="admin-management-actions">
               <div className="admin-bulk-buttons">
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleTaskBulkStatus(true)}
-                  disabled={!hasTaskSelection}
-                  type="button"
-                >
-                  Activate
-                </button>
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleTaskBulkStatus(false)}
-                  disabled={!hasTaskSelection}
-                  type="button"
-                >
-                  Deactivate
-                </button>
-                <button
-                  className="admin-action-button danger"
-                  onClick={handleTaskBulkDelete}
-                  disabled={!hasTaskSelection}
-                  type="button"
-                >
-                  Delete
-                </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => handleTaskBulkStatus(true)}
+                    disabled={!hasTaskSelection}
+                    type="button"
+                  >
+                    {t('admin.taskManage.activate')}
+                  </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => handleTaskBulkStatus(false)}
+                    disabled={!hasTaskSelection}
+                    type="button"
+                  >
+                    {t('admin.taskManage.deactivate')}
+                  </button>
+                  <button
+                    className="admin-action-button danger"
+                    onClick={handleTaskBulkDelete}
+                    disabled={!hasTaskSelection}
+                    type="button"
+                  >
+                    {t('common.actions.delete')}
+                  </button>
               </div>
               <span className="admin-selection-count">
-                {hasTaskSelection ? `${selectedTaskIds.length} selected` : 'No tasks selected'}
+                {hasTaskSelection ? t('admin.taskManage.selectedCount', { count: selectedTaskIds.length }) : t('admin.taskManage.noSelection')}
               </span>
             </div>
             <div className="admin-table-wrapper">
@@ -7454,21 +7454,21 @@ const goToRewardCreation = () => {
                               type="button"
                               onClick={() => startTaskEdit(task)}
                             >
-                              Edit
+                              {t('common.actions.edit')}
                             </button>
                             <button
                               className="admin-action-button"
                               type="button"
                               onClick={() => handleTaskStatusChange(task.id, !task.active)}
                             >
-                              {task.active ? 'Deactivate' : 'Activate'}
+                              {task.active ? t('admin.taskManage.deactivate') : t('admin.taskManage.activate')}
                             </button>
                             <button
                               className="admin-action-button danger"
                               type="button"
                               onClick={() => handleTaskDelete(task.id)}
                             >
-                              Delete
+                              {t('common.actions.delete')}
                             </button>
                           </td>
                         </tr>
@@ -7656,35 +7656,35 @@ const goToRewardCreation = () => {
             )}
             <div className="admin-management-actions">
               <div className="admin-bulk-buttons">
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleRewardBulkStatus(true)}
-                  disabled={!hasRewardSelection}
-                  type="button"
-                >
-                  Activate
-                </button>
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleRewardBulkStatus(false)}
-                  disabled={!hasRewardSelection}
-                  type="button"
-                >
-                  Deactivate
-                </button>
-                <button
-                  className="admin-action-button danger"
-                  onClick={handleRewardBulkDelete}
-                  disabled={!hasRewardSelection}
-                  type="button"
-                >
-                  Delete
-                </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => handleRewardBulkStatus(true)}
+                    disabled={!hasRewardSelection}
+                    type="button"
+                  >
+                    {t('admin.rewardManage.activate')}
+                  </button>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => handleRewardBulkStatus(false)}
+                    disabled={!hasRewardSelection}
+                    type="button"
+                  >
+                    {t('admin.rewardManage.deactivate')}
+                  </button>
+                  <button
+                    className="admin-action-button danger"
+                    onClick={handleRewardBulkDelete}
+                    disabled={!hasRewardSelection}
+                    type="button"
+                  >
+                    {t('common.actions.delete')}
+                  </button>
               </div>
               <span className="admin-selection-count">
                 {hasRewardSelection
-                  ? `${selectedRewardIds.length} selected`
-                  : 'No rewards selected'}
+                  ? t('admin.rewardManage.selectedCount', { count: selectedRewardIds.length })
+                  : t('admin.rewardManage.noSelection')}
               </span>
             </div>
             <div className="admin-table-wrapper">
@@ -7878,21 +7878,21 @@ const goToRewardCreation = () => {
                                type="button"
                                onClick={() => startRewardEdit(reward)}
                              >
-                               Edit
+                               {t('common.actions.edit')}
                              </button>
                              <button
                                className="admin-action-button"
                                type="button"
                                onClick={() => handleRewardStatusChange(reward.id, !reward.active)}
                              >
-                               {reward.active ? 'Deactivate' : 'Activate'}
+                               {reward.active ? t('admin.rewardManage.deactivate') : t('admin.rewardManage.activate')}
                              </button>
                              <button
                                className="admin-action-button danger"
                                type="button"
                                onClick={() => handleRewardDelete(reward.id)}
                              >
-                               Delete
+                               {t('common.actions.delete')}
                              </button>
                            </td>
                         </tr>

@@ -851,7 +851,11 @@
       "showInactive": "Inaktive anzeigen",
       "selectAll": "Alle Standorte auswählen",
       "online": "Online zugänglich",
-      "newButton": "Neuer Standort"
+      "newButton": "Neuer Standort",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "selectedCount": "{{count}} ausgewählt",
+      "noSelection": "Keine Standorte ausgewählt"
     },
     "taskManage": {
       "title": "Aufgaben verwalten",
@@ -866,7 +870,11 @@
       "showInactive": "Inaktive anzeigen",
       "openFilters": "Filter öffnen",
       "selectAll": "Alle Aufgaben auswählen",
-      "newButton": "Neue Aufgabe"
+      "newButton": "Neue Aufgabe",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "selectedCount": "{{count}} ausgewählt",
+      "noSelection": "Keine Aufgaben ausgewählt"
     },
     "rewardManage": {
       "title": "Belohnungen verwalten",
@@ -882,7 +890,11 @@
       "showInactive": "Inaktive anzeigen",
       "openFilters": "Filter öffnen",
       "selectAll": "Alle Belohnungen auswählen",
-      "newButton": "Neue Belohnung"
+      "newButton": "Neue Belohnung",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "selectedCount": "{{count}} ausgewählt",
+      "noSelection": "Keine Belohnungen ausgewählt"
     },
     "forestStats": {
       "title": "Wald-Debug-Statistiken",
@@ -1330,6 +1342,15 @@
         "successMessage": "Team wurde aufgelöst und Punkte verteilt",
         "error": "Team konnte nicht aufgelöst werden",
         "errorMessage": "Team konnte nicht aufgelöst werden"
+      },
+      "leave": {
+        "button": "Aus Team austreten",
+        "leaving": "Austreten...",
+        "confirm": "Möchten Sie wirklich aus diesem Team austreten? Ihre beigetragenen Punkte werden Ihnen zurückgegeben.",
+        "success": "Aus Team ausgetreten",
+        "successMessage": "Sie sind aus dem Team ausgetreten und Ihre beigetragenen Punkte wurden zurückgegeben",
+        "error": "Austritt fehlgeschlagen",
+        "errorMessage": "Austritt aus dem Team konnte nicht durchgeführt werden"
       }
     },
     "contests": {

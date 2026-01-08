@@ -847,7 +847,11 @@
       "showInactive": "Show inactive",
       "selectAll": "Select all locations",
       "online": "Accessible online",
-      "newButton": "New location"
+      "newButton": "New location",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "selectedCount": "{{count}} selected",
+      "noSelection": "No locations selected"
     },
     "taskManage": {
       "title": "Manage Tasks",
@@ -862,7 +866,11 @@
       "showInactive": "Show inactive",
       "openFilters": "Open filters",
       "selectAll": "Select all tasks",
-      "newButton": "New task"
+      "newButton": "New task",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "selectedCount": "{{count}} selected",
+      "noSelection": "No tasks selected"
     },
     "rewardManage": {
       "title": "Manage Rewards",
@@ -878,7 +886,11 @@
       "showInactive": "Show inactive",
       "openFilters": "Open filters",
       "selectAll": "Select all rewards",
-      "newButton": "New reward"
+      "newButton": "New reward",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "selectedCount": "{{count}} selected",
+      "noSelection": "No rewards selected"
     },
     "forestStats": {
       "title": "Forest Debug Stats",
@@ -1340,6 +1352,15 @@
         "successMessage": "Team has been dissolved and points distributed",
         "error": "Failed to dissolve team",
         "errorMessage": "Failed to dissolve team"
+      },
+      "leave": {
+        "button": "Leave Team",
+        "leaving": "Leaving...",
+        "confirm": "Are you sure you want to leave this team? Your contributed points will be returned to you.",
+        "success": "Left team",
+        "successMessage": "You have left the team and your contributed points have been returned",
+        "error": "Failed to leave team",
+        "errorMessage": "Failed to leave team"
       }
     },
     "contests": {

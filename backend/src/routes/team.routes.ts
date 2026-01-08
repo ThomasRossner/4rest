@@ -8,6 +8,7 @@ import {
   contributePointsController,
   redeemRewardController,
   dissolveTeamController,
+  leaveTeamController,
   getTeamQrCodeController,
 } from '../controllers/team.controller.js';
 
@@ -19,6 +20,7 @@ router.get('/', authenticate, getUserTeamsController);
 router.get('/:id', authenticate, getTeamDetailsController);
 router.post('/:id/contribute', authenticate, contributePointsController);
 router.post('/:id/redeem', authenticate, redeemRewardController);
+router.post('/:id/leave', authenticate, leaveTeamController);
 router.delete('/:id', authenticate, dissolveTeamController);
 router.get('/:id/qr-code', authenticate, getTeamQrCodeController);
 

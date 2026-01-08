@@ -9,15 +9,17 @@ type TeamQrCodeCarouselProps = {
   teamId: string;
   teamName?: string | null;
   onDissolve?: () => void;
+  onLeave?: () => void;
   isCreator?: boolean;
 };
 
-export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, isCreator }: TeamQrCodeCarouselProps) {
+export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCreator }: TeamQrCodeCarouselProps) {
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDissolving, setIsDissolving] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     const loadQrCode = async () => {
@@ -63,6 +65,31 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, isCreator }: 
     }
   };
 
+  const handleLeave = async () => {
+    if (!confirm(t('teams.leave.confirm') || 'Are you sure you want to leave this team? Your contributed points will be returned to you.')) {
+      return;
+    }
+
+    setIsLeaving(true);
+    try {
+      await api.leaveTeam(teamId);
+      showToast({
+        type: 'success',
+        title: t('teams.leave.success') || 'Left team',
+        message: t('teams.leave.successMessage') || 'You have left the team and your contributed points have been returned',
+      });
+      onLeave?.();
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: t('teams.leave.error') || 'Error',
+        message: error?.response?.data?.error || error?.message || t('teams.leave.errorMessage') || 'Failed to leave team',
+      });
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="team-qr-loading">{t('teams.qrCode.loading') || 'Loading...'}</div>;
   }
@@ -78,7 +105,7 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, isCreator }: 
         <QRCodeSVG value={qrToken} size={200} level="M" />
       </div>
       <p className="team-qr-description">{t('teams.qrCode.description') || 'Share this QR code to let others join your team'}</p>
-      {isCreator && (
+      {isCreator ? (
         <button
           type="button"
           className="team-dissolve-button"
@@ -86,6 +113,15 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, isCreator }: 
           disabled={isDissolving}
         >
           {isDissolving ? (t('teams.dissolve.dissolving') || 'Dissolving...') : (t('teams.dissolve.button') || 'Dissolve Team')}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="team-leave-button"
+          onClick={handleLeave}
+          disabled={isLeaving}
+        >
+          {isLeaving ? (t('teams.leave.leaving') || 'Leaving...') : (t('teams.leave.button') || 'Leave Team')}
         </button>
       )}
     </div>

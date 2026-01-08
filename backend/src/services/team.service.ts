@@ -408,10 +408,87 @@ export async function dissolveTeam(teamId: string, userId: string): Promise<void
       }
     }
     
+    // Entferne alle Mitglieder (CASCADE sollte das automatisch machen, aber zur Sicherheit)
+    await db.query(
+      'DELETE FROM team_members WHERE team_id = $1',
+      [teamId]
+    );
+    
     // Deaktiviere Team
     await db.query(
       'UPDATE teams SET active = FALSE, updated_at = NOW() WHERE id = $1',
       [teamId]
+    );
+    
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  }
+}
+
+/**
+ * Tritt aus einem Team aus (nicht der Ersteller)
+ */
+export async function leaveTeam(userId: string, teamId: string): Promise<void> {
+  const db = getPool();
+  
+  // Prüfe ob Team existiert
+  const teamResult = await db.query(
+    'SELECT created_by, active FROM teams WHERE id = $1',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found');
+  }
+  
+  const team = teamResult.rows[0];
+  
+  if (!team.active) {
+    throw new Error('Team is not active');
+  }
+  
+  // Prüfe ob Benutzer der Ersteller ist
+  if (team.created_by === userId) {
+    throw new Error('Team creator cannot leave the team. Use dissolve instead.');
+  }
+  
+  // Prüfe ob Benutzer Mitglied ist
+  const memberCheck = await db.query(
+    'SELECT id, points_contributed FROM team_members WHERE team_id = $1 AND user_id = $2',
+    [teamId, userId]
+  );
+  
+  if (memberCheck.rows.length === 0) {
+    throw new Error('User is not a member of this team');
+  }
+  
+  const member = memberCheck.rows[0];
+  const pointsContributed = member.points_contributed || 0;
+  
+  // Beginne Transaktion
+  await db.query('BEGIN');
+  
+  try {
+    // Gebe beigetragene Punkte zurück an den Benutzer
+    if (pointsContributed > 0) {
+      await db.query(
+        'UPDATE users SET points = points + $1 WHERE id = $2',
+        [pointsContributed, userId]
+      );
+      
+      // Entferne Punkte vom Team-Pool
+      await db.query(
+        'UPDATE teams SET points_pool = points_pool - $1, updated_at = NOW() WHERE id = $2',
+        [pointsContributed, teamId]
+      );
+    }
+    
+    // Entferne Benutzer aus Team
+    await db.query(
+      'DELETE FROM team_members WHERE team_id = $1 AND user_id = $2',
+      [teamId, userId]
     );
     
     await db.query('COMMIT');

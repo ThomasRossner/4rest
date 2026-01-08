@@ -8,6 +8,7 @@ import {
   contributePointsToTeam,
   redeemRewardFromTeam,
   dissolveTeam,
+  leaveTeam,
   getTeamQrCode,
 } from '../services/team.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -140,6 +141,21 @@ export const dissolveTeamController: RequestHandler = asyncHandler(async (req, r
   
   const { id } = req.params;
   await dissolveTeam(id, authReq.user.id);
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/teams/:id/leave
+ * Tritt aus einem Team aus (nicht der Ersteller)
+ */
+export const leaveTeamController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  await leaveTeam(authReq.user.id, id);
   res.json({ success: true });
 });
 

@@ -617,6 +617,13 @@ export const api = {
     return response.data;
   },
 
+  async leaveTeam(teamId: string) {
+    const response = await apiClient.post(`/teams/${teamId}/leave`);
+    // Update user points after leaving (contributed points are returned)
+    await api.refreshMe();
+    return response.data;
+  },
+
   async dissolveTeam(teamId: string) {
     const response = await apiClient.delete(`/teams/${teamId}`);
     // Update user points after dissolution (points are distributed)

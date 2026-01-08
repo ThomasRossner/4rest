@@ -196,22 +196,24 @@ function ProfilePage() {
       <section className="profile-section">
         <div className="profile-section-header">
           <h2>{t('profile.teams.title') || 'My Teams'}</h2>
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-            <button
-              type="button"
-              className="profile-action-button"
-              onClick={() => setShowTeamJoiner(true)}
-            >
-              {t('profile.teams.joinButton') || 'Team beitreten'}
-            </button>
-            <button
-              type="button"
-              className="profile-action-button"
-              onClick={() => setShowTeamCreator(true)}
-            >
-              {t('profile.teams.createButton') || 'Team anlegen'}
-            </button>
-          </div>
+          {(!teams || teams.length === 0) && (
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              <button
+                type="button"
+                className="profile-action-button"
+                onClick={() => setShowTeamJoiner(true)}
+              >
+                {t('profile.teams.joinButton') || 'Team beitreten'}
+              </button>
+              <button
+                type="button"
+                className="profile-action-button"
+                onClick={() => setShowTeamCreator(true)}
+              >
+                {t('profile.teams.createButton') || 'Team anlegen'}
+              </button>
+            </div>
+          )}
         </div>
         {showTeamCreator && (
           <TeamCreator
@@ -240,6 +242,7 @@ function ProfilePage() {
                 teamName={team.name}
                 isCreator={team.created_by === userId}
                 onDissolve={() => refetchTeams()}
+                onLeave={() => refetchTeams()}
               />
             ))}
           </div>
