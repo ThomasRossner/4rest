@@ -127,6 +127,11 @@
   gap: var(--spacing-xl);
 }
 
+.admin-choice-grid-compact {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--spacing-md);
+}
+
 .admin-choice-card {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);

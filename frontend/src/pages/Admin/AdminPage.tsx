@@ -4568,7 +4568,7 @@ const goToRewardCreation = () => {
       {mode === null && (
         <>
           {/* 1. Reihe: Verwaltungs-Kacheln */}
-          <div className="admin-choice-grid">
+          <div className="admin-choice-grid admin-choice-grid-compact">
             <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
               <span className="admin-choice-icon">🗂️</span>
               <h2>{t('admin.actions.manageTasks.title')}</h2>
