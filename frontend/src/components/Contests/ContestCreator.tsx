@@ -17,7 +17,10 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
   const showToast = useToastStore((s) => s.showToast);
   const user = useAuthStore((s) => s.user);
   const [contestName, setContestName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('00:00');
   const [endDate, setEndDate] = useState('');
+  const [endTime, setEndTime] = useState('23:59');
   const [rewardFirst, setRewardFirst] = useState('');
   const [rewardSecond, setRewardSecond] = useState('');
   const [rewardThird, setRewardThird] = useState('');
@@ -33,19 +36,24 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
     ? (roleFilter === 'all' ? 'employee' : roleFilter) 
     : roleFilter;
   
-  const { data: usersData, isLoading: usersLoading } = useQuery(
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery(
     ['users', effectiveRoleFilter, onlyEmployeeParticipants],
-    () => {
+    async () => {
       const roleToFilter = onlyEmployeeParticipants 
         ? (effectiveRoleFilter === 'all' ? undefined : effectiveRoleFilter)
         : (effectiveRoleFilter === 'all' ? undefined : effectiveRoleFilter);
       
-      return api.listUsers({ 
-        role: roleToFilter, 
-        active: true 
-      }).then((data: any) => {
+      try {
+        const data = await api.listUsers({ 
+          role: roleToFilter, 
+          active: true,
+          limit: 1000 // Get all users
+        });
+        
+        console.log('[ContestCreator] Users data:', data); // Debug log
+        
         // If onlyEmployeeParticipants is true, filter out guests and stakeholders
-        if (onlyEmployeeParticipants && data.users) {
+        if (onlyEmployeeParticipants && data?.users) {
           return {
             ...data,
             users: data.users.filter((u: any) => 
@@ -54,12 +62,20 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           };
         }
         return data;
-      });
+      } catch (error) {
+        console.error('[ContestCreator] Error loading users:', error);
+        throw error;
+      }
     },
     { enabled: isEmployee }
   );
 
   const users = usersData?.users || [];
+  
+  // Debug log
+  if (isEmployee) {
+    console.log('[ContestCreator] isEmployee:', isEmployee, 'usersLoading:', usersLoading, 'users:', users, 'usersError:', usersError);
+  }
 
   // Calculate minimum date (tomorrow)
   const tomorrow = new Date();
@@ -67,7 +83,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
   const minDate = tomorrow.toISOString().split('T')[0];
 
   const handleCreateContest = async () => {
-    if (!endDate) {
+    if (!startDate || !startTime || !endDate || !endTime) {
       showToast({
         type: 'error',
         title: t('contests.create.errorTitle') || 'Error',
@@ -76,8 +92,29 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
       return;
     }
 
-    const endDateObj = new Date(endDate);
-    if (endDateObj <= new Date()) {
+    // Combine date and time
+    const startDateTime = new Date(`${startDate}T${startTime}`);
+    const endDateTime = new Date(`${endDate}T${endTime}`);
+
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      showToast({
+        type: 'error',
+        title: t('contests.create.errorTitle') || 'Error',
+        message: t('contests.create.invalidDateTime') || 'Invalid date or time',
+      });
+      return;
+    }
+
+    if (startDateTime >= endDateTime) {
+      showToast({
+        type: 'error',
+        title: t('contests.create.errorTitle') || 'Error',
+        message: t('contests.create.startAfterEnd') || 'Start date must be before end date',
+      });
+      return;
+    }
+
+    if (endDateTime <= new Date()) {
       showToast({
         type: 'error',
         title: t('contests.create.errorTitle') || 'Error',
@@ -98,7 +135,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
         : undefined;
 
       const participantIds = selectedParticipants.size > 0 ? Array.from(selectedParticipants) : undefined;
-      const contest = await api.createContest(endDate, contestName || undefined, rewards, participantIds);
+      const contest = await api.createContest(startDateTime.toISOString(), endDateTime.toISOString(), contestName || undefined, rewards, participantIds);
       
       showToast({
         type: 'success',
@@ -151,15 +188,48 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
 
       <div className="contest-form-field">
         <label>
+          {t('contests.create.startDate') || 'Start Date'} *
+        </label>
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            min={new Date().toISOString().split('T')[0]}
+            required
+            style={{ flex: 1 }}
+          />
+          <input
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            required
+            style={{ flex: 1 }}
+          />
+        </div>
+      </div>
+
+      <div className="contest-form-field">
+        <label>
           {t('contests.create.endDate') || 'End Date'} *
         </label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          min={minDate}
-          required
-        />
+        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            min={startDate || minDate}
+            required
+            style={{ flex: 1 }}
+          />
+          <input
+            type="time"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            required
+            style={{ flex: 1 }}
+          />
+        </div>
       </div>
 
       {isEmployee && (
@@ -271,7 +341,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
         <button
           type="button"
           onClick={handleCreateContest}
-          disabled={isCreating || !endDate}
+          disabled={isCreating || !startDate || !startTime || !endDate || !endTime}
         >
           {isCreating ? (t('contests.create.creating') || 'Creating...') : (t('contests.create.createButton') || 'Create Contest')}
         </button>

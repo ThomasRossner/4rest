@@ -7,6 +7,7 @@ export interface Contest {
   id: string;
   name: string | null;
   created_by: string;
+  start_date: Date;
   end_date: Date;
   reward_first_place: number | null;
   reward_second_place: number | null;
@@ -53,6 +54,7 @@ export interface ContestRewards {
  */
 export async function createContest(
   creatorId: string,
+  startDate: Date,
   endDate: Date,
   contestName?: string,
   rewards?: ContestRewards,
@@ -65,6 +67,11 @@ export async function createContest(
   
   if (!creator) {
     throw new Error('Creator user not found');
+  }
+  
+  // Prüfe ob Startdatum vor Enddatum liegt
+  if (startDate >= endDate) {
+    throw new Error('Start date must be before end date');
   }
   
   // Prüfe ob Enddatum in der Zukunft liegt
@@ -82,12 +89,13 @@ export async function createContest(
   // Erstelle Contest
   const finalContestName = contestName || `Contest ${creator.name}`;
   const contestResult = await db.query(
-    `INSERT INTO contests (created_by, name, end_date, reward_first_place, reward_second_place, reward_third_place) 
-     VALUES ($1, $2, $3, $4, $5, $6) 
+    `INSERT INTO contests (created_by, name, start_date, end_date, reward_first_place, reward_second_place, reward_third_place) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7) 
      RETURNING *`,
     [
       creatorId,
       finalContestName,
+      startDate,
       endDate,
       rewards?.reward_first_place || null,
       rewards?.reward_second_place || null,
@@ -309,6 +317,7 @@ export async function getContestRanking(contestId: string): Promise<ContestRanki
 /**
  * Aktualisiert die Punkte eines Benutzers in einem Contest
  * Wird automatisch aufgerufen, wenn ein Benutzer eine Aufgabe abschließt
+ * Nur Punkte, die innerhalb des Contest-Zeitraums (start_date bis end_date) gesammelt werden, zählen
  */
 export async function updateContestPoints(userId: string, contestId: string, points: number): Promise<void> {
   const db = getPool();
@@ -317,14 +326,25 @@ export async function updateContestPoints(userId: string, contestId: string, poi
     return; // Keine negativen oder null Punkte
   }
   
-  // Prüfe ob Contest noch aktiv ist
+  const now = new Date();
+  
+  // Prüfe ob Contest noch aktiv ist und ob wir innerhalb des Zeitraums sind
   const contestResult = await db.query(
-    'SELECT id, end_date FROM contests WHERE id = $1 AND active = TRUE AND end_date > NOW()',
+    'SELECT id, start_date, end_date FROM contests WHERE id = $1 AND active = TRUE',
     [contestId]
   );
   
   if (contestResult.rows.length === 0) {
-    return; // Contest ist nicht aktiv oder abgelaufen
+    return; // Contest ist nicht aktiv
+  }
+  
+  const contest = contestResult.rows[0];
+  const startDate = new Date(contest.start_date);
+  const endDate = new Date(contest.end_date);
+  
+  // Prüfe ob wir innerhalb des Contest-Zeitraums sind
+  if (now < startDate || now > endDate) {
+    return; // Außerhalb des Contest-Zeitraums
   }
   
   // Prüfe ob Benutzer Teilnehmer ist

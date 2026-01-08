@@ -16,7 +16,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 /**
  * POST /api/contests/create
  * Erstellt einen neuen Contest
- * Body: { endDate: string (ISO), contestName?: string, rewards?: { reward_first_place?: number, reward_second_place?: number, reward_third_place?: number } }
+ * Body: { startDate: string (ISO), endDate: string (ISO), contestName?: string, rewards?: { reward_first_place?: number, reward_second_place?: number, reward_third_place?: number } }
  */
 export const createContestController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -24,10 +24,19 @@ export const createContestController: RequestHandler = asyncHandler(async (req, 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const { endDate, contestName, rewards, participantIds } = req.body;
+  const { startDate, endDate, contestName, rewards, participantIds } = req.body;
+  
+  if (!startDate || typeof startDate !== 'string') {
+    return res.status(400).json({ error: 'startDate is required (ISO string)' });
+  }
   
   if (!endDate || typeof endDate !== 'string') {
     return res.status(400).json({ error: 'endDate is required (ISO string)' });
+  }
+  
+  const startDateObj = new Date(startDate);
+  if (isNaN(startDateObj.getTime())) {
+    return res.status(400).json({ error: 'Invalid startDate format' });
   }
   
   const endDateObj = new Date(endDate);
@@ -47,6 +56,7 @@ export const createContestController: RequestHandler = asyncHandler(async (req, 
   
   const contest = await createContest(
     authReq.user.id,
+    startDateObj,
     endDateObj,
     contestName,
     rewards,

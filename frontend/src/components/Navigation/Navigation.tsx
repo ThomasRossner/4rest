@@ -134,22 +134,24 @@ function Navigation() {
     <>
       <nav className="navigation navigation-top">
         <div className="navigation-container">
-          {userRole !== 'administrator' && employeeTopItems.length > 0 && (
-            <div className="navigation-items navigation-items-top">
-              {employeeTopItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`navigation-item ${
-                    location.pathname === item.path ? 'active' : ''
-                  }`}
-                >
-                  <span className="navigation-item-icon">{item.icon}</span>
-                  <span className="navigation-item-label">{item.label}</span>
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="navigation-left">
+            {userRole !== 'administrator' && employeeTopItems.length > 0 && (
+              <div className="navigation-items navigation-items-top">
+                {employeeTopItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`navigation-item ${
+                      location.pathname === item.path ? 'active' : ''
+                    }`}
+                  >
+                    <span className="navigation-item-icon">{item.icon}</span>
+                    <span className="navigation-item-label">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="navigation-extra">
             {/* Empty for non-admin users, can be used for future items */}
           </div>
