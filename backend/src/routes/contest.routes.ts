@@ -4,6 +4,7 @@ import {
   createContestController,
   joinContestController,
   getUserContestsController,
+  getAllUserContestsController,
   getEmployeeContestsController,
   getContestDetailsController,
   getContestRankingController,
