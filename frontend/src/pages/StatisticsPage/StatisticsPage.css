@@ -64,6 +64,11 @@
   color: var(--color-text-light);
 }
 
+.rankings-contest-remaining {
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
 .rankings-list {
   display: flex;
   flex-direction: column;

@@ -60,7 +60,7 @@ export function TimelineChart({ data }: TimelineChartProps) {
       </div>
       <div className="timeline-chart-container">
         <div className="timeline-chart-bars">
-          {displayData.points.map((point, index) => (
+          {chartData.points.map((point, index) => (
             <div key={index} className="timeline-bar-group">
               <div className="timeline-bar-label">{formatDate(point.date)}</div>
               <div className="timeline-bars">
@@ -71,13 +71,13 @@ export function TimelineChart({ data }: TimelineChartProps) {
                 ></div>
                 <div
                   className="timeline-bar timeline-bar-trees"
-                  style={{ height: `${displayData.trees[index].normalized * 100}%` }}
-                  title={`${displayData.trees[index].trees} ${t('rankings.timeline.trees', 'Bäume')}`}
+                  style={{ height: `${chartData.trees[index].normalized * 100}%` }}
+                  title={`${chartData.trees[index].trees} ${t('rankings.timeline.trees', 'Bäume')}`}
                 ></div>
                 <div
                   className="timeline-bar timeline-bar-co2"
-                  style={{ height: `${displayData.co2[index].normalized * 100}%` }}
-                  title={`${displayData.co2[index].co2.toFixed(2)} kg CO₂`}
+                  style={{ height: `${chartData.co2[index].normalized * 100}%` }}
+                  title={`${chartData.co2[index].co2.toFixed(2)} kg CO₂`}
                 ></div>
               </div>
             </div>
@@ -85,13 +85,13 @@ export function TimelineChart({ data }: TimelineChartProps) {
         </div>
         <div className="timeline-chart-values">
           <div className="timeline-value-row">
-            <span>{t('rankings.timeline.maxPoints', 'Max. Punkte')}: {displayData.maxPoints}</span>
+            <span>{t('rankings.timeline.maxPoints', 'Max. Punkte')}: {chartData.maxPoints}</span>
           </div>
           <div className="timeline-value-row">
-            <span>{t('rankings.timeline.maxTrees', 'Max. Bäume')}: {displayData.maxTrees}</span>
+            <span>{t('rankings.timeline.maxTrees', 'Max. Bäume')}: {chartData.maxTrees}</span>
           </div>
           <div className="timeline-value-row">
-            <span>{t('rankings.timeline.maxCo2', 'Max. CO₂')}: {displayData.maxCo2.toFixed(2)} kg</span>
+            <span>{t('rankings.timeline.maxCo2', 'Max. CO₂')}: {chartData.maxCo2.toFixed(2)} kg</span>
           </div>
         </div>
       </div>
