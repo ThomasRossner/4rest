@@ -319,6 +319,7 @@ function ProfilePage() {
                 contestName={contest.name}
                 isCreator={contest.created_by === userId}
                 onDissolve={() => refetchContests()}
+                onLeave={() => refetchContests()}
               />
             ))}
           </div>

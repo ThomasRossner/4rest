@@ -1425,6 +1425,15 @@
         "error": "Contest konnte nicht aufgelöst werden",
         "errorMessage": "Contest konnte nicht aufgelöst werden"
       },
+      "leave": {
+        "button": "Contest verlassen",
+        "leaving": "Verlassen...",
+        "confirm": "Möchten Sie wirklich aus diesem Contest austreten?",
+        "success": "Contest verlassen",
+        "successMessage": "Sie haben den Contest verlassen",
+        "error": "Austritt fehlgeschlagen",
+        "errorMessage": "Austritt aus dem Contest konnte nicht durchgeführt werden"
+      },
       "ranking": {
         "title": "Contest-Ranking",
         "timeRemaining": "Verbleibende Zeit",

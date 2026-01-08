@@ -7,6 +7,7 @@ import {
   getContestDetails,
   getContestRanking,
   dissolveContest,
+  leaveContest,
   getContestQrCode,
 } from '../services/contest.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -132,6 +133,21 @@ export const dissolveContestController: RequestHandler = asyncHandler(async (req
   
   const { id } = req.params;
   await dissolveContest(id, authReq.user.id);
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/contests/:id/leave
+ * Verlässt einen Contest (entfernt Benutzer als Teilnehmer)
+ */
+export const leaveContestController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { id } = req.params;
+  await leaveContest(id, authReq.user.id);
   res.json({ success: true });
 });
 

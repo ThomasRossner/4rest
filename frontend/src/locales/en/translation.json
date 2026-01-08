@@ -1681,6 +1681,15 @@
       "successMessage": "Contest has been dissolved",
       "error": "Failed to dissolve contest",
       "errorMessage": "Failed to dissolve contest"
+    },
+    "leave": {
+      "button": "Leave Contest",
+      "leaving": "Leaving...",
+      "confirm": "Are you sure you want to leave this contest?",
+      "success": "Left contest",
+      "successMessage": "You have left the contest",
+      "error": "Failed to leave contest",
+      "errorMessage": "Failed to leave contest"
     }
   }
 }

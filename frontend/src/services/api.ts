@@ -682,6 +682,11 @@ export const api = {
     return response.data;
   },
 
+  async leaveContest(contestId: string) {
+    const response = await apiClient.post(`/contests/${contestId}/leave`);
+    return response.data;
+  },
+
   async getContestQrCode(contestId: string) {
     const response = await apiClient.get(`/contests/${contestId}/qr-code`);
     return response.data;

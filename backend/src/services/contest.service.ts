@@ -145,12 +145,13 @@ export async function joinContest(userId: string, contestQrToken: string): Promi
   );
   
   if (existingParticipant.rows.length > 0) {
-    throw new Error('User is already a participant in this contest');
+    // Benutzer ist bereits Teilnehmer, einfach Contest zurückgeben
+    return contest;
   }
   
-  // Füge Benutzer als Teilnehmer hinzu
+  // Füge Benutzer als Teilnehmer hinzu (startet mit 0 Punkten)
   await db.query(
-    'INSERT INTO contest_participants (contest_id, user_id) VALUES ($1, $2)',
+    'INSERT INTO contest_participants (contest_id, user_id, points) VALUES ($1, $2, 0)',
     [contestId, userId]
   );
   
@@ -403,6 +404,47 @@ export async function dissolveContest(contestId: string, userId: string): Promis
   await db.query(
     'UPDATE contests SET active = FALSE, updated_at = NOW() WHERE id = $1',
     [contestId]
+  );
+}
+
+/**
+ * Verlässt einen Contest (entfernt Benutzer als Teilnehmer)
+ */
+export async function leaveContest(contestId: string, userId: string): Promise<void> {
+  const db = getPool();
+  
+  // Prüfe ob Contest existiert und aktiv ist
+  const contestResult = await db.query(
+    'SELECT id, created_by FROM contests WHERE id = $1 AND active = TRUE',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found or inactive');
+  }
+  
+  const contest = contestResult.rows[0];
+  
+  // Ersteller kann Contest nicht verlassen, nur auflösen
+  if (contest.created_by === userId) {
+    throw new Error('Contest creator cannot leave the contest. Use dissolve instead.');
+  }
+  
+  // Prüfe ob Benutzer Teilnehmer ist
+  const participantCheck = await db.query(
+    'SELECT id FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
+    [contestId, userId]
+  );
+  
+  if (participantCheck.rows.length === 0) {
+    throw new Error('User is not a participant in this contest');
+  }
+  
+  // Entferne Benutzer als Teilnehmer
+  // Punkte bleiben auf dem persönlichen Konto (wie spezifiziert)
+  await db.query(
+    'DELETE FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
+    [contestId, userId]
   );
 }
 

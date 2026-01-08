@@ -9,15 +9,17 @@ type ContestQrCodeCarouselProps = {
   contestId: string;
   contestName?: string | null;
   onDissolve?: () => void;
+  onLeave?: () => void;
   isCreator?: boolean;
 };
 
-export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, isCreator }: ContestQrCodeCarouselProps) {
+export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, onLeave, isCreator }: ContestQrCodeCarouselProps) {
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDissolving, setIsDissolving] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     const loadQrCode = async () => {
@@ -63,6 +65,31 @@ export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, isCr
     }
   };
 
+  const handleLeave = async () => {
+    if (!confirm(t('contests.leave.confirm') || 'Are you sure you want to leave this contest?')) {
+      return;
+    }
+
+    setIsLeaving(true);
+    try {
+      await api.leaveContest(contestId);
+      showToast({
+        type: 'success',
+        title: t('contests.leave.success') || 'Left contest',
+        message: t('contests.leave.successMessage') || 'You have left the contest',
+      });
+      onLeave?.();
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: t('contests.leave.error') || 'Error',
+        message: error?.response?.data?.error || error?.message || t('contests.leave.errorMessage') || 'Failed to leave contest',
+      });
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="contest-qr-loading">{t('contests.qrCode.loading') || 'Loading...'}</div>;
   }
@@ -78,7 +105,7 @@ export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, isCr
         <QRCodeSVG value={qrToken} size={200} level="M" />
       </div>
       <p className="contest-qr-description">{t('contests.qrCode.description') || 'Share this QR code to let others join your contest'}</p>
-      {isCreator && (
+      {isCreator ? (
         <button
           type="button"
           className="contest-dissolve-button"
@@ -86,6 +113,15 @@ export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, isCr
           disabled={isDissolving}
         >
           {isDissolving ? (t('contests.dissolve.dissolving') || 'Dissolving...') : (t('contests.dissolve.button') || 'Dissolve Contest')}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="contest-leave-button"
+          onClick={handleLeave}
+          disabled={isLeaving}
+        >
+          {isLeaving ? (t('contests.leave.leaving') || 'Leaving...') : (t('contests.leave.button') || 'Leave Contest')}
         </button>
       )}
     </div>
