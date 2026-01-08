@@ -66,7 +66,7 @@ export function RewardRedemptionDisplay({
             onClick={onCancel}
             disabled={isRedeeming}
           >
-            {t('common.actions.cancel') || 'Abbrechen'}
+            {t('common.actions.cancel', 'Abbrechen')}
           </button>
           <button
             type="button"

@@ -171,7 +171,7 @@ export function ContestCreator({ onSuccess, onClose }: ContestCreatorProps) {
           onClick={onClose}
           disabled={isCreating}
         >
-          {t('common.actions.cancel') || 'Cancel'}
+          {t('common.actions.cancel', 'Abbrechen')}
         </button>
         <button
           type="button"

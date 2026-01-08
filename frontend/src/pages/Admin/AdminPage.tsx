@@ -2312,7 +2312,7 @@ const ConfirmDialog = ({
         </div>
         <div className="admin-modal-footer">
           <button type="button" className="admin-action-button secondary" onClick={onCancel}>
-            {t('common.actions.cancel')}
+            {t('common.actions.cancel', 'Abbrechen')}
           </button>
           <button
             type="button"
@@ -2497,7 +2497,7 @@ function AdminPage() {
         visible: true,
         title: t('admin.forestStats.validation.error'),
         description: error?.message || t('admin.forestStats.validation.startFailed'),
-        confirmLabel: t('common.actions.close'),
+        confirmLabel: t('common.actions.close', 'Schließen'),
         onConfirm: () => setValidationConfirm(defaultConfirmDialogState),
       });
     }
@@ -4914,7 +4914,7 @@ const goToRewardCreation = () => {
                         setValidationJobStatus(null);
                       }}
                     >
-                      {t('common.actions.close')}
+                      {t('common.actions.close', 'Schließen')}
                     </button>
                   </div>
                 )}
@@ -6226,7 +6226,7 @@ const goToRewardCreation = () => {
                         className="admin-action-button secondary"
                         onClick={cancelTaskEdit}
                       >
-                        {t('common.actions.cancel')}
+                        {t('common.actions.cancel', 'Abbrechen')}
                       </button>
                     )}
                     <button
@@ -6633,7 +6633,7 @@ const goToRewardCreation = () => {
                         className="admin-action-button secondary"
                         onClick={cancelRewardEdit}
                       >
-                        {t('common.actions.cancel')}
+                        {t('common.actions.cancel', 'Abbrechen')}
                       </button>
                     )}
                     <button
@@ -6882,7 +6882,7 @@ const goToRewardCreation = () => {
                       className="admin-action-button secondary"
                       onClick={cancelLocationEdit}
                     >
-                      {t('common.actions.cancel')}
+                      {t('common.actions.cancel', 'Abbrechen')}
                     </button>
                   )}
                   <button
@@ -6993,7 +6993,7 @@ const goToRewardCreation = () => {
                     disabled={!hasLocationSelection}
                     type="button"
                   >
-                    {t('common.actions.delete')}
+                    {t('common.actions.delete', 'Löschen')}
                   </button>
               </div>
               <span className="admin-selection-count">
@@ -7097,7 +7097,7 @@ const goToRewardCreation = () => {
                               type="button"
                               onClick={() => startLocationEdit(location)}
                             >
-                              {t('common.actions.edit')}
+                              {t('common.actions.edit', 'Bearbeiten')}
                             </button>
                             <button
                               className="admin-action-button"
@@ -7113,7 +7113,7 @@ const goToRewardCreation = () => {
                               onClick={() => handleLocationDelete(location)}
                               disabled={isDefaultLocation}
                             >
-                              {t('common.actions.delete')}
+                              {t('common.actions.delete', 'Löschen')}
                             </button>
                           </td>
                         </tr>
@@ -7244,7 +7244,7 @@ const goToRewardCreation = () => {
                     disabled={!hasTaskSelection}
                     type="button"
                   >
-                    {t('common.actions.delete')}
+                    {t('common.actions.delete', 'Löschen')}
                   </button>
               </div>
               <span className="admin-selection-count">
@@ -7454,7 +7454,7 @@ const goToRewardCreation = () => {
                               type="button"
                               onClick={() => startTaskEdit(task)}
                             >
-                              {t('common.actions.edit')}
+                              {t('common.actions.edit', 'Bearbeiten')}
                             </button>
                             <button
                               className="admin-action-button"
@@ -7468,7 +7468,7 @@ const goToRewardCreation = () => {
                               type="button"
                               onClick={() => handleTaskDelete(task.id)}
                             >
-                              {t('common.actions.delete')}
+                              {t('common.actions.delete', 'Löschen')}
                             </button>
                           </td>
                         </tr>
@@ -7678,7 +7678,7 @@ const goToRewardCreation = () => {
                     disabled={!hasRewardSelection}
                     type="button"
                   >
-                    {t('common.actions.delete')}
+                    {t('common.actions.delete', 'Löschen')}
                   </button>
               </div>
               <span className="admin-selection-count">
@@ -7878,7 +7878,7 @@ const goToRewardCreation = () => {
                                type="button"
                                onClick={() => startRewardEdit(reward)}
                              >
-                               {t('common.actions.edit')}
+                               {t('common.actions.edit', 'Bearbeiten')}
                              </button>
                              <button
                                className="admin-action-button"
@@ -7892,7 +7892,7 @@ const goToRewardCreation = () => {
                                type="button"
                                onClick={() => handleRewardDelete(reward.id)}
                              >
-                               {t('common.actions.delete')}
+                               {t('common.actions.delete', 'Löschen')}
                              </button>
                            </td>
                         </tr>
