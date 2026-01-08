@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import jsQR from 'jsqr';
 import { useToastStore } from '../../stores/toastStore';
@@ -20,6 +21,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
 
@@ -32,9 +34,28 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const completeMutation = useMutation(
     () => api.completeTask(taskId, {}),
     {
-      onSuccess: () => {
+      onSuccess: async () => {
+        // Invalidate task and progress queries
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
+        
+        // Invalidate team-related queries to update team points and forest
+        if (userId) {
+          await Promise.all([
+            queryClient.invalidateQueries(['userActiveTeam', userId]),
+            queryClient.invalidateQueries(['userTeams', userId]),
+          ]);
+        }
+        queryClient.invalidateQueries(['userActiveTeam']);
+        queryClient.invalidateQueries(['userTeams']);
+        
+        // Refresh user data to update points
+        try {
+          await api.refreshMe();
+        } catch (userError) {
+          console.debug('Failed to refresh user data:', userError);
+        }
+        
         showToast({
           type: 'success',
           title: t('tasks.toast.completedTitle'),

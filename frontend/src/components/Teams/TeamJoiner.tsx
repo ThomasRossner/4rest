@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from 'react-query';
+import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import jsQR from 'jsqr';
@@ -12,6 +14,8 @@ type TeamJoinerProps = {
 
 export function TeamJoiner({ onSuccess, onClose }: TeamJoinerProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   const showToast = useToastStore((s) => s.showToast);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -100,6 +104,27 @@ export function TeamJoiner({ onSuccess, onClose }: TeamJoinerProps) {
 
     try {
       await api.joinTeam(qrData);
+      
+      // Invalidate all relevant queries to immediately update UI
+      if (userId) {
+        await Promise.all([
+          queryClient.invalidateQueries(['userActiveTeam', userId]),
+          queryClient.invalidateQueries(['userTeams', userId]),
+          queryClient.invalidateQueries(['userProgress', userId]),
+        ]);
+      }
+      
+      // Also invalidate queries without userId (for components that don't use userId in key)
+      queryClient.invalidateQueries(['userActiveTeam']);
+      queryClient.invalidateQueries(['userTeams']);
+      
+      // Refetch user data to update points
+      try {
+        await api.refreshMe();
+      } catch (userError) {
+        // Silently fail - user data will be updated on next navigation
+        console.debug('Failed to refresh user data:', userError);
+      }
       
       showToast({
         type: 'success',

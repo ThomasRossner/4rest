@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import { TREES_PER_TASK } from '../../constants/toast';
@@ -26,6 +27,7 @@ interface SurveyQuestion {
 export function SurveyTask({ taskId, onComplete }: SurveyTaskProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
 
@@ -38,9 +40,28 @@ export function SurveyTask({ taskId, onComplete }: SurveyTaskProps) {
   const completeMutation = useMutation(
     (data: { survey_responses: any }) => api.completeTask(taskId, data),
     {
-      onSuccess: () => {
+      onSuccess: async () => {
+        // Invalidate task and progress queries
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
+        
+        // Invalidate team-related queries to update team points and forest
+        if (userId) {
+          await Promise.all([
+            queryClient.invalidateQueries(['userActiveTeam', userId]),
+            queryClient.invalidateQueries(['userTeams', userId]),
+          ]);
+        }
+        queryClient.invalidateQueries(['userActiveTeam']);
+        queryClient.invalidateQueries(['userTeams']);
+        
+        // Refresh user data to update points
+        try {
+          await api.refreshMe();
+        } catch (userError) {
+          console.debug('Failed to refresh user data:', userError);
+        }
+        
         showToast({
           type: 'success',
           title: t('tasks.toast.completedTitle'),

@@ -19,6 +19,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
+  const userId = useAuthStore((s) => s.user?.id);
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
 
@@ -33,9 +34,28 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       return api.completeTask(taskId, { photo_url: photoUrl });
     },
     {
-      onSuccess: () => {
+      onSuccess: async () => {
+        // Invalidate task and progress queries
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
+        
+        // Invalidate team-related queries to update team points and forest
+        if (userId) {
+          await Promise.all([
+            queryClient.invalidateQueries(['userActiveTeam', userId]),
+            queryClient.invalidateQueries(['userTeams', userId]),
+          ]);
+        }
+        queryClient.invalidateQueries(['userActiveTeam']);
+        queryClient.invalidateQueries(['userTeams']);
+        
+        // Refresh user data to update points
+        try {
+          await api.refreshMe();
+        } catch (userError) {
+          console.debug('Failed to refresh user data:', userError);
+        }
+        
         showToast({
           type: 'success',
           title: t('tasks.toast.completedTitle'),
