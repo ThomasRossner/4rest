@@ -118,7 +118,7 @@ function Navigation() {
     { path: '/rewards', label: t('navigation.rewards'), icon: '🎁' },
     { 
       path: '/statistics', 
-      label: userRole === 'guest' ? t('navigation.rankings', 'Rankings') : t('navigation.statistics'), 
+      label: userRole === 'guest' ? t('navigation.rankings') : t('navigation.statistics'), 
       icon: '📈' 
     },
   ];

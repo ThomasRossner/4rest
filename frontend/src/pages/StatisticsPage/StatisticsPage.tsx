@@ -9,8 +9,6 @@ import { TimelineChart } from '../../components/Statistics/TimelineChart';
 import './StatisticsPage.css';
 
 function StatisticsPage() {
-  const user = useAuthStore((s) => s.user);
-  const userId = useAuthStore((s) => s.user?.id);
   const userRole = useAuthStore((s) => s.user?.role);
   const isGuest = userRole === 'guest';
   const { t, i18n } = useTranslation();
