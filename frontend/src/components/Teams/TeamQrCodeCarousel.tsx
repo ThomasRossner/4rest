@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from 'react-query';
+import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import './TeamQrCodeCarousel.css';
@@ -15,6 +17,8 @@ type TeamQrCodeCarouselProps = {
 
 export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCreator }: TeamQrCodeCarouselProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   const showToast = useToastStore((s) => s.showToast);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +52,28 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
     setIsDissolving(true);
     try {
       await api.dissolveTeam(teamId);
+      
+      // Invalidate all relevant queries to immediately update UI
+      if (userId) {
+        await Promise.all([
+          queryClient.invalidateQueries(['userActiveTeam', userId]),
+          queryClient.invalidateQueries(['userTeams', userId]),
+          queryClient.invalidateQueries(['userProgress', userId]),
+        ]);
+      }
+      
+      // Also invalidate queries without userId (for components that don't use userId in key)
+      queryClient.invalidateQueries(['userActiveTeam']);
+      queryClient.invalidateQueries(['userTeams']);
+      
+      // Refetch user data to update points
+      try {
+        await api.refreshMe();
+      } catch (userError) {
+        // Silently fail - user data will be updated on next navigation
+        console.debug('Failed to refresh user data:', userError);
+      }
+      
       showToast({
         type: 'success',
         title: t('teams.dissolve.success') || 'Team dissolved',
@@ -73,6 +99,28 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
     setIsLeaving(true);
     try {
       await api.leaveTeam(teamId);
+      
+      // Invalidate all relevant queries to immediately update UI
+      if (userId) {
+        await Promise.all([
+          queryClient.invalidateQueries(['userActiveTeam', userId]),
+          queryClient.invalidateQueries(['userTeams', userId]),
+          queryClient.invalidateQueries(['userProgress', userId]),
+        ]);
+      }
+      
+      // Also invalidate queries without userId (for components that don't use userId in key)
+      queryClient.invalidateQueries(['userActiveTeam']);
+      queryClient.invalidateQueries(['userTeams']);
+      
+      // Refetch user data to update points
+      try {
+        await api.refreshMe();
+      } catch (userError) {
+        // Silently fail - user data will be updated on next navigation
+        console.debug('Failed to refresh user data:', userError);
+      }
+      
       showToast({
         type: 'success',
         title: t('teams.leave.success') || 'Left team',
