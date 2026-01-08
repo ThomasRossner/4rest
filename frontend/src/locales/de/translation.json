@@ -240,7 +240,9 @@
     "messages": {
       "redeemSuccess": "Belohnung erfolgreich eingelöst",
       "redeemError": "Belohnung konnte nicht eingelöst werden",
-      "notEnoughPoints": "Nicht genug Punkte"
+      "notEnoughPoints": "Nicht genug Punkte",
+      "notEnoughTeamPoints": "Nicht genug Team-Punkte",
+      "exceedsPersonalPoints": "Du überschreitest deinen eigenen Punktestand ({{points}} Punkte). Möchtest du trotzdem fortfahren?"
     },
     "confirm": {
       "title": "Einlösung bestätigen",

@@ -240,7 +240,9 @@
     "messages": {
       "redeemSuccess": "Reward redeemed successfully",
       "redeemError": "Failed to redeem reward",
-      "notEnoughPoints": "Not enough points"
+      "notEnoughPoints": "Not enough points",
+      "notEnoughTeamPoints": "Not enough team points",
+      "exceedsPersonalPoints": "You exceed your own point balance ({{points}} points). Do you want to continue anyway?"
     },
     "confirm": {
       "title": "Confirm Redemption",

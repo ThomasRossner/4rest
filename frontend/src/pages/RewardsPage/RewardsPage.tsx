@@ -39,9 +39,21 @@ function RewardsPage() {
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineRewards, setShowOnlineRewards] = useState(false);
 
-  const handleRedeemClick = async (rewardId: string, cost: number) => {
-    if (!user || user.points < cost) {
-      const infoMessage = t('rewards.messages.notEnoughPoints');
+  const handleRedeemClick = async (rewardId: string, cost: number, useTeamPoints: boolean = false) => {
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if using team points
+    const shouldUseTeamPoints = useTeamPoints && activeTeam !== null && activeTeam !== undefined;
+    const teamTotalPoints = activeTeam?.totalPoints || 0;
+    const availablePoints = shouldUseTeamPoints ? teamTotalPoints : user.points;
+    const exceedsPersonalPoints = shouldUseTeamPoints && user.points < cost;
+
+    if (availablePoints < cost) {
+      const infoMessage = shouldUseTeamPoints 
+        ? t('rewards.messages.notEnoughTeamPoints') || 'Nicht genug Team-Punkte'
+        : t('rewards.messages.notEnoughPoints');
       if (import.meta.env.VITE_UI_POLISH) {
         pushToast({ type: 'info', message: infoMessage });
       } else {
@@ -50,8 +62,16 @@ function RewardsPage() {
       throw new Error('Insufficient points');
     }
 
+    // Show warning if exceeding personal points
+    if (exceedsPersonalPoints) {
+      const warningMessage = t('rewards.messages.exceedsPersonalPoints', { points: user.points });
+      if (!window.confirm(warningMessage)) {
+        throw new Error('Redemption cancelled by user');
+      }
+    }
+
     try {
-      const res = await api.redeemReward(rewardId, cost);
+      const res = await api.redeemReward(rewardId, cost, shouldUseTeamPoints);
       return res;
     } catch (error: any) {
       const errorMessage = error?.message || t('rewards.messages.redeemError');
@@ -132,8 +152,9 @@ function RewardsPage() {
               const teamTotalPoints = activeTeam?.totalPoints || 0;
               const canAfford = user && (user.points >= reward.pointsCost || (activeTeam && teamTotalPoints >= reward.pointsCost));
               if (reward && canAfford) {
-                const useTeamPoints = activeTeam && user.points < reward.pointsCost;
-                handleRedeemClick(reward.id, reward.pointsCost, useTeamPoints);
+                // Always use team points if user is in a team
+              const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
+              handleRedeemClick(reward.id, reward.pointsCost, useTeamPoints);
               }
             }}
           />
@@ -294,7 +315,8 @@ function RewardsPage() {
             reward={reward}
             canAfford={!!user && (user.points >= reward.pointsCost || (activeTeam && (activeTeam.totalPoints || 0) >= reward.pointsCost))}
             onRedeem={(id, cost) => {
-              const useTeamPoints = activeTeam && user && user.points < cost;
+              // Always use team points if user is in a team
+              const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
               return handleRedeemClick(id, cost, useTeamPoints);
             }}
           />
