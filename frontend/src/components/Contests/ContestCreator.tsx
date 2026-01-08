@@ -308,8 +308,24 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           <div className="contest-participants-list">
             {usersLoading ? (
               <p>{t('contests.create.loadingUsers', 'Benutzer werden geladen...')}</p>
+            ) : usersError ? (
+              <div style={{ color: 'red', padding: 'var(--spacing-md)', border: '1px solid red', borderRadius: 'var(--border-radius-sm)' }}>
+                <p><strong>{t('contests.create.errorLoadingUsers', 'Fehler beim Laden der Benutzer')}</strong></p>
+                <p style={{ fontSize: '0.9rem' }}>{usersError?.response?.data?.error || usersError?.message || 'Unknown error'}</p>
+                {usersError?.response?.status && (
+                  <p style={{ fontSize: '0.85rem', marginTop: 'var(--spacing-xs)' }}>
+                    HTTP Status: {usersError.response.status}
+                  </p>
+                )}
+              </div>
             ) : users.length === 0 ? (
-              <p>{t('contests.create.noUsers', 'Keine Benutzer gefunden')}</p>
+              <div style={{ padding: 'var(--spacing-md)' }}>
+                <p>{t('contests.create.noUsers', 'Keine Benutzer gefunden')}</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginTop: 'var(--spacing-xs)' }}>
+                  Filter: {roleFilter === 'all' ? 'Alle Rollen' : roleFilter}
+                  {onlyEmployeeParticipants && ' (nur Mitarbeitende)'}
+                </p>
+              </div>
             ) : (
               <div className="contest-participants-checkboxes">
                 {users.map((userItem: any) => (
