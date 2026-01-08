@@ -4566,65 +4566,74 @@ const goToRewardCreation = () => {
       </header>
 
       {mode === null && (
-        <div className="admin-choice-grid">
-          <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
-            <span className="admin-choice-icon">🗂️</span>
-            <h2>{t('admin.actions.manageTasks.title')}</h2>
-            <p>{t('admin.actions.manageTasks.description')}</p>
-          </button>
-          <button className="admin-choice-card" onClick={() => setMode('rewardManage')}>
-            <span className="admin-choice-icon">🧾</span>
-            <h2>{t('admin.actions.manageRewards.title')}</h2>
-            <p>{t('admin.actions.manageRewards.description')}</p>
-          </button>
-          <button className="admin-choice-card" onClick={() => setMode('locationManage')}>
-            <span className="admin-choice-icon">🗺️</span>
-            <h2>{t('admin.actions.manageLocations.title')}</h2>
-            <p>{t('admin.actions.manageLocations.description')}</p>
-          </button>
-          <button className="admin-choice-card" onClick={() => setMode('qrScanner')}>
-            <span className="admin-choice-icon">📷</span>
-            <h2>{t('admin.actions.redeemRewards.title')}</h2>
-            <p>{t('admin.actions.redeemRewards.description')}</p>
-          </button>
-          <button
-            className="admin-choice-card"
-            onClick={() => {
-              void loadForestStats();
-              setMode('forestStats');
-            }}
-          >
-            <span className="admin-choice-icon">🌲</span>
-            <h2>{t('admin.actions.forestDebugStats.title')}</h2>
-            <p>{t('admin.actions.forestDebugStats.description')}</p>
-          </button>
-          <button
-            className="admin-choice-card"
-            onClick={() => setMode('debugTools')}
-          >
-            <span className="admin-choice-icon">🔧</span>
-            <h2>{t('admin.actions.debugTools.title')}</h2>
-            <p>{t('admin.actions.debugTools.description')}</p>
-          </button>
-          <button
-            className="admin-choice-card"
-            onClick={() => setMode('surveyAnalytics')}
-          >
-            <span className="admin-choice-icon">📊</span>
-            <h2>{t('admin.actions.surveyAnalytics.title')}</h2>
-            <p>{t('admin.actions.surveyAnalytics.description')}</p>
-          </button>
-          <button className="admin-choice-card" onClick={() => setMode('parameterManage')}>
-            <span className="admin-choice-icon">⚙️</span>
-            <h2>{t('admin.actions.manageParameters.title')}</h2>
-            <p>{t('admin.actions.manageParameters.description')}</p>
-          </button>
-          <button className="admin-choice-card" onClick={() => setMode('userManage')}>
-            <span className="admin-choice-icon">👥</span>
-            <h2>{t('admin.actions.manageUsers.title')}</h2>
-            <p>{t('admin.actions.manageUsers.description')}</p>
-          </button>
-        </div>
+        <>
+          {/* 1. Reihe: Verwaltungs-Kacheln */}
+          <div className="admin-choice-grid">
+            <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
+              <span className="admin-choice-icon">🗂️</span>
+              <h2>{t('admin.actions.manageTasks.title')}</h2>
+              <p>{t('admin.actions.manageTasks.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('rewardManage')}>
+              <span className="admin-choice-icon">🧾</span>
+              <h2>{t('admin.actions.manageRewards.title')}</h2>
+              <p>{t('admin.actions.manageRewards.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('locationManage')}>
+              <span className="admin-choice-icon">🗺️</span>
+              <h2>{t('admin.actions.manageLocations.title')}</h2>
+              <p>{t('admin.actions.manageLocations.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('qrScanner')}>
+              <span className="admin-choice-icon">📷</span>
+              <h2>{t('admin.actions.redeemRewards.title')}</h2>
+              <p>{t('admin.actions.redeemRewards.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('parameterManage')}>
+              <span className="admin-choice-icon">⚙️</span>
+              <h2>{t('admin.actions.manageParameters.title')}</h2>
+              <p>{t('admin.actions.manageParameters.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('userManage')}>
+              <span className="admin-choice-icon">👥</span>
+              <h2>{t('admin.actions.manageUsers.title')}</h2>
+              <p>{t('admin.actions.manageUsers.description')}</p>
+            </button>
+          </div>
+          {/* 2. Reihe: Debug-Sachen */}
+          <div className="admin-choice-grid">
+            <button
+              className="admin-choice-card"
+              onClick={() => {
+                void loadForestStats();
+                setMode('forestStats');
+              }}
+            >
+              <span className="admin-choice-icon">🌲</span>
+              <h2>{t('admin.actions.forestDebugStats.title')}</h2>
+              <p>{t('admin.actions.forestDebugStats.description')}</p>
+            </button>
+            <button
+              className="admin-choice-card"
+              onClick={() => setMode('debugTools')}
+            >
+              <span className="admin-choice-icon">🔧</span>
+              <h2>{t('admin.actions.debugTools.title')}</h2>
+              <p>{t('admin.actions.debugTools.description')}</p>
+            </button>
+          </div>
+          {/* 3. Reihe: Umfrage-Analysen */}
+          <div className="admin-choice-grid">
+            <button
+              className="admin-choice-card"
+              onClick={() => setMode('surveyAnalytics')}
+            >
+              <span className="admin-choice-icon">📊</span>
+              <h2>{t('admin.actions.surveyAnalytics.title')}</h2>
+              <p>{t('admin.actions.surveyAnalytics.description')}</p>
+            </button>
+          </div>
+        </>
       )}
 
       {mode === 'surveyAnalytics' && (
