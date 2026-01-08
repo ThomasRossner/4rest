@@ -124,6 +124,12 @@
       "tasksCompleted": "Tasks completed",
       "co2Saved": "CO₂ saved"
     },
+    "contests": {
+      "title": "Contest",
+      "points": "Points",
+      "rank": "Rank",
+      "unnamed": "Unnamed Contest"
+    },
     "quickActions": {
       "title": "Quick actions",
       "subtitle": "Continue your sustainability journey",
@@ -1428,6 +1434,23 @@
         "successMessage": "Contest has been dissolved",
         "error": "Failed to dissolve contest",
         "errorMessage": "Failed to dissolve contest"
+      },
+      "ranking": {
+        "title": "Contest Ranking",
+        "timeRemaining": "Time remaining",
+        "days": "days",
+        "hours": "hours",
+        "minutes": "minutes",
+        "ended": "Contest has ended",
+        "rank": "Rank",
+        "name": "Name",
+        "points": "Points",
+        "you": "You",
+        "notFound": "Contest not found",
+        "notFoundDescription": "The contest you are looking for does not exist or has been deleted.",
+        "noParticipants": "No participants yet",
+        "noParticipantsDescription": "Be the first to join this contest!",
+        "unnamed": "Unnamed Contest"
       }
     }
   },

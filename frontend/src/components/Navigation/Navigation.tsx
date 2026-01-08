@@ -32,6 +32,21 @@ function Navigation() {
     { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds to keep team points updated in real-time
   );
 
+  // Get active contests for contest button
+  const { data: contests } = useQuery(
+    ['userContests', userId],
+    () => api.getUserContests(),
+    { enabled: !!userId, refetchInterval: 5000 }
+  );
+
+  const activeContests = contests?.filter((c: any) => {
+    const endDate = new Date(c.end_date);
+    return endDate > new Date() && c.active;
+  }) || [];
+
+  // Get the first active contest for the button
+  const activeContest = activeContests.length > 0 ? activeContests[0] : null;
+
   // Generate user initials
   const getUserInitials = (name: string): string => {
     const parts = name.trim().split(/\s+/);
@@ -137,6 +152,17 @@ function Navigation() {
             ))}
           </div>
           <div className="navigation-extra">
+            {activeContest && (
+              <Link
+                to={`/contests/${activeContest.id}`}
+                className={`navigation-item navigation-contest-button ${
+                  location.pathname.startsWith('/contests/') ? 'active' : ''
+                }`}
+              >
+                <span className="navigation-item-icon">🏆</span>
+                <span className="navigation-item-label">{activeContest.name || t('contests.title', 'Contest')}</span>
+              </Link>
+            )}
             <LanguageSwitcher compact className="navigation-language" />
           </div>
           <div className="navigation-user" ref={userMenuRef}>

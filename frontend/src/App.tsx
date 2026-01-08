@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage/LoginPage';
 import ProfilePage from './pages/ProfilePage/ProfilePage';
 import AuthCallbackPage from './pages/AuthCallbackPage/AuthCallbackPage';
 import PointsBonusPage from './pages/Employee/PointsBonusPage';
+import ContestRankingPage from './pages/ContestRankingPage/ContestRankingPage';
 
 function ProtectedApp() {
   const { isAuthenticated, user } = useAuthStore();
@@ -39,6 +40,7 @@ function ProtectedApp() {
         <Route path="rewards" element={<RewardsPage />} />
         <Route path="statistics" element={<StatisticsPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="contests/:contestId" element={<ContestRankingPage />} />
         {(user.role === 'employee' || user.role === 'administrator') && (
           <Route path="points-bonus" element={<PointsBonusPage />} />
         )}

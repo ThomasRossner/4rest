@@ -124,6 +124,12 @@
       "tasksCompleted": "Abgeschlossene Aufgaben",
       "co2Saved": "Eingespartes CO₂"
     },
+    "contests": {
+      "title": "Contest",
+      "points": "Punkte",
+      "rank": "Rang",
+      "unnamed": "Unbenannter Contest"
+    },
     "quickActions": {
       "title": "Schnellaktionen",
       "subtitle": "Setze deine Reise fort",
@@ -1418,6 +1424,23 @@
         "successMessage": "Contest wurde aufgelöst",
         "error": "Contest konnte nicht aufgelöst werden",
         "errorMessage": "Contest konnte nicht aufgelöst werden"
+      },
+      "ranking": {
+        "title": "Contest-Ranking",
+        "timeRemaining": "Verbleibende Zeit",
+        "days": "Tage",
+        "hours": "Stunden",
+        "minutes": "Minuten",
+        "ended": "Contest ist beendet",
+        "rank": "Rang",
+        "name": "Name",
+        "points": "Punkte",
+        "you": "Du",
+        "notFound": "Contest nicht gefunden",
+        "notFoundDescription": "Der gesuchte Contest existiert nicht oder wurde gelöscht.",
+        "noParticipants": "Noch keine Teilnehmer",
+        "noParticipantsDescription": "Sei der Erste, der diesem Contest beitritt!",
+        "unnamed": "Unbenannter Contest"
       }
     }
   },

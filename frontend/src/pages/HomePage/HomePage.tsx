@@ -54,13 +54,25 @@ function HomePage() {
   const { data: contests } = useQuery(
     ['userContests', userId],
     () => api.getUserContests(),
-    { enabled: !!userId }
+    { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds for real-time updates
   );
 
   const activeContests = contests?.filter((c: any) => {
     const endDate = new Date(c.end_date);
     return endDate > new Date() && c.active;
   }) || [];
+
+  // Get the first active contest for display
+  const activeContest = activeContests.length > 0 ? activeContests[0] : null;
+  
+  // Get contest ranking to show user's rank and points
+  const { data: contestRanking } = useQuery(
+    ['contestRanking', activeContest?.id],
+    () => api.getContestRanking(activeContest!.id),
+    { enabled: !!activeContest && !!userId, refetchInterval: 5000 }
+  );
+
+  const userContestEntry = contestRanking?.find((entry: any) => entry.user_id === userId);
 
   if (progressLoading && !progress) {
     return (
@@ -148,24 +160,23 @@ function HomePage() {
             </div>
           </section>
 
-          {activeContests.length > 0 && (
+          {activeContest && userContestEntry && (
             <section className="home-section home-section-contests">
               <div className="home-section-header">
-                <h2 className="home-section-title">{t('home.contests.title') || 'Active Contests'}</h2>
-                <p className="home-section-subtitle">{t('home.contests.subtitle') || 'You are participating in contests'}</p>
+                <h2 className="home-section-title">{t('home.contests.title', 'Contest')}</h2>
               </div>
-              <div className="home-contests-list">
-                {activeContests.map((contest: any) => (
-                  <div key={contest.id} className="home-contest-card">
-                    <h3>{contest.name || t('home.contests.unnamed') || 'Unnamed Contest'}</h3>
-                    <p className="home-contest-end-date">
-                      {t('home.contests.endDate') || 'Ends'}: {new Date(contest.end_date).toLocaleDateString()}
-                    </p>
-                    <Link to="/profile" className="home-contest-link">
-                      {t('home.contests.viewProfile') || 'View in Profile'}
-                    </Link>
+              <div className="home-contest-info">
+                <div className="home-contest-name">{activeContest.name || t('home.contests.unnamed', 'Unnamed Contest')}</div>
+                <div className="home-contest-stats">
+                  <div className="home-contest-stat">
+                    <span className="home-contest-stat-label">{t('home.contests.points', 'Points')}:</span>
+                    <span className="home-contest-stat-value">{userContestEntry.points}</span>
                   </div>
-                ))}
+                  <div className="home-contest-stat">
+                    <span className="home-contest-stat-label">{t('home.contests.rank', 'Rank')}:</span>
+                    <span className="home-contest-stat-value">#{userContestEntry.rank}</span>
+                  </div>
+                </div>
               </div>
             </section>
           )}
