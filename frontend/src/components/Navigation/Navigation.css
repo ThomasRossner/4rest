@@ -728,7 +728,8 @@
 
   .navigation-bottom .navigation-items {
     display: flex;
-    justify-content: space-around;
+    justify-content: flex-start;
+    align-items: center;
     width: 100%;
     padding: var(--spacing-xs) var(--spacing-sm);
     gap: var(--spacing-xs);
@@ -869,6 +870,17 @@
   .navigation-bottom .navigation-items {
     padding: var(--spacing-xs) 4px;
     gap: 2px;
+    justify-content: flex-start;
+  }
+  
+  .navigation-logo-bottom {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+    margin-right: var(--spacing-xs);
+  }
+  
+  .navigation-logo-bottom .navigation-logo-icon {
+    font-size: 0.9rem;
   }
 
   .navigation-bottom .navigation-item {
