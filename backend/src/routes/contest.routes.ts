@@ -17,6 +17,7 @@ const router = Router();
 router.post('/create', authenticate, createContestController);
 router.post('/join', authenticate, joinContestController);
 router.get('/', authenticate, getUserContestsController);
+router.get('/all', authenticate, getAllUserContestsController);
 router.get('/employee', authenticate, getEmployeeContestsController);
 router.get('/:id', authenticate, getContestDetailsController);
 router.get('/:id/ranking', authenticate, getContestRankingController);

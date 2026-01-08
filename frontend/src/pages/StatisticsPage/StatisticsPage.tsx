@@ -154,16 +154,22 @@ function RankingsPage() {
   const [expandedContests, setExpandedContests] = useState<Set<string>>(new Set());
   const [expandedTeam, setExpandedTeam] = useState(false);
 
-  // Get user's active contests
+  // Get user's contests (active and expired) for rankings page
   const { data: contests } = useQuery(
-    ['userContests', userId],
-    () => api.getUserContests(),
+    ['allUserContests', userId],
+    () => api.getAllUserContests(),
     { enabled: !!userId, refetchInterval: 5000 }
   );
 
+  // Separate active and expired contests
   const activeContests = contests?.filter((c: any) => {
     const endDate = new Date(c.end_date);
     return endDate > new Date() && c.active;
+  }) || [];
+
+  const expiredContests = contests?.filter((c: any) => {
+    const endDate = new Date(c.end_date);
+    return endDate <= new Date() && c.active;
   }) || [];
 
   // Get user's active team
@@ -173,8 +179,8 @@ function RankingsPage() {
     { enabled: !!userId, refetchInterval: 5000 }
   );
 
-  // Get rankings for each active contest
-  const contestRankingsQueries = useQuery(
+  // Get rankings for active contests
+  const activeContestRankingsQueries = useQuery(
     ['contestRankings', activeContests.map((c: any) => c.id)],
     async () => {
       const rankings = await Promise.all(
@@ -191,7 +197,26 @@ function RankingsPage() {
     { enabled: activeContests.length > 0, refetchInterval: 5000 }
   );
 
-  const contestsWithRankings = contestRankingsQueries.data || [];
+  // Get rankings for expired contests
+  const expiredContestRankingsQueries = useQuery(
+    ['expiredContestRankings', expiredContests.map((c: any) => c.id)],
+    async () => {
+      const rankings = await Promise.all(
+        expiredContests.map(async (contest: any) => {
+          const ranking = await api.getContestRanking(contest.id);
+          return {
+            ...contest,
+            ranking,
+          };
+        })
+      );
+      return rankings;
+    },
+    { enabled: expiredContests.length > 0 }
+  );
+
+  const activeContestsWithRankings = activeContestRankingsQueries.data || [];
+  const expiredContestsWithRankings = expiredContestRankingsQueries.data || [];
 
   // Get team ranking if user is in a team
   const { data: teamRanking } = useQuery(
@@ -222,10 +247,10 @@ function RankingsPage() {
       <h1 className="rankings-title">{t('rankings.title', 'Rankings')}</h1>
 
       {/* Active Contests */}
-      {contestsWithRankings.length > 0 && (
+      {activeContestsWithRankings.length > 0 && (
         <section className="rankings-section">
           <h2 className="rankings-section-title">{t('rankings.contests.title', 'Aktive Contests')}</h2>
-          {contestsWithRankings.map((contest: any) => {
+          {activeContestsWithRankings.map((contest: any) => {
             const isExpanded = expandedContests.has(contest.id);
             const top5 = contest.ranking.slice(0, 5);
             const hasMore = contest.ranking.length > 5;

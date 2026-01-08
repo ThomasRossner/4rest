@@ -206,11 +206,32 @@ export async function joinContest(userId: string, contestQrToken: string): Promi
 export async function getUserContests(userId: string): Promise<Contest[]> {
   const db = getPool();
   
+  // Nur aktive Contests, die noch nicht abgelaufen sind
+  const result = await db.query(
+    `SELECT c.* FROM contests c
+     INNER JOIN contest_participants cp ON cp.contest_id = c.id
+     WHERE cp.user_id = $1 
+       AND c.active = TRUE
+       AND c.end_date > NOW()
+     ORDER BY c.end_date ASC`,
+    [userId]
+  );
+  
+  return result.rows;
+}
+
+/**
+ * Ruft alle Contests eines Benutzers ab (inkl. abgelaufene) - für Rankings-Seite
+ */
+export async function getAllUserContests(userId: string): Promise<Contest[]> {
+  const db = getPool();
+  
+  // Alle Contests, auch abgelaufene
   const result = await db.query(
     `SELECT c.* FROM contests c
      INNER JOIN contest_participants cp ON cp.contest_id = c.id
      WHERE cp.user_id = $1 AND c.active = TRUE
-     ORDER BY c.end_date ASC`,
+     ORDER BY c.end_date DESC`,
     [userId]
   );
   

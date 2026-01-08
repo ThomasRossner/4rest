@@ -1660,6 +1660,7 @@
     "qrCode": {
       "title": "Contest QR-Code",
       "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Contest beitreten können",
+      "duration": "Laufzeit",
       "loading": "QR-Code wird geladen...",
       "error": "QR-Code konnte nicht geladen werden",
       "errorMessage": "QR-Code konnte nicht geladen werden"
@@ -1692,6 +1693,7 @@
     "points": "Punkte",
     "contests": {
       "title": "Aktive Contests",
+      "expired": "Abgeschlossene Contests",
       "unnamed": "Unbenannter Contest",
       "duration": "Laufzeit",
       "remainingDays": "{{count}} Tage verbleibend",

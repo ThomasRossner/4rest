@@ -22,6 +22,7 @@ export function ContestQrCodeCarousel({
   onDissolve, 
   onLeave, 
   isCreator,
+  startDate,
   endDate,
   rewardsAwarded
 }: ContestQrCodeCarouselProps) {
@@ -169,6 +170,11 @@ export function ContestQrCodeCarousel({
       <div className="contest-qr-code-wrapper">
         <QRCodeSVG value={qrToken} size={200} level="M" />
       </div>
+      {startDate && endDate && (
+        <div className="contest-qr-duration">
+          {t('contests.qrCode.duration', 'Laufzeit')}: {new Date(startDate).toLocaleDateString('de-DE')} - {new Date(endDate).toLocaleDateString('de-DE')}
+        </div>
+      )}
       <p className="contest-qr-description">{t('contests.qrCode.description') || 'Share this QR code to let others join your contest'}</p>
       {isCreator ? (
         <button

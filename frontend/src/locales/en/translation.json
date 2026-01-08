@@ -1676,6 +1676,7 @@
     "qrCode": {
       "title": "Contest QR Code",
       "description": "Share this QR code to let others join your contest",
+      "duration": "Duration",
       "loading": "Loading QR code...",
       "error": "Failed to load QR code",
       "errorMessage": "Failed to load QR code"

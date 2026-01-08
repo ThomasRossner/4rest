@@ -89,7 +89,7 @@ export const joinContestController: RequestHandler = asyncHandler(async (req, re
 
 /**
  * GET /api/contests
- * Ruft alle Contests des angemeldeten Benutzers ab
+ * Ruft alle Contests des angemeldeten Benutzers ab (nur aktive, nicht abgelaufene)
  */
 export const getUserContestsController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -98,6 +98,20 @@ export const getUserContestsController: RequestHandler = asyncHandler(async (req
   }
   
   const contests = await getUserContests(authReq.user.id);
+  res.json(contests);
+});
+
+/**
+ * GET /api/contests/all
+ * Ruft alle Contests des angemeldeten Benutzers ab (inkl. abgelaufene) - für Rankings-Seite
+ */
+export const getAllUserContestsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const contests = await getAllUserContests(authReq.user.id);
   res.json(contests);
 });
 
