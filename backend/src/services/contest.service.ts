@@ -184,6 +184,34 @@ export async function getUserContests(userId: string): Promise<Contest[]> {
 }
 
 /**
+ * Ruft alle Contests für Mitarbeitende ab (nur Contests mit Gästen und Stakeholdern)
+ */
+export async function getEmployeeContests(userId: string): Promise<Contest[]> {
+  const db = getPool();
+  
+  // Hole alle Contests, an denen der Mitarbeitende beteiligt ist
+  // UND die mindestens einen Teilnehmer haben, der Gast oder Stakeholder ist
+  const result = await db.query(
+    `SELECT DISTINCT c.* 
+     FROM contests c
+     INNER JOIN contest_participants cp ON cp.contest_id = c.id
+     WHERE cp.user_id = $1 
+       AND c.active = TRUE
+       AND EXISTS (
+         SELECT 1 
+         FROM contest_participants cp2
+         INNER JOIN users u ON u.id = cp2.user_id
+         WHERE cp2.contest_id = c.id
+           AND u.role IN ('guest', 'stakeholder')
+       )
+     ORDER BY c.end_date ASC`,
+    [userId]
+  );
+  
+  return result.rows;
+}
+
+/**
  * Ruft Contest-Details mit Teilnehmern und Ranking ab
  */
 export async function getContestDetails(contestId: string, userId: string): Promise<ContestDetails | null> {

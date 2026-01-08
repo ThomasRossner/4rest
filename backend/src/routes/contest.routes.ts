@@ -4,6 +4,7 @@ import {
   createContestController,
   joinContestController,
   getUserContestsController,
+  getEmployeeContestsController,
   getContestDetailsController,
   getContestRankingController,
   dissolveContestController,
@@ -16,6 +17,7 @@ const router = Router();
 router.post('/create', authenticate, createContestController);
 router.post('/join', authenticate, joinContestController);
 router.get('/', authenticate, getUserContestsController);
+router.get('/employee', authenticate, getEmployeeContestsController);
 router.get('/:id', authenticate, getContestDetailsController);
 router.get('/:id/ranking', authenticate, getContestRankingController);
 router.delete('/:id', authenticate, dissolveContestController);

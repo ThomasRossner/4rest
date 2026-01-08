@@ -79,7 +79,8 @@
 
 .navigation-bottom .navigation-items {
   display: flex;
-  justify-content: space-around;
+  justify-content: flex-start;
+  align-items: center;
   width: 100%;
   padding: var(--spacing-xs) var(--spacing-sm);
   gap: var(--spacing-xs);
@@ -156,6 +157,40 @@
 
 .navigation-bottom .navigation-item:hover .navigation-item-icon {
   transform: scale(1.05);
+}
+
+.navigation-logo-bottom {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  padding: var(--spacing-xs);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: fit-content;
+  margin-right: var(--spacing-sm);
+}
+
+.navigation-logo-bottom:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.navigation-logo-bottom.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
 }
 
 .navigation-container {

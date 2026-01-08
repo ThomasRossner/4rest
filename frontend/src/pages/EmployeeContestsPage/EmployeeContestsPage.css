@@ -1,0 +1,55 @@
+.employee-contests-page {
+  padding: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.employee-contests-title {
+  font-size: 1.67rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.employee-contests-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-lg);
+}
+
+.employee-contests-actions {
+  margin-bottom: var(--spacing-lg);
+}
+
+.employee-contests-create-button {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.employee-contests-create-button:hover {
+  background: var(--color-primary-dark);
+}
+
+.employee-contests-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.employee-contests-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-light);
+  font-style: italic;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+}
+

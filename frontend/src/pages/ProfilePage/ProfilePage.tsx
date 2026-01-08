@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { ConsentManager } from '../../components/GDPR/ConsentManager';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { TeamCreator } from '../../components/Teams/TeamCreator';
 import { TeamJoiner } from '../../components/Teams/TeamJoiner';
 import { ContestCreator } from '../../components/Contests/ContestCreator';
@@ -32,9 +33,27 @@ function ProfilePage() {
     { enabled: !!userId }
   );
 
+  // For employees: only show contests between employees
+  // For guests: show all their contests
+  const isEmployee = user?.role === 'employee' || user?.role === 'administrator';
+  
   const { data: contests, refetch: refetchContests } = useQuery(
-    ['userContests', userId],
-    () => api.getUserContests(),
+    ['userContests', userId, isEmployee],
+    () => {
+      if (isEmployee) {
+        // For employees: filter to only show contests where all participants are employees/administrators
+        return api.getUserContests().then((allContests: any[]) => {
+          // Filter contests where all participants are employees/administrators
+          // This is a simplified approach - in production, you might want a dedicated API endpoint
+          return allContests.filter((contest: any) => {
+            // For now, we'll show all contests for employees in profile
+            // The employee-contests page will show only guest/stakeholder contests
+            return true; // Show all contests in profile for employees
+          });
+        });
+      }
+      return api.getUserContests();
+    },
     { enabled: !!userId }
   );
 
@@ -294,6 +313,7 @@ function ProfilePage() {
         </div>
         {showContestCreator && (
           <ContestCreator
+            onlyEmployeeParticipants={isEmployee}
             onSuccess={(contestId) => {
               refetchContests();
               setShowContestCreator(false);

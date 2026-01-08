@@ -71,6 +71,11 @@
   margin-bottom: var(--spacing-xl);
   padding-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
+  justify-content: space-between;
+}
+
+.profile-language-switcher {
+  margin-left: auto;
 }
 
 .profile-avatar {

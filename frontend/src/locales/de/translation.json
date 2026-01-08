@@ -27,7 +27,7 @@
     }
   },
   "navigation": {
-    "home": "Start",
+    "home": "Roots",
     "tasks": "Aufgaben",
     "forest": "Wald",
     "rewards": "Belohnungen",
@@ -37,7 +37,8 @@
     "logout": "Abmelden",
     "points": "{{count}} Punkte",
     "pointsBonus": "Punkte-Bonus",
-    "scanBonusQr": "Bonus-QR-Code scannen"
+    "scanBonusQr": "Bonus-QR-Code scannen",
+    "contests": "Contests"
   },
   "login": {
     "modes": {
@@ -1670,6 +1671,14 @@
       "successMessage": "Contest wurde aufgelöst",
       "error": "Contest konnte nicht aufgelöst werden",
       "errorMessage": "Contest konnte nicht aufgelöst werden"
+    }
+  },
+  "employee": {
+    "contests": {
+      "title": "Contest-Verwaltung",
+      "subtitle": "Verwalten Sie Contests für Gäste und Stakeholder",
+      "createButton": "Neuen Contest anlegen",
+      "empty": "Noch keine Contests für Gäste und Stakeholder"
     }
   }
 }

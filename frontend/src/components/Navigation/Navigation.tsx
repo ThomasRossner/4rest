@@ -111,59 +111,47 @@ function Navigation() {
     setShowPointsBonusScanner(true);
   };
 
+  // Base navigation items for all non-admin users (shown in bottom navigation)
   const baseNavItems = [
     { path: '/tasks', label: t('navigation.tasks'), icon: '✅' },
     { path: '/forest', label: t('navigation.forest'), icon: '🌲' },
     { path: '/rewards', label: t('navigation.rewards'), icon: '🎁' },
     { path: '/statistics', label: t('navigation.statistics'), icon: '📈' },
   ];
-  const employeeNavItems =
-    userRole === 'employee' || userRole === 'administrator'
-      ? [...baseNavItems, { path: '/points-bonus', label: t('navigation.pointsBonus') || 'Points Bonus', icon: '🎫' }]
-      : baseNavItems;
-  const navItems =
-    userRole === 'administrator'
-      ? [...employeeNavItems, { path: '/admin', label: t('navigation.admin'), icon: '🛠️' }]
-      : employeeNavItems;
+  
+  // Navigation items for bottom bar (all non-admin users)
+  const bottomNavItems = userRole === 'administrator' ? [] : baseNavItems;
+  
+  // Top bar items for employees (Points Bonus and Contests)
+  const employeeTopItems = (userRole === 'employee' || userRole === 'administrator')
+    ? [
+        { path: '/points-bonus', label: t('navigation.pointsBonus') || 'Points Bonus', icon: '🎫' },
+        { path: '/employee-contests', label: t('navigation.contests', 'Contests') || 'Contests', icon: '🏆' },
+      ]
+    : [];
 
   return (
     <>
       <nav className="navigation navigation-top">
         <div className="navigation-container">
-          <Link
-            to="/"
-            className={`navigation-logo ${location.pathname === '/' ? 'active' : ''}`}
-          >
-            <span className="navigation-logo-icon">🌳</span>
-            <span className="navigation-logo-text">{t('common.appName', { defaultValue: 'Roots of Impact' })}</span>
-          </Link>
-          <div className="navigation-items navigation-items-top">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`navigation-item ${
-                  location.pathname === item.path ? 'active' : ''
-                }`}
-              >
-                <span className="navigation-item-icon">{item.icon}</span>
-                <span className="navigation-item-label">{item.label}</span>
-              </Link>
-            ))}
-          </div>
+          {userRole !== 'administrator' && (
+            <div className="navigation-items navigation-items-top">
+              {employeeTopItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`navigation-item ${
+                    location.pathname === item.path ? 'active' : ''
+                  }`}
+                >
+                  <span className="navigation-item-icon">{item.icon}</span>
+                  <span className="navigation-item-label">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          )}
           <div className="navigation-extra">
-            {activeContest && (
-              <Link
-                to={`/contests/${activeContest.id}`}
-                className={`navigation-item navigation-contest-button ${
-                  location.pathname.startsWith('/contests/') ? 'active' : ''
-                }`}
-              >
-                <span className="navigation-item-icon">🏆</span>
-                <span className="navigation-item-label">{activeContest.name || t('contests.title', 'Contest')}</span>
-              </Link>
-            )}
-            <LanguageSwitcher compact className="navigation-language" />
+            {/* Empty for non-admin users, can be used for future items */}
           </div>
           <div className="navigation-user" ref={userMenuRef}>
             <button
@@ -218,7 +206,14 @@ function Navigation() {
       </nav>
       <nav className="navigation navigation-bottom">
         <div className="navigation-items">
-          {navItems.map((item) => (
+          <Link
+            to="/"
+            className={`navigation-logo-bottom ${location.pathname === '/' ? 'active' : ''}`}
+          >
+            <span className="navigation-logo-icon">🌳</span>
+            <span className="navigation-logo-text">{t('navigation.home', 'Roots') || 'Roots'}</span>
+          </Link>
+          {bottomNavItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}

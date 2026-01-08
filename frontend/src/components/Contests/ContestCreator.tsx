@@ -9,9 +9,10 @@ import './ContestCreator.css';
 type ContestCreatorProps = {
   onSuccess?: (contestId: string) => void;
   onClose?: () => void;
+  onlyEmployeeParticipants?: boolean; // If true, only show employees/administrators as participants
 };
 
-export function ContestCreator({ onSuccess, onClose }: ContestCreatorProps) {
+export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = false }: ContestCreatorProps) {
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
   const user = useAuthStore((s) => s.user);
@@ -27,9 +28,34 @@ export function ContestCreator({ onSuccess, onClose }: ContestCreatorProps) {
   const isEmployee = user?.role === 'employee' || user?.role === 'administrator';
 
   // Load users for employee/admin
+  // If onlyEmployeeParticipants is true, filter to only employees/administrators
+  const effectiveRoleFilter = onlyEmployeeParticipants 
+    ? (roleFilter === 'all' ? 'employee' : roleFilter) 
+    : roleFilter;
+  
   const { data: usersData, isLoading: usersLoading } = useQuery(
-    ['users', roleFilter],
-    () => api.listUsers({ role: roleFilter === 'all' ? undefined : roleFilter, active: true }),
+    ['users', effectiveRoleFilter, onlyEmployeeParticipants],
+    () => {
+      const roleToFilter = onlyEmployeeParticipants 
+        ? (effectiveRoleFilter === 'all' ? undefined : effectiveRoleFilter)
+        : (effectiveRoleFilter === 'all' ? undefined : effectiveRoleFilter);
+      
+      return api.listUsers({ 
+        role: roleToFilter, 
+        active: true 
+      }).then((data: any) => {
+        // If onlyEmployeeParticipants is true, filter out guests and stakeholders
+        if (onlyEmployeeParticipants && data.users) {
+          return {
+            ...data,
+            users: data.users.filter((u: any) => 
+              u.role === 'employee' || u.role === 'administrator'
+            )
+          };
+        }
+        return data;
+      });
+    },
     { enabled: isEmployee }
   );
 

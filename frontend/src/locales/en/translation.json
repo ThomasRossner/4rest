@@ -27,7 +27,7 @@
     }
   },
   "navigation": {
-    "home": "Home",
+    "home": "Roots",
     "tasks": "Tasks",
     "forest": "Forest",
     "rewards": "Rewards",
@@ -37,7 +37,8 @@
     "logout": "Logout",
     "points": "{{count}} Points",
     "pointsBonus": "Points Bonus",
-    "scanBonusQr": "Scan Bonus QR Code"
+    "scanBonusQr": "Scan Bonus QR Code",
+    "contests": "Contests"
   },
   "login": {
     "modes": {
@@ -1690,6 +1691,14 @@
       "successMessage": "You have left the contest",
       "error": "Failed to leave contest",
       "errorMessage": "Failed to leave contest"
+    }
+  },
+  "employee": {
+    "contests": {
+      "title": "Contest Management",
+      "subtitle": "Manage contests for guests and stakeholders",
+      "createButton": "Create New Contest",
+      "empty": "No contests for guests and stakeholders yet"
     }
   }
 }

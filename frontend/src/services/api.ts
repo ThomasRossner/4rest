@@ -667,6 +667,11 @@ export const api = {
     return response.data;
   },
 
+  async getEmployeeContests() {
+    const response = await apiClient.get('/contests/employee');
+    return response.data;
+  },
+
   async getContestDetails(contestId: string) {
     const response = await apiClient.get(`/contests/${contestId}`);
     return response.data;

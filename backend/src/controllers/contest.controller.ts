@@ -4,6 +4,7 @@ import {
   createContest,
   joinContest,
   getUserContests,
+  getEmployeeContests,
   getContestDetails,
   getContestRanking,
   dissolveContest,
@@ -87,6 +88,24 @@ export const getUserContestsController: RequestHandler = asyncHandler(async (req
   }
   
   const contests = await getUserContests(authReq.user.id);
+  res.json(contests);
+});
+
+/**
+ * GET /api/contests/employee
+ * Ruft alle Contests für Mitarbeitende ab (nur Contests mit Gästen und Stakeholdern)
+ */
+export const getEmployeeContestsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'employee' && authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Only employees and administrators can access this endpoint' });
+  }
+  
+  const contests = await getEmployeeContests(authReq.user.id);
   res.json(contests);
 });
 
