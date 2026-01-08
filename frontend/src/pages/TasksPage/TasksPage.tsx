@@ -182,9 +182,9 @@ function TasksPage() {
           <button
             className="location-button"
             onClick={() => setShowLocationMap(false)}
-            title={t('tasks.backToList') || 'Zurück zur Liste'}
+            title={t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
           >
-            {t('tasks.backToList') || 'Zurück zur Liste'}
+            {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
           </button>
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
@@ -221,6 +221,16 @@ function TasksPage() {
             >
               {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
             </button>
+          ) : showOnlineTasks ? (
+            <button
+              className="location-button"
+              onClick={() => {
+                setShowLocationMap(false);
+                setShowOnlineTasks(false);
+              }}
+            >
+              {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+            </button>
           ) : (
             <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
               <button
@@ -237,13 +247,9 @@ function TasksPage() {
                 className="location-button"
                 onClick={() => {
                   setShowLocationMap(false);
-                  setShowOnlineTasks(!showOnlineTasks);
+                  setShowOnlineTasks(true);
                 }}
                 title={t('tasks.showOnline') || 'Online'}
-                style={{
-                  backgroundColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.2)' : undefined,
-                  borderColor: showOnlineTasks ? 'rgba(102, 126, 234, 0.4)' : undefined,
-                }}
               >
                 {t('tasks.onlineButton') || 'Online'}
               </button>
