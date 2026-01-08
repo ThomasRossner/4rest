@@ -60,6 +60,7 @@ async function runMigrations() {
       '043_teams_contests',
       '044_reward_redemption_metadata',
       '045_contest_start_date',
+      '046_contest_rewards_awarded',
     ];
     
     // Read all migration files

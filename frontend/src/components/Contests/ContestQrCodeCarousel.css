@@ -79,3 +79,76 @@
   color: var(--color-error);
 }
 
+/* Ranking styles for expired contests */
+.contest-ranking-wrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.contest-ranking-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-md) 0;
+  text-align: center;
+}
+
+.contest-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+}
+
+.contest-ranking-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-background);
+  transition: background-color 0.2s;
+}
+
+.contest-ranking-item:hover {
+  background: var(--color-border-light);
+}
+
+.contest-ranking-rank {
+  font-weight: 600;
+  color: var(--color-primary);
+  min-width: 40px;
+  text-align: center;
+}
+
+.contest-ranking-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.contest-ranking-points {
+  font-weight: 600;
+  color: var(--color-primary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.contest-ranking-empty {
+  text-align: center;
+  color: var(--color-text-light);
+  font-style: italic;
+  padding: var(--spacing-md);
+}
+
+.contest-rewards-awarded {
+  text-align: center;
+  color: var(--color-success, #10b981);
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--color-background);
+  border-radius: var(--border-radius-sm);
+}
+

@@ -12,6 +12,7 @@ export interface Contest {
   reward_first_place: number | null;
   reward_second_place: number | null;
   reward_third_place: number | null;
+  rewards_awarded?: boolean;
   created_at: Date;
   updated_at: Date;
   active: boolean;
@@ -222,13 +223,12 @@ export async function getUserContests(userId: string): Promise<Contest[]> {
 export async function getEmployeeContests(userId: string): Promise<Contest[]> {
   const db = getPool();
   
-  // Hole alle Contests, an denen der Mitarbeitende beteiligt ist
+  // Hole alle Contests, die der Mitarbeitende erstellt hat
   // UND die mindestens einen Teilnehmer haben, der Gast oder Stakeholder ist
   const result = await db.query(
     `SELECT DISTINCT c.* 
      FROM contests c
-     INNER JOIN contest_participants cp ON cp.contest_id = c.id
-     WHERE cp.user_id = $1 
+     WHERE c.created_by = $1 
        AND c.active = TRUE
        AND EXISTS (
          SELECT 1 
@@ -241,7 +241,29 @@ export async function getEmployeeContests(userId: string): Promise<Contest[]> {
     [userId]
   );
   
-  return result.rows;
+  // Prüfe und vergib automatisch Belohnungen für abgelaufene Contests
+  for (const contest of result.rows) {
+    await checkAndAwardContestRewards(contest.id);
+  }
+  
+  // Lade Contests erneut, um aktualisierte rewards_awarded Flags zu erhalten
+  const updatedResult = await db.query(
+    `SELECT DISTINCT c.* 
+     FROM contests c
+     WHERE c.created_by = $1 
+       AND c.active = TRUE
+       AND EXISTS (
+         SELECT 1 
+         FROM contest_participants cp2
+         INNER JOIN users u ON u.id = cp2.user_id
+         WHERE cp2.contest_id = c.id
+           AND u.role IN ('guest', 'stakeholder')
+       )
+     ORDER BY c.end_date ASC`,
+    [userId]
+  );
+  
+  return updatedResult.rows;
 }
 
 /**
@@ -393,7 +415,10 @@ export async function updateContestPoints(userId: string, contestId: string, poi
  * Vergibt Belohnungen nach Contest-Ende
  * Sollte von einem Cron-Job oder manuell aufgerufen werden
  */
-export async function awardContestRewards(contestId: string): Promise<void> {
+/**
+ * Prüft und vergibt automatisch Belohnungen für abgelaufene Contests
+ */
+export async function checkAndAwardContestRewards(contestId: string): Promise<void> {
   const db = getPool();
   
   // Hole Contest-Informationen
@@ -403,14 +428,19 @@ export async function awardContestRewards(contestId: string): Promise<void> {
   );
   
   if (contestResult.rows.length === 0) {
-    throw new Error('Contest not found');
+    return; // Contest nicht gefunden
   }
   
   const contest = contestResult.rows[0];
   
   // Prüfe ob Contest bereits beendet ist
   if (new Date(contest.end_date) > new Date()) {
-    throw new Error('Contest has not ended yet');
+    return; // Contest noch nicht beendet
+  }
+  
+  // Prüfe ob Belohnungen bereits vergeben wurden
+  if (contest.rewards_awarded) {
+    return; // Bereits vergeben
   }
   
   // Prüfe ob Belohnungen definiert sind
@@ -450,6 +480,88 @@ export async function awardContestRewards(contestId: string): Promise<void> {
         [contest.reward_third_place, ranking[2].user_id]
       );
     }
+    
+    // Markiere Belohnungen als vergeben
+    await db.query(
+      'UPDATE contests SET rewards_awarded = TRUE WHERE id = $1',
+      [contestId]
+    );
+    
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
+  }
+}
+
+export async function awardContestRewards(contestId: string): Promise<void> {
+  const db = getPool();
+  
+  // Hole Contest-Informationen
+  const contestResult = await db.query(
+    'SELECT * FROM contests WHERE id = $1',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found');
+  }
+  
+  const contest = contestResult.rows[0];
+  
+  // Prüfe ob Contest bereits beendet ist
+  if (new Date(contest.end_date) > new Date()) {
+    throw new Error('Contest has not ended yet');
+  }
+  
+  // Prüfe ob Belohnungen bereits vergeben wurden
+  if (contest.rewards_awarded) {
+    throw new Error('Rewards have already been awarded');
+  }
+  
+  // Prüfe ob Belohnungen definiert sind
+  if (!contest.reward_first_place && !contest.reward_second_place && !contest.reward_third_place) {
+    return; // Keine Belohnungen definiert
+  }
+  
+  // Hole Top 3 Teilnehmer
+  const ranking = await getContestRanking(contestId);
+  
+  if (ranking.length === 0) {
+    return; // Keine Teilnehmer
+  }
+  
+  // Beginne Transaktion
+  await db.query('BEGIN');
+  
+  try {
+    // Vergib Belohnungen
+    if (ranking.length >= 1 && contest.reward_first_place) {
+      await db.query(
+        'UPDATE users SET points = points + $1 WHERE id = $2',
+        [contest.reward_first_place, ranking[0].user_id]
+      );
+    }
+    
+    if (ranking.length >= 2 && contest.reward_second_place) {
+      await db.query(
+        'UPDATE users SET points = points + $1 WHERE id = $2',
+        [contest.reward_second_place, ranking[1].user_id]
+      );
+    }
+    
+    if (ranking.length >= 3 && contest.reward_third_place) {
+      await db.query(
+        'UPDATE users SET points = points + $1 WHERE id = $2',
+        [contest.reward_third_place, ranking[2].user_id]
+      );
+    }
+    
+    // Markiere Belohnungen als vergeben
+    await db.query(
+      'UPDATE contests SET rewards_awarded = TRUE WHERE id = $1',
+      [contestId]
+    );
     
     await db.query('COMMIT');
   } catch (error) {

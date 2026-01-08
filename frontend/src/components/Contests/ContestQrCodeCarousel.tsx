@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
@@ -11,9 +12,19 @@ type ContestQrCodeCarouselProps = {
   onDissolve?: () => void;
   onLeave?: () => void;
   isCreator?: boolean;
+  endDate?: string | Date;
+  rewardsAwarded?: boolean;
 };
 
-export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, onLeave, isCreator }: ContestQrCodeCarouselProps) {
+export function ContestQrCodeCarousel({ 
+  contestId, 
+  contestName, 
+  onDissolve, 
+  onLeave, 
+  isCreator,
+  endDate,
+  rewardsAwarded
+}: ContestQrCodeCarouselProps) {
   const { t } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
   const [qrToken, setQrToken] = useState<string | null>(null);
@@ -21,7 +32,23 @@ export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, onLe
   const [isDissolving, setIsDissolving] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  // Check if contest is expired
+  const isExpired = endDate ? new Date(endDate) <= new Date() : false;
+
+  // Get contest ranking if expired
+  const { data: ranking } = useQuery(
+    ['contestRanking', contestId],
+    () => api.getContestRanking(contestId),
+    { enabled: isExpired && !!contestId, refetchInterval: 5000 }
+  );
+
   useEffect(() => {
+    // Only load QR code if contest is not expired
+    if (isExpired) {
+      setLoading(false);
+      return;
+    }
+
     const loadQrCode = async () => {
       try {
         const data = await api.getContestQrCode(contestId);
@@ -38,7 +65,7 @@ export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, onLe
     };
 
     loadQrCode();
-  }, [contestId, showToast, t]);
+  }, [contestId, isExpired, showToast, t]);
 
   const handleDissolve = async () => {
     if (!confirm(t('contests.dissolve.confirm') || 'Are you sure you want to dissolve this contest?')) {
@@ -94,6 +121,44 @@ export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, onLe
     return <div className="contest-qr-loading">{t('contests.qrCode.loading') || 'Loading...'}</div>;
   }
 
+  // Show ranking if contest is expired
+  if (isExpired) {
+    return (
+      <div className="contest-qr-carousel">
+        <h4>{contestName || t('contests.qrCode.title') || 'Contest'}</h4>
+        <div className="contest-ranking-wrapper">
+          <h5 className="contest-ranking-title">{t('contests.ranking.title', 'Finale Rangliste')}</h5>
+          {ranking && ranking.length > 0 ? (
+            <div className="contest-ranking-list">
+              {ranking.slice(0, 10).map((entry: any) => (
+                <div key={entry.user_id} className="contest-ranking-item">
+                  <div className="contest-ranking-rank">#{entry.rank}</div>
+                  <div className="contest-ranking-name">{entry.user_name}</div>
+                  <div className="contest-ranking-points">{entry.points} {t('rankings.points', 'Punkte')}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="contest-ranking-empty">{t('contests.ranking.empty', 'Keine Teilnehmer')}</p>
+          )}
+          {rewardsAwarded && (
+            <p className="contest-rewards-awarded">{t('contests.ranking.rewardsAwarded', 'Belohnungen wurden vergeben')}</p>
+          )}
+        </div>
+        {isCreator && (
+          <button
+            type="button"
+            className="contest-dissolve-button"
+            onClick={handleDissolve}
+            disabled={isDissolving}
+          >
+            {isDissolving ? (t('contests.dissolve.dissolving') || 'Dissolving...') : (t('contests.dissolve.button') || 'Dissolve Contest')}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (!qrToken) {
     return <div className="contest-qr-error">{t('contests.qrCode.error') || 'Failed to load QR code'}</div>;
   }
@@ -127,4 +192,3 @@ export function ContestQrCodeCarousel({ contestId, contestName, onDissolve, onLe
     </div>
   );
 }
-

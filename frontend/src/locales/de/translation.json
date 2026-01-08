@@ -1672,6 +1672,11 @@
       "successMessage": "Contest wurde aufgelöst",
       "error": "Contest konnte nicht aufgelöst werden",
       "errorMessage": "Contest konnte nicht aufgelöst werden"
+    },
+    "ranking": {
+      "title": "Finale Rangliste",
+      "empty": "Keine Teilnehmer",
+      "rewardsAwarded": "Belohnungen wurden vergeben"
     }
   },
   "employee": {

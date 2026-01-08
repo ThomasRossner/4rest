@@ -62,6 +62,8 @@ function EmployeeContestsPage() {
               key={contest.id}
               contestId={contest.id}
               contestName={contest.name}
+              endDate={contest.end_date}
+              rewardsAwarded={contest.rewards_awarded}
               isCreator={contest.created_by === userId}
               onDissolve={() => refetchContests()}
               onLeave={() => refetchContests()}
