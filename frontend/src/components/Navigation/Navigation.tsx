@@ -29,7 +29,7 @@ function Navigation() {
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
     () => api.getUserActiveTeam(),
-    { enabled: !!userId, refetchInterval: 30000 } // Refetch every 30 seconds to keep team total updated
+    { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds to keep team points updated in real-time
   );
 
   // Generate user initials

@@ -42,7 +42,7 @@ function ProfilePage() {
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
     () => api.getUserActiveTeam(),
-    { enabled: !!userId, refetchInterval: 30000 }
+    { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds to keep team points updated in real-time
   );
 
   const [showTeamCreator, setShowTeamCreator] = useState(false);
