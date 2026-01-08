@@ -361,3 +361,304 @@ export async function adjustUserPoints(userId: string, pointsDelta: number): Pro
   }
   return result.rows[0].points;
 }
+
+export interface ListUsersFilters {
+  role?: UserRole;
+  active?: boolean;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface UserListItem {
+  id: string;
+  email: string | null;
+  name: string;
+  role: UserRole;
+  user_type: UserType;
+  points: number;
+  active: boolean;
+  created_at: Date;
+  deleted_at: Date | null;
+}
+
+export async function listUsersService(filters?: ListUsersFilters): Promise<{ users: UserListItem[]; total: number }> {
+  const db = getPool();
+  const conditions: string[] = ['deleted_at IS NULL'];
+  const params: any[] = [];
+  let paramIndex = 1;
+
+  if (filters?.role) {
+    conditions.push(`role = $${paramIndex++}`);
+    params.push(filters.role);
+  }
+
+  if (filters?.active !== undefined) {
+    conditions.push(`active = $${paramIndex++}`);
+    params.push(filters.active);
+  }
+
+  if (filters?.search) {
+    conditions.push(`(name ILIKE $${paramIndex} OR email ILIKE $${paramIndex} OR oauth_email ILIKE $${paramIndex})`);
+    params.push(`%${filters.search}%`);
+    paramIndex++;
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const limit = filters?.limit || 100;
+  const offset = filters?.offset || 0;
+
+  const countResult = await db.query(
+    `SELECT COUNT(*) as total FROM users ${whereClause}`,
+    params
+  );
+  const total = parseInt(countResult.rows[0].total, 10);
+
+  const result = await db.query(
+    `SELECT id, email, oauth_email, name, role, user_type, points, active, created_at, deleted_at
+     FROM users
+     ${whereClause}
+     ORDER BY created_at DESC
+     LIMIT $${paramIndex++} OFFSET $${paramIndex++}`,
+    [...params, limit, offset]
+  );
+
+  const users = result.rows.map((row: any) => ({
+    id: row.id,
+    email: row.email || row.oauth_email || null,
+    name: row.name,
+    role: row.role,
+    user_type: row.user_type,
+    points: row.points || 0,
+    active: row.active !== false,
+    created_at: row.created_at,
+    deleted_at: row.deleted_at,
+  }));
+
+  return { users, total };
+}
+
+export interface UserDetails extends User {
+  statistics?: {
+    tasksCompleted: number;
+    treesPlanted: number;
+    totalPoints: number;
+    co2Saved: number;
+    rewardsRedeemed: number;
+    firstTaskDate: Date | null;
+    lastTaskDate: Date | null;
+  };
+}
+
+export async function getUserDetailsService(userId: string): Promise<UserDetails | null> {
+  const db = getPool();
+  const userResult = await db.query(
+    `SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL`,
+    [userId]
+  );
+
+  if (!userResult.rows[0]) {
+    return null;
+  }
+
+  const user = userResult.rows[0];
+
+  // Get statistics
+  const statsResult = await db.query(
+    `SELECT 
+       COUNT(DISTINCT ut.task_id) as tasks_completed,
+       COUNT(DISTINCT ft.id) as trees_planted,
+       COALESCE(SUM(ut.points_earned), 0) as total_points_earned,
+       COALESCE(SUM(t.co2_savings_kg), 0) as co2_saved,
+       COUNT(DISTINCT rr.id) as rewards_redeemed,
+       MIN(ut.completed_at) as first_task_date,
+       MAX(ut.completed_at) as last_task_date
+     FROM users u
+     LEFT JOIN user_tasks ut ON u.id = ut.user_id
+     LEFT JOIN tasks t ON ut.task_id = t.id
+     LEFT JOIN forest_trees ft ON u.id = ft.user_id
+     LEFT JOIN reward_redemptions rr ON u.id = rr.user_id AND rr.status = 'used'
+     WHERE u.id = $1
+     GROUP BY u.id`,
+    [userId]
+  );
+
+  const stats = statsResult.rows[0] || {
+    tasks_completed: 0,
+    trees_planted: 0,
+    total_points_earned: 0,
+    co2_saved: 0,
+    rewards_redeemed: 0,
+    first_task_date: null,
+    last_task_date: null,
+  };
+
+  return {
+    ...user,
+    statistics: {
+      tasksCompleted: parseInt(stats.tasks_completed || '0', 10),
+      treesPlanted: parseInt(stats.trees_planted || '0', 10),
+      totalPoints: parseInt(stats.total_points_earned || '0', 10),
+      co2Saved: parseFloat(stats.co2_saved || '0'),
+      rewardsRedeemed: parseInt(stats.rewards_redeemed || '0', 10),
+      firstTaskDate: stats.first_task_date,
+      lastTaskDate: stats.last_task_date,
+    },
+  };
+}
+
+export async function updateUserRoleService(userId: string, role: UserRole, adminUserId: string): Promise<User> {
+  const db = getPool();
+  
+  // Prevent admin from changing their own role
+  if (userId === adminUserId) {
+    throw new Error('Cannot change your own role');
+  }
+
+  const validatedRole = ensureRole(role);
+  const result = await db.query(
+    `UPDATE users 
+     SET role = $1, updated_at = CURRENT_TIMESTAMP 
+     WHERE id = $2 AND deleted_at IS NULL
+     RETURNING *`,
+    [validatedRole, userId]
+  );
+
+  if (!result.rows[0]) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+
+  return result.rows[0];
+}
+
+export async function updateUserPointsService(userId: string, points: number): Promise<User> {
+  const db = getPool();
+  const result = await db.query(
+    `UPDATE users 
+     SET points = GREATEST(0, $1), updated_at = CURRENT_TIMESTAMP 
+     WHERE id = $2 AND deleted_at IS NULL
+     RETURNING *`,
+    [points, userId]
+  );
+
+  if (!result.rows[0]) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+
+  return result.rows[0];
+}
+
+export async function toggleUserActiveService(userId: string, adminUserId: string): Promise<User> {
+  const db = getPool();
+  
+  // Prevent admin from deactivating themselves
+  if (userId === adminUserId) {
+    throw new Error('Cannot deactivate yourself');
+  }
+
+  const result = await db.query(
+    `UPDATE users 
+     SET active = NOT active, updated_at = CURRENT_TIMESTAMP 
+     WHERE id = $1 AND deleted_at IS NULL
+     RETURNING *`,
+    [userId]
+  );
+
+  if (!result.rows[0]) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+
+  return result.rows[0];
+}
+
+export async function resetUserPasswordService(userId: string): Promise<{ resetToken: string }> {
+  const db = getPool();
+  const crypto = await import('node:crypto');
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetExpires = new Date();
+  resetExpires.setHours(resetExpires.getHours() + 24); // Token expires in 24 hours
+
+  await db.query(
+    `UPDATE users 
+     SET password_reset_token = $1, 
+         password_reset_expires = $2, 
+         updated_at = CURRENT_TIMESTAMP 
+     WHERE id = $3 AND deleted_at IS NULL`,
+    [resetToken, resetExpires, userId]
+  );
+
+  return { resetToken };
+}
+
+export async function deleteUserService(userId: string, adminUserId: string, hardDelete: boolean = false): Promise<void> {
+  const db = getPool();
+  
+  // Prevent admin from deleting themselves
+  if (userId === adminUserId) {
+    throw new Error('Cannot delete yourself');
+  }
+
+  if (hardDelete) {
+    // Hard delete: Remove user and all related data
+    await db.query('DELETE FROM users WHERE id = $1', [userId]);
+  } else {
+    // Soft delete: Mark as deleted
+    await db.query(
+      `UPDATE users 
+       SET deleted_at = CURRENT_TIMESTAMP, 
+           active = FALSE, 
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $1`,
+      [userId]
+    );
+  }
+}
+
+export async function getUserStatisticsService(userId: string): Promise<any> {
+  const db = getPool();
+  
+  const statsResult = await db.query(
+    `SELECT 
+       COUNT(DISTINCT ut.task_id) as tasks_completed,
+       COUNT(DISTINCT ft.id) as trees_planted,
+       COALESCE(SUM(ut.points_earned), 0) as total_points_earned,
+       COALESCE(SUM(t.co2_savings_kg), 0) as co2_saved,
+       COUNT(DISTINCT rr.id) as rewards_redeemed,
+       MIN(ut.completed_at) as first_task_date,
+       MAX(ut.completed_at) as last_task_date,
+       COUNT(DISTINCT CASE WHEN ut.completed_at >= CURRENT_DATE - INTERVAL '7 days' THEN ut.task_id END) as tasks_last_7_days,
+       COUNT(DISTINCT CASE WHEN ut.completed_at >= CURRENT_DATE - INTERVAL '30 days' THEN ut.task_id END) as tasks_last_30_days
+     FROM users u
+     LEFT JOIN user_tasks ut ON u.id = ut.user_id
+     LEFT JOIN tasks t ON ut.task_id = t.id
+     LEFT JOIN forest_trees ft ON u.id = ft.user_id
+     LEFT JOIN reward_redemptions rr ON u.id = rr.user_id AND rr.status = 'used'
+     WHERE u.id = $1
+     GROUP BY u.id`,
+    [userId]
+  );
+
+  const stats = statsResult.rows[0] || {
+    tasks_completed: 0,
+    trees_planted: 0,
+    total_points_earned: 0,
+    co2_saved: 0,
+    rewards_redeemed: 0,
+    first_task_date: null,
+    last_task_date: null,
+    tasks_last_7_days: 0,
+    tasks_last_30_days: 0,
+  };
+
+  return {
+    tasksCompleted: parseInt(stats.tasks_completed || '0', 10),
+    treesPlanted: parseInt(stats.trees_planted || '0', 10),
+    totalPointsEarned: parseInt(stats.total_points_earned || '0', 10),
+    co2Saved: parseFloat(stats.co2_saved || '0'),
+    rewardsRedeemed: parseInt(stats.rewards_redeemed || '0', 10),
+    firstTaskDate: stats.first_task_date,
+    lastTaskDate: stats.last_task_date,
+    tasksLast7Days: parseInt(stats.tasks_last_7_days || '0', 10),
+    tasksLast30Days: parseInt(stats.tasks_last_30_days || '0', 10),
+  };
+}

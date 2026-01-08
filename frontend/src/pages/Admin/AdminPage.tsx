@@ -22,6 +22,7 @@ import { LocationMap } from '../../components/LocationMap/LocationMap';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { SurveyAnalytics } from './SurveyAnalytics';
 import { DebugTools } from './DebugTools';
+import { UserManagement } from './UserManagement';
 
 type AdminMode =
   | 'task'
@@ -35,6 +36,7 @@ type AdminMode =
   | 'surveyAnalytics'
   | 'debugTools'
   | 'parameterManage'
+  | 'userManage'
   | null;
 type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
@@ -4693,6 +4695,28 @@ const goToRewardCreation = () => {
             </div>
           </header>
           <DebugTools />
+        </section>
+      )}
+
+      {mode === 'userManage' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.users.title')}</h2>
+              <p>{t('admin.users.subtitle')}</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+          <UserManagement />
         </section>
       )}
 

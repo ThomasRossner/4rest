@@ -1,6 +1,19 @@
 import { RequestHandler } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
-import { getUserProgressService, getUserProfileService, updateUserProfileService, getMeService } from '../services/user.service.js';
+import {
+  getUserProgressService,
+  getUserProfileService,
+  updateUserProfileService,
+  getMeService,
+  listUsersService,
+  getUserDetailsService,
+  updateUserRoleService,
+  updateUserPointsService,
+  toggleUserActiveService,
+  resetUserPasswordService,
+  deleteUserService,
+  getUserStatisticsService,
+} from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const getMe: RequestHandler = asyncHandler(async (req, res) => {
@@ -39,4 +52,106 @@ export const updateUserProfile: RequestHandler = asyncHandler(async (req, res) =
   }
   const profile = await updateUserProfileService(req.params.id, req.body);
   res.json(profile);
+});
+
+export const listUsers: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const filters = {
+    role: req.query.role as string | undefined,
+    active: req.query.active !== undefined ? req.query.active === 'true' : undefined,
+    search: req.query.search as string | undefined,
+    limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
+    offset: req.query.offset ? parseInt(req.query.offset as string, 10) : undefined,
+  };
+
+  const result = await listUsersService(filters);
+  res.json(result);
+});
+
+export const getUserDetails: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const userDetails = await getUserDetailsService(req.params.id);
+  if (!userDetails) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  res.json({ user: userDetails });
+});
+
+export const updateUserRole: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { role } = req.body;
+  if (!role) {
+    return res.status(400).json({ error: 'Role is required' });
+  }
+
+  const user = await updateUserRoleService(req.params.id, role, authReq.user.id);
+  res.json({ user });
+});
+
+export const updateUserPoints: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { points } = req.body;
+  if (typeof points !== 'number') {
+    return res.status(400).json({ error: 'Points must be a number' });
+  }
+
+  const user = await updateUserPointsService(req.params.id, points);
+  res.json({ user });
+});
+
+export const toggleUserActive: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const user = await toggleUserActiveService(req.params.id, authReq.user.id);
+  res.json({ user });
+});
+
+export const resetUserPassword: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const result = await resetUserPasswordService(req.params.id);
+  res.json(result);
+});
+
+export const deleteUser: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const hardDelete = req.query.hard === 'true';
+  await deleteUserService(req.params.id, authReq.user.id, hardDelete);
+  res.json({ success: true, message: hardDelete ? 'User permanently deleted' : 'User soft deleted' });
+});
+
+export const getUserStatistics: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const statistics = await getUserStatisticsService(req.params.id);
+  res.json(statistics);
 });

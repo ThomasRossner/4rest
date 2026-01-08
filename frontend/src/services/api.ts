@@ -66,6 +66,55 @@ export const api = {
     const res = await apiClient.delete(`/gdpr/delete/${userId}`);
     return res.data;
   },
+
+  // User Management (Admin only)
+  async listUsers(filters?: { role?: string; active?: boolean; search?: string; limit?: number; offset?: number }) {
+    const params = new URLSearchParams();
+    if (filters?.role) params.append('role', filters.role);
+    if (filters?.active !== undefined) params.append('active', String(filters.active));
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.limit) params.append('limit', String(filters.limit));
+    if (filters?.offset) params.append('offset', String(filters.offset));
+    const queryString = params.toString();
+    const url = `/users${queryString ? `?${queryString}` : ''}`;
+    const res = await apiClient.get(url);
+    return res.data;
+  },
+
+  async getUserDetails(userId: string) {
+    const res = await apiClient.get(`/users/${userId}`);
+    return res.data;
+  },
+
+  async updateUserRole(userId: string, role: UserRole) {
+    const res = await apiClient.put(`/users/${userId}/role`, { role });
+    return res.data;
+  },
+
+  async updateUserPoints(userId: string, points: number) {
+    const res = await apiClient.put(`/users/${userId}/points`, { points });
+    return res.data;
+  },
+
+  async toggleUserActive(userId: string) {
+    const res = await apiClient.post(`/users/${userId}/toggle-active`);
+    return res.data;
+  },
+
+  async resetUserPassword(userId: string) {
+    const res = await apiClient.post(`/users/${userId}/reset-password`);
+    return res.data;
+  },
+
+  async deleteUser(userId: string, hardDelete: boolean = false) {
+    const res = await apiClient.delete(`/users/${userId}${hardDelete ? '?hard=true' : ''}`);
+    return res.data;
+  },
+
+  async getUserStatistics(userId: string) {
+    const res = await apiClient.get(`/users/${userId}/statistics`);
+    return res.data;
+  },
   // Auth
   async login(email: string, password: string) {
     const response = await apiClient.post('/auth/login', { email, password });

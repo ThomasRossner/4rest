@@ -375,6 +375,10 @@
       "manageParameters": {
         "title": "Parameter verwalten",
         "description": "Auswahlwerte für Aufgaben und Belohnungen verwalten"
+      },
+      "manageUsers": {
+        "title": "Benutzer verwalten",
+        "description": "Benutzer anzeigen, bearbeiten und verwalten"
       }
     },
     "debugMode": {
@@ -986,6 +990,97 @@
         "reward_art": "Art",
         "kategorie": "Kategorie",
         "kosten": "Kosten"
+      }
+    },
+    "users": {
+      "title": "Benutzerverwaltung",
+      "subtitle": "Verwalten Sie Benutzer, Rollen, Punkte und Statistiken",
+      "loading": "Laden...",
+      "noUsers": "Keine Benutzer gefunden",
+      "filters": {
+        "role": "Rolle",
+        "status": "Status",
+        "search": "Suche",
+        "allRoles": "Alle Rollen",
+        "allStatuses": "Alle Status",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "searchPlaceholder": "Name oder E-Mail suchen"
+      },
+      "table": {
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "points": "Punkte",
+        "status": "Status",
+        "created": "Erstellt",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv"
+      },
+      "roles": {
+        "guest": "Gast",
+        "employee": "Mitarbeiter",
+        "administrator": "Administrator",
+        "stakeholder": "Stakeholder"
+      },
+      "details": {
+        "title": "Benutzerdetails",
+        "basicInfo": "Grundinformationen",
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "userType": "Benutzertyp",
+        "points": "Punkte",
+        "status": "Status",
+        "createdAt": "Erstellt am",
+        "statistics": "Statistiken"
+      },
+      "stats": {
+        "tasksCompleted": "Aufgaben abgeschlossen",
+        "treesPlanted": "Bäume gepflanzt",
+        "totalPointsEarned": "Gesamtpunkte verdient",
+        "co2Saved": "CO2 gespart",
+        "rewardsRedeemed": "Belohnungen eingelöst",
+        "tasksLast7Days": "Aufgaben (letzte 7 Tage)",
+        "tasksLast30Days": "Aufgaben (letzte 30 Tage)"
+      },
+      "actions": {
+        "viewDetails": "Details anzeigen",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "resetPassword": "Passwort zurücksetzen",
+        "deleteUser": "Benutzer löschen (Soft Delete)",
+        "hardDeleteUser": "Benutzer löschen (Hard Delete)"
+      },
+      "messages": {
+        "roleUpdated": "Rolle erfolgreich aktualisiert",
+        "roleUpdateError": "Fehler beim Aktualisieren der Rolle",
+        "pointsUpdated": "Punkte erfolgreich aktualisiert",
+        "pointsUpdateError": "Fehler beim Aktualisieren der Punkte",
+        "activeToggled": "Status erfolgreich geändert",
+        "activeToggleError": "Fehler beim Ändern des Status",
+        "passwordReset": "Passwort-Reset-Token: {{token}}",
+        "passwordResetError": "Fehler beim Zurücksetzen des Passworts",
+        "userDeleted": "Benutzer erfolgreich gelöscht",
+        "userDeleteError": "Fehler beim Löschen des Benutzers"
+      },
+      "confirmRoleChange": "Möchten Sie die Rolle dieses Benutzers wirklich ändern?",
+      "confirmPointsChange": "Möchten Sie die Punkte dieses Benutzers wirklich ändern?",
+      "confirmToggleActive": "Möchten Sie den Status dieses Benutzers wirklich ändern?",
+      "confirmPasswordReset": "Möchten Sie das Passwort für diesen Benutzer wirklich zurücksetzen?",
+      "confirmSoftDelete": "Möchten Sie diesen Benutzer wirklich löschen? (Soft Delete - kann wiederhergestellt werden)",
+      "confirmHardDelete": "Möchten Sie diesen Benutzer wirklich permanent löschen? Diese Aktion kann nicht rückgängig gemacht werden!",
+      "pagination": {
+        "previous": "Zurück",
+        "next": "Weiter",
+        "page": "Seite {{current}} von {{total}}"
+      },
+      "errors": {
+        "loadError": "Fehler beim Laden der Benutzer",
+        "userNotFound": "Benutzer nicht gefunden"
       }
     },
     "filters": {

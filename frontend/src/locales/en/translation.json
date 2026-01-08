@@ -993,6 +993,97 @@
         "kosten": "Cost"
       }
     },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage users, roles, points and statistics",
+      "loading": "Loading...",
+      "noUsers": "No users found",
+      "filters": {
+        "role": "Role",
+        "status": "Status",
+        "search": "Search",
+        "allRoles": "All Roles",
+        "allStatuses": "All Statuses",
+        "active": "Active",
+        "inactive": "Inactive",
+        "searchPlaceholder": "Search by name or email"
+      },
+      "table": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "points": "Points",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "roles": {
+        "guest": "Guest",
+        "employee": "Employee",
+        "administrator": "Administrator",
+        "stakeholder": "Stakeholder"
+      },
+      "details": {
+        "title": "User Details",
+        "basicInfo": "Basic Information",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "userType": "User Type",
+        "points": "Points",
+        "status": "Status",
+        "createdAt": "Created At",
+        "statistics": "Statistics"
+      },
+      "stats": {
+        "tasksCompleted": "Tasks Completed",
+        "treesPlanted": "Trees Planted",
+        "totalPointsEarned": "Total Points Earned",
+        "co2Saved": "CO2 Saved",
+        "rewardsRedeemed": "Rewards Redeemed",
+        "tasksLast7Days": "Tasks (Last 7 Days)",
+        "tasksLast30Days": "Tasks (Last 30 Days)"
+      },
+      "actions": {
+        "viewDetails": "View Details",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "resetPassword": "Reset Password",
+        "deleteUser": "Delete User (Soft Delete)",
+        "hardDeleteUser": "Delete User (Hard Delete)"
+      },
+      "messages": {
+        "roleUpdated": "Role successfully updated",
+        "roleUpdateError": "Error updating role",
+        "pointsUpdated": "Points successfully updated",
+        "pointsUpdateError": "Error updating points",
+        "activeToggled": "Status successfully changed",
+        "activeToggleError": "Error changing status",
+        "passwordReset": "Password reset token: {{token}}",
+        "passwordResetError": "Error resetting password",
+        "userDeleted": "User successfully deleted",
+        "userDeleteError": "Error deleting user"
+      },
+      "confirmRoleChange": "Are you sure you want to change this user's role?",
+      "confirmPointsChange": "Are you sure you want to change this user's points?",
+      "confirmToggleActive": "Are you sure you want to change this user's status?",
+      "confirmPasswordReset": "Are you sure you want to reset the password for this user?",
+      "confirmSoftDelete": "Are you sure you want to delete this user? (Soft Delete - can be restored)",
+      "confirmHardDelete": "Are you sure you want to permanently delete this user? This action cannot be undone!",
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{current}} of {{total}}"
+      },
+      "errors": {
+        "loadError": "Error loading users",
+        "userNotFound": "User not found"
+      }
+    },
     "filters": {
       "title": "Filters",
       "close": "Close filters",
