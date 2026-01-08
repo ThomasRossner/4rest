@@ -4,6 +4,7 @@ import {
   createContest,
   joinContest,
   getUserContests,
+  getAllUserContests,
   getEmployeeContests,
   getContestDetails,
   getContestRanking,
