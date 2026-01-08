@@ -1554,6 +1554,107 @@
       "instruction": "Guest should scan this QR code to receive the bonus points. This code will expire in 24 hours.",
       "generateNew": "Generate New QR Code"
     }
+  },
+  "teams": {
+    "create": {
+      "title": "Create Team",
+      "teamName": "Team Name",
+      "teamNamePlaceholder": "Enter team name (optional)",
+      "hint": "If no name is provided, your name will be used as the team name.",
+      "createButton": "Create Team",
+      "creating": "Creating team...",
+      "success": "Team created",
+      "successMessage": "Team created successfully",
+      "error": "Failed to create team",
+      "errorTitle": "Error"
+    },
+    "join": {
+      "title": "Join Team",
+      "subtitle": "Scan a team QR code to join",
+      "joining": "Joining team...",
+      "success": "Team joined",
+      "successMessage": "Successfully joined team",
+      "error": "Failed to join team",
+      "errorTitle": "Error",
+      "cameraRequiresHttps": "Camera access requires HTTPS",
+      "cameraNotSupported": "Camera not supported",
+      "cameraError": "Failed to access camera"
+    },
+    "qrCode": {
+      "title": "Team QR Code",
+      "description": "Share this QR code to let others join your team",
+      "loading": "Loading QR code...",
+      "error": "Failed to load QR code",
+      "errorMessage": "Failed to load QR code"
+    },
+    "dissolve": {
+      "button": "Dissolve Team",
+      "dissolving": "Dissolving team...",
+      "confirm": "Are you sure you want to dissolve this team? Points will be distributed equally among members.",
+      "success": "Team dissolved",
+      "successMessage": "Team has been dissolved and points distributed",
+      "error": "Failed to dissolve team",
+      "errorMessage": "Failed to dissolve team"
+    },
+    "leave": {
+      "button": "Leave Team",
+      "leaving": "Leaving...",
+      "confirm": "Are you sure you want to leave this team? Your contributed points will be returned to you.",
+      "success": "Left team",
+      "successMessage": "You have left the team and your contributed points have been returned",
+      "error": "Failed to leave team",
+      "errorMessage": "Failed to leave team"
+    }
+  },
+  "contests": {
+    "create": {
+      "title": "Create Contest",
+      "contestName": "Contest Name",
+      "contestNamePlaceholder": "Enter contest name (optional)",
+      "nameHint": "If no name is provided, your name will be used as the contest name.",
+      "formTitle": "Contest Details",
+      "endDate": "End Date",
+      "rewardsTitle": "Rewards (Optional)",
+      "rewardFirst": "Points for 1st Place",
+      "rewardSecond": "Points for 2nd Place",
+      "rewardThird": "Points for 3rd Place",
+      "createButton": "Create Contest",
+      "creating": "Creating contest...",
+      "success": "Contest created",
+      "successMessage": "Contest created successfully",
+      "error": "Failed to create contest",
+      "errorTitle": "Error",
+      "missingFields": "Please fill in all required fields",
+      "invalidEndDate": "End date must be in the future"
+    },
+    "join": {
+      "title": "Join Contest",
+      "subtitle": "Scan a contest QR code to join",
+      "joining": "Joining contest...",
+      "success": "Contest joined",
+      "successMessage": "Successfully joined contest",
+      "error": "Failed to join contest",
+      "errorTitle": "Error",
+      "cameraRequiresHttps": "Camera access requires HTTPS",
+      "cameraNotSupported": "Camera not supported",
+      "cameraError": "Failed to access camera"
+    },
+    "qrCode": {
+      "title": "Contest QR Code",
+      "description": "Share this QR code to let others join your contest",
+      "loading": "Loading QR code...",
+      "error": "Failed to load QR code",
+      "errorMessage": "Failed to load QR code"
+    },
+    "dissolve": {
+      "button": "Dissolve Contest",
+      "dissolving": "Dissolving contest...",
+      "confirm": "Are you sure you want to dissolve this contest?",
+      "success": "Contest dissolved",
+      "successMessage": "Contest has been dissolved",
+      "error": "Failed to dissolve contest",
+      "errorMessage": "Failed to dissolve contest"
+    }
   }
 }
 

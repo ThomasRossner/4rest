@@ -1534,6 +1534,107 @@
       "instruction": "Der Gast sollte diesen QR-Code scannen, um die Bonus-Punkte zu erhalten. Dieser Code läuft in 24 Stunden ab.",
       "generateNew": "Neuen QR-Code generieren"
     }
+  },
+  "teams": {
+    "create": {
+      "title": "Team anlegen",
+      "teamName": "Team-Name",
+      "teamNamePlaceholder": "Team-Name eingeben (optional)",
+      "hint": "Wenn kein Name angegeben wird, wird Ihr Name als Team-Name verwendet.",
+      "createButton": "Team erstellen",
+      "creating": "Team wird erstellt...",
+      "success": "Team erstellt",
+      "successMessage": "Team erfolgreich erstellt",
+      "error": "Team konnte nicht erstellt werden",
+      "errorTitle": "Fehler"
+    },
+    "join": {
+      "title": "Team beitreten",
+      "subtitle": "Scannen Sie einen Team-QR-Code, um beizutreten",
+      "joining": "Team wird beigetreten...",
+      "success": "Team beigetreten",
+      "successMessage": "Erfolgreich dem Team beigetreten",
+      "error": "Team konnte nicht beigetreten werden",
+      "errorTitle": "Fehler",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+      "cameraNotSupported": "Kamera wird nicht unterstützt",
+      "cameraError": "Kamera konnte nicht geöffnet werden"
+    },
+    "qrCode": {
+      "title": "Team QR-Code",
+      "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Team beitreten können",
+      "loading": "QR-Code wird geladen...",
+      "error": "QR-Code konnte nicht geladen werden",
+      "errorMessage": "QR-Code konnte nicht geladen werden"
+    },
+    "dissolve": {
+      "button": "Team auflösen",
+      "dissolving": "Team wird aufgelöst...",
+      "confirm": "Möchten Sie dieses Team wirklich auflösen? Die Punkte werden gleichmäßig auf die Mitglieder verteilt.",
+      "success": "Team aufgelöst",
+      "successMessage": "Team wurde aufgelöst und Punkte verteilt",
+      "error": "Team konnte nicht aufgelöst werden",
+      "errorMessage": "Team konnte nicht aufgelöst werden"
+    },
+    "leave": {
+      "button": "Aus Team austreten",
+      "leaving": "Austreten...",
+      "confirm": "Möchten Sie wirklich aus diesem Team austreten? Ihre beigetragenen Punkte werden Ihnen zurückgegeben.",
+      "success": "Aus Team ausgetreten",
+      "successMessage": "Sie sind aus dem Team ausgetreten und Ihre beigetragenen Punkte wurden zurückgegeben",
+      "error": "Austritt fehlgeschlagen",
+      "errorMessage": "Austritt aus dem Team konnte nicht durchgeführt werden"
+    }
+  },
+  "contests": {
+    "create": {
+      "title": "Contest anlegen",
+      "contestName": "Contest-Name",
+      "contestNamePlaceholder": "Contest-Name eingeben (optional)",
+      "nameHint": "Wenn kein Name angegeben wird, wird Ihr Name als Contest-Name verwendet.",
+      "formTitle": "Contest-Details",
+      "endDate": "Enddatum",
+      "rewardsTitle": "Belohnungen (Optional)",
+      "rewardFirst": "Punkte für 1. Platz",
+      "rewardSecond": "Punkte für 2. Platz",
+      "rewardThird": "Punkte für 3. Platz",
+      "createButton": "Contest erstellen",
+      "creating": "Contest wird erstellt...",
+      "success": "Contest erstellt",
+      "successMessage": "Contest erfolgreich erstellt",
+      "error": "Contest konnte nicht erstellt werden",
+      "errorTitle": "Fehler",
+      "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+      "invalidEndDate": "Enddatum muss in der Zukunft liegen"
+    },
+    "join": {
+      "title": "Contest beitreten",
+      "subtitle": "Scannen Sie einen Contest-QR-Code, um beizutreten",
+      "joining": "Contest wird beigetreten...",
+      "success": "Contest beigetreten",
+      "successMessage": "Erfolgreich dem Contest beigetreten",
+      "error": "Contest konnte nicht beigetreten werden",
+      "errorTitle": "Fehler",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+      "cameraNotSupported": "Kamera wird nicht unterstützt",
+      "cameraError": "Kamera konnte nicht geöffnet werden"
+    },
+    "qrCode": {
+      "title": "Contest QR-Code",
+      "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Contest beitreten können",
+      "loading": "QR-Code wird geladen...",
+      "error": "QR-Code konnte nicht geladen werden",
+      "errorMessage": "QR-Code konnte nicht geladen werden"
+    },
+    "dissolve": {
+      "button": "Contest auflösen",
+      "dissolving": "Contest wird aufgelöst...",
+      "confirm": "Möchten Sie diesen Contest wirklich auflösen?",
+      "success": "Contest aufgelöst",
+      "successMessage": "Contest wurde aufgelöst",
+      "error": "Contest konnte nicht aufgelöst werden",
+      "errorMessage": "Contest konnte nicht aufgelöst werden"
+    }
   }
 }
 
