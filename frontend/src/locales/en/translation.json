@@ -194,7 +194,9 @@
       "locked": "Prerequisites not met"
     },
     "prerequisites": {
-      "unlockMessage": "Complete prerequisite tasks to unlock"
+      "unlockMessage": "Complete prerequisite tasks to unlock",
+      "showPrerequisites": "Show prerequisites",
+      "clearFilter": "Clear filter"
     },
     "toast": {
       "completedTitle": "Task completed",

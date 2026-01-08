@@ -37,6 +37,7 @@ function TasksPage() {
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('recent');
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineTasks, setShowOnlineTasks] = useState(false);
+  const [prerequisiteTaskIdsFilter, setPrerequisiteTaskIdsFilter] = useState<string[] | null>(null);
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
   const { data: taskTypeParameters } = useQuery('taskTypeParameters', () => api.getTaskParameters('type'), {
     retry: 2,
@@ -57,6 +58,13 @@ function TasksPage() {
     if (!tasks) return [];
 
     let filtered = [...tasks];
+
+    // Filter by prerequisite task IDs (Type 2 prerequisites)
+    if (prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0) {
+      filtered = filtered.filter((task: any) => 
+        prerequisiteTaskIdsFilter.includes(task.id)
+      );
+    }
 
     // Filter by online status
     if (showOnlineTasks) {
@@ -97,7 +105,7 @@ function TasksPage() {
     });
 
     return filtered;
-  }, [tasks, typeFilter, completionFilter, timeFilter, showOnlineTasks]);
+  }, [tasks, typeFilter, completionFilter, timeFilter, showOnlineTasks, prerequisiteTaskIdsFilter]);
 
   const handleTaskClick = (task: any) => {
     if (task.completed) return;
@@ -203,10 +211,19 @@ function TasksPage() {
   }
 
   return (
-    <div className="tasks-page">
-      <div className="tasks-header">
-        <h1 className="tasks-title">{t('tasks.title')}</h1>
-        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+      <div className="tasks-page">
+        <div className="tasks-header">
+          <h1 className="tasks-title">{t('tasks.title')}</h1>
+          {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 && (
+            <button
+              className="location-button"
+              onClick={() => setPrerequisiteTaskIdsFilter(null)}
+              style={{ marginRight: 'var(--spacing-sm)' }}
+            >
+              {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+            </button>
+          )}
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
           <button
             className="location-button"
             onClick={() => {
@@ -321,6 +338,28 @@ function TasksPage() {
               <p className="task-locked-message" style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
                 {t('tasks.prerequisites.unlockMessage')}
               </p>
+            )}
+            {/* Show prerequisite tasks button for Type 2 prerequisites */}
+            {task.prerequisite_task_ids && Array.isArray(task.prerequisite_task_ids) && task.prerequisite_task_ids.length > 0 && (
+              <button
+                className="task-prerequisite-button"
+                onClick={() => setPrerequisiteTaskIdsFilter(task.prerequisite_task_ids)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 1rem',
+                  marginBottom: '0.5rem',
+                  backgroundColor: 'var(--color-surface, #f3f4f6)',
+                  color: 'var(--color-primary, #3b82f6)',
+                  border: '1px solid var(--color-primary, #3b82f6)',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {t('tasks.prerequisites.showPrerequisites') || 'Vorbedingungen anzeigen'}
+              </button>
             )}
             <button
               className="task-button"

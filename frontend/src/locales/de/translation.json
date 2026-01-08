@@ -194,7 +194,9 @@
       "locked": "Vorbedingungen nicht erfüllt"
     },
     "prerequisites": {
-      "unlockMessage": "Vorbedingungs-Aufgaben erledigen, um freizuschalten"
+      "unlockMessage": "Vorbedingungs-Aufgaben erledigen, um freizuschalten",
+      "showPrerequisites": "Vorbedingungen anzeigen",
+      "clearFilter": "Filter zurücksetzen"
     },
     "toast": {
       "completedTitle": "Aufgabe abgeschlossen",
