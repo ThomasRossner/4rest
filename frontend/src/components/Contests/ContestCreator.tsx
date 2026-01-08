@@ -31,44 +31,64 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
   const isEmployee = user?.role === 'employee' || user?.role === 'administrator';
 
   // Load users for employee/admin
-  // If onlyEmployeeParticipants is true, filter to only employees/administrators
-  const effectiveRoleFilter = onlyEmployeeParticipants 
-    ? (roleFilter === 'all' ? 'employee' : roleFilter) 
-    : roleFilter;
-  
   const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery(
-    ['users', effectiveRoleFilter, onlyEmployeeParticipants],
+    ['users', roleFilter, onlyEmployeeParticipants],
     async () => {
-      const roleToFilter = onlyEmployeeParticipants 
-        ? (effectiveRoleFilter === 'all' ? undefined : effectiveRoleFilter)
-        : (effectiveRoleFilter === 'all' ? undefined : effectiveRoleFilter);
-      
       try {
+        // Determine role filter for API call
+        let roleToFilter: string | undefined = undefined;
+        if (roleFilter !== 'all') {
+          roleToFilter = roleFilter;
+        }
+        
+        console.log('[ContestCreator] Fetching users with filter:', { roleToFilter, active: true, onlyEmployeeParticipants });
+        
         const data = await api.listUsers({ 
           role: roleToFilter, 
           active: true,
           limit: 1000 // Get all users
         });
         
+        console.log('[ContestCreator] Received users data:', data);
+        
         // If onlyEmployeeParticipants is true, filter out guests and stakeholders
         if (onlyEmployeeParticipants && data?.users) {
-          return {
+          const filtered = {
             ...data,
             users: data.users.filter((u: any) => 
               u.role === 'employee' || u.role === 'administrator'
             )
           };
+          console.log('[ContestCreator] Filtered to employees only:', filtered);
+          return filtered;
         }
+        
+        console.log('[ContestCreator] Returning all users:', data);
         return data;
-      } catch (error) {
+      } catch (error: any) {
         console.error('[ContestCreator] Error loading users:', error);
+        console.error('[ContestCreator] Error details:', error?.response?.data || error?.message);
         throw error;
       }
     },
-    { enabled: isEmployee }
+    { 
+      enabled: isEmployee,
+      retry: 1,
+      refetchOnWindowFocus: false
+    }
   );
 
   const users = usersData?.users || [];
+  
+  console.log('[ContestCreator] Current state:', {
+    isEmployee,
+    usersLoading,
+    usersError: usersError?.message,
+    usersCount: users.length,
+    usersData: usersData,
+    roleFilter,
+    onlyEmployeeParticipants
+  });
 
   // Calculate minimum date (tomorrow)
   const tomorrow = new Date();
