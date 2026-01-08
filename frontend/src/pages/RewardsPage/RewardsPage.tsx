@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
@@ -39,6 +39,7 @@ function RewardsPage() {
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineRewards, setShowOnlineRewards] = useState(false);
   const [warningShownForReward, setWarningShownForReward] = useState<string | null>(null);
+  const warningShownRef = useRef<string | null>(null);
 
   const handleRedeemClick = async (rewardId: string, cost: number, useTeamPoints: boolean = false) => {
     if (!user) {
@@ -64,24 +65,31 @@ function RewardsPage() {
     }
 
     // Show warning if exceeding personal points (only once per reward)
-    if (exceedsPersonalPoints && warningShownForReward !== rewardId) {
+    // Use ref for synchronous check to prevent duplicate warnings even with parallel calls
+    if (exceedsPersonalPoints && warningShownRef.current !== rewardId) {
+      warningShownRef.current = rewardId;
+      setWarningShownForReward(rewardId);
       const warningMessage = t('rewards.messages.exceedsPersonalPoints', { points: user.points });
       if (!window.confirm(warningMessage)) {
+        // Reset flag if user cancels
+        warningShownRef.current = null;
+        setWarningShownForReward(null);
         throw new Error('Redemption cancelled by user');
       }
-      setWarningShownForReward(rewardId);
     }
 
     try {
       const res = await api.redeemReward(rewardId, cost, shouldUseTeamPoints);
       // Reset warning flag after successful redemption
-      if (warningShownForReward === rewardId) {
+      if (warningShownRef.current === rewardId) {
+        warningShownRef.current = null;
         setWarningShownForReward(null);
       }
       return res;
     } catch (error: any) {
       // Reset warning flag on error so it can be shown again
-      if (warningShownForReward === rewardId) {
+      if (warningShownRef.current === rewardId) {
+        warningShownRef.current = null;
         setWarningShownForReward(null);
       }
       const errorMessage = error?.message || t('rewards.messages.redeemError');
