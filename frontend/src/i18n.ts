@@ -13,7 +13,7 @@ i18n
       en: { translation: enTranslation },
       de: { translation: deTranslation },
     },
-    fallbackLng: 'en',
+    fallbackLng: 'de',
     supportedLngs: ['en', 'de'],
     defaultNS: 'translation',
     ns: 'translation',
@@ -27,6 +27,9 @@ i18n
     react: {
       useSuspense: false,
     },
+    returnEmptyString: false,
+    returnNull: false,
+    returnObjects: true,
   })
   .catch((error) => {
     console.error('i18n initialization error:', error);
