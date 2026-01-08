@@ -209,7 +209,12 @@
     "showLocation": "Show location",
     "locationMapTitle": "Your Location",
     "backToList": "Back to list",
+    "onlineButton": "Online",
+    "showOnline": "Show online rewards",
     "balanceLabel": "Your points",
+    "prerequisites": {
+      "clearFilter": "Clear filter"
+    },
     "filters": {
       "all": "All",
       "discount": "🏷️ Discounts",

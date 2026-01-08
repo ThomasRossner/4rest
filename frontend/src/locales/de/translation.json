@@ -209,7 +209,12 @@
     "showLocation": "Position anzeigen",
     "locationMapTitle": "Ihre Position",
     "backToList": "Zurück zur Liste",
+    "onlineButton": "Online",
+    "showOnline": "Online-Belohnungen anzeigen",
     "balanceLabel": "Deine Punkte",
+    "prerequisites": {
+      "clearFilter": "Filter zurücksetzen"
+    },
     "filters": {
       "all": "Alle",
       "discount": "🏷️ Rabatte",
