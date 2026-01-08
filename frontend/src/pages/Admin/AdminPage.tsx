@@ -2334,7 +2334,6 @@ function AdminPage() {
   const showToast = useToastStore((s) => s.showToast);
   const isAdmin = user?.role === 'administrator';
   const [mode, setMode] = useState<AdminMode>(null);
-  const [debugMode, setDebugMode] = useState(false);
 
   const [taskSource, setTaskSource] = useState<TaskSource>('');
   const [selectedExistingTaskId, setSelectedExistingTaskId] = useState<string>('');
@@ -4554,14 +4553,6 @@ const goToRewardCreation = () => {
         <nav className="admin-navbar">
           <div className="admin-navbar-space" aria-hidden="true" />
           <LanguageSwitcher compact className="admin-navbar-language" />
-          <button
-            className={`admin-debug-toggle ${debugMode ? 'active' : ''}`}
-            onClick={() => setDebugMode(!debugMode)}
-            title={debugMode ? t('admin.debugMode.disable') : t('admin.debugMode.enable')}
-          >
-            🔧
-            <span className="sr-only">{debugMode ? t('admin.debugMode.disable') : t('admin.debugMode.enable')}</span>
-          </button>
           <button className="admin-icon-button admin-navbar-action" onClick={logout} title={t('admin.logout')}>
             <Icon name="logout" />
             <span className="sr-only">{t('admin.logout')}</span>
@@ -4596,29 +4587,25 @@ const goToRewardCreation = () => {
             <h2>{t('admin.actions.redeemRewards.title')}</h2>
             <p>{t('admin.actions.redeemRewards.description')}</p>
           </button>
-          {debugMode && (
-            <button
-              className="admin-choice-card"
-              onClick={() => {
-                void loadForestStats();
-                setMode('forestStats');
-              }}
-            >
-              <span className="admin-choice-icon">🌲</span>
-              <h2>{t('admin.actions.forestDebugStats.title')}</h2>
-              <p>{t('admin.actions.forestDebugStats.description')}</p>
-            </button>
-          )}
-          {debugMode && (
-            <button
-              className="admin-choice-card"
-              onClick={() => setMode('debugTools')}
-            >
-              <span className="admin-choice-icon">🔧</span>
-              <h2>{t('admin.actions.debugTools.title')}</h2>
-              <p>{t('admin.actions.debugTools.description')}</p>
-            </button>
-          )}
+          <button
+            className="admin-choice-card"
+            onClick={() => {
+              void loadForestStats();
+              setMode('forestStats');
+            }}
+          >
+            <span className="admin-choice-icon">🌲</span>
+            <h2>{t('admin.actions.forestDebugStats.title')}</h2>
+            <p>{t('admin.actions.forestDebugStats.description')}</p>
+          </button>
+          <button
+            className="admin-choice-card"
+            onClick={() => setMode('debugTools')}
+          >
+            <span className="admin-choice-icon">🔧</span>
+            <h2>{t('admin.actions.debugTools.title')}</h2>
+            <p>{t('admin.actions.debugTools.description')}</p>
+          </button>
           <button
             className="admin-choice-card"
             onClick={() => setMode('surveyAnalytics')}
@@ -4704,7 +4691,7 @@ const goToRewardCreation = () => {
         </section>
       )}
 
-      {mode === 'forestStats' && debugMode && (
+      {mode === 'forestStats' && (
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
