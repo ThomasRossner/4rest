@@ -63,7 +63,10 @@ export async function generatePasswordSetupToken(userId: string): Promise<string
 export async function sendPasswordSetupEmail(userId: string, email: string, name: string): Promise<void> {
   try {
     const setupToken = await generatePasswordSetupToken(userId);
-    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+    if (!appUrl) {
+      throw new Error('APP_URL or FRONTEND_URL environment variable must be set for password setup emails');
+    }
     const setupUrl = `${appUrl}/setup-password?token=${setupToken}`;
 
     const html = emailTemplates.getPasswordSetupEmail({
@@ -86,7 +89,10 @@ export async function sendPasswordSetupEmail(userId: string, email: string, name
 
 export async function sendWelcomeEmail(userId: string, email: string, name: string, role: string): Promise<void> {
   try {
-    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+    if (!appUrl) {
+      console.warn('APP_URL or FRONTEND_URL not set, welcome email may contain invalid links');
+    }
 
     const html = emailTemplates.getWelcomeEmail({
       name,
@@ -114,7 +120,10 @@ export async function sendEmailVerificationEmail(
 ): Promise<void> {
   try {
     const verificationToken = token || await generateEmailVerificationToken(userId);
-    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+    if (!appUrl) {
+      throw new Error('APP_URL or FRONTEND_URL environment variable must be set for email verification');
+    }
     const verificationUrl = `${appUrl}/verify-email?token=${verificationToken}`;
 
     const html = emailTemplates.getEmailVerificationEmail({
@@ -138,7 +147,10 @@ export async function sendEmailVerificationEmail(
 export async function sendPasswordResetEmail(userId: string, email: string, name: string): Promise<void> {
   try {
     const resetToken = await generatePasswordResetToken(userId);
-    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+    if (!appUrl) {
+      throw new Error('APP_URL or FRONTEND_URL environment variable must be set for password reset emails');
+    }
     const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
 
     const html = emailTemplates.getPasswordResetEmail({

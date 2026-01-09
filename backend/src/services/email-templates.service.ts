@@ -44,7 +44,7 @@ class EmailTemplatesService {
     appUrl?: string;
   }): string {
     const template = this.loadTemplate('welcome-email');
-    const appUrl = variables.appUrl || process.env.APP_URL || 'http://localhost:3000';
+    const appUrl = variables.appUrl || process.env.APP_URL || process.env.FRONTEND_URL || '';
     
     return this.replaceVariables(template, {
       ...variables,
