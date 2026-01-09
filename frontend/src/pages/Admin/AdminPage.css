@@ -1246,14 +1246,26 @@
 
 }
 
-/* Responsive table layout - switch to card view on smaller screens */
-@media (max-width: 1200px) {
-  .admin-table {
-    table-layout: auto;
-    min-width: 800px;
+/* Responsive table layout - progressive column hiding based on priority */
+
+/* Priority 1: Hide least important columns first (Event/Gruppe, Ort/Werkzeug, Zeitaufwand, Schwierigkeit, Kategorie) */
+@media (max-width: 1600px) {
+  /* Tasks: Hide Event/Gruppe (13th column) */
+  .admin-table th:nth-child(13),
+  .admin-table td:nth-child(13) {
+    display: none;
   }
   
-  /* Further reduce column widths on medium screens */
+  /* Rewards: Hide Mögliche Punkte (13th column) */
+  .admin-table th:nth-child(13),
+  .admin-table td:nth-child(13) {
+    display: none;
+  }
+}
+
+/* Priority 2: Hide Ort/Werkzeug, Zeitaufwand, Schwierigkeit, Kategorie */
+@media (max-width: 1400px) {
+  /* Tasks: Hide Ort/Werkzeug (12th), Zeitaufwand (11th), Schwierigkeit (10th), Kategorie (9th) */
   .admin-table th:nth-child(9),
   .admin-table td:nth-child(9),
   .admin-table th:nth-child(10),
@@ -1261,9 +1273,50 @@
   .admin-table th:nth-child(11),
   .admin-table td:nth-child(11),
   .admin-table th:nth-child(12),
-  .admin-table td:nth-child(12),
-  .admin-table th:nth-child(13),
-  .admin-table td:nth-child(13) {
+  .admin-table td:nth-child(12) {
+    display: none;
+  }
+  
+  /* Rewards: Hide Event/Gruppe (12th), Kategorie (11th), Art (10th) */
+  .admin-table th:nth-child(10),
+  .admin-table td:nth-child(10),
+  .admin-table th:nth-child(11),
+  .admin-table td:nth-child(11),
+  .admin-table th:nth-child(12),
+  .admin-table td:nth-child(12) {
+    display: none;
+  }
+}
+
+/* Priority 3: Hide Recurrence and Zielgruppe */
+@media (max-width: 1200px) {
+  .admin-table {
+    table-layout: auto;
+    min-width: 800px;
+  }
+  
+  /* Tasks: Hide Recurrence (8th) and Zielgruppe (5th) */
+  .admin-table th:nth-child(5),
+  .admin-table td:nth-child(5),
+  .admin-table th:nth-child(8),
+  .admin-table td:nth-child(8) {
+    display: none;
+  }
+  
+  /* Rewards: Hide Recurrence (8th) and Zielgruppe (5th) */
+  .admin-table th:nth-child(5),
+  .admin-table td:nth-child(5),
+  .admin-table th:nth-child(8),
+  .admin-table td:nth-child(8) {
+    display: none;
+  }
+}
+
+/* Priority 4: Keep only essential columns (Checkbox, Title, Type, Location, Points/Cost, Status, Actions) */
+@media (max-width: 1000px) {
+  /* Hide Location if space is very tight */
+  .admin-table th:nth-child(4),
+  .admin-table td:nth-child(4) {
     display: none;
   }
 }
