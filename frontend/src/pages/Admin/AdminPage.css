@@ -1077,6 +1077,19 @@
   max-width: 12rem;
 }
 
+/* For locations table with only 3 buttons, keep them in one row and make them more compact */
+.admin-table td:nth-child(6):last-child .admin-table-actions {
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+}
+
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7rem;
+}
+
 .admin-table tbody tr:not(:last-child) {
   border-bottom: 1px solid var(--color-border);
 }
