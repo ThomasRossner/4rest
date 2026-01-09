@@ -99,6 +99,8 @@
       "missingResetToken": "Reset token is missing",
       "emailVerificationRequired": "Email verification required. Please check your inbox ({{email}}).",
       "passwordSetupRequired": "This account uses passwordless login. A password setup link has been sent to {{email}}.",
+      "validationError": "Validation error",
+      "registrationFailed": "Registration failed",
       "requestFailed": "Operation failed. Please try again.",
       "oauthFailed": "Social authentication failed. Please try again.",
       "oauthTokenFailed": "Authentication succeeded but token generation failed. Please try again.",
