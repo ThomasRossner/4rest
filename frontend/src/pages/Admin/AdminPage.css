@@ -959,13 +959,114 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 640px;
+  table-layout: fixed;
 }
 
 .admin-table th,
 .admin-table td {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-xs);
   text-align: left;
   vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-size: 0.875rem;
+}
+
+/* Checkbox column - minimal width */
+.admin-table th:first-child,
+.admin-table td:first-child {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  padding: var(--spacing-xs);
+}
+
+/* Title/Name column - flexible but constrained */
+.admin-table th:nth-child(2),
+.admin-table td:nth-child(2) {
+  width: 12%;
+  min-width: 8rem;
+  max-width: 14rem;
+}
+
+/* Type column - compact */
+.admin-table th:nth-child(3),
+.admin-table td:nth-child(3) {
+  width: 6%;
+  min-width: 5rem;
+  max-width: 6rem;
+}
+
+/* Location column - medium */
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4) {
+  width: 10%;
+  min-width: 7rem;
+  max-width: 10rem;
+}
+
+/* Zielgruppe column - compact */
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+  width: 8%;
+  min-width: 6rem;
+  max-width: 8rem;
+}
+
+/* Points/Cost column - very compact */
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+  width: 4%;
+  min-width: 3.5rem;
+  max-width: 4.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Status column - compact */
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+  width: 5%;
+  min-width: 4.5rem;
+  max-width: 5.5rem;
+  white-space: nowrap;
+}
+
+/* Recurrence column - compact */
+.admin-table th:nth-child(8),
+.admin-table td:nth-child(8) {
+  width: 6%;
+  min-width: 5rem;
+  max-width: 6.5rem;
+  white-space: nowrap;
+}
+
+/* Additional metadata columns (Kategorie, Schwierigkeit, etc.) - very compact */
+.admin-table th:nth-child(9),
+.admin-table td:nth-child(9),
+.admin-table th:nth-child(10),
+.admin-table td:nth-child(10),
+.admin-table th:nth-child(11),
+.admin-table td:nth-child(11),
+.admin-table th:nth-child(12),
+.admin-table td:nth-child(12),
+.admin-table th:nth-child(13),
+.admin-table td:nth-child(13) {
+  width: 5%;
+  min-width: 4rem;
+  max-width: 5.5rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Actions column - flexible but constrained */
+.admin-table th:last-child,
+.admin-table td:last-child {
+  width: auto;
+  min-width: 14rem;
+  max-width: 18rem;
 }
 
 .admin-table tbody tr:not(:last-child) {
@@ -981,47 +1082,82 @@
 .admin-table-primary {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xxs);
+  gap: 0.125rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .admin-table-secondary {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xxs);
+  gap: 0.125rem;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
 }
 
 .admin-table-title {
   font-weight: 600;
   color: var(--color-text);
+  word-break: break-word;
+  line-height: 1.2;
+  font-size: 0.875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-table-subtitle {
   color: var(--color-text-light);
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.125rem;
 }
 
 .admin-table-type .admin-type-badge {
-  transform: scale(0.9);
+  transform: scale(0.85);
   transform-origin: left center;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.admin-table-type {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .admin-table-actions {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xxs);
   flex-wrap: wrap;
   width: 100%;
+  align-items: flex-start;
 }
 
 .admin-action-button {
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: 0.25rem 0.5rem;
   border-radius: var(--border-radius);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .admin-action-button:hover {
@@ -1050,12 +1186,14 @@
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xxs);
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  padding: var(--spacing-xxs) var(--spacing-xs);
+  padding: 0.15rem 0.4rem;
   border-radius: 999px;
   background: var(--color-surface);
   border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.1;
 }
 
 .admin-status-badge.active {
@@ -1087,6 +1225,28 @@
 
 }
 
+/* Responsive table layout - switch to card view on smaller screens */
+@media (max-width: 1200px) {
+  .admin-table {
+    table-layout: auto;
+    min-width: 800px;
+  }
+  
+  /* Further reduce column widths on medium screens */
+  .admin-table th:nth-child(9),
+  .admin-table td:nth-child(9),
+  .admin-table th:nth-child(10),
+  .admin-table td:nth-child(10),
+  .admin-table th:nth-child(11),
+  .admin-table td:nth-child(11),
+  .admin-table th:nth-child(12),
+  .admin-table td:nth-child(12),
+  .admin-table th:nth-child(13),
+  .admin-table td:nth-child(13) {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   /* Show mobile "New task" button, hide desktop one */
   .admin-mobile-new-task-button {
@@ -1114,6 +1274,7 @@
 
   .admin-table {
     min-width: 0;
+    table-layout: auto;
   }
 
   .admin-table thead {
@@ -1151,6 +1312,8 @@
     color: var(--color-text-light);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    min-width: 30%;
   }
 
   .admin-table td:first-child {
@@ -1175,6 +1338,11 @@
   .admin-action-button {
     width: 100%;
     text-align: center;
+  }
+  
+  /* Show all columns in mobile card view */
+  .admin-table td {
+    display: flex;
   }
 }
 

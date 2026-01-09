@@ -7011,7 +7011,7 @@ const goToRewardCreation = () => {
                     <th>Type</th>
                     <th>Details</th>
                     <th>Status</th>
-                    <th style={{ width: '22rem' }}>Actions</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -7328,7 +7328,7 @@ const goToRewardCreation = () => {
                     <th>Zeitaufwand</th>
                     <th>Ort/Werkzeug</th>
                     <th>Event/Gruppe</th>
-                    <th style={{ width: '24rem' }}>Actions</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -7753,7 +7753,7 @@ const goToRewardCreation = () => {
                     <th>Kategorie</th>
                     <th>Event/Gruppe</th>
                     <th>Mögliche Punkte</th>
-                    <th style={{ width: '24rem' }}>Actions</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -7818,7 +7818,9 @@ const goToRewardCreation = () => {
                                 : '—'}
                             </span>
                           </td>
-                          <td data-label="Cost">{cost}</td>
+                          <td data-label="Cost">
+                            <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{cost}</span>
+                          </td>
                           <td data-label="Status">
                              <span
                                className={`admin-status-badge ${
@@ -7829,7 +7831,7 @@ const goToRewardCreation = () => {
                              </span>
                            </td>
                           <td data-label={t('admin.filters.recurrence')}>
-                             <span className="admin-table-type">
+                             <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                                {(() => {
                                  const recurrence = (reward.recurrence || 'once') as 'once' | 'daily' | 'weekly' | 'monthly';
                                  return t(`admin.reward.recurrence.${recurrence}`).split(' - ')[0];
@@ -7837,22 +7839,22 @@ const goToRewardCreation = () => {
                              </span>
                            </td>
                           <td data-label="Art">
-                            <span className="admin-table-secondary">
+                            <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                               {(reward as any).reward_art || '—'}
                             </span>
                           </td>
                           <td data-label="Kategorie">
-                            <span className="admin-table-secondary">
+                            <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                               {(reward as any).kategorie || '—'}
                             </span>
                           </td>
                           <td data-label="Event/Gruppe">
-                            <span className="admin-table-secondary">
+                            <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                               {(reward as any).event_group || '—'}
                             </span>
                           </td>
                           <td data-label="Mögliche Punkte">
-                            <span className="admin-table-secondary">
+                            <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                               {(reward as any).moegliche_punkte !== undefined && (reward as any).moegliche_punkte !== null ? (reward as any).moegliche_punkte : '—'}
                             </span>
                           </td>
