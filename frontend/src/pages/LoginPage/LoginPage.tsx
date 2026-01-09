@@ -152,12 +152,28 @@ function LoginPage() {
         if (!name.trim()) {
           throw new Error(t('login.messages.nameRequired'));
         }
-        await register(email, password, name);
-        setSuccess(t('login.messages.accountCreated'));
-        setMode('login');
-        setEmail('');
-        setPassword('');
-        setName('');
+        if (password.length < 6) {
+          throw new Error(t('login.messages.passwordTooShort'));
+        }
+        try {
+          await register(email, password, name);
+          setSuccess(t('login.messages.accountCreated'));
+          setMode('login');
+          setEmail('');
+          setPassword('');
+          setName('');
+        } catch (registerError: any) {
+          // Handle validation errors from backend
+          if (registerError?.response?.data?.details) {
+            const validationErrors = registerError.response.data.details;
+            const errorMessages = validationErrors.map((err: any) => {
+              const field = err.path?.join('.') || 'field';
+              return `${field}: ${err.message}`;
+            }).join(', ');
+            throw new Error(errorMessages || registerError?.response?.data?.error || t('login.messages.registrationFailed'));
+          }
+          throw registerError;
+        }
       } else if (mode === 'forgot-password') {
         await api.forgotPassword(email);
         setSuccess(t('login.messages.resetLinkSent'));
@@ -187,8 +203,22 @@ function LoginPage() {
       const errorCode = err?.response?.data?.code;
       const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
       
+      // Handle validation errors with details
+      if (err?.response?.data?.details && Array.isArray(err.response.data.details)) {
+        const validationErrors = err.response.data.details;
+        const errorMessages = validationErrors.map((validationErr: any) => {
+          const field = validationErr.path?.join('.') || 'field';
+          const message = validationErr.message || 'Invalid value';
+          // Translate common field names
+          const fieldName = field === 'email' ? t('login.fields.email') : 
+                           field === 'password' ? t('login.fields.password') :
+                           field === 'name' ? t('login.fields.name') : field;
+          return `${fieldName}: ${message}`;
+        }).join('\n');
+        setError(errorMessages || serverMsg || t('login.messages.validationError'));
+      }
       // Handle email verification error
-      if (errorCode === 'EMAIL_NOT_VERIFIED') {
+      else if (errorCode === 'EMAIL_NOT_VERIFIED') {
         const userEmail = err?.response?.data?.email || email;
         setError(t('login.messages.emailVerificationRequired', { email: userEmail }));
         // Still allow login but show the error
@@ -203,6 +233,8 @@ function LoginPage() {
             err?.message ||
             (mode === 'login'
               ? t('login.messages.loginFailed')
+              : mode === 'register'
+              ? t('login.messages.registrationFailed')
               : t('login.messages.requestFailed'))
         );
       }

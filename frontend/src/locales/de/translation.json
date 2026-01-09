@@ -98,6 +98,8 @@
       "passwordMismatch": "Die Passwörter stimmen nicht überein",
       "missingResetToken": "Reset-Token fehlt",
       "emailVerificationRequired": "E-Mail-Bestätigung erforderlich. Prüfe dein Postfach ({{email}}).",
+      "validationError": "Validierungsfehler",
+      "registrationFailed": "Registrierung fehlgeschlagen",
       "passwordSetupRequired": "Dieses Konto verwendet Passwort-lose Anmeldung. Ein Link zum Setzen eines Passworts wurde an {{email}} gesendet.",
       "requestFailed": "Aktion fehlgeschlagen. Bitte versuche es erneut.",
       "oauthFailed": "Social Login fehlgeschlagen. Bitte erneut versuchen.",
