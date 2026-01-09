@@ -959,7 +959,7 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 640px;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .admin-table th,
@@ -984,41 +984,41 @@
 /* Title/Name column - flexible but constrained */
 .admin-table th:nth-child(2),
 .admin-table td:nth-child(2) {
-  width: 12%;
+  width: 15%;
   min-width: 8rem;
-  max-width: 14rem;
+  /* max-width removed to allow more flexibility */
 }
 
 /* Type column - compact */
 .admin-table th:nth-child(3),
 .admin-table td:nth-child(3) {
-  width: 6%;
+  width: 7%;
   min-width: 5rem;
-  max-width: 6rem;
+  /* max-width removed to allow more flexibility */
 }
 
 /* Location column - medium */
 .admin-table th:nth-child(4),
 .admin-table td:nth-child(4) {
-  width: 10%;
+  width: 12%;
   min-width: 7rem;
-  max-width: 10rem;
+  /* max-width removed to allow more flexibility */
 }
 
 /* Zielgruppe column - compact */
 .admin-table th:nth-child(5),
 .admin-table td:nth-child(5) {
-  width: 8%;
+  width: 9%;
   min-width: 6rem;
-  max-width: 8rem;
+  /* max-width removed to allow more flexibility */
 }
 
 /* Points/Cost column - very compact */
 .admin-table th:nth-child(6),
 .admin-table td:nth-child(6) {
-  width: 4%;
+  width: 5%;
   min-width: 3.5rem;
-  max-width: 4.5rem;
+  /* max-width removed to allow more flexibility */
   text-align: center;
   white-space: nowrap;
 }
@@ -1026,18 +1026,18 @@
 /* Status column - compact */
 .admin-table th:nth-child(7),
 .admin-table td:nth-child(7) {
-  width: 5%;
+  width: 6%;
   min-width: 4.5rem;
-  max-width: 5.5rem;
+  /* max-width removed to allow more flexibility */
   white-space: nowrap;
 }
 
 /* Recurrence column - compact */
 .admin-table th:nth-child(8),
 .admin-table td:nth-child(8) {
-  width: 6%;
+  width: 7%;
   min-width: 5rem;
-  max-width: 6.5rem;
+  /* max-width removed to allow more flexibility */
   white-space: nowrap;
 }
 
@@ -1052,29 +1052,29 @@
 .admin-table td:nth-child(12),
 .admin-table th:nth-child(13),
 .admin-table td:nth-child(13) {
-  width: 5%;
+  width: 6%;
   min-width: 4rem;
-  max-width: 5.5rem;
+  /* max-width removed to allow more flexibility */
   font-size: 0.8rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Actions column - flexible but constrained */
+/* Actions column - fills remaining space */
 .admin-table th:last-child,
 .admin-table td:last-child {
   width: auto;
   min-width: 14rem;
-  max-width: 18rem;
+  /* max-width removed to allow Actions column to fill remaining space */
 }
 
-/* Locations table has only 6 columns - make Actions column narrower */
+/* Locations table has only 6 columns - make Actions column narrower but still flexible */
 .admin-table th:nth-child(6):last-child,
 .admin-table td:nth-child(6):last-child {
   width: auto;
   min-width: 10rem;
-  max-width: 12rem;
+  /* max-width removed to allow Actions column to fill remaining space */
 }
 
 /* For locations table with only 3 buttons, keep them in one row and make them more compact */
