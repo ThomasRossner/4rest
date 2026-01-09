@@ -1124,10 +1124,10 @@
 }
 
 .admin-table-type .admin-type-badge {
-  transform: scale(0.85);
+  transform: scale(0.5);
   transform-origin: left center;
-  font-size: 0.8rem;
-  padding: 0.15rem 0.4rem;
+  font-size: 0.4rem;
+  padding: 0.075rem 0.2rem;
 }
 
 .admin-table-type {
