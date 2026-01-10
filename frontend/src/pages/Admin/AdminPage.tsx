@@ -7671,7 +7671,7 @@ const goToRewardCreation = () => {
                   : t('admin.rewardManage.noSelection')}
               </span>
             </div>
-            <div className="admin-table-wrapper">
+            <div className="admin-table-wrapper admin-table-wrapper-rewards">
               <table className="admin-table">
                 <thead>
                   <tr>
