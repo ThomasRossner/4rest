@@ -984,10 +984,20 @@
 /* Rewards table: Make checkbox column narrower */
 .admin-table-wrapper-rewards .admin-table th:first-child,
 .admin-table-wrapper-rewards .admin-table td:first-child {
-  width: 2rem;
-  min-width: 2rem;
-  max-width: 2rem;
-  padding: var(--spacing-xxs);
+  width: 1.75rem !important;
+  min-width: 1.75rem !important;
+  max-width: 1.75rem !important;
+  padding: 0.25rem !important;
+}
+
+/* Ensure Actions column is visible and properly sized in rewards table */
+.admin-table-wrapper-rewards .admin-table th:last-child,
+.admin-table-wrapper-rewards .admin-table td:last-child {
+  width: auto !important;
+  min-width: 14rem !important;
+  max-width: none !important;
+  display: table-cell !important;
+  visibility: visible !important;
 }
 
 /* Title/Name column - flexible but constrained */
