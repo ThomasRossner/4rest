@@ -7675,7 +7675,7 @@ const goToRewardCreation = () => {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th style={{ width: '3rem' }}>
+                    <th>
                       <input
                         type="checkbox"
                         className="admin-checkbox"
