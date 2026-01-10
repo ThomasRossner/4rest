@@ -35,6 +35,10 @@ export function UserManagement() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [includeInactiveUsers, setIncludeInactiveUsers] = useState(false);
   const [userManagementMessage, setUserManagementMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
+  const [showNewUserModal, setShowNewUserModal] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState<UserRole>('guest');
+  const [newUserName, setNewUserName] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -160,6 +164,25 @@ export function UserManagement() {
       },
       onError: (error: any) => {
         pushToast({ type: 'error', message: error?.response?.data?.error || t('admin.users.messages.userDeleteError') });
+      },
+    }
+  );
+
+  const createUserMutation = useMutation(
+    ({ email, role, name }: { email: string; role: UserRole; name?: string }) => api.createUserByAdmin(email, role, name),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['users']);
+        setShowNewUserModal(false);
+        setNewUserEmail('');
+        setNewUserRole('guest');
+        setNewUserName('');
+        pushToast({ type: 'success', message: t('admin.users.messages.userCreated') });
+        setUserManagementMessage({ type: 'success', text: t('admin.users.messages.userCreated') });
+      },
+      onError: (error: any) => {
+        pushToast({ type: 'error', message: error?.response?.data?.error || t('admin.users.messages.userCreateError') });
+        setUserManagementMessage({ type: 'error', text: error?.response?.data?.error || t('admin.users.messages.userCreateError') });
       },
     }
   );
@@ -292,7 +315,7 @@ export function UserManagement() {
                   />
                   <span>{t('admin.taskManage.showInactive', 'Inaktive anzeigen')}</span>
                 </label>
-                <button className="admin-action-button" type="button" onClick={() => pushToast({ type: 'info', message: t('admin.users.newUserNotImplemented', 'Neuer Benutzer - noch nicht implementiert') })}>
+                <button className="admin-action-button" type="button" onClick={() => setShowNewUserModal(true)}>
                   {t('admin.users.newButton', 'Neuer Benutzer')}
                 </button>
               </div>
@@ -610,6 +633,82 @@ export function UserManagement() {
             ) : (
               <div className="admin-error">{t('admin.users.errors.userNotFound')}</div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showNewUserModal && (
+        <div className="user-details-modal" onClick={() => setShowNewUserModal(false)}>
+          <div className="user-details-content" onClick={(e) => e.stopPropagation()}>
+            <div className="user-details-header">
+              <h2>{t('admin.users.newUser.title', 'Neuen Benutzer anlegen')}</h2>
+              <button className="admin-icon-button" onClick={() => setShowNewUserModal(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="user-details-body">
+              <div className="user-details-section">
+                <div className="user-details-field">
+                  <label>{t('admin.users.newUser.email', 'E-Mail-Adresse')} *</label>
+                  <input
+                    type="email"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    placeholder={t('admin.users.newUser.emailPlaceholder', 'benutzer@example.com')}
+                  />
+                </div>
+                <div className="user-details-field">
+                  <label>{t('admin.users.newUser.role', 'Rolle')} *</label>
+                  <select
+                    value={newUserRole}
+                    onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+                  >
+                    {USER_ROLES.map((role) => (
+                      <option key={role} value={role}>
+                        {t(`admin.users.roles.${role}`) || role}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="user-details-field">
+                  <label>{t('admin.users.newUser.name', 'Name')} ({t('admin.users.newUser.optional', 'Optional')})</label>
+                  <input
+                    type="text"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    placeholder={t('admin.users.newUser.namePlaceholder', 'Wird aus E-Mail abgeleitet, falls leer')}
+                  />
+                </div>
+              </div>
+              <div className="user-details-actions">
+                <button
+                  className="admin-button-secondary"
+                  onClick={() => setShowNewUserModal(false)}
+                  disabled={createUserMutation.isLoading}
+                >
+                  {t('common.actions.cancel', 'Abbrechen')}
+                </button>
+                <button
+                  className="admin-button-secondary"
+                  onClick={() => {
+                    if (!newUserEmail.trim()) {
+                      pushToast({ type: 'error', message: t('admin.users.newUser.emailRequired', 'E-Mail-Adresse ist erforderlich') });
+                      return;
+                    }
+                    createUserMutation.mutate({ 
+                      email: newUserEmail.trim(), 
+                      role: newUserRole,
+                      name: newUserName.trim() || undefined
+                    });
+                  }}
+                  disabled={createUserMutation.isLoading || !newUserEmail.trim()}
+                >
+                  {createUserMutation.isLoading 
+                    ? t('admin.users.newUser.creating', 'Wird erstellt...') 
+                    : t('admin.users.newUser.create', 'Benutzer anlegen')}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -115,6 +115,11 @@ export const api = {
     const res = await apiClient.get(`/users/${userId}/statistics`);
     return res.data;
   },
+
+  async createUserByAdmin(email: string, role: UserRole, name?: string) {
+    const res = await apiClient.post('/users', { email, role, name });
+    return res.data;
+  },
   // Auth
   async login(email: string, password: string) {
     const response = await apiClient.post('/auth/login', { email, password });

@@ -38,9 +38,18 @@
   overflow-x: auto;
 }
 
-/* User Management table: First column (Name) should be wider */
+/* User Management table: Checkbox column - same as tasks */
 .user-management-table-wrapper .admin-table th:first-child,
 .user-management-table-wrapper .admin-table td:first-child {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  padding: var(--spacing-xs);
+}
+
+/* User Management table: Name column (second column) should be wider */
+.user-management-table-wrapper .admin-table th:nth-child(2),
+.user-management-table-wrapper .admin-table td:nth-child(2) {
   width: 20%;
   min-width: 12rem;
   /* Remove max-width constraint to allow more flexibility */

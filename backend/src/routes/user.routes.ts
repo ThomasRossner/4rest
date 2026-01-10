@@ -15,6 +15,7 @@ import {
   deleteUser,
   getUserStatistics,
   getUserTimeline,
+  createUserByAdmin,
 } from '../controllers/user.controller.js';
 
 const router = Router();
@@ -28,6 +29,7 @@ router.put('/:id/profile', authenticate, updateUserProfile);
 
 // Admin-only routes
 router.get('/', authenticate, requireRole('administrator', 'employee'), listUsers);
+router.post('/', authenticate, requireRole('administrator'), createUserByAdmin);
 router.get('/:id', authenticate, requireRole('administrator'), getUserDetails);
 router.put('/:id/role', authenticate, requireRole('administrator'), updateUserRole);
 router.put('/:id/points', authenticate, requireRole('administrator'), updateUserPoints);

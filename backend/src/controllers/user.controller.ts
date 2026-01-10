@@ -14,8 +14,11 @@ import {
   deleteUserService,
   getUserStatisticsService,
   getUserTimelineService,
+  createUserByAdminService,
 } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { sendPasswordSetupEmail } from '../services/auth-email.service.js';
+import { USER_ROLES, UserRole } from '../constants/enums.js';
 
 export const getMe: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -175,4 +178,40 @@ export const getUserTimeline: RequestHandler = asyncHandler(async (req, res) => 
   const days = req.query.days ? parseInt(req.query.days as string, 10) : 30;
   const timeline = await getUserTimelineService(req.params.id, days);
   res.json(timeline);
+});
+
+export const createUserByAdmin: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { email, role, name } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  if (!role || !(USER_ROLES as readonly string[]).includes(role)) {
+    return res.status(400).json({ error: 'Valid role is required' });
+  }
+
+  try {
+    // Create user without password
+    const user = await createUserByAdminService(email, role as UserRole, name);
+
+    // Send password setup email
+    await sendPasswordSetupEmail(user.id, user.email!, user.name);
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'User created successfully. Password setup email has been sent.',
+      user 
+    });
+  } catch (error: any) {
+    if (error.message === 'User with this email already exists') {
+      return res.status(400).json({ error: error.message });
+    }
+    throw error;
+  }
 });

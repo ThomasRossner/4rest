@@ -617,6 +617,35 @@ export async function deleteUserService(userId: string, adminUserId: string, har
 /**
  * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
  */
+export async function createUserByAdminService(email: string, role: UserRole, name?: string): Promise<User> {
+  // Check if user already exists
+  const existingUser = await getUserByEmail(email);
+  if (existingUser) {
+    throw new Error('User with this email already exists');
+  }
+
+  // Extract name from email if not provided
+  const userName = name || email.split('@')[0];
+
+  // Create user without password
+  const user = await createUser({
+    email,
+    password_hash: null, // No password - user will set it via email link
+    name: userName,
+    role: role || 'guest',
+    user_type: 'explorer',
+  });
+
+  // Mark email as verified since admin created it
+  const db = getPool();
+  await db.query(
+    `UPDATE users SET email_verified = true WHERE id = $1`,
+    [user.id]
+  );
+
+  return user;
+}
+
 export async function getUserTimelineService(userId: string, days: number = 30): Promise<Array<{ date: string; points: number; trees: number; co2: number }>> {
   const db = getPool();
   
