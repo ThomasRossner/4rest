@@ -401,8 +401,17 @@ export async function resetPassword(req: Request, res: Response) {
     await updateUserPassword(tokenData.userId, passwordHash);
     await clearPasswordResetToken(tokenData.userId);
 
+    // If user is inactive and this is a password setup (admin-created account), activate the user
+    if (user && !user.active && isPasswordSetup) {
+      const db = getPool();
+      await db.query(
+        `UPDATE users SET active = true WHERE id = $1`,
+        [tokenData.userId]
+      );
+    }
+
     const message = isPasswordSetup 
-      ? 'Password has been set successfully. You can now sign in with your email and password.'
+      ? 'Password has been set successfully and your account has been activated. You can now sign in with your email and password.'
       : 'Password has been reset successfully';
 
     res.json({ message });

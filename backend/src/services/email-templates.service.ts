@@ -114,6 +114,21 @@ class EmailTemplatesService {
       expiresIn,
     });
   }
+
+  getAdminCreatedUserEmail(variables: {
+    name: string;
+    email: string;
+    resetUrl: string;
+    expiresIn?: string;
+  }): string {
+    const template = this.loadTemplate('admin-created-user-email');
+    const expiresIn = variables.expiresIn || '1 hour';
+    
+    return this.replaceVariables(template, {
+      ...variables,
+      expiresIn,
+    });
+  }
 }
 
 export const emailTemplates = new EmailTemplatesService();

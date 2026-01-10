@@ -87,6 +87,33 @@ export async function sendPasswordSetupEmail(userId: string, email: string, name
   }
 }
 
+export async function sendAdminCreatedUserEmail(userId: string, email: string, name: string): Promise<void> {
+  try {
+    const setupToken = await generatePasswordSetupToken(userId);
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+    if (!appUrl) {
+      throw new Error('APP_URL or FRONTEND_URL environment variable must be set for admin created user emails');
+    }
+    const setupUrl = `${appUrl}/setup-password?token=${setupToken}`;
+
+    const html = emailTemplates.getAdminCreatedUserEmail({
+      name,
+      email,
+      resetUrl: setupUrl,
+      expiresIn: `${TOKEN_EXPIRY_HOURS.passwordReset} hour`,
+    });
+
+    await emailService.sendEmail({
+      to: email,
+      subject: 'Your Roots of Impact Account Has Been Created',
+      html,
+    });
+  } catch (error: any) {
+    console.error('Failed to send admin created user email:', error);
+    throw error;
+  }
+}
+
 export async function sendWelcomeEmail(userId: string, email: string, name: string, role: string): Promise<void> {
   try {
     const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;

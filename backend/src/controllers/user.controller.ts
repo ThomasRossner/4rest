@@ -17,7 +17,7 @@ import {
   createUserByAdminService,
 } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { sendPasswordSetupEmail } from '../services/auth-email.service.js';
+import { sendAdminCreatedUserEmail } from '../services/auth-email.service.js';
 import { USER_ROLES, UserRole } from '../constants/enums.js';
 
 export const getMe: RequestHandler = asyncHandler(async (req, res) => {
@@ -197,15 +197,15 @@ export const createUserByAdmin: RequestHandler = asyncHandler(async (req, res) =
   }
 
   try {
-    // Create user without password
+    // Create user without password and set as inactive
     const user = await createUserByAdminService(email, role as UserRole, name);
 
-    // Send password setup email
-    await sendPasswordSetupEmail(user.id, user.email!, user.name);
+    // Send admin created user email (different from password setup email)
+    await sendAdminCreatedUserEmail(user.id, user.email!, user.name);
 
     res.status(201).json({ 
       success: true, 
-      message: 'User created successfully. Password setup email has been sent.',
+      message: 'User created successfully. Activation email has been sent.',
       user 
     });
   } catch (error: any) {

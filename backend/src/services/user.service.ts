@@ -627,23 +627,38 @@ export async function createUserByAdminService(email: string, role: UserRole, na
   // Extract name from email if not provided
   const userName = name || email.split('@')[0];
 
-  // Create user without password
-  const user = await createUser({
-    email,
-    password_hash: null, // No password - user will set it via email link
-    name: userName,
-    role: role || 'guest',
-    user_type: 'explorer',
-  });
-
-  // Mark email as verified since admin created it
+  // Create user without password and set as inactive
   const db = getPool();
-  await db.query(
-    `UPDATE users SET email_verified = true WHERE id = $1`,
-    [user.id]
+  const resolvedRole = ensureRole(role);
+  const resolvedUserType = ensureUserType('explorer');
+
+  const values = [
+    email,
+    null, // No password - user will set it via email link
+    userName,
+    resolvedRole,
+    resolvedUserType,
+    0, // points
+    null, // avatar_url
+    null, // oauth_provider
+    null, // oauth_id
+    null, // oauth_email
+    null, // sihot_guest_id
+    null, // sihot_guest_data
+  ];
+
+  const result = await db.query(
+    `INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data, email_verified, active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb, true, false)
+     RETURNING *`,
+    values
   );
 
-  return user;
+  if (!result.rows[0]) {
+    throw new Error('User creation returned no rows');
+  }
+
+  return result.rows[0];
 }
 
 export async function getUserTimelineService(userId: string, days: number = 30): Promise<Array<{ date: string; points: number; trees: number; co2: number }>> {
