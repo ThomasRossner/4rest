@@ -38,6 +38,14 @@
   overflow-x: auto;
 }
 
+/* User Management table: First column (Name) should be wider */
+.user-management-table-wrapper .admin-table th:first-child,
+.user-management-table-wrapper .admin-table td:first-child {
+  width: 20%;
+  min-width: 12rem;
+  /* Remove max-width constraint to allow more flexibility */
+}
+
 .user-management-table-wrapper table tbody tr {
   transition: background-color 0.2s;
 }
