@@ -239,7 +239,7 @@ export const useAuthStore = create<AuthState>()(
         email: string,
         password: string,
         name: string,
-        role: UserRole = 'stakeholder',
+        role: UserRole = 'guest',
         userType: UserType = 'explorer'
       ) => {
         const data = await api.register(email, password, name, role, userType);

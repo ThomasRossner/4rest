@@ -40,14 +40,17 @@ class EmailTemplatesService {
   getWelcomeEmail(variables: {
     name: string;
     email: string;
-    role: string;
+    role?: string;
     appUrl?: string;
   }): string {
     const template = this.loadTemplate('welcome-email');
     const appUrl = variables.appUrl || process.env.APP_URL || process.env.FRONTEND_URL || '';
     
+    // Remove role from variables to prevent it from being displayed in email
+    const { role, ...emailVariables } = variables;
+    
     return this.replaceVariables(template, {
-      ...variables,
+      ...emailVariables,
       appUrl,
     });
   }

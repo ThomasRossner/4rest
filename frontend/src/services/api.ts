@@ -26,7 +26,7 @@ export const api = {
     email: string,
     password: string,
     name: string,
-    role: UserRole = 'stakeholder',
+    role: UserRole = 'guest',
     userType: UserType = 'explorer'
   ) {
     const res = await apiClient.post('/auth/register', { email, password, name, role, userType });
