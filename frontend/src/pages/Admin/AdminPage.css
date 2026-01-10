@@ -981,21 +981,13 @@
   padding: var(--spacing-xs);
 }
 
-/* Rewards table: Make checkbox column narrower but ensure no overlap */
+/* Rewards table: Use same checkbox column settings as tasks */
 .admin-table-wrapper-rewards .admin-table th:first-child,
 .admin-table-wrapper-rewards .admin-table td:first-child {
-  width: 2rem !important;
-  min-width: 2rem !important;
-  max-width: 2rem !important;
-  padding: 0.25rem !important;
-  box-sizing: border-box !important;
-}
-
-/* Ensure second column doesn't overlap with checkbox column */
-.admin-table-wrapper-rewards .admin-table th:nth-child(2),
-.admin-table-wrapper-rewards .admin-table td:nth-child(2) {
-  padding-left: 0.5rem !important;
-  min-width: 0 !important;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  padding: var(--spacing-xs);
 }
 
 /* Ensure Actions column (last child) is ALWAYS visible in rewards table, regardless of media queries */
