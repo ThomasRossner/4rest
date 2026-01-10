@@ -630,9 +630,6 @@ export async function createUserByAdminService(email: string, role: UserRole, na
 
   // Extract name from email if not provided
   const userName = name || email.split('@')[0];
-
-  // Create user without password and set as inactive
-  const db = getPool();
   const resolvedRole = ensureRole(role);
   const resolvedUserType = ensureUserType('explorer');
 
