@@ -26,26 +26,6 @@ type UserListItem = {
   deleted_at: string | null;
 };
 
-type UserDetails = {
-  id: string;
-  email: string | null;
-  name: string;
-  role: UserRole;
-  user_type: string;
-  points: number;
-  active: boolean;
-  created_at: string;
-  deleted_at: string | null;
-  statistics?: {
-    tasksCompleted: number;
-    treesPlanted: number;
-    totalPoints: number;
-    co2Saved: number;
-    rewardsRedeemed: number;
-    firstTaskDate: string | null;
-    lastTaskDate: string | null;
-  };
-};
 
 export function UserManagement() {
   const { t } = useTranslation();
@@ -55,9 +35,6 @@ export function UserManagement() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [includeInactiveUsers, setIncludeInactiveUsers] = useState(false);
   const [userManagementMessage, setUserManagementMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -66,19 +43,11 @@ export function UserManagement() {
       limit: pageSize,
       offset: (page - 1) * pageSize,
     };
-    if (roleFilter !== 'all') {
-      f.role = roleFilter;
-    }
-    if (activeFilter !== 'all') {
-      f.active = activeFilter === 'active';
-    } else if (!includeInactiveUsers) {
+    if (!includeInactiveUsers) {
       f.active = true;
     }
-    if (searchQuery.trim()) {
-      f.search = searchQuery.trim();
-    }
     return f;
-  }, [roleFilter, activeFilter, searchQuery, page, pageSize, includeInactiveUsers]);
+  }, [page, pageSize, includeInactiveUsers]);
 
   const { data: usersData, isLoading, error, refetch: refetchUsers } = useQuery(
     ['users', filters],
@@ -366,7 +335,7 @@ export function UserManagement() {
               </div>
               <span className="admin-selection-count">
                 {hasUserSelection
-                  ? t('admin.users.selectedCount', { count: selectedUserIds.length }, `{{count}} Benutzer ausgewählt`)
+                  ? t('admin.users.selectedCount', { count: selectedUserIds.length })
                   : t('admin.users.noSelection', 'Keine Benutzer ausgewählt')}
               </span>
             </div>
@@ -408,7 +377,7 @@ export function UserManagement() {
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((user: UserListItem) => {
+                    filteredUsers.map((user) => {
                       const isSelected = selectedUserIds.includes(user.id);
                       return (
                         <tr
