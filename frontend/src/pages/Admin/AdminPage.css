@@ -981,9 +981,9 @@
   padding: var(--spacing-xs);
 }
 
-/* Rewards table: Make checkbox column narrower - target by section context */
-.admin-section:has(h2:contains("Belohnungen")) .admin-table th:first-child,
-.admin-section:has(h2:contains("Belohnungen")) .admin-table td:first-child {
+/* Rewards table: Make checkbox column narrower */
+.admin-table-wrapper-rewards .admin-table th:first-child,
+.admin-table-wrapper-rewards .admin-table td:first-child {
   width: 2rem;
   min-width: 2rem;
   max-width: 2rem;
