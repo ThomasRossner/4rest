@@ -618,14 +618,44 @@ export async function deleteUserService(userId: string, adminUserId: string, har
  * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
  */
 export async function createUserByAdminService(email: string, role: UserRole, name?: string): Promise<User> {
-  // Check if user already exists (excluding soft-deleted users)
+  // Check if user already exists (including soft-deleted users)
   const db = getPool();
   const existingUserResult = await db.query(
-    `SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL`,
+    `SELECT id, deleted_at FROM users WHERE email = $1`,
     [email]
   );
+  
   if (existingUserResult.rows.length > 0) {
-    throw new Error('User with this email already exists');
+    const existingUser = existingUserResult.rows[0];
+    if (existingUser.deleted_at === null) {
+      throw new Error('User with this email already exists');
+    }
+    // If user is soft-deleted, reactivate and update it
+    const userName = name || email.split('@')[0];
+    const resolvedRole = ensureRole(role);
+    const resolvedUserType = ensureUserType('explorer');
+
+    const updateResult = await db.query(
+      `UPDATE users 
+       SET password_hash = NULL,
+           name = $1,
+           role = $2,
+           user_type = $3,
+           points = 0,
+           email_verified = true,
+           active = false,
+           deleted_at = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING *`,
+      [userName, resolvedRole, resolvedUserType, existingUser.id]
+    );
+
+    if (!updateResult.rows[0]) {
+      throw new Error('Failed to reactivate soft-deleted user');
+    }
+
+    return updateResult.rows[0];
   }
 
   // Extract name from email if not provided
@@ -648,18 +678,59 @@ export async function createUserByAdminService(email: string, role: UserRole, na
     null, // sihot_guest_data
   ];
 
-  const result = await db.query(
-    `INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data, email_verified, active)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb, true, false)
-     RETURNING *`,
-    values
-  );
+  try {
+    const result = await db.query(
+      `INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data, email_verified, active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb, true, false)
+       RETURNING *`,
+      values
+    );
 
-  if (!result.rows[0]) {
-    throw new Error('User creation returned no rows');
+    if (!result.rows[0]) {
+      throw new Error('User creation returned no rows');
+    }
+
+    return result.rows[0];
+  } catch (error: any) {
+    // Handle duplicate key error (in case of race condition)
+    if (error.code === '23505' && error.constraint === 'users_email_key') {
+      // Check if it's a soft-deleted user
+      const checkResult = await db.query(
+        `SELECT id, deleted_at FROM users WHERE email = $1`,
+        [email]
+      );
+      if (checkResult.rows.length > 0 && checkResult.rows[0].deleted_at !== null) {
+        // Retry with update
+        const userName = name || email.split('@')[0];
+        const resolvedRole = ensureRole(role);
+        const resolvedUserType = ensureUserType('explorer');
+
+        const updateResult = await db.query(
+          `UPDATE users 
+           SET password_hash = NULL,
+               name = $1,
+               role = $2,
+               user_type = $3,
+               points = 0,
+               email_verified = true,
+               active = false,
+               deleted_at = NULL,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $4
+           RETURNING *`,
+          [userName, resolvedRole, resolvedUserType, checkResult.rows[0].id]
+        );
+
+        if (!updateResult.rows[0]) {
+          throw new Error('Failed to reactivate soft-deleted user');
+        }
+
+        return updateResult.rows[0];
+      }
+      throw new Error('User with this email already exists');
+    }
+    throw error;
   }
-
-  return result.rows[0];
 }
 
 export async function getUserTimelineService(userId: string, days: number = 30): Promise<Array<{ date: string; points: number; trees: number; co2: number }>> {
