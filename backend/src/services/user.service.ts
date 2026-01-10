@@ -618,9 +618,13 @@ export async function deleteUserService(userId: string, adminUserId: string, har
  * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
  */
 export async function createUserByAdminService(email: string, role: UserRole, name?: string): Promise<User> {
-  // Check if user already exists
-  const existingUser = await getUserByEmail(email);
-  if (existingUser) {
+  // Check if user already exists (excluding soft-deleted users)
+  const db = getPool();
+  const existingUserResult = await db.query(
+    `SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL`,
+    [email]
+  );
+  if (existingUserResult.rows.length > 0) {
     throw new Error('User with this email already exists');
   }
 
