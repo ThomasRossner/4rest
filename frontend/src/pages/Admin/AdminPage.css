@@ -984,13 +984,13 @@
 /* Rewards table: Make checkbox column narrower */
 .admin-table-wrapper-rewards .admin-table th:first-child,
 .admin-table-wrapper-rewards .admin-table td:first-child {
-  width: 1.75rem !important;
-  min-width: 1.75rem !important;
-  max-width: 1.75rem !important;
-  padding: 0.25rem !important;
+  width: 1.5rem !important;
+  min-width: 1.5rem !important;
+  max-width: 1.5rem !important;
+  padding: 0.125rem 0.25rem !important;
 }
 
-/* Ensure Actions column is visible and properly sized in rewards table */
+/* Ensure Actions column (last child) is ALWAYS visible in rewards table, regardless of media queries */
 .admin-table-wrapper-rewards .admin-table th:last-child,
 .admin-table-wrapper-rewards .admin-table td:last-child {
   width: auto !important;
@@ -998,6 +998,42 @@
   max-width: none !important;
   display: table-cell !important;
   visibility: visible !important;
+}
+
+/* Override any media query rules that might hide the Actions column in rewards table */
+@media (max-width: 1600px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 1400px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 1000px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
 }
 
 /* Title/Name column - flexible but constrained */
