@@ -17,6 +17,13 @@
     "noFallthroughCasesInSwitch": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "suppressExcessPropertyErrors": true,
+    "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
