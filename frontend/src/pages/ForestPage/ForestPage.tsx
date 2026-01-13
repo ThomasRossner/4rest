@@ -2,15 +2,82 @@ import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Sky, PerspectiveCamera } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { useAuthStore } from '../../stores/authStore';
+import { api } from '../../services/api';
 import ForestScene from '../../components/3d/ForestScene';
 import './ForestPage.css';
 
 function ForestPage() {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const userId = useAuthStore((s) => s.user?.id);
+  const userPoints = useAuthStore((s) => s.user?.points || 0);
+
+  // Get active team and total points
+  const { data: activeTeam } = useQuery(
+    ['userActiveTeam', userId],
+    () => api.getUserActiveTeam(),
+    { enabled: !!userId, refetchInterval: 5000 }
+  );
+
+  const { data: progress, isLoading: progressLoading } = useQuery(
+    ['userProgress', userId],
+    () => api.getUserProgress(userId as string),
+    { enabled: !!userId }
+  );
+
   return (
     <div className="forest-page">
       <h1 className="forest-title">{t('forest.title')}</h1>
       <p className="forest-subtitle">{t('forest.subtitle')}</p>
+      
+      {user && progress && (
+        <section className="home-section" style={{ marginBottom: '2rem' }}>
+          <div className="home-section-header">
+            <h2 className="home-section-title">{t('home.impactTitle')}</h2>
+            <p className="home-section-subtitle">{t('home.impactSubtitle')}</p>
+          </div>
+          <div className="home-stats">
+            <div className="home-stat">
+              <div className="home-stat-icon">⭐</div>
+              <span className="home-stat-value">
+                {activeTeam?.totalPoints !== undefined ? (
+                  <>
+                    {activeTeam.totalPoints} / {userPoints}
+                  </>
+                ) : (
+                  userPoints
+                )}
+              </span>
+              <span className="home-stat-label">
+                {activeTeam?.totalPoints !== undefined 
+                  ? t('home.stats.teamPoints')
+                  : t('home.stats.totalPoints')
+                }
+              </span>
+            </div>
+            <div className="home-stat">
+              <div className="home-stat-icon">🌲</div>
+              <span className="home-stat-value">{progress?.treesPlanted || 0}</span>
+              <span className="home-stat-label">{t('home.stats.treesPlanted')}</span>
+            </div>
+            <div className="home-stat">
+              <div className="home-stat-icon">✅</div>
+              <span className="home-stat-value">{progress?.tasksCompleted || 0}</span>
+              <span className="home-stat-label">{t('home.stats.tasksCompleted')}</span>
+            </div>
+            {progress?.co2Saved && progress.co2Saved > 0 && (
+              <div className="home-stat">
+                <div className="home-stat-icon">🌍</div>
+                <span className="home-stat-value">{progress.co2Saved.toFixed(1)} kg</span>
+                <span className="home-stat-label">{t('home.stats.co2Saved')}</span>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+      
       <div className="forest-container">
         <Suspense fallback={<div className="forest-loading">{t('forest.loading')}</div>}>
           <Canvas
