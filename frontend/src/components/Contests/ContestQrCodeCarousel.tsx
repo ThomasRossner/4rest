@@ -12,6 +12,7 @@ type ContestQrCodeCarouselProps = {
   onDissolve?: () => void;
   onLeave?: () => void;
   isCreator?: boolean;
+  startDate?: string | Date;
   endDate?: string | Date;
   rewardsAwarded?: boolean;
 };
