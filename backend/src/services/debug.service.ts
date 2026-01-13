@@ -47,7 +47,7 @@ export async function createBulkTasksForUser(
         points,
         location_id: location.id,
         active: true,
-        allowed_roles: [user.role] as UserRole[],
+        allowed_roles: [user.role] as UserRole[] as any,
         allowed_user_types: [user.user_type] as UserType[],
         allowed_hotel_ids: [],
         quiz_questions: JSON.stringify([
@@ -128,7 +128,7 @@ export async function completeBulkTasksForUser(
           points,
           location_id: location.id,
           active: true,
-          allowed_roles: [user.role] as UserRole[],
+          allowed_roles: [user.role] as UserRole[] as any,
           allowed_user_types: [user.user_type] as UserType[],
           allowed_hotel_ids: [],
           quiz_questions: JSON.stringify([
@@ -184,7 +184,7 @@ export async function completeBulkTasksForUser(
     throw new Error(`Failed to complete any tasks. Errors: ${errors.join('; ')}`);
   }
 
-  return { completed, taskIds, errors: errors.length > 0 ? errors : undefined };
+  return { completed, taskIds, errors: errors.length > 0 ? errors : undefined } as any;
 }
 
 /**
@@ -709,7 +709,7 @@ export async function generateStatisticsData(
         co2_savings_kg: co2Savings,
         location_id: location.id,
         active: true,
-        allowed_roles: ['stakeholder'] as UserRole[],
+        allowed_roles: ['stakeholder'] as UserRole[] as any,
         allowed_user_types: ['explorer'] as UserType[],
         allowed_hotel_ids: [],
         quiz_questions: JSON.stringify([

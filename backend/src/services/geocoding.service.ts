@@ -117,7 +117,7 @@ export async function reverseGeocode(
       throw new Error(`Reverse geocoding API returned status ${response.status}`);
     }
 
-    const result = await response.json();
+    const result: any = await response.json();
 
     if (!result || !result.lat || !result.lon) {
       throw new Error('No results found for these coordinates.');

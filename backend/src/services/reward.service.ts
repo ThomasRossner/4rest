@@ -266,8 +266,8 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
         } catch {
           // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
           // Remove curly braces and split by comma
-          const cleaned = data.zielgruppe.replace(/^{|}$/g, '').trim();
-          zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];
+          const cleaned = (data.zielgruppe as string).replace(/^{|}$/g, '').trim();
+          zielgruppeArray = cleaned ? cleaned.split(',').map((v: string) => v.trim()) : [];
         }
       } else if (Array.isArray(data.zielgruppe)) {
         zielgruppeArray = data.zielgruppe;
