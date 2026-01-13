@@ -402,7 +402,7 @@ export async function resetPassword(req: Request, res: Response) {
     await clearPasswordResetToken(tokenData.userId);
 
     // If user is inactive and this is a password setup (admin-created account), activate the user
-    if (user && !user.active && isPasswordSetup) {
+    if (user && !(user as any).active && isPasswordSetup) {
       const db = getPool();
       await db.query(
         `UPDATE users SET active = true WHERE id = $1`,

@@ -56,7 +56,7 @@ export const getForestStats: RequestHandler = asyncHandler(async (req, res) => {
 
   // Only admins should see global forest stats
   // In this app, the admin role is stored as "administrator"
-  if (user.role !== 'administrator' && user.role !== 'admin') {
+  if (user.role !== 'administrator' && (user.role as any) !== 'admin') {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
@@ -73,7 +73,7 @@ export const validateAndFixForest: RequestHandler = asyncHandler(async (req, res
   }
 
   // Only admins should be able to run validation
-  if (user.role !== 'administrator' && user.role !== 'admin') {
+  if (user.role !== 'administrator' && (user.role as any) !== 'admin') {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
@@ -103,7 +103,7 @@ export const getValidationJobStatus: RequestHandler = asyncHandler(async (req, r
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (user.role !== 'administrator' && user.role !== 'admin') {
+  if (user.role !== 'administrator' && (user.role as any) !== 'admin') {
     return res.status(403).json({ error: 'Forbidden' });
   }
 

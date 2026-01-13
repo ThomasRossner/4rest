@@ -72,7 +72,7 @@ export const listUsers: RequestHandler = asyncHandler(async (req, res) => {
     offset: req.query.offset ? parseInt(req.query.offset as string, 10) : undefined,
   };
 
-  const result = await listUsersService(filters);
+  const result = await listUsersService(filters as any);
   res.json(result);
 });
 

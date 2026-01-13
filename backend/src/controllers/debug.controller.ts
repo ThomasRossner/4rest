@@ -77,11 +77,12 @@ export const completeBulkTasks: RequestHandler = asyncHandler(async (req, res) =
 
   const result = await completeBulkTasksForUser(userEmail, taskCount);
 
-  if (result.errors && result.errors.length > 0) {
-    logger.warn('DEBUG_COMPLETE_BULK_TASKS', `Completed ${result.completed} tasks with ${result.errors.length} errors`, {
+  const resultAny = result as any;
+  if (resultAny.errors && resultAny.errors.length > 0) {
+    logger.warn('DEBUG_COMPLETE_BULK_TASKS', `Completed ${result.completed} tasks with ${resultAny.errors.length} errors`, {
       userId: authReq.user?.id,
       userEmail: authReq.user?.email,
-      details: { targetUserEmail: userEmail, completed: result.completed, errors: result.errors },
+      details: { targetUserEmail: userEmail, completed: result.completed, errors: resultAny.errors },
     });
   } else {
     logger.info('DEBUG_COMPLETE_BULK_TASKS', `Successfully completed ${result.completed} tasks`, {
@@ -93,10 +94,10 @@ export const completeBulkTasks: RequestHandler = asyncHandler(async (req, res) =
 
   res.json({
     success: true,
-    message: `Completed ${result.completed} tasks for user ${userEmail}${result.errors && result.errors.length > 0 ? ` (${result.errors.length} errors occurred)` : ''}`,
+    message: `Completed ${result.completed} tasks for user ${userEmail}${resultAny.errors && resultAny.errors.length > 0 ? ` (${resultAny.errors.length} errors occurred)` : ''}`,
     taskIds: result.taskIds,
     completed: result.completed,
-    errors: result.errors,
+    errors: resultAny.errors,
   });
 });
 
