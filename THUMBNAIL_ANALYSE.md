@@ -327,3 +327,4 @@ async uploadRewardThumbnail(file: File): Promise<{ thumbnail_url: string }> {
 3. **Speicherort:** Lokaler Speicher oder Cloud-Storage?
 4. **Löschen:** Soll beim Löschen eines Tasks/Rewards auch das Thumbnail gelöscht werden?
 5. **Karten-Marker:** Sollen Thumbnails auch auf der Karte (UserLocationMap) verwendet werden?
+9afb022c-21eb-4b2b-b928-1bfa684801a0
