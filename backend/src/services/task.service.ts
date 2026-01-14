@@ -567,33 +567,32 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   }
 
   // Explicitly handle thumbnail_url before the loop to ensure it's always processed
-  // #region agent log
-  try {
-    const fs = require('fs');
-    const logDir = '/app/.cursor';
-    const logPath = '/app/.cursor/debug.log';
-    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-    const logEntry = JSON.stringify({location:'task.service.ts:569',message:'updateTask thumbnail_url check',data:{hasThumbnailUrl:'thumbnail_url' in data,thumbnailUrl:data.thumbnail_url,thumbnailUrlType:typeof data.thumbnail_url,thumbnailUrlUndefined:data.thumbnail_url === undefined,thumbnailUrlNull:data.thumbnail_url === null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'}) + '\n';
-    fs.appendFileSync(logPath, logEntry);
-  } catch (e) {}
-  // #endregion
-  if ('thumbnail_url' in data && data.thumbnail_url !== undefined) {
+  // ALWAYS set thumbnail_url if it exists in data, even if null
+  if ('thumbnail_url' in data) {
     updates.push(`thumbnail_url = $${paramIndex++}`);
     values.push(data.thumbnail_url ?? null);
     // #region agent log
     try {
       const fs = require('fs');
-      const logEntry = JSON.stringify({location:'task.service.ts:572',message:'thumbnail_url added to updates',data:{updatesCount:updates.length,paramIndex,value:data.thumbnail_url ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'}) + '\n';
+      const logDir = '/app/.cursor';
+      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+      const logEntry = JSON.stringify({location:'task.service.ts:571',message:'thumbnail_url ALWAYS added to updates',data:{hasThumbnailUrl:'thumbnail_url' in data,thumbnailUrl:data.thumbnail_url,thumbnailUrlType:typeof data.thumbnail_url,value:data.thumbnail_url ?? null,updatesCount:updates.length,paramIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'}) + '\n';
       fs.appendFileSync('/app/.cursor/debug.log', logEntry);
-    } catch (e) {}
+    } catch (e) {
+      console.error('Debug log error:', e);
+    }
     // #endregion
   } else {
     // #region agent log
     try {
       const fs = require('fs');
-      const logEntry = JSON.stringify({location:'task.service.ts:576',message:'thumbnail_url NOT added to updates',data:{hasThumbnailUrl:'thumbnail_url' in data,thumbnailUrl:data.thumbnail_url,thumbnailUrlUndefined:data.thumbnail_url === undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'}) + '\n';
+      const logDir = '/app/.cursor';
+      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+      const logEntry = JSON.stringify({location:'task.service.ts:585',message:'thumbnail_url NOT in data',data:{hasThumbnailUrl:'thumbnail_url' in data,dataKeys:Object.keys(data)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'}) + '\n';
       fs.appendFileSync('/app/.cursor/debug.log', logEntry);
-    } catch (e) {}
+    } catch (e) {
+      console.error('Debug log error:', e);
+    }
     // #endregion
   }
 
