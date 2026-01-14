@@ -34,6 +34,7 @@ services:
     container_name: roots-backend-homeserver
     environment:
       NODE_ENV: production
+      PORT: 5000
       DATABASE_URL: postgresql://${POSTGRES_USER:-roots_user}:${POSTGRES_PASSWORD:-roots_password}@postgres:5432/${POSTGRES_DB:-roots_of_impact}
       DATABASE_SSL: "false"
       REDIS_URL: redis://redis:6379
