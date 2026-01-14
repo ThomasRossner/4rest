@@ -82,7 +82,7 @@ export async function getAllTasks(
     }
   }
 
-  let select = 'DISTINCT ON (t.id) t.*, t.thumbnail_url, row_to_json(l.*) AS location';
+  let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
   let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
   if (userId) {
     select += `, (ut.user_id IS NOT NULL) AS completed`;
