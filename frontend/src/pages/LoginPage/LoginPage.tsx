@@ -29,6 +29,8 @@ function LoginPage() {
   const [codeSent, setCodeSent] = useState(false);
   const verificationInProgressRef = useRef(false);
   const processedTokensRef = useRef<Set<string>>(new Set());
+  const [teamRegistrationToken, setTeamRegistrationToken] = useState<string | null>(null);
+  const [contestRegistrationToken, setContestRegistrationToken] = useState<string | null>(null);
 
   const handleEmailVerification = async (token: string) => {
     // Prevent duplicate calls - check both ref and processed tokens
@@ -67,6 +69,18 @@ function LoginPage() {
     const isSetupPasswordPath = pathname === '/setup-password';
     const isVerifyEmailPath = pathname === '/verify-email';
     const isResetPasswordMode = searchParams.get('mode') === 'reset-password';
+    
+    // Check for team/contest registration tokens
+    const teamToken = searchParams.get('team');
+    const contestToken = searchParams.get('contest');
+    if (teamToken) {
+      setTeamRegistrationToken(teamToken);
+      setMode('register'); // Automatically switch to register mode
+    }
+    if (contestToken) {
+      setContestRegistrationToken(contestToken);
+      setMode('register'); // Automatically switch to register mode
+    }
 
     if (urlError) {
       if (urlError === 'oauth_failed') {
@@ -156,12 +170,18 @@ function LoginPage() {
           throw new Error(t('login.messages.passwordTooShort'));
         }
         try {
-          await register(email, password, name);
+          await register(email, password, name, 'guest', 'explorer', teamRegistrationToken || undefined, contestRegistrationToken || undefined);
           setSuccess(t('login.messages.accountCreated'));
           setMode('login');
           setEmail('');
           setPassword('');
           setName('');
+          setTeamRegistrationToken(null);
+          setContestRegistrationToken(null);
+          // Clear tokens from URL
+          if (teamRegistrationToken || contestRegistrationToken) {
+            navigate('/login', { replace: true });
+          }
         } catch (registerError: any) {
           // Handle validation errors from backend
           if (registerError?.response?.data?.details) {

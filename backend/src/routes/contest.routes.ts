@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
+import { requireRole } from '../middleware/requireRole.js';
 import {
   createContestController,
   joinContestController,
@@ -11,6 +12,10 @@ import {
   dissolveContestController,
   leaveContestController,
   getContestQrCodeController,
+  getAllContestsAdminController,
+  updateContestController,
+  enableContestRegistrationController,
+  getContestRegistrationQrCodeController,
 } from '../controllers/contest.controller.js';
 
 const router = Router();
@@ -25,6 +30,12 @@ router.get('/:id/ranking', authenticate, getContestRankingController);
 router.delete('/:id', authenticate, dissolveContestController);
 router.post('/:id/leave', authenticate, leaveContestController);
 router.get('/:id/qr-code', authenticate, getContestQrCodeController);
+
+// Admin routes
+router.get('/admin/all', authenticate, requireRole('administrator'), getAllContestsAdminController);
+router.put('/:id', authenticate, requireRole('administrator'), updateContestController);
+router.post('/:id/registration/enable', authenticate, requireRole('administrator'), enableContestRegistrationController);
+router.get('/:id/registration-qr-code', authenticate, requireRole('administrator'), getContestRegistrationQrCodeController);
 
 export default router;
 

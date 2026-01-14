@@ -27,9 +27,19 @@ export const api = {
     password: string,
     name: string,
     role: UserRole = 'guest',
-    userType: UserType = 'explorer'
+    userType: UserType = 'explorer',
+    teamRegistrationToken?: string,
+    contestRegistrationToken?: string
   ) {
-    const res = await apiClient.post('/auth/register', { email, password, name, role, userType });
+    const res = await apiClient.post('/auth/register', { 
+      email, 
+      password, 
+      name, 
+      role, 
+      userType,
+      teamRegistrationToken,
+      contestRegistrationToken
+    });
     return res.data;
   },
 
@@ -684,6 +694,27 @@ export const api = {
     return response.data;
   },
 
+  // Team Admin
+  async getAllTeams() {
+    const response = await apiClient.get('/teams/all');
+    return response.data;
+  },
+
+  async updateTeam(teamId: string, data: { name?: string | null; active?: boolean }) {
+    const response = await apiClient.put(`/teams/${teamId}`, data);
+    return response.data;
+  },
+
+  async enableTeamRegistration(teamId: string, enabled: boolean) {
+    const response = await apiClient.post(`/teams/${teamId}/registration/enable`, { enabled });
+    return response.data;
+  },
+
+  async getTeamRegistrationQrCode(teamId: string) {
+    const response = await apiClient.get(`/teams/${teamId}/registration-qr-code`);
+    return response.data;
+  },
+
   // Contests
   async createContest(startDate: string, endDate: string, contestName?: string, rewards?: { reward_first_place?: number; reward_second_place?: number; reward_third_place?: number }, participantIds?: string[]) {
     const response = await apiClient.post('/contests/create', { startDate, endDate, contestName, rewards, participantIds });
@@ -732,6 +763,27 @@ export const api = {
 
   async getContestQrCode(contestId: string) {
     const response = await apiClient.get(`/contests/${contestId}/qr-code`);
+    return response.data;
+  },
+
+  // Contest Admin
+  async getAllContests() {
+    const response = await apiClient.get('/contests/admin/all');
+    return response.data;
+  },
+
+  async updateContest(contestId: string, data: { name?: string | null; active?: boolean; endDate?: string }) {
+    const response = await apiClient.put(`/contests/${contestId}`, data);
+    return response.data;
+  },
+
+  async enableContestRegistration(contestId: string, enabled: boolean) {
+    const response = await apiClient.post(`/contests/${contestId}/registration/enable`, { enabled });
+    return response.data;
+  },
+
+  async getContestRegistrationQrCode(contestId: string) {
+    const response = await apiClient.get(`/contests/${contestId}/registration-qr-code`);
     return response.data;
   },
 };

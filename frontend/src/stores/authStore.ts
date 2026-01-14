@@ -198,7 +198,7 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role?: UserRole, userType?: UserType) => Promise<void>;
+  register: (email: string, password: string, name: string, role?: UserRole, userType?: UserType, teamRegistrationToken?: string, contestRegistrationToken?: string) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
   setToken: (token: string, user?: User | null) => void;
@@ -240,9 +240,11 @@ export const useAuthStore = create<AuthState>()(
         password: string,
         name: string,
         role: UserRole = 'guest',
-        userType: UserType = 'explorer'
+        userType: UserType = 'explorer',
+        teamRegistrationToken?: string,
+        contestRegistrationToken?: string
       ) => {
-        const data = await api.register(email, password, name, role, userType);
+        const data = await api.register(email, password, name, role, userType, teamRegistrationToken, contestRegistrationToken);
         if (!data || !data.token || !data.user) {
           throw new Error('Registration failed');
         }

@@ -389,6 +389,14 @@
       "manageParameters": {
         "title": "Manage Parameters",
         "description": "Manage dropdown values for tasks and rewards"
+      },
+      "manageTeams": {
+        "title": "Manage Teams",
+        "description": "View all teams, edit them, and manage registration QR codes"
+      },
+      "manageContests": {
+        "title": "Manage Contests",
+        "description": "View all contests, edit them, and manage registration QR codes"
       }
     },
     "debugMode": {
@@ -558,6 +566,96 @@
         "clearError": "Failed to Clear Logs",
         "viewDetails": "View Details",
         "empty": "No logs available. Debug operations will appear here."
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Manage Teams",
+        "description": "View all teams, edit them, and manage registration QR codes",
+        "list": {
+          "title": "All Teams",
+          "name": "Name",
+          "creator": "Creator",
+          "members": "Members",
+          "createdAt": "Created At",
+          "active": "Active",
+          "inactive": "Inactive",
+          "edit": "Edit",
+          "noTeams": "No teams found"
+        },
+        "edit": {
+          "title": "Edit Team",
+          "name": "Team Name",
+          "active": "Active",
+          "save": "Save",
+          "cancel": "Cancel",
+          "saved": "Team saved",
+          "error": "Error saving team"
+        },
+        "qrCodes": {
+          "title": "QR Codes",
+          "joinExisting": {
+            "title": "QR Code for Existing Users",
+            "description": "This QR code can be scanned by already registered users to join the team",
+            "download": "Download QR Code"
+          },
+          "registration": {
+            "title": "Registration QR Code",
+            "description": "This QR code can be scanned by new users to register and automatically join the team",
+            "enable": "Allow registration for new users",
+            "enabled": "Registration enabled",
+            "disabled": "Registration disabled",
+            "download": "Download Registration QR Code",
+            "generate": "Generate QR Code",
+            "notAvailable": "Registration is not enabled"
+          }
+        }
+      }
+    },
+    "contest": {
+      "manage": {
+        "title": "Manage Contests",
+        "description": "View all contests, edit them, and manage registration QR codes",
+        "list": {
+          "title": "All Contests",
+          "name": "Name",
+          "creator": "Creator",
+          "participants": "Participants",
+          "endDate": "End Date",
+          "createdAt": "Created At",
+          "active": "Active",
+          "inactive": "Inactive",
+          "edit": "Edit",
+          "noContests": "No contests found"
+        },
+        "edit": {
+          "title": "Edit Contest",
+          "name": "Contest Name",
+          "endDate": "End Date",
+          "active": "Active",
+          "save": "Save",
+          "cancel": "Cancel",
+          "saved": "Contest saved",
+          "error": "Error saving contest"
+        },
+        "qrCodes": {
+          "title": "QR Codes",
+          "joinExisting": {
+            "title": "QR Code for Existing Users",
+            "description": "This QR code can be scanned by already registered users to join the contest",
+            "download": "Download QR Code"
+          },
+          "registration": {
+            "title": "Registration QR Code",
+            "description": "This QR code can be scanned by new users to register and automatically join the contest",
+            "enable": "Allow registration for new users",
+            "enabled": "Registration enabled",
+            "disabled": "Registration disabled",
+            "download": "Download Registration QR Code",
+            "generate": "QR Code",
+            "notAvailable": "Registration is not enabled"
+          }
+        }
       }
     },
     "task": {
@@ -1120,6 +1218,7 @@
       "status": "Status",
       "recurrence": "Recurrence",
       "type": "Type",
+      "typeIcon": "Type/Icon",
       "filterBy": "Filter by {{type}}",
       "allRecurrences": "All Recurrences",
       "allLocations": "All Locations",

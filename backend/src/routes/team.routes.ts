@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
+import { requireRole } from '../middleware/requireRole.js';
 import {
   createTeamController,
   joinTeamController,
@@ -13,6 +14,10 @@ import {
   getTeamTotalPointsController,
   getUserActiveTeamController,
   getTeamRankingController,
+  getAllTeamsController,
+  updateTeamController,
+  enableTeamRegistrationController,
+  getTeamRegistrationQrCodeController,
 } from '../controllers/team.controller.js';
 
 const router = Router();
@@ -29,6 +34,12 @@ router.post('/:id/redeem', authenticate, redeemRewardController);
 router.post('/:id/leave', authenticate, leaveTeamController);
 router.delete('/:id', authenticate, dissolveTeamController);
 router.get('/:id/qr-code', authenticate, getTeamQrCodeController);
+
+// Admin routes
+router.get('/all', authenticate, requireRole('administrator'), getAllTeamsController);
+router.put('/:id', authenticate, requireRole('administrator'), updateTeamController);
+router.post('/:id/registration/enable', authenticate, requireRole('administrator'), enableTeamRegistrationController);
+router.get('/:id/registration-qr-code', authenticate, requireRole('administrator'), getTeamRegistrationQrCodeController);
 
 export default router;
 

@@ -393,6 +393,14 @@
       "manageUsers": {
         "title": "Benutzer verwalten",
         "description": "Benutzer anzeigen, bearbeiten und verwalten"
+      },
+      "manageTeams": {
+        "title": "Teams verwalten",
+        "description": "Alle Teams anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "manageContests": {
+        "title": "Wettbewerbe verwalten",
+        "description": "Alle Wettbewerbe anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
       }
     },
     "debugMode": {
@@ -562,6 +570,96 @@
         "clearError": "Protokolle konnten nicht gelöscht werden",
         "viewDetails": "Details anzeigen",
         "empty": "Keine Protokolle verfügbar. Debug-Operationen werden hier angezeigt."
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Teams verwalten",
+        "description": "Alle Teams anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten",
+        "list": {
+          "title": "Alle Teams",
+          "name": "Name",
+          "creator": "Ersteller",
+          "members": "Mitglieder",
+          "createdAt": "Erstellt am",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "edit": "Bearbeiten",
+          "noTeams": "Keine Teams gefunden"
+        },
+        "edit": {
+          "title": "Team bearbeiten",
+          "name": "Team-Name",
+          "active": "Aktiv",
+          "save": "Speichern",
+          "cancel": "Abbrechen",
+          "saved": "Team gespeichert",
+          "error": "Fehler beim Speichern"
+        },
+        "qrCodes": {
+          "title": "QR-Codes",
+          "joinExisting": {
+            "title": "QR-Code für bestehende Benutzer",
+            "description": "Dieser QR-Code kann von bereits registrierten Benutzer gescannt werden, um dem Team beizutreten",
+            "download": "QR-Code herunterladen"
+          },
+          "registration": {
+            "title": "Registrierungs-QR-Code",
+            "description": "Dieser QR-Code kann von neuen Benutzer gescannt werden, um sich zu registrieren und automatisch dem Team beizutreten",
+            "enable": "Registrierung für neue Benutzer erlauben",
+            "enabled": "Registrierung aktiviert",
+            "disabled": "Registrierung deaktiviert",
+            "download": "Registrierungs-QR-Code herunterladen",
+            "generate": "QR-Code generieren",
+            "notAvailable": "Registrierung ist nicht aktiviert"
+          }
+        }
+      }
+    },
+    "contest": {
+      "manage": {
+        "title": "Wettbewerbe verwalten",
+        "description": "Alle Wettbewerbe anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten",
+        "list": {
+          "title": "Alle Wettbewerbe",
+          "name": "Name",
+          "creator": "Ersteller",
+          "participants": "Teilnehmer",
+          "endDate": "Enddatum",
+          "createdAt": "Erstellt am",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "edit": "Bearbeiten",
+          "noContests": "Keine Wettbewerbe gefunden"
+        },
+        "edit": {
+          "title": "Wettbewerb bearbeiten",
+          "name": "Wettbewerbs-Name",
+          "endDate": "Enddatum",
+          "active": "Aktiv",
+          "save": "Speichern",
+          "cancel": "Abbrechen",
+          "saved": "Wettbewerb gespeichert",
+          "error": "Fehler beim Speichern"
+        },
+        "qrCodes": {
+          "title": "QR-Codes",
+          "joinExisting": {
+            "title": "QR-Code für bestehende Benutzer",
+            "description": "Dieser QR-Code kann von bereits registrierten Benutzer gescannt werden, um dem Wettbewerb beizutreten",
+            "download": "QR-Code herunterladen"
+          },
+          "registration": {
+            "title": "Registrierungs-QR-Code",
+            "description": "Dieser QR-Code kann von neuen Benutzer gescannt werden, um sich zu registrieren und automatisch dem Wettbewerb beizutreten",
+            "enable": "Registrierung für neue Benutzer erlauben",
+            "enabled": "Registrierung aktiviert",
+            "disabled": "Registrierung deaktiviert",
+            "download": "Registrierungs-QR-Code herunterladen",
+            "generate": "QR-Code generieren",
+            "notAvailable": "Registrierung ist nicht aktiviert"
+          }
+        }
       }
     },
     "task": {
@@ -1124,6 +1222,7 @@
       "status": "Status",
       "recurrence": "Wiederholung",
       "type": "Typ",
+      "typeIcon": "Typ/Symbol",
       "filterBy": "Nach {{type}} filtern",
       "allRecurrences": "Alle Wiederholungen",
       "allLocations": "Alle Standorte",

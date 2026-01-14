@@ -78,6 +78,62 @@ export async function createTeam(creatorId: string, teamName?: string): Promise<
 }
 
 /**
+ * Tritt einem Team direkt bei (mit Team-ID)
+ * Wird verwendet für automatische Zuordnung nach Registrierung
+ */
+export async function joinTeamById(userId: string, teamId: string): Promise<Team> {
+  const db = getPool();
+  
+  // Prüfe ob Benutzer bereits Mitglied ist
+  const existingMember = await db.query(
+    'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
+    [teamId, userId]
+  );
+  
+  if (existingMember.rows.length > 0) {
+    // Benutzer ist bereits Mitglied, gebe Team zurück
+    const teamResult = await db.query(
+      'SELECT * FROM teams WHERE id = $1 AND active = TRUE',
+      [teamId]
+    );
+    if (teamResult.rows.length > 0) {
+      return teamResult.rows[0];
+    }
+    throw new Error('Team not found or inactive');
+  }
+  
+  // Prüfe ob Benutzer bereits in einem anderen Team ist
+  const existingTeam = await db.query(
+    `SELECT tm.team_id FROM team_members tm
+     INNER JOIN teams t ON t.id = tm.team_id
+     WHERE tm.user_id = $1 AND t.active = true AND tm.team_id != $2`,
+    [userId, teamId]
+  );
+  
+  if (existingTeam.rows.length > 0) {
+    throw new Error('User is already a member of another team');
+  }
+  
+  // Prüfe ob Team aktiv ist
+  const teamResult = await db.query(
+    'SELECT * FROM teams WHERE id = $1 AND active = TRUE',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found or inactive');
+  }
+  
+  // Füge Benutzer als Mitglied hinzu
+  await db.query(
+    'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
+    [teamId, userId]
+  );
+  
+  return teamResult.rows[0];
+}
+
+/**
  * Tritt einem Team bei durch Scannen des Team-QR-Codes
  */
 export async function joinTeam(userId: string, teamQrToken: string): Promise<Team> {
@@ -572,6 +628,193 @@ export async function getTeamMembers(teamId: string): Promise<string[]> {
   );
   
   return result.rows.map((row: any) => row.user_id);
+}
+
+/**
+ * Generiert einen Registrierungs-QR-Code für ein Team
+ * Dieser QR-Code ermöglicht es neuen Benutzern, sich zu registrieren und automatisch dem Team beizutreten
+ */
+export async function generateTeamRegistrationQrCode(teamId: string): Promise<string> {
+  const db = getPool();
+  
+  // Prüfe ob Team existiert
+  const teamResult = await db.query(
+    'SELECT id FROM teams WHERE id = $1 AND active = TRUE',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found or inactive');
+  }
+  
+  // Prüfe ob bereits ein Registrierungs-QR-Code existiert
+  const existing = await db.query(
+    'SELECT qr_token FROM team_registration_qr_codes WHERE team_id = $1',
+    [teamId]
+  );
+  
+  if (existing.rows.length > 0) {
+    return existing.rows[0].qr_token;
+  }
+  
+  // Erstelle neuen Registrierungs-QR-Code
+  const qrToken = generateQrToken();
+  await db.query(
+    'INSERT INTO team_registration_qr_codes (team_id, qr_token, enabled) VALUES ($1, $2, TRUE)',
+    [teamId, qrToken]
+  );
+  
+  return qrToken;
+}
+
+/**
+ * Ruft den Registrierungs-QR-Code eines Teams ab
+ */
+export async function getTeamRegistrationQrCode(teamId: string): Promise<{ qrToken: string | null; enabled: boolean }> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT qr_token, enabled FROM team_registration_qr_codes WHERE team_id = $1',
+    [teamId]
+  );
+  
+  if (result.rows.length === 0) {
+    return { qrToken: null, enabled: false };
+  }
+  
+  return {
+    qrToken: result.rows[0].qr_token,
+    enabled: result.rows[0].enabled,
+  };
+}
+
+/**
+ * Aktiviert oder deaktiviert die Registrierung für ein Team
+ */
+export async function enableTeamRegistration(teamId: string, enabled: boolean): Promise<void> {
+  const db = getPool();
+  
+  // Prüfe ob Team existiert
+  const teamResult = await db.query(
+    'SELECT id FROM teams WHERE id = $1',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found');
+  }
+  
+  // Prüfe ob Registrierungs-QR-Code existiert
+  const existing = await db.query(
+    'SELECT id FROM team_registration_qr_codes WHERE team_id = $1',
+    [teamId]
+  );
+  
+  if (existing.rows.length === 0) {
+    // Erstelle QR-Code wenn er nicht existiert
+    if (enabled) {
+      await generateTeamRegistrationQrCode(teamId);
+    } else {
+      // Nichts zu tun, wenn disabled und nicht vorhanden
+      return;
+    }
+  } else {
+    // Aktualisiere enabled-Status
+    await db.query(
+      'UPDATE team_registration_qr_codes SET enabled = $1 WHERE team_id = $2',
+      [enabled, teamId]
+    );
+  }
+}
+
+/**
+ * Validiert einen Team-Registrierungs-Token und gibt die Team-ID zurück
+ */
+export async function validateTeamRegistrationToken(qrToken: string): Promise<string | null> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT team_id FROM team_registration_qr_codes WHERE qr_token = $1 AND enabled = TRUE',
+    [qrToken]
+  );
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  // Prüfe ob Team noch aktiv ist
+  const teamResult = await db.query(
+    'SELECT id FROM teams WHERE id = $1 AND active = TRUE',
+    [result.rows[0].team_id]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    return null;
+  }
+  
+  return result.rows[0].id;
+}
+
+/**
+ * Ruft alle Teams ab (für Admin-Verwaltung)
+ */
+export async function getAllTeams(): Promise<Team[]> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT t.*, u.name as creator_name, u.email as creator_email,
+     (SELECT COUNT(*) FROM team_members WHERE team_id = t.id) as member_count
+     FROM teams t
+     INNER JOIN users u ON u.id = t.created_by
+     ORDER BY t.created_at DESC`
+  );
+  
+  return result.rows;
+}
+
+/**
+ * Aktualisiert Team-Daten
+ */
+export async function updateTeam(teamId: string, data: Partial<{ name: string | null; active: boolean }>): Promise<Team> {
+  const db = getPool();
+  
+  // Prüfe ob Team existiert
+  const teamResult = await db.query(
+    'SELECT * FROM teams WHERE id = $1',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found');
+  }
+  
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+  
+  if (data.name !== undefined) {
+    updates.push(`name = $${paramIndex++}`);
+    values.push(data.name);
+  }
+  
+  if (data.active !== undefined) {
+    updates.push(`active = $${paramIndex++}`);
+    values.push(data.active);
+  }
+  
+  if (updates.length === 0) {
+    return teamResult.rows[0];
+  }
+  
+  updates.push(`updated_at = NOW()`);
+  values.push(teamId);
+  
+  const result = await db.query(
+    `UPDATE teams SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+    values
+  );
+  
+  return result.rows[0];
 }
 
 /**

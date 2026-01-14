@@ -13,6 +13,11 @@ import {
   getTeamTotalPoints,
   getUserActiveTeam,
   getTeamRanking,
+  getAllTeams,
+  updateTeam,
+  enableTeamRegistration,
+  getTeamRegistrationQrCode,
+  generateTeamRegistrationQrCode,
 } from '../services/team.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -258,3 +263,98 @@ export const getTeamRankingController: RequestHandler = asyncHandler(async (req,
   res.json(ranking);
 });
 
+/**
+ * GET /api/teams/all
+ * Ruft alle Teams ab (nur für Administratoren)
+ */
+export const getAllTeamsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const teams = await getAllTeams();
+  res.json(teams);
+});
+
+/**
+ * PUT /api/teams/:id
+ * Aktualisiert Team-Daten (nur für Administratoren)
+ */
+export const updateTeamController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { name, active } = req.body;
+  
+  const team = await updateTeam(id, { name, active });
+  res.json(team);
+});
+
+/**
+ * POST /api/teams/:id/registration/enable
+ * Aktiviert oder deaktiviert die Registrierung für ein Team (nur für Administratoren)
+ */
+export const enableTeamRegistrationController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { enabled } = req.body;
+  
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ error: 'enabled must be a boolean' });
+  }
+  
+  await enableTeamRegistration(id, enabled);
+  res.json({ success: true });
+});
+
+/**
+ * GET /api/teams/:id/registration-qr-code
+ * Ruft den Registrierungs-QR-Code eines Teams ab (nur für Administratoren)
+ */
+export const getTeamRegistrationQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  
+  const registrationQr = await getTeamRegistrationQrCode(id);
+  
+  if (!registrationQr.qrToken) {
+    return res.status(404).json({ error: 'Registration QR code not found. Enable registration first.' });
+  }
+  
+  const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:3000';
+  const registrationUrl = `${frontendUrl}/register?team=${registrationQr.qrToken}`;
+  
+  res.json({
+    qrToken: registrationQr.qrToken,
+    enabled: registrationQr.enabled,
+    registrationUrl,
+  });
+});

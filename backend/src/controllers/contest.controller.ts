@@ -11,6 +11,11 @@ import {
   dissolveContest,
   leaveContest,
   getContestQrCode,
+  getAllContests,
+  updateContest,
+  enableContestRegistration,
+  getContestRegistrationQrCode,
+  generateContestRegistrationQrCode,
 } from '../services/contest.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -233,3 +238,109 @@ export const getContestQrCodeController: RequestHandler = asyncHandler(async (re
   res.json({ qrToken });
 });
 
+/**
+ * GET /api/contests/admin/all
+ * Ruft alle Contests ab (nur für Administratoren)
+ */
+export const getAllContestsAdminController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const contests = await getAllContests();
+  res.json(contests);
+});
+
+/**
+ * PUT /api/contests/:id
+ * Aktualisiert Contest-Daten (nur für Administratoren)
+ */
+export const updateContestController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { name, active, endDate } = req.body;
+  
+  const updateData: any = {};
+  if (name !== undefined) updateData.name = name;
+  if (active !== undefined) updateData.active = active;
+  if (endDate !== undefined) {
+    const endDateObj = new Date(endDate);
+    if (isNaN(endDateObj.getTime())) {
+      return res.status(400).json({ error: 'Invalid endDate format' });
+    }
+    updateData.end_date = endDateObj;
+  }
+  
+  const contest = await updateContest(id, updateData);
+  res.json(contest);
+});
+
+/**
+ * POST /api/contests/:id/registration/enable
+ * Aktiviert oder deaktiviert die Registrierung für einen Contest (nur für Administratoren)
+ */
+export const enableContestRegistrationController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { enabled } = req.body;
+  
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ error: 'enabled must be a boolean' });
+  }
+  
+  await enableContestRegistration(id, enabled);
+  res.json({ success: true });
+});
+
+/**
+ * GET /api/contests/:id/registration-qr-code
+ * Ruft den Registrierungs-QR-Code eines Contests ab (nur für Administratoren)
+ */
+export const getContestRegistrationQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  
+  const registrationQr = await getContestRegistrationQrCode(id);
+  
+  if (!registrationQr.qrToken) {
+    return res.status(404).json({ error: 'Registration QR code not found. Enable registration first.' });
+  }
+  
+  const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:3000';
+  const registrationUrl = `${frontendUrl}/register?contest=${registrationQr.qrToken}`;
+  
+  res.json({
+    qrToken: registrationQr.qrToken,
+    enabled: registrationQr.enabled,
+    registrationUrl,
+  });
+});

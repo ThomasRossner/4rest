@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
 import { createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
+import { validateTeamRegistrationToken, joinTeamById } from '../services/team.service.js';
+import { validateContestRegistrationToken, joinContestById } from '../services/contest.service.js';
 import { AuthRequest } from '../middleware/authenticate.js';
 import { sihot } from '../integrations/sihot.js';
 import type { SihotGuest, SihotReservation } from '../integrations/sihot.js';
@@ -135,11 +137,34 @@ export async function login(req: Request, res: Response) {
 
 export async function register(req: Request, res: Response) {
   try {
-    const { email, password, name, role = 'guest', userType = 'explorer' } = req.body;
+    const { email, password, name, role = 'guest', userType = 'explorer', teamRegistrationToken, contestRegistrationToken } = req.body;
 
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Validiere Team/Contest-Registrierungs-Token (falls vorhanden)
+    let teamId: string | null = null;
+    let contestId: string | null = null;
+    
+    if (teamRegistrationToken) {
+      teamId = await validateTeamRegistrationToken(teamRegistrationToken);
+      if (!teamId) {
+        return res.status(400).json({ error: 'Invalid or disabled team registration token' });
+      }
+    }
+    
+    if (contestRegistrationToken) {
+      contestId = await validateContestRegistrationToken(contestRegistrationToken);
+      if (!contestId) {
+        return res.status(400).json({ error: 'Invalid or disabled contest registration token' });
+      }
+    }
+    
+    // Es darf nur entweder Team oder Contest sein, nicht beides
+    if (teamId && contestId) {
+      return res.status(400).json({ error: 'Cannot register for both team and contest at the same time' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -161,6 +186,29 @@ export async function register(req: Request, res: Response) {
       sihot_guest_id: sihotGuest?.guestId || null,
       sihot_guest_data: sihotGuestPayload,
     });
+
+    // Automatisch Team oder Contest beitreten (falls Token vorhanden)
+    let joinedTeam = null;
+    let joinedContest = null;
+    
+    if (teamId) {
+      try {
+        joinedTeam = await joinTeamById(user.id, teamId);
+      } catch (error: any) {
+        // Wenn Join fehlschlägt (z.B. Benutzer bereits in Team), ignorieren wir den Fehler
+        // Der Benutzer wurde bereits erstellt
+        console.warn('Failed to join team after registration:', error.message);
+      }
+    }
+    
+    if (contestId) {
+      try {
+        joinedContest = await joinContestById(user.id, contestId);
+      } catch (error: any) {
+        // Wenn Join fehlschlägt, ignorieren wir den Fehler
+        console.warn('Failed to join contest after registration:', error.message);
+      }
+    }
 
     const emailAddress = user.email ?? '';
     const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
@@ -185,6 +233,8 @@ export async function register(req: Request, res: Response) {
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
       },
+      joinedTeam: joinedTeam ? { id: joinedTeam.id, name: joinedTeam.name } : null,
+      joinedContest: joinedContest ? { id: joinedContest.id, name: joinedContest.name } : null,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

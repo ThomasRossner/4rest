@@ -37,6 +37,8 @@ type AdminMode =
   | 'debugTools'
   | 'parameterManage'
   | 'userManage'
+  | 'teamManage'
+  | 'contestManage'
   | null;
 type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
@@ -228,15 +230,19 @@ const defaultConfirmDialogState: ConfirmDialogState = {
 };
 
 const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
-  const icon = TASK_TYPE_ICONS[type] ?? '🧩';
+  const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
+  const elementIcon = thumbnailUrl ? (
+    <img src={thumbnailUrl} alt="" style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '4px' }} />
+  ) : (
+    typeIcon
+  );
   return (
-    <div className="admin-type-badge">
+    <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '20px' }}>
+        {typeIcon}
+      </span>
       <span className="admin-type-icon" aria-hidden="true">
-        {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt="" style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
-        ) : (
-          icon
-        )}
+        {elementIcon}
       </span>
       <span>{type.toUpperCase()}</span>
     </div>
@@ -244,15 +250,19 @@ const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: st
 };
 
 const RewardTypeBadge = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
-  const icon = REWARD_TYPE_ICONS[type] ?? '🎁';
+  const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
+  const elementIcon = thumbnailUrl ? (
+    <img src={thumbnailUrl} alt="" style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '4px' }} />
+  ) : (
+    typeIcon
+  );
   return (
-    <div className="admin-type-badge">
+    <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '20px' }}>
+        {typeIcon}
+      </span>
       <span className="admin-type-icon" aria-hidden="true">
-        {thumbnailUrl ? (
-          <img src={thumbnailUrl} alt="" style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
-        ) : (
-          icon
-        )}
+        {elementIcon}
       </span>
       <span>{type.toUpperCase().replace(/_/g, ' ')}</span>
     </div>
@@ -2405,6 +2415,24 @@ function AdminPage() {
   const [rewardFilterType, setRewardFilterType] = useState<string | null>(null);
   const [rewardFilterTitle, setRewardFilterTitle] = useState<string>('');
   const [rewardFilterCostMin, setRewardFilterCostMin] = useState<string>('');
+
+  // Team management state
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [teamManagementMessage, setTeamManagementMessage] = useState<
+    { type: 'error' | 'success'; text: string } | null
+  >(null);
+  const [teamRegistrationEnabled, setTeamRegistrationEnabled] = useState<boolean>(false);
+  const [teamRegistrationQrCode, setTeamRegistrationQrCode] = useState<string | null>(null);
+  const [teamJoinQrCode, setTeamJoinQrCode] = useState<string | null>(null);
+
+  // Contest management state
+  const [editingContestId, setEditingContestId] = useState<string | null>(null);
+  const [contestManagementMessage, setContestManagementMessage] = useState<
+    { type: 'error' | 'success'; text: string } | null
+  >(null);
+  const [contestRegistrationEnabled, setContestRegistrationEnabled] = useState<boolean>(false);
+  const [contestRegistrationQrCode, setContestRegistrationQrCode] = useState<string | null>(null);
+  const [contestJoinQrCode, setContestJoinQrCode] = useState<string | null>(null);
   const [rewardFilterCostMax, setRewardFilterCostMax] = useState<string>('');
   const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'cost' | null>(null);
   const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -4735,6 +4763,16 @@ const goToRewardCreation = () => {
               <span className="admin-choice-icon">👥</span>
               <h2>{t('admin.actions.manageUsers.title')}</h2>
               <p>{t('admin.actions.manageUsers.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('teamManage')}>
+              <span className="admin-choice-icon">👥</span>
+              <h2>{t('admin.actions.manageTeams.title')}</h2>
+              <p>{t('admin.actions.manageTeams.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('contestManage')}>
+              <span className="admin-choice-icon">🏆</span>
+              <h2>{t('admin.actions.manageContests.title')}</h2>
+              <p>{t('admin.actions.manageContests.description')}</p>
             </button>
           </div>
           {/* 2. Reihe: Debug-Sachen */}
@@ -7506,7 +7544,7 @@ const goToRewardCreation = () => {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Type {taskFilterType && '✓'}
+                      {t('admin.filters.typeIcon')} {taskFilterType && '✓'}
                     </th>
                     <th
                       className="admin-filter-header"
@@ -7595,7 +7633,7 @@ const goToRewardCreation = () => {
                               )}
                             </div>
                           </td>
-                          <td data-label="Type">
+                          <td data-label={t('admin.filters.typeIcon')}>
                             <span className="admin-table-type">
                               <TaskTypeBadge type={task.type} thumbnailUrl={(task as any).thumbnail_url} />
                             </span>
@@ -7942,7 +7980,7 @@ const goToRewardCreation = () => {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Type {rewardFilterType && '✓'}
+                      {t('admin.filters.typeIcon')} {rewardFilterType && '✓'}
                     </th>
                     <th
                       className="admin-filter-header"
@@ -8024,7 +8062,7 @@ const goToRewardCreation = () => {
                                )}
                              </div>
                            </td>
-                          <td data-label="Type">
+                          <td data-label={t('admin.filters.typeIcon')}>
                              <span className="admin-table-type">
                                <RewardTypeBadge type={reward.reward_type as RewardType} thumbnailUrl={(reward as any).thumbnail_url} />
                              </span>
@@ -8237,7 +8275,718 @@ const goToRewardCreation = () => {
         onApply={handlePrerequisiteModalApply}
         excludeTaskId={isEditingTask ? editingTaskId || undefined : undefined}
       />
+
+      {/* Team Management */}
+      {mode === 'teamManage' && (
+        <TeamManagementSection
+          editingTeamId={editingTeamId}
+          setEditingTeamId={setEditingTeamId}
+          teamManagementMessage={teamManagementMessage}
+          setTeamManagementMessage={setTeamManagementMessage}
+          teamRegistrationEnabled={teamRegistrationEnabled}
+          setTeamRegistrationEnabled={setTeamRegistrationEnabled}
+          teamRegistrationQrCode={teamRegistrationQrCode}
+          setTeamRegistrationQrCode={setTeamRegistrationQrCode}
+          teamJoinQrCode={teamJoinQrCode}
+          setTeamJoinQrCode={setTeamJoinQrCode}
+          onBack={() => setMode(null)}
+        />
+      )}
+
+      {/* Contest Management */}
+      {mode === 'contestManage' && (
+        <ContestManagementSection
+          editingContestId={editingContestId}
+          setEditingContestId={setEditingContestId}
+          contestManagementMessage={contestManagementMessage}
+          setContestManagementMessage={setContestManagementMessage}
+          contestRegistrationEnabled={contestRegistrationEnabled}
+          setContestRegistrationEnabled={setContestRegistrationEnabled}
+          contestRegistrationQrCode={contestRegistrationQrCode}
+          setContestRegistrationQrCode={setContestRegistrationQrCode}
+          contestJoinQrCode={contestJoinQrCode}
+          setContestJoinQrCode={setContestJoinQrCode}
+          onBack={() => setMode(null)}
+        />
+      )}
     </div>
+  );
+}
+
+// Team Management Component
+function TeamManagementSection({
+  editingTeamId,
+  setEditingTeamId,
+  teamManagementMessage,
+  setTeamManagementMessage,
+  teamRegistrationEnabled,
+  setTeamRegistrationEnabled,
+  teamRegistrationQrCode,
+  setTeamRegistrationQrCode,
+  teamJoinQrCode,
+  setTeamJoinQrCode,
+  onBack,
+}: {
+  editingTeamId: string | null;
+  setEditingTeamId: (id: string | null) => void;
+  teamManagementMessage: { type: 'error' | 'success'; text: string } | null;
+  setTeamManagementMessage: (msg: { type: 'error' | 'success'; text: string } | null) => void;
+  teamRegistrationEnabled: boolean;
+  setTeamRegistrationEnabled: (enabled: boolean) => void;
+  teamRegistrationQrCode: string | null;
+  setTeamRegistrationQrCode: (code: string | null) => void;
+  teamJoinQrCode: string | null;
+  setTeamJoinQrCode: (code: string | null) => void;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  const showToast = useToastStore((s) => s.showToast);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingTeam, setEditingTeam] = useState<any>(null);
+  const [teamName, setTeamName] = useState('');
+  const [teamActive, setTeamActive] = useState(true);
+
+  const { data: teamsData, refetch: refetchTeams } = useQuery({
+    queryKey: ['admin-teams'],
+    queryFn: async () => {
+      return await api.getAllTeams();
+    },
+  });
+
+  useEffect(() => {
+    if (teamsData) {
+      setTeams(teamsData);
+      setLoading(false);
+    }
+  }, [teamsData]);
+
+  useEffect(() => {
+    if (editingTeamId && teams.length > 0) {
+      const team = teams.find((t) => t.id === editingTeamId);
+      if (team) {
+        setEditingTeam(team);
+        setTeamName(team.name || '');
+        setTeamActive(team.active ?? true);
+        loadTeamQrCodes(team.id);
+      }
+    } else {
+      setEditingTeam(null);
+      setTeamName('');
+      setTeamActive(true);
+      setTeamRegistrationEnabled(false);
+      setTeamRegistrationQrCode(null);
+      setTeamJoinQrCode(null);
+    }
+  }, [editingTeamId, teams]);
+
+  const loadTeamQrCodes = async (teamId: string) => {
+    try {
+      // Load join QR code for existing users
+      const joinQr = await api.getTeamQrCode(teamId);
+      if (joinQr?.qrToken) {
+        setTeamJoinQrCode(joinQr.qrToken);
+      }
+
+      // Load registration QR code
+      try {
+        const regQr = await api.getTeamRegistrationQrCode(teamId);
+        if (regQr?.qrToken) {
+          setTeamRegistrationQrCode(regQr.qrToken);
+          setTeamRegistrationEnabled(regQr.enabled);
+        }
+      } catch (err) {
+        // Registration QR code might not exist yet
+        setTeamRegistrationQrCode(null);
+        setTeamRegistrationEnabled(false);
+      }
+    } catch (err: any) {
+      console.error('Failed to load team QR codes:', err);
+    }
+  };
+
+  const handleSaveTeam = async () => {
+    if (!editingTeamId) return;
+
+    try {
+      await api.updateTeam(editingTeamId, {
+        name: teamName || null,
+        active: teamActive,
+      });
+      setTeamManagementMessage({ type: 'success', text: t('admin.team.manage.edit.saved') });
+      await refetchTeams();
+      showToast({ type: 'success', title: t('admin.team.manage.edit.saved') });
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || t('admin.team.manage.edit.error');
+      setTeamManagementMessage({ type: 'error', text: errorMsg });
+      showToast({ type: 'error', title: errorMsg });
+    }
+  };
+
+  const handleToggleRegistration = async (enabled: boolean) => {
+    if (!editingTeamId) return;
+
+    try {
+      await api.enableTeamRegistration(editingTeamId, enabled);
+      setTeamRegistrationEnabled(enabled);
+      if (enabled) {
+        // Reload QR code
+        const regQr = await api.getTeamRegistrationQrCode(editingTeamId);
+        if (regQr?.qrToken) {
+          setTeamRegistrationQrCode(regQr.qrToken);
+        }
+      }
+      showToast({
+        type: 'success',
+        title: enabled ? t('admin.team.manage.qrCodes.registration.enabled') : t('admin.team.manage.qrCodes.registration.disabled'),
+      });
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || 'Failed to toggle registration';
+      showToast({ type: 'error', title: errorMsg });
+    }
+  };
+
+  const downloadQrCode = (qrToken: string, filename: string) => {
+    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+    const qrUrl = qrToken.startsWith('http') ? qrToken : `${frontendUrl}/register?team=${qrToken}`;
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}`;
+    
+    const link = document.createElement('a');
+    link.href = qrImageUrl;
+    link.download = filename;
+    link.click();
+  };
+
+  if (loading) {
+    return (
+      <section className="admin-section">
+        <div className="admin-loading">{t('common.loading')}</div>
+      </section>
+    );
+  }
+
+  if (editingTeamId && editingTeam) {
+    return (
+      <section className="admin-section">
+        <div className="admin-header">
+          <button className="admin-button admin-button-secondary" onClick={() => setEditingTeamId(null)}>
+            ← {t('common.back')}
+          </button>
+          <h2>{t('admin.team.manage.edit.title')}</h2>
+        </div>
+
+        {teamManagementMessage && (
+          <div className={`admin-message admin-message-${teamManagementMessage.type}`}>
+            {teamManagementMessage.text}
+          </div>
+        )}
+
+        <div className="admin-form-section">
+          <div className="admin-field">
+            <label>
+              {t('admin.team.manage.edit.name')}
+              <input
+                type="text"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder={t('admin.team.manage.edit.name')}
+              />
+            </label>
+          </div>
+
+          <div className="admin-field">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={teamActive}
+                onChange={(e) => setTeamActive(e.target.checked)}
+              />
+              {t('admin.team.manage.edit.active')}
+            </label>
+          </div>
+
+          <div style={{ marginTop: '2rem' }}>
+            <h3>{t('admin.team.manage.qrCodes.title')}</h3>
+
+            {/* Join QR Code for existing users */}
+            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+              <h4>{t('admin.team.manage.qrCodes.joinExisting.title')}</h4>
+              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                {t('admin.team.manage.qrCodes.joinExisting.description')}
+              </p>
+              {teamJoinQrCode && (
+                <div style={{ marginTop: '1rem' }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/teams/join?token=${teamJoinQrCode}`
+                    )}`}
+                    alt="Team Join QR Code"
+                    style={{ maxWidth: '200px' }}
+                  />
+                  <button
+                    className="admin-button admin-button-secondary"
+                    style={{ marginTop: '0.5rem', display: 'block' }}
+                    onClick={() => downloadQrCode(teamJoinQrCode!, 'team-join-qr.png')}
+                  >
+                    {t('admin.team.manage.qrCodes.joinExisting.download')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Registration QR Code */}
+            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+              <h4>{t('admin.team.manage.qrCodes.registration.title')}</h4>
+              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                {t('admin.team.manage.qrCodes.registration.description')}
+              </p>
+              <div style={{ marginTop: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={teamRegistrationEnabled}
+                    onChange={(e) => handleToggleRegistration(e.target.checked)}
+                  />
+                  {t('admin.team.manage.qrCodes.registration.enable')}
+                </label>
+              </div>
+              {teamRegistrationEnabled && teamRegistrationQrCode && (
+                <div style={{ marginTop: '1rem' }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/register?team=${teamRegistrationQrCode}`
+                    )}`}
+                    alt="Team Registration QR Code"
+                    style={{ maxWidth: '200px' }}
+                  />
+                  <button
+                    className="admin-button admin-button-secondary"
+                    style={{ marginTop: '0.5rem', display: 'block' }}
+                    onClick={() => downloadQrCode(teamRegistrationQrCode!, 'team-registration-qr.png')}
+                  >
+                    {t('admin.team.manage.qrCodes.registration.download')}
+                  </button>
+                </div>
+              )}
+              {teamRegistrationEnabled && !teamRegistrationQrCode && (
+                <p style={{ marginTop: '0.5rem', color: '#999' }}>
+                  {t('admin.team.manage.qrCodes.registration.notAvailable')}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+            <button className="admin-button admin-button-primary" onClick={handleSaveTeam}>
+              {t('admin.team.manage.edit.save')}
+            </button>
+            <button className="admin-button admin-button-secondary" onClick={() => setEditingTeamId(null)}>
+              {t('admin.team.manage.edit.cancel')}
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="admin-section">
+      <div className="admin-header">
+        <button className="admin-button admin-button-secondary" onClick={onBack}>
+          ← {t('common.back')}
+        </button>
+        <h2>{t('admin.team.manage.list.title')}</h2>
+      </div>
+
+      <div className="admin-table-container">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>{t('admin.team.manage.list.name')}</th>
+              <th>{t('admin.team.manage.list.creator')}</th>
+              <th>{t('admin.team.manage.list.members')}</th>
+              <th>{t('admin.team.manage.list.createdAt')}</th>
+              <th>{t('admin.team.manage.list.active')}</th>
+              <th>{t('common.actions')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teams.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
+                  {t('admin.team.manage.list.noTeams')}
+                </td>
+              </tr>
+            ) : (
+              teams.map((team) => (
+                <tr key={team.id}>
+                  <td>{team.name || t('admin.team.manage.list.name')}</td>
+                  <td>{team.creator_name || '-'}</td>
+                  <td>{team.member_count || 0}</td>
+                  <td>{new Date(team.created_at).toLocaleDateString()}</td>
+                  <td>{team.active ? t('admin.team.manage.list.active') : t('admin.team.manage.list.inactive')}</td>
+                  <td>
+                    <button
+                      className="admin-button admin-button-small"
+                      onClick={() => setEditingTeamId(team.id)}
+                    >
+                      {t('admin.team.manage.list.edit')}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// Contest Management Component
+function ContestManagementSection({
+  editingContestId,
+  setEditingContestId,
+  contestManagementMessage,
+  setContestManagementMessage,
+  contestRegistrationEnabled,
+  setContestRegistrationEnabled,
+  contestRegistrationQrCode,
+  setContestRegistrationQrCode,
+  contestJoinQrCode,
+  setContestJoinQrCode,
+  onBack,
+}: {
+  editingContestId: string | null;
+  setEditingContestId: (id: string | null) => void;
+  contestManagementMessage: { type: 'error' | 'success'; text: string } | null;
+  setContestManagementMessage: (msg: { type: 'error' | 'success'; text: string } | null) => void;
+  contestRegistrationEnabled: boolean;
+  setContestRegistrationEnabled: (enabled: boolean) => void;
+  contestRegistrationQrCode: string | null;
+  setContestRegistrationQrCode: (code: string | null) => void;
+  contestJoinQrCode: string | null;
+  setContestJoinQrCode: (code: string | null) => void;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  const showToast = useToastStore((s) => s.showToast);
+  const [contests, setContests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingContest, setEditingContest] = useState<any>(null);
+  const [contestName, setContestName] = useState('');
+  const [contestActive, setContestActive] = useState(true);
+  const [contestEndDate, setContestEndDate] = useState('');
+
+  const { data: contestsData, refetch: refetchContests } = useQuery({
+    queryKey: ['admin-contests'],
+    queryFn: async () => {
+      return await api.getAllContests();
+    },
+  });
+
+  useEffect(() => {
+    if (contestsData) {
+      setContests(contestsData);
+      setLoading(false);
+    }
+  }, [contestsData]);
+
+  useEffect(() => {
+    if (editingContestId && contests.length > 0) {
+      const contest = contests.find((c) => c.id === editingContestId);
+      if (contest) {
+        setEditingContest(contest);
+        setContestName(contest.name || '');
+        setContestActive(contest.active ?? true);
+        setContestEndDate(contest.end_date ? new Date(contest.end_date).toISOString().split('T')[0] : '');
+        loadContestQrCodes(contest.id);
+      }
+    } else {
+      setEditingContest(null);
+      setContestName('');
+      setContestActive(true);
+      setContestEndDate('');
+      setContestRegistrationEnabled(false);
+      setContestRegistrationQrCode(null);
+      setContestJoinQrCode(null);
+    }
+  }, [editingContestId, contests]);
+
+  const loadContestQrCodes = async (contestId: string) => {
+    try {
+      // Load join QR code for existing users
+      const joinQr = await api.getContestQrCode(contestId);
+      if (joinQr?.qrToken) {
+        setContestJoinQrCode(joinQr.qrToken);
+      }
+
+      // Load registration QR code
+      try {
+        const regQr = await api.getContestRegistrationQrCode(contestId);
+        if (regQr?.qrToken) {
+          setContestRegistrationQrCode(regQr.qrToken);
+          setContestRegistrationEnabled(regQr.enabled);
+        }
+      } catch (err) {
+        // Registration QR code might not exist yet
+        setContestRegistrationQrCode(null);
+        setContestRegistrationEnabled(false);
+      }
+    } catch (err: any) {
+      console.error('Failed to load contest QR codes:', err);
+    }
+  };
+
+  const handleSaveContest = async () => {
+    if (!editingContestId) return;
+
+    try {
+      await api.updateContest(editingContestId, {
+        name: contestName || null,
+        active: contestActive,
+        endDate: contestEndDate || undefined,
+      });
+      setContestManagementMessage({ type: 'success', text: t('admin.contest.manage.edit.saved') });
+      await refetchContests();
+      showToast({ type: 'success', title: t('admin.contest.manage.edit.saved') });
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || t('admin.contest.manage.edit.error');
+      setContestManagementMessage({ type: 'error', text: errorMsg });
+      showToast({ type: 'error', title: errorMsg });
+    }
+  };
+
+  const handleToggleRegistration = async (enabled: boolean) => {
+    if (!editingContestId) return;
+
+    try {
+      await api.enableContestRegistration(editingContestId, enabled);
+      setContestRegistrationEnabled(enabled);
+      if (enabled) {
+        // Reload QR code
+        const regQr = await api.getContestRegistrationQrCode(editingContestId);
+        if (regQr?.qrToken) {
+          setContestRegistrationQrCode(regQr.qrToken);
+        }
+      }
+      showToast({
+        type: 'success',
+        title: enabled ? t('admin.contest.manage.qrCodes.registration.enabled') : t('admin.contest.manage.qrCodes.registration.disabled'),
+      });
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error || 'Failed to toggle registration';
+      showToast({ type: 'error', title: errorMsg });
+    }
+  };
+
+  const downloadQrCode = (qrToken: string, filename: string) => {
+    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+    const qrUrl = qrToken.startsWith('http') ? qrToken : `${frontendUrl}/register?contest=${qrToken}`;
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}`;
+    
+    const link = document.createElement('a');
+    link.href = qrImageUrl;
+    link.download = filename;
+    link.click();
+  };
+
+  if (loading) {
+    return (
+      <section className="admin-section">
+        <div className="admin-loading">{t('common.loading')}</div>
+      </section>
+    );
+  }
+
+  if (editingContestId && editingContest) {
+    return (
+      <section className="admin-section">
+        <div className="admin-header">
+          <button className="admin-button admin-button-secondary" onClick={() => setEditingContestId(null)}>
+            ← {t('common.back')}
+          </button>
+          <h2>{t('admin.contest.manage.edit.title')}</h2>
+        </div>
+
+        {contestManagementMessage && (
+          <div className={`admin-message admin-message-${contestManagementMessage.type}`}>
+            {contestManagementMessage.text}
+          </div>
+        )}
+
+        <div className="admin-form-section">
+          <div className="admin-field">
+            <label>
+              {t('admin.contest.manage.edit.name')}
+              <input
+                type="text"
+                value={contestName}
+                onChange={(e) => setContestName(e.target.value)}
+                placeholder={t('admin.contest.manage.edit.name')}
+              />
+            </label>
+          </div>
+
+          <div className="admin-field">
+            <label>
+              {t('admin.contest.manage.edit.endDate')}
+              <input
+                type="date"
+                value={contestEndDate}
+                onChange={(e) => setContestEndDate(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="admin-field">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={contestActive}
+                onChange={(e) => setContestActive(e.target.checked)}
+              />
+              {t('admin.contest.manage.edit.active')}
+            </label>
+          </div>
+
+          <div style={{ marginTop: '2rem' }}>
+            <h3>{t('admin.contest.manage.qrCodes.title')}</h3>
+
+            {/* Join QR Code for existing users */}
+            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+              <h4>{t('admin.contest.manage.qrCodes.joinExisting.title')}</h4>
+              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                {t('admin.contest.manage.qrCodes.joinExisting.description')}
+              </p>
+              {contestJoinQrCode && (
+                <div style={{ marginTop: '1rem' }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/contests/join?token=${contestJoinQrCode}`
+                    )}`}
+                    alt="Contest Join QR Code"
+                    style={{ maxWidth: '200px' }}
+                  />
+                  <button
+                    className="admin-button admin-button-secondary"
+                    style={{ marginTop: '0.5rem', display: 'block' }}
+                    onClick={() => downloadQrCode(contestJoinQrCode!, 'contest-join-qr.png')}
+                  >
+                    {t('admin.contest.manage.qrCodes.joinExisting.download')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Registration QR Code */}
+            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+              <h4>{t('admin.contest.manage.qrCodes.registration.title')}</h4>
+              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+                {t('admin.contest.manage.qrCodes.registration.description')}
+              </p>
+              <div style={{ marginTop: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={contestRegistrationEnabled}
+                    onChange={(e) => handleToggleRegistration(e.target.checked)}
+                  />
+                  {t('admin.contest.manage.qrCodes.registration.enable')}
+                </label>
+              </div>
+              {contestRegistrationEnabled && contestRegistrationQrCode && (
+                <div style={{ marginTop: '1rem' }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/register?contest=${contestRegistrationQrCode}`
+                    )}`}
+                    alt="Contest Registration QR Code"
+                    style={{ maxWidth: '200px' }}
+                  />
+                  <button
+                    className="admin-button admin-button-secondary"
+                    style={{ marginTop: '0.5rem', display: 'block' }}
+                    onClick={() => downloadQrCode(contestRegistrationQrCode!, 'contest-registration-qr.png')}
+                  >
+                    {t('admin.contest.manage.qrCodes.registration.download')}
+                  </button>
+                </div>
+              )}
+              {contestRegistrationEnabled && !contestRegistrationQrCode && (
+                <p style={{ marginTop: '0.5rem', color: '#999' }}>
+                  {t('admin.contest.manage.qrCodes.registration.notAvailable')}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+            <button className="admin-button admin-button-primary" onClick={handleSaveContest}>
+              {t('admin.contest.manage.edit.save')}
+            </button>
+            <button className="admin-button admin-button-secondary" onClick={() => setEditingContestId(null)}>
+              {t('admin.contest.manage.edit.cancel')}
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="admin-section">
+      <div className="admin-header">
+        <button className="admin-button admin-button-secondary" onClick={onBack}>
+          ← {t('common.back')}
+        </button>
+        <h2>{t('admin.contest.manage.list.title')}</h2>
+      </div>
+
+      <div className="admin-table-container">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>{t('admin.contest.manage.list.name')}</th>
+              <th>{t('admin.contest.manage.list.creator')}</th>
+              <th>{t('admin.contest.manage.list.participants')}</th>
+              <th>{t('admin.contest.manage.list.endDate')}</th>
+              <th>{t('admin.contest.manage.list.createdAt')}</th>
+              <th>{t('admin.contest.manage.list.active')}</th>
+              <th>{t('common.actions')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {contests.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
+                  {t('admin.contest.manage.list.noContests')}
+                </td>
+              </tr>
+            ) : (
+              contests.map((contest) => (
+                <tr key={contest.id}>
+                  <td>{contest.name || t('admin.contest.manage.list.name')}</td>
+                  <td>{contest.creator_name || '-'}</td>
+                  <td>{contest.participant_count || 0}</td>
+                  <td>{new Date(contest.end_date).toLocaleDateString()}</td>
+                  <td>{new Date(contest.created_at).toLocaleDateString()}</td>
+                  <td>{contest.active ? t('admin.contest.manage.list.active') : t('admin.contest.manage.list.inactive')}</td>
+                  <td>
+                    <button
+                      className="admin-button admin-button-small"
+                      onClick={() => setEditingContestId(contest.id)}
+                    >
+                      {t('admin.contest.manage.list.edit')}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
