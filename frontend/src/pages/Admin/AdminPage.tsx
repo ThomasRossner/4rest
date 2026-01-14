@@ -4765,7 +4765,7 @@ const goToRewardCreation = () => {
               <p>{t('admin.actions.manageUsers.description')}</p>
             </button>
             <button className="admin-choice-card" onClick={() => setMode('teamManage')}>
-              <span className="admin-choice-icon">👥</span>
+              <span className="admin-choice-icon">👨‍👩‍👧‍👦</span>
               <h2>{t('admin.actions.manageTeams.title')}</h2>
               <p>{t('admin.actions.manageTeams.description')}</p>
             </button>
