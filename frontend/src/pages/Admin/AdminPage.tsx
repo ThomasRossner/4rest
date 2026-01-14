@@ -2572,12 +2572,21 @@ function AdminPage() {
               return false; // This is a PostgreSQL array string, skip it
             }
             return true;
+          }).map((item: any) => {
+            // Remove quotes from array items
+            if (typeof item === 'string') {
+              return item.replace(/^"|"$/g, '').trim();
+            }
+            return item;
           });
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
+              // Remove quotes from each value
+              return v.trim().replace(/^"|"$/g, '');
+            });
             // Merge with existing cleaned array and remove duplicates
             normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
           } else {
@@ -2586,9 +2595,13 @@ function AdminPage() {
         } else if (typeof z === 'string') {
           if (z.startsWith('{') && z.endsWith('}')) {
             // Parse PostgreSQL array format
-            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => {
+              // Remove quotes from each value
+              return v.trim().replace(/^"|"$/g, '');
+            });
           } else {
-            normalizedZielgruppe = [z];
+            // Remove quotes if present
+            normalizedZielgruppe = [z.replace(/^"|"$/g, '')];
           }
         }
       }
@@ -2718,12 +2731,21 @@ function AdminPage() {
               return false; // This is a PostgreSQL array string, skip it
             }
             return true;
+          }).map((item: any) => {
+            // Remove quotes from array items
+            if (typeof item === 'string') {
+              return item.replace(/^"|"$/g, '').trim();
+            }
+            return item;
           });
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
+              // Remove quotes from each value
+              return v.trim().replace(/^"|"$/g, '');
+            });
             // Merge with existing cleaned array and remove duplicates
             normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
           } else {
@@ -2732,9 +2754,13 @@ function AdminPage() {
         } else if (typeof z === 'string') {
           if (z.startsWith('{') && z.endsWith('}')) {
             // Parse PostgreSQL array format
-            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => {
+              // Remove quotes from each value
+              return v.trim().replace(/^"|"$/g, '');
+            });
           } else {
-            normalizedZielgruppe = [z];
+            // Remove quotes if present
+            normalizedZielgruppe = [z.replace(/^"|"$/g, '')];
           }
         }
       }
@@ -3169,12 +3195,21 @@ function AdminPage() {
               return false; // This is a PostgreSQL array string, skip it
             }
             return true;
+          }).map((item: any) => {
+            // Remove quotes from array items
+            if (typeof item === 'string') {
+              return item.replace(/^"|"$/g, '').trim();
+            }
+            return item;
           });
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
+              // Remove quotes from each value
+              return v.trim().replace(/^"|"$/g, '');
+            });
             // Merge with existing cleaned array and remove duplicates
             return [...new Set([...parsed, ...cleaned])];
           }
@@ -4228,12 +4263,21 @@ function AdminPage() {
               return false; // This is a PostgreSQL array string, skip it
             }
             return true;
+          }).map((item: any) => {
+            // Remove quotes from array items
+            if (typeof item === 'string') {
+              return item.replace(/^"|"$/g, '').trim();
+            }
+            return item;
           });
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
+              // Remove quotes from each value
+              return v.trim().replace(/^"|"$/g, '');
+            });
             // Merge with existing cleaned array and remove duplicates
             return [...new Set([...parsed, ...cleaned])];
           }
@@ -4348,12 +4392,21 @@ function AdminPage() {
               return false; // This is a PostgreSQL array string, skip it
             }
             return true;
+          }).map((item: any) => {
+            // Remove quotes from array items
+            if (typeof item === 'string') {
+              return item.replace(/^"|"$/g, '').trim();
+            }
+            return item;
           });
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
+            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
+              // Remove quotes from each value
+              return v.trim().replace(/^"|"$/g, '');
+            });
             // Merge with existing cleaned array and remove duplicates
             return [...new Set([...parsed, ...cleaned])];
           }
