@@ -33,8 +33,8 @@ const getTaskTypeIcon = (type: string) => {
 function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed'>('not_completed');
-  const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('recent');
+  const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed' | 'completed'>('all');
+  const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineTasks, setShowOnlineTasks] = useState(false);
   const [prerequisiteTaskIdsFilter, setPrerequisiteTaskIdsFilter] = useState<string[] | null>(null);
@@ -84,7 +84,10 @@ function TasksPage() {
     // Filter by completion
     if (completionFilter === 'not_completed') {
       filtered = filtered.filter((task: any) => !task.completed);
+    } else if (completionFilter === 'completed') {
+      filtered = filtered.filter((task: any) => !!task.completed);
     }
+    // If completionFilter === 'all', show both completed and not completed
 
     // Filter by time (recent = last 7 days)
     if (timeFilter === 'recent') {
@@ -293,6 +296,7 @@ function TasksPage() {
           options={[
             { value: 'all', label: t('tasks.filters.completion.all') },
             { value: 'not_completed', label: t('tasks.filters.completion.not_completed') },
+            { value: 'completed', label: t('tasks.filters.completion.completed') },
           ]}
         />
         <FilterDropdown

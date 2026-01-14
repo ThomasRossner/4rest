@@ -174,7 +174,8 @@
       "completion": {
         "label": "Completion",
         "all": "All tasks",
-        "not_completed": "Not completed"
+        "not_completed": "Not completed",
+        "completed": "Completed"
       },
       "time": {
         "label": "Time",

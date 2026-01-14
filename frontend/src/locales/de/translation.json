@@ -174,7 +174,8 @@
       "completion": {
         "label": "Status",
         "all": "Alle Aufgaben",
-        "not_completed": "Nicht abgeschlossen"
+        "not_completed": "Nicht abgeschlossen",
+        "completed": "Abgeschlossen"
       },
       "time": {
         "label": "Zeit",
