@@ -798,11 +798,6 @@ export async function uploadThumbnail(file: Express.Multer.File): Promise<string
   return `${baseUrl}/uploads/${file.filename}`;
 }
 
-export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
-  const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-  return `${baseUrl}/uploads/${file.filename}`;
-}
-
 /**
  * Validates prerequisite fields for a task
  * @param data Task data with prerequisite fields
