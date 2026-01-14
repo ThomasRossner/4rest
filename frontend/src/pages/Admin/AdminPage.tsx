@@ -69,6 +69,7 @@ type AdminTaskTemplate = {
   location_tool?: string | null;
   event_group?: string | null;
   zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
+  thumbnail_url?: string | null;
 };
 
 type RewardTemplate = {
