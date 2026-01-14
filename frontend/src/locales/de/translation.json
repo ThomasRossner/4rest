@@ -1057,9 +1057,8 @@
       },
       "roles": {
         "guest": "Gast",
-        "employee": "Mitarbeiter",
-        "administrator": "Administrator",
-        "stakeholder": "Stakeholder"
+        "front_office": "Front Office",
+        "administrator": "Administrator"
       },
       "details": {
         "title": "Benutzerdetails",
@@ -1686,9 +1685,9 @@
   "employee": {
     "contests": {
       "title": "Contest-Verwaltung",
-      "subtitle": "Verwalten Sie Contests für Gäste und Stakeholder",
+      "subtitle": "Verwalten Sie Contests für Gäste",
       "createButton": "Neuen Contest anlegen",
-      "empty": "Noch keine Contests für Gäste und Stakeholder"
+      "empty": "Noch keine Contests für Gäste"
     }
   },
   "rankings": {

@@ -1,6 +1,6 @@
 # 4rester
 
-A gamification-based sustainability platform connecting hotel guests, employees, and global stakeholders through a virtual forest experience.
+A gamification-based sustainability platform connecting hotel guests and front office staff through a virtual forest experience.
 
 ## Project Overview
 

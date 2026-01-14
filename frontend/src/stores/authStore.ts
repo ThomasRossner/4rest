@@ -219,7 +219,7 @@ export const useAuthStore = create<AuthState>()(
 
         const normalizedRole: UserRole = USER_ROLES.includes(data.user.role as UserRole)
           ? (data.user.role as UserRole)
-          : 'stakeholder';
+          : 'guest';
         const normalizedUserType: UserType = USER_TYPES.includes(data.user.userType as UserType)
           ? (data.user.userType as UserType)
           : 'explorer';
@@ -248,7 +248,7 @@ export const useAuthStore = create<AuthState>()(
         }
         const normalizedRole: UserRole = USER_ROLES.includes(data.user.role as UserRole)
           ? (data.user.role as UserRole)
-          : 'stakeholder';
+          : 'guest';
         const normalizedUserType: UserType = USER_TYPES.includes(data.user.userType as UserType)
           ? (data.user.userType as UserType)
           : 'explorer';
@@ -264,7 +264,7 @@ export const useAuthStore = create<AuthState>()(
         set({ user: null, token: null, isAuthenticated: false });
       },
       setUser: (user: User) => {
-        const normalizedRole: UserRole = USER_ROLES.includes(user.role) ? user.role : 'stakeholder';
+        const normalizedRole: UserRole = USER_ROLES.includes(user.role) ? user.role : 'guest';
         const normalizedUserType: UserType = USER_TYPES.includes(user.userType) ? user.userType : 'explorer';
         set({ user: { ...user, role: normalizedRole, userType: normalizedUserType }, isAuthenticated: true });
         startSihotSocket();
@@ -273,7 +273,7 @@ export const useAuthStore = create<AuthState>()(
         if (user) {
           const normalizedRole: UserRole = USER_ROLES.includes(user.role)
             ? user.role
-            : 'stakeholder';
+            : 'guest';
           const normalizedUserType: UserType = USER_TYPES.includes(user.userType)
             ? user.userType
             : 'explorer';
@@ -307,7 +307,7 @@ export const useAuthStore = create<AuthState>()(
           if (state?.user && state?.token) {
             const normalizedRole: UserRole = USER_ROLES.includes(state.user.role)
               ? state.user.role
-              : 'stakeholder';
+              : 'guest';
             const normalizedUserType: UserType = USER_TYPES.includes(state.user.userType)
               ? state.user.userType
               : 'explorer';

@@ -35,7 +35,7 @@ function ProfilePage() {
 
   // For employees: only show contests between employees
   // For guests: show all their contests
-  const isEmployee = user?.role === 'employee' || user?.role === 'administrator';
+  const isEmployee = user?.role === 'front_office' || user?.role === 'administrator';
   
   const { data: contests, refetch: refetchContests } = useQuery(
     ['userContests', userId, isEmployee],

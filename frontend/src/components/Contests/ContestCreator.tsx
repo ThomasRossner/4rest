@@ -28,7 +28,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
   const [roleFilter, setRoleFilter] = useState<string>('all');
 
-  const isEmployee = user?.role === 'employee' || user?.role === 'administrator';
+  const isEmployee = user?.role === 'front_office' || user?.role === 'administrator';
 
   // Load users for employee/admin
   const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery(
@@ -56,7 +56,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           const filtered = {
             ...data,
             users: data.users.filter((u: any) => 
-              u.role === 'employee' || u.role === 'administrator'
+              u.role === 'front_office' || u.role === 'administrator'
             )
           };
           console.log('[ContestCreator] Filtered to employees only:', filtered);

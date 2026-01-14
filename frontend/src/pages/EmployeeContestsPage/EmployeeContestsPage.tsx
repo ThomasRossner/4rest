@@ -14,11 +14,11 @@ function EmployeeContestsPage() {
   const userId = useAuthStore((s) => s.user?.id);
   const [showContestCreator, setShowContestCreator] = useState(false);
 
-  // Get contests for guests and stakeholders only
+  // Get contests for guests only
   const { data: contests, isLoading, refetch: refetchContests } = useQuery(
     ['employeeContests', userId],
     () => api.getEmployeeContests(),
-    { enabled: !!userId && (user?.role === 'employee' || user?.role === 'administrator') }
+    { enabled: !!userId && (user?.role === 'front_office' || user?.role === 'administrator') }
   );
 
   if (isLoading) {
@@ -33,7 +33,7 @@ function EmployeeContestsPage() {
   return (
     <div className="employee-contests-page">
       <h1 className="employee-contests-title">{t('employee.contests.title', 'Contest-Verwaltung')}</h1>
-      <p className="employee-contests-subtitle">{t('employee.contests.subtitle', 'Verwalten Sie Contests für Gäste und Stakeholder')}</p>
+      <p className="employee-contests-subtitle">{t('employee.contests.subtitle', 'Verwalten Sie Contests für Gäste')}</p>
 
       <div className="employee-contests-actions">
         <button
@@ -72,7 +72,7 @@ function EmployeeContestsPage() {
           ))}
         </div>
       ) : (
-        <p className="employee-contests-empty">{t('employee.contests.empty', 'Noch keine Contests für Gäste und Stakeholder')}</p>
+        <p className="employee-contests-empty">{t('employee.contests.empty', 'Noch keine Contests für Gäste')}</p>
       )}
     </div>
   );

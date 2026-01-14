@@ -42,7 +42,7 @@ export interface Task {
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
   event_group?: string;
-  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[];
+  zielgruppe?: ('Front Office' | 'Gäste')[];
   thumbnail_url?: string;
 }
 
@@ -61,7 +61,7 @@ export async function getAllTasks(
   const includeInactive = options?.includeInactive ?? false;
 
   // Map user role to zielgruppe for filtering
-  let userZielgruppe: 'Mitarbeitende' | 'Gäste' | 'Stakeholder' | null = null;
+  let userZielgruppe: 'Front Office' | 'Gäste' | null = null;
   
   if (userId) {
     const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
@@ -72,12 +72,10 @@ export async function getAllTasks(
         applyAudienceFilters = false;
       } else {
         // Map role to zielgruppe
-        if (userRole === 'employee') {
-          userZielgruppe = 'Mitarbeitende';
+        if (userRole === 'front_office') {
+          userZielgruppe = 'Front Office';
         } else if (userRole === 'guest') {
           userZielgruppe = 'Gäste';
-        } else if (userRole === 'stakeholder') {
-          userZielgruppe = 'Stakeholder';
         }
       }
     }
@@ -635,7 +633,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
           try {
             zielgruppeArray = JSON.parse(value);
           } catch {
-            // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
+            // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}"
             // Remove curly braces and split by comma
             const cleaned = value.replace(/^{|}$/g, '').trim();
             zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];

@@ -68,7 +68,7 @@ type AdminTaskTemplate = {
   time_required?: string | null;
   location_tool?: string | null;
   event_group?: string | null;
-  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
+  zielgruppe?: ('Front Office' | 'Gäste')[] | null;
   thumbnail_url?: string | null;
 };
 
@@ -139,7 +139,7 @@ type TaskFormState = {
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
   event_group?: string;
-  zielgruppe?: 'Mitarbeitende' | 'Gäste' | 'Stakeholder';
+  zielgruppe?: 'Front Office' | 'Gäste';
   thumbnailFile?: File | null;
   thumbnailUrl?: string | null;
 };
@@ -151,7 +151,7 @@ type RewardFormState = {
   pointsCost: number;
   voucherCode: string;
   externalApiId: string;
-  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
+  zielgruppe?: ('Front Office' | 'Gäste')[] | null;
   locationId: string;
   active: boolean;
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
@@ -2566,7 +2566,7 @@ function AdminPage() {
       let normalizedZielgruppe: string[] | null = null;
       if (z) {
         if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
           const cleaned = z.filter((item: any) => {
             if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
               return false; // This is a PostgreSQL array string, skip it
@@ -2576,7 +2576,7 @@ function AdminPage() {
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
             const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
             // Merge with existing cleaned array and remove duplicates
             normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
@@ -2712,7 +2712,7 @@ function AdminPage() {
       let normalizedZielgruppe: string[] | null = null;
       if (z) {
         if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
           const cleaned = z.filter((item: any) => {
             if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
               return false; // This is a PostgreSQL array string, skip it
@@ -2722,7 +2722,7 @@ function AdminPage() {
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
             const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
             // Merge with existing cleaned array and remove duplicates
             normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
@@ -3163,7 +3163,7 @@ function AdminPage() {
         if (!z) return undefined;
         // If it's already an array, check if it contains a PostgreSQL array string
         if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
           const cleaned = z.filter((item: any) => {
             if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
               return false; // This is a PostgreSQL array string, skip it
@@ -3173,7 +3173,7 @@ function AdminPage() {
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
             const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
             // Merge with existing cleaned array and remove duplicates
             return [...new Set([...parsed, ...cleaned])];
@@ -4222,7 +4222,7 @@ function AdminPage() {
         if (!z) return undefined;
         // If it's already an array, check if it contains a PostgreSQL array string
         if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
           const cleaned = z.filter((item: any) => {
             if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
               return false; // This is a PostgreSQL array string, skip it
@@ -4232,7 +4232,7 @@ function AdminPage() {
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
             const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
             // Merge with existing cleaned array and remove duplicates
             return [...new Set([...parsed, ...cleaned])];
@@ -4342,7 +4342,7 @@ function AdminPage() {
         if (!z) return null;
         // If it's already an array, check if it contains a PostgreSQL array string
         if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Stakeholder}"
+          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
           const cleaned = z.filter((item: any) => {
             if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
               return false; // This is a PostgreSQL array string, skip it
@@ -4352,7 +4352,7 @@ function AdminPage() {
           // If we found a PostgreSQL array string, parse it
           const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
           if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Stakeholder}" -> ["Gäste", "Stakeholder"]
+            // Parse PostgreSQL array format: "{Gäste,Front Office}" -> ["Gäste", "Front Office"]
             const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
             // Merge with existing cleaned array and remove duplicates
             return [...new Set([...parsed, ...cleaned])];
@@ -6273,7 +6273,7 @@ const goToRewardCreation = () => {
                     <div className="admin-field">
                       <FieldLabel label="Zielgruppe" />
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {(['Mitarbeitende', 'Gäste', 'Stakeholder'] as const).map((role) => (
+                        {(['Front Office', 'Gäste'] as const).map((role) => (
                           <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                             <input
                               type="checkbox"
@@ -6670,7 +6670,7 @@ const goToRewardCreation = () => {
                     <div className="admin-field">
                       <FieldLabel label="Zielgruppe" />
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {(['Mitarbeitende', 'Gäste', 'Stakeholder'] as const).map((role) => (
+                        {(['Front Office', 'Gäste'] as const).map((role) => (
                           <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                             <input
                               type="checkbox"

@@ -1,7 +1,7 @@
 {
   "name": "4rester",
   "version": "1.0.0",
-  "description": "Gamification-based sustainability platform connecting hotel guests, employees, and stakeholders",
+  "description": "Gamification-based sustainability platform connecting hotel guests and front office staff",
   "private": true,
   "workspaces": [
     "frontend",

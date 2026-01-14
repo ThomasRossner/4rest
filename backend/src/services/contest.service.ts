@@ -82,8 +82,8 @@ export async function createContest(
   
   // Prüfe ob Ersteller Mitarbeiter ist (für Belohnungen)
   if (rewards && (rewards.reward_first_place || rewards.reward_second_place || rewards.reward_third_place)) {
-    if (creator.role !== 'employee' && creator.role !== 'administrator') {
-      throw new Error('Only employees and administrators can create contests with rewards');
+    if (creator.role !== 'front_office' && creator.role !== 'administrator') {
+      throw new Error('Only front office and administrators can create contests with rewards');
     }
   }
   
@@ -116,7 +116,7 @@ export async function createContest(
   
   // Prüfe ob alle Teilnehmer Mitarbeiter oder Administratoren sind
   // Wenn ja, füge den Ersteller auch hinzu (interner Contest)
-  // Wenn nein, füge den Ersteller NICHT hinzu (Contest für Gäste/Stakeholder)
+  // Wenn nein, füge den Ersteller NICHT hinzu (Contest für Gäste)
   if (allParticipantIds.size > 0) {
     const participantRoles = await db.query(
       `SELECT role FROM users WHERE id = ANY($1::uuid[])`,
@@ -124,7 +124,7 @@ export async function createContest(
     );
     
     const allAreEmployees = participantRoles.rows.every(
-      (row: any) => row.role === 'employee' || row.role === 'administrator'
+      (row: any) => row.role === 'front_office' || row.role === 'administrator'
     );
     
     // Nur wenn alle Teilnehmer Mitarbeiter/Administratoren sind, füge den Ersteller hinzu
@@ -256,7 +256,7 @@ export async function getEmployeeContests(userId: string): Promise<Contest[]> {
          FROM contest_participants cp2
          INNER JOIN users u ON u.id = cp2.user_id
          WHERE cp2.contest_id = c.id
-           AND u.role IN ('guest', 'stakeholder')
+           AND u.role = 'guest'
        )
      ORDER BY c.end_date ASC`,
     [userId]
@@ -278,7 +278,7 @@ export async function getEmployeeContests(userId: string): Promise<Contest[]> {
          FROM contest_participants cp2
          INNER JOIN users u ON u.id = cp2.user_id
          WHERE cp2.contest_id = c.id
-           AND u.role IN ('guest', 'stakeholder')
+           AND u.role = 'guest'
        )
      ORDER BY c.end_date ASC`,
     [userId]

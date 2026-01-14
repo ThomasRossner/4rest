@@ -162,8 +162,8 @@ paths:
                   minLength: 2
                 role:
                   type: string
-                  enum: [guest, employee, stakeholder, administrator]
-                  default: stakeholder
+                  enum: [guest, front_office, administrator]
+                  default: guest
                 userType:
                   type: string
                   enum: [explorer, guest_in_house, observer, advocate]
@@ -444,7 +444,7 @@ paths:
         
         If no account exists with the given email, a new account will be created automatically with:
         - Email verified (since they're receiving the code at this email)
-        - Default role: stakeholder
+        - Default role: guest
         - Default user type: explorer
         - Name extracted from email address
         - No password (passwordless account)
@@ -1874,7 +1874,7 @@ components:
           type: string
         role:
           type: string
-          enum: [guest, employee, stakeholder, administrator]
+          enum: [guest, front_office, administrator]
         points:
           type: integer
           minimum: 0
@@ -1952,7 +1952,7 @@ components:
           type: array
           items:
             type: string
-            enum: [guest, employee, stakeholder, administrator]
+            enum: [guest, front_office, administrator]
         allowed_user_types:
           type: array
           items:
@@ -2033,7 +2033,7 @@ components:
           type: array
           items:
             type: string
-            enum: [guest, employee, stakeholder, administrator]
+            enum: [guest, front_office, administrator]
         allowed_user_types:
           type: array
           items:
@@ -2098,7 +2098,7 @@ components:
           type: array
           items:
             type: string
-            enum: [guest, employee, stakeholder, administrator]
+            enum: [guest, front_office, administrator]
         allowed_user_types:
           type: array
           items:
@@ -2158,7 +2158,7 @@ components:
           type: array
           items:
             type: string
-            enum: [guest, employee, stakeholder, administrator]
+            enum: [guest, front_office, administrator]
         allowed_user_types:
           type: array
           items:
@@ -2209,7 +2209,7 @@ components:
           type: array
           items:
             type: string
-            enum: [guest, employee, stakeholder, administrator]
+            enum: [guest, front_office, administrator]
         allowed_user_types:
           type: array
           items:
@@ -2253,7 +2253,7 @@ components:
           type: array
           items:
             type: string
-            enum: [guest, employee, stakeholder, administrator]
+            enum: [guest, front_office, administrator]
         allowed_user_types:
           type: array
           items:

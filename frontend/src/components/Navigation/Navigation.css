@@ -301,7 +301,7 @@
   display: none;
 }
 
-/* Show navigation items in top bar for employees (when items exist) */
+/* Show navigation items in top bar for front office (when items exist) */
 .navigation-top .navigation-items-top:not(:empty) {
   display: flex;
   gap: var(--spacing-sm);
@@ -706,7 +706,7 @@
     min-width: 140px;
   }
 
-  /* Hide navigation items from top bar on mobile (but show for employees) */
+  /* Hide navigation items from top bar on mobile (but show for front office) */
   .navigation-top .navigation-items-top:empty {
     display: none;
   }

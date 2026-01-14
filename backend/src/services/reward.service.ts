@@ -25,17 +25,15 @@ export async function getRewardsService(userId: string) {
     'SELECT r.*, row_to_json(l.*) AS location FROM rewards r JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE';
 
   // Map user role to zielgruppe for filtering (same logic as tasks)
-  let userZielgruppe: 'Mitarbeitende' | 'Gäste' | 'Stakeholder' | null = null;
+  let userZielgruppe: 'Front Office' | 'Gäste' | null = null;
   
   if (role === 'administrator') {
     // Administrators see all rewards
     userZielgruppe = null;
-  } else if (role === 'employee') {
-    userZielgruppe = 'Mitarbeitende';
+  } else if (role === 'front_office') {
+    userZielgruppe = 'Front Office';
   } else if (role === 'guest') {
     userZielgruppe = 'Gäste';
-  } else if (role === 'stakeholder') {
-    userZielgruppe = 'Stakeholder';
   }
 
   // Filter by zielgruppe: Only show rewards that match user's zielgruppe
@@ -91,7 +89,7 @@ interface CreateCustomRewardInput {
   rewardType?: string;
   voucherCode?: string | null;
   externalApiId?: string | null;
-  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
+  zielgruppe?: ('Front Office' | 'Gäste')[] | null;
   location_id: string;
   active?: boolean;
   recurrence?: string | null;
@@ -109,7 +107,7 @@ interface UpdateRewardInput {
   rewardType?: string | null;
   voucherCode?: string | null;
   externalApiId?: string | null;
-  zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
+  zielgruppe?: ('Front Office' | 'Gäste')[] | null;
   location_id?: string | null;
   active?: boolean;
   recurrence?: string | null;
@@ -269,7 +267,7 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
         try {
           zielgruppeArray = JSON.parse(data.zielgruppe);
         } catch {
-          // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
+          // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}"
           // Remove curly braces and split by comma
           const cleaned = (data.zielgruppe as string).replace(/^{|}$/g, '').trim();
           zielgruppeArray = cleaned ? cleaned.split(',').map((v: string) => v.trim()) : [];
@@ -513,15 +511,15 @@ export async function getRedemptionStatus(qrToken: string, userId: string) {
 
 /**
  * Get reward information from QR code without redeeming it
- * Used by employees to preview the reward before redeeming
+ * Used by front office to preview the reward before redeeming
  */
 export async function getRewardInfoFromQrCode(qrToken: string, employeeUserId: string) {
   const db = getPool();
 
-  // Verify employee user
+  // Verify front office user
   const employee = await getUserById(employeeUserId);
-  if (!employee || (employee.role !== 'administrator' && employee.role !== 'employee')) {
-    throw new Error('Unauthorized: Only administrators and employees can view QR code information');
+  if (!employee || (employee.role !== 'administrator' && employee.role !== 'front_office')) {
+    throw new Error('Unauthorized: Only administrators and front office can view QR code information');
   }
 
   // Find redemption by QR token
@@ -566,10 +564,10 @@ export async function getRewardInfoFromQrCode(qrToken: string, employeeUserId: s
 export async function verifyQrCodeService(qrToken: string, adminUserId: string) {
   const db = getPool();
 
-  // Verify admin or employee user
+  // Verify admin or front office user
   const admin = await getUserById(adminUserId);
-  if (!admin || (admin.role !== 'administrator' && admin.role !== 'employee')) {
-    throw new Error('Unauthorized: Only administrators and employees can verify QR codes');
+  if (!admin || (admin.role !== 'administrator' && admin.role !== 'front_office')) {
+    throw new Error('Unauthorized: Only administrators and front office can verify QR codes');
   }
 
   // Find redemption by QR token
@@ -646,16 +644,16 @@ export async function verifyQrCodeService(qrToken: string, adminUserId: string) 
 }
 
 /**
- * Redeem a reward QR code for a guest (employee action)
+ * Redeem a reward QR code for a guest (front office action)
  * This marks the redemption as 'used' and deducts points from the guest
  */
 export async function redeemRewardQrCodeService(qrToken: string, employeeUserId: string) {
   const db = getPool();
 
-  // Verify employee user
+  // Verify front office user
   const employee = await getUserById(employeeUserId);
-  if (!employee || employee.role !== 'employee') {
-    throw new Error('Unauthorized: Only employees can redeem reward QR codes');
+  if (!employee || employee.role !== 'front_office') {
+    throw new Error('Unauthorized: Only front office can redeem reward QR codes');
   }
 
   // Find redemption by QR token

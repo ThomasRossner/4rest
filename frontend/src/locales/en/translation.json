@@ -342,7 +342,7 @@
     "requiresPrivileges": "You need administrator privileges to access this page.",
     "home": {
       "title": "Administrator Home",
-      "subtitle": "Curate experiences for guests, employees, and partners."
+      "subtitle": "Curate experiences for guests and front office staff."
     },
     "logout": "Logout",
     "actions": {
@@ -1053,9 +1053,8 @@
       },
       "roles": {
         "guest": "Guest",
-        "employee": "Employee",
-        "administrator": "Administrator",
-        "stakeholder": "Stakeholder"
+        "front_office": "Front Office",
+        "administrator": "Administrator"
       },
       "details": {
         "title": "User Details",
@@ -1706,9 +1705,9 @@
   "employee": {
     "contests": {
       "title": "Contest Management",
-      "subtitle": "Manage contests for guests and stakeholders",
+      "subtitle": "Manage contests for guests",
       "createButton": "Create New Contest",
-      "empty": "No contests for guests and stakeholders yet"
+      "empty": "No contests for guests yet"
     }
   },
   "rankings": {

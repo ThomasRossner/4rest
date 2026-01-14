@@ -42,7 +42,7 @@ function ProtectedApp() {
         <Route path="statistics" element={<StatisticsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="contests/:contestId" element={<ContestRankingPage />} />
-        {(user.role === 'employee' || user.role === 'administrator') && (
+        {(user.role === 'front_office' || user.role === 'administrator') && (
           <>
             <Route path="points-bonus" element={<PointsBonusPage />} />
             <Route path="employee-contests" element={<EmployeeContestsPage />} />

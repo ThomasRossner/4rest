@@ -27,7 +27,7 @@ function normalizeRole(role: unknown): UserRole {
   if (typeof role === 'string' && (USER_ROLES as readonly string[]).includes(role)) {
     return role as UserRole;
   }
-  return 'stakeholder';
+  return 'guest';
 }
 
 function normalizeUserType(userType: unknown): UserType {
@@ -508,7 +508,7 @@ export async function requestLoginCode(req: Request, res: Response) {
         email,
         password_hash: null, // No password for passwordless accounts
         name: combinedName,
-        role: 'stakeholder',
+        role: 'guest',
         user_type: 'explorer',
         sihot_guest_id: sihotGuest?.guestId || null,
         sihot_guest_data: sihotGuestPayload,

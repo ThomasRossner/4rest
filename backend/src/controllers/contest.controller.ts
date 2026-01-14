@@ -118,7 +118,7 @@ export const getAllUserContestsController: RequestHandler = asyncHandler(async (
 
 /**
  * GET /api/contests/employee
- * Ruft alle Contests für Mitarbeitende ab (nur Contests mit Gästen und Stakeholdern)
+ * Ruft alle Contests für Front Office ab (nur Contests mit Gästen)
  */
 export const getEmployeeContestsController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -126,8 +126,8 @@ export const getEmployeeContestsController: RequestHandler = asyncHandler(async 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'employee' && authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Only employees and administrators can access this endpoint' });
+  if (authReq.user.role !== 'front_office' && authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Only front office and administrators can access this endpoint' });
   }
   
   const contests = await getEmployeeContests(authReq.user.id);

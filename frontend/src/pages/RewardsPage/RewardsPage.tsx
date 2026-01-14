@@ -232,8 +232,8 @@ function RewardsPage() {
           )}
         </span>
       </div>
-      {/* Show reward scanner button for employees */}
-      {user && user.role === 'employee' && (
+      {/* Show reward scanner button for front office */}
+      {user && user.role === 'front_office' && (
         <button
           className="rewards-scan-button"
           onClick={() => setShowRewardScanner(true)}
@@ -254,8 +254,8 @@ function RewardsPage() {
           {t('rewards.scanner.button') || 'Belohnung von Gast einlösen'}
         </button>
       )}
-      {/* Only show scanner button for guests (not employees or administrators) */}
-      {user && (user.role === 'guest' || user.role === 'stakeholder') && (
+      {/* Only show scanner button for guests */}
+      {user && user.role === 'guest' && (
         <button
           className="rewards-scan-button"
           onClick={() => setShowPointsBonusScanner(true)}
