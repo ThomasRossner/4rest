@@ -61,6 +61,7 @@ export const createReward: RequestHandler = asyncHandler(async (req, res) => {
     kategorie: payload.kategorie ?? payload.category ?? null,
     event_group: payload.event_group ?? payload.eventGroup ?? null,
     moegliche_punkte: payload.moegliche_punkte ?? payload.possible_points ?? null,
+    thumbnail_url: payload.thumbnail_url ?? payload.thumbnailUrl ?? null,
   });
 
   res.status(201).json(reward);
@@ -123,6 +124,10 @@ export const updateReward: RequestHandler = asyncHandler(async (req, res) => {
 
     if (payload.recurrence !== undefined) {
       updatePayload.recurrence = payload.recurrence;
+    }
+
+    if (payload.thumbnail_url !== undefined || payload.thumbnailUrl !== undefined) {
+      updatePayload.thumbnail_url = payload.thumbnail_url ?? payload.thumbnailUrl ?? null;
     }
 
     const reward = await updateRewardService(req.params.id, updatePayload);
