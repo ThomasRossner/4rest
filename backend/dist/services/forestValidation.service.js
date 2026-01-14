@@ -5,7 +5,6 @@
  * Used by the admin API endpoint.
  */
 import { getPool } from '../database/connection.js';
-import { plantTree } from './gamification.service.js';
 import { FOREST_AREA_SPACING, FOREST_MAX_TREES_PER_BLOCK, calculateGridSize, generateBlockOrigins, } from './forestLayout.js';
 /**
  * Ensure trees for a user obey the current geometric constraints.
@@ -194,34 +193,7 @@ async function validateAndFixUserForest(db, userId, dryRun = false, forceGeometr
         const completedTaskIds = completedTasksResult.rows
             .map((row) => row.task_id)
             .filter((id) => !!id);
-        const targetCount = completedTaskIds.length;
-        if (existingCount === 0 && targetCount === 0) {
-            return stats;
-        }
-        let isConsistent = false;
-        if (existingCount === targetCount && targetCount > 0) {
-            const treeTasksResult = await db.query(`SELECT task_id
-           FROM forest_trees
-          WHERE user_id = $1`, [userId]);
-            const treeTaskIds = treeTasksResult.rows
-                .map((row) => row.task_id)
-                .filter((id) => !!id);
-            const completedSet = new Set(completedTaskIds);
-            const treeSet = new Set(treeTaskIds);
-            const sameSize = completedSet.size === treeSet.size;
-            const allMatch = sameSize &&
-                [...completedSet].every((tid) => treeSet.has(tid));
-            isConsistent = allMatch;
-        }
         if (dryRun) {
-            if (!isConsistent) {
-                stats.deleted = existingCount;
-                stats.moved = targetCount;
-                stats.fixed = stats.deleted + stats.moved;
-                if (existingCount > 0 || targetCount > 0) {
-                    stats.errors.push(`Dry-run: would delete ${existingCount} existing tree(s) and recreate ${targetCount} tree(s) from completed tasks.`);
-                }
-            }
             const geometryDryRun = await fixTreeGeometryForUser(db, userId, true, forceGeometry);
             if (geometryDryRun.repositioned > 0) {
                 stats.moved += geometryDryRun.repositioned;
@@ -229,19 +201,6 @@ async function validateAndFixUserForest(db, userId, dryRun = false, forceGeometr
                 stats.errors.push(`Dry-run: would reposition ${geometryDryRun.repositioned} tree(s) to match current grid layout.`);
             }
             return stats;
-        }
-        if (!isConsistent) {
-            await db.query('BEGIN');
-            if (existingCount > 0) {
-                await db.query(`DELETE FROM forest_trees WHERE user_id = $1`, [userId]);
-                stats.deleted = existingCount;
-            }
-            for (const taskId of completedTaskIds) {
-                await plantTree(userId, taskId);
-                stats.moved += 1;
-            }
-            await db.query('COMMIT');
-            stats.fixed = stats.deleted + stats.moved;
         }
         const geometryFix = await fixTreeGeometryForUser(db, userId, false, forceGeometry);
         if (geometryFix.repositioned > 0) {

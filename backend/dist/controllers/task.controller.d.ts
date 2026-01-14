@@ -9,4 +9,5 @@ export declare const bulkDeleteTasks: RequestHandler;
 export declare const completeTask: RequestHandler;
 export declare const uploadPhoto: RequestHandler;
 export declare const uploadVideo: RequestHandler;
+export declare const uploadThumbnail: RequestHandler;
 //# sourceMappingURL=task.controller.d.ts.map

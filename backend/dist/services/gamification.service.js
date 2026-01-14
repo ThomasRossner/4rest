@@ -1,5 +1,5 @@
 import { getPool } from '../database/connection.js';
-import { FOREST_AREA_SPACING, FOREST_MAX_TREES_PER_BLOCK, calculateGridSize, } from './forestLayout.js';
+import { FOREST_AREA_SPACING, FOREST_MAX_TREES_PER_BLOCK, calculateGridSize, generateBlockOrigins, } from './forestLayout.js';
 /**
  * Calculate tree stage based on growth points
  * Sapling: 1-20, Young: 21-50, Mature: 51-100
@@ -28,32 +28,6 @@ function generateSizeForStage(stage) {
     }
 }
 // calculateGridSize and generateBlockOrigins are now imported from forestLayout.ts
-/**
- * Generate block origins for a square grid centered around [0,0]
- * Returns array of block origins in row-major order
- * Block [0,0] will always be at the center (or near-center for even-sized grids)
- */
-function generateBlockOrigins(primaryOriginX, primaryOriginZ, gridSize, areaSpacing) {
-    const blocks = [];
-    // Calculate offset to center the grid around [0,0]
-    // For odd grids (3x3, 5x5): center block is at [0,0]
-    // For even grids (2x2, 4x4): [0,0] is in one of the center blocks
-    // Formula: centerOffset = Math.floor(-(gridSize - 1) / 2) * areaSpacing
-    // This ensures blocks align to areaSpacing boundaries and [0,0] is centered
-    const centerOffset = Math.floor(-(gridSize - 1) / 2) * areaSpacing;
-    // Start from the calculated center offset, relative to primary origin
-    const startX = primaryOriginX + centerOffset;
-    const startZ = primaryOriginZ + centerOffset;
-    for (let row = 0; row < gridSize; row++) {
-        for (let col = 0; col < gridSize; col++) {
-            blocks.push({
-                x: startX + col * areaSpacing,
-                z: startZ + row * areaSpacing,
-            });
-        }
-    }
-    return blocks;
-}
 export async function addUserPoints(userId, points) {
     const db = getPool();
     await db.query('UPDATE users SET points = points + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [points, userId]);

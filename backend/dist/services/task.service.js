@@ -3,6 +3,8 @@ import { getTaskParameters } from './parameter.service.js';
 import { getPointsCalculationFactor } from './system-config.service.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
+import { updateContestPoints } from './contest.service.js';
+import { getUserActiveTeam, getTeamMembers } from './team.service.js';
 export async function getAllTasks(filters, userId, options) {
     const db = getPool();
     let userRole = null;
@@ -35,7 +37,7 @@ export async function getAllTasks(filters, userId, options) {
             }
         }
     }
-    let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
+    let select = 'DISTINCT ON (t.id) t.*, t.thumbnail_url, row_to_json(l.*) AS location';
     let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
     if (userId) {
         select += `, (ut.user_id IS NOT NULL) AS completed`;
@@ -245,9 +247,10 @@ export async function createTask(data) {
        time_required,
        location_tool,
        event_group,
-       zielgruppe
+       zielgruppe,
+       thumbnail_url
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
      RETURNING *`, [
         data.title,
         data.description ?? null,
@@ -277,6 +280,7 @@ export async function createTask(data) {
         data.location_tool ?? null,
         data.event_group ?? null,
         zielgruppeValue, // PostgreSQL will automatically convert JavaScript arrays to PostgreSQL arrays
+        data.thumbnail_url ?? null,
     ]);
     return result.rows[0];
 }
@@ -387,7 +391,7 @@ export async function updateTask(id, data) {
         'target_latitude', 'target_longitude', 'article_url', 'article_content',
         'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
         'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-        'event_group', 'zielgruppe'
+        'event_group', 'zielgruppe', 'thumbnail_url'
     ]);
     // If type is being changed, reset type-specific fields of the old type
     if (typeChanged) {
@@ -615,11 +619,24 @@ export async function completeTask(taskId, userId, data) {
         surveyResponsesPayload,
         task.points,
     ]);
-    // Award points and plant tree
-    await addUserPoints(userId, task.points);
-    const newTreeId = await plantTree(userId, taskId);
-    // Distribute task points to growth of a random existing tree (not the newly planted one)
-    await addGrowthPointsToRandomTree(userId, task.points, newTreeId);
+    // Check if user is in a team
+    const userTeam = await getUserActiveTeam(userId);
+    const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
+    // Award points and plant tree for all team members
+    for (const memberId of teamMembers) {
+        await addUserPoints(memberId, task.points);
+        const newTreeId = await plantTree(memberId, taskId);
+        // Distribute task points to growth of a random existing tree (not the newly planted one)
+        await addGrowthPointsToRandomTree(memberId, task.points, newTreeId);
+        // Update contest points for all active contests this member participates in
+        const activeContests = await db.query(`SELECT c.id FROM contests c
+       INNER JOIN contest_participants cp ON cp.contest_id = c.id
+       WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`, [memberId]);
+        // Update points for each active contest
+        for (const contest of activeContests.rows) {
+            await updateContestPoints(memberId, contest.id, task.points);
+        }
+    }
     return {
         success: true,
         pointsEarned: task.points,
@@ -629,11 +646,15 @@ export async function completeTask(taskId, userId, data) {
 export async function uploadPhoto(file) {
     // In production, this would upload to cloud storage (S3, Azure Blob, etc.)
     // For now, return a local file path
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
+    const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
     return `${baseUrl}/uploads/${file.filename}`;
 }
 export async function uploadVideo(file) {
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5001';
+    const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
+    return `${baseUrl}/uploads/${file.filename}`;
+}
+export async function uploadThumbnail(file) {
+    const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
     return `${baseUrl}/uploads/${file.filename}`;
 }
 /**

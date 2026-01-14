@@ -339,7 +339,11 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
         // Show normal reward card
         <>
           <div className="reward-icon" aria-hidden>
-            {reward.rewardType === 'discount' ? '🏷️' : reward.rewardType === 'benefit' ? '✨' : reward.rewardType === 'team_event' ? '🤝' : '🎁'}
+            {reward.thumbnail_url ? (
+              <img src={reward.thumbnail_url} alt={reward.title} className="reward-icon-image" />
+            ) : (
+              reward.rewardType === 'discount' ? '🏷️' : reward.rewardType === 'benefit' ? '✨' : reward.rewardType === 'team_event' ? '🤝' : '🎁'
+            )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 className="reward-title" style={{ marginRight: 8 }}>{reward.title}</h3>

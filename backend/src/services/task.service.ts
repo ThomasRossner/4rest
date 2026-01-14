@@ -42,6 +42,7 @@ export interface Task {
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
   event_group?: string;
   zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[];
+  thumbnail_url?: string;
 }
 
 export async function getAllTasks(
@@ -81,7 +82,7 @@ export async function getAllTasks(
     }
   }
 
-  let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
+  let select = 'DISTINCT ON (t.id) t.*, t.thumbnail_url, row_to_json(l.*) AS location';
   let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
   if (userId) {
     select += `, (ut.user_id IS NOT NULL) AS completed`;
@@ -333,9 +334,10 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        time_required,
        location_tool,
        event_group,
-       zielgruppe
+       zielgruppe,
+       thumbnail_url
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
      RETURNING *`,
     [
       data.title,
@@ -366,6 +368,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.location_tool ?? null,
       data.event_group ?? null,
       zielgruppeValue, // PostgreSQL will automatically convert JavaScript arrays to PostgreSQL arrays
+      data.thumbnail_url ?? null,
     ]
   );
   return result.rows[0];
@@ -482,7 +485,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     'target_latitude', 'target_longitude', 'article_url', 'article_content',
     'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
     'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-    'event_group', 'zielgruppe'
+    'event_group', 'zielgruppe', 'thumbnail_url'
   ]);
 
   // If type is being changed, reset type-specific fields of the old type
@@ -786,6 +789,16 @@ export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
 }
 
 export async function uploadVideo(file: Express.Multer.File): Promise<string> {
+  const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
+  return `${baseUrl}/uploads/${file.filename}`;
+}
+
+export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
+  const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
+  return `${baseUrl}/uploads/${file.filename}`;
+}
+
+export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
   const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
   return `${baseUrl}/uploads/${file.filename}`;
 }

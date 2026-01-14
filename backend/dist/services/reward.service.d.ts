@@ -6,6 +6,7 @@ export declare function getRewardsService(userId: string): Promise<{
     pointsCost: any;
     rewardType: any;
     icon: string;
+    thumbnail_url: any;
     location: Location;
 }[]>;
 interface CreateCustomRewardInput {
@@ -23,6 +24,7 @@ interface CreateCustomRewardInput {
     kategorie?: string;
     event_group?: string | null;
     moegliche_punkte?: number | null;
+    thumbnail_url?: string | null;
 }
 interface UpdateRewardInput {
     title?: string | null;
@@ -39,6 +41,7 @@ interface UpdateRewardInput {
     kategorie?: string | null;
     event_group?: string | null;
     moegliche_punkte?: number | null;
+    thumbnail_url?: string | null;
 }
 export declare function createCustomReward(data: CreateCustomRewardInput): Promise<any>;
 export declare function updateReward(id: string, data: UpdateRewardInput): Promise<any>;
@@ -46,7 +49,7 @@ export declare function setRewardsActiveState(ids: string[], active: boolean): P
 export declare function bulkDeleteRewards(ids: string[]): Promise<void>;
 export declare function getRewardById(id: string): Promise<any>;
 export declare function listRewardsForAdmin(includeInactive?: boolean): Promise<any[]>;
-export declare function redeemRewardService(rewardId: string, userId: string): Promise<{
+export declare function redeemRewardService(rewardId: string, userId: string, useTeamPoints?: boolean): Promise<{
     success: boolean;
     redemption: {
         id: any;
@@ -55,6 +58,35 @@ export declare function redeemRewardService(rewardId: string, userId: string): P
         status: any;
     };
     remainingPoints: number;
+    teamTotalPoints: number;
+    exceedsPersonalPoints: boolean;
+    message: string;
+}>;
+/**
+ * Get redemption status by QR token (for polling)
+ */
+export declare function getRedemptionStatus(qrToken: string, userId: string): Promise<{
+    id: any;
+    status: any;
+    points: number;
+}>;
+/**
+ * Get reward information from QR code without redeeming it
+ * Used by employees to preview the reward before redeeming
+ */
+export declare function getRewardInfoFromQrCode(qrToken: string, employeeUserId: string): Promise<{
+    success: boolean;
+    redemption: {
+        id: any;
+        rewardId: any;
+        rewardTitle: any;
+        rewardDescription: any;
+        userId: any;
+        userName: any;
+        userEmail: any;
+        pointsCost: any;
+        status: any;
+    };
     message: string;
 }>;
 export declare function verifyQrCodeService(qrToken: string, adminUserId: string): Promise<{
@@ -73,6 +105,27 @@ export declare function verifyQrCodeService(qrToken: string, adminUserId: string
     };
     message: string;
 }>;
+/**
+ * Redeem a reward QR code for a guest (employee action)
+ * This marks the redemption as 'used' and deducts points from the guest
+ */
+export declare function redeemRewardQrCodeService(qrToken: string, employeeUserId: string): Promise<{
+    success: boolean;
+    redemption: {
+        id: any;
+        rewardId: any;
+        rewardTitle: any;
+        rewardDescription: any;
+        userId: any;
+        userName: any;
+        userEmail: any;
+        pointsCost: any;
+        status: string;
+    };
+    guestPoints: any;
+    message: string;
+}>;
+export declare function uploadThumbnail(file: Express.Multer.File): Promise<string>;
 export declare function getUserRedemptions(userId: string): Promise<any[]>;
 export {};
 //# sourceMappingURL=reward.service.d.ts.map

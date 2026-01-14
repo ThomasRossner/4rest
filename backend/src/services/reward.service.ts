@@ -67,6 +67,7 @@ export async function getRewardsService(userId: string) {
     pointsCost: row.points_cost,
     rewardType: row.reward_type,
     icon: getRewardIcon(row.reward_type),
+    thumbnail_url: row.thumbnail_url ?? null,
     location: row.location as Location,
   }));
 }
@@ -98,6 +99,7 @@ interface CreateCustomRewardInput {
   kategorie?: string;
   event_group?: string | null;
   moegliche_punkte?: number | null;
+  thumbnail_url?: string | null;
 }
 
 interface UpdateRewardInput {
@@ -115,6 +117,7 @@ interface UpdateRewardInput {
   kategorie?: string | null;
   event_group?: string | null;
   moegliche_punkte?: number | null;
+  thumbnail_url?: string | null;
 }
 
 export async function createCustomReward(data: CreateCustomRewardInput) {
@@ -155,9 +158,10 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        reward_art,
        kategorie,
        event_group,
-       moegliche_punkte
+       moegliche_punkte,
+       thumbnail_url
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING *`,
     [
       title,
@@ -174,6 +178,7 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       data.kategorie ?? null,
       data.event_group ?? null,
       data.moegliche_punkte ?? null,
+      data.thumbnail_url ?? null,
     ]
   );
 
@@ -318,6 +323,11 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
   if (data.moegliche_punkte !== undefined) {
     updates.push(`moegliche_punkte = $${paramIndex++}`);
     values.push(data.moegliche_punkte ?? null);
+  }
+
+  if (data.thumbnail_url !== undefined) {
+    updates.push(`thumbnail_url = $${paramIndex++}`);
+    values.push(data.thumbnail_url ?? null);
   }
 
   if (updates.length === 0) {
@@ -757,6 +767,11 @@ export async function redeemRewardQrCodeService(qrToken: string, employeeUserId:
     guestPoints: updatedPoints,
     message: 'Reward redeemed successfully',
   };
+}
+
+export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
+  const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
+  return `${baseUrl}/uploads/${file.filename}`;
 }
 
 export async function getUserRedemptions(userId: string) {

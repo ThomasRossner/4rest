@@ -12,6 +12,7 @@ import {
   setRewardsActiveState,
   bulkDeleteRewards,
   getRedemptionStatus,
+  uploadThumbnail as uploadThumbnailService,
 } from '../services/reward.service.js';
 import {
   generatePointsBonusQr,
@@ -268,4 +269,13 @@ export const redeemRewardQrCode: RequestHandler = asyncHandler(async (req, res) 
 
   const result = await redeemRewardQrCodeService(qrToken, authReq.user.id);
   res.json(result);
+});
+
+export const uploadThumbnail: RequestHandler = asyncHandler(async (req, res) => {
+  const file = (req as AuthRequest & { file?: Express.Multer.File }).file;
+  if (!file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  const thumbnailUrl = await uploadThumbnailService(file);
+  res.json({ thumbnail_url: thumbnailUrl });
 });

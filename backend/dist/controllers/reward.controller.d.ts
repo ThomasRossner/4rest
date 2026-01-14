@@ -9,4 +9,7 @@ export declare const bulkDeleteRewardsController: RequestHandler;
 export declare const verifyQrCode: RequestHandler;
 export declare const generatePointsBonusQrCode: RequestHandler;
 export declare const redeemPointsBonusQrCode: RequestHandler;
+export declare const getRewardInfoFromQr: RequestHandler;
+export declare const getRedemptionStatusController: RequestHandler;
+export declare const redeemRewardQrCode: RequestHandler;
 //# sourceMappingURL=reward.controller.d.ts.map

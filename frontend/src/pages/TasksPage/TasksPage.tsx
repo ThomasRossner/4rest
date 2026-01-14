@@ -319,12 +319,16 @@ function TasksPage() {
             <div key={task.id} className={`task-card ${isCompleted ? 'task-card-completed' : ''} ${isLocked ? 'task-card-locked' : ''}`}>
             <div className="task-header">
               <span className="task-icon">
-                {task.type === 'video' ? '🎥' : 
-                 task.type === 'quiz' ? '❓' : 
-                 task.type === 'article_quiz' ? '📄' :
-                 task.type === 'survey' ? '📋' :
-                 task.type === 'qr' ? <QRCodeIcon size={48} /> : 
-                 task.type === 'visit_location' ? '📍' : '📷'}
+                {task.thumbnail_url ? (
+                  <img src={task.thumbnail_url} alt={task.title} className="task-icon-image" />
+                ) : (
+                  task.type === 'video' ? '🎥' : 
+                  task.type === 'quiz' ? '❓' : 
+                  task.type === 'article_quiz' ? '📄' :
+                  task.type === 'survey' ? '📋' :
+                  task.type === 'qr' ? <QRCodeIcon size={48} /> : 
+                  task.type === 'visit_location' ? '📍' : '📷'
+                )}
               </span>
               <span className="task-points">{t('tasksComponents.points', { points: task.points })}</span>
               {isCompleted && (

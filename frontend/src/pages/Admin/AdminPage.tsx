@@ -139,6 +139,8 @@ type TaskFormState = {
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
   event_group?: string;
   zielgruppe?: 'Mitarbeitende' | 'Gäste' | 'Stakeholder';
+  thumbnailFile?: File | null;
+  thumbnailUrl?: string | null;
 };
 
 type RewardFormState = {
@@ -156,6 +158,8 @@ type RewardFormState = {
   kategorie?: string;
   event_group?: string | null;
   moegliche_punkte?: number | null;
+  thumbnailFile?: File | null;
+  thumbnailUrl?: string | null;
 };
 
 type LocationFormState = {
@@ -1196,6 +1200,8 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   location_tool: undefined,
   event_group: undefined,
   zielgruppe: undefined,
+  thumbnailFile: null,
+  thumbnailUrl: null,
 });
 
 const defaultRewardForm = (type: RewardType): RewardFormState => ({
@@ -1213,6 +1219,8 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   kategorie: undefined,
   event_group: undefined,
   moegliche_punkte: undefined,
+  thumbnailFile: null,
+  thumbnailUrl: null,
 });
 
 const defaultLocationForm = (): LocationFormState => ({
@@ -3375,6 +3383,9 @@ function AdminPage() {
         }
         // Always include zielgruppe, even if undefined/null, so it can be cleared
         payload.zielgruppe = taskForm.zielgruppe || null;
+        
+        // Add thumbnail_url (null if no thumbnail, to allow deletion)
+        payload.thumbnail_url = thumbnailUrl;
 
         await updateTaskMutation.mutateAsync({ id: editingTaskId, payload });
         return;
@@ -3461,6 +3472,9 @@ function AdminPage() {
         }
         // Always include zielgruppe, even if undefined/null, so it can be cleared
         payload.zielgruppe = taskForm.zielgruppe || null;
+        
+        // Add thumbnail_url
+        payload.thumbnail_url = thumbnailUrl;
 
         await publishTaskMutation.mutateAsync(payload);
         return;
@@ -3545,6 +3559,9 @@ function AdminPage() {
       }
       // Always include zielgruppe, even if undefined/null, so it can be cleared
       payload.zielgruppe = taskForm.zielgruppe || null;
+      
+      // Add thumbnail_url
+      payload.thumbnail_url = thumbnailUrl;
 
       await publishTaskMutation.mutateAsync(payload);
     } catch (error: any) {
@@ -3564,6 +3581,18 @@ function AdminPage() {
           text: rewardValidation.message ?? 'Please complete the required fields.',
         });
         return;
+      }
+
+      // Upload thumbnail if a new file was selected
+      let thumbnailUrl = rewardForm.thumbnailUrl;
+      if (rewardForm.thumbnailFile) {
+        try {
+          const uploadResult = await api.uploadRewardThumbnail(rewardForm.thumbnailFile);
+          thumbnailUrl = uploadResult.thumbnail_url;
+        } catch (error: any) {
+          setRewardMessage({ type: 'error', text: error?.message || 'Failed to upload thumbnail.' });
+          return;
+        }
       }
 
       const pointsCost = Number(rewardForm.pointsCost) || 0;
@@ -3597,6 +3626,9 @@ function AdminPage() {
       if (rewardForm.moegliche_punkte !== undefined && rewardForm.moegliche_punkte !== null) {
         basePayload.moegliche_punkte = Number(rewardForm.moegliche_punkte) || null;
       }
+      
+      // Add thumbnail_url (null if no thumbnail, to allow deletion)
+      basePayload.thumbnail_url = thumbnailUrl;
 
       if (isEditingReward && editingRewardId) {
         await updateRewardMutation.mutateAsync({ id: editingRewardId, payload: basePayload });
@@ -4289,6 +4321,8 @@ function AdminPage() {
       kategorie: (template as any).kategorie ?? undefined,
       event_group: (template as any).event_group ?? undefined,
       moegliche_punkte: (template as any).moegliche_punkte ?? undefined,
+      thumbnailFile: null,
+      thumbnailUrl: (template as any).thumbnail_url ?? null,
     });
     setIsEditingReward(true);
     setEditingRewardId(template.id);
@@ -5564,6 +5598,50 @@ const goToRewardCreation = () => {
                         rows={3}
                       />
                     </label>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Thumbnail (optional)" />
+                      <div className="admin-upload-field">
+                        {(taskForm.thumbnailUrl || taskForm.thumbnailFile) && (
+                          <div style={{ marginBottom: '0.5rem' }}>
+                            <img
+                              src={taskForm.thumbnailFile ? URL.createObjectURL(taskForm.thumbnailFile) : taskForm.thumbnailUrl || ''}
+                              alt="Thumbnail preview"
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTaskForm((prev) => ({ ...prev, thumbnailFile: null, thumbnailUrl: null }));
+                              }}
+                              style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                        <div className="admin-upload-control">
+                          <label className="admin-upload-button">
+                            <span>Choose Thumbnail</span>
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg"
+                              onChange={(event) => {
+                                const file = event.target.files?.[0] ?? null;
+                                setTaskForm((prev) => ({
+                                  ...prev,
+                                  thumbnailFile: file,
+                                  thumbnailUrl: file ? null : prev.thumbnailUrl,
+                                }));
+                              }}
+                            />
+                          </label>
+                          <span className="admin-upload-filename">
+                            {taskForm.thumbnailFile ? taskForm.thumbnailFile.name : taskForm.thumbnailUrl ? 'Current thumbnail' : 'No thumbnail selected'}
+                          </span>
+                        </div>
+                        <p className="admin-field-note">PNG or JPG, max 2MB. Will be resized to 48x48px.</p>
+                      </div>
+                    </div>
                     <label className="admin-field">
                       <FieldLabel label={t('admin.task.fields.points')} required />
                       <input
@@ -6373,6 +6451,50 @@ const goToRewardCreation = () => {
                         rows={3}
                       />
                     </label>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Thumbnail (optional)" />
+                      <div className="admin-upload-field">
+                        {(rewardForm.thumbnailUrl || rewardForm.thumbnailFile) && (
+                          <div style={{ marginBottom: '0.5rem' }}>
+                            <img
+                              src={rewardForm.thumbnailFile ? URL.createObjectURL(rewardForm.thumbnailFile) : rewardForm.thumbnailUrl || ''}
+                              alt="Thumbnail preview"
+                              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRewardForm((prev) => ({ ...prev, thumbnailFile: null, thumbnailUrl: null }));
+                              }}
+                              style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                        <div className="admin-upload-control">
+                          <label className="admin-upload-button">
+                            <span>Choose Thumbnail</span>
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg"
+                              onChange={(event) => {
+                                const file = event.target.files?.[0] ?? null;
+                                setRewardForm((prev) => ({
+                                  ...prev,
+                                  thumbnailFile: file,
+                                  thumbnailUrl: file ? null : prev.thumbnailUrl,
+                                }));
+                              }}
+                            />
+                          </label>
+                          <span className="admin-upload-filename">
+                            {rewardForm.thumbnailFile ? rewardForm.thumbnailFile.name : rewardForm.thumbnailUrl ? 'Current thumbnail' : 'No thumbnail selected'}
+                          </span>
+                        </div>
+                        <p className="admin-field-note">PNG or JPG, max 2MB. Will be resized to 48x48px.</p>
+                      </div>
+                    </div>
                     <label className="admin-field">
                       <FieldLabel label={t('admin.reward.fields.pointsCost')} required />
                       <input

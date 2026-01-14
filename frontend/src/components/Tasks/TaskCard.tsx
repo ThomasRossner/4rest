@@ -131,7 +131,13 @@ function TaskCard({ task, onSelect, disabled, isAvailable }: TaskCardProps) {
     >
       <header style={headerStyle}>
         <h3 style={titleStyle}>
-          <span aria-hidden>{emoji}</span>
+          <span aria-hidden>
+            {(task as any).thumbnail_url ? (
+              <img src={(task as any).thumbnail_url} alt={task.title} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
+            ) : (
+              emoji
+            )}
+          </span>
           <span>{task.title}</span>
         </h3>
         <span style={badgeStyle}>{pointsLabel}</span>

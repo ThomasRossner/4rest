@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getTasks, getTask, createTask, updateTask, deleteTask, completeTask, uploadPhoto, uploadVideo, bulkUpdateTaskStatus, bulkDeleteTasks, } from '../controllers/task.controller.js';
+import { getTasks, getTask, createTask, updateTask, deleteTask, completeTask, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, } from '../controllers/task.controller.js';
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
 const photoStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -49,6 +49,28 @@ const uploadVideoMiddleware = multer({
         }
     },
 });
+const thumbnailStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, 'task-thumbnail-' + uniqueSuffix + path.extname(file.originalname));
+    },
+});
+const uploadThumbnailMiddleware = multer({
+    storage: thumbnailStorage,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+    fileFilter: (req, file, cb) => {
+        const allowedMimes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        }
+        else {
+            cb(new Error('Only PNG and JPG images are allowed'));
+        }
+    },
+});
 const router = Router();
 router.get('/', authenticate, getTasks);
 router.post('/bulk/status', authenticate, requireRole('administrator'), bulkUpdateTaskStatus);
@@ -60,5 +82,6 @@ router.delete('/:id', authenticate, requireRole('administrator'), deleteTask);
 router.post('/:id/complete', authenticate, completeTask);
 router.post('/upload', authenticate, uploadPhotoMiddleware.single('photo'), uploadPhoto);
 router.post('/upload/video', authenticate, requireRole('administrator'), uploadVideoMiddleware.single('video'), uploadVideo);
+router.post('/upload/thumbnail', authenticate, requireRole('administrator'), uploadThumbnailMiddleware.single('thumbnail'), uploadThumbnail);
 export default router;
 //# sourceMappingURL=task.routes.js.map

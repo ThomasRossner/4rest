@@ -6,7 +6,7 @@ declare class EmailTemplatesService {
     getWelcomeEmail(variables: {
         name: string;
         email: string;
-        role: string;
+        role?: string;
         appUrl?: string;
     }): string;
     getPasswordResetEmail(variables: {
@@ -28,6 +28,12 @@ declare class EmailTemplatesService {
         expiresIn?: string;
     }): string;
     getPasswordSetupEmail(variables: {
+        name: string;
+        email: string;
+        resetUrl: string;
+        expiresIn?: string;
+    }): string;
+    getAdminCreatedUserEmail(variables: {
         name: string;
         email: string;
         resetUrl: string;

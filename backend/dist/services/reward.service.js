@@ -3,6 +3,7 @@ import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
 import { validateRewardType, validateRecurrence, normalizePointsCost, } from '../utils/validation.js';
+import { getUserActiveTeam, getTeamTotalPoints, deductTeamPoints } from './team.service.js';
 export async function getRewardsService(userId) {
     const db = getPool();
     const user = await getUserById(userId);
@@ -53,6 +54,7 @@ export async function getRewardsService(userId) {
         pointsCost: row.points_cost,
         rewardType: row.reward_type,
         icon: getRewardIcon(row.reward_type),
+        thumbnail_url: row.thumbnail_url ?? null,
         location: row.location,
     }));
 }
@@ -101,9 +103,10 @@ export async function createCustomReward(data) {
        reward_art,
        kategorie,
        event_group,
-       moegliche_punkte
+       moegliche_punkte,
+       thumbnail_url
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING *`, [
         title,
         data.description ?? null,
@@ -119,6 +122,7 @@ export async function createCustomReward(data) {
         data.kategorie ?? null,
         data.event_group ?? null,
         data.moegliche_punkte ?? null,
+        data.thumbnail_url ?? null,
     ]);
     return result.rows[0];
 }
@@ -197,7 +201,7 @@ export async function updateReward(id, data) {
                     // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
                     // Remove curly braces and split by comma
                     const cleaned = data.zielgruppe.replace(/^{|}$/g, '').trim();
-                    zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];
+                    zielgruppeArray = cleaned ? cleaned.split(',').map((v) => v.trim()) : [];
                 }
             }
             else if (Array.isArray(data.zielgruppe)) {
@@ -243,6 +247,10 @@ export async function updateReward(id, data) {
     if (data.moegliche_punkte !== undefined) {
         updates.push(`moegliche_punkte = $${paramIndex++}`);
         values.push(data.moegliche_punkte ?? null);
+    }
+    if (data.thumbnail_url !== undefined) {
+        updates.push(`thumbnail_url = $${paramIndex++}`);
+        values.push(data.thumbnail_url ?? null);
     }
     if (updates.length === 0) {
         const reward = await getRewardById(id);
@@ -295,7 +303,7 @@ export async function listRewardsForAdmin(includeInactive = false) {
     const result = await db.query(query, params);
     return result.rows;
 }
-export async function redeemRewardService(rewardId, userId) {
+export async function redeemRewardService(rewardId, userId, useTeamPoints = false) {
     const db = getPool();
     // Get user and reward
     const user = await getUserById(userId);
@@ -307,8 +315,26 @@ export async function redeemRewardService(rewardId, userId) {
     if (!reward) {
         throw new Error('Reward not found');
     }
-    if (user.points < reward.points_cost) {
-        throw new Error('Insufficient points');
+    // Check if user is in a team
+    const userTeam = await getUserActiveTeam(userId);
+    const teamTotalPoints = userTeam ? await getTeamTotalPoints(userTeam.id) : 0;
+    // Determine if we should use team points
+    const shouldUseTeamPoints = useTeamPoints && userTeam !== null;
+    // Check if user has enough points (either personal or team total)
+    if (shouldUseTeamPoints) {
+        if (teamTotalPoints < reward.points_cost) {
+            throw new Error('Insufficient team points');
+        }
+        // Check if user exceeds their personal points (warning case)
+        if (user.points < reward.points_cost) {
+            // This is allowed but should trigger a warning in the frontend
+            // We'll return a flag indicating this
+        }
+    }
+    else {
+        if (user.points < reward.points_cost) {
+            throw new Error('Insufficient points');
+        }
     }
     // Generate unique QR token
     const crypto = await import('node:crypto');
@@ -324,10 +350,14 @@ export async function redeemRewardService(rewardId, userId) {
             // Continue with redemption even if external voucher generation fails
         }
     }
+    // Check if user exceeds personal points (warning case)
+    const exceedsPersonalPoints = shouldUseTeamPoints && user.points < reward.points_cost;
     // Create redemption record with QR token (points NOT deducted yet - will be deducted on verification)
-    const redemptionResult = await db.query(`INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING *`, [userId, rewardId, voucherCode || null, 'pending', qrToken]);
+    // Store whether team points should be used in a JSON metadata field
+    const metadata = shouldUseTeamPoints && userTeam ? { useTeamPoints: true, teamId: userTeam.id } : null;
+    const redemptionResult = await db.query(`INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+     RETURNING *`, [userId, rewardId, voucherCode || null, 'pending', qrToken, metadata]);
     return {
         success: true,
         redemption: {
@@ -337,15 +367,77 @@ export async function redeemRewardService(rewardId, userId) {
             status: redemptionResult.rows[0].status,
         },
         remainingPoints: user.points, // Points not deducted yet
+        teamTotalPoints: shouldUseTeamPoints ? teamTotalPoints : undefined,
+        exceedsPersonalPoints: exceedsPersonalPoints,
         message: 'QR code generated. Please show it to an administrator for verification.',
+    };
+}
+/**
+ * Get redemption status by QR token (for polling)
+ */
+export async function getRedemptionStatus(qrToken, userId) {
+    const db = getPool();
+    const result = await db.query(`SELECT rr.id, rr.status, rr.user_id, u.points as user_points
+     FROM reward_redemptions rr
+     JOIN users u ON u.id = rr.user_id
+     WHERE rr.qr_token = $1 AND rr.user_id = $2`, [qrToken, userId]);
+    if (result.rows.length === 0) {
+        return null;
+    }
+    return {
+        id: result.rows[0].id,
+        status: result.rows[0].status,
+        points: parseInt(result.rows[0].user_points || '0', 10),
+    };
+}
+/**
+ * Get reward information from QR code without redeeming it
+ * Used by employees to preview the reward before redeeming
+ */
+export async function getRewardInfoFromQrCode(qrToken, employeeUserId) {
+    const db = getPool();
+    // Verify employee user
+    const employee = await getUserById(employeeUserId);
+    if (!employee || (employee.role !== 'administrator' && employee.role !== 'employee')) {
+        throw new Error('Unauthorized: Only administrators and employees can view QR code information');
+    }
+    // Find redemption by QR token
+    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+            u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
+     FROM reward_redemptions rr
+     JOIN rewards r ON rr.reward_id = r.id
+     JOIN users u ON rr.user_id = u.id
+     WHERE rr.qr_token = $1 AND rr.status = 'pending'`, [qrToken]);
+    if (redemptionResult.rows.length === 0) {
+        throw new Error('QR code not found or already used');
+    }
+    const redemption = redemptionResult.rows[0];
+    // Check if user still has enough points (in case they spent them elsewhere)
+    if (redemption.user_points < redemption.points_cost) {
+        throw new Error('User no longer has sufficient points for this redemption');
+    }
+    return {
+        success: true,
+        redemption: {
+            id: redemption.id,
+            rewardId: redemption.reward_id,
+            rewardTitle: redemption.reward_title,
+            rewardDescription: redemption.reward_description,
+            userId: redemption.user_id,
+            userName: redemption.user_name,
+            userEmail: redemption.user_email,
+            pointsCost: redemption.points_cost,
+            status: redemption.status,
+        },
+        message: 'QR code information retrieved successfully',
     };
 }
 export async function verifyQrCodeService(qrToken, adminUserId) {
     const db = getPool();
-    // Verify admin user
+    // Verify admin or employee user
     const admin = await getUserById(adminUserId);
-    if (!admin || admin.role !== 'administrator') {
-        throw new Error('Unauthorized: Only administrators can verify QR codes');
+    if (!admin || (admin.role !== 'administrator' && admin.role !== 'employee')) {
+        throw new Error('Unauthorized: Only administrators and employees can verify QR codes');
     }
     // Find redemption by QR token
     const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
@@ -394,6 +486,105 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
         },
         message: 'QR code verified and reward redeemed successfully',
     };
+}
+/**
+ * Redeem a reward QR code for a guest (employee action)
+ * This marks the redemption as 'used' and deducts points from the guest
+ */
+export async function redeemRewardQrCodeService(qrToken, employeeUserId) {
+    const db = getPool();
+    // Verify employee user
+    const employee = await getUserById(employeeUserId);
+    if (!employee || employee.role !== 'employee') {
+        throw new Error('Unauthorized: Only employees can redeem reward QR codes');
+    }
+    // Find redemption by QR token
+    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+            u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
+     FROM reward_redemptions rr
+     JOIN rewards r ON rr.reward_id = r.id
+     JOIN users u ON rr.user_id = u.id
+     WHERE rr.qr_token = $1 AND rr.status = 'pending'`, [qrToken]);
+    if (redemptionResult.rows.length === 0) {
+        throw new Error('QR code not found or already used');
+    }
+    const redemption = redemptionResult.rows[0];
+    // Parse metadata to check if team points should be used
+    let useTeamPoints = false;
+    let teamId = null;
+    if (redemption.metadata) {
+        try {
+            const metadata = typeof redemption.metadata === 'string' ? JSON.parse(redemption.metadata) : redemption.metadata;
+            useTeamPoints = metadata?.useTeamPoints === true;
+            teamId = metadata?.teamId || null;
+        }
+        catch (e) {
+            // If metadata parsing fails, assume no team points
+            console.warn('Failed to parse redemption metadata:', e);
+        }
+    }
+    // Check if user still has enough points (either personal or team total)
+    if (useTeamPoints && teamId) {
+        const teamTotalPoints = await getTeamTotalPoints(teamId);
+        if (teamTotalPoints < redemption.points_cost) {
+            // Mark as expired if team doesn't have enough points
+            await db.query(`UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`, [redemption.id]);
+            throw new Error('Team no longer has sufficient points for this redemption');
+        }
+    }
+    else {
+        if (redemption.user_points < redemption.points_cost) {
+            // Mark as expired if user doesn't have enough points
+            await db.query(`UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`, [redemption.id]);
+            throw new Error('User no longer has sufficient points for this redemption');
+        }
+    }
+    // Deduct points cost and add possible points (moegliche_punkte) now that QR code is redeemed
+    const pointsToAdd = redemption.moegliche_punkte || 0;
+    if (useTeamPoints && teamId) {
+        // Deduct points from team members (user's points first, then distribute remainder)
+        await deductTeamPoints(teamId, redemption.user_id, redemption.points_cost);
+        // Add possible points to the user
+        if (pointsToAdd > 0) {
+            await db.query('UPDATE users SET points = points + $1 WHERE id = $2', [pointsToAdd, redemption.user_id]);
+        }
+    }
+    else {
+        // Deduct points from user only
+        await db.query('UPDATE users SET points = points - $1 + $2 WHERE id = $3', [redemption.points_cost, pointsToAdd, redemption.user_id]);
+    }
+    // Update redemption status to 'used'
+    await db.query(`UPDATE reward_redemptions SET status = 'used' WHERE id = $1`, [redemption.id]);
+    // Get updated user points
+    const updatedUserResult = await db.query('SELECT points FROM users WHERE id = $1', [redemption.user_id]);
+    const updatedPoints = updatedUserResult.rows[0]?.points || 0;
+    // Broadcast update to user via WebSocket
+    broadcastRedemptionUpdate({
+        userId: redemption.user_id,
+        redemptionId: redemption.id,
+        status: 'used',
+        points: updatedPoints,
+    });
+    return {
+        success: true,
+        redemption: {
+            id: redemption.id,
+            rewardId: redemption.reward_id,
+            rewardTitle: redemption.reward_title,
+            rewardDescription: redemption.reward_description,
+            userId: redemption.user_id,
+            userName: redemption.user_name,
+            userEmail: redemption.user_email,
+            pointsCost: redemption.points_cost,
+            status: 'used',
+        },
+        guestPoints: updatedPoints,
+        message: 'Reward redeemed successfully',
+    };
+}
+export async function uploadThumbnail(file) {
+    const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
+    return `${baseUrl}/uploads/${file.filename}`;
 }
 export async function getUserRedemptions(userId) {
     const db = getPool();

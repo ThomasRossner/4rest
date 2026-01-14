@@ -239,11 +239,6 @@ export async function getForestStatsService() {
      LEFT JOIN tree_counts tc ON tc.user_id = u.id
      LEFT JOIN completed_counts cc ON cc.user_id = u.id
      ORDER BY u.created_at ASC`);
-    // Add a simple consistency flag based on counts (not full task_id set comparison)
-    const rowsWithConsistency = result.rows.map((row) => ({
-        ...row,
-        is_count_consistent: Number(row.tree_count) === Number(row.completed_tasks),
-    }));
-    return rowsWithConsistency;
+    return result.rows;
 }
 //# sourceMappingURL=forest.service.js.map

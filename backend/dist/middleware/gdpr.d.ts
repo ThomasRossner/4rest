@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-export declare function exportUserData(req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>> | undefined>;
-export declare function deleteUserData(req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function exportUserData(req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>>>;
+export declare function deleteUserData(req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>>>;
 export interface ConsentPreferences {
     analytics: boolean;
     marketing: boolean;

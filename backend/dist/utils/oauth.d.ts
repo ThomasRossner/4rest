@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 /**
- * Gets the frontend URL from environment or defaults to localhost
+ * Gets the frontend URL from environment
+ * Throws an error if not set to prevent invalid redirects
  */
 export declare function getFrontendUrl(): string;
 /**

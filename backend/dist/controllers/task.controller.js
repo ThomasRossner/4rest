@@ -1,4 +1,4 @@
-import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, } from '../services/task.service.js';
+import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, } from '../services/task.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
 export const getTasks = asyncHandler(async (req, res) => {
@@ -130,5 +130,13 @@ export const uploadVideo = asyncHandler(async (req, res) => {
     }
     const videoUrl = await uploadVideoService(file);
     res.json({ video_url: videoUrl });
+});
+export const uploadThumbnail = asyncHandler(async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const thumbnailUrl = await uploadThumbnailService(file);
+    res.json({ thumbnail_url: thumbnailUrl });
 });
 //# sourceMappingURL=task.controller.js.map

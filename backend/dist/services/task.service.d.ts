@@ -32,6 +32,7 @@ export interface Task {
     location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
     event_group?: string;
     zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[];
+    thumbnail_url?: string;
 }
 export declare function getAllTasks(filters?: {
     limit?: number;
@@ -60,6 +61,7 @@ export declare function completeTask(taskId: string, userId: string, data?: any)
 }>;
 export declare function uploadPhoto(file: Express.Multer.File): Promise<string>;
 export declare function uploadVideo(file: Express.Multer.File): Promise<string>;
+export declare function uploadThumbnail(file: Express.Multer.File): Promise<string>;
 /**
  * Checks if all prerequisites for a task are met by a user
  * @param taskId Task ID to check prerequisites for

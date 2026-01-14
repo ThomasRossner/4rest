@@ -1,10 +1,15 @@
 import passport from 'passport';
 import { signUserToken } from './jwt.js';
 /**
- * Gets the frontend URL from environment or defaults to localhost
+ * Gets the frontend URL from environment
+ * Throws an error if not set to prevent invalid redirects
  */
 export function getFrontendUrl() {
-    return process.env.FRONTEND_URL || 'http://localhost:3000';
+    const url = process.env.FRONTEND_URL || process.env.APP_URL;
+    if (!url) {
+        throw new Error('FRONTEND_URL or APP_URL environment variable must be set for OAuth redirects');
+    }
+    return url;
 }
 /**
  * Creates a reusable OAuth callback handler

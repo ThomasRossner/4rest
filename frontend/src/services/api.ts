@@ -344,9 +344,27 @@ export const api = {
     return response.data;
   },
 
+  async uploadTaskThumbnail(file: File) {
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    const response = await apiClient.post('/tasks/upload/thumbnail', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   // Admin - Rewards
   async getRewardTemplates(params?: { includeInactive?: boolean }) {
     const response = await apiClient.get('/rewards/templates', { params });
+    return response.data;
+  },
+
+  async uploadRewardThumbnail(file: File) {
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    const response = await apiClient.post('/rewards/upload/thumbnail', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 

@@ -25,9 +25,11 @@ class EmailTemplatesService {
     }
     getWelcomeEmail(variables) {
         const template = this.loadTemplate('welcome-email');
-        const appUrl = variables.appUrl || process.env.APP_URL || 'http://localhost:3000';
+        const appUrl = variables.appUrl || process.env.APP_URL || process.env.FRONTEND_URL || '';
+        // Remove role from variables to prevent it from being displayed in email
+        const { role, ...emailVariables } = variables;
         return this.replaceVariables(template, {
-            ...variables,
+            ...emailVariables,
             appUrl,
         });
     }
@@ -57,6 +59,14 @@ class EmailTemplatesService {
     }
     getPasswordSetupEmail(variables) {
         const template = this.loadTemplate('password-setup-email');
+        const expiresIn = variables.expiresIn || '1 hour';
+        return this.replaceVariables(template, {
+            ...variables,
+            expiresIn,
+        });
+    }
+    getAdminCreatedUserEmail(variables) {
+        const template = this.loadTemplate('admin-created-user-email');
         const expiresIn = variables.expiresIn || '1 hour';
         return this.replaceVariables(template, {
             ...variables,

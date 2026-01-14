@@ -42,7 +42,10 @@ export async function generatePasswordSetupToken(userId) {
 export async function sendPasswordSetupEmail(userId, email, name) {
     try {
         const setupToken = await generatePasswordSetupToken(userId);
-        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+        if (!appUrl) {
+            throw new Error('APP_URL or FRONTEND_URL environment variable must be set for password setup emails');
+        }
         const setupUrl = `${appUrl}/setup-password?token=${setupToken}`;
         const html = emailTemplates.getPasswordSetupEmail({
             name,
@@ -61,9 +64,37 @@ export async function sendPasswordSetupEmail(userId, email, name) {
         throw error;
     }
 }
+export async function sendAdminCreatedUserEmail(userId, email, name) {
+    try {
+        const setupToken = await generatePasswordSetupToken(userId);
+        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+        if (!appUrl) {
+            throw new Error('APP_URL or FRONTEND_URL environment variable must be set for admin created user emails');
+        }
+        const setupUrl = `${appUrl}/setup-password?token=${setupToken}`;
+        const html = emailTemplates.getAdminCreatedUserEmail({
+            name,
+            email,
+            resetUrl: setupUrl,
+            expiresIn: `${TOKEN_EXPIRY_HOURS.passwordReset} hour`,
+        });
+        await emailService.sendEmail({
+            to: email,
+            subject: 'Your Roots of Impact Account Has Been Created',
+            html,
+        });
+    }
+    catch (error) {
+        console.error('Failed to send admin created user email:', error);
+        throw error;
+    }
+}
 export async function sendWelcomeEmail(userId, email, name, role) {
     try {
-        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+        if (!appUrl) {
+            console.warn('APP_URL or FRONTEND_URL not set, welcome email may contain invalid links');
+        }
         const html = emailTemplates.getWelcomeEmail({
             name,
             email,
@@ -84,7 +115,10 @@ export async function sendWelcomeEmail(userId, email, name, role) {
 export async function sendEmailVerificationEmail(userId, email, name, token) {
     try {
         const verificationToken = token || await generateEmailVerificationToken(userId);
-        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+        if (!appUrl) {
+            throw new Error('APP_URL or FRONTEND_URL environment variable must be set for email verification');
+        }
         const verificationUrl = `${appUrl}/verify-email?token=${verificationToken}`;
         const html = emailTemplates.getEmailVerificationEmail({
             name,
@@ -106,7 +140,10 @@ export async function sendEmailVerificationEmail(userId, email, name, token) {
 export async function sendPasswordResetEmail(userId, email, name) {
     try {
         const resetToken = await generatePasswordResetToken(userId);
-        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
+        const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+        if (!appUrl) {
+            throw new Error('APP_URL or FRONTEND_URL environment variable must be set for password reset emails');
+        }
         const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
         const html = emailTemplates.getPasswordResetEmail({
             name,
