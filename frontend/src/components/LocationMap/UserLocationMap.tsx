@@ -378,9 +378,15 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       
       // Add each task to the popup
       tasksAtLocation.forEach((task, index) => {
+        const thumbnailUrl = (task as any).thumbnail_url;
         popupHTML += `
           <div style="margin-bottom: ${index < tasksAtLocation.length - 1 ? '16px' : '0'}; padding-bottom: ${index < tasksAtLocation.length - 1 ? '16px' : '0'}; border-bottom: ${index < tasksAtLocation.length - 1 ? '1px solid #e5e7eb' : 'none'};">
-            ${tasksAtLocation.length > 1 ? `<h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 600; color: #1f2937;">${escapeHtml(task.title)}</h4>` : ''}
+            ${tasksAtLocation.length > 1 ? `
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                ${thumbnailUrl ? `<img src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(task.title)}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; flex-shrink: 0;" />` : ''}
+                <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">${escapeHtml(task.title)}</h4>
+              </div>
+            ` : ''}
             ${task.description ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 0.9rem;">${escapeHtml(task.description)}</p>` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
               <span style="font-weight: 600; color: #f59e0b;">⭐ ${task.points} Punkte</span>
@@ -513,9 +519,15 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         
         // Add each reward to the popup
         rewardsAtLocation.forEach((reward, index) => {
+          const thumbnailUrl = (reward as any).thumbnail_url;
           popupHTML += `
             <div style="margin-bottom: ${index < rewardsAtLocation.length - 1 ? '16px' : '0'}; padding-bottom: ${index < rewardsAtLocation.length - 1 ? '16px' : '0'}; border-bottom: ${index < rewardsAtLocation.length - 1 ? '1px solid #e5e7eb' : 'none'};">
-              ${rewardsAtLocation.length > 1 ? `<h4 style="margin: 0 0 6px 0; font-size: 1rem; font-weight: 600; color: #1f2937;">${escapeHtml(reward.title)}</h4>` : ''}
+              ${rewardsAtLocation.length > 1 ? `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                  ${thumbnailUrl ? `<img src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(reward.title)}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; flex-shrink: 0;" />` : ''}
+                  <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">${escapeHtml(reward.title)}</h4>
+                </div>
+              ` : ''}
               ${reward.description ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 0.9rem;">${escapeHtml(reward.description)}</p>` : ''}
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                 <span style="font-weight: 600; color: #f59e0b;">💰 ${reward.pointsCost} Punkte</span>
