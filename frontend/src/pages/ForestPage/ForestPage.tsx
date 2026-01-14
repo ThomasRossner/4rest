@@ -67,10 +67,10 @@ function ForestPage() {
               <span className="home-stat-value">{progress?.tasksCompleted || 0}</span>
               <span className="home-stat-label">{t('home.stats.tasksCompleted')}</span>
             </div>
-            {progress?.co2Saved && progress.co2Saved > 0 && (
+            {progress?.co2Saved && Number(progress.co2Saved) > 0 && (
               <div className="home-stat">
                 <div className="home-stat-icon">🌍</div>
-                <span className="home-stat-value">{progress.co2Saved.toFixed(1)} kg</span>
+                <span className="home-stat-value">{Number(progress.co2Saved).toFixed(1)} kg</span>
                 <span className="home-stat-label">{t('home.stats.co2Saved')}</span>
               </div>
             )}
