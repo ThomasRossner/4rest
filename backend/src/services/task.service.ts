@@ -143,6 +143,18 @@ export async function getAllTasks(
   
   const tasks = Array.from(unique.values());
   
+  // #region agent log
+  const logData = {location:'task.service.ts:144',message:'getAllTasks returning tasks',data:{tasksCount:tasks.length,firstTaskThumbnail:tasks[0]?.thumbnail_url,firstTaskId:tasks[0]?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'};
+  console.log('[DEBUG]', JSON.stringify(logData));
+  try {
+    const logDir = '/app/.cursor';
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+    fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
+  } catch (e) {
+    console.error('[DEBUG] Log error:', e);
+  }
+  // #endregion
+  
   // Check availability for each task if userId is provided
   if (userId) {
     for (const task of tasks) {
