@@ -566,16 +566,15 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     }
   }
 
+  // Explicitly handle thumbnail_url before the loop to ensure it's always processed
+  if ('thumbnail_url' in data && data.thumbnail_url !== undefined) {
+    updates.push(`thumbnail_url = $${paramIndex++}`);
+    values.push(data.thumbnail_url ?? null);
+  }
+
   Object.entries(data).forEach(([key, value]) => {
-    // Skip invalid fields and id
-    // Allow null values for thumbnail_url to enable deletion
-    if (value === undefined || key === 'id' || !validColumns.has(key)) {
-      return;
-    }
-    // Explicitly handle thumbnail_url to allow null values
-    if (key === 'thumbnail_url' && value === null) {
-      updates.push(`${key} = $${paramIndex++}`);
-      values.push(null);
+    // Skip invalid fields, id, and thumbnail_url (already handled above)
+    if (value === undefined || key === 'id' || key === 'thumbnail_url' || !validColumns.has(key)) {
       return;
     }
 
