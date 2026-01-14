@@ -873,18 +873,56 @@ export async function validateContestRegistrationToken(qrToken: string): Promise
 /**
  * Ruft alle Contests ab (für Admin-Verwaltung)
  */
-export async function getAllContests(): Promise<Contest[]> {
+export async function getAllContests(options?: { includeInactive?: boolean }): Promise<Contest[]> {
   const db = getPool();
+  
+  const includeInactive = options?.includeInactive ?? false;
+  const whereClause = includeInactive ? '' : 'WHERE c.active = TRUE';
   
   const result = await db.query(
     `SELECT c.*, u.name as creator_name, u.email as creator_email,
      (SELECT COUNT(*) FROM contest_participants WHERE contest_id = c.id) as participant_count
      FROM contests c
      INNER JOIN users u ON u.id = c.created_by
+     ${whereClause}
      ORDER BY c.created_at DESC`
   );
   
   return result.rows;
+}
+
+/**
+ * Aktualisiert den Status mehrerer Contests (Bulk-Operation)
+ */
+export async function bulkUpdateContestsStatus(contestIds: string[], active: boolean): Promise<void> {
+  const db = getPool();
+  
+  if (contestIds.length === 0) {
+    return;
+  }
+  
+  await db.query(
+    `UPDATE contests SET active = $1, updated_at = NOW() WHERE id = ANY($2::uuid[])`,
+    [active, contestIds]
+  );
+}
+
+/**
+ * Löscht mehrere Contests (Bulk-Operation)
+ * Hinweis: Contests werden nicht physisch gelöscht, sondern deaktiviert
+ */
+export async function bulkDeleteContests(contestIds: string[]): Promise<void> {
+  const db = getPool();
+  
+  if (contestIds.length === 0) {
+    return;
+  }
+  
+  // Deaktiviere Contests (CASCADE sollte contest_participants automatisch entfernen)
+  await db.query(
+    `UPDATE contests SET active = FALSE, updated_at = NOW() WHERE id = ANY($1::uuid[])`,
+    [contestIds]
+  );
 }
 
 /**

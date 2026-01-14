@@ -16,6 +16,8 @@ import {
   enableContestRegistration,
   getContestRegistrationQrCode,
   generateContestRegistrationQrCode,
+  bulkUpdateContestsStatus,
+  bulkDeleteContests,
 } from '../services/contest.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -241,6 +243,7 @@ export const getContestQrCodeController: RequestHandler = asyncHandler(async (re
 /**
  * GET /api/contests/admin/all
  * Ruft alle Contests ab (nur für Administratoren)
+ * Query: ?includeInactive=true
  */
 export const getAllContestsAdminController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -252,7 +255,8 @@ export const getAllContestsAdminController: RequestHandler = asyncHandler(async 
     return res.status(403).json({ error: 'Forbidden: Administrator access required' });
   }
   
-  const contests = await getAllContests();
+  const includeInactive = req.query.includeInactive === 'true';
+  const contests = await getAllContests({ includeInactive });
   res.json(contests);
 });
 
@@ -343,4 +347,58 @@ export const getContestRegistrationQrCodeController: RequestHandler = asyncHandl
     enabled: registrationQr.enabled,
     registrationUrl,
   });
+});
+
+/**
+ * POST /api/contests/bulk/status
+ * Aktualisiert den Status mehrerer Contests (Bulk-Operation, nur für Administratoren)
+ * Body: { contestIds: string[], active: boolean }
+ */
+export const bulkUpdateContestsStatusController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { contestIds, active } = req.body;
+  
+  if (!Array.isArray(contestIds) || contestIds.length === 0) {
+    return res.status(400).json({ error: 'contestIds must be a non-empty array' });
+  }
+  
+  if (typeof active !== 'boolean') {
+    return res.status(400).json({ error: 'active must be a boolean' });
+  }
+  
+  await bulkUpdateContestsStatus(contestIds, active);
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/contests/bulk/delete
+ * Löscht mehrere Contests (Bulk-Operation, nur für Administratoren)
+ * Body: { contestIds: string[] }
+ */
+export const bulkDeleteContestsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { contestIds } = req.body;
+  
+  if (!Array.isArray(contestIds) || contestIds.length === 0) {
+    return res.status(400).json({ error: 'contestIds must be a non-empty array' });
+  }
+  
+  await bulkDeleteContests(contestIds);
+  res.json({ success: true });
 });

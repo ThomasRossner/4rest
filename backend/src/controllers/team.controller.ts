@@ -18,6 +18,8 @@ import {
   enableTeamRegistration,
   getTeamRegistrationQrCode,
   generateTeamRegistrationQrCode,
+  bulkUpdateTeamsStatus,
+  bulkDeleteTeams,
 } from '../services/team.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -266,6 +268,7 @@ export const getTeamRankingController: RequestHandler = asyncHandler(async (req,
 /**
  * GET /api/teams/all
  * Ruft alle Teams ab (nur für Administratoren)
+ * Query: ?includeInactive=true
  */
 export const getAllTeamsController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -277,7 +280,8 @@ export const getAllTeamsController: RequestHandler = asyncHandler(async (req, re
     return res.status(403).json({ error: 'Forbidden: Administrator access required' });
   }
   
-  const teams = await getAllTeams();
+  const includeInactive = req.query.includeInactive === 'true';
+  const teams = await getAllTeams({ includeInactive });
   res.json(teams);
 });
 
@@ -357,4 +361,58 @@ export const getTeamRegistrationQrCodeController: RequestHandler = asyncHandler(
     enabled: registrationQr.enabled,
     registrationUrl,
   });
+});
+
+/**
+ * POST /api/teams/bulk/status
+ * Aktualisiert den Status mehrerer Teams (Bulk-Operation, nur für Administratoren)
+ * Body: { teamIds: string[], active: boolean }
+ */
+export const bulkUpdateTeamsStatusController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { teamIds, active } = req.body;
+  
+  if (!Array.isArray(teamIds) || teamIds.length === 0) {
+    return res.status(400).json({ error: 'teamIds must be a non-empty array' });
+  }
+  
+  if (typeof active !== 'boolean') {
+    return res.status(400).json({ error: 'active must be a boolean' });
+  }
+  
+  await bulkUpdateTeamsStatus(teamIds, active);
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/teams/bulk/delete
+ * Löscht mehrere Teams (Bulk-Operation, nur für Administratoren)
+ * Body: { teamIds: string[] }
+ */
+export const bulkDeleteTeamsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { teamIds } = req.body;
+  
+  if (!Array.isArray(teamIds) || teamIds.length === 0) {
+    return res.status(400).json({ error: 'teamIds must be a non-empty array' });
+  }
+  
+  await bulkDeleteTeams(teamIds);
+  res.json({ success: true });
 });

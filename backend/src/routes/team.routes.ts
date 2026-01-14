@@ -18,6 +18,8 @@ import {
   updateTeamController,
   enableTeamRegistrationController,
   getTeamRegistrationQrCodeController,
+  bulkUpdateTeamsStatusController,
+  bulkDeleteTeamsController,
 } from '../controllers/team.controller.js';
 
 const router = Router();
@@ -29,6 +31,8 @@ router.get('/active', authenticate, getUserActiveTeamController);
 
 // Admin routes - MUST come before /:id routes
 router.get('/all', authenticate, requireRole('administrator'), getAllTeamsController);
+router.post('/bulk/status', authenticate, requireRole('administrator'), bulkUpdateTeamsStatusController);
+router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDeleteTeamsController);
 
 // Dynamic routes - must come after specific routes
 router.get('/:id', authenticate, getTeamDetailsController);

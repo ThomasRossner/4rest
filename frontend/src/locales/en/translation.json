@@ -571,17 +571,35 @@
     "team": {
       "manage": {
         "title": "Manage Teams",
-        "description": "View all teams, edit them, and manage registration QR codes",
+        "subtitle": "View and manage all teams",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading...",
+        "loadError": "Error loading teams",
+        "showInactive": "Show inactive",
+        "openFilters": "Filters",
+        "selectAll": "Select all",
+        "selectedCount": "{{count}} selected",
+        "noSelection": "No selection",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "existing": {
+          "title": "Existing Teams",
+          "subtitle": "Manage all teams"
+        },
         "list": {
           "title": "All Teams",
           "name": "Name",
           "creator": "Creator",
           "members": "Members",
+          "points": "Points",
           "createdAt": "Created At",
+          "updatedAt": "Updated At",
           "active": "Active",
           "inactive": "Inactive",
           "edit": "Edit",
-          "noTeams": "No teams found"
+          "noTeams": "No teams found",
+          "untitled": "Untitled"
         },
         "edit": {
           "title": "Edit Team",
@@ -615,18 +633,37 @@
     "contest": {
       "manage": {
         "title": "Manage Contests",
-        "description": "View all contests, edit them, and manage registration QR codes",
+        "subtitle": "View and manage all contests",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading...",
+        "loadError": "Error loading contests",
+        "showInactive": "Show inactive",
+        "openFilters": "Filters",
+        "selectAll": "Select all",
+        "selectedCount": "{{count}} selected",
+        "noSelection": "No selection",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "existing": {
+          "title": "Existing Contests",
+          "subtitle": "Manage all contests"
+        },
         "list": {
           "title": "All Contests",
           "name": "Name",
           "creator": "Creator",
           "participants": "Participants",
+          "startDate": "Start Date",
           "endDate": "End Date",
+          "rewards": "Rewards",
           "createdAt": "Created At",
+          "updatedAt": "Updated At",
           "active": "Active",
           "inactive": "Inactive",
           "edit": "Edit",
-          "noContests": "No contests found"
+          "noContests": "No contests found",
+          "untitled": "Untitled"
         },
         "edit": {
           "title": "Edit Contest",
@@ -1219,21 +1256,26 @@
       "recurrence": "Recurrence",
       "type": "Type",
       "typeIcon": "Type/Icon",
+      "name": "Name",
+      "creator": "Creator",
+      "endDate": "End Date",
       "filterBy": "Filter by {{type}}",
       "allRecurrences": "All Recurrences",
       "allLocations": "All Locations",
       "allStatuses": "All Statuses",
       "allTypes": "All Types",
+      "allCreators": "All Creators",
       "clear": "Clear",
       "clearAll": "Clear All",
       "applyFilters": "Apply Filters",
       "clearSelection": "Clear selection",
       "title": "Title",
+      "titlePlaceholder": "Search by title...",
+      "namePlaceholder": "Search by name...",
       "points": "Points",
       "cost": "Cost",
       "min": "Min",
       "max": "Max",
-      "titlePlaceholder": "Search by title...",
       "minPlaceholder": "Min value",
       "maxPlaceholder": "Max value"
     },
@@ -1281,6 +1323,26 @@
       "deleteLocationWithName": {
         "title": "Delete {{name}}?",
         "description": "Are you sure you want to delete this location? Tasks and rewards using it will need to be reassigned."
+      },
+      "deleteTeams": "Delete teams",
+      "deleteTeam": "Delete team",
+      "deleteContests": "Delete contests",
+      "deleteContest": "Delete contest",
+      "deleteSelectedTeams": {
+        "title": "Delete selected teams",
+        "description": "Are you sure you want to permanently delete the selected teams? This action cannot be undone."
+      },
+      "deleteTeamSingle": {
+        "title": "Delete team",
+        "description": "Are you sure you want to permanently delete this team? This action cannot be undone."
+      },
+      "deleteSelectedContests": {
+        "title": "Delete selected contests",
+        "description": "Are you sure you want to permanently delete the selected contests? This action cannot be undone."
+      },
+      "deleteContestSingle": {
+        "title": "Delete contest",
+        "description": "Are you sure you want to permanently delete this contest? This action cannot be undone."
       }
     },
     "messages": {
@@ -1308,7 +1370,23 @@
       "locationDeletedSuccessfully": "Location deleted successfully.",
       "failedToDeleteTask": "Failed to delete task.",
       "failedToDeleteReward": "Failed to delete reward.",
-      "failedToDeleteLocation": "Failed to delete location."
+      "failedToDeleteLocation": "Failed to delete location.",
+      "selectedTeamsDeleted": "Selected teams deleted.",
+      "failedToDeleteTeams": "Failed to delete selected teams.",
+      "teamActivated": "Team activated.",
+      "teamDeactivated": "Team deactivated.",
+      "failedToUpdateTeam": "Failed to update team.",
+      "failedToDeleteTeam": "Failed to delete team.",
+      "selectedTeamsActivated": "Selected teams activated.",
+      "selectedTeamsDeactivated": "Selected teams deactivated.",
+      "selectedContestsDeleted": "Selected contests deleted.",
+      "failedToDeleteContests": "Failed to delete selected contests.",
+      "contestActivated": "Contest activated.",
+      "contestDeactivated": "Contest deactivated.",
+      "failedToUpdateContest": "Failed to update contest.",
+      "failedToDeleteContest": "Failed to delete contest.",
+      "selectedContestsActivated": "Selected contests activated.",
+      "selectedContestsDeactivated": "Selected contests deactivated."
     },
     "toasts": {
       "taskCreatedTitle": "Task created",

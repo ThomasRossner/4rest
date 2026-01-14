@@ -276,7 +276,7 @@ type FilterDropdownProps = {
   options?: Array<{ id: string; name?: string } | string>;
   selectedValue?: string | null;
   onSelect?: (value: string | null) => void;
-  type: 'location' | 'status' | 'recurrence' | 'type' | 'title' | 'points' | 'cost';
+  type: 'location' | 'status' | 'recurrence' | 'type' | 'title' | 'points' | 'cost' | 'name' | 'creator' | 'endDate';
   // For text filters
   textValue?: string;
   onTextChange?: (value: string) => void;
@@ -285,6 +285,9 @@ type FilterDropdownProps = {
   maxValue?: string;
   onMinChange?: (value: string) => void;
   onMaxChange?: (value: string) => void;
+  // For date filters
+  dateValue?: string;
+  onDateChange?: (value: string) => void;
 };
 
 const FilterDropdown = ({
@@ -301,6 +304,8 @@ const FilterDropdown = ({
   maxValue,
   onMinChange,
   onMaxChange,
+  dateValue,
+  onDateChange,
 }: FilterDropdownProps) => {
   const { t } = useTranslation();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -320,8 +325,8 @@ const FilterDropdown = ({
 
   if (!isOpen) return null;
 
-  // Text input filter (for title)
-  if (type === 'title' && onTextChange !== undefined) {
+  // Text input filter (for title or name)
+  if ((type === 'title' || type === 'name') && onTextChange !== undefined) {
     return (
       <div
         ref={dropdownRef}
@@ -335,7 +340,7 @@ const FilterDropdown = ({
         }}
       >
         <div className="admin-filter-dropdown-header">
-          <span>{t('admin.filters.filterBy', { type: t('admin.filters.title') })}</span>
+          <span>{t('admin.filters.filterBy', { type: t(`admin.filters.${type}`) })}</span>
           <button
             type="button"
             onClick={() => {
@@ -353,7 +358,48 @@ const FilterDropdown = ({
             type="text"
             value={textValue || ''}
             onChange={(e) => onTextChange(e.target.value)}
-            placeholder={t('admin.filters.titlePlaceholder')}
+            placeholder={t(`admin.filters.${type}Placeholder`, { defaultValue: t('admin.filters.titlePlaceholder') })}
+            style={{ width: '100%', padding: '0.5rem' }}
+            autoFocus
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Date filter (for endDate)
+  if (type === 'endDate' && onDateChange !== undefined) {
+    return (
+      <div
+        ref={dropdownRef}
+        className="admin-filter-dropdown"
+        style={{
+          position: 'fixed',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          zIndex: 1000,
+          minWidth: '200px',
+        }}
+      >
+        <div className="admin-filter-dropdown-header">
+          <span>{t('admin.filters.filterBy', { type: t('admin.filters.endDate') })}</span>
+          <button
+            type="button"
+            onClick={() => {
+              onDateChange('');
+              onClose();
+            }}
+            className="admin-filter-clear"
+            style={{ marginLeft: 'auto', padding: '0.25rem 0.5rem' }}
+          >
+            {t('admin.filters.clear')}
+          </button>
+        </div>
+        <div className="admin-filter-dropdown-content" style={{ padding: '0.75rem' }}>
+          <input
+            type="date"
+            value={dateValue || ''}
+            onChange={(e) => onDateChange(e.target.value)}
             style={{ width: '100%', padding: '0.5rem' }}
             autoFocus
           />
@@ -514,30 +560,35 @@ type MobileFilterModalProps = {
   isOpen: boolean;
   onClose: () => void;
   filterOptions: {
-    locations: Array<{ id: string; name?: string } | string>;
-    statuses: Array<string>;
-    recurrences: Array<string>;
-    types: Array<string>;
+    locations?: Array<{ id: string; name?: string } | string>;
+    statuses?: Array<string>;
+    recurrences?: Array<string>;
+    types?: Array<string>;
+    creators?: Array<{ id: string; name: string }>;
   };
   filters: {
-    location: string | null;
-    status: 'active' | 'inactive' | null;
-    recurrence: string | null;
-    type: string | null;
+    location?: string | null;
+    status?: 'active' | 'inactive' | null;
+    recurrence?: string | null;
+    type?: string | null;
     title?: string;
+    name?: string;
+    creator?: string | null;
     pointsMin?: string;
     pointsMax?: string;
     costMin?: string;
     costMax?: string;
+    endDate?: string;
   };
-  onFilterChange: (filterType: 'location' | 'status' | 'recurrence' | 'type', value: string | null) => void;
+  onFilterChange: (filterType: 'location' | 'status' | 'recurrence' | 'type' | 'creator', value: string | null) => void;
   onTitleChange?: (value: string) => void;
   onPointsMinChange?: (value: string) => void;
   onPointsMaxChange?: (value: string) => void;
   onCostMinChange?: (value: string) => void;
   onCostMaxChange?: (value: string) => void;
+  onEndDateChange?: (value: string) => void;
   onClearAll: () => void;
-  filterType?: 'task' | 'reward';
+  filterType?: 'task' | 'reward' | 'team' | 'contest';
 };
 
 const MobileFilterModal = ({
@@ -551,6 +602,7 @@ const MobileFilterModal = ({
   onPointsMaxChange,
   onCostMinChange,
   onCostMaxChange,
+  onEndDateChange,
   onClearAll,
   filterType = 'task',
 }: MobileFilterModalProps) => {
@@ -610,6 +662,9 @@ const MobileFilterModal = ({
     filters.recurrence,
     filters.type,
     filters.title?.trim(),
+    filters.name?.trim(),
+    filters.creator,
+    filters.endDate?.trim(),
     filters.pointsMin?.trim() || filters.pointsMax?.trim(),
     filters.costMin?.trim() || filters.costMax?.trim(),
   ].filter(Boolean).length;
@@ -630,104 +685,112 @@ const MobileFilterModal = ({
         </div>
         <div className="admin-mobile-filter-content">
           {/* Location Filter */}
-          <div className="admin-mobile-filter-section">
-            <h4>Location</h4>
-            <div className="admin-mobile-filter-options">
-              <button
-                type="button"
-                className={`admin-mobile-filter-option ${!filters.location ? 'active' : ''}`}
-                onClick={() => onFilterChange('location', null)}
-              >
-                {t('admin.filters.allLocations')}
-              </button>
-              {filterOptions.locations.map((option) => {
-                const value = getOptionValue(option);
-                const label = getOptionLabel(option, 'location');
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    className={`admin-mobile-filter-option ${filters.location === value ? 'active' : ''}`}
-                    onClick={() => onFilterChange('location', filters.location === value ? null : value)}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+          {filterOptions.locations && filterOptions.locations.length > 0 && (
+            <div className="admin-mobile-filter-section">
+              <h4>Location</h4>
+              <div className="admin-mobile-filter-options">
+                <button
+                  type="button"
+                  className={`admin-mobile-filter-option ${!filters.location ? 'active' : ''}`}
+                  onClick={() => onFilterChange('location', null)}
+                >
+                  {t('admin.filters.allLocations')}
+                </button>
+                {filterOptions.locations.map((option) => {
+                  const value = getOptionValue(option);
+                  const label = getOptionLabel(option, 'location');
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`admin-mobile-filter-option ${filters.location === value ? 'active' : ''}`}
+                      onClick={() => onFilterChange('location', filters.location === value ? null : value)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Status Filter */}
-          <div className="admin-mobile-filter-section">
-            <h4>Status</h4>
-            <div className="admin-mobile-filter-options">
-              <button
-                type="button"
-                className={`admin-mobile-filter-option ${!filters.status ? 'active' : ''}`}
-                onClick={() => onFilterChange('status', null)}
-              >
-                {t('admin.filters.allStatuses')}
-              </button>
-              {filterOptions.statuses.map((status) => (
+          {filterOptions.statuses && filterOptions.statuses.length > 0 && (
+            <div className="admin-mobile-filter-section">
+              <h4>Status</h4>
+              <div className="admin-mobile-filter-options">
                 <button
-                  key={status}
                   type="button"
-                  className={`admin-mobile-filter-option ${filters.status === status ? 'active' : ''}`}
-                  onClick={() => onFilterChange('status', filters.status === status ? null : status as 'active' | 'inactive')}
+                  className={`admin-mobile-filter-option ${!filters.status ? 'active' : ''}`}
+                  onClick={() => onFilterChange('status', null)}
                 >
-                  {formatValue(status, 'status')}
+                  {t('admin.filters.allStatuses')}
                 </button>
-              ))}
+                {filterOptions.statuses.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    className={`admin-mobile-filter-option ${filters.status === status ? 'active' : ''}`}
+                    onClick={() => onFilterChange('status', filters.status === status ? null : status as 'active' | 'inactive')}
+                  >
+                    {formatValue(status, 'status')}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Recurrence Filter */}
-          <div className="admin-mobile-filter-section">
-            <h4>{t('admin.filters.recurrence')}</h4>
-            <div className="admin-mobile-filter-options">
-              <button
-                type="button"
-                className={`admin-mobile-filter-option ${!filters.recurrence ? 'active' : ''}`}
-                onClick={() => onFilterChange('recurrence', null)}
-              >
-                {t('admin.filters.allRecurrences')}
-              </button>
-              {filterOptions.recurrences.map((recurrence) => (
+          {filterOptions.recurrences && filterOptions.recurrences.length > 0 && (
+            <div className="admin-mobile-filter-section">
+              <h4>{t('admin.filters.recurrence')}</h4>
+              <div className="admin-mobile-filter-options">
                 <button
-                  key={recurrence}
                   type="button"
-                  className={`admin-mobile-filter-option ${filters.recurrence === recurrence ? 'active' : ''}`}
-                  onClick={() => onFilterChange('recurrence', filters.recurrence === recurrence ? null : recurrence)}
+                  className={`admin-mobile-filter-option ${!filters.recurrence ? 'active' : ''}`}
+                  onClick={() => onFilterChange('recurrence', null)}
                 >
-                  {formatValue(recurrence, 'recurrence')}
+                  {t('admin.filters.allRecurrences')}
                 </button>
-              ))}
+                {filterOptions.recurrences.map((recurrence) => (
+                  <button
+                    key={recurrence}
+                    type="button"
+                    className={`admin-mobile-filter-option ${filters.recurrence === recurrence ? 'active' : ''}`}
+                    onClick={() => onFilterChange('recurrence', filters.recurrence === recurrence ? null : recurrence)}
+                  >
+                    {formatValue(recurrence, 'recurrence')}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Type Filter */}
-          <div className="admin-mobile-filter-section">
-            <h4>Type</h4>
-            <div className="admin-mobile-filter-options">
-              <button
-                type="button"
-                className={`admin-mobile-filter-option ${!filters.type ? 'active' : ''}`}
-                onClick={() => onFilterChange('type', null)}
-              >
-                {t('admin.filters.allTypes')}
-              </button>
-              {filterOptions.types.map((type) => (
+          {filterOptions.types && filterOptions.types.length > 0 && (
+            <div className="admin-mobile-filter-section">
+              <h4>Type</h4>
+              <div className="admin-mobile-filter-options">
                 <button
-                  key={type}
                   type="button"
-                  className={`admin-mobile-filter-option ${filters.type === type ? 'active' : ''}`}
-                  onClick={() => onFilterChange('type', filters.type === type ? null : type)}
+                  className={`admin-mobile-filter-option ${!filters.type ? 'active' : ''}`}
+                  onClick={() => onFilterChange('type', null)}
                 >
-                  {formatValue(type, 'type')}
+                  {t('admin.filters.allTypes')}
                 </button>
-              ))}
+                {filterOptions.types.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`admin-mobile-filter-option ${filters.type === type ? 'active' : ''}`}
+                    onClick={() => onFilterChange('type', filters.type === type ? null : type)}
+                  >
+                    {formatValue(type, 'type')}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Title Filter */}
           {onTitleChange && (
@@ -739,6 +802,69 @@ const MobileFilterModal = ({
                   value={filters.title || ''}
                   onChange={(e) => onTitleChange(e.target.value)}
                   placeholder={t('admin.filters.titlePlaceholder')}
+                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Name Filter (for teams/contests) */}
+          {filterType === 'team' || filterType === 'contest' ? (
+            <div className="admin-mobile-filter-section">
+              <h4>{t('admin.filters.name')}</h4>
+              <div className="admin-mobile-filter-options">
+                <input
+                  type="text"
+                  value={filters.name || ''}
+                  onChange={(e) => {
+                    if (filterType === 'team' && onTitleChange) {
+                      onTitleChange(e.target.value);
+                    } else if (filterType === 'contest' && onTitleChange) {
+                      onTitleChange(e.target.value);
+                    }
+                  }}
+                  placeholder={t('admin.filters.namePlaceholder')}
+                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {/* Creator Filter (for teams/contests) */}
+          {filterOptions.creators && filterOptions.creators.length > 0 && (
+            <div className="admin-mobile-filter-section">
+              <h4>{t('admin.filters.creator')}</h4>
+              <div className="admin-mobile-filter-options">
+                <button
+                  type="button"
+                  className={`admin-mobile-filter-option ${!filters.creator ? 'active' : ''}`}
+                  onClick={() => onFilterChange('creator', null)}
+                >
+                  {t('admin.filters.allCreators')}
+                </button>
+                {filterOptions.creators.map((creator) => (
+                  <button
+                    key={creator.id}
+                    type="button"
+                    className={`admin-mobile-filter-option ${filters.creator === creator.id ? 'active' : ''}`}
+                    onClick={() => onFilterChange('creator', filters.creator === creator.id ? null : creator.id)}
+                  >
+                    {creator.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* End Date Filter (for contests) */}
+          {filterType === 'contest' && onEndDateChange && (
+            <div className="admin-mobile-filter-section">
+              <h4>{t('admin.filters.endDate')}</h4>
+              <div className="admin-mobile-filter-options">
+                <input
+                  type="date"
+                  value={filters.endDate || ''}
+                  onChange={(e) => onEndDateChange(e.target.value)}
                   style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
                 />
               </div>
@@ -2424,6 +2550,16 @@ function AdminPage() {
   const [teamRegistrationEnabled, setTeamRegistrationEnabled] = useState<boolean>(false);
   const [teamRegistrationQrCode, setTeamRegistrationQrCode] = useState<string | null>(null);
   const [teamJoinQrCode, setTeamJoinQrCode] = useState<string | null>(null);
+  const [includeInactiveTeams, setIncludeInactiveTeams] = useState(false);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [teamConfirm, setTeamConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+  const [teamFilterStatus, setTeamFilterStatus] = useState<'active' | 'inactive' | null>(null);
+  const [teamFilterName, setTeamFilterName] = useState<string>('');
+  const [teamFilterCreator, setTeamFilterCreator] = useState<string | null>(null);
+  const [teamFilterDropdown, setTeamFilterDropdown] = useState<'status' | 'name' | 'creator' | null>(null);
+  const [teamFilterDropdownPosition, setTeamFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const teamFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileTeamFilterOpen, setIsMobileTeamFilterOpen] = useState(false);
 
   // Contest management state
   const [editingContestId, setEditingContestId] = useState<string | null>(null);
@@ -2433,6 +2569,17 @@ function AdminPage() {
   const [contestRegistrationEnabled, setContestRegistrationEnabled] = useState<boolean>(false);
   const [contestRegistrationQrCode, setContestRegistrationQrCode] = useState<string | null>(null);
   const [contestJoinQrCode, setContestJoinQrCode] = useState<string | null>(null);
+  const [includeInactiveContests, setIncludeInactiveContests] = useState(false);
+  const [selectedContestIds, setSelectedContestIds] = useState<string[]>([]);
+  const [contestConfirm, setContestConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
+  const [contestFilterStatus, setContestFilterStatus] = useState<'active' | 'inactive' | null>(null);
+  const [contestFilterName, setContestFilterName] = useState<string>('');
+  const [contestFilterCreator, setContestFilterCreator] = useState<string | null>(null);
+  const [contestFilterEndDate, setContestFilterEndDate] = useState<string>('');
+  const [contestFilterDropdown, setContestFilterDropdown] = useState<'status' | 'name' | 'creator' | 'endDate' | null>(null);
+  const [contestFilterDropdownPosition, setContestFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const contestFilterDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileContestFilterOpen, setIsMobileContestFilterOpen] = useState(false);
   const [rewardFilterCostMax, setRewardFilterCostMax] = useState<string>('');
   const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'cost' | null>(null);
   const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -8289,6 +8436,25 @@ const goToRewardCreation = () => {
           setTeamRegistrationQrCode={setTeamRegistrationQrCode}
           teamJoinQrCode={teamJoinQrCode}
           setTeamJoinQrCode={setTeamJoinQrCode}
+          includeInactiveTeams={includeInactiveTeams}
+          setIncludeInactiveTeams={setIncludeInactiveTeams}
+          selectedTeamIds={selectedTeamIds}
+          setSelectedTeamIds={setSelectedTeamIds}
+          teamConfirm={teamConfirm}
+          setTeamConfirm={setTeamConfirm}
+          teamFilterStatus={teamFilterStatus}
+          setTeamFilterStatus={setTeamFilterStatus}
+          teamFilterName={teamFilterName}
+          setTeamFilterName={setTeamFilterName}
+          teamFilterCreator={teamFilterCreator}
+          setTeamFilterCreator={setTeamFilterCreator}
+          teamFilterDropdown={teamFilterDropdown}
+          setTeamFilterDropdown={setTeamFilterDropdown}
+          teamFilterDropdownPosition={teamFilterDropdownPosition}
+          setTeamFilterDropdownPosition={setTeamFilterDropdownPosition}
+          teamFilterDropdownRef={teamFilterDropdownRef}
+          isMobileTeamFilterOpen={isMobileTeamFilterOpen}
+          setIsMobileTeamFilterOpen={setIsMobileTeamFilterOpen}
           onBack={() => setMode(null)}
         />
       )}
@@ -8306,6 +8472,27 @@ const goToRewardCreation = () => {
           setContestRegistrationQrCode={setContestRegistrationQrCode}
           contestJoinQrCode={contestJoinQrCode}
           setContestJoinQrCode={setContestJoinQrCode}
+          includeInactiveContests={includeInactiveContests}
+          setIncludeInactiveContests={setIncludeInactiveContests}
+          selectedContestIds={selectedContestIds}
+          setSelectedContestIds={setSelectedContestIds}
+          contestConfirm={contestConfirm}
+          setContestConfirm={setContestConfirm}
+          contestFilterStatus={contestFilterStatus}
+          setContestFilterStatus={setContestFilterStatus}
+          contestFilterName={contestFilterName}
+          setContestFilterName={setContestFilterName}
+          contestFilterCreator={contestFilterCreator}
+          setContestFilterCreator={setContestFilterCreator}
+          contestFilterEndDate={contestFilterEndDate}
+          setContestFilterEndDate={setContestFilterEndDate}
+          contestFilterDropdown={contestFilterDropdown}
+          setContestFilterDropdown={setContestFilterDropdown}
+          contestFilterDropdownPosition={contestFilterDropdownPosition}
+          setContestFilterDropdownPosition={setContestFilterDropdownPosition}
+          contestFilterDropdownRef={contestFilterDropdownRef}
+          isMobileContestFilterOpen={isMobileContestFilterOpen}
+          setIsMobileContestFilterOpen={setIsMobileContestFilterOpen}
           onBack={() => setMode(null)}
         />
       )}
@@ -8325,6 +8512,25 @@ function TeamManagementSection({
   setTeamRegistrationQrCode,
   teamJoinQrCode,
   setTeamJoinQrCode,
+  includeInactiveTeams,
+  setIncludeInactiveTeams,
+  selectedTeamIds,
+  setSelectedTeamIds,
+  teamConfirm,
+  setTeamConfirm,
+  teamFilterStatus,
+  setTeamFilterStatus,
+  teamFilterName,
+  setTeamFilterName,
+  teamFilterCreator,
+  setTeamFilterCreator,
+  teamFilterDropdown,
+  setTeamFilterDropdown,
+  teamFilterDropdownPosition,
+  setTeamFilterDropdownPosition,
+  teamFilterDropdownRef,
+  isMobileTeamFilterOpen,
+  setIsMobileTeamFilterOpen,
   onBack,
 }: {
   editingTeamId: string | null;
@@ -8337,6 +8543,25 @@ function TeamManagementSection({
   setTeamRegistrationQrCode: (code: string | null) => void;
   teamJoinQrCode: string | null;
   setTeamJoinQrCode: (code: string | null) => void;
+  includeInactiveTeams: boolean;
+  setIncludeInactiveTeams: (value: boolean) => void;
+  selectedTeamIds: string[];
+  setSelectedTeamIds: React.Dispatch<React.SetStateAction<string[]>>;
+  teamConfirm: ConfirmDialogState;
+  setTeamConfirm: (state: ConfirmDialogState) => void;
+  teamFilterStatus: 'active' | 'inactive' | null;
+  setTeamFilterStatus: (status: 'active' | 'inactive' | null) => void;
+  teamFilterName: string;
+  setTeamFilterName: (name: string) => void;
+  teamFilterCreator: string | null;
+  setTeamFilterCreator: (creator: string | null) => void;
+  teamFilterDropdown: 'status' | 'name' | 'creator' | null;
+  setTeamFilterDropdown: (dropdown: 'status' | 'name' | 'creator' | null) => void;
+  teamFilterDropdownPosition: { top: number; left: number } | null;
+  setTeamFilterDropdownPosition: (position: { top: number; left: number } | null) => void;
+  teamFilterDropdownRef: React.RefObject<HTMLDivElement>;
+  isMobileTeamFilterOpen: boolean;
+  setIsMobileTeamFilterOpen: (open: boolean) => void;
   onBack: () => void;
 }) {
   const { t } = useTranslation();
@@ -8348,9 +8573,9 @@ function TeamManagementSection({
   const [teamActive, setTeamActive] = useState(true);
 
   const { data: teamsData, isLoading: teamsLoading, error: teamsError, refetch: refetchTeams } = useQuery({
-    queryKey: ['admin-teams'],
+    queryKey: ['admin-teams', includeInactiveTeams],
     queryFn: async () => {
-      return await api.getAllTeams();
+      return await api.getAllTeams({ includeInactive: includeInactiveTeams });
     },
   });
 
@@ -8460,6 +8685,171 @@ function TeamManagementSection({
     link.href = qrImageUrl;
     link.download = filename;
     link.click();
+  };
+
+  // Filter and sort teams
+  const filteredAndSortedTeams = useMemo(() => {
+    let filtered = teams;
+    
+    if (teamFilterStatus) {
+      filtered = filtered.filter((team) => 
+        teamFilterStatus === 'active' ? team.active : !team.active
+      );
+    }
+    
+    if (teamFilterName.trim()) {
+      const searchTerm = teamFilterName.toLowerCase().trim();
+      filtered = filtered.filter((team) => 
+        team.name?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (teamFilterCreator) {
+      filtered = filtered.filter((team) => 
+        team.creator_name === teamFilterCreator
+      );
+    }
+    
+    // Sort by created_at DESC (newest first), then alphabetically by name
+    filtered.sort((a, b) => {
+      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (bCreated !== aCreated) {
+        return bCreated - aCreated; // DESC
+      }
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    
+    return filtered;
+  }, [teams, teamFilterStatus, teamFilterName, teamFilterCreator]);
+
+  // Filter options
+  const teamFilterOptions = useMemo(() => {
+    const creators = new Map<string, string>();
+    
+    teams.forEach((team) => {
+      if (team.creator_name) {
+        creators.set(team.creator_name, team.creator_name);
+      }
+    });
+    
+    return {
+      creators: Array.from(creators.entries()).map(([name, value]) => ({ id: name, name: value })),
+      statuses: ['active', 'inactive'] as ('active' | 'inactive')[],
+    };
+  }, [teams]);
+
+  // Selection helpers
+  const toggleTeamSelection = (teamId: string, checked: boolean) => {
+    setSelectedTeamIds((prev) => {
+      if (checked) {
+        return [...prev, teamId];
+      } else {
+        return prev.filter((id) => id !== teamId);
+      }
+    });
+  };
+
+  const allTeamsSelected = filteredAndSortedTeams.length > 0 && 
+    selectedTeamIds.length === filteredAndSortedTeams.length;
+  const hasTeamSelection = selectedTeamIds.length > 0;
+
+  // Bulk operations
+  const handleTeamBulkStatus = async (active: boolean) => {
+    if (!selectedTeamIds.length) return;
+    try {
+      setTeamManagementMessage(null);
+      await api.bulkUpdateTeamsStatus(selectedTeamIds, active);
+      setTeamManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.selectedTeamsActivated') : t('admin.messages.selectedTeamsDeactivated'),
+      });
+      setSelectedTeamIds([]);
+      void refetchTeams();
+    } catch (error: any) {
+      setTeamManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update selected teams.',
+      });
+    }
+  };
+
+  const handleTeamBulkDelete = async () => {
+    if (!selectedTeamIds.length) return;
+    setTeamConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteSelectedTeams.title'),
+      description: t('admin.confirm.deleteSelectedTeams.description'),
+      confirmLabel: t('admin.confirm.deleteTeams'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setTeamManagementMessage(null);
+          await api.bulkDeleteTeams(selectedTeamIds);
+          setTeamManagementMessage({
+            type: 'success',
+            text: t('admin.messages.selectedTeamsDeleted'),
+          });
+          setSelectedTeamIds([]);
+          void refetchTeams();
+        } catch (error: any) {
+          setTeamManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteTeams'),
+          });
+        } finally {
+          setTeamConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
+  };
+
+  const handleTeamStatusChange = async (teamId: string, active: boolean) => {
+    try {
+      setTeamManagementMessage(null);
+      await api.bulkUpdateTeamsStatus([teamId], active);
+      setTeamManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.teamActivated') : t('admin.messages.teamDeactivated'),
+      });
+      void refetchTeams();
+    } catch (error: any) {
+      setTeamManagementMessage({
+        type: 'error',
+        text: error?.message || t('admin.messages.failedToUpdateTeam'),
+      });
+    }
+  };
+
+  const handleTeamDelete = async (teamId: string) => {
+    setTeamConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteTeamSingle.title'),
+      description: t('admin.confirm.deleteTeamSingle.description'),
+      confirmLabel: t('admin.confirm.deleteTeam'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setTeamManagementMessage(null);
+          await api.bulkDeleteTeams([teamId]);
+          setTeamManagementMessage({
+            type: 'success',
+            text: 'Team deleted.',
+          });
+          if (editingTeamId === teamId) {
+            setEditingTeamId(null);
+          }
+          void refetchTeams();
+        } catch (error: any) {
+          setTeamManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteTeam'),
+          });
+        } finally {
+          setTeamConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
   };
 
   if (loading || teamsLoading) {
@@ -8609,54 +8999,317 @@ function TeamManagementSection({
 
   return (
     <section className="admin-section">
-      <div className="admin-header">
-        <button className="admin-button admin-button-secondary" onClick={onBack}>
-          ← {t('common.back')}
-        </button>
-        <h2>{t('admin.team.manage.list.title')}</h2>
-      </div>
+      <header className="admin-section-header">
+        <div>
+          <h2>{t('admin.team.manage.title')}</h2>
+          <p>{t('admin.team.manage.subtitle')}</p>
+        </div>
+        <div className="admin-actions">
+          <button
+            className="admin-button admin-button-secondary"
+            onClick={() => refetchTeams()}
+            title={t('admin.team.manage.refresh')}
+          >
+            ↻ {t('admin.team.manage.refresh')}
+          </button>
+          <button
+            className="admin-button admin-button-secondary"
+            onClick={onBack}
+            title={t('admin.team.manage.back')}
+          >
+            ← {t('admin.team.manage.back')}
+          </button>
+        </div>
+      </header>
 
-      <div className="admin-table-container">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>{t('admin.team.manage.list.name')}</th>
-              <th>{t('admin.team.manage.list.creator')}</th>
-              <th>{t('admin.team.manage.list.members')}</th>
-              <th>{t('admin.team.manage.list.createdAt')}</th>
-              <th>{t('admin.team.manage.list.active')}</th>
-              <th>{t('common.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.length === 0 ? (
+      {teamsLoading && <p>{t('admin.team.manage.loading')}</p>}
+      {Boolean(teamsError) && <p className="admin-error">{t('admin.team.manage.loadError')}</p>}
+
+      <div className="admin-management-card">
+        <div className="admin-management-top">
+          <div>
+            <h3>{t('admin.team.manage.existing.title')}</h3>
+            <p>{t('admin.team.manage.existing.subtitle')}</p>
+          </div>
+          <div className="admin-management-controls">
+            <label className="admin-toggle">
+              <input
+                type="checkbox"
+                className="admin-checkbox"
+                style={COMPACT_TOGGLE_STYLE}
+                checked={includeInactiveTeams}
+                onChange={(event) => {
+                  setIncludeInactiveTeams(event.target.checked);
+                  setSelectedTeamIds([]);
+                }}
+              />
+              <span>{t('admin.team.manage.showInactive')}</span>
+            </label>
+            <button
+              className="admin-mobile-filter-button"
+              type="button"
+              onClick={() => setIsMobileTeamFilterOpen(true)}
+              aria-label={t('admin.team.manage.openFilters')}
+            >
+              🔍 {t('admin.team.manage.openFilters')}
+              {(teamFilterStatus || teamFilterName.trim() || teamFilterCreator) && (
+                <span className="admin-mobile-filter-badge">
+                  {[teamFilterStatus, teamFilterName.trim() ? 'name' : null, teamFilterCreator].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+        {teamManagementMessage && (
+          <p
+            className={
+              teamManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+            }
+          >
+            {teamManagementMessage.text}
+          </p>
+        )}
+        <div className="admin-management-actions">
+          <div className="admin-bulk-buttons">
+            <button
+              className="admin-action-button"
+              onClick={() => handleTeamBulkStatus(true)}
+              disabled={!hasTeamSelection}
+              type="button"
+            >
+              {t('admin.team.manage.activate')}
+            </button>
+            <button
+              className="admin-action-button"
+              onClick={() => handleTeamBulkStatus(false)}
+              disabled={!hasTeamSelection}
+              type="button"
+            >
+              {t('admin.team.manage.deactivate')}
+            </button>
+            <button
+              className="admin-action-button danger"
+              onClick={handleTeamBulkDelete}
+              disabled={!hasTeamSelection}
+              type="button"
+            >
+              {t('common.actions.delete', 'Löschen')}
+            </button>
+          </div>
+          <span className="admin-selection-count">
+            {hasTeamSelection
+              ? t('admin.team.manage.selectedCount', { count: selectedTeamIds.length })
+              : t('admin.team.manage.noSelection')}
+          </span>
+        </div>
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
-                  {t('admin.team.manage.list.noTeams')}
-                </td>
+                <th style={{ width: '3rem' }}>
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
+                    checked={allTeamsSelected && filteredAndSortedTeams.length > 0}
+                    disabled={!filteredAndSortedTeams.length}
+                    onChange={(event) =>
+                      setSelectedTeamIds(
+                        event.target.checked
+                          ? filteredAndSortedTeams.map((team) => team.id)
+                          : []
+                      )
+                    }
+                    aria-label={t('admin.team.manage.selectAll')}
+                  />
+                </th>
+                <th
+                  className="admin-filter-header"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                    setTeamFilterDropdown('name');
+                  }}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {t('admin.team.manage.list.name')} {teamFilterName && '✓'}
+                </th>
+                <th
+                  className="admin-filter-header"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                    setTeamFilterDropdown('creator');
+                  }}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {t('admin.team.manage.list.creator')} {teamFilterCreator && '✓'}
+                </th>
+                <th>{t('admin.team.manage.list.members')}</th>
+                <th>{t('admin.team.manage.list.points')}</th>
+                <th>{t('admin.team.manage.list.createdAt')}</th>
+                <th>{t('admin.team.manage.list.updatedAt')}</th>
+                <th
+                  className="admin-filter-header"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                    setTeamFilterDropdown('status');
+                  }}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {t('admin.team.manage.list.active')} {teamFilterStatus && '✓'}
+                </th>
+                <th>{t('common.actions')}</th>
               </tr>
-            ) : (
-              teams.map((team) => (
-                <tr key={team.id}>
-                  <td>{team.name || t('admin.team.manage.list.name')}</td>
-                  <td>{team.creator_name || '-'}</td>
-                  <td>{team.member_count || 0}</td>
-                  <td>{new Date(team.created_at).toLocaleDateString()}</td>
-                  <td>{team.active ? t('admin.team.manage.list.active') : t('admin.team.manage.list.inactive')}</td>
-                  <td>
-                    <button
-                      className="admin-button admin-button-small"
-                      onClick={() => setEditingTeamId(team.id)}
-                    >
-                      {t('admin.team.manage.list.edit')}
-                    </button>
+            </thead>
+            <tbody>
+              {filteredAndSortedTeams.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="admin-table-empty">
+                    {t('admin.team.manage.list.noTeams')}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredAndSortedTeams.map((team) => {
+                  const isSelected = selectedTeamIds.includes(team.id);
+                  return (
+                    <tr key={team.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          className="admin-checkbox"
+                          style={COMPACT_TOGGLE_STYLE}
+                          checked={isSelected}
+                          onChange={(event) =>
+                            toggleTeamSelection(team.id, event.target.checked)
+                          }
+                          aria-label={`Select team ${team.name}`}
+                        />
+                      </td>
+                      <td data-label={t('admin.team.manage.list.name')}>
+                        <div className="admin-table-primary">
+                          <span className="admin-table-title">
+                            {team.name || t('admin.team.manage.list.untitled')}
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label={t('admin.team.manage.list.creator')}>
+                        <span className="admin-table-secondary">
+                          {team.creator_name || '-'}
+                        </span>
+                      </td>
+                      <td data-label={t('admin.team.manage.list.members')}>
+                        {team.member_count || 0}
+                      </td>
+                      <td data-label={t('admin.team.manage.list.points')}>
+                        {team.points_pool || 0}
+                      </td>
+                      <td data-label={t('admin.team.manage.list.createdAt')}>
+                        {new Date(team.created_at).toLocaleDateString()}
+                      </td>
+                      <td data-label={t('admin.team.manage.list.updatedAt')}>
+                        {team.updated_at ? new Date(team.updated_at).toLocaleDateString() : '-'}
+                      </td>
+                      <td data-label={t('admin.team.manage.list.active')}>
+                        <span
+                          className={`admin-status-badge ${
+                            team.active ? 'active' : 'inactive'
+                          }`}
+                        >
+                          {team.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td data-label={t('common.actions')} className="admin-table-actions">
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => setEditingTeamId(team.id)}
+                        >
+                          {t('common.actions.edit', 'Bearbeiten')}
+                        </button>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => handleTeamStatusChange(team.id, !team.active)}
+                        >
+                          {team.active ? t('admin.team.manage.deactivate') : t('admin.team.manage.activate')}
+                        </button>
+                        <button
+                          className="admin-action-button danger"
+                          type="button"
+                          onClick={() => handleTeamDelete(team.id)}
+                        >
+                          {t('common.actions.delete', 'Löschen')}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+          {teamFilterDropdown && teamFilterDropdownPosition && (
+            <FilterDropdown
+              isOpen={true}
+              onClose={() => setTeamFilterDropdown(null)}
+              position={teamFilterDropdownPosition}
+              options={
+                teamFilterDropdown === 'status'
+                  ? teamFilterOptions.statuses
+                  : teamFilterDropdown === 'creator'
+                  ? teamFilterOptions.creators
+                  : undefined
+              }
+              selectedValue={
+                teamFilterDropdown === 'status'
+                  ? teamFilterStatus
+                  : teamFilterDropdown === 'creator'
+                  ? teamFilterCreator
+                  : undefined
+              }
+              onSelect={(value) => {
+                if (teamFilterDropdown === 'status') {
+                  setTeamFilterStatus(value as 'active' | 'inactive' | null);
+                } else if (teamFilterDropdown === 'creator') {
+                  setTeamFilterCreator(value);
+                }
+              }}
+              type={teamFilterDropdown}
+              textValue={teamFilterDropdown === 'name' ? teamFilterName : undefined}
+              onTextChange={teamFilterDropdown === 'name' ? setTeamFilterName : undefined}
+            />
+          )}
+        </div>
       </div>
+      <MobileFilterModal
+        isOpen={isMobileTeamFilterOpen}
+        onClose={() => setIsMobileTeamFilterOpen(false)}
+        filterOptions={teamFilterOptions}
+        filters={{
+          status: teamFilterStatus,
+          name: teamFilterName,
+          creator: teamFilterCreator,
+        }}
+        onFilterChange={(filterType, value) => {
+          if (filterType === 'status') {
+            setTeamFilterStatus(value as 'active' | 'inactive' | null);
+          } else if (filterType === 'creator') {
+            setTeamFilterCreator(value);
+          }
+        }}
+        onTitleChange={setTeamFilterName}
+        onClearAll={() => {
+          setTeamFilterStatus(null);
+          setTeamFilterName('');
+          setTeamFilterCreator(null);
+        }}
+        filterType="team"
+      />
+      <ConfirmDialog
+        {...teamConfirm}
+        onCancel={() => setTeamConfirm(defaultConfirmDialogState)}
+      />
     </section>
   );
 }
@@ -8673,6 +9326,27 @@ function ContestManagementSection({
   setContestRegistrationQrCode,
   contestJoinQrCode,
   setContestJoinQrCode,
+  includeInactiveContests,
+  setIncludeInactiveContests,
+  selectedContestIds,
+  setSelectedContestIds,
+  contestConfirm,
+  setContestConfirm,
+  contestFilterStatus,
+  setContestFilterStatus,
+  contestFilterName,
+  setContestFilterName,
+  contestFilterCreator,
+  setContestFilterCreator,
+  contestFilterEndDate,
+  setContestFilterEndDate,
+  contestFilterDropdown,
+  setContestFilterDropdown,
+  contestFilterDropdownPosition,
+  setContestFilterDropdownPosition,
+  contestFilterDropdownRef,
+  isMobileContestFilterOpen,
+  setIsMobileContestFilterOpen,
   onBack,
 }: {
   editingContestId: string | null;
@@ -8685,6 +9359,27 @@ function ContestManagementSection({
   setContestRegistrationQrCode: (code: string | null) => void;
   contestJoinQrCode: string | null;
   setContestJoinQrCode: (code: string | null) => void;
+  includeInactiveContests: boolean;
+  setIncludeInactiveContests: (value: boolean) => void;
+  selectedContestIds: string[];
+  setSelectedContestIds: React.Dispatch<React.SetStateAction<string[]>>;
+  contestConfirm: ConfirmDialogState;
+  setContestConfirm: (state: ConfirmDialogState) => void;
+  contestFilterStatus: 'active' | 'inactive' | null;
+  setContestFilterStatus: (status: 'active' | 'inactive' | null) => void;
+  contestFilterName: string;
+  setContestFilterName: (name: string) => void;
+  contestFilterCreator: string | null;
+  setContestFilterCreator: (creator: string | null) => void;
+  contestFilterEndDate: string;
+  setContestFilterEndDate: (date: string) => void;
+  contestFilterDropdown: 'status' | 'name' | 'creator' | 'endDate' | null;
+  setContestFilterDropdown: (dropdown: 'status' | 'name' | 'creator' | 'endDate' | null) => void;
+  contestFilterDropdownPosition: { top: number; left: number } | null;
+  setContestFilterDropdownPosition: (position: { top: number; left: number } | null) => void;
+  contestFilterDropdownRef: React.RefObject<HTMLDivElement>;
+  isMobileContestFilterOpen: boolean;
+  setIsMobileContestFilterOpen: (open: boolean) => void;
   onBack: () => void;
 }) {
   const { t } = useTranslation();
@@ -8697,9 +9392,9 @@ function ContestManagementSection({
   const [contestEndDate, setContestEndDate] = useState('');
 
   const { data: contestsData, isLoading: contestsLoading, error: contestsError, refetch: refetchContests } = useQuery({
-    queryKey: ['admin-contests'],
+    queryKey: ['admin-contests', includeInactiveContests],
     queryFn: async () => {
-      return await api.getAllContests();
+      return await api.getAllContests({ includeInactive: includeInactiveContests });
     },
   });
 
@@ -8812,6 +9507,179 @@ function ContestManagementSection({
     link.href = qrImageUrl;
     link.download = filename;
     link.click();
+  };
+
+  // Filter and sort contests
+  const filteredAndSortedContests = useMemo(() => {
+    let filtered = contests;
+    
+    if (contestFilterStatus) {
+      filtered = filtered.filter((contest) => 
+        contestFilterStatus === 'active' ? contest.active : !contest.active
+      );
+    }
+    
+    if (contestFilterName.trim()) {
+      const searchTerm = contestFilterName.toLowerCase().trim();
+      filtered = filtered.filter((contest) => 
+        contest.name?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (contestFilterCreator) {
+      filtered = filtered.filter((contest) => 
+        contest.creator_name === contestFilterCreator
+      );
+    }
+    
+    if (contestFilterEndDate.trim()) {
+      const filterDate = new Date(contestFilterEndDate);
+      filtered = filtered.filter((contest) => {
+        const contestEndDate = new Date(contest.end_date);
+        return contestEndDate.toDateString() === filterDate.toDateString();
+      });
+    }
+    
+    // Sort by created_at DESC (newest first), then alphabetically by name
+    filtered.sort((a, b) => {
+      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (bCreated !== aCreated) {
+        return bCreated - aCreated; // DESC
+      }
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    
+    return filtered;
+  }, [contests, contestFilterStatus, contestFilterName, contestFilterCreator, contestFilterEndDate]);
+
+  // Filter options
+  const contestFilterOptions = useMemo(() => {
+    const creators = new Map<string, string>();
+    
+    contests.forEach((contest) => {
+      if (contest.creator_name) {
+        creators.set(contest.creator_name, contest.creator_name);
+      }
+    });
+    
+    return {
+      creators: Array.from(creators.entries()).map(([name, value]) => ({ id: name, name: value })),
+      statuses: ['active', 'inactive'] as ('active' | 'inactive')[],
+    };
+  }, [contests]);
+
+  // Selection helpers
+  const toggleContestSelection = (contestId: string, checked: boolean) => {
+    setSelectedContestIds((prev) => {
+      if (checked) {
+        return [...prev, contestId];
+      } else {
+        return prev.filter((id) => id !== contestId);
+      }
+    });
+  };
+
+  const allContestsSelected = filteredAndSortedContests.length > 0 && 
+    selectedContestIds.length === filteredAndSortedContests.length;
+  const hasContestSelection = selectedContestIds.length > 0;
+
+  // Bulk operations
+  const handleContestBulkStatus = async (active: boolean) => {
+    if (!selectedContestIds.length) return;
+    try {
+      setContestManagementMessage(null);
+      await api.bulkUpdateContestsStatus(selectedContestIds, active);
+      setContestManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.selectedContestsActivated') : t('admin.messages.selectedContestsDeactivated'),
+      });
+      setSelectedContestIds([]);
+      void refetchContests();
+    } catch (error: any) {
+      setContestManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update selected contests.',
+      });
+    }
+  };
+
+  const handleContestBulkDelete = async () => {
+    if (!selectedContestIds.length) return;
+    setContestConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteSelectedContests.title'),
+      description: t('admin.confirm.deleteSelectedContests.description'),
+      confirmLabel: t('admin.confirm.deleteContests'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setContestManagementMessage(null);
+          await api.bulkDeleteContests(selectedContestIds);
+          setContestManagementMessage({
+            type: 'success',
+            text: t('admin.messages.selectedContestsDeleted'),
+          });
+          setSelectedContestIds([]);
+          void refetchContests();
+        } catch (error: any) {
+          setContestManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteContests'),
+          });
+        } finally {
+          setContestConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
+  };
+
+  const handleContestStatusChange = async (contestId: string, active: boolean) => {
+    try {
+      setContestManagementMessage(null);
+      await api.bulkUpdateContestsStatus([contestId], active);
+      setContestManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.contestActivated') : t('admin.messages.contestDeactivated'),
+      });
+      void refetchContests();
+    } catch (error: any) {
+      setContestManagementMessage({
+        type: 'error',
+        text: error?.message || t('admin.messages.failedToUpdateContest'),
+      });
+    }
+  };
+
+  const handleContestDelete = async (contestId: string) => {
+    setContestConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteContestSingle.title'),
+      description: t('admin.confirm.deleteContestSingle.description'),
+      confirmLabel: t('admin.confirm.deleteContest'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setContestManagementMessage(null);
+          await api.bulkDeleteContests([contestId]);
+          setContestManagementMessage({
+            type: 'success',
+            text: 'Contest deleted.',
+          });
+          if (editingContestId === contestId) {
+            setEditingContestId(null);
+          }
+          void refetchContests();
+        } catch (error: any) {
+          setContestManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteContest'),
+          });
+        } finally {
+          setContestConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
   };
 
   if (loading || contestsLoading) {
@@ -8972,56 +9840,344 @@ function ContestManagementSection({
 
   return (
     <section className="admin-section">
-      <div className="admin-header">
-        <button className="admin-button admin-button-secondary" onClick={onBack}>
-          ← {t('common.back')}
-        </button>
-        <h2>{t('admin.contest.manage.list.title')}</h2>
-      </div>
+      <header className="admin-section-header">
+        <div>
+          <h2>{t('admin.contest.manage.title')}</h2>
+          <p>{t('admin.contest.manage.subtitle')}</p>
+        </div>
+        <div className="admin-actions">
+          <button
+            className="admin-button admin-button-secondary"
+            onClick={() => refetchContests()}
+            title={t('admin.contest.manage.refresh')}
+          >
+            ↻ {t('admin.contest.manage.refresh')}
+          </button>
+          <button
+            className="admin-button admin-button-secondary"
+            onClick={onBack}
+            title={t('admin.contest.manage.back')}
+          >
+            ← {t('admin.contest.manage.back')}
+          </button>
+        </div>
+      </header>
 
-      <div className="admin-table-container">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>{t('admin.contest.manage.list.name')}</th>
-              <th>{t('admin.contest.manage.list.creator')}</th>
-              <th>{t('admin.contest.manage.list.participants')}</th>
-              <th>{t('admin.contest.manage.list.endDate')}</th>
-              <th>{t('admin.contest.manage.list.createdAt')}</th>
-              <th>{t('admin.contest.manage.list.active')}</th>
-              <th>{t('common.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contests.length === 0 ? (
+      {contestsLoading && <p>{t('admin.contest.manage.loading')}</p>}
+      {Boolean(contestsError) && <p className="admin-error">{t('admin.contest.manage.loadError')}</p>}
+
+      <div className="admin-management-card">
+        <div className="admin-management-top">
+          <div>
+            <h3>{t('admin.contest.manage.existing.title')}</h3>
+            <p>{t('admin.contest.manage.existing.subtitle')}</p>
+          </div>
+          <div className="admin-management-controls">
+            <label className="admin-toggle">
+              <input
+                type="checkbox"
+                className="admin-checkbox"
+                style={COMPACT_TOGGLE_STYLE}
+                checked={includeInactiveContests}
+                onChange={(event) => {
+                  setIncludeInactiveContests(event.target.checked);
+                  setSelectedContestIds([]);
+                }}
+              />
+              <span>{t('admin.contest.manage.showInactive')}</span>
+            </label>
+            <button
+              className="admin-mobile-filter-button"
+              type="button"
+              onClick={() => setIsMobileContestFilterOpen(true)}
+              aria-label={t('admin.contest.manage.openFilters')}
+            >
+              🔍 {t('admin.contest.manage.openFilters')}
+              {(contestFilterStatus || contestFilterName.trim() || contestFilterCreator || contestFilterEndDate.trim()) && (
+                <span className="admin-mobile-filter-badge">
+                  {[contestFilterStatus, contestFilterName.trim() ? 'name' : null, contestFilterCreator, contestFilterEndDate.trim() ? 'endDate' : null].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+        {contestManagementMessage && (
+          <p
+            className={
+              contestManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+            }
+          >
+            {contestManagementMessage.text}
+          </p>
+        )}
+        <div className="admin-management-actions">
+          <div className="admin-bulk-buttons">
+            <button
+              className="admin-action-button"
+              onClick={() => handleContestBulkStatus(true)}
+              disabled={!hasContestSelection}
+              type="button"
+            >
+              {t('admin.contest.manage.activate')}
+            </button>
+            <button
+              className="admin-action-button"
+              onClick={() => handleContestBulkStatus(false)}
+              disabled={!hasContestSelection}
+              type="button"
+            >
+              {t('admin.contest.manage.deactivate')}
+            </button>
+            <button
+              className="admin-action-button danger"
+              onClick={handleContestBulkDelete}
+              disabled={!hasContestSelection}
+              type="button"
+            >
+              {t('common.actions.delete', 'Löschen')}
+            </button>
+          </div>
+          <span className="admin-selection-count">
+            {hasContestSelection
+              ? t('admin.contest.manage.selectedCount', { count: selectedContestIds.length })
+              : t('admin.contest.manage.noSelection')}
+          </span>
+        </div>
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
-                  {t('admin.contest.manage.list.noContests')}
-                </td>
+                <th style={{ width: '3rem' }}>
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
+                    checked={allContestsSelected && filteredAndSortedContests.length > 0}
+                    disabled={!filteredAndSortedContests.length}
+                    onChange={(event) =>
+                      setSelectedContestIds(
+                        event.target.checked
+                          ? filteredAndSortedContests.map((contest) => contest.id)
+                          : []
+                      )
+                    }
+                    aria-label={t('admin.contest.manage.selectAll')}
+                  />
+                </th>
+                <th
+                  className="admin-filter-header"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                    setContestFilterDropdown('name');
+                  }}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {t('admin.contest.manage.list.name')} {contestFilterName && '✓'}
+                </th>
+                <th
+                  className="admin-filter-header"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                    setContestFilterDropdown('creator');
+                  }}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {t('admin.contest.manage.list.creator')} {contestFilterCreator && '✓'}
+                </th>
+                <th>{t('admin.contest.manage.list.participants')}</th>
+                <th>{t('admin.contest.manage.list.startDate')}</th>
+                <th
+                  className="admin-filter-header"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                    setContestFilterDropdown('endDate');
+                  }}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {t('admin.contest.manage.list.endDate')} {contestFilterEndDate && '✓'}
+                </th>
+                <th>{t('admin.contest.manage.list.rewards')}</th>
+                <th>{t('admin.contest.manage.list.createdAt')}</th>
+                <th>{t('admin.contest.manage.list.updatedAt')}</th>
+                <th
+                  className="admin-filter-header"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                    setContestFilterDropdown('status');
+                  }}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {t('admin.contest.manage.list.active')} {contestFilterStatus && '✓'}
+                </th>
+                <th>{t('common.actions')}</th>
               </tr>
-            ) : (
-              contests.map((contest) => (
-                <tr key={contest.id}>
-                  <td>{contest.name || t('admin.contest.manage.list.name')}</td>
-                  <td>{contest.creator_name || '-'}</td>
-                  <td>{contest.participant_count || 0}</td>
-                  <td>{new Date(contest.end_date).toLocaleDateString()}</td>
-                  <td>{new Date(contest.created_at).toLocaleDateString()}</td>
-                  <td>{contest.active ? t('admin.contest.manage.list.active') : t('admin.contest.manage.list.inactive')}</td>
-                  <td>
-                    <button
-                      className="admin-button admin-button-small"
-                      onClick={() => setEditingContestId(contest.id)}
-                    >
-                      {t('admin.contest.manage.list.edit')}
-                    </button>
+            </thead>
+            <tbody>
+              {filteredAndSortedContests.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="admin-table-empty">
+                    {t('admin.contest.manage.list.noContests')}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredAndSortedContests.map((contest) => {
+                  const isSelected = selectedContestIds.includes(contest.id);
+                  return (
+                    <tr key={contest.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          className="admin-checkbox"
+                          style={COMPACT_TOGGLE_STYLE}
+                          checked={isSelected}
+                          onChange={(event) =>
+                            toggleContestSelection(contest.id, event.target.checked)
+                          }
+                          aria-label={`Select contest ${contest.name}`}
+                        />
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.name')}>
+                        <div className="admin-table-primary">
+                          <span className="admin-table-title">
+                            {contest.name || t('admin.contest.manage.list.untitled')}
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.creator')}>
+                        <span className="admin-table-secondary">
+                          {contest.creator_name || '-'}
+                        </span>
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.participants')}>
+                        {contest.participant_count || 0}
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.startDate')}>
+                        {contest.start_date ? new Date(contest.start_date).toLocaleDateString() : '-'}
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.endDate')}>
+                        {contest.end_date ? new Date(contest.end_date).toLocaleDateString() : '-'}
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.rewards')}>
+                        <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
+                          {contest.reward_first_place || contest.reward_second_place || contest.reward_third_place
+                            ? `1st: ${contest.reward_first_place || 0}, 2nd: ${contest.reward_second_place || 0}, 3rd: ${contest.reward_third_place || 0}`
+                            : '-'}
+                        </span>
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.createdAt')}>
+                        {new Date(contest.created_at).toLocaleDateString()}
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.updatedAt')}>
+                        {contest.updated_at ? new Date(contest.updated_at).toLocaleDateString() : '-'}
+                      </td>
+                      <td data-label={t('admin.contest.manage.list.active')}>
+                        <span
+                          className={`admin-status-badge ${
+                            contest.active ? 'active' : 'inactive'
+                          }`}
+                        >
+                          {contest.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td data-label={t('common.actions')} className="admin-table-actions">
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => setEditingContestId(contest.id)}
+                        >
+                          {t('common.actions.edit', 'Bearbeiten')}
+                        </button>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => handleContestStatusChange(contest.id, !contest.active)}
+                        >
+                          {contest.active ? t('admin.contest.manage.deactivate') : t('admin.contest.manage.activate')}
+                        </button>
+                        <button
+                          className="admin-action-button danger"
+                          type="button"
+                          onClick={() => handleContestDelete(contest.id)}
+                        >
+                          {t('common.actions.delete', 'Löschen')}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+          {contestFilterDropdown && contestFilterDropdownPosition && (
+            <FilterDropdown
+              isOpen={true}
+              onClose={() => setContestFilterDropdown(null)}
+              position={contestFilterDropdownPosition}
+              options={
+                contestFilterDropdown === 'status'
+                  ? contestFilterOptions.statuses
+                  : contestFilterDropdown === 'creator'
+                  ? contestFilterOptions.creators
+                  : undefined
+              }
+              selectedValue={
+                contestFilterDropdown === 'status'
+                  ? contestFilterStatus
+                  : contestFilterDropdown === 'creator'
+                  ? contestFilterCreator
+                  : undefined
+              }
+              onSelect={(value) => {
+                if (contestFilterDropdown === 'status') {
+                  setContestFilterStatus(value as 'active' | 'inactive' | null);
+                } else if (contestFilterDropdown === 'creator') {
+                  setContestFilterCreator(value);
+                }
+              }}
+              type={contestFilterDropdown}
+              textValue={contestFilterDropdown === 'name' ? contestFilterName : undefined}
+              onTextChange={contestFilterDropdown === 'name' ? setContestFilterName : undefined}
+              dateValue={contestFilterDropdown === 'endDate' ? contestFilterEndDate : undefined}
+              onDateChange={contestFilterDropdown === 'endDate' ? setContestFilterEndDate : undefined}
+            />
+          )}
+        </div>
       </div>
+      <MobileFilterModal
+        isOpen={isMobileContestFilterOpen}
+        onClose={() => setIsMobileContestFilterOpen(false)}
+        filterOptions={contestFilterOptions}
+        filters={{
+          status: contestFilterStatus,
+          name: contestFilterName,
+          creator: contestFilterCreator,
+          endDate: contestFilterEndDate,
+        }}
+        onFilterChange={(filterType, value) => {
+          if (filterType === 'status') {
+            setContestFilterStatus(value as 'active' | 'inactive' | null);
+          } else if (filterType === 'creator') {
+            setContestFilterCreator(value);
+          }
+        }}
+        onTitleChange={setContestFilterName}
+        onEndDateChange={setContestFilterEndDate}
+        onClearAll={() => {
+          setContestFilterStatus(null);
+          setContestFilterName('');
+          setContestFilterCreator(null);
+          setContestFilterEndDate('');
+        }}
+        filterType="contest"
+      />
+      <ConfirmDialog
+        {...contestConfirm}
+        onCancel={() => setContestConfirm(defaultConfirmDialogState)}
+      />
     </section>
   );
 }

@@ -575,17 +575,35 @@
     "team": {
       "manage": {
         "title": "Teams verwalten",
-        "description": "Alle Teams anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten",
+        "subtitle": "Alle Teams anzeigen und verwalten",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Laden...",
+        "loadError": "Fehler beim Laden der Teams",
+        "showInactive": "Inaktive anzeigen",
+        "openFilters": "Filter",
+        "selectAll": "Alle auswählen",
+        "selectedCount": "{{count}} ausgewählt",
+        "noSelection": "Keine Auswahl",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "existing": {
+          "title": "Bestehende Teams",
+          "subtitle": "Verwalten Sie alle Teams"
+        },
         "list": {
           "title": "Alle Teams",
           "name": "Name",
           "creator": "Ersteller",
           "members": "Mitglieder",
+          "points": "Punkte",
           "createdAt": "Erstellt am",
+          "updatedAt": "Aktualisiert am",
           "active": "Aktiv",
           "inactive": "Inaktiv",
           "edit": "Bearbeiten",
-          "noTeams": "Keine Teams gefunden"
+          "noTeams": "Keine Teams gefunden",
+          "untitled": "Unbenannt"
         },
         "edit": {
           "title": "Team bearbeiten",
@@ -619,18 +637,37 @@
     "contest": {
       "manage": {
         "title": "Wettbewerbe verwalten",
-        "description": "Alle Wettbewerbe anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten",
+        "subtitle": "Alle Wettbewerbe anzeigen und verwalten",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Laden...",
+        "loadError": "Fehler beim Laden der Wettbewerbe",
+        "showInactive": "Inaktive anzeigen",
+        "openFilters": "Filter",
+        "selectAll": "Alle auswählen",
+        "selectedCount": "{{count}} ausgewählt",
+        "noSelection": "Keine Auswahl",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "existing": {
+          "title": "Bestehende Wettbewerbe",
+          "subtitle": "Verwalten Sie alle Wettbewerbe"
+        },
         "list": {
           "title": "Alle Wettbewerbe",
           "name": "Name",
           "creator": "Ersteller",
           "participants": "Teilnehmer",
+          "startDate": "Startdatum",
           "endDate": "Enddatum",
+          "rewards": "Belohnungen",
           "createdAt": "Erstellt am",
+          "updatedAt": "Aktualisiert am",
           "active": "Aktiv",
           "inactive": "Inaktiv",
           "edit": "Bearbeiten",
-          "noContests": "Keine Wettbewerbe gefunden"
+          "noContests": "Keine Wettbewerbe gefunden",
+          "untitled": "Unbenannt"
         },
         "edit": {
           "title": "Wettbewerb bearbeiten",
@@ -1223,16 +1260,22 @@
       "recurrence": "Wiederholung",
       "type": "Typ",
       "typeIcon": "Typ/Symbol",
+      "name": "Name",
+      "creator": "Ersteller",
+      "endDate": "Enddatum",
       "filterBy": "Nach {{type}} filtern",
       "allRecurrences": "Alle Wiederholungen",
       "allLocations": "Alle Standorte",
       "allStatuses": "Alle Status",
       "allTypes": "Alle Typen",
+      "allCreators": "Alle Ersteller",
       "clear": "Löschen",
       "clearAll": "Alle löschen",
       "applyFilters": "Filter anwenden",
       "clearSelection": "Auswahl löschen",
       "title": "Titel",
+      "titlePlaceholder": "Titel suchen...",
+      "namePlaceholder": "Name suchen...",
       "points": "Punkte",
       "cost": "Kosten",
       "min": "Min",
@@ -1285,6 +1328,26 @@
       "deleteLocationWithName": {
         "title": "{{name}} löschen?",
         "description": "Möchten Sie diesen Standort wirklich löschen? Aufgaben und Belohnungen, die ihn verwenden, müssen neu zugewiesen werden."
+      },
+      "deleteTeams": "Teams löschen",
+      "deleteTeam": "Team löschen",
+      "deleteContests": "Wettbewerbe löschen",
+      "deleteContest": "Wettbewerb löschen",
+      "deleteSelectedTeams": {
+        "title": "Ausgewählte Teams löschen",
+        "description": "Möchten Sie die ausgewählten Teams wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteTeamSingle": {
+        "title": "Team löschen",
+        "description": "Möchten Sie dieses Team wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteSelectedContests": {
+        "title": "Ausgewählte Wettbewerbe löschen",
+        "description": "Möchten Sie die ausgewählten Wettbewerbe wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteContestSingle": {
+        "title": "Wettbewerb löschen",
+        "description": "Möchten Sie diesen Wettbewerb wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
       }
     },
     "messages": {
@@ -1312,7 +1375,23 @@
       "locationDeletedSuccessfully": "Standort erfolgreich gelöscht.",
       "failedToDeleteTask": "Aufgabe konnte nicht gelöscht werden.",
       "failedToDeleteReward": "Belohnung konnte nicht gelöscht werden.",
-      "failedToDeleteLocation": "Standort konnte nicht gelöscht werden."
+      "failedToDeleteLocation": "Standort konnte nicht gelöscht werden.",
+      "selectedTeamsDeleted": "Ausgewählte Teams gelöscht.",
+      "failedToDeleteTeams": "Ausgewählte Teams konnten nicht gelöscht werden.",
+      "teamActivated": "Team aktiviert.",
+      "teamDeactivated": "Team deaktiviert.",
+      "failedToUpdateTeam": "Team konnte nicht aktualisiert werden.",
+      "failedToDeleteTeam": "Team konnte nicht gelöscht werden.",
+      "selectedTeamsActivated": "Ausgewählte Teams aktiviert.",
+      "selectedTeamsDeactivated": "Ausgewählte Teams deaktiviert.",
+      "selectedContestsDeleted": "Ausgewählte Wettbewerbe gelöscht.",
+      "failedToDeleteContests": "Ausgewählte Wettbewerbe konnten nicht gelöscht werden.",
+      "contestActivated": "Wettbewerb aktiviert.",
+      "contestDeactivated": "Wettbewerb deaktiviert.",
+      "failedToUpdateContest": "Wettbewerb konnte nicht aktualisiert werden.",
+      "failedToDeleteContest": "Wettbewerb konnte nicht gelöscht werden.",
+      "selectedContestsActivated": "Ausgewählte Wettbewerbe aktiviert.",
+      "selectedContestsDeactivated": "Ausgewählte Wettbewerbe deaktiviert."
     },
     "toasts": {
       "taskCreatedTitle": "Aufgabe erstellt",

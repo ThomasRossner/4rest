@@ -16,6 +16,8 @@ import {
   updateContestController,
   enableContestRegistrationController,
   getContestRegistrationQrCodeController,
+  bulkUpdateContestsStatusController,
+  bulkDeleteContestsController,
 } from '../controllers/contest.controller.js';
 
 const router = Router();
@@ -28,6 +30,8 @@ router.get('/employee', authenticate, getEmployeeContestsController);
 
 // Admin routes - MUST come before /:id routes
 router.get('/admin/all', authenticate, requireRole('administrator'), getAllContestsAdminController);
+router.post('/bulk/status', authenticate, requireRole('administrator'), bulkUpdateContestsStatusController);
+router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDeleteContestsController);
 
 // Dynamic routes - must come after specific routes
 router.get('/:id', authenticate, getContestDetailsController);

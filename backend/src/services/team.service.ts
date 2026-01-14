@@ -758,15 +758,19 @@ export async function validateTeamRegistrationToken(qrToken: string): Promise<st
 /**
  * Ruft alle Teams ab (für Admin-Verwaltung)
  */
-export async function getAllTeams(): Promise<Team[]> {
+export async function getAllTeams(options?: { includeInactive?: boolean }): Promise<Team[]> {
   const db = getPool();
   
   try {
+    const includeInactive = options?.includeInactive ?? false;
+    const whereClause = includeInactive ? '' : 'WHERE t.active = TRUE';
+    
     const result = await db.query(
       `SELECT t.*, u.name as creator_name, u.email as creator_email,
        (SELECT COUNT(*)::integer FROM team_members WHERE team_id = t.id) as member_count
        FROM teams t
        LEFT JOIN users u ON u.id = t.created_by
+       ${whereClause}
        ORDER BY t.created_at DESC`
     );
     
@@ -775,6 +779,40 @@ export async function getAllTeams(): Promise<Team[]> {
     console.error('Error in getAllTeams:', error);
     throw error;
   }
+}
+
+/**
+ * Aktualisiert den Status mehrerer Teams (Bulk-Operation)
+ */
+export async function bulkUpdateTeamsStatus(teamIds: string[], active: boolean): Promise<void> {
+  const db = getPool();
+  
+  if (teamIds.length === 0) {
+    return;
+  }
+  
+  await db.query(
+    `UPDATE teams SET active = $1, updated_at = NOW() WHERE id = ANY($2::uuid[])`,
+    [active, teamIds]
+  );
+}
+
+/**
+ * Löscht mehrere Teams (Bulk-Operation)
+ * Hinweis: Teams werden nicht physisch gelöscht, sondern deaktiviert
+ */
+export async function bulkDeleteTeams(teamIds: string[]): Promise<void> {
+  const db = getPool();
+  
+  if (teamIds.length === 0) {
+    return;
+  }
+  
+  // Deaktiviere Teams (CASCADE sollte team_members automatisch entfernen)
+  await db.query(
+    `UPDATE teams SET active = FALSE, updated_at = NOW() WHERE id = ANY($1::uuid[])`,
+    [teamIds]
+  );
 }
 
 /**

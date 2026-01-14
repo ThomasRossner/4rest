@@ -695,8 +695,14 @@ export const api = {
   },
 
   // Team Admin
-  async getAllTeams() {
-    const response = await apiClient.get('/teams/all');
+  async getAllTeams(options?: { includeInactive?: boolean }) {
+    const params = new URLSearchParams();
+    if (options?.includeInactive) {
+      params.append('includeInactive', 'true');
+    }
+    const queryString = params.toString();
+    const url = `/teams/all${queryString ? `?${queryString}` : ''}`;
+    const response = await apiClient.get(url);
     return response.data;
   },
 
@@ -712,6 +718,16 @@ export const api = {
 
   async getTeamRegistrationQrCode(teamId: string) {
     const response = await apiClient.get(`/teams/${teamId}/registration-qr-code`);
+    return response.data;
+  },
+
+  async bulkUpdateTeamsStatus(teamIds: string[], active: boolean) {
+    const response = await apiClient.post('/teams/bulk/status', { teamIds, active });
+    return response.data;
+  },
+
+  async bulkDeleteTeams(teamIds: string[]) {
+    const response = await apiClient.post('/teams/bulk/delete', { teamIds });
     return response.data;
   },
 
@@ -767,8 +783,14 @@ export const api = {
   },
 
   // Contest Admin
-  async getAllContests() {
-    const response = await apiClient.get('/contests/admin/all');
+  async getAllContests(options?: { includeInactive?: boolean }) {
+    const params = new URLSearchParams();
+    if (options?.includeInactive) {
+      params.append('includeInactive', 'true');
+    }
+    const queryString = params.toString();
+    const url = `/contests/admin/all${queryString ? `?${queryString}` : ''}`;
+    const response = await apiClient.get(url);
     return response.data;
   },
 
@@ -784,6 +806,16 @@ export const api = {
 
   async getContestRegistrationQrCode(contestId: string) {
     const response = await apiClient.get(`/contests/${contestId}/registration-qr-code`);
+    return response.data;
+  },
+
+  async bulkUpdateContestsStatus(contestIds: string[], active: boolean) {
+    const response = await apiClient.post('/contests/bulk/status', { contestIds, active });
+    return response.data;
+  },
+
+  async bulkDeleteContests(contestIds: string[]) {
+    const response = await apiClient.post('/contests/bulk/delete', { contestIds });
     return response.data;
   },
 };
