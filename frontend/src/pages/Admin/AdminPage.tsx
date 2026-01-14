@@ -4764,9 +4764,6 @@ const goToRewardCreation = () => {
               <h2>{t('admin.actions.manageUsers.title')}</h2>
               <p>{t('admin.actions.manageUsers.description')}</p>
             </button>
-          </div>
-          {/* 2. Reihe: Teams und Contests */}
-          <div className="admin-choice-grid admin-choice-grid-compact">
             <button className="admin-choice-card" onClick={() => setMode('teamManage')}>
               <span className="admin-choice-icon">👨‍👩‍👧‍👦</span>
               <h2>{t('admin.actions.manageTeams.title')}</h2>
@@ -4778,7 +4775,7 @@ const goToRewardCreation = () => {
               <p>{t('admin.actions.manageContests.description')}</p>
             </button>
           </div>
-          {/* 3. Reihe: Debug-Sachen */}
+          {/* 2. Reihe: Debug-Sachen */}
           <div className="admin-choice-grid">
             <button
               className="admin-choice-card"
