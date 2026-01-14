@@ -40,9 +40,11 @@
 }
 
 .login-logo {
-  font-size: 4rem;
+  width: 64px;
+  height: 64px;
   display: block;
   margin-bottom: var(--spacing-md);
+  object-fit: contain;
 }
 
 .login-header h1 {

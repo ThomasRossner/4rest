@@ -9,22 +9,23 @@ import numpy as np
 import os
 
 def create_gradient_background(size):
-    """Create a diagonal gradient background."""
+    """Create a diagonal gradient background (135 degrees from top-left to bottom-right)."""
     # Create gradient using numpy for better performance
     img = np.zeros((size, size, 3), dtype=np.uint8)
     
-    # Gradient colors
-    # Top-left: darker teal-green (#3D8277 or #488C7E)
-    r1, g1, b1 = 0x48, 0x8C, 0x7E
-    # Bottom-right: lighter lime-green (#7AB958 or #8BC34A)
+    # Gradient colors based on the image description
+    # Top-left: darker teal-green (#3D8277)
+    r1, g1, b1 = 0x3D, 0x82, 0x77
+    # Bottom-right: lighter lime-green (#8BC34A)
     r2, g2, b2 = 0x8B, 0xC3, 0x4A
     
-    # Create diagonal gradient (135 degrees)
+    # Create diagonal gradient (135 degrees - from top-left to bottom-right)
     for y in range(size):
         for x in range(size):
             # Calculate diagonal position (0.0 to 1.0)
-            # Diagonal from top-left to bottom-right
+            # Normalize: distance from top-left corner along diagonal
             diag = (x + y) / (size * 2 - 2) if size > 1 else 0
+            diag = max(0, min(1, diag))  # Clamp to [0, 1]
             
             # Interpolate colors
             r = int(r1 + (r2 - r1) * diag)
@@ -43,7 +44,7 @@ def create_rounded_mask(size, radius):
     return mask
 
 def draw_number_4(draw, size, font):
-    """Draw the white number 4."""
+    """Draw the white number 4, centered. Returns the bounding box for tree positioning."""
     text = "4"
     
     # Calculate text position (centered)
@@ -55,33 +56,55 @@ def draw_number_4(draw, size, font):
     
     # Draw white "4"
     draw.text((text_x, text_y), text, fill=(255, 255, 255, 255), font=font)
+    
+    # Return position info for tree elements
+    return {
+        'x': text_x,
+        'y': text_y,
+        'width': text_width,
+        'height': text_height,
+        'right': text_x + text_width,
+        'top': text_y
+    }
 
-def draw_tree_elements(draw, size):
-    """Draw the tree/arrow elements in upper right."""
-    # Three overlapping green triangles
+def draw_tree_elements(draw, size, number4_bbox):
+    """Draw the tree/arrow elements in upper right, integrated with the "4"."""
+    # Three overlapping green triangles with transparency
+    # Colors from the image description - more vibrant greens
     tree_colors = [
-        (140, 198, 63, 200),   # Medium-dark green (#8CC63F)
-        (170, 221, 92, 180),   # Lighter green (#AADD5C)
-        (204, 255, 128, 160),  # Lightest green (#CCFF80)
+        (140, 198, 63, 220),   # Medium-dark green (#8CC63F) - innermost/leftmost
+        (170, 221, 92, 200),   # Lighter green (#AADD5C) - middle
+        (204, 255, 128, 180),  # Lightest green (#CCFF80) - outermost/rightmost
     ]
     
-    # Position triangles in upper right, overlapping the "4"
-    # Base position: upper right quadrant
-    base_x = int(size * 0.6)
-    base_y = int(size * 0.2)
-    triangle_width = int(size * 0.3)
-    triangle_height = int(size * 0.25)
+    # Position triangles to integrate with the "4"
+    # The triangles should start from the upper right part of the "4"
+    # where the diagonal and vertical strokes meet
+    # Base should connect with the "4" at approximately 65-75% of the "4" width from left
+    number4_center_x = number4_bbox['x'] + number4_bbox['width'] / 2
+    number4_top_y = number4_bbox['top']
+    
+    # Position: start from upper right of "4", extend upward and right
+    base_x = int(number4_center_x + number4_bbox['width'] * 0.15)  # Slightly right of center
+    base_y = int(number4_top_y + number4_bbox['height'] * 0.15)  # Upper part of "4"
+    
+    triangle_base_width = int(size * 0.25)  # Width of triangle base
+    triangle_height = int(size * 0.20)  # Height of triangles
     
     for i, color in enumerate(tree_colors):
-        # Offset each triangle slightly
-        offset_x = i * (triangle_width // 8)
-        offset_y = -i * (triangle_height // 12)
+        # Offset each triangle slightly to create layering effect
+        # Each triangle is offset to the right and slightly up
+        offset_x = i * (triangle_base_width // 5)
+        offset_y = -i * (triangle_height // 8)
         
-        # Triangle points: base at bottom, point at top
+        # Triangle points: 
+        # - Base connects with the "4" (bottom)
+        # - Point extends upward and to the right (top)
+        # The triangles should form a tree/arrow shape pointing up-right
         points = [
-            (base_x + offset_x, base_y + triangle_height + offset_y),  # Bottom left
-            (base_x + triangle_width + offset_x, base_y + triangle_height + offset_y),  # Bottom right
-            (base_x + triangle_width // 2 + offset_x, base_y + offset_y),  # Top point
+            (base_x + offset_x, base_y + triangle_height + offset_y),  # Bottom left (connects with "4")
+            (base_x + triangle_base_width + offset_x, base_y + triangle_height + offset_y),  # Bottom right
+            (base_x + triangle_base_width // 2 + offset_x, base_y + offset_y),  # Top point (arrow tip)
         ]
         draw.polygon(points, fill=color)
 
@@ -90,8 +113,8 @@ def create_icon(size, output_path):
     # Create gradient background
     img = create_gradient_background(size)
     
-    # Apply rounded corners
-    corner_radius = int(size * 0.2)  # 20% of size for app icon style
+    # Apply rounded corners (20% of size for modern app icon style)
+    corner_radius = int(size * 0.2)
     mask = create_rounded_mask(size, corner_radius)
     
     # Convert to RGBA and apply mask
@@ -103,29 +126,33 @@ def create_icon(size, output_path):
     # Create drawing context
     draw = ImageDraw.Draw(output)
     
-    # Load font for the "4"
-    font_size = int(size * 0.65)  # 65% of icon size
-    try:
-        # Try system fonts (macOS)
-        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial Bold.ttf", font_size)
-    except:
+    # Load font for the "4" - try to get a bold sans-serif font
+    font_size = int(size * 0.7)  # 70% of icon size for prominence
+    font = None
+    font_paths = [
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",  # macOS
+        "/System/Library/Fonts/Helvetica.ttc",  # macOS alternative
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",  # Linux alternative
+    ]
+    
+    for font_path in font_paths:
         try:
-            # Try Helvetica
-            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
+            font = ImageFont.truetype(font_path, font_size)
+            break
         except:
-            try:
-                # Try Linux font
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
-            except:
-                # Fallback to default font (may not be bold)
-                font = ImageFont.load_default()
-                print(f"Warning: Using default font for {size}x{size} icon")
+            continue
     
-    # Draw the white "4"
-    draw_number_4(draw, size, font)
+    if font is None:
+        # Fallback to default font
+        font = ImageFont.load_default()
+        print(f"⚠️  Warning: Using default font for {size}x{size} icon (may not be bold)")
     
-    # Draw tree elements in upper right
-    draw_tree_elements(draw, size)
+    # Draw the white "4" first to get its bounding box
+    number4_bbox = draw_number_4(draw, size, font)
+    
+    # Draw tree elements integrated with the "4"
+    draw_tree_elements(draw, size, number4_bbox)
     
     # Save the image
     output.save(output_path, 'PNG', optimize=True)
@@ -139,22 +166,26 @@ def main():
     public_dir = os.path.join(project_root, 'frontend', 'public')
     
     if not os.path.exists(public_dir):
-        print(f"Error: {public_dir} does not exist!")
+        print(f"❌ Error: {public_dir} does not exist!")
         return
     
     print("🎨 Generating 4rester app icons...")
     print(f"📁 Output directory: {public_dir}\n")
     
-    # Generate icons
+    # Generate icons in different sizes
     create_icon(32, os.path.join(public_dir, 'favicon.png'))
     create_icon(192, os.path.join(public_dir, 'pwa-192x192.png'))
     create_icon(512, os.path.join(public_dir, 'pwa-512x512.png'))
+    
+    # Also create a larger version for the login page
+    create_icon(128, os.path.join(public_dir, 'app-icon-128.png'))
     
     print("\n✨ All icons generated successfully!")
     print("\n📦 Generated files:")
     print("  - frontend/public/favicon.png (32x32)")
     print("  - frontend/public/pwa-192x192.png (192x192)")
     print("  - frontend/public/pwa-512x512.png (512x512)")
+    print("  - frontend/public/app-icon-128.png (128x128)")
 
 if __name__ == '__main__':
     main()
