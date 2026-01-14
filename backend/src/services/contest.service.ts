@@ -153,45 +153,6 @@ export async function createContest(
 /**
  * Tritt einem Contest bei durch Scannen des Contest-QR-Codes
  */
-/**
- * Tritt einem Contest direkt bei (mit Contest-ID)
- * Wird verwendet für automatische Zuordnung nach Registrierung
- */
-export async function joinContestById(userId: string, contestId: string): Promise<Contest> {
-  const db = getPool();
-  
-  // Prüfe ob Contest noch aktiv ist und nicht abgelaufen
-  const contestResult = await db.query(
-    'SELECT * FROM contests WHERE id = $1 AND active = TRUE AND end_date > NOW()',
-    [contestId]
-  );
-  
-  if (contestResult.rows.length === 0) {
-    throw new Error('Contest not found, inactive, or expired');
-  }
-  
-  const contest = contestResult.rows[0];
-  
-  // Prüfe ob Benutzer bereits Teilnehmer ist
-  const existingParticipant = await db.query(
-    'SELECT id FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
-    [contestId, userId]
-  );
-  
-  if (existingParticipant.rows.length > 0) {
-    // Benutzer ist bereits Teilnehmer, gebe Contest zurück
-    return contest;
-  }
-  
-  // Füge Benutzer als Teilnehmer hinzu (startet mit 0 Punkten)
-  await db.query(
-    'INSERT INTO contest_participants (contest_id, user_id, points) VALUES ($1, $2, 0)',
-    [contestId, userId]
-  );
-  
-  return contest;
-}
-
 export async function joinContest(userId: string, contestQrToken: string): Promise<Contest> {
   const db = getPool();
   
@@ -745,3 +706,425 @@ export async function getContestQrCode(contestId: string): Promise<string | null
   return result.rows[0].qr_token;
 }
 
+/**
+ * Tritt einem Contest direkt bei (ohne QR-Code-Validierung)
+ * Wird intern verwendet, z.B. bei der Registrierung mit Contest-Token
+ */
+export async function joinContestById(userId: string, contestId: string): Promise<Contest> {
+  const db = getPool();
+  
+  // Prüfe ob Contest noch aktiv ist und nicht abgelaufen
+  const contestResult = await db.query(
+    'SELECT * FROM contests WHERE id = $1 AND active = TRUE AND end_date > NOW()',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found, inactive, or expired');
+  }
+  
+  const contest = contestResult.rows[0];
+  
+  // Prüfe ob Benutzer bereits Teilnehmer ist
+  const existingParticipant = await db.query(
+    'SELECT id FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
+    [contestId, userId]
+  );
+  
+  if (existingParticipant.rows.length > 0) {
+    // Benutzer ist bereits Teilnehmer, einfach Contest zurückgeben
+    return contest;
+  }
+  
+  // Füge Benutzer als Teilnehmer hinzu (startet mit 0 Punkten)
+  await db.query(
+    'INSERT INTO contest_participants (contest_id, user_id, points) VALUES ($1, $2, 0)',
+    [contestId, userId]
+  );
+  
+  return contest;
+}
+
+/**
+ * Generiert einen Registrierungs-QR-Code für einen Contest
+ * Dieser QR-Code ermöglicht es neuen Benutzern, sich zu registrieren und automatisch dem Contest beizutreten
+ */
+export async function generateContestRegistrationQrCode(contestId: string): Promise<string> {
+  const db = getPool();
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT id FROM contests WHERE id = $1 AND active = TRUE',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found or inactive');
+  }
+  
+  // Prüfe ob bereits ein Registrierungs-QR-Code existiert
+  const existing = await db.query(
+    'SELECT qr_token FROM contest_registration_qr_codes WHERE contest_id = $1',
+    [contestId]
+  );
+  
+  if (existing.rows.length > 0) {
+    return existing.rows[0].qr_token;
+  }
+  
+  // Erstelle neuen Registrierungs-QR-Code
+  const qrToken = generateQrToken();
+  await db.query(
+    'INSERT INTO contest_registration_qr_codes (contest_id, qr_token, enabled) VALUES ($1, $2, TRUE)',
+    [contestId, qrToken]
+  );
+  
+  return qrToken;
+}
+
+/**
+ * Ruft den Registrierungs-QR-Code eines Contests ab
+ */
+export async function getContestRegistrationQrCode(contestId: string): Promise<{ qrToken: string | null; enabled: boolean }> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT qr_token, enabled FROM contest_registration_qr_codes WHERE contest_id = $1',
+    [contestId]
+  );
+  
+  if (result.rows.length === 0) {
+    return { qrToken: null, enabled: false };
+  }
+  
+  return {
+    qrToken: result.rows[0].qr_token,
+    enabled: result.rows[0].enabled,
+  };
+}
+
+/**
+ * Aktiviert oder deaktiviert die Registrierung für einen Contest
+ */
+export async function enableContestRegistration(contestId: string, enabled: boolean): Promise<void> {
+  const db = getPool();
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT id FROM contests WHERE id = $1',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found');
+  }
+  
+  // Prüfe ob Registrierungs-QR-Code existiert
+  const existing = await db.query(
+    'SELECT id FROM contest_registration_qr_codes WHERE contest_id = $1',
+    [contestId]
+  );
+  
+  if (existing.rows.length === 0) {
+    // Erstelle QR-Code wenn er nicht existiert
+    if (enabled) {
+      await generateContestRegistrationQrCode(contestId);
+    } else {
+      // Nichts zu tun, wenn disabled und nicht vorhanden
+      return;
+    }
+  } else {
+    // Aktualisiere enabled-Status
+    await db.query(
+      'UPDATE contest_registration_qr_codes SET enabled = $1 WHERE contest_id = $2',
+      [enabled, contestId]
+    );
+  }
+}
+
+/**
+ * Validiert einen Contest-Registrierungs-Token und gibt die Contest-ID zurück
+ */
+export async function validateContestRegistrationToken(qrToken: string): Promise<string | null> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT contest_id FROM contest_registration_qr_codes WHERE qr_token = $1 AND enabled = TRUE',
+    [qrToken]
+  );
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  // Prüfe ob Contest noch aktiv ist und nicht abgelaufen
+  const contestResult = await db.query(
+    'SELECT id FROM contests WHERE id = $1 AND active = TRUE AND end_date > NOW()',
+    [result.rows[0].contest_id]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    return null;
+  }
+  
+  return result.rows[0].id;
+}
+
+/**
+ * Ruft alle Contests ab (für Admin-Verwaltung)
+ */
+export async function getAllContests(): Promise<Contest[]> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT c.*, u.name as creator_name, u.email as creator_email,
+     (SELECT COUNT(*) FROM contest_participants WHERE contest_id = c.id) as participant_count
+     FROM contests c
+     INNER JOIN users u ON u.id = c.created_by
+     ORDER BY c.created_at DESC`
+  );
+  
+  return result.rows;
+}
+
+/**
+ * Aktualisiert Contest-Daten
+ */
+export async function updateContest(contestId: string, data: Partial<{ name: string | null; active: boolean; end_date?: Date }>): Promise<Contest> {
+  const db = getPool();
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT * FROM contests WHERE id = $1',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found');
+  }
+  
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+  
+  if (data.name !== undefined) {
+    updates.push(`name = $${paramIndex++}`);
+    values.push(data.name);
+  }
+  
+  if (data.active !== undefined) {
+    updates.push(`active = $${paramIndex++}`);
+    values.push(data.active);
+  }
+  
+  if (data.end_date !== undefined) {
+    updates.push(`end_date = $${paramIndex++}`);
+    values.push(data.end_date);
+  }
+  
+  if (updates.length === 0) {
+    return contestResult.rows[0];
+  }
+  
+  updates.push(`updated_at = NOW()`);
+  values.push(contestId);
+  
+  const result = await db.query(
+    `UPDATE contests SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+    values
+  );
+  
+  return result.rows[0];
+}
+
+/**
+ * Generiert einen Registrierungs-QR-Code für einen Contest
+ * Dieser QR-Code ermöglicht es neuen Benutzern, sich zu registrieren und automatisch dem Contest beizutreten
+ */
+export async function generateContestRegistrationQrCode(contestId: string): Promise<string> {
+  const db = getPool();
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT id FROM contests WHERE id = $1 AND active = TRUE',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found or inactive');
+  }
+  
+  // Prüfe ob bereits ein Registrierungs-QR-Code existiert
+  const existing = await db.query(
+    'SELECT qr_token FROM contest_registration_qr_codes WHERE contest_id = $1',
+    [contestId]
+  );
+  
+  if (existing.rows.length > 0) {
+    return existing.rows[0].qr_token;
+  }
+  
+  // Erstelle neuen Registrierungs-QR-Code
+  const qrToken = generateQrToken();
+  await db.query(
+    'INSERT INTO contest_registration_qr_codes (contest_id, qr_token, enabled) VALUES ($1, $2, TRUE)',
+    [contestId, qrToken]
+  );
+  
+  return qrToken;
+}
+
+/**
+ * Ruft den Registrierungs-QR-Code eines Contests ab
+ */
+export async function getContestRegistrationQrCode(contestId: string): Promise<{ qrToken: string | null; enabled: boolean }> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT qr_token, enabled FROM contest_registration_qr_codes WHERE contest_id = $1',
+    [contestId]
+  );
+  
+  if (result.rows.length === 0) {
+    return { qrToken: null, enabled: false };
+  }
+  
+  return {
+    qrToken: result.rows[0].qr_token,
+    enabled: result.rows[0].enabled,
+  };
+}
+
+/**
+ * Aktiviert oder deaktiviert die Registrierung für einen Contest
+ */
+export async function enableContestRegistration(contestId: string, enabled: boolean): Promise<void> {
+  const db = getPool();
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT id FROM contests WHERE id = $1',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found');
+  }
+  
+  // Prüfe ob Registrierungs-QR-Code existiert
+  const existing = await db.query(
+    'SELECT id FROM contest_registration_qr_codes WHERE contest_id = $1',
+    [contestId]
+  );
+  
+  if (existing.rows.length === 0) {
+    // Erstelle QR-Code wenn er nicht existiert
+    if (enabled) {
+      await generateContestRegistrationQrCode(contestId);
+    } else {
+      // Nichts zu tun, wenn disabled und nicht vorhanden
+      return;
+    }
+  } else {
+    // Aktualisiere enabled-Status
+    await db.query(
+      'UPDATE contest_registration_qr_codes SET enabled = $1 WHERE contest_id = $2',
+      [enabled, contestId]
+    );
+  }
+}
+
+/**
+ * Validiert einen Contest-Registrierungs-Token und gibt die Contest-ID zurück
+ */
+export async function validateContestRegistrationToken(qrToken: string): Promise<string | null> {
+  const db = getPool();
+  
+  const result = await db.query(
+    'SELECT contest_id FROM contest_registration_qr_codes WHERE qr_token = $1 AND enabled = TRUE',
+    [qrToken]
+  );
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  // Prüfe ob Contest noch aktiv ist und nicht abgelaufen
+  const contestResult = await db.query(
+    'SELECT id FROM contests WHERE id = $1 AND active = TRUE AND end_date > NOW()',
+    [result.rows[0].contest_id]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    return null;
+  }
+  
+  return result.rows[0].id;
+}
+
+/**
+ * Ruft alle Contests ab (für Admin-Verwaltung)
+ */
+export async function getAllContests(): Promise<Contest[]> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT c.*, u.name as creator_name, u.email as creator_email,
+     (SELECT COUNT(*) FROM contest_participants WHERE contest_id = c.id) as participant_count
+     FROM contests c
+     INNER JOIN users u ON u.id = c.created_by
+     ORDER BY c.created_at DESC`
+  );
+  
+  return result.rows;
+}
+
+/**
+ * Aktualisiert Contest-Daten
+ */
+export async function updateContest(contestId: string, data: Partial<{ name: string | null; active: boolean; end_date?: Date }>): Promise<Contest> {
+  const db = getPool();
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT * FROM contests WHERE id = $1',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found');
+  }
+  
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+  
+  if (data.name !== undefined) {
+    updates.push(`name = $${paramIndex++}`);
+    values.push(data.name);
+  }
+  
+  if (data.active !== undefined) {
+    updates.push(`active = $${paramIndex++}`);
+    values.push(data.active);
+  }
+  
+  if (data.end_date !== undefined) {
+    updates.push(`end_date = $${paramIndex++}`);
+    values.push(data.end_date);
+  }
+  
+  if (updates.length === 0) {
+    return contestResult.rows[0];
+  }
+  
+  updates.push(`updated_at = NOW()`);
+  values.push(contestId);
+  
+  const result = await db.query(
+    `UPDATE contests SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+    values
+  );
+  
+  return result.rows[0];
+}
