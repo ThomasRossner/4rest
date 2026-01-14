@@ -7,6 +7,7 @@ import { Location } from './location.service.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 import { updateContestPoints } from './contest.service.js';
 import { getUserActiveTeam, getTeamMembers } from './team.service.js';
+import fs from 'fs';
 
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
 
@@ -575,7 +576,6 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     const logData = {location:'task.service.ts:571',message:'thumbnail_url ALWAYS added to updates',data:{hasThumbnailUrl:'thumbnail_url' in data,thumbnailUrl:data.thumbnail_url,thumbnailUrlType:typeof data.thumbnail_url,value:data.thumbnail_url ?? null,updatesCount:updates.length,paramIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'};
     console.log('[DEBUG]', JSON.stringify(logData));
     try {
-      const fs = require('fs');
       const logDir = '/app/.cursor';
       if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
       fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
@@ -588,7 +588,6 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     const logData = {location:'task.service.ts:585',message:'thumbnail_url NOT in data',data:{hasThumbnailUrl:'thumbnail_url' in data,dataKeys:Object.keys(data)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'};
     console.log('[DEBUG]', JSON.stringify(logData));
     try {
-      const fs = require('fs');
       const logDir = '/app/.cursor';
       if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
       fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
@@ -694,7 +693,6 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   const logDataQuery = {location:'task.service.ts:667',message:'SQL UPDATE query',data:{updates:updates.join(', '),values:JSON.stringify(values),hasThumbnailInUpdates:updates.some(u => u.includes('thumbnail_url')),paramIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
   console.log('[DEBUG]', JSON.stringify(logDataQuery));
   try {
-    const fs = require('fs');
     const logDir = '/app/.cursor';
     if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
     fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataQuery) + '\n');
@@ -710,7 +708,6 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   const logDataResult = {location:'task.service.ts:672',message:'SQL UPDATE result',data:{rowCount:result.rowCount,thumbnailUrl:result.rows[0]?.thumbnail_url,returnedTask:result.rows[0] ? JSON.stringify(result.rows[0]) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
   console.log('[DEBUG]', JSON.stringify(logDataResult));
   try {
-    const fs = require('fs');
     const logDir = '/app/.cursor';
     if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
     fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataResult) + '\n');
