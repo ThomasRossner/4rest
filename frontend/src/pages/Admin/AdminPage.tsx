@@ -8347,7 +8347,7 @@ function TeamManagementSection({
   const [teamName, setTeamName] = useState('');
   const [teamActive, setTeamActive] = useState(true);
 
-  const { data: teamsData, refetch: refetchTeams } = useQuery({
+  const { data: teamsData, isLoading: teamsLoading, error: teamsError, refetch: refetchTeams } = useQuery({
     queryKey: ['admin-teams'],
     queryFn: async () => {
       return await api.getAllTeams();
@@ -8358,8 +8358,13 @@ function TeamManagementSection({
     if (teamsData) {
       setTeams(teamsData);
       setLoading(false);
+    } else if (teamsError) {
+      setLoading(false);
+      setTeamManagementMessage({ type: 'error', text: teamsError instanceof Error ? teamsError.message : 'Failed to load teams' });
+    } else if (!teamsLoading) {
+      setLoading(false);
     }
-  }, [teamsData]);
+  }, [teamsData, teamsLoading, teamsError]);
 
   useEffect(() => {
     if (editingTeamId && teams.length > 0) {
@@ -8678,7 +8683,7 @@ function ContestManagementSection({
   const [contestActive, setContestActive] = useState(true);
   const [contestEndDate, setContestEndDate] = useState('');
 
-  const { data: contestsData, refetch: refetchContests } = useQuery({
+  const { data: contestsData, isLoading: contestsLoading, error: contestsError, refetch: refetchContests } = useQuery({
     queryKey: ['admin-contests'],
     queryFn: async () => {
       return await api.getAllContests();
@@ -8689,8 +8694,13 @@ function ContestManagementSection({
     if (contestsData) {
       setContests(contestsData);
       setLoading(false);
+    } else if (contestsError) {
+      setLoading(false);
+      setContestManagementMessage({ type: 'error', text: contestsError instanceof Error ? contestsError.message : 'Failed to load contests' });
+    } else if (!contestsLoading) {
+      setLoading(false);
     }
-  }, [contestsData]);
+  }, [contestsData, contestsLoading, contestsError]);
 
   useEffect(() => {
     if (editingContestId && contests.length > 0) {
