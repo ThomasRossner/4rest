@@ -644,18 +644,36 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
           try {
             zielgruppeArray = JSON.parse(value);
           } catch {
-            // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}"
+            // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}" or "{""Front Office""}"
             // Remove curly braces and split by comma
-            const cleaned = value.replace(/^{|}$/g, '').trim();
-            zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];
+            let cleaned = value.replace(/^{|}$/g, '').trim();
+            // Remove double quotes that might wrap values (e.g., ""Front Office"" -> Front Office)
+            cleaned = cleaned.replace(/^"|"$/g, '');
+            zielgruppeArray = cleaned ? cleaned.split(',').map((v: string) => {
+              // Remove quotes from each value and trim
+              return v.trim().replace(/^"|"$/g, '');
+            }) : [];
           }
         } else if (Array.isArray(value)) {
-          zielgruppeArray = value;
+          zielgruppeArray = value.map((v: any) => {
+            // If array contains strings with quotes, remove them
+            if (typeof v === 'string') {
+              return v.replace(/^"|"$/g, '').trim();
+            }
+            return v;
+          });
         } else {
           zielgruppeArray = [value];
         }
-        // Filter out empty strings and null values
-        zielgruppeValue = zielgruppeArray.filter((v: any) => v !== null && v !== undefined && v !== '');
+        // Filter out empty strings and null values, and remove any remaining quotes
+        zielgruppeValue = zielgruppeArray
+          .map((v: any) => {
+            if (typeof v === 'string') {
+              return v.replace(/^"|"$/g, '').trim();
+            }
+            return v;
+          })
+          .filter((v: any) => v !== null && v !== undefined && v !== '');
         // If resulting array is empty, set to null
         if (zielgruppeValue.length === 0) {
           zielgruppeValue = null;
