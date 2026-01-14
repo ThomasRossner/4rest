@@ -226,24 +226,32 @@ const defaultConfirmDialogState: ConfirmDialogState = {
   onConfirm: () => undefined,
 };
 
-const TaskTypeBadge = ({ type }: { type: string }) => {
+const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
   const icon = TASK_TYPE_ICONS[type] ?? '🧩';
   return (
     <div className="admin-type-badge">
       <span className="admin-type-icon" aria-hidden="true">
-        {icon}
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt="" style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
+        ) : (
+          icon
+        )}
       </span>
       <span>{type.toUpperCase()}</span>
     </div>
   );
 };
 
-const RewardTypeBadge = ({ type }: { type: RewardType }) => {
+const RewardTypeBadge = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
   const icon = REWARD_TYPE_ICONS[type] ?? '🎁';
   return (
     <div className="admin-type-badge">
       <span className="admin-type-icon" aria-hidden="true">
-        {icon}
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt="" style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
+        ) : (
+          icon
+        )}
       </span>
       <span>{type.toUpperCase().replace(/_/g, ' ')}</span>
     </div>
@@ -981,7 +989,7 @@ const TaskSelectionModal = ({
                       }}
                     >
                       <div style={{ flexShrink: 0 }}>
-                        <TaskTypeBadge type={task.type} />
+                        <TaskTypeBadge type={task.type} thumbnailUrl={(task as any).thumbnail_url} />
                       </div>
                       <span style={{ flex: 1, textAlign: 'left' }}>{task.title}</span>
                     </button>
@@ -3273,7 +3281,7 @@ function AdminPage() {
       }
 
       // Upload thumbnail if a new file was selected
-      let thumbnailUrl = taskForm.thumbnailUrl;
+      let thumbnailUrl: string | null = taskForm.thumbnailUrl ?? null;
       if (taskForm.thumbnailFile) {
         try {
           const uploadResult = await api.uploadTaskThumbnail(taskForm.thumbnailFile);
@@ -3282,6 +3290,10 @@ function AdminPage() {
           setTaskMessage({ type: 'error', text: error?.message || 'Failed to upload thumbnail.' });
           return;
         }
+      }
+      // If thumbnailFile is null and thumbnailUrl is null, explicitly set to null to allow deletion
+      if (!taskForm.thumbnailFile && !taskForm.thumbnailUrl) {
+        thumbnailUrl = null;
       }
 
       const prepareVideoData = async (taskType: string) => {
@@ -3596,7 +3608,7 @@ function AdminPage() {
       }
 
       // Upload thumbnail if a new file was selected
-      let thumbnailUrl = rewardForm.thumbnailUrl;
+      let thumbnailUrl: string | null = rewardForm.thumbnailUrl ?? null;
       if (rewardForm.thumbnailFile) {
         try {
           const uploadResult = await api.uploadRewardThumbnail(rewardForm.thumbnailFile);
@@ -3605,6 +3617,10 @@ function AdminPage() {
           setRewardMessage({ type: 'error', text: error?.message || 'Failed to upload thumbnail.' });
           return;
         }
+      }
+      // If thumbnailFile is null and thumbnailUrl is null, explicitly set to null to allow deletion
+      if (!rewardForm.thumbnailFile && !rewardForm.thumbnailUrl) {
+        thumbnailUrl = null;
       }
 
       const pointsCost = Number(rewardForm.pointsCost) || 0;
@@ -5564,7 +5580,7 @@ const goToRewardCreation = () => {
                       <h3>{t('admin.task.basics.title')}</h3>
                       <p>{t('admin.task.basics.subtitle')}</p>
                     </div>
-                    {!isEditingTask && <TaskTypeBadge type={taskForm.type} />}
+                    {!isEditingTask && <TaskTypeBadge type={taskForm.type} thumbnailUrl={taskForm.thumbnailUrl} />}
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     {isEditingTask && (
@@ -5723,7 +5739,7 @@ const goToRewardCreation = () => {
                             <div style={{ flexShrink: 0 }}>
                               {(() => {
                                 const selectedTask = getSelectedTask(taskForm.prerequisite_task_id);
-                                return selectedTask ? <TaskTypeBadge type={selectedTask.type} /> : null;
+                                return selectedTask ? <TaskTypeBadge type={selectedTask.type} thumbnailUrl={(selectedTask as any).thumbnail_url} /> : null;
                               })()}
                             </div>
                             <span style={{ flex: 1, textAlign: 'left' }}>
@@ -6419,7 +6435,7 @@ const goToRewardCreation = () => {
                       <h3>{t('admin.reward.details.title')}</h3>
                       <p>Define the reward content and optional integrations.</p>
                     </div>
-                    {!isEditingReward && <RewardTypeBadge type={rewardForm.type} />}
+                    {!isEditingReward && <RewardTypeBadge type={rewardForm.type} thumbnailUrl={rewardForm.thumbnailUrl} />}
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     {isEditingReward && (
@@ -7501,7 +7517,7 @@ const goToRewardCreation = () => {
                           </td>
                           <td data-label="Type">
                             <span className="admin-table-type">
-                              <TaskTypeBadge type={task.type} />
+                              <TaskTypeBadge type={task.type} thumbnailUrl={(task as any).thumbnail_url} />
                             </span>
                           </td>
                           <td data-label="Location">
@@ -7930,7 +7946,7 @@ const goToRewardCreation = () => {
                            </td>
                           <td data-label="Type">
                              <span className="admin-table-type">
-                               <RewardTypeBadge type={reward.reward_type as RewardType} />
+                               <RewardTypeBadge type={reward.reward_type as RewardType} thumbnailUrl={(reward as any).thumbnail_url} />
                              </span>
                            </td>
                           <td data-label="Location">

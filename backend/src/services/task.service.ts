@@ -568,7 +568,14 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
 
   Object.entries(data).forEach(([key, value]) => {
     // Skip invalid fields and id
+    // Allow null values for thumbnail_url to enable deletion
     if (value === undefined || key === 'id' || !validColumns.has(key)) {
+      return;
+    }
+    // Explicitly handle thumbnail_url to allow null values
+    if (key === 'thumbnail_url' && value === null) {
+      updates.push(`${key} = $${paramIndex++}`);
+      values.push(null);
       return;
     }
 
