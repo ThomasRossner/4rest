@@ -123,11 +123,15 @@ export const updateTask: RequestHandler = asyncHandler(async (req, res) => {
 
   const task = await updateTaskService(req.params.id, req.body);
   // #region agent log
+  const logDataResult = {location:'task.controller.ts:112',message:'updateTask service result',data:{task:task ? JSON.stringify(task) : null,thumbnailUrl:task?.thumbnail_url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
+  console.log('[DEBUG]', JSON.stringify(logDataResult));
   try {
-    const fs = require('fs');
-    const logEntry = JSON.stringify({location:'task.controller.ts:112',message:'updateTask service result',data:{task:task ? JSON.stringify(task) : null,thumbnailUrl:task?.thumbnail_url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'}) + '\n';
-    fs.appendFileSync('/app/.cursor/debug.log', logEntry);
-  } catch (e) {}
+    const logDir = '/app/.cursor';
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+    fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataResult) + '\n');
+  } catch (e) {
+    console.error('[DEBUG] Log error:', e);
+  }
   // #endregion
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
