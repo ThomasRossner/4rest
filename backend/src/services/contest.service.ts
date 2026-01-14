@@ -153,6 +153,45 @@ export async function createContest(
 /**
  * Tritt einem Contest bei durch Scannen des Contest-QR-Codes
  */
+/**
+ * Tritt einem Contest direkt bei (mit Contest-ID)
+ * Wird verwendet für automatische Zuordnung nach Registrierung
+ */
+export async function joinContestById(userId: string, contestId: string): Promise<Contest> {
+  const db = getPool();
+  
+  // Prüfe ob Contest noch aktiv ist und nicht abgelaufen
+  const contestResult = await db.query(
+    'SELECT * FROM contests WHERE id = $1 AND active = TRUE AND end_date > NOW()',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found, inactive, or expired');
+  }
+  
+  const contest = contestResult.rows[0];
+  
+  // Prüfe ob Benutzer bereits Teilnehmer ist
+  const existingParticipant = await db.query(
+    'SELECT id FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
+    [contestId, userId]
+  );
+  
+  if (existingParticipant.rows.length > 0) {
+    // Benutzer ist bereits Teilnehmer, gebe Contest zurück
+    return contest;
+  }
+  
+  // Füge Benutzer als Teilnehmer hinzu (startet mit 0 Punkten)
+  await db.query(
+    'INSERT INTO contest_participants (contest_id, user_id, points) VALUES ($1, $2, 0)',
+    [contestId, userId]
+  );
+  
+  return contest;
+}
+
 export async function joinContest(userId: string, contestQrToken: string): Promise<Contest> {
   const db = getPool();
   
