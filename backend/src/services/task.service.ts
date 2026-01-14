@@ -229,6 +229,17 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
     }
   }
   
+  // For QR code tasks, also check for duplicate QR codes (regardless of location)
+  if (data.type === 'qr' && data.qr_code) {
+    const qrDuplicateCheck = await db.query(
+      `SELECT id, title, qr_code FROM tasks WHERE qr_code = $1 AND active = TRUE LIMIT 1`,
+      [data.qr_code]
+    );
+    if (qrDuplicateCheck.rows.length > 0) {
+      throw new Error(`A task with the QR code "${data.qr_code}" already exists (task: "${qrDuplicateCheck.rows[0].title}"). QR codes must be unique.`);
+    }
+  }
+  
   const quizPayload = data.quiz_questions
     ? typeof data.quiz_questions === 'string'
       ? data.quiz_questions
