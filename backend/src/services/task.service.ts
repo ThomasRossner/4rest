@@ -567,9 +567,19 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   }
 
   // Explicitly handle thumbnail_url before the loop to ensure it's always processed
+  // #region agent log
+  fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'task.service.ts:569',message:'updateTask thumbnail_url check',data:{hasThumbnailUrl:'thumbnail_url' in data,thumbnailUrl:data.thumbnail_url,thumbnailUrlType:typeof data.thumbnail_url,thumbnailUrlUndefined:data.thumbnail_url === undefined,thumbnailUrlNull:data.thumbnail_url === null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
   if ('thumbnail_url' in data && data.thumbnail_url !== undefined) {
     updates.push(`thumbnail_url = $${paramIndex++}`);
     values.push(data.thumbnail_url ?? null);
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'task.service.ts:572',message:'thumbnail_url added to updates',data:{updatesCount:updates.length,paramIndex,value:data.thumbnail_url ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+  } else {
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'task.service.ts:576',message:'thumbnail_url NOT added to updates',data:{hasThumbnailUrl:'thumbnail_url' in data,thumbnailUrl:data.thumbnail_url,thumbnailUrlUndefined:data.thumbnail_url === undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
   }
 
   Object.entries(data).forEach(([key, value]) => {
@@ -664,10 +674,16 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   updates.push('updated_at = CURRENT_TIMESTAMP');
   values.push(id);
 
+  // #region agent log
+  fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'task.service.ts:667',message:'SQL UPDATE query',data:{updates:updates.join(', '),values:JSON.stringify(values),hasThumbnailInUpdates:updates.some(u => u.includes('thumbnail_url')),paramIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
   const result = await db.query(
     `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
     values
   );
+  // #region agent log
+  fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'task.service.ts:672',message:'SQL UPDATE result',data:{rowCount:result.rowCount,thumbnailUrl:result.rows[0]?.thumbnail_url,returnedTask:result.rows[0] ? JSON.stringify(result.rows[0]) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion
 
   return result.rows[0] || null;
 }
