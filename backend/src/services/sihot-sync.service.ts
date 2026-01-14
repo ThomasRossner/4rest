@@ -44,7 +44,7 @@ async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): P
          WHERE id = $1`,
         [row.id]
       );
-      broadcastSihotUpdate({ userId: row.id, payload: null, role: 'stakeholder' });
+      broadcastSihotUpdate({ userId: row.id, payload: null, role: 'guest' });
       return;
     }
 
@@ -72,7 +72,7 @@ async function processUserRow(pool: ReturnType<typeof getPool>, row: UserRow): P
       })
     );
 
-    const desiredRole = isCheckedIn ? 'guest' : 'stakeholder';
+    const desiredRole = isCheckedIn ? 'guest' : 'guest';
 
     const payload = {
       guest: {

@@ -42,7 +42,7 @@ function ensureRole(value: unknown): UserRole {
   if (typeof value === 'string' && (USER_ROLES as readonly string[]).includes(value)) {
     return value as UserRole;
   }
-  return 'stakeholder';
+  return 'guest';
 }
 
 function ensureUserType(value: unknown): UserType {

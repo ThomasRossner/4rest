@@ -289,7 +289,7 @@ export async function createSurveyWithParticipants(
         user = await createUser({
           email,
           name: `Debug Survey User ${i + 1}`,
-          role: 'stakeholder',
+          role: 'guest',
           user_type: 'explorer',
           points: 0,
           password_hash: null // No password for debug users
@@ -683,7 +683,7 @@ export async function generateStatisticsData(
         user = await createUser({
           email,
           name: `Debug Stats User ${i + 1}`,
-          role: 'stakeholder',
+          role: 'guest',
           user_type: 'explorer',
           points: 0,
           password_hash: null
@@ -709,7 +709,7 @@ export async function generateStatisticsData(
         co2_savings_kg: co2Savings,
         location_id: location.id,
         active: true,
-        ...({ allowed_roles: ['stakeholder'] as UserRole[] } as any),
+        ...({ allowed_roles: ['guest'] as UserRole[] } as any),
         allowed_user_types: ['explorer'] as UserType[],
         allowed_hotel_ids: [],
         quiz_questions: JSON.stringify([
