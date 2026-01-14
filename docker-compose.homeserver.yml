@@ -39,6 +39,7 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+      BASE_URL: ${BASE_URL:-https://luise.bio}
       HOTELKIT_API_URL: ${HOTELKIT_API_URL:-}
       HOTELKIT_API_KEY: ${HOTELKIT_API_KEY:-}
     depends_on:

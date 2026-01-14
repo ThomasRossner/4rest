@@ -771,7 +771,9 @@ export async function redeemRewardQrCodeService(qrToken: string, employeeUserId:
 
 export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
   const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-  return `${baseUrl}/uploads/${file.filename}`;
+  // Remove trailing slash if present
+  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+  return `${cleanBaseUrl}/uploads/${file.filename}`;
 }
 
 export async function getUserRedemptions(userId: string) {

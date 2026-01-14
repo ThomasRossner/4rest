@@ -838,7 +838,9 @@ export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
   // In production, this would upload to cloud storage (S3, Azure Blob, etc.)
   // For now, return a local file path
   const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-  return `${baseUrl}/uploads/${file.filename}`;
+  // Remove trailing slash if present
+  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+  return `${cleanBaseUrl}/uploads/${file.filename}`;
 }
 
 export async function uploadVideo(file: Express.Multer.File): Promise<string> {
@@ -848,7 +850,9 @@ export async function uploadVideo(file: Express.Multer.File): Promise<string> {
 
 export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
   const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-  return `${baseUrl}/uploads/${file.filename}`;
+  // Remove trailing slash if present
+  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+  return `${cleanBaseUrl}/uploads/${file.filename}`;
 }
 
 /**
