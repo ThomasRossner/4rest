@@ -4245,6 +4245,8 @@ function AdminPage() {
         }
         return undefined;
       })(),
+      thumbnailFile: null,
+      thumbnailUrl: (task as any).thumbnail_url ?? null,
     });
     setIsEditingTask(true);
     setEditingTaskId(task.id);
@@ -5601,7 +5603,7 @@ const goToRewardCreation = () => {
                       <h3>{t('admin.task.basics.title')}</h3>
                       <p>{t('admin.task.basics.subtitle')}</p>
                     </div>
-                    {!isEditingTask && <TaskTypeBadge type={taskForm.type} thumbnailUrl={taskForm.thumbnailUrl} />}
+                    <TaskTypeBadge type={taskForm.type} thumbnailUrl={taskForm.thumbnailUrl} />
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     {isEditingTask && (
@@ -6456,7 +6458,7 @@ const goToRewardCreation = () => {
                       <h3>{t('admin.reward.details.title')}</h3>
                       <p>Define the reward content and optional integrations.</p>
                     </div>
-                    {!isEditingReward && <RewardTypeBadge type={rewardForm.type} thumbnailUrl={rewardForm.thumbnailUrl} />}
+                    <RewardTypeBadge type={rewardForm.type} thumbnailUrl={rewardForm.thumbnailUrl} />
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     {isEditingReward && (
