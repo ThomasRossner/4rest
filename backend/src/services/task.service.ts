@@ -219,6 +219,18 @@ export async function calculateTaskPoints(
 
 export async function createTask(data: Partial<Task>): Promise<Task> {
   const db = getPool();
+  
+  // Check for duplicate task (same title and location_id)
+  if (data.title && data.location_id) {
+    const duplicateCheck = await db.query(
+      `SELECT id, title FROM tasks WHERE title = $1 AND location_id = $2 AND active = TRUE LIMIT 1`,
+      [data.title, data.location_id]
+    );
+    if (duplicateCheck.rows.length > 0) {
+      throw new Error(`A task with the title "${data.title}" already exists at this location. Please use a different title or edit the existing task.`);
+    }
+  }
+  
   const quizPayload = data.quiz_questions
     ? typeof data.quiz_questions === 'string'
       ? data.quiz_questions
