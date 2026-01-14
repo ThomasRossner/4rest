@@ -3124,7 +3124,7 @@ function AdminPage() {
     if (!isEditingTask || !editingTaskId) return;
     const task = existingTemplates.find((t) => t.id === editingTaskId);
     if (!task) return;
-    setTaskForm({
+    setTaskForm((prev) => ({
       title: task.title ?? '',
       description: task.description ?? '',
       type: task.type,
@@ -3190,9 +3190,9 @@ function AdminPage() {
         }
         return undefined;
       })(),
-      thumbnailFile: null,
-      thumbnailUrl: (task as any).thumbnail_url ?? null,
-    });
+      thumbnailFile: prev.thumbnailFile, // Behalte bestehende Datei
+      thumbnailUrl: task.thumbnail_url ?? prev.thumbnailUrl ?? null, // Verwende task.thumbnail_url wenn vorhanden, sonst behalte bestehenden Wert
+    }));
   }, [isEditingTask, editingTaskId, existingTemplates]);
 
   useEffect(() => {
