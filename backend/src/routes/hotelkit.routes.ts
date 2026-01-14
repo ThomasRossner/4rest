@@ -56,7 +56,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
     switch (event) {
       case 'task.completed':
         // Handle task completion from HotelKit
-        // This could trigger automatic completion in Roots of Impact
+        // This could trigger automatic completion in 4rester
         console.log('HotelKit task completed:', data);
         break;
       case 'task.created':

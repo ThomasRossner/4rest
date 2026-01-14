@@ -1,7 +1,7 @@
 {
-  "name": "roots-of-impact-backend",
+  "name": "4rester-backend",
   "version": "1.0.0",
-  "description": "Backend API for Roots of Impact platform",
+  "description": "Backend API for 4rester platform",
   "main": "dist/server.js",
   "type": "module",
   "scripts": {

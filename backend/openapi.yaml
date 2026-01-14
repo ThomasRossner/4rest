@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Roots of Impact API
+  title: 4rester API
   description: |
-    API for the Roots of Impact gamification platform. This API provides endpoints for:
+    API for the 4rester gamification platform. This API provides endpoints for:
     - User authentication and management
     - Task management and completion
     - Reward system
@@ -12,11 +12,11 @@ info:
     - Integration with HotelKit and Sihot systems
   version: 1.0.0
   contact:
-    name: Roots of Impact
+    name: 4rester
 servers:
   - url: http://localhost:5001/api
     description: Development server
-  - url: https://api.roots-of-impact.com/api
+  - url: https://api.4rester.com/api
     description: Production server
 
 tags:

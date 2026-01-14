@@ -78,7 +78,7 @@ export async function sendPasswordSetupEmail(userId: string, email: string, name
 
     await emailService.sendEmail({
       to: email,
-      subject: 'Set Your Password - Roots of Impact',
+      subject: 'Set Your Password - 4rester',
       html,
     });
   } catch (error: any) {
@@ -105,7 +105,7 @@ export async function sendAdminCreatedUserEmail(userId: string, email: string, n
 
     await emailService.sendEmail({
       to: email,
-      subject: 'Your Roots of Impact Account Has Been Created',
+      subject: 'Your 4rester Account Has Been Created',
       html,
     });
   } catch (error: any) {
@@ -130,7 +130,7 @@ export async function sendWelcomeEmail(userId: string, email: string, name: stri
 
     await emailService.sendEmail({
       to: email,
-      subject: 'Welcome to Roots of Impact!',
+      subject: 'Welcome to 4rester!',
       html,
     });
   } catch (error: any) {
@@ -162,7 +162,7 @@ export async function sendEmailVerificationEmail(
 
     await emailService.sendEmail({
       to: email,
-      subject: 'Verify Your Email Address - Roots of Impact',
+      subject: 'Verify Your Email Address - 4rester',
       html,
     });
   } catch (error: any) {
@@ -189,7 +189,7 @@ export async function sendPasswordResetEmail(userId: string, email: string, name
 
     await emailService.sendEmail({
       to: email,
-      subject: 'Reset Your Password - Roots of Impact',
+      subject: 'Reset Your Password - 4rester',
       html,
     });
   } catch (error: any) {
@@ -338,7 +338,7 @@ export async function sendLoginCodeEmail(userId: string, email: string, name: st
 
     await emailService.sendEmail({
       to: email,
-      subject: 'Your Login Code - Roots of Impact',
+      subject: 'Your Login Code - 4rester',
       html,
     });
   } catch (error: any) {

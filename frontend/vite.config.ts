@@ -16,8 +16,8 @@ export default defineConfig({
         type: 'module',
       },
       manifest: {
-        name: 'Roots of Impact',
-        short_name: 'Roots',
+        name: '4rester',
+        short_name: '4rester',
         description: 'Sustainability gamification platform',
         theme_color: '#2d5016',
         background_color: '#ffffff',

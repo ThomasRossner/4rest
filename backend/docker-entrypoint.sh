@@ -4,7 +4,7 @@
 
 set -e
 
-echo "==> Starting Roots of Impact Backend..."
+echo "==> Starting 4rester Backend..."
 
 # Extract database connection details from DATABASE_URL or use defaults
 if [ -n "${DATABASE_URL:-}" ]; then

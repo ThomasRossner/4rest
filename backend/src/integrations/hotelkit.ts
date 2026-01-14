@@ -86,7 +86,7 @@ class HotelKitIntegration {
             continue;
           }
 
-          // Convert HotelKit task to Roots of Impact task
+          // Convert HotelKit task to 4rester task
           await createTask({
             title: hkTask.title,
             description: hkTask.description || `Synced from HotelKit: ${hkTask.category || 'General'}`,
@@ -163,7 +163,7 @@ class HotelKitIntegration {
   }
 
   /**
-   * Map HotelKit task category to Roots of Impact task type
+   * Map HotelKit task category to 4rester task type
    */
   private mapTaskType(category?: string): string {
     const categoryMap: Record<string, string> = {

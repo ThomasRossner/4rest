@@ -39,7 +39,7 @@ class VoucherIntegration {
         type: rewardType,
         value: pointsValue,
         metadata: {
-          source: 'roots-of-impact',
+          source: '4rester',
           timestamp: new Date().toISOString(),
         },
       });

@@ -25,8 +25,8 @@ UPLOAD_DIR=./uploads
 # Email Configuration
 EMAIL_ENABLED=true
 EMAIL_MOCK_MODE=true
-EMAIL_FROM=noreply@roots-of-impact.com
-EMAIL_FROM_NAME=Roots of Impact
+EMAIL_FROM=noreply@4rester.com
+EMAIL_FROM_NAME=4rester
 APP_URL=http://localhost:3000
 FRONTEND_URL=http://localhost:3000
 
@@ -36,7 +36,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASS=
-SMTP_FROM=noreply@roots-of-impact.com
+SMTP_FROM=noreply@4rester.com
 
 # OAuth Configuration
 # GitHub OAuth

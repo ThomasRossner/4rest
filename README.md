@@ -1,10 +1,10 @@
-# Roots of Impact
+# 4rester
 
 A gamification-based sustainability platform connecting hotel guests, employees, and global stakeholders through a virtual forest experience.
 
 ## Project Overview
 
-Roots of Impact encourages sustainable actions through gamification. Each completed task grows a personal tree in a virtual forest, creating both individual progress and collective impact.
+4rester encourages sustainable actions through gamification. Each completed task grows a personal tree in a virtual forest, creating both individual progress and collective impact.
 
 ## Architecture
 
