@@ -97,7 +97,13 @@ export const createTask: RequestHandler = asyncHandler(async (req, res) => {
 
 export const updateTask: RequestHandler = asyncHandler(async (req, res) => {
   // #region agent log
-  fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'task.controller.ts:98',message:'updateTask controller entry',data:{id:req.params.id,body:JSON.stringify(req.body),hasThumbnailUrl:'thumbnail_url' in req.body,thumbnailUrl:req.body.thumbnail_url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  try {
+    const fs = require('fs');
+    const logDir = '/app/.cursor';
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+    const logEntry = JSON.stringify({location:'task.controller.ts:98',message:'updateTask controller entry',data:{id:req.params.id,body:JSON.stringify(req.body),hasThumbnailUrl:'thumbnail_url' in req.body,thumbnailUrl:req.body.thumbnail_url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'}) + '\n';
+    fs.appendFileSync('/app/.cursor/debug.log', logEntry);
+  } catch (e) {}
   // #endregion
   const locationId = req.body.locationId ?? req.body.location_id;
   if (locationId !== undefined) {
@@ -114,7 +120,11 @@ export const updateTask: RequestHandler = asyncHandler(async (req, res) => {
 
   const task = await updateTaskService(req.params.id, req.body);
   // #region agent log
-  fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'task.controller.ts:112',message:'updateTask service result',data:{task:task ? JSON.stringify(task) : null,thumbnailUrl:task?.thumbnail_url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  try {
+    const fs = require('fs');
+    const logEntry = JSON.stringify({location:'task.controller.ts:112',message:'updateTask service result',data:{task:task ? JSON.stringify(task) : null,thumbnailUrl:task?.thumbnail_url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'}) + '\n';
+    fs.appendFileSync('/app/.cursor/debug.log', logEntry);
+  } catch (e) {}
   // #endregion
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
