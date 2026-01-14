@@ -9,30 +9,29 @@ import numpy as np
 import os
 
 def create_gradient_background(size):
-    """Create a diagonal gradient background (135 degrees from top-left to bottom-right)."""
+    """Create a vertical gradient background (from top to bottom)."""
     # Create gradient using numpy for better performance
     img = np.zeros((size, size, 3), dtype=np.uint8)
     
     # Gradient colors based on the image description
-    # Top-left: darker teal-green (#3D8277)
+    # Top: darker green
     r1, g1, b1 = 0x3D, 0x82, 0x77
-    # Bottom-right: lighter lime-green (#8BC34A)
+    # Bottom: lighter, more yellowish-green
     r2, g2, b2 = 0x8B, 0xC3, 0x4A
     
-    # Create diagonal gradient (135 degrees - from top-left to bottom-right)
+    # Create vertical gradient (from top to bottom)
     for y in range(size):
-        for x in range(size):
-            # Calculate diagonal position (0.0 to 1.0)
-            # Normalize: distance from top-left corner along diagonal
-            diag = (x + y) / (size * 2 - 2) if size > 1 else 0
-            diag = max(0, min(1, diag))  # Clamp to [0, 1]
-            
-            # Interpolate colors
-            r = int(r1 + (r2 - r1) * diag)
-            g = int(g1 + (g2 - g1) * diag)
-            b = int(b1 + (b2 - b1) * diag)
-            
-            img[y, x] = [r, g, b]
+        # Calculate vertical position (0.0 at top to 1.0 at bottom)
+        vertical = y / (size - 1) if size > 1 else 0
+        vertical = max(0, min(1, vertical))  # Clamp to [0, 1]
+        
+        # Interpolate colors
+        r = int(r1 + (r2 - r1) * vertical)
+        g = int(g1 + (g2 - g1) * vertical)
+        b = int(b1 + (b2 - b1) * vertical)
+        
+        # Apply same color to entire row
+        img[y, :] = [r, g, b]
     
     return Image.fromarray(img, 'RGB')
 
@@ -68,41 +67,40 @@ def draw_number_4(draw, size, font):
     }
 
 def draw_tree_elements(draw, size, number4_bbox):
-    """Draw the tree/arrow elements in upper right, integrated with the "4"."""
+    """Draw the tree/arrow elements in upper right quadrant, slightly overlapping the "4"."""
     # Three overlapping green triangles with transparency
-    # Colors from the image description - more vibrant greens
+    # Colors from the image description - light green
     tree_colors = [
         (140, 198, 63, 220),   # Medium-dark green (#8CC63F) - innermost/leftmost
         (170, 221, 92, 200),   # Lighter green (#AADD5C) - middle
         (204, 255, 128, 180),  # Lightest green (#CCFF80) - outermost/rightmost
     ]
     
-    # Position triangles to integrate with the "4"
-    # The triangles should start from the upper right part of the "4"
-    # where the diagonal and vertical strokes meet
-    # Base should connect with the "4" at approximately 65-75% of the "4" width from left
-    number4_center_x = number4_bbox['x'] + number4_bbox['width'] / 2
-    number4_top_y = number4_bbox['top']
+    # Position triangles in the upper right quadrant
+    # They should slightly overlap the "4" but be primarily in the upper right area
+    number4_right = number4_bbox['right']
+    number4_top = number4_bbox['top']
     
-    # Position: start from upper right of "4", extend upward and right
-    base_x = int(number4_center_x + number4_bbox['width'] * 0.15)  # Slightly right of center
-    base_y = int(number4_top_y + number4_bbox['height'] * 0.15)  # Upper part of "4"
+    # Position in upper right quadrant: start from around 60-70% of width, top 20-30% of height
+    # Base should be positioned to slightly overlap with the "4"
+    base_x = int(size * 0.55)  # Start in upper right quadrant
+    base_y = int(size * 0.25)  # Upper part of icon
     
-    triangle_base_width = int(size * 0.25)  # Width of triangle base
-    triangle_height = int(size * 0.20)  # Height of triangles
+    triangle_base_width = int(size * 0.22)  # Width of triangle base
+    triangle_height = int(size * 0.18)  # Height of triangles
     
     for i, color in enumerate(tree_colors):
         # Offset each triangle slightly to create layering effect
-        # Each triangle is offset to the right and slightly up
-        offset_x = i * (triangle_base_width // 5)
-        offset_y = -i * (triangle_height // 8)
+        # Each triangle is offset to the right and slightly up for 3D effect
+        offset_x = i * (triangle_base_width // 6)
+        offset_y = -i * (triangle_height // 10)
         
         # Triangle points: 
-        # - Base connects with the "4" (bottom)
-        # - Point extends upward and to the right (top)
+        # - Base at bottom (slightly overlapping "4")
+        # - Point extends upward and to the right (pointing up-right)
         # The triangles should form a tree/arrow shape pointing up-right
         points = [
-            (base_x + offset_x, base_y + triangle_height + offset_y),  # Bottom left (connects with "4")
+            (base_x + offset_x, base_y + triangle_height + offset_y),  # Bottom left
             (base_x + triangle_base_width + offset_x, base_y + triangle_height + offset_y),  # Bottom right
             (base_x + triangle_base_width // 2 + offset_x, base_y + offset_y),  # Top point (arrow tip)
         ]

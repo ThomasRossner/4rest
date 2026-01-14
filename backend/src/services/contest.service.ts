@@ -239,12 +239,12 @@ export async function getAllUserContests(userId: string): Promise<Contest[]> {
 }
 
 /**
- * Ruft alle Contests für Mitarbeitende ab (nur Contests mit Gästen und Stakeholdern)
+ * Ruft alle Contests für Front Office ab (nur Contests mit Gästen und Stakeholdern)
  */
 export async function getEmployeeContests(userId: string): Promise<Contest[]> {
   const db = getPool();
   
-  // Hole alle Contests, die der Mitarbeitende erstellt hat
+  // Hole alle Contests, die der Front Office Mitarbeiter erstellt hat
   // UND die mindestens einen Teilnehmer haben, der Gast oder Stakeholder ist
   const result = await db.query(
     `SELECT DISTINCT c.* 

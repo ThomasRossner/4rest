@@ -323,7 +323,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
                 <p>{t('contests.create.noUsers', 'Keine Benutzer gefunden')}</p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginTop: 'var(--spacing-xs)' }}>
                   Filter: {roleFilter === 'all' ? 'Alle Rollen' : roleFilter}
-                  {onlyEmployeeParticipants && ' (nur Mitarbeitende)'}
+                  {onlyEmployeeParticipants && ' (nur Front Office)'}
                 </p>
               </div>
             ) : (
