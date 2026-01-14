@@ -8462,10 +8462,23 @@ function TeamManagementSection({
     link.click();
   };
 
-  if (loading) {
+  if (loading || teamsLoading) {
     return (
       <section className="admin-section">
         <div className="admin-loading">{t('common.loading')}</div>
+      </section>
+    );
+  }
+
+  if (teamsError) {
+    return (
+      <section className="admin-section">
+        <div className="admin-error">
+          Fehler beim Laden der Teams: {teamsError instanceof Error ? teamsError.message : 'Unknown error'}
+        </div>
+        <button className="admin-button" onClick={() => refetchTeams()}>
+          Erneut versuchen
+        </button>
       </section>
     );
   }
@@ -8801,10 +8814,23 @@ function ContestManagementSection({
     link.click();
   };
 
-  if (loading) {
+  if (loading || contestsLoading) {
     return (
       <section className="admin-section">
         <div className="admin-loading">{t('common.loading')}</div>
+      </section>
+    );
+  }
+
+  if (contestsError) {
+    return (
+      <section className="admin-section">
+        <div className="admin-error">
+          Fehler beim Laden der Contests: {contestsError instanceof Error ? contestsError.message : 'Unknown error'}
+        </div>
+        <button className="admin-button" onClick={() => refetchContests()}>
+          Erneut versuchen
+        </button>
       </section>
     );
   }

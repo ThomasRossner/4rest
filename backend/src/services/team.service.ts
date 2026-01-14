@@ -761,15 +761,20 @@ export async function validateTeamRegistrationToken(qrToken: string): Promise<st
 export async function getAllTeams(): Promise<Team[]> {
   const db = getPool();
   
-  const result = await db.query(
-    `SELECT t.*, u.name as creator_name, u.email as creator_email,
-     (SELECT COUNT(*) FROM team_members WHERE team_id = t.id) as member_count
-     FROM teams t
-     INNER JOIN users u ON u.id = t.created_by
-     ORDER BY t.created_at DESC`
-  );
-  
-  return result.rows;
+  try {
+    const result = await db.query(
+      `SELECT t.*, u.name as creator_name, u.email as creator_email,
+       (SELECT COUNT(*)::integer FROM team_members WHERE team_id = t.id) as member_count
+       FROM teams t
+       LEFT JOIN users u ON u.id = t.created_by
+       ORDER BY t.created_at DESC`
+    );
+    
+    return result.rows;
+  } catch (error: any) {
+    console.error('Error in getAllTeams:', error);
+    throw error;
+  }
 }
 
 /**

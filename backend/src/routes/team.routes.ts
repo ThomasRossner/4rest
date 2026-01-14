@@ -26,6 +26,11 @@ router.post('/create', authenticate, createTeamController);
 router.post('/join', authenticate, joinTeamController);
 router.get('/', authenticate, getUserTeamsController);
 router.get('/active', authenticate, getUserActiveTeamController);
+
+// Admin routes - MUST come before /:id routes
+router.get('/all', authenticate, requireRole('administrator'), getAllTeamsController);
+
+// Dynamic routes - must come after specific routes
 router.get('/:id', authenticate, getTeamDetailsController);
 router.get('/:id/total-points', authenticate, getTeamTotalPointsController);
 router.get('/:id/ranking', authenticate, getTeamRankingController);
@@ -35,8 +40,7 @@ router.post('/:id/leave', authenticate, leaveTeamController);
 router.delete('/:id', authenticate, dissolveTeamController);
 router.get('/:id/qr-code', authenticate, getTeamQrCodeController);
 
-// Admin routes
-router.get('/all', authenticate, requireRole('administrator'), getAllTeamsController);
+// Admin routes for specific teams
 router.put('/:id', authenticate, requireRole('administrator'), updateTeamController);
 router.post('/:id/registration/enable', authenticate, requireRole('administrator'), enableTeamRegistrationController);
 router.get('/:id/registration-qr-code', authenticate, requireRole('administrator'), getTeamRegistrationQrCodeController);

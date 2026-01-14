@@ -25,14 +25,18 @@ router.post('/join', authenticate, joinContestController);
 router.get('/', authenticate, getUserContestsController);
 router.get('/all', authenticate, getAllUserContestsController);
 router.get('/employee', authenticate, getEmployeeContestsController);
+
+// Admin routes - MUST come before /:id routes
+router.get('/admin/all', authenticate, requireRole('administrator'), getAllContestsAdminController);
+
+// Dynamic routes - must come after specific routes
 router.get('/:id', authenticate, getContestDetailsController);
 router.get('/:id/ranking', authenticate, getContestRankingController);
 router.delete('/:id', authenticate, dissolveContestController);
 router.post('/:id/leave', authenticate, leaveContestController);
 router.get('/:id/qr-code', authenticate, getContestQrCodeController);
 
-// Admin routes
-router.get('/admin/all', authenticate, requireRole('administrator'), getAllContestsAdminController);
+// Admin routes for specific contests
 router.put('/:id', authenticate, requireRole('administrator'), updateContestController);
 router.post('/:id/registration/enable', authenticate, requireRole('administrator'), enableContestRegistrationController);
 router.get('/:id/registration-qr-code', authenticate, requireRole('administrator'), getContestRegistrationQrCodeController);
