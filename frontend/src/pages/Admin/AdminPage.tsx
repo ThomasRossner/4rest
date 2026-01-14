@@ -2613,6 +2613,7 @@ function AdminPage() {
         location: (task as any).location ?? null,
         active: task.active ?? true,
         recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+        thumbnail_url: (task as any).thumbnail_url ?? null,
       };
     });
   }, [adminTasks]);
