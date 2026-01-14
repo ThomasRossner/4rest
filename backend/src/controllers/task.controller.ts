@@ -97,14 +97,15 @@ export const createTask: RequestHandler = asyncHandler(async (req, res) => {
 
 export const updateTask: RequestHandler = asyncHandler(async (req, res) => {
   // #region agent log
+  const logData = {location:'task.controller.ts:98',message:'updateTask controller entry',data:{id:req.params.id,bodyKeys:Object.keys(req.body),hasThumbnailUrl:'thumbnail_url' in req.body,thumbnailUrl:req.body.thumbnail_url,thumbnailUrlType:typeof req.body.thumbnail_url,bodyString:JSON.stringify(req.body)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'};
+  console.log('[DEBUG]', JSON.stringify(logData));
   try {
     const fs = require('fs');
     const logDir = '/app/.cursor';
     if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-    const logEntry = JSON.stringify({location:'task.controller.ts:98',message:'updateTask controller entry',data:{id:req.params.id,bodyKeys:Object.keys(req.body),hasThumbnailUrl:'thumbnail_url' in req.body,thumbnailUrl:req.body.thumbnail_url,thumbnailUrlType:typeof req.body.thumbnail_url,bodyString:JSON.stringify(req.body)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'}) + '\n';
-    fs.appendFileSync('/app/.cursor/debug.log', logEntry);
+    fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
   } catch (e) {
-    console.error('Debug log error:', e);
+    console.error('[DEBUG] Log error:', e);
   }
   // #endregion
   const locationId = req.body.locationId ?? req.body.location_id;
