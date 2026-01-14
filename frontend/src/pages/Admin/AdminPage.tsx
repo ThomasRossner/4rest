@@ -3188,6 +3188,8 @@ function AdminPage() {
         }
         return undefined;
       })(),
+      thumbnailFile: null,
+      thumbnailUrl: (task as any).thumbnail_url ?? null,
     });
   }, [isEditingTask, editingTaskId, existingTemplates]);
 
