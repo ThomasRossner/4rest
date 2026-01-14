@@ -3272,6 +3272,18 @@ function AdminPage() {
         return;
       }
 
+      // Upload thumbnail if a new file was selected
+      let thumbnailUrl = taskForm.thumbnailUrl;
+      if (taskForm.thumbnailFile) {
+        try {
+          const uploadResult = await api.uploadTaskThumbnail(taskForm.thumbnailFile);
+          thumbnailUrl = uploadResult.thumbnail_url;
+        } catch (error: any) {
+          setTaskMessage({ type: 'error', text: error?.message || 'Failed to upload thumbnail.' });
+          return;
+        }
+      }
+
       const prepareVideoData = async (taskType: string) => {
         if (taskType === 'quiz' || taskType === 'article_quiz') {
           const quizPayload = buildQuizPayload(taskForm.quizQuestions);
