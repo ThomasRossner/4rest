@@ -38,5 +38,5 @@ END $$;
 -- WHERE 'Mitarbeitende' = ANY(zielgruppe);
 
 -- Update comments
-COMMENT ON TYPE task_zielgruppe_enum IS 'Zielgruppe der Aufgabe: Front Office, Gäste, Stakeholder';
-COMMENT ON TYPE reward_zielgruppe_enum IS 'Zielgruppe der Belohnung: Front Office, Gäste, Stakeholder';
+COMMENT ON TYPE task_zielgruppe_enum IS 'Zielgruppe der Aufgabe: Front Office, Gäste';
+COMMENT ON TYPE reward_zielgruppe_enum IS 'Zielgruppe der Belohnung: Front Office, Gäste';

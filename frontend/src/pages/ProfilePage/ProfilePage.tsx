@@ -47,7 +47,7 @@ function ProfilePage() {
           // This is a simplified approach - in production, you might want a dedicated API endpoint
           return allContests.filter((contest: any) => {
             // For now, we'll show all contests for employees in profile
-            // The employee-contests page will show only guest/stakeholder contests
+            // The employee-contests page will show only guest contests
             return true; // Show all contests in profile for employees
           });
         });

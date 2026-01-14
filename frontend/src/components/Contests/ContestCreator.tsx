@@ -51,7 +51,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
         
         console.log('[ContestCreator] Received users data:', data);
         
-        // If onlyEmployeeParticipants is true, filter out guests and stakeholders
+        // If onlyEmployeeParticipants is true, filter out guests
         if (onlyEmployeeParticipants && data?.users) {
           const filtered = {
             ...data,

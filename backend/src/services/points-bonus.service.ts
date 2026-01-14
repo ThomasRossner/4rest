@@ -84,7 +84,7 @@ export async function redeemPointsBonusQr(
     throw new Error('User not found');
   }
 
-  // Only guests (guest or stakeholder role) can redeem points bonus QR codes
+  // Only guests can redeem points bonus QR codes
   // Employees and administrators cannot redeem QR codes they generate
   if (user.role === 'front_office' || user.role === 'administrator') {
     throw new Error('Only guests can redeem points bonus QR codes');
