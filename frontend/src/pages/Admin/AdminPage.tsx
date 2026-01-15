@@ -231,19 +231,16 @@ const defaultConfirmDialogState: ConfirmDialogState = {
 
 const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
   const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
-  const elementIcon = thumbnailUrl ? (
-    <img src={thumbnailUrl} alt="" style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '4px' }} />
+  const displayIcon = thumbnailUrl ? (
+    <img src={thumbnailUrl} alt={type} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
   ) : (
-    typeIcon
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '24px' }}>
+      {typeIcon}
+    </span>
   );
   return (
     <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '20px' }}>
-        {typeIcon}
-      </span>
-      <span className="admin-type-icon" aria-hidden="true">
-        {elementIcon}
-      </span>
+      {displayIcon}
       <span>{type.toUpperCase()}</span>
     </div>
   );
@@ -251,19 +248,16 @@ const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: st
 
 const RewardTypeBadge = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
   const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
-  const elementIcon = thumbnailUrl ? (
-    <img src={thumbnailUrl} alt="" style={{ width: '20px', height: '20px', objectFit: 'cover', borderRadius: '4px' }} />
+  const displayIcon = thumbnailUrl ? (
+    <img src={thumbnailUrl} alt={type} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
   ) : (
-    typeIcon
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '24px' }}>
+      {typeIcon}
+    </span>
   );
   return (
     <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '20px' }}>
-        {typeIcon}
-      </span>
-      <span className="admin-type-icon" aria-hidden="true">
-        {elementIcon}
-      </span>
+      {displayIcon}
       <span>{type.toUpperCase().replace(/_/g, ' ')}</span>
     </div>
   );
