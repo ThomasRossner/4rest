@@ -9006,7 +9006,7 @@ const goToRewardCreation = () => {
                     >
                       {t('admin.team.manage.list.active')} {teamFilterStatus && '✓'}
                     </th>
-                    <th>{t('common.actions')}</th>
+                    <th>Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -9401,7 +9401,7 @@ const goToRewardCreation = () => {
                     >
                       {t('admin.contest.manage.list.active')} {contestFilterStatus && '✓'}
                     </th>
-                    <th>{t('common.actions')}</th>
+                    <th>Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
