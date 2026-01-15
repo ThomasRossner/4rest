@@ -1097,16 +1097,17 @@
 }
 
 /* Additional metadata columns (Kategorie, Schwierigkeit, etc.) - very compact */
-.admin-table th:nth-child(9),
-.admin-table td:nth-child(9),
-.admin-table th:nth-child(10),
-.admin-table td:nth-child(10),
-.admin-table th:nth-child(11),
-.admin-table td:nth-child(11),
-.admin-table th:nth-child(12),
-.admin-table td:nth-child(12),
-.admin-table th:nth-child(13),
-.admin-table td:nth-child(13) {
+/* General column styling - but never apply to last child (Actions column) */
+.admin-table th:nth-child(9):not(:last-child),
+.admin-table td:nth-child(9):not(:last-child),
+.admin-table th:nth-child(10):not(:last-child),
+.admin-table td:nth-child(10):not(:last-child),
+.admin-table th:nth-child(11):not(:last-child),
+.admin-table td:nth-child(11):not(:last-child),
+.admin-table th:nth-child(12):not(:last-child),
+.admin-table td:nth-child(12):not(:last-child),
+.admin-table th:nth-child(13):not(:last-child),
+.admin-table td:nth-child(13):not(:last-child) {
   width: 6%;
   min-width: 4rem;
   /* max-width removed to allow more flexibility */
@@ -1117,10 +1118,13 @@
 }
 
 /* Actions column - fills remaining space */
+/* CRITICAL: Always ensure Actions column is visible - never hide it */
 .admin-table th:last-child,
 .admin-table td:last-child {
   width: auto;
   min-width: 14rem;
+  display: table-cell !important;
+  visibility: visible !important;
   /* max-width removed to allow Actions column to fill remaining space */
 }
 
@@ -1306,14 +1310,16 @@
 /* Priority 1: Hide least important columns first (Event/Gruppe, Ort/Werkzeug, Zeitaufwand, Schwierigkeit, Kategorie) */
 @media (max-width: 1600px) {
   /* Tasks: Hide Event/Gruppe (13th column) */
-  .admin-table th:nth-child(13),
-  .admin-table td:nth-child(13) {
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(13):not(:last-child),
+  .admin-table td:nth-child(13):not(:last-child) {
     display: none;
   }
   
   /* Rewards: Hide Mögliche Punkte (13th column) */
-  .admin-table th:nth-child(13),
-  .admin-table td:nth-child(13) {
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(13):not(:last-child),
+  .admin-table td:nth-child(13):not(:last-child) {
     display: none;
   }
 }
@@ -1321,24 +1327,26 @@
 /* Priority 2: Hide Ort/Werkzeug, Zeitaufwand, Schwierigkeit, Kategorie */
 @media (max-width: 1400px) {
   /* Tasks: Hide Ort/Werkzeug (12th), Zeitaufwand (11th), Schwierigkeit (10th), Kategorie (9th) */
-  .admin-table th:nth-child(9),
-  .admin-table td:nth-child(9),
-  .admin-table th:nth-child(10),
-  .admin-table td:nth-child(10),
-  .admin-table th:nth-child(11),
-  .admin-table td:nth-child(11),
-  .admin-table th:nth-child(12),
-  .admin-table td:nth-child(12) {
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(9):not(:last-child),
+  .admin-table td:nth-child(9):not(:last-child),
+  .admin-table th:nth-child(10):not(:last-child),
+  .admin-table td:nth-child(10):not(:last-child),
+  .admin-table th:nth-child(11):not(:last-child),
+  .admin-table td:nth-child(11):not(:last-child),
+  .admin-table th:nth-child(12):not(:last-child),
+  .admin-table td:nth-child(12):not(:last-child) {
     display: none;
   }
   
   /* Rewards: Hide Event/Gruppe (12th), Kategorie (11th), Art (10th) */
-  .admin-table th:nth-child(10),
-  .admin-table td:nth-child(10),
-  .admin-table th:nth-child(11),
-  .admin-table td:nth-child(11),
-  .admin-table th:nth-child(12),
-  .admin-table td:nth-child(12) {
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(10):not(:last-child),
+  .admin-table td:nth-child(10):not(:last-child),
+  .admin-table th:nth-child(11):not(:last-child),
+  .admin-table td:nth-child(11):not(:last-child),
+  .admin-table th:nth-child(12):not(:last-child),
+  .admin-table td:nth-child(12):not(:last-child) {
     display: none;
   }
 }
