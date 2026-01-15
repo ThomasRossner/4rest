@@ -2480,1707 +2480,6 @@ const ConfirmDialog = ({
   );
 };
 
-// Team Management Component
-function TeamManagementSection({
-  editingTeamId,
-  setEditingTeamId,
-  teamManagementMessage,
-  setTeamManagementMessage,
-  teamRegistrationEnabled,
-  setTeamRegistrationEnabled,
-  teamRegistrationQrCode,
-  setTeamRegistrationQrCode,
-  teamJoinQrCode,
-  setTeamJoinQrCode,
-  includeInactiveTeams,
-  setIncludeInactiveTeams,
-  selectedTeamIds,
-  setSelectedTeamIds,
-  teamConfirm,
-  setTeamConfirm,
-  teamFilterStatus,
-  setTeamFilterStatus,
-  teamFilterName,
-  setTeamFilterName,
-  teamFilterCreator,
-  setTeamFilterCreator,
-  teamFilterDropdown,
-  setTeamFilterDropdown,
-  teamFilterDropdownPosition,
-  setTeamFilterDropdownPosition,
-  teamFilterDropdownRef,
-  isMobileTeamFilterOpen,
-  setIsMobileTeamFilterOpen,
-  onBack,
-}: {
-  editingTeamId: string | null;
-  setEditingTeamId: (id: string | null) => void;
-  teamManagementMessage: { type: 'error' | 'success'; text: string } | null;
-  setTeamManagementMessage: (msg: { type: 'error' | 'success'; text: string } | null) => void;
-  teamRegistrationEnabled: boolean;
-  setTeamRegistrationEnabled: (enabled: boolean) => void;
-  teamRegistrationQrCode: string | null;
-  setTeamRegistrationQrCode: (code: string | null) => void;
-  teamJoinQrCode: string | null;
-  setTeamJoinQrCode: (code: string | null) => void;
-  includeInactiveTeams: boolean;
-  setIncludeInactiveTeams: (value: boolean) => void;
-  selectedTeamIds: string[];
-  setSelectedTeamIds: React.Dispatch<React.SetStateAction<string[]>>;
-  teamConfirm: ConfirmDialogState;
-  setTeamConfirm: (state: ConfirmDialogState) => void;
-  teamFilterStatus: 'active' | 'inactive' | null;
-  setTeamFilterStatus: (status: 'active' | 'inactive' | null) => void;
-  teamFilterName: string;
-  setTeamFilterName: (name: string) => void;
-  teamFilterCreator: string | null;
-  setTeamFilterCreator: (creator: string | null) => void;
-  teamFilterDropdown: 'status' | 'name' | 'creator' | null;
-  setTeamFilterDropdown: (dropdown: 'status' | 'name' | 'creator' | null) => void;
-  teamFilterDropdownPosition: { top: number; left: number } | null;
-  setTeamFilterDropdownPosition: (position: { top: number; left: number } | null) => void;
-  teamFilterDropdownRef: React.RefObject<HTMLDivElement>;
-  isMobileTeamFilterOpen: boolean;
-  setIsMobileTeamFilterOpen: (open: boolean) => void;
-  onBack: () => void;
-}) {
-  const { t } = useTranslation();
-  const showToast = useToastStore((s) => s.showToast);
-  const [teams, setTeams] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingTeam, setEditingTeam] = useState<any>(null);
-  const [teamName, setTeamName] = useState('');
-  const [teamActive, setTeamActive] = useState(true);
-
-  const { data: teamsData, isLoading: teamsLoading, error: teamsError, refetch: refetchTeams } = useQuery({
-    queryKey: ['admin-teams', includeInactiveTeams],
-    queryFn: async () => {
-      return await api.getAllTeams({ includeInactive: includeInactiveTeams });
-    },
-  });
-
-  useEffect(() => {
-    if (teamsData) {
-      setTeams(teamsData);
-      setLoading(false);
-    } else if (teamsError) {
-      setLoading(false);
-      setTeamManagementMessage({ type: 'error', text: teamsError instanceof Error ? teamsError.message : 'Failed to load teams' });
-    } else if (!teamsLoading) {
-      setLoading(false);
-    }
-  }, [teamsData, teamsLoading, teamsError]);
-
-  useEffect(() => {
-    if (editingTeamId && teams.length > 0) {
-      const team = teams.find((t) => t.id === editingTeamId);
-      if (team) {
-        setEditingTeam(team);
-        setTeamName(team.name || '');
-        setTeamActive(team.active ?? true);
-        loadTeamQrCodes(team.id);
-      }
-    } else {
-      setEditingTeam(null);
-      setTeamName('');
-      setTeamActive(true);
-      setTeamRegistrationEnabled(false);
-      setTeamRegistrationQrCode(null);
-      setTeamJoinQrCode(null);
-    }
-  }, [editingTeamId, teams]);
-
-  const loadTeamQrCodes = async (teamId: string) => {
-    try {
-      // Load join QR code for existing users
-      const joinQr = await api.getTeamQrCode(teamId);
-      if (joinQr?.qrToken) {
-        setTeamJoinQrCode(joinQr.qrToken);
-      }
-
-      // Load registration QR code
-      try {
-        const regQr = await api.getTeamRegistrationQrCode(teamId);
-        if (regQr?.qrToken) {
-          setTeamRegistrationQrCode(regQr.qrToken);
-          setTeamRegistrationEnabled(regQr.enabled);
-        }
-      } catch (err) {
-        // Registration QR code might not exist yet
-        setTeamRegistrationQrCode(null);
-        setTeamRegistrationEnabled(false);
-      }
-    } catch (err: any) {
-      console.error('Failed to load team QR codes:', err);
-    }
-  };
-
-  const handleSaveTeam = async () => {
-    if (!editingTeamId) return;
-
-    try {
-      await api.updateTeam(editingTeamId, {
-        name: teamName || null,
-        active: teamActive,
-      });
-      setTeamManagementMessage({ type: 'success', text: t('admin.team.manage.edit.saved') });
-      await refetchTeams();
-      showToast({ type: 'success', title: t('admin.team.manage.edit.saved') });
-    } catch (err: any) {
-      const errorMsg = err?.response?.data?.error || t('admin.team.manage.edit.error');
-      setTeamManagementMessage({ type: 'error', text: errorMsg });
-      showToast({ type: 'error', title: errorMsg });
-    }
-  };
-
-  const handleToggleRegistration = async (enabled: boolean) => {
-    if (!editingTeamId) return;
-
-    try {
-      await api.enableTeamRegistration(editingTeamId, enabled);
-      setTeamRegistrationEnabled(enabled);
-      if (enabled) {
-        // Reload QR code
-        const regQr = await api.getTeamRegistrationQrCode(editingTeamId);
-        if (regQr?.qrToken) {
-          setTeamRegistrationQrCode(regQr.qrToken);
-        }
-      }
-      showToast({
-        type: 'success',
-        title: enabled ? t('admin.team.manage.qrCodes.registration.enabled') : t('admin.team.manage.qrCodes.registration.disabled'),
-      });
-    } catch (err: any) {
-      const errorMsg = err?.response?.data?.error || 'Failed to toggle registration';
-      showToast({ type: 'error', title: errorMsg });
-    }
-  };
-
-  const downloadQrCode = (qrToken: string, filename: string) => {
-    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
-    const qrUrl = qrToken.startsWith('http') ? qrToken : `${frontendUrl}/register?team=${qrToken}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}`;
-    
-    const link = document.createElement('a');
-    link.href = qrImageUrl;
-    link.download = filename;
-    link.click();
-  };
-
-  // Filter and sort teams
-  const filteredAndSortedTeams = useMemo(() => {
-    let filtered = teams;
-    
-    if (teamFilterStatus) {
-      filtered = filtered.filter((team) => 
-        teamFilterStatus === 'active' ? team.active : !team.active
-      );
-    }
-    
-    if (teamFilterName.trim()) {
-      const searchTerm = teamFilterName.toLowerCase().trim();
-      filtered = filtered.filter((team) => 
-        team.name?.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    if (teamFilterCreator) {
-      filtered = filtered.filter((team) => 
-        team.creator_name === teamFilterCreator
-      );
-    }
-    
-    // Sort by created_at DESC (newest first), then alphabetically by name
-    filtered.sort((a, b) => {
-      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
-      if (bCreated !== aCreated) {
-        return bCreated - aCreated; // DESC
-      }
-      return (a.name || '').localeCompare(b.name || '');
-    });
-    
-    return filtered;
-  }, [teams, teamFilterStatus, teamFilterName, teamFilterCreator]);
-
-  // Filter options
-  const teamFilterOptions = useMemo(() => {
-    const creators = new Map<string, string>();
-    
-    teams.forEach((team) => {
-      if (team.creator_name) {
-        creators.set(team.creator_name, team.creator_name);
-      }
-    });
-    
-    return {
-      creators: Array.from(creators.entries()).map(([name, value]) => ({ id: name, name: value })),
-      statuses: ['active', 'inactive'] as ('active' | 'inactive')[],
-    };
-  }, [teams]);
-
-  // Selection helpers
-  const toggleTeamSelection = (teamId: string, checked: boolean) => {
-    setSelectedTeamIds((prev) => {
-      if (checked) {
-        return [...prev, teamId];
-      } else {
-        return prev.filter((id) => id !== teamId);
-      }
-    });
-  };
-
-  const allTeamsSelected = filteredAndSortedTeams.length > 0 && 
-    selectedTeamIds.length === filteredAndSortedTeams.length;
-  const hasTeamSelection = selectedTeamIds.length > 0;
-
-  // Bulk operations
-  const handleTeamBulkStatus = async (active: boolean) => {
-    if (!selectedTeamIds.length) return;
-    try {
-      setTeamManagementMessage(null);
-      await api.bulkUpdateTeamsStatus(selectedTeamIds, active);
-      setTeamManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.selectedTeamsActivated') : t('admin.messages.selectedTeamsDeactivated'),
-      });
-      setSelectedTeamIds([]);
-      void refetchTeams();
-    } catch (error: any) {
-      setTeamManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to update selected teams.',
-      });
-    }
-  };
-
-  const handleTeamBulkDelete = async () => {
-    if (!selectedTeamIds.length) return;
-    setTeamConfirm({
-      visible: true,
-      title: t('admin.confirm.deleteSelectedTeams.title'),
-      description: t('admin.confirm.deleteSelectedTeams.description'),
-      confirmLabel: t('admin.confirm.deleteTeams'),
-      confirmTone: 'danger',
-      onConfirm: async () => {
-        try {
-          setTeamManagementMessage(null);
-          await api.bulkDeleteTeams(selectedTeamIds);
-          setTeamManagementMessage({
-            type: 'success',
-            text: t('admin.messages.selectedTeamsDeleted'),
-          });
-          setSelectedTeamIds([]);
-          void refetchTeams();
-        } catch (error: any) {
-          setTeamManagementMessage({
-            type: 'error',
-            text: error?.message || t('admin.messages.failedToDeleteTeams'),
-          });
-        } finally {
-          setTeamConfirm(defaultConfirmDialogState);
-        }
-      },
-    });
-  };
-
-  const handleTeamStatusChange = async (teamId: string, active: boolean) => {
-    try {
-      setTeamManagementMessage(null);
-      await api.bulkUpdateTeamsStatus([teamId], active);
-      setTeamManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.teamActivated') : t('admin.messages.teamDeactivated'),
-      });
-      void refetchTeams();
-    } catch (error: any) {
-      setTeamManagementMessage({
-        type: 'error',
-        text: error?.message || t('admin.messages.failedToUpdateTeam'),
-      });
-    }
-  };
-
-  const handleTeamDelete = async (teamId: string) => {
-    setTeamConfirm({
-      visible: true,
-      title: t('admin.confirm.deleteTeamSingle.title'),
-      description: t('admin.confirm.deleteTeamSingle.description'),
-      confirmLabel: t('admin.confirm.deleteTeam'),
-      confirmTone: 'danger',
-      onConfirm: async () => {
-        try {
-          setTeamManagementMessage(null);
-          await api.bulkDeleteTeams([teamId]);
-          setTeamManagementMessage({
-            type: 'success',
-            text: 'Team deleted.',
-          });
-          if (editingTeamId === teamId) {
-            setEditingTeamId(null);
-          }
-          void refetchTeams();
-        } catch (error: any) {
-          setTeamManagementMessage({
-            type: 'error',
-            text: error?.message || t('admin.messages.failedToDeleteTeam'),
-          });
-        } finally {
-          setTeamConfirm(defaultConfirmDialogState);
-        }
-      },
-    });
-  };
-
-  if (loading || teamsLoading) {
-    return (
-      <section className="admin-section">
-        <div className="admin-loading">{t('common.loading')}</div>
-      </section>
-    );
-  }
-
-  if (teamsError) {
-    return (
-      <section className="admin-section">
-        <div className="admin-error">
-          Fehler beim Laden der Teams: {teamsError instanceof Error ? teamsError.message : 'Unknown error'}
-        </div>
-        <button className="admin-button" onClick={() => refetchTeams()}>
-          Erneut versuchen
-        </button>
-      </section>
-    );
-  }
-
-  if (editingTeamId && editingTeam) {
-    return (
-      <section className="admin-section">
-        <div className="admin-header">
-          <button className="admin-button admin-button-secondary" onClick={() => setEditingTeamId(null)}>
-            ← {t('common.back')}
-          </button>
-          <h2>{t('admin.team.manage.edit.title')}</h2>
-        </div>
-
-        {teamManagementMessage && (
-          <div className={`admin-message admin-message-${teamManagementMessage.type}`}>
-            {teamManagementMessage.text}
-          </div>
-        )}
-
-        <div className="admin-form-section">
-          <div className="admin-field">
-            <label>
-              {t('admin.team.manage.edit.name')}
-              <input
-                type="text"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder={t('admin.team.manage.edit.name')}
-              />
-            </label>
-          </div>
-
-          <div className="admin-field">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input
-                type="checkbox"
-                checked={teamActive}
-                onChange={(e) => setTeamActive(e.target.checked)}
-              />
-              {t('admin.team.manage.edit.active')}
-            </label>
-          </div>
-
-          <div style={{ marginTop: '2rem' }}>
-            <h3>{t('admin.team.manage.qrCodes.title')}</h3>
-
-            {/* Join QR Code for existing users */}
-            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
-              <h4>{t('admin.team.manage.qrCodes.joinExisting.title')}</h4>
-              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-                {t('admin.team.manage.qrCodes.joinExisting.description')}
-              </p>
-              {teamJoinQrCode && (
-                <div style={{ marginTop: '1rem' }}>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/teams/join?token=${teamJoinQrCode}`
-                    )}`}
-                    alt="Team Join QR Code"
-                    style={{ maxWidth: '200px' }}
-                  />
-                  <button
-                    className="admin-button admin-button-secondary"
-                    style={{ marginTop: '0.5rem', display: 'block' }}
-                    onClick={() => downloadQrCode(teamJoinQrCode!, 'team-join-qr.png')}
-                  >
-                    {t('admin.team.manage.qrCodes.joinExisting.download')}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Registration QR Code */}
-            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
-              <h4>{t('admin.team.manage.qrCodes.registration.title')}</h4>
-              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-                {t('admin.team.manage.qrCodes.registration.description')}
-              </p>
-              <div style={{ marginTop: '1rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={teamRegistrationEnabled}
-                    onChange={(e) => handleToggleRegistration(e.target.checked)}
-                  />
-                  {t('admin.team.manage.qrCodes.registration.enable')}
-                </label>
-              </div>
-              {teamRegistrationEnabled && teamRegistrationQrCode && (
-                <div style={{ marginTop: '1rem' }}>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/register?team=${teamRegistrationQrCode}`
-                    )}`}
-                    alt="Team Registration QR Code"
-                    style={{ maxWidth: '200px' }}
-                  />
-                  <button
-                    className="admin-button admin-button-secondary"
-                    style={{ marginTop: '0.5rem', display: 'block' }}
-                    onClick={() => downloadQrCode(teamRegistrationQrCode!, 'team-registration-qr.png')}
-                  >
-                    {t('admin.team.manage.qrCodes.registration.download')}
-                  </button>
-                </div>
-              )}
-              {teamRegistrationEnabled && !teamRegistrationQrCode && (
-                <p style={{ marginTop: '0.5rem', color: '#999' }}>
-                  {t('admin.team.manage.qrCodes.registration.notAvailable')}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-            <button className="admin-button admin-button-primary" onClick={handleSaveTeam}>
-              {t('admin.team.manage.edit.save')}
-            </button>
-            <button className="admin-button admin-button-secondary" onClick={() => setEditingTeamId(null)}>
-              {t('admin.team.manage.edit.cancel')}
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="admin-section">
-      <header className="admin-section-header">
-        <div>
-          <h2>{t('admin.team.manage.title')}</h2>
-          <p>{t('admin.team.manage.subtitle')}</p>
-        </div>
-        <div className="admin-actions">
-          {!editingTeamId && (
-            <button
-              className="admin-icon-button"
-              onClick={() => refetchTeams()}
-              title={t('admin.team.manage.refresh')}
-            >
-              <Icon name="refresh" />
-              <span className="sr-only">{t('admin.team.manage.refresh')}</span>
-            </button>
-          )}
-          <button
-            className="admin-icon-button"
-            onClick={() => {
-              if (editingTeamId) {
-                setEditingTeamId(null);
-              } else {
-                onBack();
-              }
-            }}
-            title={editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}
-          >
-            <Icon name="back" />
-            <span className="sr-only">{editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}</span>
-          </button>
-        </div>
-      </header>
-
-      {teamsLoading && <p>{t('admin.team.manage.loading')}</p>}
-      {Boolean(teamsError) && <p className="admin-error">{t('admin.team.manage.loadError')}</p>}
-
-      <div className="admin-management-card">
-        <div className="admin-management-top">
-          <div>
-            <h3>{t('admin.team.manage.existing.title')}</h3>
-            <p>{t('admin.team.manage.existing.subtitle')}</p>
-          </div>
-          <div className="admin-management-controls">
-            <label className="admin-toggle">
-              <input
-                type="checkbox"
-                className="admin-checkbox"
-                style={COMPACT_TOGGLE_STYLE}
-                checked={includeInactiveTeams}
-                onChange={(event) => {
-                  setIncludeInactiveTeams(event.target.checked);
-                  setSelectedTeamIds([]);
-                }}
-              />
-              <span>{t('admin.team.manage.showInactive')}</span>
-            </label>
-            <button
-              className="admin-mobile-filter-button"
-              type="button"
-              onClick={() => setIsMobileTeamFilterOpen(true)}
-              aria-label={t('admin.team.manage.openFilters')}
-            >
-              <Icon name="filter" />
-              {(teamFilterStatus || teamFilterName.trim() || teamFilterCreator) && (
-                <span className="admin-mobile-filter-badge">
-                  {[teamFilterStatus, teamFilterName.trim() ? 'name' : null, teamFilterCreator].filter(Boolean).length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-        {teamManagementMessage && (
-          <p
-            className={
-              teamManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
-            }
-          >
-            {teamManagementMessage.text}
-          </p>
-        )}
-        <div className="admin-management-actions">
-          <div className="admin-bulk-buttons">
-            <button
-              className="admin-action-button"
-              onClick={() => handleTeamBulkStatus(true)}
-              disabled={!hasTeamSelection}
-              type="button"
-            >
-              {t('admin.team.manage.activate')}
-            </button>
-            <button
-              className="admin-action-button"
-              onClick={() => handleTeamBulkStatus(false)}
-              disabled={!hasTeamSelection}
-              type="button"
-            >
-              {t('admin.team.manage.deactivate')}
-            </button>
-            <button
-              className="admin-action-button danger"
-              onClick={handleTeamBulkDelete}
-              disabled={!hasTeamSelection}
-              type="button"
-            >
-              {t('common.actions.delete', 'Löschen')}
-            </button>
-          </div>
-          <span className="admin-selection-count">
-            {hasTeamSelection
-              ? t('admin.team.manage.selectedCount', { count: selectedTeamIds.length })
-              : t('admin.team.manage.noSelection')}
-          </span>
-        </div>
-        <div className="admin-table-wrapper">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th style={{ width: '3rem' }}>
-                  <input
-                    type="checkbox"
-                    className="admin-checkbox"
-                    style={COMPACT_TOGGLE_STYLE}
-                    checked={allTeamsSelected && filteredAndSortedTeams.length > 0}
-                    disabled={!filteredAndSortedTeams.length}
-                    onChange={(event) =>
-                      setSelectedTeamIds(
-                        event.target.checked
-                          ? filteredAndSortedTeams.map((team) => team.id)
-                          : []
-                      )
-                    }
-                    aria-label={t('admin.team.manage.selectAll')}
-                  />
-                </th>
-                <th
-                  className="admin-filter-header"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
-                    setTeamFilterDropdown('name');
-                  }}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {t('admin.team.manage.list.name')} {teamFilterName && '✓'}
-                </th>
-                <th
-                  className="admin-filter-header"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
-                    setTeamFilterDropdown('creator');
-                  }}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {t('admin.team.manage.list.creator')} {teamFilterCreator && '✓'}
-                </th>
-                <th>{t('admin.team.manage.list.members')}</th>
-                <th>{t('admin.team.manage.list.points')}</th>
-                <th>{t('admin.team.manage.list.createdAt')}</th>
-                <th>{t('admin.team.manage.list.updatedAt')}</th>
-                <th
-                  className="admin-filter-header"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
-                    setTeamFilterDropdown('status');
-                  }}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {t('admin.team.manage.list.active')} {teamFilterStatus && '✓'}
-                </th>
-                <th>{t('common.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSortedTeams.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="admin-table-empty">
-                    {t('admin.team.manage.list.noTeams')}
-                  </td>
-                </tr>
-              ) : (
-                filteredAndSortedTeams.map((team) => {
-                  const isSelected = selectedTeamIds.includes(team.id);
-                  return (
-                    <tr key={team.id}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          className="admin-checkbox"
-                          style={COMPACT_TOGGLE_STYLE}
-                          checked={isSelected}
-                          onChange={(event) =>
-                            toggleTeamSelection(team.id, event.target.checked)
-                          }
-                          aria-label={`Select team ${team.name}`}
-                        />
-                      </td>
-                      <td data-label={t('admin.team.manage.list.name')}>
-                        <div className="admin-table-primary">
-                          <span className="admin-table-title">
-                            {team.name || t('admin.team.manage.list.untitled')}
-                          </span>
-                        </div>
-                      </td>
-                      <td data-label={t('admin.team.manage.list.creator')}>
-                        <span className="admin-table-secondary">
-                          {team.creator_name || '-'}
-                        </span>
-                      </td>
-                      <td data-label={t('admin.team.manage.list.members')}>
-                        {team.member_count || 0}
-                      </td>
-                      <td data-label={t('admin.team.manage.list.points')}>
-                        {team.points_pool || 0}
-                      </td>
-                      <td data-label={t('admin.team.manage.list.createdAt')}>
-                        {new Date(team.created_at).toLocaleDateString()}
-                      </td>
-                      <td data-label={t('admin.team.manage.list.updatedAt')}>
-                        {team.updated_at ? new Date(team.updated_at).toLocaleDateString() : '-'}
-                      </td>
-                      <td data-label={t('admin.team.manage.list.active')}>
-                        <span
-                          className={`admin-status-badge ${
-                            team.active ? 'active' : 'inactive'
-                          }`}
-                        >
-                          {team.active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td data-label={t('common.actions')} className="admin-table-actions">
-                        <button
-                          className="admin-action-button"
-                          type="button"
-                          onClick={() => setEditingTeamId(team.id)}
-                        >
-                          {t('common.actions.edit', 'Bearbeiten')}
-                        </button>
-                        <button
-                          className="admin-action-button"
-                          type="button"
-                          onClick={() => handleTeamStatusChange(team.id, !team.active)}
-                        >
-                          {team.active ? t('admin.team.manage.deactivate') : t('admin.team.manage.activate')}
-                        </button>
-                        <button
-                          className="admin-action-button danger"
-                          type="button"
-                          onClick={() => handleTeamDelete(team.id)}
-                        >
-                          {t('common.actions.delete', 'Löschen')}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-          {teamFilterDropdown && teamFilterDropdownPosition && (
-            <FilterDropdown
-              isOpen={true}
-              onClose={() => setTeamFilterDropdown(null)}
-              position={teamFilterDropdownPosition}
-              options={
-                teamFilterDropdown === 'status'
-                  ? teamFilterOptions.statuses
-                  : teamFilterDropdown === 'creator'
-                  ? teamFilterOptions.creators
-                  : undefined
-              }
-              selectedValue={
-                teamFilterDropdown === 'status'
-                  ? teamFilterStatus
-                  : teamFilterDropdown === 'creator'
-                  ? teamFilterCreator
-                  : undefined
-              }
-              onSelect={(value) => {
-                if (teamFilterDropdown === 'status') {
-                  setTeamFilterStatus(value as 'active' | 'inactive' | null);
-                } else if (teamFilterDropdown === 'creator') {
-                  setTeamFilterCreator(value);
-                }
-              }}
-              type={teamFilterDropdown}
-              textValue={teamFilterDropdown === 'name' ? teamFilterName : undefined}
-              onTextChange={teamFilterDropdown === 'name' ? setTeamFilterName : undefined}
-            />
-          )}
-        </div>
-      </div>
-      <MobileFilterModal
-        isOpen={isMobileTeamFilterOpen}
-        onClose={() => setIsMobileTeamFilterOpen(false)}
-        filterOptions={teamFilterOptions}
-        filters={{
-          status: teamFilterStatus,
-          name: teamFilterName,
-          creator: teamFilterCreator,
-        }}
-        onFilterChange={(filterType, value) => {
-          if (filterType === 'status') {
-            setTeamFilterStatus(value as 'active' | 'inactive' | null);
-          } else if (filterType === 'creator') {
-            setTeamFilterCreator(value);
-          }
-        }}
-        onTitleChange={setTeamFilterName}
-        onClearAll={() => {
-          setTeamFilterStatus(null);
-          setTeamFilterName('');
-          setTeamFilterCreator(null);
-        }}
-        filterType="team"
-      />
-      <ConfirmDialog
-        {...teamConfirm}
-        onCancel={() => setTeamConfirm(defaultConfirmDialogState)}
-      />
-    </section>
-  );
-}
-
-// Contest Management Component
-function ContestManagementSection({
-  editingContestId,
-  setEditingContestId,
-  contestManagementMessage,
-  setContestManagementMessage,
-  contestRegistrationEnabled,
-  setContestRegistrationEnabled,
-  contestRegistrationQrCode,
-  setContestRegistrationQrCode,
-  contestJoinQrCode,
-  setContestJoinQrCode,
-  includeInactiveContests,
-  setIncludeInactiveContests,
-  selectedContestIds,
-  setSelectedContestIds,
-  contestConfirm,
-  setContestConfirm,
-  contestFilterStatus,
-  setContestFilterStatus,
-  contestFilterName,
-  setContestFilterName,
-  contestFilterCreator,
-  setContestFilterCreator,
-  contestFilterEndDate,
-  setContestFilterEndDate,
-  contestFilterDropdown,
-  setContestFilterDropdown,
-  contestFilterDropdownPosition,
-  setContestFilterDropdownPosition,
-  contestFilterDropdownRef,
-  isMobileContestFilterOpen,
-  setIsMobileContestFilterOpen,
-  onBack,
-}: {
-  editingContestId: string | null;
-  setEditingContestId: (id: string | null) => void;
-  contestManagementMessage: { type: 'error' | 'success'; text: string } | null;
-  setContestManagementMessage: (msg: { type: 'error' | 'success'; text: string } | null) => void;
-  contestRegistrationEnabled: boolean;
-  setContestRegistrationEnabled: (enabled: boolean) => void;
-  contestRegistrationQrCode: string | null;
-  setContestRegistrationQrCode: (code: string | null) => void;
-  contestJoinQrCode: string | null;
-  setContestJoinQrCode: (code: string | null) => void;
-  includeInactiveContests: boolean;
-  setIncludeInactiveContests: (value: boolean) => void;
-  selectedContestIds: string[];
-  setSelectedContestIds: React.Dispatch<React.SetStateAction<string[]>>;
-  contestConfirm: ConfirmDialogState;
-  setContestConfirm: (state: ConfirmDialogState) => void;
-  contestFilterStatus: 'active' | 'inactive' | null;
-  setContestFilterStatus: (status: 'active' | 'inactive' | null) => void;
-  contestFilterName: string;
-  setContestFilterName: (name: string) => void;
-  contestFilterCreator: string | null;
-  setContestFilterCreator: (creator: string | null) => void;
-  contestFilterEndDate: string;
-  setContestFilterEndDate: (date: string) => void;
-  contestFilterDropdown: 'status' | 'name' | 'creator' | 'endDate' | null;
-  setContestFilterDropdown: (dropdown: 'status' | 'name' | 'creator' | 'endDate' | null) => void;
-  contestFilterDropdownPosition: { top: number; left: number } | null;
-  setContestFilterDropdownPosition: (position: { top: number; left: number } | null) => void;
-  contestFilterDropdownRef: React.RefObject<HTMLDivElement>;
-  isMobileContestFilterOpen: boolean;
-  setIsMobileContestFilterOpen: (open: boolean) => void;
-  onBack: () => void;
-}) {
-  const { t } = useTranslation();
-  const showToast = useToastStore((s) => s.showToast);
-  const [contests, setContests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingContest, setEditingContest] = useState<any>(null);
-  const [contestName, setContestName] = useState('');
-  const [contestActive, setContestActive] = useState(true);
-  const [contestEndDate, setContestEndDate] = useState('');
-
-  const { data: contestsData, isLoading: contestsLoading, error: contestsError, refetch: refetchContests } = useQuery({
-    queryKey: ['admin-contests', includeInactiveContests],
-    queryFn: async () => {
-      return await api.getAllContests({ includeInactive: includeInactiveContests });
-    },
-  });
-
-  useEffect(() => {
-    if (contestsData) {
-      setContests(contestsData);
-      setLoading(false);
-    } else if (contestsError) {
-      setLoading(false);
-      setContestManagementMessage({ type: 'error', text: contestsError instanceof Error ? contestsError.message : 'Failed to load contests' });
-    } else if (!contestsLoading) {
-      setLoading(false);
-    }
-  }, [contestsData, contestsLoading, contestsError]);
-
-  useEffect(() => {
-    if (editingContestId && contests.length > 0) {
-      const contest = contests.find((c) => c.id === editingContestId);
-      if (contest) {
-        setEditingContest(contest);
-        setContestName(contest.name || '');
-        setContestActive(contest.active ?? true);
-        setContestEndDate(contest.end_date ? new Date(contest.end_date).toISOString().split('T')[0] : '');
-        loadContestQrCodes(contest.id);
-      }
-    } else {
-      setEditingContest(null);
-      setContestName('');
-      setContestActive(true);
-      setContestEndDate('');
-      setContestRegistrationEnabled(false);
-      setContestRegistrationQrCode(null);
-      setContestJoinQrCode(null);
-    }
-  }, [editingContestId, contests]);
-
-  const loadContestQrCodes = async (contestId: string) => {
-    try {
-      // Load join QR code for existing users
-      const joinQr = await api.getContestQrCode(contestId);
-      if (joinQr?.qrToken) {
-        setContestJoinQrCode(joinQr.qrToken);
-      }
-
-      // Load registration QR code
-      try {
-        const regQr = await api.getContestRegistrationQrCode(contestId);
-        if (regQr?.qrToken) {
-          setContestRegistrationQrCode(regQr.qrToken);
-          setContestRegistrationEnabled(regQr.enabled);
-        }
-      } catch (err) {
-        // Registration QR code might not exist yet
-        setContestRegistrationQrCode(null);
-        setContestRegistrationEnabled(false);
-      }
-    } catch (err: any) {
-      console.error('Failed to load contest QR codes:', err);
-    }
-  };
-
-  const handleSaveContest = async () => {
-    if (!editingContestId) return;
-
-    try {
-      await api.updateContest(editingContestId, {
-        name: contestName || null,
-        active: contestActive,
-        endDate: contestEndDate || undefined,
-      });
-      setContestManagementMessage({ type: 'success', text: t('admin.contest.manage.edit.saved') });
-      await refetchContests();
-      showToast({ type: 'success', title: t('admin.contest.manage.edit.saved') });
-    } catch (err: any) {
-      const errorMsg = err?.response?.data?.error || t('admin.contest.manage.edit.error');
-      setContestManagementMessage({ type: 'error', text: errorMsg });
-      showToast({ type: 'error', title: errorMsg });
-    }
-  };
-
-  const handleToggleRegistration = async (enabled: boolean) => {
-    if (!editingContestId) return;
-
-    try {
-      await api.enableContestRegistration(editingContestId, enabled);
-      setContestRegistrationEnabled(enabled);
-      if (enabled) {
-        // Reload QR code
-        const regQr = await api.getContestRegistrationQrCode(editingContestId);
-        if (regQr?.qrToken) {
-          setContestRegistrationQrCode(regQr.qrToken);
-        }
-      }
-      showToast({
-        type: 'success',
-        title: enabled ? t('admin.contest.manage.qrCodes.registration.enabled') : t('admin.contest.manage.qrCodes.registration.disabled'),
-      });
-    } catch (err: any) {
-      const errorMsg = err?.response?.data?.error || 'Failed to toggle registration';
-      showToast({ type: 'error', title: errorMsg });
-    }
-  };
-
-  const downloadQrCode = (qrToken: string, filename: string) => {
-    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
-    const qrUrl = qrToken.startsWith('http') ? qrToken : `${frontendUrl}/register?contest=${qrToken}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}`;
-    
-    const link = document.createElement('a');
-    link.href = qrImageUrl;
-    link.download = filename;
-    link.click();
-  };
-
-  // Filter and sort contests
-  const filteredAndSortedContests = useMemo(() => {
-    let filtered = contests;
-    
-    if (contestFilterStatus) {
-      filtered = filtered.filter((contest) => 
-        contestFilterStatus === 'active' ? contest.active : !contest.active
-      );
-    }
-    
-    if (contestFilterName.trim()) {
-      const searchTerm = contestFilterName.toLowerCase().trim();
-      filtered = filtered.filter((contest) => 
-        contest.name?.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    if (contestFilterCreator) {
-      filtered = filtered.filter((contest) => 
-        contest.creator_name === contestFilterCreator
-      );
-    }
-    
-    if (contestFilterEndDate.trim()) {
-      const filterDate = new Date(contestFilterEndDate);
-      filtered = filtered.filter((contest) => {
-        const contestEndDate = new Date(contest.end_date);
-        return contestEndDate.toDateString() === filterDate.toDateString();
-      });
-    }
-    
-    // Sort by created_at DESC (newest first), then alphabetically by name
-    filtered.sort((a, b) => {
-      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
-      if (bCreated !== aCreated) {
-        return bCreated - aCreated; // DESC
-      }
-      return (a.name || '').localeCompare(b.name || '');
-    });
-    
-    return filtered;
-  }, [contests, contestFilterStatus, contestFilterName, contestFilterCreator, contestFilterEndDate]);
-
-  // Filter options
-  const contestFilterOptions = useMemo(() => {
-    const creators = new Map<string, string>();
-    
-    contests.forEach((contest) => {
-      if (contest.creator_name) {
-        creators.set(contest.creator_name, contest.creator_name);
-      }
-    });
-    
-    return {
-      creators: Array.from(creators.entries()).map(([name, value]) => ({ id: name, name: value })),
-      statuses: ['active', 'inactive'] as ('active' | 'inactive')[],
-    };
-  }, [contests]);
-
-  // Selection helpers
-  const toggleContestSelection = (contestId: string, checked: boolean) => {
-    setSelectedContestIds((prev) => {
-      if (checked) {
-        return [...prev, contestId];
-      } else {
-        return prev.filter((id) => id !== contestId);
-      }
-    });
-  };
-
-  const allContestsSelected = filteredAndSortedContests.length > 0 && 
-    selectedContestIds.length === filteredAndSortedContests.length;
-  const hasContestSelection = selectedContestIds.length > 0;
-
-  // Bulk operations
-  const handleContestBulkStatus = async (active: boolean) => {
-    if (!selectedContestIds.length) return;
-    try {
-      setContestManagementMessage(null);
-      await api.bulkUpdateContestsStatus(selectedContestIds, active);
-      setContestManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.selectedContestsActivated') : t('admin.messages.selectedContestsDeactivated'),
-      });
-      setSelectedContestIds([]);
-      void refetchContests();
-    } catch (error: any) {
-      setContestManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to update selected contests.',
-      });
-    }
-  };
-
-  const handleContestBulkDelete = async () => {
-    if (!selectedContestIds.length) return;
-    setContestConfirm({
-      visible: true,
-      title: t('admin.confirm.deleteSelectedContests.title'),
-      description: t('admin.confirm.deleteSelectedContests.description'),
-      confirmLabel: t('admin.confirm.deleteContests'),
-      confirmTone: 'danger',
-      onConfirm: async () => {
-        try {
-          setContestManagementMessage(null);
-          await api.bulkDeleteContests(selectedContestIds);
-          setContestManagementMessage({
-            type: 'success',
-            text: t('admin.messages.selectedContestsDeleted'),
-          });
-          setSelectedContestIds([]);
-          void refetchContests();
-        } catch (error: any) {
-          setContestManagementMessage({
-            type: 'error',
-            text: error?.message || t('admin.messages.failedToDeleteContests'),
-          });
-        } finally {
-          setContestConfirm(defaultConfirmDialogState);
-        }
-      },
-    });
-  };
-
-  const handleContestStatusChange = async (contestId: string, active: boolean) => {
-    try {
-      setContestManagementMessage(null);
-      await api.bulkUpdateContestsStatus([contestId], active);
-      setContestManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.contestActivated') : t('admin.messages.contestDeactivated'),
-      });
-      void refetchContests();
-    } catch (error: any) {
-      setContestManagementMessage({
-        type: 'error',
-        text: error?.message || t('admin.messages.failedToUpdateContest'),
-      });
-    }
-  };
-
-  const handleContestDelete = async (contestId: string) => {
-    setContestConfirm({
-      visible: true,
-      title: t('admin.confirm.deleteContestSingle.title'),
-      description: t('admin.confirm.deleteContestSingle.description'),
-      confirmLabel: t('admin.confirm.deleteContest'),
-      confirmTone: 'danger',
-      onConfirm: async () => {
-        try {
-          setContestManagementMessage(null);
-          await api.bulkDeleteContests([contestId]);
-          setContestManagementMessage({
-            type: 'success',
-            text: 'Contest deleted.',
-          });
-          if (editingContestId === contestId) {
-            setEditingContestId(null);
-          }
-          void refetchContests();
-        } catch (error: any) {
-          setContestManagementMessage({
-            type: 'error',
-            text: error?.message || t('admin.messages.failedToDeleteContest'),
-          });
-        } finally {
-          setContestConfirm(defaultConfirmDialogState);
-        }
-      },
-    });
-  };
-
-  if (loading || contestsLoading) {
-    return (
-      <section className="admin-section">
-        <div className="admin-loading">{t('common.loading')}</div>
-      </section>
-    );
-  }
-
-  if (contestsError) {
-    return (
-      <section className="admin-section">
-        <div className="admin-error">
-          Fehler beim Laden der Contests: {contestsError instanceof Error ? contestsError.message : 'Unknown error'}
-        </div>
-        <button className="admin-button" onClick={() => refetchContests()}>
-          Erneut versuchen
-        </button>
-      </section>
-    );
-  }
-
-  if (editingContestId && editingContest) {
-    return (
-      <section className="admin-section">
-        <div className="admin-header">
-          <button className="admin-button admin-button-secondary" onClick={() => setEditingContestId(null)}>
-            ← {t('common.back')}
-          </button>
-          <h2>{t('admin.contest.manage.edit.title')}</h2>
-        </div>
-
-        {contestManagementMessage && (
-          <div className={`admin-message admin-message-${contestManagementMessage.type}`}>
-            {contestManagementMessage.text}
-          </div>
-        )}
-
-        <div className="admin-form-section">
-          <div className="admin-field">
-            <label>
-              {t('admin.contest.manage.edit.name')}
-              <input
-                type="text"
-                value={contestName}
-                onChange={(e) => setContestName(e.target.value)}
-                placeholder={t('admin.contest.manage.edit.name')}
-              />
-            </label>
-          </div>
-
-          <div className="admin-field">
-            <label>
-              {t('admin.contest.manage.edit.endDate')}
-              <input
-                type="date"
-                value={contestEndDate}
-                onChange={(e) => setContestEndDate(e.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className="admin-field">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input
-                type="checkbox"
-                checked={contestActive}
-                onChange={(e) => setContestActive(e.target.checked)}
-              />
-              {t('admin.contest.manage.edit.active')}
-            </label>
-          </div>
-
-          <div style={{ marginTop: '2rem' }}>
-            <h3>{t('admin.contest.manage.qrCodes.title')}</h3>
-
-            {/* Join QR Code for existing users */}
-            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
-              <h4>{t('admin.contest.manage.qrCodes.joinExisting.title')}</h4>
-              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-                {t('admin.contest.manage.qrCodes.joinExisting.description')}
-              </p>
-              {contestJoinQrCode && (
-                <div style={{ marginTop: '1rem' }}>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/contests/join?token=${contestJoinQrCode}`
-                    )}`}
-                    alt="Contest Join QR Code"
-                    style={{ maxWidth: '200px' }}
-                  />
-                  <button
-                    className="admin-button admin-button-secondary"
-                    style={{ marginTop: '0.5rem', display: 'block' }}
-                    onClick={() => downloadQrCode(contestJoinQrCode!, 'contest-join-qr.png')}
-                  >
-                    {t('admin.contest.manage.qrCodes.joinExisting.download')}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Registration QR Code */}
-            <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
-              <h4>{t('admin.contest.manage.qrCodes.registration.title')}</h4>
-              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-                {t('admin.contest.manage.qrCodes.registration.description')}
-              </p>
-              <div style={{ marginTop: '1rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="checkbox"
-                    checked={contestRegistrationEnabled}
-                    onChange={(e) => handleToggleRegistration(e.target.checked)}
-                  />
-                  {t('admin.contest.manage.qrCodes.registration.enable')}
-                </label>
-              </div>
-              {contestRegistrationEnabled && contestRegistrationQrCode && (
-                <div style={{ marginTop: '1rem' }}>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                      `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/register?contest=${contestRegistrationQrCode}`
-                    )}`}
-                    alt="Contest Registration QR Code"
-                    style={{ maxWidth: '200px' }}
-                  />
-                  <button
-                    className="admin-button admin-button-secondary"
-                    style={{ marginTop: '0.5rem', display: 'block' }}
-                    onClick={() => downloadQrCode(contestRegistrationQrCode!, 'contest-registration-qr.png')}
-                  >
-                    {t('admin.contest.manage.qrCodes.registration.download')}
-                  </button>
-                </div>
-              )}
-              {contestRegistrationEnabled && !contestRegistrationQrCode && (
-                <p style={{ marginTop: '0.5rem', color: '#999' }}>
-                  {t('admin.contest.manage.qrCodes.registration.notAvailable')}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-            <button className="admin-button admin-button-primary" onClick={handleSaveContest}>
-              {t('admin.contest.manage.edit.save')}
-            </button>
-            <button className="admin-button admin-button-secondary" onClick={() => setEditingContestId(null)}>
-              {t('admin.contest.manage.edit.cancel')}
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="admin-section">
-      <header className="admin-section-header">
-        <div>
-          <h2>{t('admin.contest.manage.title')}</h2>
-          <p>{t('admin.contest.manage.subtitle')}</p>
-        </div>
-        <div className="admin-actions">
-          {!editingContestId && (
-            <button
-              className="admin-icon-button"
-              onClick={() => refetchContests()}
-              title={t('admin.contest.manage.refresh')}
-            >
-              <Icon name="refresh" />
-              <span className="sr-only">{t('admin.contest.manage.refresh')}</span>
-            </button>
-          )}
-          <button
-            className="admin-icon-button"
-            onClick={() => {
-              if (editingContestId) {
-                setEditingContestId(null);
-              } else {
-                onBack();
-              }
-            }}
-            title={editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}
-          >
-            <Icon name="back" />
-            <span className="sr-only">{editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}</span>
-          </button>
-        </div>
-      </header>
-
-      {contestsLoading && <p>{t('admin.contest.manage.loading')}</p>}
-      {Boolean(contestsError) && <p className="admin-error">{t('admin.contest.manage.loadError')}</p>}
-
-      <div className="admin-management-card">
-        <div className="admin-management-top">
-          <div>
-            <h3>{t('admin.contest.manage.existing.title')}</h3>
-            <p>{t('admin.contest.manage.existing.subtitle')}</p>
-          </div>
-          <div className="admin-management-controls">
-            <label className="admin-toggle">
-              <input
-                type="checkbox"
-                className="admin-checkbox"
-                style={COMPACT_TOGGLE_STYLE}
-                checked={includeInactiveContests}
-                onChange={(event) => {
-                  setIncludeInactiveContests(event.target.checked);
-                  setSelectedContestIds([]);
-                }}
-              />
-              <span>{t('admin.contest.manage.showInactive')}</span>
-            </label>
-            <button
-              className="admin-mobile-filter-button"
-              type="button"
-              onClick={() => setIsMobileContestFilterOpen(true)}
-              aria-label={t('admin.contest.manage.openFilters')}
-            >
-              <Icon name="filter" />
-              {(contestFilterStatus || contestFilterName.trim() || contestFilterCreator || contestFilterEndDate.trim()) && (
-                <span className="admin-mobile-filter-badge">
-                  {[contestFilterStatus, contestFilterName.trim() ? 'name' : null, contestFilterCreator, contestFilterEndDate.trim() ? 'endDate' : null].filter(Boolean).length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-        {contestManagementMessage && (
-          <p
-            className={
-              contestManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
-            }
-          >
-            {contestManagementMessage.text}
-          </p>
-        )}
-        <div className="admin-management-actions">
-          <div className="admin-bulk-buttons">
-            <button
-              className="admin-action-button"
-              onClick={() => handleContestBulkStatus(true)}
-              disabled={!hasContestSelection}
-              type="button"
-            >
-              {t('admin.contest.manage.activate')}
-            </button>
-            <button
-              className="admin-action-button"
-              onClick={() => handleContestBulkStatus(false)}
-              disabled={!hasContestSelection}
-              type="button"
-            >
-              {t('admin.contest.manage.deactivate')}
-            </button>
-            <button
-              className="admin-action-button danger"
-              onClick={handleContestBulkDelete}
-              disabled={!hasContestSelection}
-              type="button"
-            >
-              {t('common.actions.delete', 'Löschen')}
-            </button>
-          </div>
-          <span className="admin-selection-count">
-            {hasContestSelection
-              ? t('admin.contest.manage.selectedCount', { count: selectedContestIds.length })
-              : t('admin.contest.manage.noSelection')}
-          </span>
-        </div>
-        <div className="admin-table-wrapper">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th style={{ width: '3rem' }}>
-                  <input
-                    type="checkbox"
-                    className="admin-checkbox"
-                    style={COMPACT_TOGGLE_STYLE}
-                    checked={allContestsSelected && filteredAndSortedContests.length > 0}
-                    disabled={!filteredAndSortedContests.length}
-                    onChange={(event) =>
-                      setSelectedContestIds(
-                        event.target.checked
-                          ? filteredAndSortedContests.map((contest) => contest.id)
-                          : []
-                      )
-                    }
-                    aria-label={t('admin.contest.manage.selectAll')}
-                  />
-                </th>
-                <th
-                  className="admin-filter-header"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
-                    setContestFilterDropdown('name');
-                  }}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {t('admin.contest.manage.list.name')} {contestFilterName && '✓'}
-                </th>
-                <th
-                  className="admin-filter-header"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
-                    setContestFilterDropdown('creator');
-                  }}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {t('admin.contest.manage.list.creator')} {contestFilterCreator && '✓'}
-                </th>
-                <th>{t('admin.contest.manage.list.participants')}</th>
-                <th>{t('admin.contest.manage.list.startDate')}</th>
-                <th
-                  className="admin-filter-header"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
-                    setContestFilterDropdown('endDate');
-                  }}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {t('admin.contest.manage.list.endDate')} {contestFilterEndDate && '✓'}
-                </th>
-                <th>{t('admin.contest.manage.list.rewards')}</th>
-                <th>{t('admin.contest.manage.list.createdAt')}</th>
-                <th>{t('admin.contest.manage.list.updatedAt')}</th>
-                <th
-                  className="admin-filter-header"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
-                    setContestFilterDropdown('status');
-                  }}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {t('admin.contest.manage.list.active')} {contestFilterStatus && '✓'}
-                </th>
-                <th>{t('common.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSortedContests.length === 0 ? (
-                <tr>
-                  <td colSpan={11} className="admin-table-empty">
-                    {t('admin.contest.manage.list.noContests')}
-                  </td>
-                </tr>
-              ) : (
-                filteredAndSortedContests.map((contest) => {
-                  const isSelected = selectedContestIds.includes(contest.id);
-                  return (
-                    <tr key={contest.id}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          className="admin-checkbox"
-                          style={COMPACT_TOGGLE_STYLE}
-                          checked={isSelected}
-                          onChange={(event) =>
-                            toggleContestSelection(contest.id, event.target.checked)
-                          }
-                          aria-label={`Select contest ${contest.name}`}
-                        />
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.name')}>
-                        <div className="admin-table-primary">
-                          <span className="admin-table-title">
-                            {contest.name || t('admin.contest.manage.list.untitled')}
-                          </span>
-                        </div>
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.creator')}>
-                        <span className="admin-table-secondary">
-                          {contest.creator_name || '-'}
-                        </span>
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.participants')}>
-                        {contest.participant_count || 0}
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.startDate')}>
-                        {contest.start_date ? new Date(contest.start_date).toLocaleDateString() : '-'}
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.endDate')}>
-                        {contest.end_date ? new Date(contest.end_date).toLocaleDateString() : '-'}
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.rewards')}>
-                        <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
-                          {contest.reward_first_place || contest.reward_second_place || contest.reward_third_place
-                            ? `1st: ${contest.reward_first_place || 0}, 2nd: ${contest.reward_second_place || 0}, 3rd: ${contest.reward_third_place || 0}`
-                            : '-'}
-                        </span>
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.createdAt')}>
-                        {new Date(contest.created_at).toLocaleDateString()}
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.updatedAt')}>
-                        {contest.updated_at ? new Date(contest.updated_at).toLocaleDateString() : '-'}
-                      </td>
-                      <td data-label={t('admin.contest.manage.list.active')}>
-                        <span
-                          className={`admin-status-badge ${
-                            contest.active ? 'active' : 'inactive'
-                          }`}
-                        >
-                          {contest.active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td data-label={t('common.actions')} className="admin-table-actions">
-                        <button
-                          className="admin-action-button"
-                          type="button"
-                          onClick={() => setEditingContestId(contest.id)}
-                        >
-                          {t('common.actions.edit', 'Bearbeiten')}
-                        </button>
-                        <button
-                          className="admin-action-button"
-                          type="button"
-                          onClick={() => handleContestStatusChange(contest.id, !contest.active)}
-                        >
-                          {contest.active ? t('admin.contest.manage.deactivate') : t('admin.contest.manage.activate')}
-                        </button>
-                        <button
-                          className="admin-action-button danger"
-                          type="button"
-                          onClick={() => handleContestDelete(contest.id)}
-                        >
-                          {t('common.actions.delete', 'Löschen')}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-          {contestFilterDropdown && contestFilterDropdownPosition && (
-            <FilterDropdown
-              isOpen={true}
-              onClose={() => setContestFilterDropdown(null)}
-              position={contestFilterDropdownPosition}
-              options={
-                contestFilterDropdown === 'status'
-                  ? contestFilterOptions.statuses
-                  : contestFilterDropdown === 'creator'
-                  ? contestFilterOptions.creators
-                  : undefined
-              }
-              selectedValue={
-                contestFilterDropdown === 'status'
-                  ? contestFilterStatus
-                  : contestFilterDropdown === 'creator'
-                  ? contestFilterCreator
-                  : undefined
-              }
-              onSelect={(value) => {
-                if (contestFilterDropdown === 'status') {
-                  setContestFilterStatus(value as 'active' | 'inactive' | null);
-                } else if (contestFilterDropdown === 'creator') {
-                  setContestFilterCreator(value);
-                }
-              }}
-              type={contestFilterDropdown}
-              textValue={contestFilterDropdown === 'name' ? contestFilterName : undefined}
-              onTextChange={contestFilterDropdown === 'name' ? setContestFilterName : undefined}
-              dateValue={contestFilterDropdown === 'endDate' ? contestFilterEndDate : undefined}
-              onDateChange={contestFilterDropdown === 'endDate' ? setContestFilterEndDate : undefined}
-            />
-          )}
-        </div>
-      </div>
-      <MobileFilterModal
-        isOpen={isMobileContestFilterOpen}
-        onClose={() => setIsMobileContestFilterOpen(false)}
-        filterOptions={contestFilterOptions}
-        filters={{
-          status: contestFilterStatus,
-          name: contestFilterName,
-          creator: contestFilterCreator,
-          endDate: contestFilterEndDate,
-        }}
-        onFilterChange={(filterType, value) => {
-          if (filterType === 'status') {
-            setContestFilterStatus(value as 'active' | 'inactive' | null);
-          } else if (filterType === 'creator') {
-            setContestFilterCreator(value);
-          }
-        }}
-        onTitleChange={setContestFilterName}
-        onEndDateChange={setContestFilterEndDate}
-        onClearAll={() => {
-          setContestFilterStatus(null);
-          setContestFilterName('');
-          setContestFilterCreator(null);
-          setContestFilterEndDate('');
-        }}
-        filterType="contest"
-      />
-      <ConfirmDialog
-        {...contestConfirm}
-        onCancel={() => setContestConfirm(defaultConfirmDialogState)}
-      />
-    </section>
-  );
-}
 
 function AdminPage() {
   const { t } = useTranslation();
@@ -4581,6 +2880,118 @@ function AdminPage() {
     };
   }, [existingTemplates]);
 
+  // Teams filter logic - inline like tasks
+  const teamsList = adminTeams ?? [];
+  const filteredTeams = useMemo(() => {
+    let filtered = teamsList;
+    
+    if (teamFilterStatus) {
+      filtered = filtered.filter((team) => 
+        teamFilterStatus === 'active' ? team.active : !team.active
+      );
+    }
+    
+    if (teamFilterName.trim()) {
+      const searchTerm = teamFilterName.toLowerCase().trim();
+      filtered = filtered.filter((team) => 
+        team.name?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (teamFilterCreator) {
+      filtered = filtered.filter((team) => 
+        team.creator_name === teamFilterCreator
+      );
+    }
+    
+    // Sort by created_at DESC (newest first), then alphabetically by name
+    filtered.sort((a, b) => {
+      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (bCreated !== aCreated) {
+        return bCreated - aCreated; // DESC
+      }
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    
+    return filtered;
+  }, [teamsList, teamFilterStatus, teamFilterName, teamFilterCreator]);
+
+  const teamFilterOptions = useMemo(() => {
+    const creators = new Map<string, string>();
+    
+    teamsList.forEach((team) => {
+      if (team.creator_name) {
+        creators.set(team.creator_name, team.creator_name);
+      }
+    });
+    
+    return {
+      creators: Array.from(creators.entries()).map(([name, value]) => ({ id: name, name: value })),
+      statuses: ['active', 'inactive'] as ('active' | 'inactive')[],
+    };
+  }, [teamsList]);
+
+  // Contests filter logic - inline like tasks
+  const contestsList = adminContests ?? [];
+  const filteredContests = useMemo(() => {
+    let filtered = contestsList;
+    
+    if (contestFilterStatus) {
+      filtered = filtered.filter((contest) => 
+        contestFilterStatus === 'active' ? contest.active : !contest.active
+      );
+    }
+    
+    if (contestFilterName.trim()) {
+      const searchTerm = contestFilterName.toLowerCase().trim();
+      filtered = filtered.filter((contest) => 
+        contest.name?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (contestFilterCreator) {
+      filtered = filtered.filter((contest) => 
+        contest.creator_name === contestFilterCreator
+      );
+    }
+    
+    if (contestFilterEndDate.trim()) {
+      const filterDate = new Date(contestFilterEndDate);
+      filtered = filtered.filter((contest) => {
+        const contestEndDate = new Date(contest.end_date);
+        return contestEndDate.toDateString() === filterDate.toDateString();
+      });
+    }
+    
+    // Sort by created_at DESC (newest first), then alphabetically by name
+    filtered.sort((a, b) => {
+      const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+      if (bCreated !== aCreated) {
+        return bCreated - aCreated; // DESC
+      }
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    
+    return filtered;
+  }, [contestsList, contestFilterStatus, contestFilterName, contestFilterCreator, contestFilterEndDate]);
+
+  const contestFilterOptions = useMemo(() => {
+    const creators = new Map<string, string>();
+    
+    contestsList.forEach((contest) => {
+      if (contest.creator_name) {
+        creators.set(contest.creator_name, contest.creator_name);
+      }
+    });
+    
+    return {
+      creators: Array.from(creators.entries()).map(([name, value]) => ({ id: name, name: value })),
+      statuses: ['active', 'inactive'] as ('active' | 'inactive')[],
+    };
+  }, [contestsList]);
+
   const {
     data: rewardTemplatesData,
     isLoading: rewardTemplatesLoading,
@@ -4764,6 +3175,33 @@ function AdminPage() {
     () => api.getRewardParameters(),
     {
       enabled: isAdmin && (mode === 'reward' || mode === 'rewardManage' || mode === 'parameterManage'),
+    }
+  );
+
+  // Teams and Contests queries - inline like tasks
+  const {
+    data: adminTeams,
+    isLoading: teamsLoading,
+    error: teamsError,
+    refetch: refetchTeams,
+  } = useQuery<any[]>(
+    ['adminTeams', includeInactiveTeams],
+    () => api.getAllTeams({ includeInactive: includeInactiveTeams }),
+    {
+      enabled: isAdmin && mode === 'teamManage',
+    }
+  );
+
+  const {
+    data: adminContests,
+    isLoading: contestsLoading,
+    error: contestsError,
+    refetch: refetchContests,
+  } = useQuery<any[]>(
+    ['adminContests', includeInactiveContests],
+    () => api.getAllContests({ includeInactive: includeInactiveContests }),
+    {
+      enabled: isAdmin && mode === 'contestManage',
     }
   );
 
@@ -6540,6 +4978,232 @@ const goToRewardCreation = () => {
     selectedRewardIds.length === filteredRewards.length;
   const hasTaskSelection = selectedTaskIds.length > 0;
   const hasRewardSelection = selectedRewardIds.length > 0;
+
+  // Teams helper functions - inline like tasks
+  const toggleTeamSelection = (teamId: string, checked: boolean) => {
+    setSelectedTeamIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(teamId);
+      } else {
+        next.delete(teamId);
+      }
+      return Array.from(next);
+    });
+  };
+
+  const allTeamsSelected = filteredTeams.length > 0 && selectedTeamIds.length === filteredTeams.length;
+  const hasTeamSelection = selectedTeamIds.length > 0;
+
+  const handleTeamBulkStatus = async (active: boolean) => {
+    if (!selectedTeamIds.length) return;
+    try {
+      setTeamManagementMessage(null);
+      await api.bulkUpdateTeamsStatus(selectedTeamIds, active);
+      setTeamManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.selectedTeamsActivated') : t('admin.messages.selectedTeamsDeactivated'),
+      });
+      setSelectedTeamIds([]);
+      void refetchTeams();
+    } catch (error: any) {
+      setTeamManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update selected teams.',
+      });
+    }
+  };
+
+  const handleTeamBulkDelete = async () => {
+    if (!selectedTeamIds.length) return;
+    setTeamConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteSelectedTeams.title'),
+      description: t('admin.confirm.deleteSelectedTeams.description'),
+      confirmLabel: t('admin.confirm.deleteTeams'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setTeamManagementMessage(null);
+          await api.bulkDeleteTeams(selectedTeamIds);
+          setTeamManagementMessage({
+            type: 'success',
+            text: t('admin.messages.selectedTeamsDeleted'),
+          });
+          setSelectedTeamIds([]);
+          void refetchTeams();
+        } catch (error: any) {
+          setTeamManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteTeams'),
+          });
+        } finally {
+          setTeamConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
+  };
+
+  const handleTeamStatusChange = async (teamId: string, active: boolean) => {
+    try {
+      setTeamManagementMessage(null);
+      await api.bulkUpdateTeamsStatus([teamId], active);
+      setTeamManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.teamActivated') : t('admin.messages.teamDeactivated'),
+      });
+      void refetchTeams();
+    } catch (error: any) {
+      setTeamManagementMessage({
+        type: 'error',
+        text: error?.message || t('admin.messages.failedToUpdateTeam'),
+      });
+    }
+  };
+
+  const handleTeamDelete = async (teamId: string) => {
+    setTeamConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteTeamSingle.title'),
+      description: t('admin.confirm.deleteTeamSingle.description'),
+      confirmLabel: t('admin.confirm.deleteTeam'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setTeamManagementMessage(null);
+          await api.bulkDeleteTeams([teamId]);
+          setTeamManagementMessage({
+            type: 'success',
+            text: 'Team deleted.',
+          });
+          if (editingTeamId === teamId) {
+            setEditingTeamId(null);
+          }
+          void refetchTeams();
+        } catch (error: any) {
+          setTeamManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteTeam'),
+          });
+        } finally {
+          setTeamConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
+  };
+
+  // Contests helper functions - inline like tasks
+  const toggleContestSelection = (contestId: string, checked: boolean) => {
+    setSelectedContestIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(contestId);
+      } else {
+        next.delete(contestId);
+      }
+      return Array.from(next);
+    });
+  };
+
+  const allContestsSelected = filteredContests.length > 0 && selectedContestIds.length === filteredContests.length;
+  const hasContestSelection = selectedContestIds.length > 0;
+
+  const handleContestBulkStatus = async (active: boolean) => {
+    if (!selectedContestIds.length) return;
+    try {
+      setContestManagementMessage(null);
+      await api.bulkUpdateContestsStatus(selectedContestIds, active);
+      setContestManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.selectedContestsActivated') : t('admin.messages.selectedContestsDeactivated'),
+      });
+      setSelectedContestIds([]);
+      void refetchContests();
+    } catch (error: any) {
+      setContestManagementMessage({
+        type: 'error',
+        text: error?.message || 'Failed to update selected contests.',
+      });
+    }
+  };
+
+  const handleContestBulkDelete = async () => {
+    if (!selectedContestIds.length) return;
+    setContestConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteSelectedContests.title'),
+      description: t('admin.confirm.deleteSelectedContests.description'),
+      confirmLabel: t('admin.confirm.deleteContests'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setContestManagementMessage(null);
+          await api.bulkDeleteContests(selectedContestIds);
+          setContestManagementMessage({
+            type: 'success',
+            text: t('admin.messages.selectedContestsDeleted'),
+          });
+          setSelectedContestIds([]);
+          void refetchContests();
+        } catch (error: any) {
+          setContestManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteContests'),
+          });
+        } finally {
+          setContestConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
+  };
+
+  const handleContestStatusChange = async (contestId: string, active: boolean) => {
+    try {
+      setContestManagementMessage(null);
+      await api.bulkUpdateContestsStatus([contestId], active);
+      setContestManagementMessage({
+        type: 'success',
+        text: active ? t('admin.messages.contestActivated') : t('admin.messages.contestDeactivated'),
+      });
+      void refetchContests();
+    } catch (error: any) {
+      setContestManagementMessage({
+        type: 'error',
+        text: error?.message || t('admin.messages.failedToUpdateContest'),
+      });
+    }
+  };
+
+  const handleContestDelete = async (contestId: string) => {
+    setContestConfirm({
+      visible: true,
+      title: t('admin.confirm.deleteContestSingle.title'),
+      description: t('admin.confirm.deleteContestSingle.description'),
+      confirmLabel: t('admin.confirm.deleteContest'),
+      confirmTone: 'danger',
+      onConfirm: async () => {
+        try {
+          setContestManagementMessage(null);
+          await api.bulkDeleteContests([contestId]);
+          setContestManagementMessage({
+            type: 'success',
+            text: 'Contest deleted.',
+          });
+          if (editingContestId === contestId) {
+            setEditingContestId(null);
+          }
+          void refetchContests();
+        } catch (error: any) {
+          setContestManagementMessage({
+            type: 'error',
+            text: error?.message || t('admin.messages.failedToDeleteContest'),
+          });
+        } finally {
+          setContestConfirm(defaultConfirmDialogState);
+        }
+      },
+    });
+  };
   const isTaskSaving = publishTaskMutation.isLoading || updateTaskMutation.isLoading;
   const taskSubmitLabel = isEditingTask
     ? isTaskSaving
@@ -10125,78 +8789,677 @@ const goToRewardCreation = () => {
         excludeTaskId={isEditingTask ? editingTaskId || undefined : undefined}
       />
 
-      {/* Team Management */}
+      {/* Team Management - inline like taskManage */}
       {mode === 'teamManage' && (
-        <TeamManagementSection
-          editingTeamId={editingTeamId}
-          setEditingTeamId={setEditingTeamId}
-          teamManagementMessage={teamManagementMessage}
-          setTeamManagementMessage={setTeamManagementMessage}
-          teamRegistrationEnabled={teamRegistrationEnabled}
-          setTeamRegistrationEnabled={setTeamRegistrationEnabled}
-          teamRegistrationQrCode={teamRegistrationQrCode}
-          setTeamRegistrationQrCode={setTeamRegistrationQrCode}
-          teamJoinQrCode={teamJoinQrCode}
-          setTeamJoinQrCode={setTeamJoinQrCode}
-          includeInactiveTeams={includeInactiveTeams}
-          setIncludeInactiveTeams={setIncludeInactiveTeams}
-          selectedTeamIds={selectedTeamIds}
-          setSelectedTeamIds={setSelectedTeamIds}
-          teamConfirm={teamConfirm}
-          setTeamConfirm={setTeamConfirm}
-          teamFilterStatus={teamFilterStatus}
-          setTeamFilterStatus={setTeamFilterStatus}
-          teamFilterName={teamFilterName}
-          setTeamFilterName={setTeamFilterName}
-          teamFilterCreator={teamFilterCreator}
-          setTeamFilterCreator={setTeamFilterCreator}
-          teamFilterDropdown={teamFilterDropdown}
-          setTeamFilterDropdown={setTeamFilterDropdown}
-          teamFilterDropdownPosition={teamFilterDropdownPosition}
-          setTeamFilterDropdownPosition={setTeamFilterDropdownPosition}
-          teamFilterDropdownRef={teamFilterDropdownRef}
-          isMobileTeamFilterOpen={isMobileTeamFilterOpen}
-          setIsMobileTeamFilterOpen={setIsMobileTeamFilterOpen}
-          onBack={() => setMode(null)}
-        />
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.team.manage.title')}</h2>
+              <p>{t('admin.team.manage.subtitle')}</p>
+            </div>
+            <div className="admin-actions">
+              {!editingTeamId && (
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchTeams()}
+                  title={t('admin.team.manage.refresh')}
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">{t('admin.team.manage.refresh')}</span>
+                </button>
+              )}
+              <button
+                className="admin-icon-button"
+                onClick={() => {
+                  if (editingTeamId) {
+                    setEditingTeamId(null);
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title={editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}</span>
+              </button>
+            </div>
+          </header>
+
+          {teamsLoading && <p>{t('admin.team.manage.loading')}</p>}
+          {Boolean(teamsError) && <p className="admin-error">{t('admin.team.manage.loadError')}</p>}
+
+          <div className="admin-management-card">
+            <div className="admin-management-top">
+              <div>
+                <h3>{t('admin.team.manage.existing.title')}</h3>
+                <p>{t('admin.team.manage.existing.subtitle')}</p>
+              </div>
+              <div className="admin-management-controls">
+                <label className="admin-toggle">
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
+                    checked={includeInactiveTeams}
+                    onChange={(event) => {
+                      setIncludeInactiveTeams(event.target.checked);
+                      setSelectedTeamIds([]);
+                    }}
+                  />
+                  <span>{t('admin.team.manage.showInactive')}</span>
+                </label>
+                <button
+                  className="admin-mobile-filter-button"
+                  type="button"
+                  onClick={() => setIsMobileTeamFilterOpen(true)}
+                  aria-label={t('admin.team.manage.openFilters')}
+                >
+                  <Icon name="filter" />
+                  {(teamFilterStatus || teamFilterName.trim() || teamFilterCreator) && (
+                    <span className="admin-mobile-filter-badge">
+                      {[teamFilterStatus, teamFilterName.trim() ? 'name' : null, teamFilterCreator].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+            {teamManagementMessage && (
+              <p
+                className={
+                  teamManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+                }
+              >
+                {teamManagementMessage.text}
+              </p>
+            )}
+            <div className="admin-management-actions">
+              <div className="admin-bulk-buttons">
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleTeamBulkStatus(true)}
+                  disabled={!hasTeamSelection}
+                  type="button"
+                >
+                  {t('admin.team.manage.activate')}
+                </button>
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleTeamBulkStatus(false)}
+                  disabled={!hasTeamSelection}
+                  type="button"
+                >
+                  {t('admin.team.manage.deactivate')}
+                </button>
+                <button
+                  className="admin-action-button danger"
+                  onClick={handleTeamBulkDelete}
+                  disabled={!hasTeamSelection}
+                  type="button"
+                >
+                  {t('common.actions.delete', 'Löschen')}
+                </button>
+              </div>
+              <span className="admin-selection-count">
+                {hasTeamSelection
+                  ? t('admin.team.manage.selectedCount', { count: selectedTeamIds.length })
+                  : t('admin.team.manage.noSelection')}
+              </span>
+            </div>
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '3rem' }}>
+                      <input
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={allTeamsSelected && filteredTeams.length > 0}
+                        disabled={!filteredTeams.length}
+                        onChange={(event) =>
+                          setSelectedTeamIds(
+                            event.target.checked
+                              ? filteredTeams.map((team) => team.id)
+                              : []
+                          )
+                        }
+                        aria-label={t('admin.team.manage.selectAll')}
+                      />
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTeamFilterDropdown('name');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.team.manage.list.name')} {teamFilterName && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTeamFilterDropdown('creator');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.team.manage.list.creator')} {teamFilterCreator && '✓'}
+                    </th>
+                    <th>{t('admin.team.manage.list.members')}</th>
+                    <th>{t('admin.team.manage.list.points')}</th>
+                    <th>{t('admin.team.manage.list.createdAt')}</th>
+                    <th>{t('admin.team.manage.list.updatedAt')}</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTeamFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setTeamFilterDropdown('status');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.team.manage.list.active')} {teamFilterStatus && '✓'}
+                    </th>
+                    <th>{t('common.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTeams.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="admin-table-empty">
+                        {t('admin.team.manage.list.noTeams')}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTeams.map((team) => {
+                      const isSelected = selectedTeamIds.includes(team.id);
+                      return (
+                        <tr key={team.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="admin-checkbox"
+                              style={COMPACT_TOGGLE_STYLE}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggleTeamSelection(team.id, event.target.checked)
+                              }
+                              aria-label={`Select team ${team.name}`}
+                            />
+                          </td>
+                          <td data-label={t('admin.team.manage.list.name')}>
+                            <div className="admin-table-primary">
+                              <span className="admin-table-title">
+                                {team.name || t('admin.team.manage.list.untitled')}
+                              </span>
+                            </div>
+                          </td>
+                          <td data-label={t('admin.team.manage.list.creator')}>
+                            <span className="admin-table-secondary">
+                              {team.creator_name || '-'}
+                            </span>
+                          </td>
+                          <td data-label={t('admin.team.manage.list.members')}>
+                            {team.member_count || 0}
+                          </td>
+                          <td data-label={t('admin.team.manage.list.points')}>
+                            {team.points_pool || 0}
+                          </td>
+                          <td data-label={t('admin.team.manage.list.createdAt')}>
+                            {new Date(team.created_at).toLocaleDateString()}
+                          </td>
+                          <td data-label={t('admin.team.manage.list.updatedAt')}>
+                            {team.updated_at ? new Date(team.updated_at).toLocaleDateString() : '-'}
+                          </td>
+                          <td data-label={t('admin.team.manage.list.active')}>
+                            <span
+                              className={`admin-status-badge ${
+                                team.active ? 'active' : 'inactive'
+                              }`}
+                            >
+                              {team.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td data-label={t('common.actions')} className="admin-table-actions">
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => setEditingTeamId(team.id)}
+                            >
+                              {t('common.actions.edit', 'Bearbeiten')}
+                            </button>
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => handleTeamStatusChange(team.id, !team.active)}
+                            >
+                              {team.active ? t('admin.team.manage.deactivate') : t('admin.team.manage.activate')}
+                            </button>
+                            <button
+                              className="admin-action-button danger"
+                              type="button"
+                              onClick={() => handleTeamDelete(team.id)}
+                            >
+                              {t('common.actions.delete', 'Löschen')}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+              {teamFilterDropdown && teamFilterDropdownPosition && (
+                <FilterDropdown
+                  isOpen={true}
+                  onClose={() => setTeamFilterDropdown(null)}
+                  position={teamFilterDropdownPosition}
+                  options={
+                    teamFilterDropdown === 'status'
+                      ? teamFilterOptions.statuses
+                      : teamFilterDropdown === 'creator'
+                      ? teamFilterOptions.creators
+                      : undefined
+                  }
+                  selectedValue={
+                    teamFilterDropdown === 'status'
+                      ? teamFilterStatus
+                      : teamFilterDropdown === 'creator'
+                      ? teamFilterCreator
+                      : undefined
+                  }
+                  onSelect={(value) => {
+                    if (teamFilterDropdown === 'status') {
+                      setTeamFilterStatus(value as 'active' | 'inactive' | null);
+                    } else if (teamFilterDropdown === 'creator') {
+                      setTeamFilterCreator(value);
+                    }
+                  }}
+                  type={teamFilterDropdown}
+                  textValue={teamFilterDropdown === 'name' ? teamFilterName : undefined}
+                  onTextChange={teamFilterDropdown === 'name' ? setTeamFilterName : undefined}
+                />
+              )}
+            </div>
+          </div>
+          <MobileFilterModal
+            isOpen={isMobileTeamFilterOpen}
+            onClose={() => setIsMobileTeamFilterOpen(false)}
+            filterOptions={teamFilterOptions}
+            filters={{
+              status: teamFilterStatus,
+              name: teamFilterName,
+              creator: teamFilterCreator,
+            }}
+            onFilterChange={(filterType, value) => {
+              if (filterType === 'status') {
+                setTeamFilterStatus(value as 'active' | 'inactive' | null);
+              } else if (filterType === 'creator') {
+                setTeamFilterCreator(value);
+              }
+            }}
+            onTitleChange={setTeamFilterName}
+            onClearAll={() => {
+              setTeamFilterStatus(null);
+              setTeamFilterName('');
+              setTeamFilterCreator(null);
+            }}
+            filterType="team"
+          />
+        </section>
       )}
 
-      {/* Contest Management */}
+      {/* Contest Management - inline like taskManage */}
       {mode === 'contestManage' && (
-        <ContestManagementSection
-          editingContestId={editingContestId}
-          setEditingContestId={setEditingContestId}
-          contestManagementMessage={contestManagementMessage}
-          setContestManagementMessage={setContestManagementMessage}
-          contestRegistrationEnabled={contestRegistrationEnabled}
-          setContestRegistrationEnabled={setContestRegistrationEnabled}
-          contestRegistrationQrCode={contestRegistrationQrCode}
-          setContestRegistrationQrCode={setContestRegistrationQrCode}
-          contestJoinQrCode={contestJoinQrCode}
-          setContestJoinQrCode={setContestJoinQrCode}
-          includeInactiveContests={includeInactiveContests}
-          setIncludeInactiveContests={setIncludeInactiveContests}
-          selectedContestIds={selectedContestIds}
-          setSelectedContestIds={setSelectedContestIds}
-          contestConfirm={contestConfirm}
-          setContestConfirm={setContestConfirm}
-          contestFilterStatus={contestFilterStatus}
-          setContestFilterStatus={setContestFilterStatus}
-          contestFilterName={contestFilterName}
-          setContestFilterName={setContestFilterName}
-          contestFilterCreator={contestFilterCreator}
-          setContestFilterCreator={setContestFilterCreator}
-          contestFilterEndDate={contestFilterEndDate}
-          setContestFilterEndDate={setContestFilterEndDate}
-          contestFilterDropdown={contestFilterDropdown}
-          setContestFilterDropdown={setContestFilterDropdown}
-          contestFilterDropdownPosition={contestFilterDropdownPosition}
-          setContestFilterDropdownPosition={setContestFilterDropdownPosition}
-          contestFilterDropdownRef={contestFilterDropdownRef}
-          isMobileContestFilterOpen={isMobileContestFilterOpen}
-          setIsMobileContestFilterOpen={setIsMobileContestFilterOpen}
-          onBack={() => setMode(null)}
-        />
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.contest.manage.title')}</h2>
+              <p>{t('admin.contest.manage.subtitle')}</p>
+            </div>
+            <div className="admin-actions">
+              {!editingContestId && (
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchContests()}
+                  title={t('admin.contest.manage.refresh')}
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">{t('admin.contest.manage.refresh')}</span>
+                </button>
+              )}
+              <button
+                className="admin-icon-button"
+                onClick={() => {
+                  if (editingContestId) {
+                    setEditingContestId(null);
+                  } else {
+                    setMode(null);
+                  }
+                }}
+                title={editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}</span>
+              </button>
+            </div>
+          </header>
+
+          {contestsLoading && <p>{t('admin.contest.manage.loading')}</p>}
+          {Boolean(contestsError) && <p className="admin-error">{t('admin.contest.manage.loadError')}</p>}
+
+          <div className="admin-management-card">
+            <div className="admin-management-top">
+              <div>
+                <h3>{t('admin.contest.manage.existing.title')}</h3>
+                <p>{t('admin.contest.manage.existing.subtitle')}</p>
+              </div>
+              <div className="admin-management-controls">
+                <label className="admin-toggle">
+                  <input
+                    type="checkbox"
+                    className="admin-checkbox"
+                    style={COMPACT_TOGGLE_STYLE}
+                    checked={includeInactiveContests}
+                    onChange={(event) => {
+                      setIncludeInactiveContests(event.target.checked);
+                      setSelectedContestIds([]);
+                    }}
+                  />
+                  <span>{t('admin.contest.manage.showInactive')}</span>
+                </label>
+                <button
+                  className="admin-mobile-filter-button"
+                  type="button"
+                  onClick={() => setIsMobileContestFilterOpen(true)}
+                  aria-label={t('admin.contest.manage.openFilters')}
+                >
+                  <Icon name="filter" />
+                  {(contestFilterStatus || contestFilterName.trim() || contestFilterCreator || contestFilterEndDate.trim()) && (
+                    <span className="admin-mobile-filter-badge">
+                      {[contestFilterStatus, contestFilterName.trim() ? 'name' : null, contestFilterCreator, contestFilterEndDate.trim() ? 'endDate' : null].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+            {contestManagementMessage && (
+              <p
+                className={
+                  contestManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+                }
+              >
+                {contestManagementMessage.text}
+              </p>
+            )}
+            <div className="admin-management-actions">
+              <div className="admin-bulk-buttons">
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleContestBulkStatus(true)}
+                  disabled={!hasContestSelection}
+                  type="button"
+                >
+                  {t('admin.contest.manage.activate')}
+                </button>
+                <button
+                  className="admin-action-button"
+                  onClick={() => handleContestBulkStatus(false)}
+                  disabled={!hasContestSelection}
+                  type="button"
+                >
+                  {t('admin.contest.manage.deactivate')}
+                </button>
+                <button
+                  className="admin-action-button danger"
+                  onClick={handleContestBulkDelete}
+                  disabled={!hasContestSelection}
+                  type="button"
+                >
+                  {t('common.actions.delete', 'Löschen')}
+                </button>
+              </div>
+              <span className="admin-selection-count">
+                {hasContestSelection
+                  ? t('admin.contest.manage.selectedCount', { count: selectedContestIds.length })
+                  : t('admin.contest.manage.noSelection')}
+              </span>
+            </div>
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '3rem' }}>
+                      <input
+                        type="checkbox"
+                        className="admin-checkbox"
+                        style={COMPACT_TOGGLE_STYLE}
+                        checked={allContestsSelected && filteredContests.length > 0}
+                        disabled={!filteredContests.length}
+                        onChange={(event) =>
+                          setSelectedContestIds(
+                            event.target.checked
+                              ? filteredContests.map((contest) => contest.id)
+                              : []
+                          )
+                        }
+                        aria-label={t('admin.contest.manage.selectAll')}
+                      />
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setContestFilterDropdown('name');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.contest.manage.list.name')} {contestFilterName && '✓'}
+                    </th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setContestFilterDropdown('creator');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.contest.manage.list.creator')} {contestFilterCreator && '✓'}
+                    </th>
+                    <th>{t('admin.contest.manage.list.participants')}</th>
+                    <th>{t('admin.contest.manage.list.startDate')}</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setContestFilterDropdown('endDate');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.contest.manage.list.endDate')} {contestFilterEndDate && '✓'}
+                    </th>
+                    <th>{t('admin.contest.manage.list.rewards')}</th>
+                    <th>{t('admin.contest.manage.list.createdAt')}</th>
+                    <th>{t('admin.contest.manage.list.updatedAt')}</th>
+                    <th
+                      className="admin-filter-header"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setContestFilterDropdownPosition({ top: rect.bottom + 5, left: rect.left });
+                        setContestFilterDropdown('status');
+                      }}
+                      style={{ cursor: 'pointer', position: 'relative' }}
+                    >
+                      {t('admin.contest.manage.list.active')} {contestFilterStatus && '✓'}
+                    </th>
+                    <th>{t('common.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredContests.length === 0 ? (
+                    <tr>
+                      <td colSpan={11} className="admin-table-empty">
+                        {t('admin.contest.manage.list.noContests')}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredContests.map((contest) => {
+                      const isSelected = selectedContestIds.includes(contest.id);
+                      return (
+                        <tr key={contest.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="admin-checkbox"
+                              style={COMPACT_TOGGLE_STYLE}
+                              checked={isSelected}
+                              onChange={(event) =>
+                                toggleContestSelection(contest.id, event.target.checked)
+                              }
+                              aria-label={`Select contest ${contest.name}`}
+                            />
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.name')}>
+                            <div className="admin-table-primary">
+                              <span className="admin-table-title">
+                                {contest.name || t('admin.contest.manage.list.untitled')}
+                              </span>
+                            </div>
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.creator')}>
+                            <span className="admin-table-secondary">
+                              {contest.creator_name || '-'}
+                            </span>
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.participants')}>
+                            {contest.participant_count || 0}
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.startDate')}>
+                            {contest.start_date ? new Date(contest.start_date).toLocaleDateString() : '-'}
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.endDate')}>
+                            {contest.end_date ? new Date(contest.end_date).toLocaleDateString() : '-'}
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.rewards')}>
+                            <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
+                              {contest.reward_first_place || contest.reward_second_place || contest.reward_third_place
+                                ? `1st: ${contest.reward_first_place || 0}, 2nd: ${contest.reward_second_place || 0}, 3rd: ${contest.reward_third_place || 0}`
+                                : '-'}
+                            </span>
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.createdAt')}>
+                            {new Date(contest.created_at).toLocaleDateString()}
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.updatedAt')}>
+                            {contest.updated_at ? new Date(contest.updated_at).toLocaleDateString() : '-'}
+                          </td>
+                          <td data-label={t('admin.contest.manage.list.active')}>
+                            <span
+                              className={`admin-status-badge ${
+                                contest.active ? 'active' : 'inactive'
+                              }`}
+                            >
+                              {contest.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td data-label={t('common.actions')} className="admin-table-actions">
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => setEditingContestId(contest.id)}
+                            >
+                              {t('common.actions.edit', 'Bearbeiten')}
+                            </button>
+                            <button
+                              className="admin-action-button"
+                              type="button"
+                              onClick={() => handleContestStatusChange(contest.id, !contest.active)}
+                            >
+                              {contest.active ? t('admin.contest.manage.deactivate') : t('admin.contest.manage.activate')}
+                            </button>
+                            <button
+                              className="admin-action-button danger"
+                              type="button"
+                              onClick={() => handleContestDelete(contest.id)}
+                            >
+                              {t('common.actions.delete', 'Löschen')}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+              {contestFilterDropdown && contestFilterDropdownPosition && (
+                <FilterDropdown
+                  isOpen={true}
+                  onClose={() => setContestFilterDropdown(null)}
+                  position={contestFilterDropdownPosition}
+                  options={
+                    contestFilterDropdown === 'status'
+                      ? contestFilterOptions.statuses
+                      : contestFilterDropdown === 'creator'
+                      ? contestFilterOptions.creators
+                      : undefined
+                  }
+                  selectedValue={
+                    contestFilterDropdown === 'status'
+                      ? contestFilterStatus
+                      : contestFilterDropdown === 'creator'
+                      ? contestFilterCreator
+                      : undefined
+                  }
+                  onSelect={(value) => {
+                    if (contestFilterDropdown === 'status') {
+                      setContestFilterStatus(value as 'active' | 'inactive' | null);
+                    } else if (contestFilterDropdown === 'creator') {
+                      setContestFilterCreator(value);
+                    }
+                  }}
+                  type={contestFilterDropdown}
+                  textValue={contestFilterDropdown === 'name' ? contestFilterName : undefined}
+                  onTextChange={contestFilterDropdown === 'name' ? setContestFilterName : undefined}
+                  dateValue={contestFilterDropdown === 'endDate' ? contestFilterEndDate : undefined}
+                  onDateChange={contestFilterDropdown === 'endDate' ? setContestFilterEndDate : undefined}
+                />
+              )}
+            </div>
+          </div>
+          <MobileFilterModal
+            isOpen={isMobileContestFilterOpen}
+            onClose={() => setIsMobileContestFilterOpen(false)}
+            filterOptions={contestFilterOptions}
+            filters={{
+              status: contestFilterStatus,
+              name: contestFilterName,
+              creator: contestFilterCreator,
+              endDate: contestFilterEndDate,
+            }}
+            onFilterChange={(filterType, value) => {
+              if (filterType === 'status') {
+                setContestFilterStatus(value as 'active' | 'inactive' | null);
+              } else if (filterType === 'creator') {
+                setContestFilterCreator(value);
+              }
+            }}
+            onTitleChange={setContestFilterName}
+            onEndDateChange={setContestFilterEndDate}
+            onClearAll={() => {
+              setContestFilterStatus(null);
+              setContestFilterName('');
+              setContestFilterCreator(null);
+              setContestFilterEndDate('');
+            }}
+            filterType="contest"
+          />
+        </section>
       )}
     </div>
   );
