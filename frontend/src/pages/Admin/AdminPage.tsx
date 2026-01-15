@@ -230,15 +230,20 @@ const defaultConfirmDialogState: ConfirmDialogState = {
 };
 
 const TaskTypeIcon = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
-  const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
   if (thumbnailUrl) {
-    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />;
+    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block', flexShrink: 0 }} />;
   }
-  return (
-    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block' }}>
-      {typeIcon}
-    </span>
-  );
+  const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
+  // Handle ReactNode (for QR code) vs string (for emojis)
+  if (typeof typeIcon === 'string') {
+    return (
+      <span aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block', flexShrink: 0 }}>
+        {typeIcon}
+      </span>
+    );
+  }
+  // For ReactNode (QRCodeIcon), render it directly
+  return <span style={{ display: 'inline-block', flexShrink: 0, fontSize: '48px', lineHeight: '1' }}>{typeIcon}</span>;
 };
 
 // TaskTypeBadge for use in forms (shows icon + type text)
@@ -260,12 +265,12 @@ const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: st
 };
 
 const RewardTypeIcon = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
-  const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
   if (thumbnailUrl) {
-    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />;
+    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block', flexShrink: 0 }} />;
   }
+  const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
   return (
-    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block' }}>
+    <span aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block', flexShrink: 0 }}>
       {typeIcon}
     </span>
   );
