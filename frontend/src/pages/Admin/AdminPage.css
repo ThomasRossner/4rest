@@ -1203,19 +1203,7 @@
   margin-top: 0.125rem;
 }
 
-.admin-table-type .admin-type-badge {
-  transform: scale(0.5);
-  transform-origin: left center;
-  font-size: 0.4rem;
-  padding: 0.075rem 0.2rem;
-}
-
-.admin-table-type {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
+/* Removed: admin-table-type scaling - icons should be displayed at full size */
 
 .admin-table-actions {
   display: flex;

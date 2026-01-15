@@ -229,37 +229,27 @@ const defaultConfirmDialogState: ConfirmDialogState = {
   onConfirm: () => undefined,
 };
 
-const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
+const TaskTypeIcon = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
   const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
-  const displayIcon = thumbnailUrl ? (
-    <img src={thumbnailUrl} alt={type} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
-  ) : (
-    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '24px' }}>
+  if (thumbnailUrl) {
+    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />;
+  }
+  return (
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1' }}>
       {typeIcon}
     </span>
-  );
-  return (
-    <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      {displayIcon}
-      <span>{type.toUpperCase()}</span>
-    </div>
   );
 };
 
-const RewardTypeBadge = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
+const RewardTypeIcon = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
   const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
-  const displayIcon = thumbnailUrl ? (
-    <img src={thumbnailUrl} alt={type} style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
-  ) : (
-    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '24px' }}>
+  if (thumbnailUrl) {
+    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />;
+  }
+  return (
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1' }}>
       {typeIcon}
     </span>
-  );
-  return (
-    <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      {displayIcon}
-      <span>{type.toUpperCase().replace(/_/g, ' ')}</span>
-    </div>
   );
 };
 
@@ -8141,9 +8131,10 @@ const goToRewardCreation = () => {
                             </div>
                           </td>
                           <td data-label={t('admin.filters.typeIcon')}>
-                            <span className="admin-table-type">
-                              <TaskTypeBadge type={task.type} thumbnailUrl={(task as any).thumbnail_url} />
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <TaskTypeIcon type={task.type} thumbnailUrl={(task as any).thumbnail_url} />
+                              <span>{task.type}</span>
+                            </div>
                           </td>
                           <td data-label="Location">
                             <div className="admin-table-secondary">
@@ -8570,10 +8561,11 @@ const goToRewardCreation = () => {
                              </div>
                            </td>
                           <td data-label={t('admin.filters.typeIcon')}>
-                             <span className="admin-table-type">
-                               <RewardTypeBadge type={reward.reward_type as RewardType} thumbnailUrl={(reward as any).thumbnail_url} />
-                             </span>
-                           </td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <RewardTypeIcon type={reward.reward_type as RewardType} thumbnailUrl={(reward as any).thumbnail_url} />
+                              <span>{reward.reward_type}</span>
+                            </div>
+                          </td>
                           <td data-label="Location">
                             <div className="admin-table-secondary">
                               <span className="admin-table-title">
