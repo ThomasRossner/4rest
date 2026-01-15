@@ -232,24 +232,60 @@ const defaultConfirmDialogState: ConfirmDialogState = {
 const TaskTypeIcon = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
   const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
   if (thumbnailUrl) {
-    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />;
+    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />;
   }
   return (
-    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1' }}>
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block' }}>
       {typeIcon}
     </span>
+  );
+};
+
+// TaskTypeBadge for use in forms (shows icon + type text)
+const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
+  const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
+  const displayIcon = thumbnailUrl ? (
+    <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+  ) : (
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block' }}>
+      {typeIcon}
+    </span>
+  );
+  return (
+    <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {displayIcon}
+      <span>{type.toUpperCase()}</span>
+    </div>
   );
 };
 
 const RewardTypeIcon = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
   const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
   if (thumbnailUrl) {
-    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />;
+    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />;
   }
   return (
-    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1' }}>
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block' }}>
       {typeIcon}
     </span>
+  );
+};
+
+// RewardTypeBadge for use in forms (shows icon + type text)
+const RewardTypeBadge = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
+  const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
+  const displayIcon = thumbnailUrl ? (
+    <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block' }} />
+  ) : (
+    <span className="admin-type-icon" aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block' }}>
+      {typeIcon}
+    </span>
+  );
+  return (
+    <div className="admin-type-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {displayIcon}
+      <span>{type.toUpperCase().replace(/_/g, ' ')}</span>
+    </div>
   );
 };
 
