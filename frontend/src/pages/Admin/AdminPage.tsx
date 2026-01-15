@@ -9005,19 +9005,29 @@ function TeamManagementSection({
           <p>{t('admin.team.manage.subtitle')}</p>
         </div>
         <div className="admin-actions">
+          {!editingTeamId && (
+            <button
+              className="admin-icon-button"
+              onClick={() => refetchTeams()}
+              title={t('admin.team.manage.refresh')}
+            >
+              <Icon name="refresh" />
+              <span className="sr-only">{t('admin.team.manage.refresh')}</span>
+            </button>
+          )}
           <button
-            className="admin-button admin-button-secondary"
-            onClick={() => refetchTeams()}
-            title={t('admin.team.manage.refresh')}
+            className="admin-icon-button"
+            onClick={() => {
+              if (editingTeamId) {
+                setEditingTeamId(null);
+              } else {
+                onBack();
+              }
+            }}
+            title={editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}
           >
-            ↻ {t('admin.team.manage.refresh')}
-          </button>
-          <button
-            className="admin-button admin-button-secondary"
-            onClick={onBack}
-            title={t('admin.team.manage.back')}
-          >
-            ← {t('admin.team.manage.back')}
+            <Icon name="back" />
+            <span className="sr-only">{editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}</span>
           </button>
         </div>
       </header>
@@ -9051,7 +9061,7 @@ function TeamManagementSection({
               onClick={() => setIsMobileTeamFilterOpen(true)}
               aria-label={t('admin.team.manage.openFilters')}
             >
-              🔍 {t('admin.team.manage.openFilters')}
+              <Icon name="filter" />
               {(teamFilterStatus || teamFilterName.trim() || teamFilterCreator) && (
                 <span className="admin-mobile-filter-badge">
                   {[teamFilterStatus, teamFilterName.trim() ? 'name' : null, teamFilterCreator].filter(Boolean).length}
@@ -9846,19 +9856,29 @@ function ContestManagementSection({
           <p>{t('admin.contest.manage.subtitle')}</p>
         </div>
         <div className="admin-actions">
+          {!editingContestId && (
+            <button
+              className="admin-icon-button"
+              onClick={() => refetchContests()}
+              title={t('admin.contest.manage.refresh')}
+            >
+              <Icon name="refresh" />
+              <span className="sr-only">{t('admin.contest.manage.refresh')}</span>
+            </button>
+          )}
           <button
-            className="admin-button admin-button-secondary"
-            onClick={() => refetchContests()}
-            title={t('admin.contest.manage.refresh')}
+            className="admin-icon-button"
+            onClick={() => {
+              if (editingContestId) {
+                setEditingContestId(null);
+              } else {
+                onBack();
+              }
+            }}
+            title={editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}
           >
-            ↻ {t('admin.contest.manage.refresh')}
-          </button>
-          <button
-            className="admin-button admin-button-secondary"
-            onClick={onBack}
-            title={t('admin.contest.manage.back')}
-          >
-            ← {t('admin.contest.manage.back')}
+            <Icon name="back" />
+            <span className="sr-only">{editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}</span>
           </button>
         </div>
       </header>
@@ -9892,7 +9912,7 @@ function ContestManagementSection({
               onClick={() => setIsMobileContestFilterOpen(true)}
               aria-label={t('admin.contest.manage.openFilters')}
             >
-              🔍 {t('admin.contest.manage.openFilters')}
+              <Icon name="filter" />
               {(contestFilterStatus || contestFilterName.trim() || contestFilterCreator || contestFilterEndDate.trim()) && (
                 <span className="admin-mobile-filter-badge">
                   {[contestFilterStatus, contestFilterName.trim() ? 'name' : null, contestFilterCreator, contestFilterEndDate.trim() ? 'endDate' : null].filter(Boolean).length}
