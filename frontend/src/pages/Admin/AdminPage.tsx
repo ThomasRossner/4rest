@@ -8828,6 +8828,49 @@ const goToRewardCreation = () => {
           {teamsLoading && <p>{t('admin.team.manage.loading')}</p>}
           {Boolean(teamsError) && <p className="admin-error">{t('admin.team.manage.loadError')}</p>}
 
+          {editingTeamId && filteredTeams.find((t) => t.id === editingTeamId) ? (() => {
+            const editingTeam = filteredTeams.find((t) => t.id === editingTeamId)!;
+            return (
+              <div className="admin-form-section">
+                <h3>{t('admin.team.manage.edit.title')}</h3>
+                <div className="admin-field">
+                  <label>
+                    {t('admin.team.manage.edit.name')}
+                    <input
+                      type="text"
+                      value={editingTeam.name || ''}
+                      onChange={async (e) => {
+                        try {
+                          await api.updateTeam(editingTeamId, { name: e.target.value || null });
+                          await refetchTeams();
+                        } catch (err) {
+                          console.error('Failed to update team name:', err);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={editingTeam.active ?? true}
+                      onChange={async (e) => {
+                        try {
+                          await api.bulkUpdateTeamsStatus([editingTeamId], e.target.checked);
+                          await refetchTeams();
+                        } catch (err) {
+                          console.error('Failed to update team status:', err);
+                        }
+                      }}
+                    />
+                    {t('admin.team.manage.edit.active')}
+                  </label>
+                </div>
+              </div>
+            );
+          })() : null}
+
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
@@ -9151,6 +9194,66 @@ const goToRewardCreation = () => {
           {contestsLoading && <p>{t('admin.contest.manage.loading')}</p>}
           {Boolean(contestsError) && <p className="admin-error">{t('admin.contest.manage.loadError')}</p>}
 
+          {editingContestId && filteredContests.find((c) => c.id === editingContestId) ? (() => {
+            const editingContest = filteredContests.find((c) => c.id === editingContestId)!;
+            return (
+              <div className="admin-form-section">
+                <h3>{t('admin.contest.manage.edit.title')}</h3>
+                <div className="admin-field">
+                  <label>
+                    {t('admin.contest.manage.edit.name')}
+                    <input
+                      type="text"
+                      value={editingContest.name || ''}
+                      onChange={async (e) => {
+                        try {
+                          await api.updateContest(editingContestId, { name: e.target.value || null });
+                          await refetchContests();
+                        } catch (err) {
+                          console.error('Failed to update contest name:', err);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="admin-field">
+                  <label>
+                    {t('admin.contest.manage.edit.endDate')}
+                    <input
+                      type="date"
+                      value={editingContest.end_date ? new Date(editingContest.end_date).toISOString().split('T')[0] : ''}
+                      onChange={async (e) => {
+                        try {
+                          await api.updateContest(editingContestId, { endDate: e.target.value || undefined });
+                          await refetchContests();
+                        } catch (err) {
+                          console.error('Failed to update contest end date:', err);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={editingContest.active ?? true}
+                      onChange={async (e) => {
+                        try {
+                          await api.bulkUpdateContestsStatus([editingContestId], e.target.checked);
+                          await refetchContests();
+                        } catch (err) {
+                          console.error('Failed to update contest status:', err);
+                        }
+                      }}
+                    />
+                    {t('admin.contest.manage.edit.active')}
+                  </label>
+                </div>
+              </div>
+            );
+          })() : null}
+
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
@@ -9432,6 +9535,33 @@ const goToRewardCreation = () => {
               )}
             </div>
           </div>
+          <MobileFilterModal
+            isOpen={isMobileContestFilterOpen}
+            onClose={() => setIsMobileContestFilterOpen(false)}
+            filterOptions={contestFilterOptions}
+            filters={{
+              status: contestFilterStatus,
+              name: contestFilterName,
+              creator: contestFilterCreator,
+              endDate: contestFilterEndDate,
+            }}
+            onFilterChange={(filterType, value) => {
+              if (filterType === 'status') {
+                setContestFilterStatus(value as 'active' | 'inactive' | null);
+              } else if (filterType === 'creator') {
+                setContestFilterCreator(value);
+              }
+            }}
+            onTitleChange={setContestFilterName}
+            onEndDateChange={setContestFilterEndDate}
+            onClearAll={() => {
+              setContestFilterStatus(null);
+              setContestFilterName('');
+              setContestFilterCreator(null);
+              setContestFilterEndDate('');
+            }}
+            filterType="contest"
+          />
           <MobileFilterModal
             isOpen={isMobileContestFilterOpen}
             onClose={() => setIsMobileContestFilterOpen(false)}
