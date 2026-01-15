@@ -1,6 +1,6 @@
 // Service Worker for offline QR code functionality
-const CACHE_NAME = 'roots-of-impact-v1';
-const RUNTIME_CACHE = 'runtime-cache';
+const CACHE_NAME = 'roots-of-impact-v2';
+const RUNTIME_CACHE = 'runtime-cache-v2';
 
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
