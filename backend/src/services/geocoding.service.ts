@@ -22,7 +22,7 @@ export interface GeocodingError {
 }
 
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/search';
-const USER_AGENT = 'RootsOfImpact/1.0'; // Required by Nominatim ToS
+const USER_AGENT = '4rest/1.0'; // Required by Nominatim ToS
 
 /**
  * Geocode an address to get coordinates

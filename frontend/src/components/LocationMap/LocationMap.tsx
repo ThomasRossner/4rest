@@ -125,7 +125,7 @@ export function LocationMap({
       // Use Nominatim directly for reverse geocoding
       fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
         headers: {
-          'User-Agent': 'RootsOfImpact/1.0'
+          'User-Agent': '4rest/1.0'
         }
       })
         .then((response) => response.json())
