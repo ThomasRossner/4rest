@@ -354,6 +354,13 @@ export const api = {
     formData.append('video', file);
     const response = await apiClient.post('/tasks/upload/video', formData, {
       // Don't set Content-Type manually - axios will set it automatically with boundary for FormData
+      timeout: 300000, // 5 minutes timeout for large video uploads
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload progress: ${percentCompleted}%`);
+        }
+      },
     });
     return response.data;
   },
