@@ -188,7 +188,7 @@ export async function register(req: Request, res: Response) {
           const teamId = await validateTeamRegistrationToken(teamRegistrationToken);
           if (teamId) {
             try {
-              joinedTeam = await joinTeam(user.id, teamId);
+              joinedTeam = await joinTeamById(user.id, teamId);
             } catch (error) {
               console.error('Failed to join team after reactivation:', error);
             }
@@ -199,7 +199,7 @@ export async function register(req: Request, res: Response) {
           const contestId = await validateContestRegistrationToken(contestRegistrationToken);
           if (contestId) {
             try {
-              joinedContest = await joinContest(user.id, contestId);
+              joinedContest = await joinContestById(user.id, contestId);
             } catch (error) {
               console.error('Failed to join contest after reactivation:', error);
             }
