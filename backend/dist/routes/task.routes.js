@@ -73,15 +73,15 @@ const uploadThumbnailMiddleware = multer({
 });
 const router = Router();
 router.get('/', authenticate, getTasks);
-router.post('/bulk/status', authenticate, requireRole('administrator'), bulkUpdateTaskStatus);
-router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDeleteTasks);
+router.post('/bulk/status', authenticate, requireRole('redaktion', 'administrator'), bulkUpdateTaskStatus);
+router.post('/bulk/delete', authenticate, requireRole('redaktion', 'administrator'), bulkDeleteTasks);
 router.get('/:id', getTask);
-router.post('/', authenticate, requireRole('administrator'), createTask);
-router.put('/:id', authenticate, requireRole('administrator'), updateTask);
-router.delete('/:id', authenticate, requireRole('administrator'), deleteTask);
+router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);
+router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), updateTask);
+router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
 router.post('/:id/complete', authenticate, completeTask);
 router.post('/upload', authenticate, uploadPhotoMiddleware.single('photo'), uploadPhoto);
-router.post('/upload/video', authenticate, requireRole('administrator'), uploadVideoMiddleware.single('video'), uploadVideo);
-router.post('/upload/thumbnail', authenticate, requireRole('administrator'), uploadThumbnailMiddleware.single('thumbnail'), uploadThumbnail);
+router.post('/upload/video', authenticate, requireRole('redaktion', 'administrator'), uploadVideoMiddleware.single('video'), uploadVideo);
+router.post('/upload/thumbnail', authenticate, requireRole('redaktion', 'administrator'), uploadThumbnailMiddleware.single('thumbnail'), uploadThumbnail);
 export default router;
 //# sourceMappingURL=task.routes.js.map

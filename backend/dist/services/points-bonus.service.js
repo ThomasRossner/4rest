@@ -13,8 +13,8 @@ export async function generatePointsBonusQr(employeeUserId, pointsAmount) {
     if (!user) {
         throw new Error('User not found');
     }
-    if (user.role !== 'front_office' && user.role !== 'administrator') {
-        throw new Error('Only front office staff and administrators can generate points bonus QR codes');
+    if (user.role !== 'rezeption' && user.role !== 'administrator') {
+        throw new Error('Only rezeption staff and administrators can generate points bonus QR codes');
     }
     if (!Number.isInteger(pointsAmount) || pointsAmount <= 0) {
         throw new Error('Points amount must be a positive integer');
@@ -55,7 +55,7 @@ export async function redeemPointsBonusQr(qrToken, userId) {
     }
     // Only guests can redeem points bonus QR codes
     // Employees and administrators cannot redeem QR codes they generate
-    if (user.role === 'front_office' || user.role === 'administrator') {
+    if (user.role === 'rezeption' || user.role === 'redaktion' || user.role === 'administrator') {
         throw new Error('Only guests can redeem points bonus QR codes');
     }
     // Find QR token

@@ -1188,7 +1188,8 @@
       },
       "roles": {
         "guest": "Guest",
-        "front_office": "Front Office",
+        "rezeption": "Rezeption",
+        "redaktion": "Redaktion",
         "administrator": "Administrator"
       },
       "details": {
@@ -1912,6 +1913,148 @@
       "maxPoints": "Max. Points",
       "maxTrees": "Max. Trees",
       "maxCo2": "Max. CO₂"
+    }
+  },
+  "rezeption": {
+    "title": "Reception",
+    "subtitle": "Management of teams, contests and rewards",
+    "actions": {
+      "manageTeams": {
+        "title": "Manage Teams",
+        "description": "View, edit all teams and manage registration QR codes"
+      },
+      "manageContests": {
+        "title": "Manage Contests",
+        "description": "View, edit all contests and manage registration QR codes"
+      },
+      "pointsBonus": {
+        "title": "Give Bonus Points",
+        "description": "Generate QR codes for bonus points"
+      },
+      "redeemRewards": {
+        "title": "Redeem Rewards",
+        "description": "Scan QR codes to verify and redeem rewards"
+      },
+      "verifyTasks": {
+        "title": "Verify Tasks",
+        "description": "Manually verify and approve tasks"
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Manage Teams",
+        "subtitle": "Manage all teams",
+        "createNew": "Create New Team",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading teams...",
+        "loadError": "Error loading teams",
+        "createSuccess": "Team created successfully",
+        "noTeams": "No teams found",
+        "unnamed": "Unnamed Team",
+        "createdBy": "Created by",
+        "status": "Status",
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Search by name...",
+          "includeInactive": "Show inactive"
+        },
+        "edit": {
+          "title": "Edit Team",
+          "name": "Team Name",
+          "nameUpdated": "Team name updated",
+          "nameUpdateError": "Error updating",
+          "addMembers": "Add Members",
+          "removeMembers": "Remove Members",
+          "showJoinQr": "Show Join QR Code",
+          "showRegistrationQr": "Show Registration QR Code",
+          "cancel": "Cancel",
+          "joinQrTitle": "Join QR Code",
+          "joinQrDescription": "Existing users can scan this QR code to join the team",
+          "registrationQrTitle": "Registration QR Code",
+          "registrationQrDescription": "New users can scan this QR code to register and automatically join the team",
+          "add": "Add",
+          "remove": "Remove"
+        }
+      },
+      "membersAdded": "Members added successfully",
+      "membersRemoved": "Members removed successfully",
+      "addMembersError": "Error adding members",
+      "removeMembersError": "Error removing members",
+      "qrError": "Error generating QR code",
+      "registrationQrError": "Error generating registration QR code"
+    },
+    "contest": {
+      "manage": {
+        "title": "Manage Contests",
+        "subtitle": "Manage all contests",
+        "createNew": "Create New Contest",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading contests...",
+        "loadError": "Error loading contests",
+        "createSuccess": "Contest created successfully",
+        "noContests": "No contests found",
+        "unnamed": "Unnamed Contest",
+        "createdBy": "Created by",
+        "status": "Status",
+        "endDate": "End Date",
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Search by name...",
+          "includeInactive": "Show inactive"
+        },
+        "edit": {
+          "title": "Edit Contest",
+          "name": "Contest Name",
+          "nameUpdated": "Contest name updated",
+          "nameUpdateError": "Error updating",
+          "addParticipants": "Add Participants",
+          "removeParticipants": "Remove Participants",
+          "showJoinQr": "Show Join QR Code",
+          "showRegistrationQr": "Show Registration QR Code",
+          "cancel": "Cancel",
+          "joinQrTitle": "Join QR Code",
+          "joinQrDescription": "Existing users can scan this QR code to join the contest",
+          "registrationQrTitle": "Registration QR Code",
+          "registrationQrDescription": "New users can scan this QR code to register and automatically join the contest",
+          "add": "Add",
+          "remove": "Remove"
+        }
+      },
+      "participantsAdded": "Participants added successfully",
+      "participantsRemoved": "Participants removed successfully",
+      "addParticipantsError": "Error adding participants",
+      "removeParticipantsError": "Error removing participants",
+      "qrError": "Error generating QR code",
+      "registrationQrError": "Error generating registration QR code",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "toggleSuccess": "Contest status updated successfully",
+      "toggleError": "Error updating contest status",
+      "deleteSuccess": "Contest deleted successfully",
+      "deleteError": "Error deleting contest",
+      "deleteConfirm": {
+        "title": "Delete Contest",
+        "description": "Are you sure you want to delete the contest \"{{name}}\"?"
+      },
+      "toggleConfirm": {
+        "title": "Change Contest Status",
+        "description": "Are you sure you want to change the status of the contest \"{{name}}\"?"
+      }
+    },
+    "pointsBonus": {
+      "title": "Give Bonus Points"
+    },
+    "redeemRewards": {
+      "title": "Redeem Rewards"
+    },
+    "verifyTasks": {
+      "title": "Verify Tasks",
+      "subtitle": "This feature will be available soon",
+      "placeholder": "The function to verify tasks is not yet implemented."
     }
   }
 }

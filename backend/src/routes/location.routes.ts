@@ -16,7 +16,7 @@ import {
 
 const router = Router();
 
-router.use(authenticate, requireRole('administrator'));
+router.use(authenticate, requireRole('redaktion', 'administrator'));
 
 router.get('/', listLocations);
 router.post('/', createLocationController);

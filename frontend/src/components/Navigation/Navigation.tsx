@@ -126,8 +126,8 @@ function Navigation() {
   // Navigation items for bottom bar (all non-admin users)
   const bottomNavItems = userRole === 'administrator' ? [] : baseNavItems;
   
-  // Top bar items for front office (Points Bonus and Contests)
-  const employeeTopItems = (userRole === 'front_office' || userRole === 'administrator')
+  // Top bar items for rezeption (Points Bonus and Contests)
+  const employeeTopItems = (userRole === 'rezeption' || userRole === 'administrator')
     ? [
         { path: '/points-bonus', label: t('navigation.pointsBonus') || 'Points Bonus', icon: '🎫' },
         { path: '/employee-contests', label: t('navigation.contests', 'Contests') || 'Contests', icon: '🏆' },

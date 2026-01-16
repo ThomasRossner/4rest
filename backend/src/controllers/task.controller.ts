@@ -61,8 +61,12 @@ export const createTask: RequestHandler = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'Active flag must be a boolean value' });
     }
 
-    if (payload.allowed_roles && !Array.isArray(payload.allowed_roles)) {
-      return res.status(400).json({ error: 'allowed_roles must be an array of strings' });
+    // allowed_roles is deprecated, use allowed_teams and allowed_contests instead
+    if (payload.allowed_teams && !Array.isArray(payload.allowed_teams)) {
+      return res.status(400).json({ error: 'allowed_teams must be an array of UUIDs' });
+    }
+    if (payload.allowed_contests && !Array.isArray(payload.allowed_contests)) {
+      return res.status(400).json({ error: 'allowed_contests must be an array of UUIDs' });
     }
     if (payload.allowed_user_types && !Array.isArray(payload.allowed_user_types)) {
       return res.status(400).json({ error: 'allowed_user_types must be an array of strings' });
@@ -84,8 +88,8 @@ export const createTask: RequestHandler = asyncHandler(async (req, res) => {
     payload.location_id = location.id;
 
     // Validate arrays using shared validation functions
+    // allowed_roles is deprecated, validation removed
     try {
-      validateRoleArray(payload.allowed_roles);
       validateUserTypeArray(payload.allowed_user_types);
       validateHotelIdArray(payload.allowed_hotel_ids);
     } catch (error: any) {

@@ -3,6 +3,7 @@ import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
 import { validateRewardType, validateRecurrence, normalizePointsCost, } from '../utils/validation.js';
+import { buildTeamContestFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 import { getUserActiveTeam, getTeamTotalPoints, deductTeamPoints } from './team.service.js';
 export async function getRewardsService(userId) {
     const db = getPool();
@@ -10,32 +11,41 @@ export async function getRewardsService(userId) {
     const role = user?.role ?? null;
     const userType = user?.user_type ?? null;
     const params = [];
-    let paramIndex = 1;
+    let paramIndex = { current: 1 };
     let query = 'SELECT r.*, row_to_json(l.*) AS location FROM rewards r JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE';
-    // Map user role to zielgruppe for filtering (same logic as tasks)
-    let userZielgruppe = null;
+    let userTeamIds = [];
+    let userContestIds = [];
+    let applyFilters = true;
     if (role === 'administrator') {
         // Administrators see all rewards
-        userZielgruppe = null;
+        applyFilters = false;
     }
-    else if (role === 'front_office') {
-        userZielgruppe = 'Front Office';
+    else {
+        // Get user's team memberships
+        const teamResult = await db.query('SELECT team_id FROM team_members WHERE user_id = $1', [userId]);
+        userTeamIds = teamResult.rows.map((row) => row.team_id);
+        // Get user's contest participations
+        const contestResult = await db.query('SELECT contest_id FROM contest_participants WHERE user_id = $1', [userId]);
+        userContestIds = contestResult.rows.map((row) => row.contest_id);
     }
-    else if (role === 'guest') {
-        userZielgruppe = 'Gäste';
-    }
-    // Filter by zielgruppe: Only show rewards that match user's zielgruppe
-    // NULL or empty array zielgruppe means accessible to all, otherwise must match user's zielgruppe
-    if (role !== 'administrator') {
-        if (userZielgruppe) {
-            // Show rewards with NULL/empty zielgruppe (accessible to all) OR rewards where user's zielgruppe is in the array
-            query += ` AND (r.zielgruppe IS NULL OR array_length(r.zielgruppe, 1) IS NULL OR $${paramIndex} = ANY(r.zielgruppe))`;
-            params.push(userZielgruppe);
-            paramIndex++;
-        }
-        else {
-            // If user has no matching zielgruppe (e.g., unknown role), only show rewards with NULL or empty zielgruppe
-            query += ' AND (r.zielgruppe IS NULL OR array_length(r.zielgruppe, 1) IS NULL)';
+    // Filter by team/contest assignments
+    if (applyFilters) {
+        const hotelId = getConfiguredHotelId();
+        const filterClauses = buildTeamContestFilterClauses({
+            userTeamIds: userTeamIds.length > 0 ? userTeamIds : null,
+            userContestIds: userContestIds.length > 0 ? userContestIds : null,
+            userType,
+            hotelId,
+            applyFilters: true,
+        }, params, paramIndex);
+        // Convert clauses to SQL WHERE conditions
+        // The clauses use table aliases, so we need to adapt them for rewards table
+        const rewardClauses = filterClauses.map(clause => clause.replace(/allowed_teams/g, 'r.allowed_teams')
+            .replace(/allowed_contests/g, 'r.allowed_contests')
+            .replace(/allowed_user_types/g, 'r.allowed_user_types')
+            .replace(/allowed_hotel_ids/g, 'r.allowed_hotel_ids'));
+        if (rewardClauses.length > 0) {
+            query += ` AND ${rewardClauses.join(' AND ')}`;
         }
     }
     query += ' ORDER BY r.points_cost ASC';
@@ -411,10 +421,10 @@ export async function getRedemptionStatus(qrToken, userId) {
  */
 export async function getRewardInfoFromQrCode(qrToken, employeeUserId) {
     const db = getPool();
-    // Verify front office user
+    // Verify rezeption user
     const employee = await getUserById(employeeUserId);
-    if (!employee || (employee.role !== 'administrator' && employee.role !== 'front_office')) {
-        throw new Error('Unauthorized: Only administrators and front office can view QR code information');
+    if (!employee || (employee.role !== 'administrator' && employee.role !== 'rezeption')) {
+        throw new Error('Unauthorized: Only administrators and rezeption can view QR code information');
     }
     // Find redemption by QR token
     const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
@@ -449,10 +459,10 @@ export async function getRewardInfoFromQrCode(qrToken, employeeUserId) {
 }
 export async function verifyQrCodeService(qrToken, adminUserId) {
     const db = getPool();
-    // Verify admin or front office user
+    // Verify admin or rezeption user
     const admin = await getUserById(adminUserId);
-    if (!admin || (admin.role !== 'administrator' && admin.role !== 'front_office')) {
-        throw new Error('Unauthorized: Only administrators and front office can verify QR codes');
+    if (!admin || (admin.role !== 'administrator' && admin.role !== 'rezeption')) {
+        throw new Error('Unauthorized: Only administrators and rezeption can verify QR codes');
     }
     // Find redemption by QR token
     const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
@@ -508,10 +518,10 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
  */
 export async function redeemRewardQrCodeService(qrToken, employeeUserId) {
     const db = getPool();
-    // Verify front office user
+    // Verify rezeption user
     const employee = await getUserById(employeeUserId);
-    if (!employee || employee.role !== 'front_office') {
-        throw new Error('Unauthorized: Only front office can redeem reward QR codes');
+    if (!employee || employee.role !== 'rezeption') {
+        throw new Error('Unauthorized: Only rezeption can redeem reward QR codes');
     }
     // Find redemption by QR token
     const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 

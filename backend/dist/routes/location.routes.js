@@ -4,7 +4,7 @@ import { requireRole } from '../middleware/requireRole.js';
 import { bulkDeleteLocationController, bulkUpdateLocationStatus, createLocationController, deleteLocationController, listLocations, updateLocationController, } from '../controllers/location.controller.js';
 import { geocodeAddressController, reverseGeocodeController, } from '../controllers/geocoding.controller.js';
 const router = Router();
-router.use(authenticate, requireRole('administrator'));
+router.use(authenticate, requireRole('redaktion', 'administrator'));
 router.get('/', listLocations);
 router.post('/', createLocationController);
 router.post('/bulk/status', bulkUpdateLocationStatus);

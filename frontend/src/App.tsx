@@ -14,6 +14,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage/AuthCallbackPage';
 import PointsBonusPage from './pages/Employee/PointsBonusPage';
 import ContestRankingPage from './pages/ContestRankingPage/ContestRankingPage';
 import EmployeeContestsPage from './pages/EmployeeContestsPage/EmployeeContestsPage';
+import RezeptionPage from './pages/Rezeption/RezeptionPage';
 
 function ProtectedApp() {
   const { isAuthenticated, user } = useAuthStore();
@@ -31,6 +32,15 @@ function ProtectedApp() {
     );
   }
 
+  if (user.role === 'rezeption') {
+    return (
+      <Routes>
+        <Route path="/" element={<RezeptionPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
@@ -42,7 +52,7 @@ function ProtectedApp() {
         <Route path="statistics" element={<StatisticsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="contests/:contestId" element={<ContestRankingPage />} />
-        {(user.role === 'front_office' || user.role === 'administrator') && (
+        {(user.role === 'rezeption' || user.role === 'administrator') && (
           <>
             <Route path="points-bonus" element={<PointsBonusPage />} />
             <Route path="employee-contests" element={<EmployeeContestsPage />} />

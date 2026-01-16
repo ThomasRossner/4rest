@@ -12,7 +12,7 @@ type UserSelectionModalProps = {
   includeOnlyUserIds?: string[]; // If provided, only show these users (for remove mode)
   title?: string;
   addButtonLabel?: string;
-  roleFilter?: 'all' | 'guest' | 'employee' | 'administrator';
+  roleFilter?: 'all' | 'guest' | 'rezeption' | 'redaktion' | 'administrator';
   onlyActive?: boolean;
 };
 
@@ -37,7 +37,7 @@ export function UserSelectionModal({
   // Determine role filter for API call
   let roleToFilter: string | undefined = undefined;
   if (roleFilter !== 'all') {
-    roleToFilter = roleFilter === 'employee' ? 'front_office' : roleFilter;
+    roleToFilter = roleFilter;
   }
 
   const { data: usersData, isLoading, error } = useQuery(

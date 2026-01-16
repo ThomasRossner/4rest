@@ -28,7 +28,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
   const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
   const [roleFilter, setRoleFilter] = useState<string>('all');
 
-  const isEmployee = user?.role === 'front_office' || user?.role === 'administrator';
+  const isEmployee = user?.role === 'rezeption' || user?.role === 'administrator';
 
   // Load users for employee/admin
   const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery(
@@ -56,7 +56,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           const filtered = {
             ...data,
             users: data.users.filter((u: any) => 
-              u.role === 'front_office' || u.role === 'administrator'
+              u.role === 'rezeption' || u.role === 'administrator'
             )
           };
           console.log('[ContestCreator] Filtered to employees only:', filtered);
@@ -300,7 +300,8 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
               >
                 <option value="all">{t('contests.create.allRoles', 'Alle Typen')}</option>
                 <option value="guest">{t('contests.create.roleGuest', 'Gast')}</option>
-                <option value="employee">{t('contests.create.roleEmployee', 'Mitarbeiter')}</option>
+                <option value="rezeption">{t('contests.create.roleRezeption', 'Rezeption')}</option>
+                <option value="redaktion">{t('contests.create.roleRedaktion', 'Redaktion')}</option>
                 <option value="administrator">{t('contests.create.roleAdministrator', 'Administrator')}</option>
               </select>
             </label>
@@ -323,7 +324,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
                 <p>{t('contests.create.noUsers', 'Keine Benutzer gefunden')}</p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginTop: 'var(--spacing-xs)' }}>
                   Filter: {roleFilter === 'all' ? 'Alle Rollen' : roleFilter}
-                  {onlyEmployeeParticipants && ' (nur Front Office)'}
+                  {onlyEmployeeParticipants && ' (nur Rezeption)'}
                 </p>
               </div>
             ) : (

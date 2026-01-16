@@ -164,7 +164,10 @@ export const dissolveTeamController: RequestHandler = asyncHandler(async (req, r
   // #region agent log
   fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:153',message:'dissolveTeamController before dissolveTeam',data:{teamId:id,userId:authReq.user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
   // #endregion
-  await dissolveTeam(id, authReq.user.id);
+  
+  // Administratoren und Rezeption können Teams löschen, auch wenn sie nicht der Ersteller sind
+  const isAdminOrRezeption = authReq.user.role === 'administrator' || authReq.user.role === 'rezeption';
+  await dissolveTeam(id, authReq.user.id, isAdminOrRezeption);
   // #region agent log
   fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:154',message:'dissolveTeamController after dissolveTeam success',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
   // #endregion
@@ -200,8 +203,8 @@ export const getTeamQrCodeController: RequestHandler = asyncHandler(async (req, 
   
   const { id } = req.params;
   
-  // Administratoren haben immer Zugriff
-  if (authReq.user.role !== 'administrator') {
+  // Administratoren und Rezeption haben immer Zugriff
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
     // Prüfe ob Benutzer Mitglied ist
     const teamDetails = await getTeamDetails(id, authReq.user.id);
     if (!teamDetails) {
@@ -293,18 +296,37 @@ export const getTeamRankingController: RequestHandler = asyncHandler(async (req,
  * Query: ?includeInactive=true
  */
 export const getAllTeamsController: RequestHandler = asyncHandler(async (req, res) => {
+  // #region agent log
+  await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:298',message:'getAllTeamsController called',data:{hasUser:!!(req as AuthRequest).user,userRole:(req as AuthRequest).user?.role,includeInactive:req.query.includeInactive},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
+  // #endregion
   const authReq = req as AuthRequest;
   if (!authReq.user) {
+    // #region agent log
+    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:302',message:'getAllTeamsController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
+    // #endregion
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    // #region agent log
+    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:306',message:'getAllTeamsController forbidden',data:{userRole:authReq.user.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
+    // #endregion
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const includeInactive = req.query.includeInactive === 'true';
-  const teams = await getAllTeams({ includeInactive });
-  res.json(teams);
+  try {
+    const teams = await getAllTeams({ includeInactive });
+    // #region agent log
+    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:312',message:'getAllTeamsController success',data:{teamsCount:teams?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
+    // #endregion
+    res.json(teams);
+  } catch (error: any) {
+    // #region agent log
+    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:316',message:'getAllTeamsController error',data:{error:error?.message,stack:error?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
+    // #endregion
+    throw error;
+  }
 });
 
 /**
@@ -317,8 +339,8 @@ export const updateTeamController: RequestHandler = asyncHandler(async (req, res
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -338,8 +360,8 @@ export const enableTeamRegistrationController: RequestHandler = asyncHandler(asy
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -369,11 +391,11 @@ export const getTeamRegistrationQrCodeController: RequestHandler = asyncHandler(
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
     // #region agent log
     try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:365',message:'getTeamRegistrationQrCodeController forbidden',data:{userRole:authReq.user.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
     // #endregion
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -472,8 +494,8 @@ export const getTeamMembersAdminController: RequestHandler = asyncHandler(async 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -493,8 +515,8 @@ export const addTeamMembersController: RequestHandler = asyncHandler(async (req,
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -519,8 +541,8 @@ export const removeTeamMembersController: RequestHandler = asyncHandler(async (r
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;

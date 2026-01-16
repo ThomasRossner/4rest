@@ -35,7 +35,7 @@ export async function createBulkTasksForUser(userEmail, count = 20) {
                 points,
                 location_id: location.id,
                 active: true,
-                ...{ allowed_roles: [user.role] },
+                ...{ allowed_teams: [], allowed_contests: [] },
                 allowed_user_types: [user.user_type],
                 allowed_hotel_ids: [],
                 quiz_questions: JSON.stringify([
@@ -96,7 +96,8 @@ export async function completeBulkTasksForUser(userEmail, count = 20) {
                     points,
                     location_id: location.id,
                     active: true,
-                    ...{ allowed_roles: [user.role] },
+                    ...{ allowed_teams: [], allowed_contests: [] },
+                    ...{ allowed_teams: [], allowed_contests: [] },
                     allowed_user_types: [user.user_type],
                     allowed_hotel_ids: [],
                     quiz_questions: JSON.stringify([
@@ -531,7 +532,7 @@ export async function generateStatisticsData(startDate, endDate, targetUserCount
                 co2_savings_kg: co2Savings,
                 location_id: location.id,
                 active: true,
-                ...{ allowed_roles: ['guest'] },
+                ...{ allowed_teams: [], allowed_contests: [] },
                 allowed_user_types: ['explorer'],
                 allowed_hotel_ids: [],
                 quiz_questions: JSON.stringify([

@@ -1,7 +1,8 @@
 import { getPool } from '../database/connection.js';
 import { USER_ROLES, USER_TYPES } from '../constants/enums.js';
 function ensureRole(value) {
-    if (typeof value === 'string' && USER_ROLES.includes(value)) {
+    const rolesArray = Array.from(USER_ROLES);
+    if (typeof value === 'string' && rolesArray.includes(value)) {
         return value;
     }
     return 'guest';

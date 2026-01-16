@@ -128,13 +128,7 @@
   background: var(--color-primary-ghost);
 }
 
-.debug-tool-button.danger {
-  background-color: #dc2626;
-}
-
-.debug-tool-button.danger:hover:not(:disabled) {
-  background-color: #b91c1c;
-}
+/* Removed .debug-tool-button.danger - all buttons use unified design */
 
 .debug-survey-questions {
   margin-top: var(--spacing-md);
@@ -179,9 +173,9 @@
 
 .debug-survey-remove-button {
   margin-left: auto;
-  background: #dc2626;
-  color: white;
-  border: none;
+  background: var(--color-primary) !important;
+  color: white !important;
+  border: none !important;
   border-radius: 50%;
   width: 28px;
   height: 28px;
@@ -194,7 +188,7 @@
 }
 
 .debug-survey-remove-button:hover:not(:disabled) {
-  background: #b91c1c;
+  background: var(--color-primary-dark) !important;
   transform: scale(1.1);
 }
 

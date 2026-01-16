@@ -137,8 +137,8 @@ export const getEmployeeContestsController: RequestHandler = asyncHandler(async 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'front_office' && authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Only front office and administrators can access this endpoint' });
+  if (authReq.user.role !== 'rezeption' && authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Only rezeption and administrators can access this endpoint' });
   }
   
   const contests = await getEmployeeContests(authReq.user.id);
@@ -207,7 +207,10 @@ export const dissolveContestController: RequestHandler = asyncHandler(async (req
   // #region agent log
   fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:197',message:'dissolveContestController before dissolveContest',data:{contestId:id,userId:authReq.user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
   // #endregion
-  await dissolveContest(id, authReq.user.id);
+  
+  // Administratoren und Rezeption können Wettbewerbe löschen, auch wenn sie nicht der Ersteller sind
+  const isAdminOrRezeption = authReq.user.role === 'administrator' || authReq.user.role === 'rezeption';
+  await dissolveContest(id, authReq.user.id, isAdminOrRezeption);
   // #region agent log
   fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:198',message:'dissolveContestController after dissolveContest success',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
   // #endregion
@@ -243,8 +246,8 @@ export const getContestQrCodeController: RequestHandler = asyncHandler(async (re
   
   const { id } = req.params;
   
-  // Administratoren haben immer Zugriff
-  if (authReq.user.role !== 'administrator') {
+  // Administratoren und Rezeption haben immer Zugriff
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
     // Prüfe ob Benutzer Teilnehmer ist
     const contestDetails = await getContestDetails(id, authReq.user.id);
     if (!contestDetails) {
@@ -272,8 +275,8 @@ export const getAllContestsAdminController: RequestHandler = asyncHandler(async 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const includeInactive = req.query.includeInactive === 'true';
@@ -291,8 +294,8 @@ export const updateContestController: RequestHandler = asyncHandler(async (req, 
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -323,8 +326,8 @@ export const enableContestRegistrationController: RequestHandler = asyncHandler(
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -348,8 +351,8 @@ export const getContestRegistrationQrCodeController: RequestHandler = asyncHandl
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -434,8 +437,8 @@ export const getContestParticipantsAdminController: RequestHandler = asyncHandle
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -455,8 +458,8 @@ export const addContestParticipantsController: RequestHandler = asyncHandler(asy
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
@@ -481,8 +484,8 @@ export const removeContestParticipantsController: RequestHandler = asyncHandler(
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  if (authReq.user.role !== 'administrator') {
-    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;

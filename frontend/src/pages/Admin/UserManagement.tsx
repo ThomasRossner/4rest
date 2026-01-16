@@ -99,12 +99,16 @@ export function UserManagement() {
   const updateRoleMutation = useMutation(
     ({ userId, role }: { userId: string; role: UserRole }) => api.updateUserRole(userId, role),
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        // Update the cache directly instead of invalidating to avoid race condition
+        if (data?.user && selectedUserId) {
+          queryClient.setQueryData(['userDetails', selectedUserId], { user: data.user });
+        }
         queryClient.invalidateQueries(['users']);
-        queryClient.invalidateQueries(['userDetails', selectedUserId]);
         pushToast({ type: 'success', message: t('admin.users.messages.roleUpdated') });
       },
       onError: (error: any) => {
+        console.error('[UserManagement] updateRoleMutation error:', error);
         pushToast({ type: 'error', message: error?.response?.data?.error || t('admin.users.messages.roleUpdateError') });
       },
     }
@@ -348,7 +352,7 @@ export function UserManagement() {
                   {t('admin.users.deactivate', 'Deaktivieren')}
                 </button>
                 <button
-                  className="admin-action-button danger"
+                  className="admin-action-button"
                   onClick={handleUserBulkDelete}
                   disabled={!hasUserSelection}
                   type="button"
@@ -446,7 +450,7 @@ export function UserManagement() {
                               {user.active ? t('admin.users.deactivate', 'Deaktivieren') : t('admin.users.activate', 'Aktivieren')}
                             </button>
                             <button
-                              className="admin-action-button danger"
+                              className="admin-action-button"
                               type="button"
                               onClick={() => handleDeleteUser(user.id, false)}
                               disabled={user.id === currentUser?.id}
@@ -512,7 +516,7 @@ export function UserManagement() {
                   <div className="user-details-field">
                     <label>{t('admin.users.details.role')}</label>
                     <select
-                      value={userDetails.user.role}
+                      value={userDetails.user.role || 'guest'}
                       onChange={(e) => handleUpdateRole(selectedUserId, e.target.value as UserRole)}
                       disabled={selectedUserId === currentUser?.id}
                     >
@@ -612,14 +616,14 @@ export function UserManagement() {
                   {selectedUserId !== currentUser?.id && (
                     <>
                       <button
-                        className="admin-button-danger"
+                        className="admin-action-button"
                         onClick={() => handleDeleteUser(selectedUserId, false)}
                         disabled={deleteUserMutation.isLoading}
                       >
                         {t('admin.users.actions.deleteUser')}
                       </button>
                       <button
-                        className="admin-button-danger"
+                        className="admin-action-button"
                         onClick={() => handleDeleteUser(selectedUserId, true)}
                         disabled={deleteUserMutation.isLoading}
                         style={{ marginLeft: '0.5rem' }}

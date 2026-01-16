@@ -26,6 +26,8 @@ import { UserManagement } from './UserManagement';
 import { TeamCreator } from '../../components/Teams/TeamCreator';
 import { ContestCreator } from '../../components/Contests/ContestCreator';
 import { UserSelectionModal } from '../../components/Admin/UserSelectionModal';
+import { TeamManagement } from '../../components/Admin/TeamManagement';
+import { ContestManagement } from '../../components/Admin/ContestManagement';
 import QRCode from 'qrcode.react';
 
 type AdminMode =
@@ -57,7 +59,8 @@ type AdminTaskTemplate = {
   qr_code?: string | null;
   photo_required?: boolean;
   co2_savings_kg?: number | null;
-  allowed_roles?: UserRole[] | null;
+  allowed_teams?: string[] | null;
+  allowed_contests?: string[] | null;
   allowed_user_types?: UserType[] | null;
   allowed_hotel_ids?: HotelId[] | null;
   location_id?: string | null;
@@ -86,7 +89,8 @@ type RewardTemplate = {
   points_cost: number;
   voucher_code?: string | null;
   external_api_id?: string | null;
-  allowed_roles?: string[] | null;
+  allowed_teams?: string[] | null;
+  allowed_contests?: string[] | null;
   allowed_user_types?: string[] | null;
   allowed_hotel_ids?: string[] | null;
   created_at?: string | null;
@@ -1374,6 +1378,8 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   location_tool: undefined,
   event_group: undefined,
   zielgruppe: undefined,
+  allowed_teams: [],
+  allowed_contests: [],
   thumbnailFile: null,
   thumbnailUrl: null,
 });
@@ -1393,6 +1399,8 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   kategorie: undefined,
   event_group: undefined,
   moegliche_punkte: undefined,
+  allowed_teams: [],
+  allowed_contests: [],
   thumbnailFile: null,
   thumbnailUrl: null,
 });
@@ -2498,7 +2506,7 @@ const ConfirmDialog = ({
           </button>
           <button
             type="button"
-            className={`admin-action-button ${confirmTone === 'danger' ? 'danger' : ''}`}
+            className={confirmTone === 'danger' ? 'admin-action-button danger' : 'admin-action-button'}
             onClick={onConfirm}
           >
             {confirmLabel}
@@ -2839,7 +2847,8 @@ function AdminPage() {
                 }
               })()
             : task.quiz_questions ?? [],
-        allowed_roles: normalizeEnumArray(task.allowed_roles) as UserRole[],
+        allowed_teams: normalizeEnumArray((task as any).allowed_teams) as string[],
+        allowed_contests: normalizeEnumArray((task as any).allowed_contests) as string[],
         allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
         allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
         zielgruppe: normalizedZielgruppe,
@@ -3165,7 +3174,8 @@ function AdminPage() {
       
       return {
         ...template,
-        allowed_roles: normalizeEnumArray(template.allowed_roles),
+        allowed_teams: normalizeEnumArray((template as any).allowed_teams) as string[],
+        allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[],
         allowed_user_types: normalizeEnumArray(template.allowed_user_types),
         allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
         zielgruppe: normalizedZielgruppe,
@@ -3542,6 +3552,9 @@ function AdminPage() {
       time_required: (template as any).time_required ?? undefined,
       location_tool: (template as any).location_tool ?? undefined,
       event_group: (template as any).event_group ?? undefined,
+      zielgruppe: (template as any).zielgruppe ?? undefined,
+      allowed_teams: normalizeEnumArray((template as any).allowed_teams) as string[] || [],
+      allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[] || [],
     });
   }, [taskSource, selectedExistingTaskId, existingTemplates, isEditingTask]);
 
@@ -3626,6 +3639,8 @@ function AdminPage() {
         }
         return undefined;
       })(),
+      allowed_teams: normalizeEnumArray((task as any).allowed_teams) as string[] || [],
+      allowed_contests: normalizeEnumArray((task as any).allowed_contests) as string[] || [],
       thumbnailFile: prev.thumbnailFile, // Behalte bestehende Datei
       thumbnailUrl: task.thumbnail_url ?? prev.thumbnailUrl ?? null, // Verwende task.thumbnail_url wenn vorhanden, sonst behalte bestehenden Wert
     }));
@@ -3692,6 +3707,9 @@ function AdminPage() {
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
       recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
+      zielgruppe: (template as any).zielgruppe ?? undefined,
+      allowed_teams: normalizeEnumArray((template as any).allowed_teams) as string[] || [],
+      allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[] || [],
     });
   }, [rewardSource, selectedRewardTemplate, normalizedRewardTemplates, isEditingReward]);
 
@@ -3853,6 +3871,10 @@ function AdminPage() {
         // Always include zielgruppe, even if undefined/null, so it can be cleared
         payload.zielgruppe = taskForm.zielgruppe || null;
         
+        // Add team/contest assignments
+        payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
+        payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
+        
         // Add thumbnail_url (null if no thumbnail, to allow deletion)
         payload.thumbnail_url = thumbnailUrl;
 
@@ -3941,6 +3963,10 @@ function AdminPage() {
         }
         // Always include zielgruppe, even if undefined/null, so it can be cleared
         payload.zielgruppe = taskForm.zielgruppe || null;
+        
+        // Add team/contest assignments
+        payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
+        payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
         
         // Add thumbnail_url
         payload.thumbnail_url = thumbnailUrl;
@@ -4032,6 +4058,10 @@ function AdminPage() {
       // Always include zielgruppe, even if undefined/null, so it can be cleared
       payload.zielgruppe = taskForm.zielgruppe || null;
       
+      // Add team/contest assignments
+      payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
+      payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
+      
       // Add thumbnail_url
       payload.thumbnail_url = thumbnailUrl;
 
@@ -4083,6 +4113,10 @@ function AdminPage() {
         recurrence: rewardForm.recurrence,
       };
       basePayload.location_id = rewardForm.locationId;
+      
+      // Add team/contest assignments
+      basePayload.allowed_teams = (rewardForm.allowed_teams && rewardForm.allowed_teams.length > 0) ? rewardForm.allowed_teams : null;
+      basePayload.allowed_contests = (rewardForm.allowed_contests && rewardForm.allowed_contests.length > 0) ? rewardForm.allowed_contests : null;
 
       if (rewardForm.voucherCode.trim()) {
         basePayload.voucherCode = rewardForm.voucherCode.trim();
@@ -4817,6 +4851,8 @@ function AdminPage() {
       kategorie: (template as any).kategorie ?? undefined,
       event_group: (template as any).event_group ?? undefined,
       moegliche_punkte: (template as any).moegliche_punkte ?? undefined,
+      allowed_teams: normalizeEnumArray((template as any).allowed_teams) as string[] || [],
+      allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[] || [],
       thumbnailFile: null,
       thumbnailUrl: (template as any).thumbnail_url ?? null,
     });
@@ -5308,10 +5344,11 @@ const goToRewardCreation = () => {
       <header className="admin-header">
         <nav className="admin-navbar">
           <div className="admin-navbar-space" aria-hidden="true" />
-          <LanguageSwitcher compact className="admin-navbar-language" />
-          <button className="admin-icon-button admin-navbar-action" onClick={logout} title={t('admin.logout')}>
-            <Icon name="logout" />
-            <span className="sr-only">{t('admin.logout')}</span>
+          <div className="admin-navbar-language">
+            <LanguageSwitcher />
+          </div>
+          <button className="admin-logout-button" onClick={logout} type="button">
+            {t('navigation.logout')}
           </button>
         </nav>
 
@@ -5323,7 +5360,39 @@ const goToRewardCreation = () => {
 
       {mode === null && (
         <>
-          {/* 1. Reihe: Verwaltungs-Kacheln */}
+          {/* 1. Reihe: Parameter verwalten, Benutzer verwalten, Debug-Tools, Wald-Debug-Statistiken */}
+          <div className="admin-choice-grid admin-choice-grid-compact">
+            <button className="admin-choice-card" onClick={() => setMode('parameterManage')}>
+              <span className="admin-choice-icon">⚙️</span>
+              <h2>{t('admin.actions.manageParameters.title')}</h2>
+              <p>{t('admin.actions.manageParameters.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('userManage')}>
+              <span className="admin-choice-icon">👥</span>
+              <h2>{t('admin.actions.manageUsers.title')}</h2>
+              <p>{t('admin.actions.manageUsers.description')}</p>
+            </button>
+            <button
+              className="admin-choice-card"
+              onClick={() => setMode('debugTools')}
+            >
+              <span className="admin-choice-icon">🔧</span>
+              <h2>{t('admin.actions.debugTools.title')}</h2>
+              <p>{t('admin.actions.debugTools.description')}</p>
+            </button>
+            <button
+              className="admin-choice-card"
+              onClick={() => {
+                void loadForestStats();
+                setMode('forestStats');
+              }}
+            >
+              <span className="admin-choice-icon">🌲</span>
+              <h2>{t('admin.actions.forestDebugStats.title')}</h2>
+              <p>{t('admin.actions.forestDebugStats.description')}</p>
+            </button>
+          </div>
+          {/* 2. Reihe: Aufgaben, Belohnungen, Standorte, Teams, Wettbewerbe */}
           <div className="admin-choice-grid admin-choice-grid-compact">
             <button className="admin-choice-card" onClick={() => setMode('taskManage')}>
               <span className="admin-choice-icon">🗂️</span>
@@ -5340,16 +5409,6 @@ const goToRewardCreation = () => {
               <h2>{t('admin.actions.manageLocations.title')}</h2>
               <p>{t('admin.actions.manageLocations.description')}</p>
             </button>
-            <button className="admin-choice-card" onClick={() => setMode('parameterManage')}>
-              <span className="admin-choice-icon">⚙️</span>
-              <h2>{t('admin.actions.manageParameters.title')}</h2>
-              <p>{t('admin.actions.manageParameters.description')}</p>
-            </button>
-            <button className="admin-choice-card" onClick={() => setMode('userManage')}>
-              <span className="admin-choice-icon">👥</span>
-              <h2>{t('admin.actions.manageUsers.title')}</h2>
-              <p>{t('admin.actions.manageUsers.description')}</p>
-            </button>
             <button className="admin-choice-card" onClick={() => setMode('teamManage')}>
               <span className="admin-choice-icon">👨‍👩‍👧‍👦</span>
               <h2>{t('admin.actions.manageTeams.title')}</h2>
@@ -5361,29 +5420,7 @@ const goToRewardCreation = () => {
               <p>{t('admin.actions.manageContests.description')}</p>
             </button>
           </div>
-          {/* 2. Reihe: Debug-Sachen */}
-          <div className="admin-choice-grid">
-            <button
-              className="admin-choice-card"
-              onClick={() => {
-                void loadForestStats();
-                setMode('forestStats');
-              }}
-            >
-              <span className="admin-choice-icon">🌲</span>
-              <h2>{t('admin.actions.forestDebugStats.title')}</h2>
-              <p>{t('admin.actions.forestDebugStats.description')}</p>
-            </button>
-            <button
-              className="admin-choice-card"
-              onClick={() => setMode('debugTools')}
-            >
-              <span className="admin-choice-icon">🔧</span>
-              <h2>{t('admin.actions.debugTools.title')}</h2>
-              <p>{t('admin.actions.debugTools.description')}</p>
-            </button>
-          </div>
-          {/* 3. Reihe: Umfrage-Analysen und Belohnungen einlösen */}
+          {/* 3. Reihe: Der Rest */}
           <div className="admin-choice-grid">
             <button
               className="admin-choice-card"
@@ -5818,7 +5855,7 @@ const goToRewardCreation = () => {
                                   {t('admin.parameterManage.edit')}
                                 </button>
                                 <button
-                                  className="admin-action-button danger"
+                                  className="admin-action-button"
                                   onClick={() => handleDeleteParameter('task', param.id)}
                                 >
                                   {t('admin.parameterManage.delete')}
@@ -6000,7 +6037,7 @@ const goToRewardCreation = () => {
                                   {t('admin.parameterManage.edit')}
                                 </button>
                                 <button
-                                  className="admin-action-button danger"
+                                  className="admin-action-button"
                                   onClick={() => handleDeleteParameter('reward', param.id)}
                                 >
                                   {t('admin.parameterManage.delete')}
@@ -6626,7 +6663,7 @@ const goToRewardCreation = () => {
                                 {(taskForm.videoFile || (taskForm.video_url && taskForm.video_url.includes('/uploads/'))) && (
                                   <button
                                     type="button"
-                                    className="admin-action-button danger"
+                                    className="admin-action-button"
                                     onClick={() => {
                                       setTaskForm((prev) => ({
                                         ...prev,
@@ -7017,6 +7054,56 @@ const goToRewardCreation = () => {
                           </label>
                         ))}
                       </div>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Teams (optional)" />
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
+                        Wenn Teams ausgewählt werden, ist diese Aufgabe nur für Mitglieder dieser Teams sichtbar. Leer = allgemein sichtbar.
+                      </p>
+                      <select
+                        multiple
+                        value={taskForm.allowed_teams || []}
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.selectedOptions, option => option.value);
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            allowed_teams: selected.length > 0 ? selected : [],
+                          }));
+                        }}
+                        className="admin-select"
+                        style={{ minHeight: '100px' }}
+                      >
+                        {teamsList.filter(t => t.active).map((team) => (
+                          <option key={team.id} value={team.id}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Wettbewerbe (optional)" />
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
+                        Wenn Wettbewerbe ausgewählt werden, ist diese Aufgabe nur für Teilnehmer dieser Wettbewerbe sichtbar. Leer = allgemein sichtbar.
+                      </p>
+                      <select
+                        multiple
+                        value={taskForm.allowed_contests || []}
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.selectedOptions, option => option.value);
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            allowed_contests: selected.length > 0 ? selected : [],
+                          }));
+                        }}
+                        className="admin-select"
+                        style={{ minHeight: '100px' }}
+                      >
+                        {contestsList.filter(c => c.active).map((contest) => (
+                          <option key={contest.id} value={contest.id}>
+                            {contest.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="admin-field admin-field-span-2">
                       <FieldLabel label="Event/Gruppe" />
@@ -7414,6 +7501,56 @@ const goToRewardCreation = () => {
                           </label>
                         ))}
                       </div>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Teams (optional)" />
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
+                        Wenn Teams ausgewählt werden, ist diese Belohnung nur für Mitglieder dieser Teams sichtbar. Leer = allgemein sichtbar.
+                      </p>
+                      <select
+                        multiple
+                        value={rewardForm.allowed_teams || []}
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.selectedOptions, option => option.value);
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            allowed_teams: selected.length > 0 ? selected : [],
+                          }));
+                        }}
+                        className="admin-select"
+                        style={{ minHeight: '100px' }}
+                      >
+                        {teamsList.filter(t => t.active).map((team) => (
+                          <option key={team.id} value={team.id}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <FieldLabel label="Wettbewerbe (optional)" />
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
+                        Wenn Wettbewerbe ausgewählt werden, ist diese Belohnung nur für Teilnehmer dieser Wettbewerbe sichtbar. Leer = allgemein sichtbar.
+                      </p>
+                      <select
+                        multiple
+                        value={rewardForm.allowed_contests || []}
+                        onChange={(e) => {
+                          const selected = Array.from(e.target.selectedOptions, option => option.value);
+                          setRewardForm((prev) => ({
+                            ...prev,
+                            allowed_contests: selected.length > 0 ? selected : [],
+                          }));
+                        }}
+                        className="admin-select"
+                        style={{ minHeight: '100px' }}
+                      >
+                        {contestsList.filter(c => c.active).map((contest) => (
+                          <option key={contest.id} value={contest.id}>
+                            {contest.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="admin-field">
                       <FieldLabel label="Art" />
@@ -7867,7 +8004,7 @@ const goToRewardCreation = () => {
                     {t('admin.locationManage.deactivate')}
                   </button>
                   <button
-                    className="admin-action-button danger"
+                    className="admin-action-button"
                     onClick={handleLocationBulkDelete}
                     disabled={!hasLocationSelection}
                     type="button"
@@ -7987,7 +8124,7 @@ const goToRewardCreation = () => {
                               {location.active ? t('admin.locationManage.deactivate') : t('admin.locationManage.activate')}
                             </button>
                             <button
-                              className="admin-action-button danger"
+                              className="admin-action-button"
                               type="button"
                               onClick={() => handleLocationDelete(location)}
                               disabled={isDefaultLocation}
@@ -8118,7 +8255,7 @@ const goToRewardCreation = () => {
                     {t('admin.taskManage.deactivate')}
                   </button>
                   <button
-                    className="admin-action-button danger"
+                    className="admin-action-button"
                     onClick={handleTaskBulkDelete}
                     disabled={!hasTaskSelection}
                     type="button"
@@ -8344,7 +8481,7 @@ const goToRewardCreation = () => {
                               {task.active ? t('admin.taskManage.deactivate') : t('admin.taskManage.activate')}
                             </button>
                             <button
-                              className="admin-action-button danger"
+                              className="admin-action-button"
                               type="button"
                               onClick={() => handleTaskDelete(task.id)}
                             >
@@ -8553,7 +8690,7 @@ const goToRewardCreation = () => {
                     {t('admin.rewardManage.deactivate')}
                   </button>
                   <button
-                    className="admin-action-button danger"
+                    className="admin-action-button"
                     onClick={handleRewardBulkDelete}
                     disabled={!hasRewardSelection}
                     type="button"
@@ -8771,7 +8908,7 @@ const goToRewardCreation = () => {
                                {reward.active ? t('admin.rewardManage.deactivate') : t('admin.rewardManage.activate')}
                              </button>
                              <button
-                               className="admin-action-button danger"
+                               className="admin-action-button"
                                type="button"
                                onClick={() => handleRewardDelete(reward.id)}
                              >
@@ -8905,8 +9042,22 @@ const goToRewardCreation = () => {
         excludeTaskId={isEditingTask ? editingTaskId || undefined : undefined}
       />
 
-      {/* Team Management - inline like taskManage */}
-      {mode === 'teamManage' && (
+      {/* Team Management - using TeamManagement component */}
+      {mode === 'teamManage' && (() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9046',message:'Rendering TeamManagement',data:{mode,cssPrefix:'admin'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+        // #endregion
+        return (
+          <TeamManagement
+            cssPrefix="admin"
+            onBack={() => setMode(null)}
+            enabled={mode === 'teamManage'}
+          />
+        );
+      })()}
+
+      {/* Legacy Team Management - replaced by TeamManagement component */}
+      {false && mode === 'teamManage' && (
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
@@ -8923,14 +9074,14 @@ const goToRewardCreation = () => {
                   >
                     {t('admin.team.manage.createNew', 'Neues Team erstellen')}
                   </button>
-                  <button
-                    className="admin-icon-button"
-                    onClick={() => refetchTeams()}
-                    title={t('admin.team.manage.refresh')}
-                  >
-                    <Icon name="refresh" />
-                    <span className="sr-only">{t('admin.team.manage.refresh')}</span>
-                  </button>
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchTeams()}
+                  title={t('admin.team.manage.refresh')}
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">{t('admin.team.manage.refresh')}</span>
+                </button>
                 </>
               )}
               <button
@@ -8981,42 +9132,42 @@ const goToRewardCreation = () => {
             }
             return (
               <div className="admin-form-card">
-                <div className="admin-form-section">
+              <div className="admin-form-section">
                   <h3>{t('admin.team.manage.edit.title', 'Team bearbeiten')}</h3>
-                  <div className="admin-field">
-                    <label>
+                <div className="admin-field">
+                  <label>
                       {t('admin.team.manage.edit.name', 'Team-Name')}
-                      <input
-                        type="text"
-                        value={editingTeam.name || ''}
-                        onChange={async (e) => {
-                          try {
-                            await api.updateTeam(editingTeamId, { name: e.target.value || null });
-                            await refetchTeams();
+                    <input
+                      type="text"
+                      value={editingTeam.name || ''}
+                      onChange={async (e) => {
+                        try {
+                          await api.updateTeam(editingTeamId, { name: e.target.value || null });
+                          await refetchTeams();
                             setTeamManagementMessage({
                               type: 'success',
                               text: t('admin.team.manage.edit.nameUpdated', 'Team-Name aktualisiert'),
                             });
                           } catch (err: any) {
-                            console.error('Failed to update team name:', err);
+                          console.error('Failed to update team name:', err);
                             setTeamManagementMessage({
                               type: 'error',
                               text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.nameUpdateError', 'Fehler beim Aktualisieren des Team-Namens'),
                             });
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="admin-field">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={editingTeam.active ?? true}
-                        onChange={async (e) => {
-                          try {
-                            await api.bulkUpdateTeamsStatus([editingTeamId], e.target.checked);
-                            await refetchTeams();
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={editingTeam.active ?? true}
+                      onChange={async (e) => {
+                        try {
+                          await api.bulkUpdateTeamsStatus([editingTeamId], e.target.checked);
+                          await refetchTeams();
                             setTeamManagementMessage({
                               type: 'success',
                               text: e.target.checked 
@@ -9024,16 +9175,16 @@ const goToRewardCreation = () => {
                                 : t('admin.team.manage.teamDeactivated', 'Team deaktiviert'),
                             });
                           } catch (err: any) {
-                            console.error('Failed to update team status:', err);
+                          console.error('Failed to update team status:', err);
                             setTeamManagementMessage({
                               type: 'error',
                               text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.statusUpdateError', 'Fehler beim Aktualisieren des Team-Status'),
                             });
-                          }
-                        }}
-                      />
+                        }
+                      }}
+                    />
                       {t('admin.team.manage.edit.active', 'Aktiv')}
-                    </label>
+                  </label>
                   </div>
                   <div className="admin-form-section" style={{ marginTop: '2rem' }}>
                     <h4>{t('admin.team.manage.edit.members', 'Mitglieder')}</h4>
@@ -9232,7 +9383,7 @@ const goToRewardCreation = () => {
                   {t('admin.team.manage.deactivate')}
                 </button>
                 <button
-                  className="admin-action-button danger"
+                              className="admin-action-button"
                   onClick={handleTeamBulkDelete}
                   disabled={!hasTeamSelection}
                   type="button"
@@ -9380,7 +9531,7 @@ const goToRewardCreation = () => {
                               {team.active ? t('admin.team.manage.deactivate') : t('admin.team.manage.activate')}
                             </button>
                             <button
-                              className="admin-action-button danger"
+                              className="admin-action-button"
                               type="button"
                               onClick={() => handleTeamDelete(team.id)}
                             >
@@ -9569,8 +9720,22 @@ const goToRewardCreation = () => {
         </section>
       )}
 
-      {/* Contest Management - inline like taskManage */}
-      {mode === 'contestManage' && (
+      {/* Contest Management - using ContestManagement component */}
+      {mode === 'contestManage' && (() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9719',message:'Rendering ContestManagement',data:{mode,cssPrefix:'admin'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+        // #endregion
+        return (
+          <ContestManagement
+            cssPrefix="admin"
+            onBack={() => setMode(null)}
+            enabled={mode === 'contestManage'}
+          />
+        );
+      })()}
+
+      {/* Legacy Contest Management - replaced by ContestManagement component */}
+      {false && mode === 'contestManage' && (
         <section className="admin-section">
           <header className="admin-section-header">
             <div>
@@ -9587,14 +9752,14 @@ const goToRewardCreation = () => {
                   >
                     {t('admin.contest.manage.createNew', 'Neuen Wettbewerb erstellen')}
                   </button>
-                  <button
-                    className="admin-icon-button"
-                    onClick={() => refetchContests()}
-                    title={t('admin.contest.manage.refresh')}
-                  >
-                    <Icon name="refresh" />
-                    <span className="sr-only">{t('admin.contest.manage.refresh')}</span>
-                  </button>
+                <button
+                  className="admin-icon-button"
+                  onClick={() => refetchContests()}
+                  title={t('admin.contest.manage.refresh')}
+                >
+                  <Icon name="refresh" />
+                  <span className="sr-only">{t('admin.contest.manage.refresh')}</span>
+                </button>
                 </>
               )}
               <button
@@ -9646,67 +9811,67 @@ const goToRewardCreation = () => {
             }
             return (
               <div className="admin-form-card">
-                <div className="admin-form-section">
+              <div className="admin-form-section">
                   <h3>{t('admin.contest.manage.edit.title', 'Wettbewerb bearbeiten')}</h3>
-                  <div className="admin-field">
-                    <label>
+                <div className="admin-field">
+                  <label>
                       {t('admin.contest.manage.edit.name', 'Wettbewerbs-Name')}
-                      <input
-                        type="text"
-                        value={editingContest.name || ''}
-                        onChange={async (e) => {
-                          try {
-                            await api.updateContest(editingContestId, { name: e.target.value || null });
-                            await refetchContests();
+                    <input
+                      type="text"
+                      value={editingContest.name || ''}
+                      onChange={async (e) => {
+                        try {
+                          await api.updateContest(editingContestId, { name: e.target.value || null });
+                          await refetchContests();
                             setContestManagementMessage({
                               type: 'success',
                               text: t('admin.contest.manage.edit.nameUpdated', 'Wettbewerbs-Name aktualisiert'),
                             });
                           } catch (err: any) {
-                            console.error('Failed to update contest name:', err);
+                          console.error('Failed to update contest name:', err);
                             setContestManagementMessage({
                               type: 'error',
                               text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.nameUpdateError', 'Fehler beim Aktualisieren des Wettbewerbs-Namens'),
                             });
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="admin-field">
-                    <label>
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="admin-field">
+                  <label>
                       {t('admin.contest.manage.edit.endDate', 'Enddatum')}
-                      <input
-                        type="date"
-                        value={editingContest.end_date ? new Date(editingContest.end_date).toISOString().split('T')[0] : ''}
-                        onChange={async (e) => {
-                          try {
-                            await api.updateContest(editingContestId, { endDate: e.target.value || undefined });
-                            await refetchContests();
+                    <input
+                      type="date"
+                      value={editingContest.end_date ? new Date(editingContest.end_date).toISOString().split('T')[0] : ''}
+                      onChange={async (e) => {
+                        try {
+                          await api.updateContest(editingContestId, { endDate: e.target.value || undefined });
+                          await refetchContests();
                             setContestManagementMessage({
                               type: 'success',
                               text: t('admin.contest.manage.edit.endDateUpdated', 'Enddatum aktualisiert'),
                             });
                           } catch (err: any) {
-                            console.error('Failed to update contest end date:', err);
+                          console.error('Failed to update contest end date:', err);
                             setContestManagementMessage({
                               type: 'error',
                               text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.endDateUpdateError', 'Fehler beim Aktualisieren des Enddatums'),
                             });
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <div className="admin-field">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={editingContest.active ?? true}
-                        onChange={async (e) => {
-                          try {
-                            await api.bulkUpdateContestsStatus([editingContestId], e.target.checked);
-                            await refetchContests();
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                <div className="admin-field">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={editingContest.active ?? true}
+                      onChange={async (e) => {
+                        try {
+                          await api.bulkUpdateContestsStatus([editingContestId], e.target.checked);
+                          await refetchContests();
                             setContestManagementMessage({
                               type: 'success',
                               text: e.target.checked 
@@ -9714,16 +9879,16 @@ const goToRewardCreation = () => {
                                 : t('admin.contest.manage.contestDeactivated', 'Wettbewerb deaktiviert'),
                             });
                           } catch (err: any) {
-                            console.error('Failed to update contest status:', err);
+                          console.error('Failed to update contest status:', err);
                             setContestManagementMessage({
                               type: 'error',
                               text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.statusUpdateError', 'Fehler beim Aktualisieren des Wettbewerbs-Status'),
                             });
-                          }
-                        }}
-                      />
+                        }
+                      }}
+                    />
                       {t('admin.contest.manage.edit.active', 'Aktiv')}
-                    </label>
+                  </label>
                   </div>
                   <div className="admin-form-section" style={{ marginTop: '2rem' }}>
                     <h4>{t('admin.contest.manage.edit.participants', 'Teilnehmer')}</h4>
@@ -9898,7 +10063,7 @@ const goToRewardCreation = () => {
                   {t('admin.contest.manage.deactivate')}
                 </button>
                 <button
-                  className="admin-action-button danger"
+                              className="admin-action-button"
                   onClick={handleContestBulkDelete}
                   disabled={!hasContestSelection}
                   type="button"
@@ -10068,7 +10233,7 @@ const goToRewardCreation = () => {
                               {contest.active ? t('admin.contest.manage.deactivate') : t('admin.contest.manage.activate')}
                             </button>
                             <button
-                              className="admin-action-button danger"
+                              className="admin-action-button"
                               type="button"
                               onClick={() => handleContestDelete(contest.id)}
                             >

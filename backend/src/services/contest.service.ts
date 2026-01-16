@@ -80,10 +80,10 @@ export async function createContest(
     throw new Error('End date must be in the future');
   }
   
-  // Prüfe ob Ersteller Mitarbeiter ist (für Belohnungen)
+  // Prüfe ob Ersteller Rezeption ist (für Belohnungen)
   if (rewards && (rewards.reward_first_place || rewards.reward_second_place || rewards.reward_third_place)) {
-    if (creator.role !== 'front_office' && creator.role !== 'administrator') {
-      throw new Error('Only front office and administrators can create contests with rewards');
+    if (creator.role !== 'rezeption' && creator.role !== 'administrator') {
+      throw new Error('Only rezeption and administrators can create contests with rewards');
     }
   }
   
@@ -124,7 +124,7 @@ export async function createContest(
     );
     
     const allAreEmployees = participantRoles.rows.every(
-      (row: any) => row.role === 'front_office' || row.role === 'administrator'
+      (row: any) => row.role === 'rezeption' || row.role === 'administrator'
     );
     
     // Nur wenn alle Teilnehmer Mitarbeiter/Administratoren sind, füge den Ersteller hinzu
@@ -594,9 +594,9 @@ export async function awardContestRewards(contestId: string): Promise<void> {
 /**
  * Löst einen Contest auf (nur Ersteller)
  */
-export async function dissolveContest(contestId: string, userId: string): Promise<void> {
+export async function dissolveContest(contestId: string, userId: string, skipCreatorCheck: boolean = false): Promise<void> {
   // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:597',message:'dissolveContest entry',data:{contestId,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:597',message:'dissolveContest entry',data:{contestId,userId,skipCreatorCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
   // #endregion
   const db = getPool();
   
@@ -619,21 +619,54 @@ export async function dissolveContest(contestId: string, userId: string): Promis
   const contest = contestResult.rows[0];
   
   // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:612',message:'dissolveContest before permission check',data:{contestCreatedBy:contest.created_by,userId,isCreator:contest.created_by===userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:612',message:'dissolveContest before permission check',data:{contestCreatedBy:contest.created_by,userId,isCreator:contest.created_by===userId,skipCreatorCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
   // #endregion
-  if (contest.created_by !== userId) {
+  if (!skipCreatorCheck && contest.created_by !== userId) {
     // #region agent log
     fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:613',message:'dissolveContest permission denied error',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     throw new Error('Only the contest creator can dissolve the contest');
   }
   
-  // Deaktiviere Contest
-  // Punkte bleiben auf den persönlichen Konten (wie spezifiziert)
-  await db.query(
-    'UPDATE contests SET active = FALSE, updated_at = NOW() WHERE id = $1',
-    [contestId]
-  );
+  // Beginne Transaktion
+  await db.query('BEGIN');
+  
+  try {
+    // Entferne alle Teilnehmer (CASCADE sollte das automatisch machen, aber zur Sicherheit)
+    await db.query(
+      'DELETE FROM contest_participants WHERE contest_id = $1',
+      [contestId]
+    );
+    
+    // Lösche Contest physisch (CASCADE entfernt automatisch contest_participants, aber wir haben es oben schon gemacht)
+    // Die Trigger in der Datenbank kümmern sich um die Deaktivierung von zugeordneten Tasks/Rewards
+    const deleteResult = await db.query(
+      'DELETE FROM contests WHERE id = $1',
+      [contestId]
+    );
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:636',message:'dissolveContest DELETE executed',data:{contestId,rowCount:deleteResult.rowCount},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
+    if (deleteResult.rowCount === 0) {
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:640',message:'dissolveContest DELETE no rows affected',data:{contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      throw new Error('Contest not found or could not be deleted');
+    }
+    
+    await db.query('COMMIT');
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:647',message:'dissolveContest DELETE committed',data:{contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+  } catch (error) {
+    await db.query('ROLLBACK');
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:652',message:'dissolveContest DELETE rolled back',data:{contestId,error:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    throw error;
+  }
 }
 
 /**

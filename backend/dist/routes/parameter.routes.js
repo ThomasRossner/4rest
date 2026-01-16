@@ -14,7 +14,7 @@ router.get('/tasks', authenticate, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-router.post('/tasks', authenticate, requireRole('administrator'), async (req, res) => {
+router.post('/tasks', authenticate, requireRole('redaktion', 'administrator'), async (req, res) => {
     try {
         const { parameter_type, value, display_order, weight } = req.body;
         if (!parameter_type || !value) {
@@ -27,7 +27,7 @@ router.post('/tasks', authenticate, requireRole('administrator'), async (req, re
         res.status(500).json({ error: error.message });
     }
 });
-router.put('/tasks/:id', authenticate, requireRole('administrator'), async (req, res) => {
+router.put('/tasks/:id', authenticate, requireRole('redaktion', 'administrator'), async (req, res) => {
     try {
         const { id } = req.params;
         const { value, display_order, weight, active } = req.body;
@@ -38,7 +38,7 @@ router.put('/tasks/:id', authenticate, requireRole('administrator'), async (req,
         res.status(500).json({ error: error.message });
     }
 });
-router.delete('/tasks/:id', authenticate, requireRole('administrator'), async (req, res) => {
+router.delete('/tasks/:id', authenticate, requireRole('redaktion', 'administrator'), async (req, res) => {
     try {
         const { id } = req.params;
         await deleteTaskParameter(id);
@@ -59,7 +59,7 @@ router.get('/rewards', authenticate, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-router.post('/rewards', authenticate, requireRole('administrator'), async (req, res) => {
+router.post('/rewards', authenticate, requireRole('redaktion', 'administrator'), async (req, res) => {
     try {
         const { parameter_type, value, display_order, weight } = req.body;
         if (!parameter_type || !value) {
@@ -72,7 +72,7 @@ router.post('/rewards', authenticate, requireRole('administrator'), async (req, 
         res.status(500).json({ error: error.message });
     }
 });
-router.put('/rewards/:id', authenticate, requireRole('administrator'), async (req, res) => {
+router.put('/rewards/:id', authenticate, requireRole('redaktion', 'administrator'), async (req, res) => {
     try {
         const { id } = req.params;
         const { value, display_order, weight, active } = req.body;
@@ -83,7 +83,7 @@ router.put('/rewards/:id', authenticate, requireRole('administrator'), async (re
         res.status(500).json({ error: error.message });
     }
 });
-router.delete('/rewards/:id', authenticate, requireRole('administrator'), async (req, res) => {
+router.delete('/rewards/:id', authenticate, requireRole('redaktion', 'administrator'), async (req, res) => {
     try {
         const { id } = req.params;
         await deleteRewardParameter(id);

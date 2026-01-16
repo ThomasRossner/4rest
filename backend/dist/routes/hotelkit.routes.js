@@ -9,9 +9,9 @@ router.post('/sync', authenticate, async (req, res) => {
         if (!authReq.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        // Only front office can trigger sync
-        if (authReq.user.role !== 'front_office') {
-            return res.status(403).json({ error: 'Only front office can sync tasks' });
+        // Only redaktion can trigger sync
+        if (authReq.user.role !== 'redaktion' && authReq.user.role !== 'administrator') {
+            return res.status(403).json({ error: 'Only redaktion and administrators can sync tasks' });
         }
         const result = await hotelKit.syncEmployeeTasks();
         res.json({

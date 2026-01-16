@@ -700,14 +700,30 @@ export const api = {
 
   // Team Admin
   async getAllTeams(options?: { includeInactive?: boolean }) {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:702',message:'getAllTeams API call start',data:{includeInactive:options?.includeInactive},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     const params = new URLSearchParams();
     if (options?.includeInactive) {
       params.append('includeInactive', 'true');
     }
     const queryString = params.toString();
     const url = `/teams/all${queryString ? `?${queryString}` : ''}`;
-    const response = await apiClient.get(url);
-    return response.data;
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:709',message:'getAllTeams API call before request',data:{url,baseURL:apiBaseUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    try {
+      const response = await apiClient.get(url);
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:712',message:'getAllTeams API call success',data:{status:response.status,dataLength:response.data?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return response.data;
+    } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:716',message:'getAllTeams API call error',data:{error:error?.message,status:error?.response?.status,responseData:error?.response?.data,url:error?.config?.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      throw error;
+    }
   },
 
   async updateTeam(teamId: string, data: { name?: string | null; active?: boolean }) {

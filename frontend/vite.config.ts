@@ -107,6 +107,11 @@ export default defineConfig({
         '**/*.timestamp*.mjs',
         '**/.vite/**',
         '**/.cursor/**',
+        '**/test-results/**',
+        '**/*.log',
+        '**/*.tmp',
+        '**/.DS_Store',
+        '**/Thumbs.db',
       ],
     },
     proxy: {
@@ -120,7 +125,10 @@ export default defineConfig({
     // Allow serving certificate file for installation on mobile devices
     // But restrict to frontend directory to avoid watching backend files
     fs: {
-      allow: ['.']
+      // Only allow access to files within the frontend directory
+      // This prevents Vite from watching the entire project root
+      strict: true,
+      allow: [path.resolve(__dirname)]
     }
   },
   build: {

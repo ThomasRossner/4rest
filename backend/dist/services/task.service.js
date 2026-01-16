@@ -2,36 +2,37 @@ import { getPool } from '../database/connection.js';
 import { getTaskParameters } from './parameter.service.js';
 import { getPointsCalculationFactor } from './system-config.service.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
+import { buildTeamContestFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 import { updateContestPoints } from './contest.service.js';
 import { getUserActiveTeam, getTeamMembers } from './team.service.js';
 import fs from 'fs';
 export async function getAllTasks(filters, userId, options) {
     const db = getPool();
-    let userRole = null;
     let userType = null;
+    let userTeamIds = [];
+    let userContestIds = [];
     const params = [];
-    let paramIndex = 1;
+    let paramIndex = { current: 1 };
     let applyAudienceFilters = !(options?.includeAll ?? false);
     const includeInactive = options?.includeInactive ?? false;
-    // Map user role to zielgruppe for filtering
-    let userZielgruppe = null;
     if (userId) {
+        // Get user info
         const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
         if (userResult.rows[0]) {
-            userRole = userResult.rows[0].role;
+            const userRole = userResult.rows[0].role;
             userType = userResult.rows[0].user_type;
+            // Administrators see all tasks
             if (userRole === 'administrator') {
                 applyAudienceFilters = false;
             }
             else {
-                // Map role to zielgruppe
-                if (userRole === 'front_office') {
-                    userZielgruppe = 'Front Office';
-                }
-                else if (userRole === 'guest') {
-                    userZielgruppe = 'Gäste';
-                }
+                // Get user's team memberships
+                const teamResult = await db.query('SELECT team_id FROM team_members WHERE user_id = $1', [userId]);
+                userTeamIds = teamResult.rows.map((row) => row.team_id);
+                // Get user's contest participations
+                const contestResult = await db.query('SELECT contest_id FROM contest_participants WHERE user_id = $1', [userId]);
+                userContestIds = contestResult.rows.map((row) => row.contest_id);
             }
         }
     }
@@ -39,7 +40,7 @@ export async function getAllTasks(filters, userId, options) {
     let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
     if (userId) {
         select += `, (ut.user_id IS NOT NULL) AS completed`;
-        from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex++}`;
+        from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex.current++}`;
         params.push(userId);
     }
     // Add prerequisite fields to select
@@ -48,22 +49,20 @@ export async function getAllTasks(filters, userId, options) {
     if (!includeInactive) {
         clauses.push('t.active = TRUE');
     }
-    // Filter by zielgruppe: Only show tasks that match user's zielgruppe
-    // NULL or empty array zielgruppe means accessible to all, otherwise must match user's zielgruppe
+    // Filter by team/contest assignments
     if (applyAudienceFilters) {
-        if (userZielgruppe) {
-            // Show tasks with NULL/empty zielgruppe (accessible to all) OR tasks where user's zielgruppe is in the array
-            clauses.push('(t.zielgruppe IS NULL OR array_length(t.zielgruppe, 1) IS NULL OR $' + paramIndex + ' = ANY(t.zielgruppe))');
-            params.push(userZielgruppe);
-            paramIndex++;
-        }
-        else {
-            // If user has no matching zielgruppe (e.g., unknown role), only show tasks with NULL or empty zielgruppe
-            clauses.push('(t.zielgruppe IS NULL OR array_length(t.zielgruppe, 1) IS NULL)');
-        }
+        const hotelId = getConfiguredHotelId();
+        const filterClauses = buildTeamContestFilterClauses({
+            userTeamIds: userTeamIds.length > 0 ? userTeamIds : null,
+            userContestIds: userContestIds.length > 0 ? userContestIds : null,
+            userType,
+            hotelId,
+            applyFilters: true,
+        }, params, paramIndex);
+        clauses.push(...filterClauses);
     }
     if (filters?.type) {
-        clauses.push(`t.type = $${paramIndex++}`);
+        clauses.push(`t.type = $${paramIndex.current++}`);
         params.push(filters.type);
     }
     let query = `SELECT ${select}${from}`;
@@ -72,11 +71,11 @@ export async function getAllTasks(filters, userId, options) {
     }
     query += ' ORDER BY t.id, t.created_at DESC';
     if (filters?.limit) {
-        query += ` LIMIT $${paramIndex++}`;
+        query += ` LIMIT $${paramIndex.current++}`;
         params.push(filters.limit);
     }
     if (filters?.offset) {
-        query += ` OFFSET $${paramIndex++}`;
+        query += ` OFFSET $${paramIndex.current++}`;
         params.push(filters.offset);
     }
     const result = await db.query(query, params);

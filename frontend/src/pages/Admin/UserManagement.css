@@ -231,22 +231,9 @@
   background: var(--color-surface, #f9fafb);
 }
 
-.admin-button-danger {
-  padding: 0.5rem 1rem;
-  border: 1px solid #b91c1c;
-  border-radius: 4px;
-  background: white;
-  color: #b91c1c;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+/* Removed .admin-button-danger - all buttons use unified design */
 
-.admin-button-danger:hover:not(:disabled) {
-  background: #fee2e2;
-}
-
-.admin-button-secondary:disabled,
-.admin-button-danger:disabled {
+.admin-button-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

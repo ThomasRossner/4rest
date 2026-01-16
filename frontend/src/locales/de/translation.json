@@ -1192,7 +1192,8 @@
       },
       "roles": {
         "guest": "Gast",
-        "front_office": "Front Office",
+        "rezeption": "Rezeption",
+        "redaktion": "Redaktion",
         "administrator": "Administrator"
       },
       "details": {
@@ -1897,6 +1898,148 @@
       "maxPoints": "Max. Punkte",
       "maxTrees": "Max. Bäume",
       "maxCo2": "Max. CO₂"
+    }
+  },
+  "rezeption": {
+    "title": "Rezeption",
+    "subtitle": "Verwaltung von Teams, Wettbewerben und Belohnungen",
+    "actions": {
+      "manageTeams": {
+        "title": "Teams verwalten",
+        "description": "Alle Teams anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "manageContests": {
+        "title": "Wettbewerbe verwalten",
+        "description": "Alle Wettbewerbe anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "pointsBonus": {
+        "title": "Bonuspunkte geben",
+        "description": "QR-Codes für Bonuspunkte generieren"
+      },
+      "redeemRewards": {
+        "title": "Belohnungen einlösen",
+        "description": "Scannen Sie QR-Codes, um Belohnungen zu verifizieren und einzulösen"
+      },
+      "verifyTasks": {
+        "title": "Aufgaben verifizieren",
+        "description": "Aufgaben manuell verifizieren und freigeben"
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Teams verwalten",
+        "subtitle": "Verwalten Sie alle Teams",
+        "createNew": "Neues Team erstellen",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Lade Teams...",
+        "loadError": "Fehler beim Laden der Teams",
+        "createSuccess": "Team erfolgreich erstellt",
+        "noTeams": "Keine Teams gefunden",
+        "unnamed": "Unbenanntes Team",
+        "createdBy": "Erstellt von",
+        "status": "Status",
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Nach Name suchen...",
+          "includeInactive": "Inaktive anzeigen"
+        },
+        "edit": {
+          "title": "Team bearbeiten",
+          "name": "Team-Name",
+          "nameUpdated": "Team-Name aktualisiert",
+          "nameUpdateError": "Fehler beim Aktualisieren",
+          "addMembers": "Mitglieder hinzufügen",
+          "removeMembers": "Mitglieder entfernen",
+          "showJoinQr": "Join-QR-Code anzeigen",
+          "showRegistrationQr": "Registrierungs-QR-Code anzeigen",
+          "cancel": "Abbrechen",
+          "joinQrTitle": "Join-QR-Code",
+          "joinQrDescription": "Bestehende Benutzer können diesen QR-Code scannen, um dem Team beizutreten",
+          "registrationQrTitle": "Registrierungs-QR-Code",
+          "registrationQrDescription": "Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch dem Team beizutreten",
+          "add": "Hinzufügen",
+          "remove": "Entfernen"
+        }
+      },
+      "membersAdded": "Mitglieder erfolgreich hinzugefügt",
+      "membersRemoved": "Mitglieder erfolgreich entfernt",
+      "addMembersError": "Fehler beim Hinzufügen der Mitglieder",
+      "removeMembersError": "Fehler beim Entfernen der Mitglieder",
+      "qrError": "Fehler beim Generieren des QR-Codes",
+      "registrationQrError": "Fehler beim Generieren des Registrierungs-QR-Codes"
+    },
+    "contest": {
+      "manage": {
+        "title": "Wettbewerbe verwalten",
+        "subtitle": "Verwalten Sie alle Wettbewerbe",
+        "createNew": "Neuen Wettbewerb erstellen",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Lade Wettbewerbe...",
+        "loadError": "Fehler beim Laden der Wettbewerbe",
+        "createSuccess": "Wettbewerb erfolgreich erstellt",
+        "noContests": "Keine Wettbewerbe gefunden",
+        "unnamed": "Unbenannter Wettbewerb",
+        "createdBy": "Erstellt von",
+        "status": "Status",
+        "endDate": "Ende",
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Nach Name suchen...",
+          "includeInactive": "Inaktive anzeigen"
+        },
+        "edit": {
+          "title": "Wettbewerb bearbeiten",
+          "name": "Wettbewerbs-Name",
+          "nameUpdated": "Wettbewerbs-Name aktualisiert",
+          "nameUpdateError": "Fehler beim Aktualisieren",
+          "addParticipants": "Teilnehmer hinzufügen",
+          "removeParticipants": "Teilnehmer entfernen",
+          "showJoinQr": "Join-QR-Code anzeigen",
+          "showRegistrationQr": "Registrierungs-QR-Code anzeigen",
+          "cancel": "Abbrechen",
+          "joinQrTitle": "Join-QR-Code",
+          "joinQrDescription": "Bestehende Benutzer können diesen QR-Code scannen, um am Wettbewerb teilzunehmen",
+          "registrationQrTitle": "Registrierungs-QR-Code",
+          "registrationQrDescription": "Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch am Wettbewerb teilzunehmen",
+          "add": "Hinzufügen",
+          "remove": "Entfernen"
+        }
+      },
+      "participantsAdded": "Teilnehmer erfolgreich hinzugefügt",
+      "participantsRemoved": "Teilnehmer erfolgreich entfernt",
+      "addParticipantsError": "Fehler beim Hinzufügen der Teilnehmer",
+      "removeParticipantsError": "Fehler beim Entfernen der Teilnehmer",
+      "qrError": "Fehler beim Generieren des QR-Codes",
+      "registrationQrError": "Fehler beim Generieren des Registrierungs-QR-Codes",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "toggleSuccess": "Wettbewerbs-Status erfolgreich geändert",
+      "toggleError": "Fehler beim Ändern des Wettbewerbs-Status",
+      "deleteSuccess": "Wettbewerb erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Wettbewerbs",
+      "deleteConfirm": {
+        "title": "Wettbewerb löschen",
+        "description": "Möchten Sie den Wettbewerb \"{{name}}\" wirklich löschen?"
+      },
+      "toggleConfirm": {
+        "title": "Wettbewerbs-Status ändern",
+        "description": "Möchten Sie den Status des Wettbewerbs \"{{name}}\" wirklich ändern?"
+      }
+    },
+    "pointsBonus": {
+      "title": "Bonuspunkte geben"
+    },
+    "redeemRewards": {
+      "title": "Belohnungen einlösen"
+    },
+    "verifyTasks": {
+      "title": "Aufgaben verifizieren",
+      "subtitle": "Diese Funktion wird in Kürze verfügbar sein",
+      "placeholder": "Die Funktion zum Verifizieren von Aufgaben ist noch nicht implementiert."
     }
   }
 }

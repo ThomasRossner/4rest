@@ -375,7 +375,7 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
                 padding: '12px 24px',
                 fontSize: '16px',
                 fontWeight: 'bold',
-                background: '#dc2626',
+                background: 'var(--color-primary)',
               }}
             >
               {t('tasksComponents.visit_location.stopTracking')}

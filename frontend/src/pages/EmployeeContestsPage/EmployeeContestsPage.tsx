@@ -18,7 +18,7 @@ function EmployeeContestsPage() {
   const { data: contests, isLoading, refetch: refetchContests } = useQuery(
     ['employeeContests', userId],
     () => api.getEmployeeContests(),
-    { enabled: !!userId && (user?.role === 'front_office' || user?.role === 'administrator') }
+    { enabled: !!userId && (user?.role === 'rezeption' || user?.role === 'administrator') }
   );
 
   if (isLoading) {

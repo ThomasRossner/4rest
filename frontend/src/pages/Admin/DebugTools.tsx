@@ -727,7 +727,7 @@ export function DebugTools() {
                 deleteTaskCount < 0 ||
                 deletePoints < 0
               }
-              className="debug-tool-button danger"
+              className="debug-tool-button"
             >
               {deleteDataMutation.isLoading
                 ? t('admin.debugTools.deleteData.deleting')
@@ -1075,7 +1075,7 @@ export function DebugTools() {
                   <button
                     onClick={confirmResetData}
                     disabled={resetDataMutation.isLoading}
-                    className="debug-tool-button danger"
+                    className="debug-tool-button"
                   >
                     {t('admin.debugTools.resetUserData.confirm')}
                   </button>
@@ -1093,7 +1093,7 @@ export function DebugTools() {
               <button
                 onClick={handleResetData}
                 disabled={resetDataMutation.isLoading || !resetDataEmail.trim()}
-                className="debug-tool-button danger"
+                className="debug-tool-button"
               >
                 {t('admin.debugTools.resetUserData.button')}
               </button>
@@ -1318,7 +1318,7 @@ export function DebugTools() {
               <button
                 onClick={() => clearLogsMutation.mutate()}
                 disabled={clearLogsMutation.isLoading}
-                className="debug-tool-button danger"
+                className="debug-tool-button"
               >
                 {t('admin.debugTools.logs.clear')}
               </button>

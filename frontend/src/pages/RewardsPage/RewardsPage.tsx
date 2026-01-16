@@ -232,8 +232,8 @@ function RewardsPage() {
           )}
         </span>
       </div>
-      {/* Show reward scanner button for front office */}
-      {user && user.role === 'front_office' && (
+      {/* Show reward scanner button for rezeption */}
+      {user && user.role === 'rezeption' && (
         <button
           className="rewards-scan-button"
           onClick={() => setShowRewardScanner(true)}

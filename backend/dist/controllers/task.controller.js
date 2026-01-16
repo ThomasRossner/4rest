@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, } from '../services/task.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
+import { validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
 export const getTasks = asyncHandler(async (req, res) => {
     const { limit, offset, type, includeAll, includeInactive } = req.query;
     const authReq = req;
@@ -35,8 +35,12 @@ export const createTask = asyncHandler(async (req, res) => {
     if (payload.active !== undefined && typeof payload.active !== 'boolean') {
         return res.status(400).json({ error: 'Active flag must be a boolean value' });
     }
-    if (payload.allowed_roles && !Array.isArray(payload.allowed_roles)) {
-        return res.status(400).json({ error: 'allowed_roles must be an array of strings' });
+    // allowed_roles is deprecated, use allowed_teams and allowed_contests instead
+    if (payload.allowed_teams && !Array.isArray(payload.allowed_teams)) {
+        return res.status(400).json({ error: 'allowed_teams must be an array of UUIDs' });
+    }
+    if (payload.allowed_contests && !Array.isArray(payload.allowed_contests)) {
+        return res.status(400).json({ error: 'allowed_contests must be an array of UUIDs' });
     }
     if (payload.allowed_user_types && !Array.isArray(payload.allowed_user_types)) {
         return res.status(400).json({ error: 'allowed_user_types must be an array of strings' });
@@ -55,8 +59,8 @@ export const createTask = asyncHandler(async (req, res) => {
     }
     payload.location_id = location.id;
     // Validate arrays using shared validation functions
+    // allowed_roles is deprecated, validation removed
     try {
-        validateRoleArray(payload.allowed_roles);
         validateUserTypeArray(payload.allowed_user_types);
         validateHotelIdArray(payload.allowed_hotel_ids);
     }
@@ -159,36 +163,11 @@ export const uploadVideo = asyncHandler(async (req, res) => {
     res.json({ video_url: videoUrl });
 });
 export const uploadThumbnail = asyncHandler(async (req, res) => {
-    // #region agent log
-    const logPath = '/Users/thomas/Development/4rest/.cursor/debug.log';
-    try {
-        fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:197', message: 'uploadThumbnail entry', data: { method: req.method, path: req.path, hasFile: !!req.file, fileSize: req.file?.size, fileName: req.file?.originalname, userId: req.user?.id }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) + '\n');
-    }
-    catch (e) { }
-    // #endregion
     const file = req.file;
     if (!file) {
-        // #region agent log
-        try {
-            fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:200', message: 'uploadThumbnail no file', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) + '\n');
-        }
-        catch (e) { }
-        // #endregion
         return res.status(400).json({ error: 'No file uploaded' });
     }
-    // #region agent log
-    try {
-        fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:203', message: 'uploadThumbnail calling uploadThumbnailService', data: { fileName: file.filename, originalName: file.originalname, size: file.size, mimetype: file.mimetype }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) + '\n');
-    }
-    catch (e) { }
-    // #endregion
     const thumbnailUrl = await uploadThumbnailService(file);
-    // #region agent log
-    try {
-        fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:205', message: 'uploadThumbnail returning', data: { thumbnailUrl }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) + '\n');
-    }
-    catch (e) { }
-    // #endregion
     res.json({ thumbnail_url: thumbnailUrl });
 });
 //# sourceMappingURL=task.controller.js.map
