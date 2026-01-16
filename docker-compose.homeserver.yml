@@ -43,6 +43,20 @@ services:
       BASE_URL: ${BASE_URL:-https://luise.bio}
       HOTELKIT_API_URL: ${HOTELKIT_API_URL:-}
       HOTELKIT_API_KEY: ${HOTELKIT_API_KEY:-}
+      # Email Configuration
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      EMAIL_MOCK_MODE: ${EMAIL_MOCK_MODE:-false}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@4rest.com}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-4rest}
+      APP_URL: ${APP_URL:-http://localhost:3001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      # SMTP Configuration
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-${EMAIL_FROM:-noreply@4rest.com}}
     depends_on:
       - postgres
       - redis
