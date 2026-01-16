@@ -4,7 +4,7 @@
 
 set -e
 
-echo "==> Starting 4rester Backend..."
+echo "==> Starting 4rest Backend..."
 
 # Extract database connection details from DATABASE_URL or use defaults
 if [ -n "${DATABASE_URL:-}" ]; then

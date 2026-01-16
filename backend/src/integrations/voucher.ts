@@ -39,7 +39,7 @@ class VoucherIntegration {
         type: rewardType,
         value: pointsValue,
         metadata: {
-          source: '4rester',
+          source: '4rest',
           timestamp: new Date().toISOString(),
         },
       });

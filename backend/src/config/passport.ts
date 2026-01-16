@@ -110,7 +110,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
               const response = await axios.get('https://api.github.com/user/emails', {
                 headers: {
                   'Authorization': `token ${accessToken}`,
-                  'User-Agent': '4rester-OAuth',
+                  'User-Agent': '4rest-OAuth',
                   'Accept': 'application/vnd.github.v3+json',
                 },
               });

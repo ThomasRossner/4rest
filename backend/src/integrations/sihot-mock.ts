@@ -467,7 +467,7 @@ export class SihotMockService {
     const properties: SihotProperty[] = [
       {
         propertyId: 'ROI-BER',
-        name: '4rester Berlin',
+        name: '4rest Berlin',
         timezone: 'Europe/Berlin',
         currency: 'EUR',
         address: {
@@ -481,7 +481,7 @@ export class SihotMockService {
       },
       {
         propertyId: 'ROI-VIE',
-        name: '4rester Vienna',
+        name: '4rest Vienna',
         timezone: 'Europe/Vienna',
         currency: 'EUR',
         address: {

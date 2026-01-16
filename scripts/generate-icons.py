@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate 4rester app icons from the design specification.
+Generate 4rest app icons from the design specification.
 Requires: pip install pillow numpy
 """
 
@@ -107,7 +107,7 @@ def draw_tree_elements(draw, size, number4_bbox):
         draw.polygon(points, fill=color)
 
 def create_icon(size, output_path):
-    """Create a 4rester app icon with the specified size."""
+    """Create a 4rest app icon with the specified size."""
     # Create gradient background
     img = create_gradient_background(size)
     
@@ -167,7 +167,7 @@ def main():
         print(f"❌ Error: {public_dir} does not exist!")
         return
     
-    print("🎨 Generating 4rester app icons...")
+    print("🎨 Generating 4rest app icons...")
     print(f"📁 Output directory: {public_dir}\n")
     
     # Generate icons in different sizes

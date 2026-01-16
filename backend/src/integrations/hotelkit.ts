@@ -86,7 +86,7 @@ class HotelKitIntegration {
             continue;
           }
 
-          // Convert HotelKit task to 4rester task
+          // Convert HotelKit task to 4rest task
           await createTask({
             title: hkTask.title,
             description: hkTask.description || `Synced from HotelKit: ${hkTask.category || 'General'}`,
@@ -163,7 +163,7 @@ class HotelKitIntegration {
   }
 
   /**
-   * Map HotelKit task category to 4rester task type
+   * Map HotelKit task category to 4rest task type
    */
   private mapTaskType(category?: string): string {
     const categoryMap: Record<string, string> = {

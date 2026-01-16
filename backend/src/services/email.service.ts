@@ -150,8 +150,8 @@ class EmailService {
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
-    const fromEmail = process.env.SMTP_FROM || process.env.EMAIL_FROM || 'noreply@4rester.com';
-    const fromName = process.env.EMAIL_FROM_NAME || '4rester';
+    const fromEmail = process.env.SMTP_FROM || process.env.EMAIL_FROM || 'noreply@4rest.com';
+    const fromName = process.env.EMAIL_FROM_NAME || '4rest';
     const from = `"${fromName}" <${fromEmail}>`;
 
     if (this.isMockMode) {

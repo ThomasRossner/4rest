@@ -4,7 +4,7 @@
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <input-icon.png>"
-    echo "Example: $0 ~/Downloads/4rester-logo.png"
+    echo "Example: $0 ~/Downloads/4rest-logo.png"
     exit 1
 fi
 

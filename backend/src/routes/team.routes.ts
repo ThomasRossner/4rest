@@ -41,7 +41,12 @@ router.get('/:id/ranking', authenticate, getTeamRankingController);
 router.post('/:id/contribute', authenticate, contributePointsController);
 router.post('/:id/redeem', authenticate, redeemRewardController);
 router.post('/:id/leave', authenticate, leaveTeamController);
-router.delete('/:id', authenticate, dissolveTeamController);
+router.delete('/:id', (req, res, next) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.routes.ts:44',message:'DELETE /:id route matched',data:{method:req.method,path:req.path,params:req.params},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  authenticate(req, res, next);
+}, dissolveTeamController);
 router.get('/:id/qr-code', authenticate, getTeamQrCodeController);
 
 // Admin routes for specific teams

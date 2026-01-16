@@ -36,7 +36,12 @@ router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDele
 // Dynamic routes - must come after specific routes
 router.get('/:id', authenticate, getContestDetailsController);
 router.get('/:id/ranking', authenticate, getContestRankingController);
-router.delete('/:id', authenticate, dissolveContestController);
+router.delete('/:id', (req, res, next) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.routes.ts:39',message:'DELETE /:id route matched',data:{method:req.method,path:req.path,params:req.params},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  authenticate(req, res, next);
+}, dissolveContestController);
 router.post('/:id/leave', authenticate, leaveContestController);
 router.get('/:id/qr-code', authenticate, getContestQrCodeController);
 

@@ -22,15 +22,15 @@ fi
 echo "Connecting to IONOS server..."
 ssh -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" << 'REMOTE_SCRIPT'
 # Find the deployment directory
-if [ -d "/root/4rester" ]; then
-    DEPLOY_DIR="/root/4rester"
+if [ -d "/root/4rest" ]; then
+    DEPLOY_DIR="/root/4rest"
 elif [ -d "/root/roots-of-impact" ]; then
     DEPLOY_DIR="/root/roots-of-impact"
-elif [ -d "/var/www/4rester" ]; then
-    DEPLOY_DIR="/var/www/4rester"
+elif [ -d "/var/www/4rest" ]; then
+    DEPLOY_DIR="/var/www/4rest"
 else
     echo "Deployment directory not found. Searching..."
-    DEPLOY_DIR=$(find /root /var/www -type d -name "4rester" -o -name "roots-of-impact" 2>/dev/null | head -1)
+    DEPLOY_DIR=$(find /root /var/www -type d -name "4rest" -o -name "roots-of-impact" 2>/dev/null | head -1)
     if [ -z "$DEPLOY_DIR" ]; then
         echo "ERROR: Could not find deployment directory"
         exit 1

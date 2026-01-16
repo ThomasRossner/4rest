@@ -595,6 +595,9 @@ export async function awardContestRewards(contestId: string): Promise<void> {
  * Löst einen Contest auf (nur Ersteller)
  */
 export async function dissolveContest(contestId: string, userId: string): Promise<void> {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:597',message:'dissolveContest entry',data:{contestId,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   const db = getPool();
   
   // Prüfe ob Benutzer der Ersteller ist
@@ -603,13 +606,25 @@ export async function dissolveContest(contestId: string, userId: string): Promis
     [contestId]
   );
   
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:606',message:'dissolveContest after query',data:{contestFound:contestResult.rows.length>0,rowCount:contestResult.rows.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   if (contestResult.rows.length === 0) {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:607',message:'dissolveContest contest not found error',data:{contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     throw new Error('Contest not found');
   }
   
   const contest = contestResult.rows[0];
   
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:612',message:'dissolveContest before permission check',data:{contestCreatedBy:contest.created_by,userId,isCreator:contest.created_by===userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   if (contest.created_by !== userId) {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:613',message:'dissolveContest permission denied error',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     throw new Error('Only the contest creator can dissolve the contest');
   }
   

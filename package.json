@@ -1,5 +1,5 @@
 {
-  "name": "4rester",
+  "name": "4rest",
   "version": "1.0.0",
   "description": "Gamification-based sustainability platform connecting hotel guests and front office staff",
   "private": true,
@@ -21,7 +21,12 @@
     "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@faker-js/faker": "^8.4.1",
+    "@types/pg": "^8.16.0",
+    "axios": "^1.13.2",
+    "concurrently": "^8.2.2",
+    "dotenv": "^16.6.1",
+    "pg": "^8.17.1"
   },
   "engines": {
     "node": ">=18.0.0",

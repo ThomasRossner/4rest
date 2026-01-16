@@ -1,10 +1,10 @@
-# 4rester
+# 4rest
 
 A gamification-based sustainability platform connecting hotel guests and front office staff through a virtual forest experience.
 
 ## Project Overview
 
-4rester encourages sustainable actions through gamification. Each completed task grows a personal tree in a virtual forest, creating both individual progress and collective impact.
+4rest encourages sustainable actions through gamification. Each completed task grows a personal tree in a virtual forest, creating both individual progress and collective impact.
 
 ## Architecture
 

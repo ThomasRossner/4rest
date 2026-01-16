@@ -1,4 +1,4 @@
-# Anleitung: 4rester Icon erstellen
+# Anleitung: 4rest Icon erstellen
 
 ## Spezifikationen basierend auf dem Original
 

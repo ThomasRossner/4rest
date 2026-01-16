@@ -144,13 +144,25 @@ export const redeemRewardController: RequestHandler = asyncHandler(async (req, r
  * Löst ein Team auf (nur Ersteller)
  */
 export const dissolveTeamController: RequestHandler = asyncHandler(async (req, res) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:146',message:'dissolveTeamController entry',data:{method:req.method,path:req.path,params:req.params,userId:req.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   const authReq = req as AuthRequest;
   if (!authReq.user) {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:149',message:'dissolveTeamController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   const { id } = req.params;
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:153',message:'dissolveTeamController before dissolveTeam',data:{teamId:id,userId:authReq.user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
   await dissolveTeam(id, authReq.user.id);
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:154',message:'dissolveTeamController after dissolveTeam success',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   res.json({ success: true });
 });
 

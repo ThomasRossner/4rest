@@ -188,13 +188,25 @@ export const getContestRankingController: RequestHandler = asyncHandler(async (r
  * Löst einen Contest auf (nur Ersteller)
  */
 export const dissolveContestController: RequestHandler = asyncHandler(async (req, res) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:190',message:'dissolveContestController entry',data:{method:req.method,path:req.path,params:req.params,userId:req.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   const authReq = req as AuthRequest;
   if (!authReq.user) {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:193',message:'dissolveContestController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   const { id } = req.params;
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:197',message:'dissolveContestController before dissolveContest',data:{contestId:id,userId:authReq.user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
   await dissolveContest(id, authReq.user.id);
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:198',message:'dissolveContestController after dissolveContest success',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   res.json({ success: true });
 });
 

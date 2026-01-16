@@ -16,8 +16,8 @@ export default defineConfig({
         type: 'module',
       },
       manifest: {
-        name: '4rester',
-        short_name: '4rester',
+        name: '4rest',
+        short_name: '4rest',
         description: 'Sustainability gamification platform',
         theme_color: '#2d5016',
         background_color: '#ffffff',

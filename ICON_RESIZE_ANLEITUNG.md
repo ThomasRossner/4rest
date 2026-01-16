@@ -5,13 +5,13 @@ Du hast bereits ein PNG mit dem richtigen Logo. Hier sind die einfachsten Method
 ## Methode 1: Mit dem Skript (empfohlen)
 
 ```bash
-cd /Users/thomas/Development/4rester
+cd /Users/thomas/Development/4rest
 ./scripts/resize-icon.sh /pfad/zu/deinem/logo.png
 ```
 
 **Beispiel:**
 ```bash
-./scripts/resize-icon.sh ~/Downloads/4rester-logo.png
+./scripts/resize-icon.sh ~/Downloads/4rest-logo.png
 ```
 
 Das Skript erstellt automatisch alle benötigten Größen:
@@ -23,7 +23,7 @@ Das Skript erstellt automatisch alle benötigten Größen:
 ## Methode 2: Mit sips (macOS - eingebaut)
 
 ```bash
-cd /Users/thomas/Development/4rester/frontend/public
+cd /Users/thomas/Development/4rest/frontend/public
 
 sips -z 32 32 /pfad/zu/deinem/logo.png --out favicon.png
 sips -z 128 128 /pfad/zu/deinem/logo.png --out app-icon-128.png
@@ -37,7 +37,7 @@ Falls ImageMagick installiert ist:
 ```bash
 brew install imagemagick  # Falls nicht installiert
 
-cd /Users/thomas/Development/4rester/frontend/public
+cd /Users/thomas/Development/4rest/frontend/public
 
 convert /pfad/zu/deinem/logo.png -resize 32x32 favicon.png
 convert /pfad/zu/deinem/logo.png -resize 128x128 app-icon-128.png
@@ -89,7 +89,7 @@ EOF
 
 Nachdem du die Icons erstellt hast, kannst du sie testen:
 ```bash
-cd /Users/thomas/Development/4rester
+cd /Users/thomas/Development/4rest
 # Frontend neu starten oder rebuilden
 ```
 
