@@ -144,6 +144,13 @@ export async function register(req: Request, res: Response) {
       // Check if user is soft-deleted
       // deleted_at might not be in the TypeScript interface, but it's in the database result
       const deletedAt = (existingUser as any).deleted_at;
+      console.log('[REGISTER] Existing user found:', {
+        email: existingUser.email,
+        deleted_at: deletedAt,
+        deleted_at_type: typeof deletedAt,
+        isDeleted: !!deletedAt,
+        active: (existingUser as any).active,
+      });
       if (deletedAt) {
         // Reactivate soft-deleted user
         const db = getPool();
