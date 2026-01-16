@@ -149,9 +149,11 @@ export async function register(req: Request, res: Response) {
         deleted_at: deletedAt,
         deleted_at_type: typeof deletedAt,
         isDeleted: !!deletedAt,
+        isNotNull: deletedAt !== null,
         active: (existingUser as any).active,
       });
-      if (deletedAt) {
+      // Check if user is soft-deleted (deleted_at is not null)
+      if (deletedAt !== null && deletedAt !== undefined) {
         // Reactivate soft-deleted user
         const db = getPool();
         const passwordHash = await bcrypt.hash(password, 10);
