@@ -812,6 +812,8 @@ export async function redeemRewardQrCodeService(qrToken: string, employeeUserId:
 }
 
 export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
+  // BASE_URL should be set in production (e.g., https://luise.bio)
+  // localhost is only used as fallback for local development with virtual hosts
   const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
   // Remove trailing slash if present
   const cleanBaseUrl = baseUrl.replace(/\/$/, '');

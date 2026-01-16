@@ -34,8 +34,12 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN}
+      BASE_URL: ${BASE_URL}
       HOTELKIT_API_URL: ${HOTELKIT_API_URL}
       HOTELKIT_API_KEY: ${HOTELKIT_API_KEY}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       - postgres
       - redis
@@ -61,6 +65,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:
 
 networks:
   roots-network:
