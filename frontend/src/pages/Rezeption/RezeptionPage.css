@@ -487,12 +487,12 @@
   text-align: center;
 }
 
-/* Status column (4th column) - max 20% width */
+/* Status column (4th column) - max 10% width */
 .rezeption-table th:nth-child(4),
 .rezeption-table td:nth-child(4) {
-  width: 20%;
-  max-width: 20%;
-  min-width: 5rem;
+  width: 10%;
+  max-width: 10%;
+  min-width: 4rem;
 }
 
 .rezeption-table th {
