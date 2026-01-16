@@ -21,6 +21,8 @@ export interface User {
   password_reset_token?: string | null;
   password_reset_expires?: Date | null;
   email_notifications_enabled?: boolean;
+  deleted_at?: Date | null;
+  active?: boolean;
 }
 
 export interface CreateUserData {
@@ -39,7 +41,8 @@ export interface CreateUserData {
 }
 
 function ensureRole(value: unknown): UserRole {
-  if (typeof value === 'string' && (USER_ROLES as readonly string[]).includes(value)) {
+  const rolesArray = Array.from(USER_ROLES) as string[];
+  if (typeof value === 'string' && rolesArray.includes(value)) {
     return value as UserRole;
   }
   return 'guest';

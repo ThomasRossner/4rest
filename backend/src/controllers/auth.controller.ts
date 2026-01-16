@@ -142,7 +142,9 @@ export async function register(req: Request, res: Response) {
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
       // Check if user is soft-deleted
-      if (existingUser.deleted_at) {
+      // deleted_at might not be in the TypeScript interface, but it's in the database result
+      const deletedAt = (existingUser as any).deleted_at;
+      if (deletedAt) {
         // Reactivate soft-deleted user
         const db = getPool();
         const passwordHash = await bcrypt.hash(password, 10);
