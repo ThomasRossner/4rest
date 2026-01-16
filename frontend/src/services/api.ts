@@ -17,6 +17,10 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Remove Content-Type header for FormData - axios will set it automatically with boundary
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 
@@ -349,7 +353,7 @@ export const api = {
     const formData = new FormData();
     formData.append('video', file);
     const response = await apiClient.post('/tasks/upload/video', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      // Don't set Content-Type manually - axios will set it automatically with boundary for FormData
     });
     return response.data;
   },
@@ -358,7 +362,7 @@ export const api = {
     const formData = new FormData();
     formData.append('thumbnail', file);
     const response = await apiClient.post('/tasks/upload/thumbnail', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      // Don't set Content-Type manually - axios will set it automatically with boundary for FormData
     });
     return response.data;
   },
@@ -373,7 +377,7 @@ export const api = {
     const formData = new FormData();
     formData.append('thumbnail', file);
     const response = await apiClient.post('/rewards/upload/thumbnail', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      // Don't set Content-Type manually - axios will set it automatically with boundary for FormData
     });
     return response.data;
   },

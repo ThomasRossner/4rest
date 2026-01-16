@@ -159,11 +159,36 @@ export const uploadVideo = asyncHandler(async (req, res) => {
     res.json({ video_url: videoUrl });
 });
 export const uploadThumbnail = asyncHandler(async (req, res) => {
+    // #region agent log
+    const logPath = '/Users/thomas/Development/4rest/.cursor/debug.log';
+    try {
+        fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:197', message: 'uploadThumbnail entry', data: { method: req.method, path: req.path, hasFile: !!req.file, fileSize: req.file?.size, fileName: req.file?.originalname, userId: req.user?.id }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) + '\n');
+    }
+    catch (e) { }
+    // #endregion
     const file = req.file;
     if (!file) {
+        // #region agent log
+        try {
+            fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:200', message: 'uploadThumbnail no file', data: {}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' }) + '\n');
+        }
+        catch (e) { }
+        // #endregion
         return res.status(400).json({ error: 'No file uploaded' });
     }
+    // #region agent log
+    try {
+        fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:203', message: 'uploadThumbnail calling uploadThumbnailService', data: { fileName: file.filename, originalName: file.originalname, size: file.size, mimetype: file.mimetype }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) + '\n');
+    }
+    catch (e) { }
+    // #endregion
     const thumbnailUrl = await uploadThumbnailService(file);
+    // #region agent log
+    try {
+        fs.appendFileSync(logPath, JSON.stringify({ location: 'task.controller.ts:205', message: 'uploadThumbnail returning', data: { thumbnailUrl }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) + '\n');
+    }
+    catch (e) { }
+    // #endregion
     res.json({ thumbnail_url: thumbnailUrl });
 });
 //# sourceMappingURL=task.controller.js.map

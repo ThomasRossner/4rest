@@ -3722,20 +3722,11 @@ function AdminPage() {
 
       // Upload thumbnail if a new file was selected
       let thumbnailUrl: string | null = taskForm.thumbnailUrl ?? null;
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3284',message:'Thumbnail upload start',data:{hasFile:!!taskForm.thumbnailFile,existingUrl:taskForm.thumbnailUrl,thumbnailUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       if (taskForm.thumbnailFile) {
         try {
           const uploadResult = await api.uploadTaskThumbnail(taskForm.thumbnailFile);
           thumbnailUrl = uploadResult.thumbnail_url;
-          // #region agent log
-          fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3288',message:'Thumbnail upload result',data:{uploadResult,thumbnailUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
         } catch (error: any) {
-          // #region agent log
-          fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3290',message:'Thumbnail upload error',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
           setTaskMessage({ type: 'error', text: error?.message || 'Failed to upload thumbnail.' });
           return;
         }
@@ -3744,9 +3735,6 @@ function AdminPage() {
       if (!taskForm.thumbnailFile && !taskForm.thumbnailUrl) {
         thumbnailUrl = null;
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3297',message:'Thumbnail URL final value',data:{thumbnailUrl,thumbnailFile:taskForm.thumbnailFile,thumbnailUrlForm:taskForm.thumbnailUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
 
       const prepareVideoData = async (taskType: string) => {
         if (taskType === 'quiz' || taskType === 'article_quiz') {
@@ -3774,6 +3762,11 @@ function AdminPage() {
             }
             videoUrl = uploadedUrl;
             setTaskForm((prev) => ({ ...prev, video_url: uploadedUrl }));
+          } catch (error: any) {
+            // #region agent log
+            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3780',message:'prepareVideoData upload error',data:{error:error?.message,status:error?.response?.status,responseData:error?.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            throw error;
           } finally {
             setIsUploadingVideo(false);
           }
@@ -3862,9 +3855,6 @@ function AdminPage() {
         
         // Add thumbnail_url (null if no thumbnail, to allow deletion)
         payload.thumbnail_url = thumbnailUrl;
-        // #region agent log
-        fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3412',message:'Payload before updateTask (edit)',data:{payload:JSON.stringify(payload),thumbnailUrl,hasThumbnailUrl:'thumbnail_url' in payload},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
 
         await updateTaskMutation.mutateAsync({ id: editingTaskId, payload });
         return;
@@ -4044,9 +4034,6 @@ function AdminPage() {
       
       // Add thumbnail_url
       payload.thumbnail_url = thumbnailUrl;
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3584',message:'Payload before publishTask (new task)',data:{payload:JSON.stringify(payload),thumbnailUrl,hasThumbnailUrl:'thumbnail_url' in payload},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
 
       await publishTaskMutation.mutateAsync(payload);
     } catch (error: any) {

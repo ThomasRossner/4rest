@@ -38,18 +38,32 @@ fi
 
 # Prüfe ob lokale Datenbank erreichbar ist
 echo "==> Checking local database connection..."
-export PGHOST="$LOCAL_DB_HOST"
-export PGPORT="$LOCAL_DB_PORT"
-export PGUSER="$LOCAL_DB_USER"
-export PGPASSWORD="$LOCAL_DB_PASSWORD"
-export PGDATABASE="postgres"
-
-if ! PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d postgres -c '\q' 2>/dev/null; then
-    echo "❌ Error: Kann nicht zur lokalen Datenbank verbinden"
-    echo "   Stelle sicher, dass PostgreSQL läuft und die Verbindungsdaten korrekt sind"
-    exit 1
+# Prüfe ob Docker-Container läuft
+LOCAL_CONTAINER=$(docker ps --filter "name=postgres" --format "{{.Names}}" | head -1)
+if [ -n "$LOCAL_CONTAINER" ]; then
+    echo "   Found Docker container: $LOCAL_CONTAINER"
+    USE_DOCKER=true
+    if ! docker exec "$LOCAL_CONTAINER" psql -U "$LOCAL_DB_USER" -d postgres -c '\q' 2>/dev/null; then
+        echo "❌ Error: Kann nicht zur lokalen Datenbank im Container verbinden"
+        exit 1
+    fi
+    echo "   ✓ Lokale Datenbank (Docker) erreichbar"
+else
+    # Versuche direkte Verbindung
+    export PGHOST="$LOCAL_DB_HOST"
+    export PGPORT="$LOCAL_DB_PORT"
+    export PGUSER="$LOCAL_DB_USER"
+    export PGPASSWORD="$LOCAL_DB_PASSWORD"
+    export PGDATABASE="postgres"
+    USE_DOCKER=false
+    
+    if ! PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d postgres -c '\q' 2>/dev/null; then
+        echo "❌ Error: Kann nicht zur lokalen Datenbank verbinden"
+        echo "   Stelle sicher, dass PostgreSQL läuft und die Verbindungsdaten korrekt sind"
+        exit 1
+    fi
+    echo "   ✓ Lokale Datenbank erreichbar"
 fi
-echo "   ✓ Lokale Datenbank erreichbar"
 echo ""
 
 # SSH-Key zum Agent hinzufügen
@@ -121,10 +135,17 @@ echo ""
 
 # Erstelle lokale Datenbank falls nicht vorhanden
 echo "==> Preparing local database..."
-PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d postgres <<EOF >/dev/null 2>&1 || true
+if [ "$USE_DOCKER" = true ]; then
+    docker exec "$LOCAL_CONTAINER" psql -U "$LOCAL_DB_USER" -d postgres <<EOF >/dev/null 2>&1 || true
 SELECT 'CREATE DATABASE ${LOCAL_DB_NAME}'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${LOCAL_DB_NAME}')\gexec
 EOF
+else
+    PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d postgres <<EOF >/dev/null 2>&1 || true
+SELECT 'CREATE DATABASE ${LOCAL_DB_NAME}'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${LOCAL_DB_NAME}')\gexec
+EOF
+fi
 echo "   ✓ Local database ready"
 echo ""
 
@@ -141,16 +162,27 @@ else
 fi
 
 echo "==> Dropping existing local database..."
-PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d postgres <<EOF
+if [ "$USE_DOCKER" = true ]; then
+    docker exec "$LOCAL_CONTAINER" psql -U "$LOCAL_DB_USER" -d postgres <<EOF
 DROP DATABASE IF EXISTS ${LOCAL_DB_NAME};
 CREATE DATABASE ${LOCAL_DB_NAME};
 EOF
+else
+    PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d postgres <<EOF
+DROP DATABASE IF EXISTS ${LOCAL_DB_NAME};
+CREATE DATABASE ${LOCAL_DB_NAME};
+EOF
+fi
 echo "   ✓ Local database recreated"
 echo ""
 
 # Importiere Dump
 echo "==> Importing dump into local database..."
-PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d "$LOCAL_DB_NAME" < "${LOCAL_DUMP_FILE}"
+if [ "$USE_DOCKER" = true ]; then
+    docker exec -i "$LOCAL_CONTAINER" psql -U "$LOCAL_DB_USER" -d "$LOCAL_DB_NAME" < "${LOCAL_DUMP_FILE}"
+else
+    PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d "$LOCAL_DB_NAME" < "${LOCAL_DUMP_FILE}"
+fi
 
 if [ $? -eq 0 ]; then
     echo "   ✓ Dump imported successfully"
@@ -162,7 +194,8 @@ echo ""
 
 # Zeige Statistiken
 echo "==> Database statistics:"
-PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d "$LOCAL_DB_NAME" <<EOF
+if [ "$USE_DOCKER" = true ]; then
+    docker exec "$LOCAL_CONTAINER" psql -U "$LOCAL_DB_USER" -d "$LOCAL_DB_NAME" <<'STATS_EOF'
 SELECT 
     schemaname,
     tablename,
@@ -171,7 +204,19 @@ FROM pg_tables
 WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
 LIMIT 10;
-EOF
+STATS_EOF
+else
+    PGPASSWORD="$LOCAL_DB_PASSWORD" psql -h "$LOCAL_DB_HOST" -p "$LOCAL_DB_PORT" -U "$LOCAL_DB_USER" -d "$LOCAL_DB_NAME" <<'STATS_EOF'
+SELECT 
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
+FROM pg_tables
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+LIMIT 10;
+STATS_EOF
+fi
 echo ""
 
 # Lösche lokalen Dump (optional - auskommentiert für Debugging)

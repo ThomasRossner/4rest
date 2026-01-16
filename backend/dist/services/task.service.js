@@ -743,13 +743,15 @@ export async function uploadPhoto(file) {
 }
 export async function uploadVideo(file) {
     const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-    return `${baseUrl}/uploads/${file.filename}`;
+    const videoUrl = `${baseUrl}/uploads/${file.filename}`;
+    return videoUrl;
 }
 export async function uploadThumbnail(file) {
     const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
     // Remove trailing slash if present
     const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-    return `${cleanBaseUrl}/uploads/${file.filename}`;
+    const thumbnailUrl = `${cleanBaseUrl}/uploads/${file.filename}`;
+    return thumbnailUrl;
 }
 /**
  * Validates prerequisite fields for a task
