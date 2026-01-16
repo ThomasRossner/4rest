@@ -143,19 +143,28 @@ export async function register(req: Request, res: Response) {
     if (existingUser) {
       // Check if user is soft-deleted
       // deleted_at might not be in the TypeScript interface, but it's in the database result
-      const deletedAt = (existingUser as any).deleted_at;
+      // Get deleted_at directly from database to ensure we have the correct value
+      const db = getPool();
+      const userCheckResult = await db.query(
+        'SELECT deleted_at, active FROM users WHERE email = $1',
+        [email]
+      );
+      const dbUser = userCheckResult.rows[0];
+      const deletedAt = dbUser?.deleted_at;
+      
       console.log('[REGISTER] Existing user found:', {
         email: existingUser.email,
-        deleted_at: deletedAt,
+        deleted_at_from_getUserByEmail: (existingUser as any).deleted_at,
+        deleted_at_from_db: deletedAt,
         deleted_at_type: typeof deletedAt,
         isDeleted: !!deletedAt,
         isNotNull: deletedAt !== null,
-        active: (existingUser as any).active,
+        active: dbUser?.active,
       });
+      
       // Check if user is soft-deleted (deleted_at is not null)
       if (deletedAt !== null && deletedAt !== undefined) {
         // Reactivate soft-deleted user
-        const db = getPool();
         const passwordHash = await bcrypt.hash(password, 10);
         const { combinedName, sihotGuestPayload, sihotGuest } = await enrichWithSihotData(
           email,
