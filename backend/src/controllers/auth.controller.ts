@@ -150,20 +150,28 @@ export async function register(req: Request, res: Response) {
         [email]
       );
       const dbUser = userCheckResult.rows[0];
+      // PostgreSQL returns null as null, but we need to check explicitly
       const deletedAt = dbUser?.deleted_at;
+      const isActive = dbUser?.active !== false; // active can be null, false, or true
       
       console.log('[REGISTER] Existing user found:', {
         email: existingUser.email,
         deleted_at_from_getUserByEmail: (existingUser as any).deleted_at,
         deleted_at_from_db: deletedAt,
         deleted_at_type: typeof deletedAt,
+        deleted_at_value: deletedAt,
         isDeleted: !!deletedAt,
         isNotNull: deletedAt !== null,
+        isNotUndefined: deletedAt !== undefined,
         active: dbUser?.active,
+        isActive: isActive,
       });
       
-      // Check if user is soft-deleted (deleted_at is not null)
-      if (deletedAt !== null && deletedAt !== undefined) {
+      // Check if user is soft-deleted (deleted_at is not null and not undefined)
+      // Also check if user is inactive (active is false)
+      const isSoftDeleted = (deletedAt !== null && deletedAt !== undefined) || !isActive;
+      
+      if (isSoftDeleted) {
         // Reactivate soft-deleted user
         const passwordHash = await bcrypt.hash(password, 10);
         const { combinedName, sihotGuestPayload, sihotGuest } = await enrichWithSihotData(
