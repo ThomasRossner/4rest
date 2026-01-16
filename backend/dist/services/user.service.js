@@ -4,7 +4,7 @@ function ensureRole(value) {
     if (typeof value === 'string' && USER_ROLES.includes(value)) {
         return value;
     }
-    return 'stakeholder';
+    return 'guest';
 }
 function ensureUserType(value) {
     if (typeof value === 'string' && USER_TYPES.includes(value)) {

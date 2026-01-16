@@ -133,8 +133,8 @@ class EmailService {
         console.log(`[MOCK EMAIL] Saved to: ${filepath}`);
     }
     async sendEmail(options) {
-        const fromEmail = process.env.SMTP_FROM || process.env.EMAIL_FROM || 'noreply@roots-of-impact.com';
-        const fromName = process.env.EMAIL_FROM_NAME || 'Roots of Impact';
+        const fromEmail = process.env.SMTP_FROM || process.env.EMAIL_FROM || 'noreply@4rest.com';
+        const fromName = process.env.EMAIL_FROM_NAME || '4rest';
         const from = `"${fromName}" <${fromEmail}>`;
         if (this.isMockMode) {
             try {

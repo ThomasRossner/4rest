@@ -18,14 +18,11 @@ export async function getRewardsService(userId) {
         // Administrators see all rewards
         userZielgruppe = null;
     }
-    else if (role === 'employee') {
-        userZielgruppe = 'Mitarbeitende';
+    else if (role === 'front_office') {
+        userZielgruppe = 'Front Office';
     }
     else if (role === 'guest') {
         userZielgruppe = 'Gäste';
-    }
-    else if (role === 'stakeholder') {
-        userZielgruppe = 'Stakeholder';
     }
     // Filter by zielgruppe: Only show rewards that match user's zielgruppe
     // NULL or empty array zielgruppe means accessible to all, otherwise must match user's zielgruppe
@@ -198,20 +195,38 @@ export async function updateReward(id, data) {
                     zielgruppeArray = JSON.parse(data.zielgruppe);
                 }
                 catch {
-                    // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
+                    // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}" or "{""Front Office""}"
                     // Remove curly braces and split by comma
-                    const cleaned = data.zielgruppe.replace(/^{|}$/g, '').trim();
-                    zielgruppeArray = cleaned ? cleaned.split(',').map((v) => v.trim()) : [];
+                    let cleaned = data.zielgruppe.replace(/^{|}$/g, '').trim();
+                    // Remove double quotes that might wrap values (e.g., ""Front Office"" -> Front Office)
+                    cleaned = cleaned.replace(/^"|"$/g, '');
+                    zielgruppeArray = cleaned ? cleaned.split(',').map((v) => {
+                        // Remove quotes from each value and trim
+                        return v.trim().replace(/^"|"$/g, '');
+                    }) : [];
                 }
             }
             else if (Array.isArray(data.zielgruppe)) {
-                zielgruppeArray = data.zielgruppe;
+                zielgruppeArray = data.zielgruppe.map((v) => {
+                    // If array contains strings with quotes, remove them
+                    if (typeof v === 'string') {
+                        return v.replace(/^"|"$/g, '').trim();
+                    }
+                    return v;
+                });
             }
             else {
                 zielgruppeArray = [data.zielgruppe];
             }
-            // Filter out empty strings and null values
-            zielgruppeValue = zielgruppeArray.filter((v) => v !== null && v !== undefined && v !== '');
+            // Filter out empty strings and null values, and remove any remaining quotes
+            zielgruppeValue = zielgruppeArray
+                .map((v) => {
+                if (typeof v === 'string') {
+                    return v.replace(/^"|"$/g, '').trim();
+                }
+                return v;
+            })
+                .filter((v) => v !== null && v !== undefined && v !== '');
             // If resulting array is empty, set to null
             if (zielgruppeValue.length === 0) {
                 zielgruppeValue = null;
@@ -392,14 +407,14 @@ export async function getRedemptionStatus(qrToken, userId) {
 }
 /**
  * Get reward information from QR code without redeeming it
- * Used by employees to preview the reward before redeeming
+ * Used by front office to preview the reward before redeeming
  */
 export async function getRewardInfoFromQrCode(qrToken, employeeUserId) {
     const db = getPool();
-    // Verify employee user
+    // Verify front office user
     const employee = await getUserById(employeeUserId);
-    if (!employee || (employee.role !== 'administrator' && employee.role !== 'employee')) {
-        throw new Error('Unauthorized: Only administrators and employees can view QR code information');
+    if (!employee || (employee.role !== 'administrator' && employee.role !== 'front_office')) {
+        throw new Error('Unauthorized: Only administrators and front office can view QR code information');
     }
     // Find redemption by QR token
     const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
@@ -434,10 +449,10 @@ export async function getRewardInfoFromQrCode(qrToken, employeeUserId) {
 }
 export async function verifyQrCodeService(qrToken, adminUserId) {
     const db = getPool();
-    // Verify admin or employee user
+    // Verify admin or front office user
     const admin = await getUserById(adminUserId);
-    if (!admin || (admin.role !== 'administrator' && admin.role !== 'employee')) {
-        throw new Error('Unauthorized: Only administrators and employees can verify QR codes');
+    if (!admin || (admin.role !== 'administrator' && admin.role !== 'front_office')) {
+        throw new Error('Unauthorized: Only administrators and front office can verify QR codes');
     }
     // Find redemption by QR token
     const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
@@ -488,15 +503,15 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
     };
 }
 /**
- * Redeem a reward QR code for a guest (employee action)
+ * Redeem a reward QR code for a guest (front office action)
  * This marks the redemption as 'used' and deducts points from the guest
  */
 export async function redeemRewardQrCodeService(qrToken, employeeUserId) {
     const db = getPool();
-    // Verify employee user
+    // Verify front office user
     const employee = await getUserById(employeeUserId);
-    if (!employee || employee.role !== 'employee') {
-        throw new Error('Unauthorized: Only employees can redeem reward QR codes');
+    if (!employee || employee.role !== 'front_office') {
+        throw new Error('Unauthorized: Only front office can redeem reward QR codes');
     }
     // Find redemption by QR token
     const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
@@ -584,7 +599,9 @@ export async function redeemRewardQrCodeService(qrToken, employeeUserId) {
 }
 export async function uploadThumbnail(file) {
     const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-    return `${baseUrl}/uploads/${file.filename}`;
+    // Remove trailing slash if present
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+    return `${cleanBaseUrl}/uploads/${file.filename}`;
 }
 export async function getUserRedemptions(userId) {
     const db = getPool();

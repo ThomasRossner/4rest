@@ -19,7 +19,7 @@ declare class HotelKitIntegration {
      */
     getEmployee(employeeId: string): Promise<any>;
     /**
-     * Map HotelKit task category to Roots of Impact task type
+     * Map HotelKit task category to 4rest task type
      */
     private mapTaskType;
     /**

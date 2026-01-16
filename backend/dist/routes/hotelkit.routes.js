@@ -2,16 +2,16 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { hotelKit } from '../integrations/hotelkit.js';
 const router = Router();
-// Sync tasks from HotelKit (requires employee role)
+// Sync tasks from HotelKit (requires front office role)
 router.post('/sync', authenticate, async (req, res) => {
     try {
         const authReq = req;
         if (!authReq.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        // Only employees can trigger sync
-        if (authReq.user.role !== 'employee') {
-            return res.status(403).json({ error: 'Only employees can sync tasks' });
+        // Only front office can trigger sync
+        if (authReq.user.role !== 'front_office') {
+            return res.status(403).json({ error: 'Only front office can sync tasks' });
         }
         const result = await hotelKit.syncEmployeeTasks();
         res.json({
@@ -49,7 +49,7 @@ router.post('/webhook', async (req, res) => {
         switch (event) {
             case 'task.completed':
                 // Handle task completion from HotelKit
-                // This could trigger automatic completion in Roots of Impact
+                // This could trigger automatic completion in 4rest
                 console.log('HotelKit task completed:', data);
                 break;
             case 'task.created':

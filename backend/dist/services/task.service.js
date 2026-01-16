@@ -5,6 +5,7 @@ import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamific
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 import { updateContestPoints } from './contest.service.js';
 import { getUserActiveTeam, getTeamMembers } from './team.service.js';
+import fs from 'fs';
 export async function getAllTasks(filters, userId, options) {
     const db = getPool();
     let userRole = null;
@@ -25,19 +26,16 @@ export async function getAllTasks(filters, userId, options) {
             }
             else {
                 // Map role to zielgruppe
-                if (userRole === 'employee') {
-                    userZielgruppe = 'Mitarbeitende';
+                if (userRole === 'front_office') {
+                    userZielgruppe = 'Front Office';
                 }
                 else if (userRole === 'guest') {
                     userZielgruppe = 'Gäste';
                 }
-                else if (userRole === 'stakeholder') {
-                    userZielgruppe = 'Stakeholder';
-                }
             }
         }
     }
-    let select = 'DISTINCT ON (t.id) t.*, t.thumbnail_url, row_to_json(l.*) AS location';
+    let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
     let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
     if (userId) {
         select += `, (ut.user_id IS NOT NULL) AS completed`;
@@ -148,6 +146,20 @@ export async function calculateTaskPoints(difficulty, time_required) {
 }
 export async function createTask(data) {
     const db = getPool();
+    // Check for duplicate task (same title and location_id)
+    if (data.title && data.location_id) {
+        const duplicateCheck = await db.query(`SELECT id, title FROM tasks WHERE title = $1 AND location_id = $2 AND active = TRUE LIMIT 1`, [data.title, data.location_id]);
+        if (duplicateCheck.rows.length > 0) {
+            throw new Error(`A task with the title "${data.title}" already exists at this location. Please use a different title or edit the existing task.`);
+        }
+    }
+    // For QR code tasks, also check for duplicate QR codes (regardless of location)
+    if (data.type === 'qr' && data.qr_code) {
+        const qrDuplicateCheck = await db.query(`SELECT id, title, qr_code FROM tasks WHERE qr_code = $1 AND active = TRUE LIMIT 1`, [data.qr_code]);
+        if (qrDuplicateCheck.rows.length > 0) {
+            throw new Error(`A task with the QR code "${data.qr_code}" already exists (task: "${qrDuplicateCheck.rows[0].title}"). QR codes must be unique.`);
+        }
+    }
     const quizPayload = data.quiz_questions
         ? typeof data.quiz_questions === 'string'
             ? data.quiz_questions
@@ -463,9 +475,43 @@ export async function updateTask(id, data) {
             }
         }
     }
+    // Explicitly handle thumbnail_url before the loop to ensure it's always processed
+    // ALWAYS set thumbnail_url if it exists in data, even if null
+    if ('thumbnail_url' in data) {
+        updates.push(`thumbnail_url = $${paramIndex++}`);
+        values.push(data.thumbnail_url ?? null);
+        // #region agent log
+        const logData = { location: 'task.service.ts:571', message: 'thumbnail_url ALWAYS added to updates', data: { hasThumbnailUrl: 'thumbnail_url' in data, thumbnailUrl: data.thumbnail_url, thumbnailUrlType: typeof data.thumbnail_url, value: data.thumbnail_url ?? null, updatesCount: updates.length, paramIndex }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' };
+        console.log('[DEBUG]', JSON.stringify(logData));
+        try {
+            const logDir = '/app/.cursor';
+            if (!fs.existsSync(logDir))
+                fs.mkdirSync(logDir, { recursive: true });
+            fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
+        }
+        catch (e) {
+            console.error('[DEBUG] Log error:', e);
+        }
+        // #endregion
+    }
+    else {
+        // #region agent log
+        const logData = { location: 'task.service.ts:585', message: 'thumbnail_url NOT in data', data: { hasThumbnailUrl: 'thumbnail_url' in data, dataKeys: Object.keys(data) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' };
+        console.log('[DEBUG]', JSON.stringify(logData));
+        try {
+            const logDir = '/app/.cursor';
+            if (!fs.existsSync(logDir))
+                fs.mkdirSync(logDir, { recursive: true });
+            fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
+        }
+        catch (e) {
+            console.error('[DEBUG] Log error:', e);
+        }
+        // #endregion
+    }
     Object.entries(data).forEach(([key, value]) => {
-        // Skip invalid fields and id
-        if (value === undefined || key === 'id' || !validColumns.has(key)) {
+        // Skip invalid fields, id, and thumbnail_url (already handled above)
+        if (value === undefined || key === 'id' || key === 'thumbnail_url' || !validColumns.has(key)) {
             return;
         }
         if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
@@ -492,20 +538,38 @@ export async function updateTask(id, data) {
                         zielgruppeArray = JSON.parse(value);
                     }
                     catch {
-                        // If not JSON, might be PostgreSQL array format like "{Gäste,Stakeholder}"
+                        // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}" or "{""Front Office""}"
                         // Remove curly braces and split by comma
-                        const cleaned = value.replace(/^{|}$/g, '').trim();
-                        zielgruppeArray = cleaned ? cleaned.split(',').map(v => v.trim()) : [];
+                        let cleaned = value.replace(/^{|}$/g, '').trim();
+                        // Remove double quotes that might wrap values (e.g., ""Front Office"" -> Front Office)
+                        cleaned = cleaned.replace(/^"|"$/g, '');
+                        zielgruppeArray = cleaned ? cleaned.split(',').map((v) => {
+                            // Remove quotes from each value and trim
+                            return v.trim().replace(/^"|"$/g, '');
+                        }) : [];
                     }
                 }
                 else if (Array.isArray(value)) {
-                    zielgruppeArray = value;
+                    zielgruppeArray = value.map((v) => {
+                        // If array contains strings with quotes, remove them
+                        if (typeof v === 'string') {
+                            return v.replace(/^"|"$/g, '').trim();
+                        }
+                        return v;
+                    });
                 }
                 else {
                     zielgruppeArray = [value];
                 }
-                // Filter out empty strings and null values
-                zielgruppeValue = zielgruppeArray.filter((v) => v !== null && v !== undefined && v !== '');
+                // Filter out empty strings and null values, and remove any remaining quotes
+                zielgruppeValue = zielgruppeArray
+                    .map((v) => {
+                    if (typeof v === 'string') {
+                        return v.replace(/^"|"$/g, '').trim();
+                    }
+                    return v;
+                })
+                    .filter((v) => v !== null && v !== undefined && v !== '');
                 // If resulting array is empty, set to null
                 if (zielgruppeValue.length === 0) {
                     zielgruppeValue = null;
@@ -555,7 +619,33 @@ export async function updateTask(id, data) {
     }
     updates.push('updated_at = CURRENT_TIMESTAMP');
     values.push(id);
+    // #region agent log
+    const logDataQuery = { location: 'task.service.ts:667', message: 'SQL UPDATE query', data: { updates: updates.join(', '), values: JSON.stringify(values), hasThumbnailInUpdates: updates.some(u => u.includes('thumbnail_url')), paramIndex }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' };
+    console.log('[DEBUG]', JSON.stringify(logDataQuery));
+    try {
+        const logDir = '/app/.cursor';
+        if (!fs.existsSync(logDir))
+            fs.mkdirSync(logDir, { recursive: true });
+        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataQuery) + '\n');
+    }
+    catch (e) {
+        console.error('[DEBUG] Log error:', e);
+    }
+    // #endregion
     const result = await db.query(`UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`, values);
+    // #region agent log
+    const logDataResult = { location: 'task.service.ts:672', message: 'SQL UPDATE result', data: { rowCount: result.rowCount, thumbnailUrl: result.rows[0]?.thumbnail_url, returnedTask: result.rows[0] ? JSON.stringify(result.rows[0]) : null }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' };
+    console.log('[DEBUG]', JSON.stringify(logDataResult));
+    try {
+        const logDir = '/app/.cursor';
+        if (!fs.existsSync(logDir))
+            fs.mkdirSync(logDir, { recursive: true });
+        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataResult) + '\n');
+    }
+    catch (e) {
+        console.error('[DEBUG] Log error:', e);
+    }
+    // #endregion
     return result.rows[0] || null;
 }
 export async function deleteTask(id) {
@@ -647,7 +737,9 @@ export async function uploadPhoto(file) {
     // In production, this would upload to cloud storage (S3, Azure Blob, etc.)
     // For now, return a local file path
     const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-    return `${baseUrl}/uploads/${file.filename}`;
+    // Remove trailing slash if present
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+    return `${cleanBaseUrl}/uploads/${file.filename}`;
 }
 export async function uploadVideo(file) {
     const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
@@ -655,7 +747,9 @@ export async function uploadVideo(file) {
 }
 export async function uploadThumbnail(file) {
     const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-    return `${baseUrl}/uploads/${file.filename}`;
+    // Remove trailing slash if present
+    const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+    return `${cleanBaseUrl}/uploads/${file.filename}`;
 }
 /**
  * Validates prerequisite fields for a task

@@ -57,6 +57,7 @@ async function runMigrations() {
             '044_reward_redemption_metadata',
             '045_contest_start_date',
             '046_contest_rewards_awarded',
+            '047_task_reward_thumbnails',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({

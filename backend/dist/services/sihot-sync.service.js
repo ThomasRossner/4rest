@@ -27,7 +27,7 @@ async function processUserRow(pool, row) {
          SET sihot_guest_data = NULL,
              updated_at = CURRENT_TIMESTAMP
          WHERE id = $1`, [row.id]);
-            broadcastSihotUpdate({ userId: row.id, payload: null, role: 'stakeholder' });
+            broadcastSihotUpdate({ userId: row.id, payload: null, role: 'guest' });
             return;
         }
         const reservations = await sihot.getReservationsByGuest(guest.guestId);
@@ -48,7 +48,7 @@ async function processUserRow(pool, row) {
                 departureDate.setHours(0, 0, 0, 0);
                 return arrivalDate <= today && today <= departureDate;
             }));
-        const desiredRole = isCheckedIn ? 'guest' : 'stakeholder';
+        const desiredRole = isCheckedIn ? 'guest' : 'guest';
         const payload = {
             guest: {
                 guestId: guest.guestId,

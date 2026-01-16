@@ -540,6 +540,63 @@ function LoginPage() {
             </p>
           )}
         </div>
+        <div className="login-eu-logo">
+          <img 
+            src="/eu-logo.png" 
+            alt="Co-funded by the European Union" 
+            className="eu-funding-logo"
+            onError={(e) => {
+              // Fallback if image doesn't exist - create inline SVG
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent && !parent.querySelector('.eu-logo-svg')) {
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('class', 'eu-logo-svg');
+                svg.setAttribute('viewBox', '0 0 200 100');
+                svg.setAttribute('width', '200');
+                svg.setAttribute('height', '100');
+                
+                // EU Flag
+                const flag = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                flag.setAttribute('x', '0');
+                flag.setAttribute('y', '0');
+                flag.setAttribute('width', '200');
+                flag.setAttribute('height', '60');
+                flag.setAttribute('fill', '#003399');
+                svg.appendChild(flag);
+                
+                // Stars circle
+                const centerX = 100;
+                const centerY = 30;
+                const radius = 20;
+                for (let i = 0; i < 12; i++) {
+                  const angle = (i * 30 - 90) * Math.PI / 180;
+                  const x = centerX + radius * Math.cos(angle);
+                  const y = centerY + radius * Math.sin(angle);
+                  const star = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                  star.setAttribute('points', `${x},${y} ${x-2},${y-6} ${x+2},${y-6}`);
+                  star.setAttribute('fill', '#FFCC00');
+                  star.setAttribute('transform', `rotate(${i * 30} ${x} ${y})`);
+                  svg.appendChild(star);
+                }
+                
+                // Text
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', '100');
+                text.setAttribute('y', '85');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#003399');
+                text.setAttribute('font-family', 'Arial, sans-serif');
+                text.setAttribute('font-size', '12');
+                text.textContent = 'Co-funded by the European Union';
+                svg.appendChild(text);
+                
+                parent.appendChild(svg);
+              }
+            }}
+          />
+        </div>
       </div>
     </div>
   );

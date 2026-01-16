@@ -13,18 +13,18 @@ export declare const registerSchema: z.ZodObject<{
     email: z.ZodString;
     password: z.ZodString;
     name: z.ZodString;
-    role: z.ZodOptional<z.ZodEnum<["guest", "employee", "stakeholder", "administrator"]>>;
+    role: z.ZodOptional<z.ZodEnum<["guest", "front_office", "administrator"]>>;
     userType: z.ZodOptional<z.ZodEnum<["explorer", "guest_in_house", "observer", "advocate"]>>;
 }, "strip", z.ZodTypeAny, {
     email?: string;
     name?: string;
-    role?: "guest" | "employee" | "stakeholder" | "administrator";
+    role?: "guest" | "front_office" | "administrator";
     password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
 }, {
     email?: string;
     name?: string;
-    role?: "guest" | "employee" | "stakeholder" | "administrator";
+    role?: "guest" | "front_office" | "administrator";
     password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
 }>;

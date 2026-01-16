@@ -57,7 +57,7 @@ class HotelKitIntegration {
                     if (existingExternalIds.has(`hotelkit_${hkTask.id}`)) {
                         continue;
                     }
-                    // Convert HotelKit task to Roots of Impact task
+                    // Convert HotelKit task to 4rest task
                     await createTask({
                         title: hkTask.title,
                         description: hkTask.description || `Synced from HotelKit: ${hkTask.category || 'General'}`,
@@ -124,7 +124,7 @@ class HotelKitIntegration {
         }
     }
     /**
-     * Map HotelKit task category to Roots of Impact task type
+     * Map HotelKit task category to 4rest task type
      */
     mapTaskType(category) {
         const categoryMap = {

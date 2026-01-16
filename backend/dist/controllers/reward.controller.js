@@ -1,4 +1,4 @@
-import { getRewardsService, redeemRewardService, verifyQrCodeService, getRewardInfoFromQrCode, redeemRewardQrCodeService, createCustomReward, listRewardsForAdmin, updateReward as updateRewardService, setRewardsActiveState, bulkDeleteRewards, getRedemptionStatus, } from '../services/reward.service.js';
+import { getRewardsService, redeemRewardService, verifyQrCodeService, getRewardInfoFromQrCode, redeemRewardQrCodeService, createCustomReward, listRewardsForAdmin, updateReward as updateRewardService, setRewardsActiveState, bulkDeleteRewards, getRedemptionStatus, uploadThumbnail as uploadThumbnailService, } from '../services/reward.service.js';
 import { generatePointsBonusQr, redeemPointsBonusQr, } from '../services/points-bonus.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 export const getRewards = asyncHandler(async (req, res) => {
@@ -38,6 +38,7 @@ export const createReward = asyncHandler(async (req, res) => {
         kategorie: payload.kategorie ?? payload.category ?? null,
         event_group: payload.event_group ?? payload.eventGroup ?? null,
         moegliche_punkte: payload.moegliche_punkte ?? payload.possible_points ?? null,
+        thumbnail_url: payload.thumbnail_url ?? payload.thumbnailUrl ?? null,
     });
     res.status(201).json(reward);
 });
@@ -97,6 +98,9 @@ export const updateReward = asyncHandler(async (req, res) => {
     }
     if (payload.recurrence !== undefined) {
         updatePayload.recurrence = payload.recurrence;
+    }
+    if (payload.thumbnail_url !== undefined || payload.thumbnailUrl !== undefined) {
+        updatePayload.thumbnail_url = payload.thumbnail_url ?? payload.thumbnailUrl ?? null;
     }
     const reward = await updateRewardService(req.params.id, updatePayload);
     res.json(reward);
@@ -216,5 +220,13 @@ export const redeemRewardQrCode = asyncHandler(async (req, res) => {
     }
     const result = await redeemRewardQrCodeService(qrToken, authReq.user.id);
     res.json(result);
+});
+export const uploadThumbnail = asyncHandler(async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const thumbnailUrl = await uploadThumbnailService(file);
+    res.json({ thumbnail_url: thumbnailUrl });
 });
 //# sourceMappingURL=reward.controller.js.map

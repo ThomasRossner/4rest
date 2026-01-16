@@ -55,7 +55,7 @@ export async function sendPasswordSetupEmail(userId, email, name) {
         });
         await emailService.sendEmail({
             to: email,
-            subject: 'Set Your Password - Roots of Impact',
+            subject: 'Set Your Password - 4rest',
             html,
         });
     }
@@ -80,7 +80,7 @@ export async function sendAdminCreatedUserEmail(userId, email, name) {
         });
         await emailService.sendEmail({
             to: email,
-            subject: 'Your Roots of Impact Account Has Been Created',
+            subject: 'Your 4rest Account Has Been Created',
             html,
         });
     }
@@ -103,7 +103,7 @@ export async function sendWelcomeEmail(userId, email, name, role) {
         });
         await emailService.sendEmail({
             to: email,
-            subject: 'Welcome to Roots of Impact!',
+            subject: 'Welcome to 4rest!',
             html,
         });
     }
@@ -128,7 +128,7 @@ export async function sendEmailVerificationEmail(userId, email, name, token) {
         });
         await emailService.sendEmail({
             to: email,
-            subject: 'Verify Your Email Address - Roots of Impact',
+            subject: 'Verify Your Email Address - 4rest',
             html,
         });
     }
@@ -153,7 +153,7 @@ export async function sendPasswordResetEmail(userId, email, name) {
         });
         await emailService.sendEmail({
             to: email,
-            subject: 'Reset Your Password - Roots of Impact',
+            subject: 'Reset Your Password - 4rest',
             html,
         });
     }
@@ -258,7 +258,7 @@ export async function sendLoginCodeEmail(userId, email, name, code) {
         });
         await emailService.sendEmail({
             to: email,
-            subject: 'Your Login Code - Roots of Impact',
+            subject: 'Your Login Code - 4rest',
             html,
         });
     }

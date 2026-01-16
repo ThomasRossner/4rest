@@ -12,4 +12,5 @@ export declare const redeemPointsBonusQrCode: RequestHandler;
 export declare const getRewardInfoFromQr: RequestHandler;
 export declare const getRedemptionStatusController: RequestHandler;
 export declare const redeemRewardQrCode: RequestHandler;
+export declare const uploadThumbnail: RequestHandler;
 //# sourceMappingURL=reward.controller.d.ts.map

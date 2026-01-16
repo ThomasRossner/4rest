@@ -10,7 +10,7 @@ router.get('/:id/timeline', authenticate, getUserTimeline);
 router.get('/:id/profile', authenticate, getUserProfile);
 router.put('/:id/profile', authenticate, updateUserProfile);
 // Admin-only routes
-router.get('/', authenticate, requireRole('administrator', 'employee'), listUsers);
+router.get('/', authenticate, requireRole('administrator', 'front_office'), listUsers);
 router.post('/', authenticate, requireRole('administrator'), createUserByAdmin);
 router.get('/:id', authenticate, requireRole('administrator'), getUserDetails);
 router.put('/:id/role', authenticate, requireRole('administrator'), updateUserRole);

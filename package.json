@@ -22,11 +22,13 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@playwright/test": "^1.57.0",
     "@types/pg": "^8.16.0",
     "axios": "^1.13.2",
     "concurrently": "^8.2.2",
     "dotenv": "^16.6.1",
-    "pg": "^8.17.1"
+    "pg": "^8.17.1",
+    "playwright": "^1.57.0"
   },
   "engines": {
     "node": ">=18.0.0",

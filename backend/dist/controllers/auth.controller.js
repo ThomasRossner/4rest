@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
 import { createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
+import { validateTeamRegistrationToken, joinTeamById } from '../services/team.service.js';
+import { validateContestRegistrationToken, joinContestById } from '../services/contest.service.js';
 import { sihot } from '../integrations/sihot.js';
 import { USER_ROLES, USER_TYPES } from '../constants/enums.js';
 import { getPool } from '../database/connection.js';
@@ -11,7 +13,7 @@ function normalizeRole(role) {
     if (typeof role === 'string' && USER_ROLES.includes(role)) {
         return role;
     }
-    return 'stakeholder';
+    return 'guest';
 }
 function normalizeUserType(userType) {
     if (typeof userType === 'string' && USER_TYPES.includes(userType)) {
@@ -106,10 +108,29 @@ export async function login(req, res) {
 }
 export async function register(req, res) {
     try {
-        const { email, password, name, role = 'guest', userType = 'explorer' } = req.body;
+        const { email, password, name, role = 'guest', userType = 'explorer', teamRegistrationToken, contestRegistrationToken } = req.body;
         const existingUser = await getUserByEmail(email);
         if (existingUser) {
             return res.status(400).json({ error: 'User already exists' });
+        }
+        // Validiere Team/Contest-Registrierungs-Token (falls vorhanden)
+        let teamId = null;
+        let contestId = null;
+        if (teamRegistrationToken) {
+            teamId = await validateTeamRegistrationToken(teamRegistrationToken);
+            if (!teamId) {
+                return res.status(400).json({ error: 'Invalid or disabled team registration token' });
+            }
+        }
+        if (contestRegistrationToken) {
+            contestId = await validateContestRegistrationToken(contestRegistrationToken);
+            if (!contestId) {
+                return res.status(400).json({ error: 'Invalid or disabled contest registration token' });
+            }
+        }
+        // Es darf nur entweder Team oder Contest sein, nicht beides
+        if (teamId && contestId) {
+            return res.status(400).json({ error: 'Cannot register for both team and contest at the same time' });
         }
         const passwordHash = await bcrypt.hash(password, 10);
         const { combinedName, sihotGuestPayload, sihotGuest } = await enrichWithSihotData(email, name);
@@ -124,6 +145,28 @@ export async function register(req, res) {
             sihot_guest_id: sihotGuest?.guestId || null,
             sihot_guest_data: sihotGuestPayload,
         });
+        // Automatisch Team oder Contest beitreten (falls Token vorhanden)
+        let joinedTeam = null;
+        let joinedContest = null;
+        if (teamId) {
+            try {
+                joinedTeam = await joinTeamById(user.id, teamId);
+            }
+            catch (error) {
+                // Wenn Join fehlschlägt (z.B. Benutzer bereits in Team), ignorieren wir den Fehler
+                // Der Benutzer wurde bereits erstellt
+                console.warn('Failed to join team after registration:', error.message);
+            }
+        }
+        if (contestId) {
+            try {
+                joinedContest = await joinContestById(user.id, contestId);
+            }
+            catch (error) {
+                // Wenn Join fehlschlägt, ignorieren wir den Fehler
+                console.warn('Failed to join contest after registration:', error.message);
+            }
+        }
         const emailAddress = user.email ?? '';
         const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
         // Send email verification email (non-blocking)
@@ -145,6 +188,8 @@ export async function register(req, res) {
                 sihotGuest: user.sihot_guest_data?.guest ?? null,
                 sihotReservations: user.sihot_guest_data?.reservations ?? [],
             },
+            joinedTeam: joinedTeam ? { id: joinedTeam.id, name: joinedTeam.name } : null,
+            joinedContest: joinedContest ? { id: joinedContest.id, name: joinedContest.name } : null,
         });
     }
     catch (error) {
@@ -408,7 +453,7 @@ export async function requestLoginCode(req, res) {
                 email,
                 password_hash: null, // No password for passwordless accounts
                 name: combinedName,
-                role: 'stakeholder',
+                role: 'guest',
                 user_type: 'explorer',
                 sihot_guest_id: sihotGuest?.guestId || null,
                 sihot_guest_data: sihotGuestPayload,

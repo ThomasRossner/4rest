@@ -1,5 +1,7 @@
 import { RequestHandler } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
+import { getFrontendUrlFromRequest } from '../utils/oauth.js';
+import fs from 'fs';
 import {
   createTeam,
   joinTeam,
@@ -20,6 +22,9 @@ import {
   generateTeamRegistrationQrCode,
   bulkUpdateTeamsStatus,
   bulkDeleteTeams,
+  addTeamMembers,
+  removeTeamMembers,
+  getTeamMembersAdmin,
 } from '../services/team.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -144,10 +149,10 @@ export const redeemRewardController: RequestHandler = asyncHandler(async (req, r
  * Löst ein Team auf (nur Ersteller)
  */
 export const dissolveTeamController: RequestHandler = asyncHandler(async (req, res) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:146',message:'dissolveTeamController entry',data:{method:req.method,path:req.path,params:req.params,userId:req.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   const authReq = req as AuthRequest;
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:146',message:'dissolveTeamController entry',data:{method:req.method,path:req.path,params:req.params,userId:authReq.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   if (!authReq.user) {
     // #region agent log
     fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:149',message:'dissolveTeamController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
@@ -184,6 +189,8 @@ export const leaveTeamController: RequestHandler = asyncHandler(async (req, res)
 /**
  * GET /api/teams/:id/qr-code
  * Ruft den QR-Code eines Teams ab
+ * Für Administratoren: Immer erlaubt
+ * Für normale Benutzer: Nur wenn Mitglied
  */
 export const getTeamQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -193,10 +200,13 @@ export const getTeamQrCodeController: RequestHandler = asyncHandler(async (req, 
   
   const { id } = req.params;
   
-  // Prüfe ob Benutzer Mitglied ist
-  const teamDetails = await getTeamDetails(id, authReq.user.id);
-  if (!teamDetails) {
-    return res.status(404).json({ error: 'Team not found or access denied' });
+  // Administratoren haben immer Zugriff
+  if (authReq.user.role !== 'administrator') {
+    // Prüfe ob Benutzer Mitglied ist
+    const teamDetails = await getTeamDetails(id, authReq.user.id);
+    if (!teamDetails) {
+      return res.status(404).json({ error: 'Team not found or access denied' });
+    }
   }
   
   const qrToken = await getTeamQrCode(id);
@@ -348,25 +358,48 @@ export const enableTeamRegistrationController: RequestHandler = asyncHandler(asy
  * Ruft den Registrierungs-QR-Code eines Teams ab (nur für Administratoren)
  */
 export const getTeamRegistrationQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
+  // #region agent log
+  const logPath='/Users/thomas/Development/4rest/.cursor/debug.log';try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:358',message:'getTeamRegistrationQrCodeController entry',data:{method:req.method,path:req.path,params:req.params,userId:(req as any).user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n');}catch(e){}
+  // #endregion
   const authReq = req as AuthRequest;
   if (!authReq.user) {
+    // #region agent log
+    try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:361',message:'getTeamRegistrationQrCodeController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
+    // #endregion
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   if (authReq.user.role !== 'administrator') {
+    // #region agent log
+    try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:365',message:'getTeamRegistrationQrCodeController forbidden',data:{userRole:authReq.user.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
+    // #endregion
     return res.status(403).json({ error: 'Forbidden: Administrator access required' });
   }
   
   const { id } = req.params;
-  
+  // #region agent log
+  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:370',message:'getTeamRegistrationQrCodeController before getTeamRegistrationQrCode',data:{teamId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})+'\n');}catch(e){}
+  // #endregion
   const registrationQr = await getTeamRegistrationQrCode(id);
+  // #region agent log
+  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:372',message:'getTeamRegistrationQrCodeController after getTeamRegistrationQrCode',data:{hasQrToken:!!registrationQr.qrToken,enabled:registrationQr.enabled},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})+'\n');}catch(e){}
+  // #endregion
   
   if (!registrationQr.qrToken) {
+    // #region agent log
+    try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:374',message:'getTeamRegistrationQrCodeController no qrToken found',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n');}catch(e){}
+    // #endregion
     return res.status(404).json({ error: 'Registration QR code not found. Enable registration first.' });
   }
   
-  const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:3000';
+  const frontendUrl = getFrontendUrlFromRequest(req);
+  // #region agent log
+  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:394',message:'getTeamRegistrationQrCodeController frontendUrl determined',data:{frontendUrl,hasEnvVar:!!(process.env.FRONTEND_URL||process.env.APP_URL),reqHost:req.headers?.host,reqProtocol:req.protocol},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n');}catch(e){}
+  // #endregion
   const registrationUrl = `${frontendUrl}/register?team=${registrationQr.qrToken}`;
+  // #region agent log
+  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:397',message:'getTeamRegistrationQrCodeController returning response',data:{qrToken:registrationQr.qrToken,registrationUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n');}catch(e){}
+  // #endregion
   
   res.json({
     qrToken: registrationQr.qrToken,
@@ -426,5 +459,77 @@ export const bulkDeleteTeamsController: RequestHandler = asyncHandler(async (req
   }
   
   await bulkDeleteTeams(teamIds);
+  res.json({ success: true });
+});
+
+/**
+ * GET /api/teams/:id/members
+ * Ruft alle Mitglieder eines Teams ab (nur für Administratoren)
+ */
+export const getTeamMembersAdminController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  
+  const members = await getTeamMembersAdmin(id);
+  res.json(members);
+});
+
+/**
+ * POST /api/teams/:id/members/add
+ * Fügt Benutzer zu einem Team hinzu (nur für Administratoren)
+ * Body: { userIds: string[] }
+ */
+export const addTeamMembersController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { userIds } = req.body;
+  
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ error: 'userIds must be a non-empty array' });
+  }
+  
+  await addTeamMembers(id, userIds);
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/teams/:id/members/remove
+ * Entfernt Benutzer aus einem Team (nur für Administratoren)
+ * Body: { userIds: string[] }
+ */
+export const removeTeamMembersController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { userIds } = req.body;
+  
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ error: 'userIds must be a non-empty array' });
+  }
+  
+  await removeTeamMembers(id, userIds);
   res.json({ success: true });
 });

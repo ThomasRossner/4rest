@@ -44,7 +44,7 @@ export async function getStatisticsService() {
      FROM users u
      LEFT JOIN user_tasks ut ON u.id = ut.user_id
      LEFT JOIN tasks t ON ut.task_id = t.id
-     WHERE u.role = 'employee'
+     WHERE u.role = 'front_office'
      GROUP BY u.id, u.name, u.role
      ORDER BY total_points DESC
      LIMIT 10`);

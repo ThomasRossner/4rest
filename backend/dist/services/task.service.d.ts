@@ -31,7 +31,7 @@ export interface Task {
     time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
     location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
     event_group?: string;
-    zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[];
+    zielgruppe?: ('Front Office' | 'Gäste')[];
     thumbnail_url?: string;
 }
 export declare function getAllTasks(filters?: {

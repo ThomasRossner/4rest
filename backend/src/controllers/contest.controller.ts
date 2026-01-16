@@ -1,5 +1,6 @@
 import { RequestHandler } from 'express';
 import { AuthRequest } from '../middleware/authenticate.js';
+import { getFrontendUrlFromRequest } from '../utils/oauth.js';
 import {
   createContest,
   joinContest,
@@ -18,6 +19,9 @@ import {
   generateContestRegistrationQrCode,
   bulkUpdateContestsStatus,
   bulkDeleteContests,
+  addContestParticipants,
+  removeContestParticipants,
+  getContestParticipantsAdmin,
 } from '../services/contest.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -188,10 +192,10 @@ export const getContestRankingController: RequestHandler = asyncHandler(async (r
  * Löst einen Contest auf (nur Ersteller)
  */
 export const dissolveContestController: RequestHandler = asyncHandler(async (req, res) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:190',message:'dissolveContestController entry',data:{method:req.method,path:req.path,params:req.params,userId:req.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   const authReq = req as AuthRequest;
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:190',message:'dissolveContestController entry',data:{method:req.method,path:req.path,params:req.params,userId:authReq.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   if (!authReq.user) {
     // #region agent log
     fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.controller.ts:193',message:'dissolveContestController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
@@ -228,6 +232,8 @@ export const leaveContestController: RequestHandler = asyncHandler(async (req, r
 /**
  * GET /api/contests/:id/qr-code
  * Ruft den QR-Code eines Contests ab
+ * Für Administratoren: Immer erlaubt
+ * Für normale Benutzer: Nur wenn Teilnehmer
  */
 export const getContestQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -237,10 +243,13 @@ export const getContestQrCodeController: RequestHandler = asyncHandler(async (re
   
   const { id } = req.params;
   
-  // Prüfe ob Benutzer Teilnehmer ist
-  const contestDetails = await getContestDetails(id, authReq.user.id);
-  if (!contestDetails) {
-    return res.status(404).json({ error: 'Contest not found or access denied' });
+  // Administratoren haben immer Zugriff
+  if (authReq.user.role !== 'administrator') {
+    // Prüfe ob Benutzer Teilnehmer ist
+    const contestDetails = await getContestDetails(id, authReq.user.id);
+    if (!contestDetails) {
+      return res.status(404).json({ error: 'Contest not found or access denied' });
+    }
   }
   
   const qrToken = await getContestQrCode(id);
@@ -351,7 +360,7 @@ export const getContestRegistrationQrCodeController: RequestHandler = asyncHandl
     return res.status(404).json({ error: 'Registration QR code not found. Enable registration first.' });
   }
   
-  const frontendUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:3000';
+  const frontendUrl = getFrontendUrlFromRequest(req);
   const registrationUrl = `${frontendUrl}/register?contest=${registrationQr.qrToken}`;
   
   res.json({
@@ -412,5 +421,77 @@ export const bulkDeleteContestsController: RequestHandler = asyncHandler(async (
   }
   
   await bulkDeleteContests(contestIds);
+  res.json({ success: true });
+});
+
+/**
+ * GET /api/contests/:id/participants
+ * Ruft alle Teilnehmer eines Contests ab (nur für Administratoren)
+ */
+export const getContestParticipantsAdminController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  
+  const participants = await getContestParticipantsAdmin(id);
+  res.json(participants);
+});
+
+/**
+ * POST /api/contests/:id/participants/add
+ * Fügt Benutzer zu einem Contest hinzu (nur für Administratoren)
+ * Body: { userIds: string[] }
+ */
+export const addContestParticipantsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { userIds } = req.body;
+  
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ error: 'userIds must be a non-empty array' });
+  }
+  
+  await addContestParticipants(id, userIds);
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/contests/:id/participants/remove
+ * Entfernt Benutzer aus einem Contest (nur für Administratoren)
+ * Body: { userIds: string[] }
+ */
+export const removeContestParticipantsController: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator') {
+    return res.status(403).json({ error: 'Forbidden: Administrator access required' });
+  }
+  
+  const { id } = req.params;
+  const { userIds } = req.body;
+  
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ error: 'userIds must be a non-empty array' });
+  }
+  
+  await removeContestParticipants(id, userIds);
   res.json({ success: true });
 });

@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, } from '../services/task.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
@@ -66,6 +67,19 @@ export const createTask = asyncHandler(async (req, res) => {
     return res.status(201).json(task);
 });
 export const updateTask = asyncHandler(async (req, res) => {
+    // #region agent log
+    const logData = { location: 'task.controller.ts:98', message: 'updateTask controller entry', data: { id: req.params.id, bodyKeys: Object.keys(req.body), hasThumbnailUrl: 'thumbnail_url' in req.body, thumbnailUrl: req.body.thumbnail_url, thumbnailUrlType: typeof req.body.thumbnail_url, bodyString: JSON.stringify(req.body) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' };
+    console.log('[DEBUG]', JSON.stringify(logData));
+    try {
+        const logDir = '/app/.cursor';
+        if (!fs.existsSync(logDir))
+            fs.mkdirSync(logDir, { recursive: true });
+        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
+    }
+    catch (e) {
+        console.error('[DEBUG] Log error:', e);
+    }
+    // #endregion
     const locationId = req.body.locationId ?? req.body.location_id;
     if (locationId !== undefined) {
         if (!locationId || typeof locationId !== 'string') {
@@ -79,6 +93,19 @@ export const updateTask = asyncHandler(async (req, res) => {
         req.body.location_id = location.id;
     }
     const task = await updateTaskService(req.params.id, req.body);
+    // #region agent log
+    const logDataResult = { location: 'task.controller.ts:112', message: 'updateTask service result', data: { task: task ? JSON.stringify(task) : null, thumbnailUrl: task?.thumbnail_url }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' };
+    console.log('[DEBUG]', JSON.stringify(logDataResult));
+    try {
+        const logDir = '/app/.cursor';
+        if (!fs.existsSync(logDir))
+            fs.mkdirSync(logDir, { recursive: true });
+        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataResult) + '\n');
+    }
+    catch (e) {
+        console.error('[DEBUG] Log error:', e);
+    }
+    // #endregion
     if (!task) {
         return res.status(404).json({ error: 'Task not found' });
     }

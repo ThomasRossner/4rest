@@ -1007,3 +1007,104 @@ export async function deductTeamPoints(teamId: string, userId: string, totalPoin
   }
 }
 
+/**
+ * Fügt Benutzer zu einem Team hinzu (nur für Administratoren)
+ */
+export async function addTeamMembers(teamId: string, userIds: string[]): Promise<void> {
+  const db = getPool();
+  
+  if (userIds.length === 0) {
+    return;
+  }
+  
+  // Prüfe ob Team existiert
+  const teamResult = await db.query(
+    'SELECT id, active FROM teams WHERE id = $1',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found');
+  }
+  
+  // Füge Benutzer hinzu (ignoriere Duplikate)
+  for (const userId of userIds) {
+    // Prüfe ob Benutzer bereits Mitglied ist
+    const existingMember = await db.query(
+      'SELECT id FROM team_members WHERE team_id = $1 AND user_id = $2',
+      [teamId, userId]
+    );
+    
+    if (existingMember.rows.length === 0) {
+      // Prüfe ob Benutzer bereits in einem anderen Team ist
+      const otherTeam = await db.query(
+        `SELECT tm.team_id FROM team_members tm
+         INNER JOIN teams t ON t.id = tm.team_id
+         WHERE tm.user_id = $1 AND t.active = true AND tm.team_id != $2`,
+        [userId, teamId]
+      );
+      
+      if (otherTeam.rows.length === 0) {
+        // Füge Benutzer hinzu
+        await db.query(
+          'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
+          [teamId, userId]
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Entfernt Benutzer aus einem Team (nur für Administratoren)
+ */
+export async function removeTeamMembers(teamId: string, userIds: string[]): Promise<void> {
+  const db = getPool();
+  
+  if (userIds.length === 0) {
+    return;
+  }
+  
+  // Prüfe ob Team existiert
+  const teamResult = await db.query(
+    'SELECT id, created_by FROM teams WHERE id = $1',
+    [teamId]
+  );
+  
+  if (teamResult.rows.length === 0) {
+    throw new Error('Team not found');
+  }
+  
+  const team = teamResult.rows[0];
+  
+  // Entferne Benutzer (außer Ersteller)
+  for (const userId of userIds) {
+    // Ersteller kann nicht entfernt werden
+    if (team.created_by === userId) {
+      continue;
+    }
+    
+    await db.query(
+      'DELETE FROM team_members WHERE team_id = $1 AND user_id = $2',
+      [teamId, userId]
+    );
+  }
+}
+
+/**
+ * Ruft alle Mitglieder eines Teams ab (nur für Administratoren)
+ */
+export async function getTeamMembersAdmin(teamId: string): Promise<TeamMember[]> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT tm.*, u.name as user_name, u.email as user_email
+     FROM team_members tm
+     INNER JOIN users u ON u.id = tm.user_id
+     WHERE tm.team_id = $1
+     ORDER BY tm.joined_at ASC`,
+    [teamId]
+  );
+  
+  return result.rows;
+}

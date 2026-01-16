@@ -16,7 +16,7 @@ interface CreateCustomRewardInput {
     rewardType?: string;
     voucherCode?: string | null;
     externalApiId?: string | null;
-    zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
+    zielgruppe?: ('Front Office' | 'Gäste')[] | null;
     location_id: string;
     active?: boolean;
     recurrence?: string | null;
@@ -33,7 +33,7 @@ interface UpdateRewardInput {
     rewardType?: string | null;
     voucherCode?: string | null;
     externalApiId?: string | null;
-    zielgruppe?: ('Mitarbeitende' | 'Gäste' | 'Stakeholder')[] | null;
+    zielgruppe?: ('Front Office' | 'Gäste')[] | null;
     location_id?: string | null;
     active?: boolean;
     recurrence?: string | null;
@@ -72,7 +72,7 @@ export declare function getRedemptionStatus(qrToken: string, userId: string): Pr
 }>;
 /**
  * Get reward information from QR code without redeeming it
- * Used by employees to preview the reward before redeeming
+ * Used by front office to preview the reward before redeeming
  */
 export declare function getRewardInfoFromQrCode(qrToken: string, employeeUserId: string): Promise<{
     success: boolean;
@@ -106,7 +106,7 @@ export declare function verifyQrCodeService(qrToken: string, adminUserId: string
     message: string;
 }>;
 /**
- * Redeem a reward QR code for a guest (employee action)
+ * Redeem a reward QR code for a guest (front office action)
  * This marks the redemption as 'used' and deducts points from the guest
  */
 export declare function redeemRewardQrCodeService(qrToken: string, employeeUserId: string): Promise<{

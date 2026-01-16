@@ -12,6 +12,29 @@ export function getFrontendUrl() {
     return url;
 }
 /**
+ * Gets the frontend URL intelligently from environment, request headers, or fallback
+ * Uses request headers to determine the correct URL when environment variables are not set
+ */
+export function getFrontendUrlFromRequest(req) {
+    // First, try environment variables
+    const envUrl = process.env.FRONTEND_URL || process.env.APP_URL;
+    if (envUrl) {
+        return envUrl;
+    }
+    // If we have a request object, try to determine from headers
+    if (req) {
+        const protocol = req.headers?.['x-forwarded-proto'] || req.get?.('x-forwarded-proto') || req.protocol || 'http';
+        const host = req.headers?.['x-forwarded-host'] || req.get?.('x-forwarded-host') || req.headers?.host || req.get?.('host');
+        if (host) {
+            // Remove port if it's the default port (80 for http, 443 for https)
+            const cleanHost = host.replace(/:80$/, '').replace(/:443$/, '');
+            return `${protocol}://${cleanHost}`;
+        }
+    }
+    // Fallback to localhost
+    return 'http://localhost:3000';
+}
+/**
  * Creates a reusable OAuth callback handler
  * Eliminates code duplication across OAuth providers (DRY principle)
  */

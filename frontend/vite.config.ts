@@ -69,40 +69,58 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0', // Allow external access
     https: (() => {
-      // Enable HTTPS for camera access from external devices
-      const certPath = path.resolve(__dirname, '.certificates/cert.pem');
-      const keyPath = path.resolve(__dirname, '.certificates/key.pem');
-      if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
-        return {
-          cert: fs.readFileSync(certPath),
-          key: fs.readFileSync(keyPath),
-        };
+      // Only enable HTTPS if explicitly requested (e.g., for external device camera access)
+      // In production, HTTPS is handled by Caddy reverse proxy
+      if (process.env.VITE_ENABLE_HTTPS === 'true') {
+        const certPath = path.resolve(__dirname, '.certificates/cert.pem');
+        const keyPath = path.resolve(__dirname, '.certificates/key.pem');
+        if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+          return {
+            cert: fs.readFileSync(certPath),
+            key: fs.readFileSync(keyPath),
+          };
+        }
       }
-      return false; // Fallback to HTTP if certificates don't exist
+      return false; // Default to HTTP for local development
     })(),
     hmr: {
       overlay: false, // Disable overlay to prevent EPIPE errors
-      // HMR runs through Caddy reverse proxy (HTTPS), so use external domain
-      host: process.env.VITE_HMR_HOST || 'roots.rossner.synology.me',
-      clientPort: 443, // Caddy runs on port 443 (HTTPS)
-      protocol: 'wss', // Use secure WebSocket since Caddy serves HTTPS
+      // For local development, use localhost
+      // Only use external domain when VITE_HMR_HOST is explicitly set
+      host: process.env.VITE_HMR_HOST || 'localhost',
+      port: 3000,
+      protocol: process.env.VITE_HMR_HOST ? 'wss' : 'ws', // Use ws for local, wss for external
     },
     watch: {
-      // Enable polling for better file watching on WSL/Windows
-      usePolling: true,
-      interval: 1000,
+      // Disable polling on macOS/Linux for better performance
+      usePolling: false,
+      // Ignore backend and other non-frontend directories
+      ignored: [
+        '**/backend/**',
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
+        '**/database/**',
+        '**/scripts/**',
+        '**/docs/**',
+        '**/e2e/**',
+        '**/*.timestamp*.mjs',
+        '**/.vite/**',
+        '**/.cursor/**',
+      ],
     },
     proxy: {
       '/api': {
-        target: 'http://roots-backend:5001',
+        target: process.env.VITE_API_TARGET || 'http://localhost:5001',
         changeOrigin: true,
         secure: false, // Allow self-signed certificates
         ws: true
       }
     },
     // Allow serving certificate file for installation on mobile devices
+    // But restrict to frontend directory to avoid watching backend files
     fs: {
-      allow: ['..']
+      allow: ['.']
     }
   },
   build: {

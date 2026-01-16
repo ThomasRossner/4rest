@@ -69,19 +69,19 @@ export async function seedTestData(): Promise<void> {
     ];
     
     for (const task of testTasks) {
-      await db.query(`
-        INSERT INTO tasks (title, type, points, qr_code, photo_required, active, allowed_roles, allowed_user_types)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        ON CONFLICT DO NOTHING
-      `, [
+    await db.query(`
+      INSERT INTO tasks (title, type, points, qr_code, photo_required, active, allowed_roles, allowed_user_types)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT DO NOTHING
+    `, [
         task.title,
         task.type,
         task.points,
         task.qr_code || null,
         task.photo_required || false,
         task.active,
-        ARRAY[]::TEXT[],
-        ARRAY[]::TEXT[],
+        '{}',
+        '{}',
       ]).catch(() => {
         // Task might already exist
       });

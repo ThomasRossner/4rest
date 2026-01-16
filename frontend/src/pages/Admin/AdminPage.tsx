@@ -23,6 +23,10 @@ import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwit
 import { SurveyAnalytics } from './SurveyAnalytics';
 import { DebugTools } from './DebugTools';
 import { UserManagement } from './UserManagement';
+import { TeamCreator } from '../../components/Teams/TeamCreator';
+import { ContestCreator } from '../../components/Contests/ContestCreator';
+import { UserSelectionModal } from '../../components/Admin/UserSelectionModal';
+import QRCode from 'qrcode.react';
 
 type AdminMode =
   | 'task'
@@ -2586,6 +2590,14 @@ function AdminPage() {
   const [teamFilterDropdownPosition, setTeamFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const teamFilterDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileTeamFilterOpen, setIsMobileTeamFilterOpen] = useState(false);
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [showTeamAddUsersModal, setShowTeamAddUsersModal] = useState(false);
+  const [showTeamRemoveUsersModal, setShowTeamRemoveUsersModal] = useState(false);
+  const [showTeamJoinQrModal, setShowTeamJoinQrModal] = useState(false);
+  const [showTeamRegistrationQrModal, setShowTeamRegistrationQrModal] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [teamJoinQrToken, setTeamJoinQrToken] = useState<string | null>(null);
+  const [teamRegistrationQrData, setTeamRegistrationQrData] = useState<{ qrToken: string; registrationUrl: string } | null>(null);
 
   // Contest management state
   const [editingContestId, setEditingContestId] = useState<string | null>(null);
@@ -2606,6 +2618,14 @@ function AdminPage() {
   const [contestFilterDropdownPosition, setContestFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const contestFilterDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileContestFilterOpen, setIsMobileContestFilterOpen] = useState(false);
+  const [isCreatingContest, setIsCreatingContest] = useState(false);
+  const [showContestAddUsersModal, setShowContestAddUsersModal] = useState(false);
+  const [showContestRemoveUsersModal, setShowContestRemoveUsersModal] = useState(false);
+  const [showContestJoinQrModal, setShowContestJoinQrModal] = useState(false);
+  const [showContestRegistrationQrModal, setShowContestRegistrationQrModal] = useState(false);
+  const [contestParticipants, setContestParticipants] = useState<any[]>([]);
+  const [contestJoinQrToken, setContestJoinQrToken] = useState<string | null>(null);
+  const [contestRegistrationQrData, setContestRegistrationQrData] = useState<{ qrToken: string; registrationUrl: string } | null>(null);
   const [rewardFilterCostMax, setRewardFilterCostMax] = useState<string>('');
   const [rewardFilterDropdown, setRewardFilterDropdown] = useState<'location' | 'status' | 'recurrence' | 'type' | 'title' | 'cost' | null>(null);
   const [rewardFilterDropdownPosition, setRewardFilterDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -2905,6 +2925,71 @@ function AdminPage() {
     };
   }, [existingTemplates]);
 
+  // Teams and Contests queries - must be defined before use
+  const {
+    data: adminTeams,
+    isLoading: teamsLoading,
+    error: teamsError,
+    refetch: refetchTeams,
+  } = useQuery<any[]>(
+    ['adminTeams', includeInactiveTeams],
+    () => api.getAllTeams({ includeInactive: includeInactiveTeams }),
+    {
+      enabled: isAdmin && mode === 'teamManage',
+    }
+  );
+
+  const {
+    data: adminContests,
+    isLoading: contestsLoading,
+    error: contestsError,
+    refetch: refetchContests,
+  } = useQuery<any[]>(
+    ['adminContests', includeInactiveContests],
+    () => api.getAllContests({ includeInactive: includeInactiveContests }),
+    {
+      enabled: isAdmin && mode === 'contestManage',
+    }
+  );
+
+  // Team members query
+  const {
+    data: teamMembersData,
+    isLoading: teamMembersLoading,
+    refetch: refetchTeamMembers,
+  } = useQuery<any[]>(
+    ['teamMembers', editingTeamId],
+    () => api.getTeamMembers(editingTeamId!),
+    {
+      enabled: isAdmin && !!editingTeamId,
+    }
+  );
+
+  // Contest participants query
+  const {
+    data: contestParticipantsData,
+    isLoading: contestParticipantsLoading,
+    refetch: refetchContestParticipants,
+  } = useQuery<any[]>(
+    ['contestParticipants', editingContestId],
+    () => api.getContestParticipants(editingContestId!),
+    {
+      enabled: isAdmin && !!editingContestId,
+    }
+  );
+
+  useEffect(() => {
+    if (teamMembersData) {
+      setTeamMembers(teamMembersData);
+    }
+  }, [teamMembersData]);
+
+  useEffect(() => {
+    if (contestParticipantsData) {
+      setContestParticipants(contestParticipantsData);
+    }
+  }, [contestParticipantsData]);
+
   // Teams filter logic - inline like tasks
   const teamsList = adminTeams ?? [];
   const filteredTeams = useMemo(() => {
@@ -3203,32 +3288,6 @@ function AdminPage() {
     }
   );
 
-  // Teams and Contests queries - inline like tasks
-  const {
-    data: adminTeams,
-    isLoading: teamsLoading,
-    error: teamsError,
-    refetch: refetchTeams,
-  } = useQuery<any[]>(
-    ['adminTeams', includeInactiveTeams],
-    () => api.getAllTeams({ includeInactive: includeInactiveTeams }),
-    {
-      enabled: isAdmin && mode === 'teamManage',
-    }
-  );
-
-  const {
-    data: adminContests,
-    isLoading: contestsLoading,
-    error: contestsError,
-    refetch: refetchContests,
-  } = useQuery<any[]>(
-    ['adminContests', includeInactiveContests],
-    () => api.getAllContests({ includeInactive: includeInactiveContests }),
-    {
-      enabled: isAdmin && mode === 'contestManage',
-    }
-  );
 
   // Group parameters by type
   const taskParametersByType = useMemo(() => {
@@ -3490,13 +3549,15 @@ function AdminPage() {
     if (!isEditingTask || !editingTaskId) return;
     const task = existingTemplates.find((t) => t.id === editingTaskId);
     if (!task) return;
+    // Determine if video_url is an uploaded video (starts with /uploads/ or contains /uploads/)
+    const isUploadedVideo = task.video_url?.includes('/uploads/') || task.video_url?.startsWith('/uploads/');
     setTaskForm((prev) => ({
       title: task.title ?? '',
       description: task.description ?? '',
       type: task.type,
       points: task.points ?? 0,
       video_url: task.video_url ?? '',
-      videoSource: 'url',
+      videoSource: isUploadedVideo ? 'upload' : 'url',
       videoFile: null,
       quizQuestions:
         (task.type === 'video' || task.type === 'quiz' || task.type === 'article_quiz')
@@ -6567,16 +6628,57 @@ const goToRewardCreation = () => {
                                       setTaskForm((prev) => ({
                                         ...prev,
                                         videoFile: file,
-                                        video_url: file ? '' : '',
+                                        video_url: file ? '' : prev.video_url,
                                       }));
                                     }}
                                   />
                                 </label>
                                 <span className="admin-upload-filename">
-                                  {taskForm.videoFile ? taskForm.videoFile.name : t('admin.task.noFileSelected')}
+                                  {taskForm.videoFile ? taskForm.videoFile.name : (taskForm.video_url && taskForm.video_url.includes('/uploads/') ? taskForm.video_url.split('/').pop() : t('admin.task.noFileSelected'))}
                                 </span>
+                                {(taskForm.videoFile || (taskForm.video_url && taskForm.video_url.includes('/uploads/'))) && (
+                                  <button
+                                    type="button"
+                                    className="admin-action-button danger"
+                                    onClick={() => {
+                                      setTaskForm((prev) => ({
+                                        ...prev,
+                                        videoFile: null,
+                                        video_url: '',
+                                      }));
+                                    }}
+                                    style={{ marginLeft: 'auto' }}
+                                  >
+                                    {t('common.actions.delete', 'Löschen')}
+                                  </button>
+                                )}
                               </div>
                             </div>
+                            {/* Video Preview */}
+                            {(taskForm.videoFile || (taskForm.video_url && taskForm.video_url.includes('/uploads/'))) && (
+                              <div style={{ marginTop: '1rem' }}>
+                                <FieldLabel label={t('admin.task.videoPreview', 'Video-Vorschau')} />
+                                <div style={{ marginTop: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 'var(--border-radius)', overflow: 'hidden', maxWidth: '100%' }}>
+                                  {taskForm.videoFile ? (
+                                    <video
+                                      controls
+                                      src={URL.createObjectURL(taskForm.videoFile)}
+                                      style={{ width: '100%', maxHeight: '400px', display: 'block' }}
+                                    >
+                                      {t('tasksComponents.video.notSupported')}
+                                    </video>
+                                  ) : taskForm.video_url && taskForm.video_url.includes('/uploads/') ? (
+                                    <video
+                                      controls
+                                      src={taskForm.video_url.startsWith('http') ? taskForm.video_url : `${window.location.origin}${taskForm.video_url}`}
+                                      style={{ width: '100%', maxHeight: '400px', display: 'block' }}
+                                    >
+                                      {t('tasksComponents.video.notSupported')}
+                                    </video>
+                                  ) : null}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </>
@@ -8825,29 +8927,40 @@ const goToRewardCreation = () => {
               <p>{t('admin.team.manage.subtitle')}</p>
             </div>
             <div className="admin-actions">
-              {!editingTeamId && (
-                <button
-                  className="admin-icon-button"
-                  onClick={() => refetchTeams()}
-                  title={t('admin.team.manage.refresh')}
-                >
-                  <Icon name="refresh" />
-                  <span className="sr-only">{t('admin.team.manage.refresh')}</span>
-                </button>
+              {!editingTeamId && !isCreatingTeam && (
+                <>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => setIsCreatingTeam(true)}
+                    type="button"
+                  >
+                    {t('admin.team.manage.createNew', 'Neues Team erstellen')}
+                  </button>
+                  <button
+                    className="admin-icon-button"
+                    onClick={() => refetchTeams()}
+                    title={t('admin.team.manage.refresh')}
+                  >
+                    <Icon name="refresh" />
+                    <span className="sr-only">{t('admin.team.manage.refresh')}</span>
+                  </button>
+                </>
               )}
               <button
                 className="admin-icon-button"
                 onClick={() => {
                   if (editingTeamId) {
                     setEditingTeamId(null);
+                  } else if (isCreatingTeam) {
+                    setIsCreatingTeam(false);
                   } else {
                     setMode(null);
                   }
                 }}
-                title={editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}
+                title={editingTeamId ? t('admin.team.manage.edit.cancel') : isCreatingTeam ? t('common.actions.cancel') : t('admin.team.manage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{editingTeamId ? t('admin.team.manage.edit.cancel') : t('admin.team.manage.back')}</span>
+                <span className="sr-only">{editingTeamId ? t('admin.team.manage.edit.cancel') : isCreatingTeam ? t('common.actions.cancel') : t('admin.team.manage.back')}</span>
               </button>
             </div>
           </header>
@@ -8855,49 +8968,220 @@ const goToRewardCreation = () => {
           {teamsLoading && <p>{t('admin.team.manage.loading')}</p>}
           {Boolean(teamsError) && <p className="admin-error">{t('admin.team.manage.loadError')}</p>}
 
-          {editingTeamId && filteredTeams.find((t) => t.id === editingTeamId) ? (() => {
-            const editingTeam = filteredTeams.find((t) => t.id === editingTeamId)!;
+          {isCreatingTeam && (
+            <div className="admin-form-card">
+              <TeamCreator
+                onSuccess={async (teamId) => {
+                  setIsCreatingTeam(false);
+                  await refetchTeams();
+                  setTeamManagementMessage({
+                    type: 'success',
+                    text: t('admin.team.manage.createSuccess', 'Team erfolgreich erstellt'),
+                  });
+                }}
+                onClose={() => setIsCreatingTeam(false)}
+              />
+            </div>
+          )}
+
+          {editingTeamId && (() => {
+            // Find team in all teams, not just filtered ones
+            const editingTeam = teamsList.find((t) => t.id === editingTeamId);
+            if (!editingTeam) {
+              // Team not found, reset editing state
+              setEditingTeamId(null);
+              return null;
+            }
             return (
-              <div className="admin-form-section">
-                <h3>{t('admin.team.manage.edit.title')}</h3>
-                <div className="admin-field">
-                  <label>
-                    {t('admin.team.manage.edit.name')}
-                    <input
-                      type="text"
-                      value={editingTeam.name || ''}
-                      onChange={async (e) => {
-                        try {
-                          await api.updateTeam(editingTeamId, { name: e.target.value || null });
-                          await refetchTeams();
-                        } catch (err) {
-                          console.error('Failed to update team name:', err);
-                        }
+              <div className="admin-form-card">
+                <div className="admin-form-section">
+                  <h3>{t('admin.team.manage.edit.title', 'Team bearbeiten')}</h3>
+                  <div className="admin-field">
+                    <label>
+                      {t('admin.team.manage.edit.name', 'Team-Name')}
+                      <input
+                        type="text"
+                        value={editingTeam.name || ''}
+                        onChange={async (e) => {
+                          try {
+                            await api.updateTeam(editingTeamId, { name: e.target.value || null });
+                            await refetchTeams();
+                            setTeamManagementMessage({
+                              type: 'success',
+                              text: t('admin.team.manage.edit.nameUpdated', 'Team-Name aktualisiert'),
+                            });
+                          } catch (err: any) {
+                            console.error('Failed to update team name:', err);
+                            setTeamManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.nameUpdateError', 'Fehler beim Aktualisieren des Team-Namens'),
+                            });
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="admin-field">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={editingTeam.active ?? true}
+                        onChange={async (e) => {
+                          try {
+                            await api.bulkUpdateTeamsStatus([editingTeamId], e.target.checked);
+                            await refetchTeams();
+                            setTeamManagementMessage({
+                              type: 'success',
+                              text: e.target.checked 
+                                ? t('admin.team.manage.teamActivated', 'Team aktiviert')
+                                : t('admin.team.manage.teamDeactivated', 'Team deaktiviert'),
+                            });
+                          } catch (err: any) {
+                            console.error('Failed to update team status:', err);
+                            setTeamManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.statusUpdateError', 'Fehler beim Aktualisieren des Team-Status'),
+                            });
+                          }
+                        }}
+                      />
+                      {t('admin.team.manage.edit.active', 'Aktiv')}
+                    </label>
+                  </div>
+                  <div className="admin-form-section" style={{ marginTop: '2rem' }}>
+                    <h4>{t('admin.team.manage.edit.members', 'Mitglieder')}</h4>
+                    <div className="admin-form-actions" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={() => setShowTeamAddUsersModal(true)}
+                      >
+                        {t('admin.team.manage.edit.addMembers', 'Benutzer hinzufügen')}
+                      </button>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={() => setShowTeamRemoveUsersModal(true)}
+                        disabled={teamMembers.length === 0}
+                      >
+                        {t('admin.team.manage.edit.removeMembers', 'Benutzer entfernen')}
+                      </button>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const qrData = await api.getTeamQrCode(editingTeamId);
+                            setTeamJoinQrToken(qrData.qrToken);
+                            setShowTeamJoinQrModal(true);
+                          } catch (err: any) {
+                            setTeamManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.qrError', 'Fehler beim Laden des QR-Codes'),
+                            });
+                          }
+                        }}
+                      >
+                        {t('admin.team.manage.edit.showJoinQr', 'QR-Code zum Beitreten')}
+                      </button>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={async () => {
+                          // #region agent log
+                          fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9047',message:'showRegistrationQr button clicked',data:{editingTeamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                          // #endregion
+                          try {
+                            // #region agent log
+                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9050',message:'calling enableTeamRegistration',data:{teamId:editingTeamId,enabled:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                            // #endregion
+                            // Enable registration first if not enabled
+                            await api.enableTeamRegistration(editingTeamId, true);
+                            // #region agent log
+                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9052',message:'enableTeamRegistration success',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                            // #endregion
+                            // #region agent log
+                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9053',message:'calling getTeamRegistrationQrCode',data:{teamId:editingTeamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                            // #endregion
+                            const qrData = await api.getTeamRegistrationQrCode(editingTeamId);
+                            // #region agent log
+                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9056',message:'getTeamRegistrationQrCode success',data:{qrToken:qrData?.qrToken,hasRegistrationUrl:!!qrData?.registrationUrl,registrationUrl:qrData?.registrationUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                            // #endregion
+                            setTeamRegistrationQrData({
+                              qrToken: qrData.qrToken,
+                              registrationUrl: qrData.registrationUrl,
+                            });
+                            // #region agent log
+                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9061',message:'setting teamRegistrationQrData and showing modal',data:{hasQrToken:!!qrData?.qrToken,hasRegistrationUrl:!!qrData?.registrationUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                            // #endregion
+                            setShowTeamRegistrationQrModal(true);
+                            // #region agent log
+                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9063',message:'modal state set to true',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                            // #endregion
+                          } catch (err: any) {
+                            // #region agent log
+                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9065',message:'error in registration QR flow',data:{error:err?.message,status:err?.response?.status,responseData:err?.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                            // #endregion
+                            setTeamManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.registrationQrError', 'Fehler beim Laden des Registrierungs-QR-Codes'),
+                            });
+                          }
+                        }}
+                      >
+                        {t('admin.team.manage.edit.showRegistrationQr', 'QR-Code für Registrierung')}
+                      </button>
+                    </div>
+                    {teamMembersLoading ? (
+                      <p>{t('admin.team.manage.edit.loadingMembers', 'Lade Mitglieder...')}</p>
+                    ) : teamMembers.length === 0 ? (
+                      <p className="admin-field-note">{t('admin.team.manage.edit.noMembers', 'Keine Mitglieder')}</p>
+                    ) : (
+                      <div className="admin-table-wrapper">
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>{t('admin.team.manage.edit.memberName', 'Name')}</th>
+                              <th>{t('admin.team.manage.edit.memberEmail', 'E-Mail')}</th>
+                              <th>{t('admin.team.manage.edit.memberPoints', 'Beigetragene Punkte')}</th>
+                              <th>{t('admin.team.manage.edit.memberJoined', 'Beigetreten')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {teamMembers.map((member: any) => (
+                              <tr key={member.id}>
+                                <td>{member.user_name || '-'}</td>
+                                <td>{member.user_email || '-'}</td>
+                                <td>{member.points_contributed || 0}</td>
+                                <td>{new Date(member.joined_at).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                  <div className="admin-form-actions" style={{ marginTop: '1rem' }}>
+                    <button
+                      className="admin-action-button"
+                      type="button"
+                      onClick={() => {
+                        setEditingTeamId(null);
+                        setTeamManagementMessage(null);
+                        setTeamMembers([]);
+                        setTeamJoinQrToken(null);
+                        setTeamRegistrationQrData(null);
                       }}
-                    />
-                  </label>
-                </div>
-                <div className="admin-field">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={editingTeam.active ?? true}
-                      onChange={async (e) => {
-                        try {
-                          await api.bulkUpdateTeamsStatus([editingTeamId], e.target.checked);
-                          await refetchTeams();
-                        } catch (err) {
-                          console.error('Failed to update team status:', err);
-                        }
-                      }}
-                    />
-                    {t('admin.team.manage.edit.active')}
-                  </label>
+                    >
+                      {t('common.actions.done', 'Fertig')}
+                    </button>
+                  </div>
                 </div>
               </div>
             );
-          })() : null}
+          })()}
 
+          {!editingTeamId && (
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
@@ -9155,6 +9439,8 @@ const goToRewardCreation = () => {
               )}
             </div>
           </div>
+          )}
+          
           <MobileFilterModal
             isOpen={isMobileTeamFilterOpen}
             onClose={() => setIsMobileTeamFilterOpen(false)}
@@ -9179,6 +9465,120 @@ const goToRewardCreation = () => {
             }}
             filterType="team"
           />
+
+          {/* Team User Selection Modals */}
+          {editingTeamId && (
+            <>
+              <UserSelectionModal
+                isOpen={showTeamAddUsersModal}
+                onClose={() => setShowTeamAddUsersModal(false)}
+                onAdd={async (userIds) => {
+                  try {
+                    await api.addTeamMembers(editingTeamId, userIds);
+                    await refetchTeamMembers();
+                    await refetchTeams();
+                    setTeamManagementMessage({
+                      type: 'success',
+                      text: t('admin.team.manage.edit.membersAdded', { count: userIds.length }, `${userIds.length} Benutzer hinzugefügt`),
+                    });
+                  } catch (err: any) {
+                    setTeamManagementMessage({
+                      type: 'error',
+                      text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.membersAddError', 'Fehler beim Hinzufügen der Benutzer'),
+                    });
+                  }
+                }}
+                excludeUserIds={teamMembers.map((m: any) => m.user_id)}
+                title={t('admin.team.manage.edit.addMembersTitle', 'Benutzer zum Team hinzufügen')}
+                addButtonLabel={t('admin.team.manage.edit.add', 'Hinzufügen')}
+              />
+              <UserSelectionModal
+                isOpen={showTeamRemoveUsersModal}
+                onClose={() => setShowTeamRemoveUsersModal(false)}
+                onAdd={async (userIds) => {
+                  try {
+                    await api.removeTeamMembers(editingTeamId, userIds);
+                    await refetchTeamMembers();
+                    await refetchTeams();
+                    setTeamManagementMessage({
+                      type: 'success',
+                      text: t('admin.team.manage.edit.membersRemoved', { count: userIds.length }, `${userIds.length} Benutzer entfernt`),
+                    });
+                  } catch (err: any) {
+                    setTeamManagementMessage({
+                      type: 'error',
+                      text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.membersRemoveError', 'Fehler beim Entfernen der Benutzer'),
+                    });
+                  }
+                }}
+                includeOnlyUserIds={teamMembers.map((m: any) => m.user_id)}
+                title={t('admin.team.manage.edit.removeMembersTitle', 'Benutzer aus Team entfernen')}
+                addButtonLabel={t('admin.team.manage.edit.remove', 'Entfernen')}
+                roleFilter="all"
+              />
+              {showTeamJoinQrModal && teamJoinQrToken && (
+                <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
+                  <div className="admin-form-card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
+                    <div className="admin-form-section">
+                      <h3>{t('admin.team.manage.edit.joinQrTitle', 'QR-Code zum Beitreten')}</h3>
+                      <p className="admin-field-note">{t('admin.team.manage.edit.joinQrDescription', 'Bestehende Benutzer können diesen QR-Code scannen, um dem Team beizutreten.')}</p>
+                      <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                        <QRCode value={teamJoinQrToken} size={256} />
+                      </div>
+                      <div className="admin-form-actions">
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => {
+                            setShowTeamJoinQrModal(false);
+                            setTeamJoinQrToken(null);
+                          }}
+                        >
+                          {t('common.actions.close', 'Schließen')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {showTeamRegistrationQrModal && teamRegistrationQrData && (
+                <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
+                  <div className="admin-form-card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
+                    <div className="admin-form-section">
+                      <h3>{t('admin.team.manage.edit.registrationQrTitle', 'QR-Code für Registrierung')}</h3>
+                      <p className="admin-field-note">{t('admin.team.manage.edit.registrationQrDescription', 'Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch dem Team beizutreten.')}</p>
+                      <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                        <QRCode value={teamRegistrationQrData.registrationUrl} size={256} />
+                      </div>
+                      <div className="admin-field" style={{ marginTop: '1rem' }}>
+                        <label>
+                          {t('admin.team.manage.edit.registrationUrl', 'Registrierungs-URL')}
+                          <input
+                            type="text"
+                            value={teamRegistrationQrData.registrationUrl}
+                            readOnly
+                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                          />
+                        </label>
+                      </div>
+                      <div className="admin-form-actions">
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => {
+                            setShowTeamRegistrationQrModal(false);
+                            setTeamRegistrationQrData(null);
+                          }}
+                        >
+                          {t('common.actions.close', 'Schließen')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </section>
       )}
 
@@ -9191,29 +9591,40 @@ const goToRewardCreation = () => {
               <p>{t('admin.contest.manage.subtitle')}</p>
             </div>
             <div className="admin-actions">
-              {!editingContestId && (
-                <button
-                  className="admin-icon-button"
-                  onClick={() => refetchContests()}
-                  title={t('admin.contest.manage.refresh')}
-                >
-                  <Icon name="refresh" />
-                  <span className="sr-only">{t('admin.contest.manage.refresh')}</span>
-                </button>
+              {!editingContestId && !isCreatingContest && (
+                <>
+                  <button
+                    className="admin-action-button"
+                    onClick={() => setIsCreatingContest(true)}
+                    type="button"
+                  >
+                    {t('admin.contest.manage.createNew', 'Neuen Wettbewerb erstellen')}
+                  </button>
+                  <button
+                    className="admin-icon-button"
+                    onClick={() => refetchContests()}
+                    title={t('admin.contest.manage.refresh')}
+                  >
+                    <Icon name="refresh" />
+                    <span className="sr-only">{t('admin.contest.manage.refresh')}</span>
+                  </button>
+                </>
               )}
               <button
                 className="admin-icon-button"
                 onClick={() => {
                   if (editingContestId) {
                     setEditingContestId(null);
+                  } else if (isCreatingContest) {
+                    setIsCreatingContest(false);
                   } else {
                     setMode(null);
                   }
                 }}
-                title={editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}
+                title={editingContestId ? t('admin.contest.manage.edit.cancel') : isCreatingContest ? t('common.actions.cancel') : t('admin.contest.manage.back')}
               >
                 <Icon name="back" />
-                <span className="sr-only">{editingContestId ? t('admin.contest.manage.edit.cancel') : t('admin.contest.manage.back')}</span>
+                <span className="sr-only">{editingContestId ? t('admin.contest.manage.edit.cancel') : isCreatingContest ? t('common.actions.cancel') : t('admin.contest.manage.back')}</span>
               </button>
             </div>
           </header>
@@ -9221,66 +9632,222 @@ const goToRewardCreation = () => {
           {contestsLoading && <p>{t('admin.contest.manage.loading')}</p>}
           {Boolean(contestsError) && <p className="admin-error">{t('admin.contest.manage.loadError')}</p>}
 
-          {editingContestId && filteredContests.find((c) => c.id === editingContestId) ? (() => {
-            const editingContest = filteredContests.find((c) => c.id === editingContestId)!;
+          {isCreatingContest && (
+            <div className="admin-form-card">
+              <ContestCreator
+                onSuccess={async (contestId) => {
+                  setIsCreatingContest(false);
+                  await refetchContests();
+                  setContestManagementMessage({
+                    type: 'success',
+                    text: t('admin.contest.manage.createSuccess', 'Wettbewerb erfolgreich erstellt'),
+                  });
+                }}
+                onClose={() => setIsCreatingContest(false)}
+                onlyEmployeeParticipants={false}
+              />
+            </div>
+          )}
+
+          {editingContestId && (() => {
+            // Find contest in all contests, not just filtered ones
+            const editingContest = contestsList.find((c) => c.id === editingContestId);
+            if (!editingContest) {
+              // Contest not found, reset editing state
+              setEditingContestId(null);
+              return null;
+            }
             return (
-              <div className="admin-form-section">
-                <h3>{t('admin.contest.manage.edit.title')}</h3>
-                <div className="admin-field">
-                  <label>
-                    {t('admin.contest.manage.edit.name')}
-                    <input
-                      type="text"
-                      value={editingContest.name || ''}
-                      onChange={async (e) => {
-                        try {
-                          await api.updateContest(editingContestId, { name: e.target.value || null });
-                          await refetchContests();
-                        } catch (err) {
-                          console.error('Failed to update contest name:', err);
-                        }
+              <div className="admin-form-card">
+                <div className="admin-form-section">
+                  <h3>{t('admin.contest.manage.edit.title', 'Wettbewerb bearbeiten')}</h3>
+                  <div className="admin-field">
+                    <label>
+                      {t('admin.contest.manage.edit.name', 'Wettbewerbs-Name')}
+                      <input
+                        type="text"
+                        value={editingContest.name || ''}
+                        onChange={async (e) => {
+                          try {
+                            await api.updateContest(editingContestId, { name: e.target.value || null });
+                            await refetchContests();
+                            setContestManagementMessage({
+                              type: 'success',
+                              text: t('admin.contest.manage.edit.nameUpdated', 'Wettbewerbs-Name aktualisiert'),
+                            });
+                          } catch (err: any) {
+                            console.error('Failed to update contest name:', err);
+                            setContestManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.nameUpdateError', 'Fehler beim Aktualisieren des Wettbewerbs-Namens'),
+                            });
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="admin-field">
+                    <label>
+                      {t('admin.contest.manage.edit.endDate', 'Enddatum')}
+                      <input
+                        type="date"
+                        value={editingContest.end_date ? new Date(editingContest.end_date).toISOString().split('T')[0] : ''}
+                        onChange={async (e) => {
+                          try {
+                            await api.updateContest(editingContestId, { endDate: e.target.value || undefined });
+                            await refetchContests();
+                            setContestManagementMessage({
+                              type: 'success',
+                              text: t('admin.contest.manage.edit.endDateUpdated', 'Enddatum aktualisiert'),
+                            });
+                          } catch (err: any) {
+                            console.error('Failed to update contest end date:', err);
+                            setContestManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.endDateUpdateError', 'Fehler beim Aktualisieren des Enddatums'),
+                            });
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="admin-field">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={editingContest.active ?? true}
+                        onChange={async (e) => {
+                          try {
+                            await api.bulkUpdateContestsStatus([editingContestId], e.target.checked);
+                            await refetchContests();
+                            setContestManagementMessage({
+                              type: 'success',
+                              text: e.target.checked 
+                                ? t('admin.contest.manage.contestActivated', 'Wettbewerb aktiviert')
+                                : t('admin.contest.manage.contestDeactivated', 'Wettbewerb deaktiviert'),
+                            });
+                          } catch (err: any) {
+                            console.error('Failed to update contest status:', err);
+                            setContestManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.statusUpdateError', 'Fehler beim Aktualisieren des Wettbewerbs-Status'),
+                            });
+                          }
+                        }}
+                      />
+                      {t('admin.contest.manage.edit.active', 'Aktiv')}
+                    </label>
+                  </div>
+                  <div className="admin-form-section" style={{ marginTop: '2rem' }}>
+                    <h4>{t('admin.contest.manage.edit.participants', 'Teilnehmer')}</h4>
+                    <div className="admin-form-actions" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={() => setShowContestAddUsersModal(true)}
+                      >
+                        {t('admin.contest.manage.edit.addParticipants', 'Benutzer hinzufügen')}
+                      </button>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={() => setShowContestRemoveUsersModal(true)}
+                        disabled={contestParticipants.length === 0}
+                      >
+                        {t('admin.contest.manage.edit.removeParticipants', 'Benutzer entfernen')}
+                      </button>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const qrData = await api.getContestQrCode(editingContestId);
+                            setContestJoinQrToken(qrData.qrToken);
+                            setShowContestJoinQrModal(true);
+                          } catch (err: any) {
+                            setContestManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.qrError', 'Fehler beim Laden des QR-Codes'),
+                            });
+                          }
+                        }}
+                      >
+                        {t('admin.contest.manage.edit.showJoinQr', 'QR-Code zum Beitreten')}
+                      </button>
+                      <button
+                        className="admin-action-button"
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            // Enable registration first if not enabled
+                            await api.enableContestRegistration(editingContestId, true);
+                            const qrData = await api.getContestRegistrationQrCode(editingContestId);
+                            setContestRegistrationQrData({
+                              qrToken: qrData.qrToken,
+                              registrationUrl: qrData.registrationUrl,
+                            });
+                            setShowContestRegistrationQrModal(true);
+                          } catch (err: any) {
+                            setContestManagementMessage({
+                              type: 'error',
+                              text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.registrationQrError', 'Fehler beim Laden des Registrierungs-QR-Codes'),
+                            });
+                          }
+                        }}
+                      >
+                        {t('admin.contest.manage.edit.showRegistrationQr', 'QR-Code für Registrierung')}
+                      </button>
+                    </div>
+                    {contestParticipantsLoading ? (
+                      <p>{t('admin.contest.manage.edit.loadingParticipants', 'Lade Teilnehmer...')}</p>
+                    ) : contestParticipants.length === 0 ? (
+                      <p className="admin-field-note">{t('admin.contest.manage.edit.noParticipants', 'Keine Teilnehmer')}</p>
+                    ) : (
+                      <div className="admin-table-wrapper">
+                        <table className="admin-table">
+                          <thead>
+                            <tr>
+                              <th>{t('admin.contest.manage.edit.participantName', 'Name')}</th>
+                              <th>{t('admin.contest.manage.edit.participantEmail', 'E-Mail')}</th>
+                              <th>{t('admin.contest.manage.edit.participantPoints', 'Punkte')}</th>
+                              <th>{t('admin.contest.manage.edit.participantJoined', 'Beigetreten')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {contestParticipants.map((participant: any) => (
+                              <tr key={participant.id}>
+                                <td>{participant.user_name || '-'}</td>
+                                <td>{participant.user_email || '-'}</td>
+                                <td>{participant.points || 0}</td>
+                                <td>{new Date(participant.joined_at).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                  <div className="admin-form-actions" style={{ marginTop: '1rem' }}>
+                    <button
+                      className="admin-action-button"
+                      type="button"
+                      onClick={() => {
+                        setEditingContestId(null);
+                        setContestManagementMessage(null);
+                        setContestParticipants([]);
+                        setContestJoinQrToken(null);
+                        setContestRegistrationQrData(null);
                       }}
-                    />
-                  </label>
-                </div>
-                <div className="admin-field">
-                  <label>
-                    {t('admin.contest.manage.edit.endDate')}
-                    <input
-                      type="date"
-                      value={editingContest.end_date ? new Date(editingContest.end_date).toISOString().split('T')[0] : ''}
-                      onChange={async (e) => {
-                        try {
-                          await api.updateContest(editingContestId, { endDate: e.target.value || undefined });
-                          await refetchContests();
-                        } catch (err) {
-                          console.error('Failed to update contest end date:', err);
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-                <div className="admin-field">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={editingContest.active ?? true}
-                      onChange={async (e) => {
-                        try {
-                          await api.bulkUpdateContestsStatus([editingContestId], e.target.checked);
-                          await refetchContests();
-                        } catch (err) {
-                          console.error('Failed to update contest status:', err);
-                        }
-                      }}
-                    />
-                    {t('admin.contest.manage.edit.active')}
-                  </label>
+                    >
+                      {t('common.actions.done', 'Fertig')}
+                    </button>
+                  </div>
                 </div>
               </div>
             );
-          })() : null}
+          })()}
 
+          {!editingContestId && (
           <div className="admin-management-card">
             <div className="admin-management-top">
               <div>
@@ -9562,6 +10129,8 @@ const goToRewardCreation = () => {
               )}
             </div>
           </div>
+          )}
+          
           <MobileFilterModal
             isOpen={isMobileContestFilterOpen}
             onClose={() => setIsMobileContestFilterOpen(false)}
@@ -9589,33 +10158,120 @@ const goToRewardCreation = () => {
             }}
             filterType="contest"
           />
-          <MobileFilterModal
-            isOpen={isMobileContestFilterOpen}
-            onClose={() => setIsMobileContestFilterOpen(false)}
-            filterOptions={contestFilterOptions}
-            filters={{
-              status: contestFilterStatus,
-              name: contestFilterName,
-              creator: contestFilterCreator,
-              endDate: contestFilterEndDate,
-            }}
-            onFilterChange={(filterType, value) => {
-              if (filterType === 'status') {
-                setContestFilterStatus(value as 'active' | 'inactive' | null);
-              } else if (filterType === 'creator') {
-                setContestFilterCreator(value);
-              }
-            }}
-            onTitleChange={setContestFilterName}
-            onEndDateChange={setContestFilterEndDate}
-            onClearAll={() => {
-              setContestFilterStatus(null);
-              setContestFilterName('');
-              setContestFilterCreator(null);
-              setContestFilterEndDate('');
-            }}
-            filterType="contest"
-          />
+
+          {/* Contest User Selection Modals */}
+          {editingContestId && (
+            <>
+              <UserSelectionModal
+                isOpen={showContestAddUsersModal}
+                onClose={() => setShowContestAddUsersModal(false)}
+                onAdd={async (userIds) => {
+                  try {
+                    await api.addContestParticipants(editingContestId, userIds);
+                    await refetchContestParticipants();
+                    await refetchContests();
+                    setContestManagementMessage({
+                      type: 'success',
+                      text: t('admin.contest.manage.edit.participantsAdded', { count: userIds.length }, `${userIds.length} Benutzer hinzugefügt`),
+                    });
+                  } catch (err: any) {
+                    setContestManagementMessage({
+                      type: 'error',
+                      text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.participantsAddError', 'Fehler beim Hinzufügen der Benutzer'),
+                    });
+                  }
+                }}
+                excludeUserIds={contestParticipants.map((p: any) => p.user_id)}
+                title={t('admin.contest.manage.edit.addParticipantsTitle', 'Benutzer zum Wettbewerb hinzufügen')}
+                addButtonLabel={t('admin.contest.manage.edit.add', 'Hinzufügen')}
+              />
+              <UserSelectionModal
+                isOpen={showContestRemoveUsersModal}
+                onClose={() => setShowContestRemoveUsersModal(false)}
+                onAdd={async (userIds) => {
+                  try {
+                    await api.removeContestParticipants(editingContestId, userIds);
+                    await refetchContestParticipants();
+                    await refetchContests();
+                    setContestManagementMessage({
+                      type: 'success',
+                      text: t('admin.contest.manage.edit.participantsRemoved', { count: userIds.length }, `${userIds.length} Benutzer entfernt`),
+                    });
+                  } catch (err: any) {
+                    setContestManagementMessage({
+                      type: 'error',
+                      text: err?.response?.data?.error || err?.message || t('admin.contest.manage.edit.participantsRemoveError', 'Fehler beim Entfernen der Benutzer'),
+                    });
+                  }
+                }}
+                includeOnlyUserIds={contestParticipants.map((p: any) => p.user_id)}
+                title={t('admin.contest.manage.edit.removeParticipantsTitle', 'Benutzer aus Wettbewerb entfernen')}
+                addButtonLabel={t('admin.contest.manage.edit.remove', 'Entfernen')}
+                roleFilter="all"
+              />
+              {showContestJoinQrModal && contestJoinQrToken && (
+                <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
+                  <div className="admin-form-card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
+                    <div className="admin-form-section">
+                      <h3>{t('admin.contest.manage.edit.joinQrTitle', 'QR-Code zum Beitreten')}</h3>
+                      <p className="admin-field-note">{t('admin.contest.manage.edit.joinQrDescription', 'Bestehende Benutzer können diesen QR-Code scannen, um dem Wettbewerb beizutreten.')}</p>
+                      <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                        <QRCode value={contestJoinQrToken} size={256} />
+                      </div>
+                      <div className="admin-form-actions">
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => {
+                            setShowContestJoinQrModal(false);
+                            setContestJoinQrToken(null);
+                          }}
+                        >
+                          {t('common.actions.close', 'Schließen')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {showContestRegistrationQrModal && contestRegistrationQrData && (
+                <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
+                  <div className="admin-form-card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
+                    <div className="admin-form-section">
+                      <h3>{t('admin.contest.manage.edit.registrationQrTitle', 'QR-Code für Registrierung')}</h3>
+                      <p className="admin-field-note">{t('admin.contest.manage.edit.registrationQrDescription', 'Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch dem Wettbewerb beizutreten.')}</p>
+                      <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                        <QRCode value={contestRegistrationQrData.registrationUrl} size={256} />
+                      </div>
+                      <div className="admin-field" style={{ marginTop: '1rem' }}>
+                        <label>
+                          {t('admin.contest.manage.edit.registrationUrl', 'Registrierungs-URL')}
+                          <input
+                            type="text"
+                            value={contestRegistrationQrData.registrationUrl}
+                            readOnly
+                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                          />
+                        </label>
+                      </div>
+                      <div className="admin-form-actions">
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => {
+                            setShowContestRegistrationQrModal(false);
+                            setContestRegistrationQrData(null);
+                          }}
+                        >
+                          {t('common.actions.close', 'Schließen')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </section>
       )}
     </div>

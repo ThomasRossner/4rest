@@ -64,6 +64,10 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
   if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
   if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VideoTask.tsx:66',message:'VideoTask task loaded',data:{taskId,taskTitle:task.title,videoUrl:task.video_url,hasVideoUrl:!!task.video_url,isYouTubeUrl:task.video_url?.includes('youtube.com')||task.video_url?.includes('youtu.be')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+
   const questions = task.quiz_questions || [];
   const currentQuestion = questions[currentQuestionIndex];
   const allAnswered = questions.every((_: any, index: number) => answers[index]);
@@ -94,16 +98,71 @@ export function VideoTask({ taskId, onComplete }: VideoTaskProps) {
 
       {task.video_url && (
         <div className="video-container">
-          <video
-            controls
-            src={task.video_url}
-            className="task-video"
-            onEnded={() => {
-              // Video ended, show quiz questions
-            }}
-          >
-            {t('tasksComponents.video.notSupported')}
-          </video>
+          {/* #region agent log */}
+          {(()=>{fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VideoTask.tsx:95',message:'VideoTask rendering video',data:{videoUrl:task.video_url,isYouTube:task.video_url?.includes('youtube.com')||task.video_url?.includes('youtu.be')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});return null;})()}
+          {/* #endregion */}
+          {(() => {
+            const videoUrl = task.video_url;
+            const isYouTube = videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be');
+            
+            if (isYouTube) {
+              // Convert YouTube URL to embed format
+              let embedUrl = '';
+              if (videoUrl.includes('/shorts/')) {
+                const videoId = videoUrl.split('/shorts/')[1]?.split('?')[0];
+                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+              } else if (videoUrl.includes('youtube.com/watch?v=')) {
+                const videoId = videoUrl.split('v=')[1]?.split('&')[0];
+                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+              } else if (videoUrl.includes('youtu.be/')) {
+                const videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+              } else {
+                embedUrl = videoUrl;
+              }
+              
+              // #region agent log
+              fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VideoTask.tsx:108',message:'VideoTask using YouTube iframe',data:{originalUrl:videoUrl,embedUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+              
+              return (
+                <iframe
+                  src={embedUrl}
+                  className="task-video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
+                />
+              );
+            }
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VideoTask.tsx:120',message:'VideoTask using HTML5 video element',data:{videoUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
+            return (
+              <video
+                controls
+                src={videoUrl}
+                className="task-video"
+                onError={(e) => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VideoTask.tsx:128',message:'VideoTask video error',data:{videoUrl,error:((e.target as HTMLVideoElement).error?.message||'unknown')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                  // #endregion
+                }}
+                onLoadStart={() => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'VideoTask.tsx:133',message:'VideoTask video load start',data:{videoUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                  // #endregion
+                }}
+                onEnded={() => {
+                  // Video ended, show quiz questions
+                }}
+              >
+                {t('tasksComponents.video.notSupported')}
+              </video>
+            );
+          })()}
         </div>
       )}
 

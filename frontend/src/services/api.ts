@@ -731,6 +731,21 @@ export const api = {
     return response.data;
   },
 
+  async getTeamMembers(teamId: string) {
+    const response = await apiClient.get(`/teams/${teamId}/members`);
+    return response.data;
+  },
+
+  async addTeamMembers(teamId: string, userIds: string[]) {
+    const response = await apiClient.post(`/teams/${teamId}/members/add`, { userIds });
+    return response.data;
+  },
+
+  async removeTeamMembers(teamId: string, userIds: string[]) {
+    const response = await apiClient.post(`/teams/${teamId}/members/remove`, { userIds });
+    return response.data;
+  },
+
   // Contests
   async createContest(startDate: string, endDate: string, contestName?: string, rewards?: { reward_first_place?: number; reward_second_place?: number; reward_third_place?: number }, participantIds?: string[]) {
     const response = await apiClient.post('/contests/create', { startDate, endDate, contestName, rewards, participantIds });
@@ -816,6 +831,21 @@ export const api = {
 
   async bulkDeleteContests(contestIds: string[]) {
     const response = await apiClient.post('/contests/bulk/delete', { contestIds });
+    return response.data;
+  },
+
+  async getContestParticipants(contestId: string) {
+    const response = await apiClient.get(`/contests/${contestId}/participants`);
+    return response.data;
+  },
+
+  async addContestParticipants(contestId: string, userIds: string[]) {
+    const response = await apiClient.post(`/contests/${contestId}/participants/add`, { userIds });
+    return response.data;
+  },
+
+  async removeContestParticipants(contestId: string, userIds: string[]) {
+    const response = await apiClient.post(`/contests/${contestId}/participants/remove`, { userIds });
     return response.data;
   },
 };

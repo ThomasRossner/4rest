@@ -994,3 +994,95 @@ export async function updateContest(contestId: string, data: Partial<{ name: str
  * Generiert einen Registrierungs-QR-Code für einen Contest
  * Dieser QR-Code ermöglicht es neuen Benutzern, sich zu registrieren und automatisch dem Contest beizutreten
  */
+
+/**
+ * Fügt Benutzer zu einem Contest hinzu (nur für Administratoren)
+ */
+export async function addContestParticipants(contestId: string, userIds: string[]): Promise<void> {
+  const db = getPool();
+  
+  if (userIds.length === 0) {
+    return;
+  }
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT id, active FROM contests WHERE id = $1',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found');
+  }
+  
+  // Füge Benutzer hinzu (ignoriere Duplikate)
+  for (const userId of userIds) {
+    // Prüfe ob Benutzer bereits Teilnehmer ist
+    const existingParticipant = await db.query(
+      'SELECT id FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
+      [contestId, userId]
+    );
+    
+    if (existingParticipant.rows.length === 0) {
+      // Füge Benutzer hinzu
+      await db.query(
+        'INSERT INTO contest_participants (contest_id, user_id, points) VALUES ($1, $2, 0)',
+        [contestId, userId]
+      );
+    }
+  }
+}
+
+/**
+ * Entfernt Benutzer aus einem Contest (nur für Administratoren)
+ */
+export async function removeContestParticipants(contestId: string, userIds: string[]): Promise<void> {
+  const db = getPool();
+  
+  if (userIds.length === 0) {
+    return;
+  }
+  
+  // Prüfe ob Contest existiert
+  const contestResult = await db.query(
+    'SELECT id, created_by FROM contests WHERE id = $1',
+    [contestId]
+  );
+  
+  if (contestResult.rows.length === 0) {
+    throw new Error('Contest not found');
+  }
+  
+  const contest = contestResult.rows[0];
+  
+  // Entferne Benutzer (außer Ersteller)
+  for (const userId of userIds) {
+    // Ersteller kann nicht entfernt werden
+    if (contest.created_by === userId) {
+      continue;
+    }
+    
+    await db.query(
+      'DELETE FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
+      [contestId, userId]
+    );
+  }
+}
+
+/**
+ * Ruft alle Teilnehmer eines Contests ab (nur für Administratoren)
+ */
+export async function getContestParticipantsAdmin(contestId: string): Promise<ContestParticipant[]> {
+  const db = getPool();
+  
+  const result = await db.query(
+    `SELECT cp.*, u.name as user_name, u.email as user_email
+     FROM contest_participants cp
+     INNER JOIN users u ON u.id = cp.user_id
+     WHERE cp.contest_id = $1
+     ORDER BY cp.joined_at ASC`,
+    [contestId]
+  );
+  
+  return result.rows;
+}
