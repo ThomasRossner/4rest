@@ -205,8 +205,12 @@ export async function register(req: Request, res: Response) {
 
         const user = updateResult.rows[0];
 
-        // Send verification email for reactivated user
-        await sendEmailVerificationEmail(user.id, user.email || '', user.name);
+        // Send verification email for reactivated user (non-blocking)
+        // Don't block registration if email fails
+        sendEmailVerificationEmail(user.id, user.email || '', user.name).catch((error) => {
+          console.error('[REGISTER] Failed to send verification email after reactivation:', error);
+          // Continue anyway - user is reactivated
+        });
 
         // Automatisch Team oder Contest beitreten (falls Token vorhanden)
         let joinedTeam = null;
