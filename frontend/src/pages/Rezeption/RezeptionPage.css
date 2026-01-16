@@ -487,6 +487,14 @@
   text-align: center;
 }
 
+/* Status column (4th column) - max 20% width */
+.rezeption-table th:nth-child(4),
+.rezeption-table td:nth-child(4) {
+  width: 20%;
+  max-width: 20%;
+  min-width: 5rem;
+}
+
 .rezeption-table th {
   font-weight: 600;
   color: var(--color-text);

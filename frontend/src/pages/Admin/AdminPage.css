@@ -1170,6 +1170,14 @@
   text-overflow: ellipsis;
 }
 
+/* Contest table: Status column (11th column, before Actions) - max 20% width */
+.admin-table th:nth-child(11):not(:last-child),
+.admin-table td:nth-child(11):not(:last-child) {
+  width: 20%;
+  max-width: 20%;
+  min-width: 5rem;
+}
+
 /* Actions column - fills remaining space */
 /* CRITICAL: Always ensure Actions column is visible - never hide it */
 .admin-table th:last-child,
