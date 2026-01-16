@@ -51,7 +51,12 @@ expect eof
 EXPECT_SCRIPT
 
 echo "==> Pulling latest changes from Git..."
-git pull origin dev || git pull origin main || git pull
+# Stash local changes in node_modules if any
+git stash push -m "Stashing local node_modules changes before pull" -- frontend/node_modules backend/node_modules 2>/dev/null || true
+# Force pull to overwrite any local changes
+git fetch origin
+git reset --hard origin/dev || git reset --hard origin/main || git pull --rebase
+git clean -fd
 
 echo ""
 echo "==> Building Docker images..."
