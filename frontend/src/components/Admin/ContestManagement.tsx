@@ -155,13 +155,14 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
     (contestId: string) => api.getContestRegistrationQrCode(contestId),
     {
       onSuccess: (data) => {
-        setContestRegistrationQrData({ token: data.token, url: data.registrationUrl });
+        setContestRegistrationQrData({ token: data.qrToken, url: data.registrationUrl });
         setShowContestRegistrationQrModal(true);
       },
       onError: (error: any) => {
         showToast({
           type: 'error',
-          message: error?.response?.data?.error || t('rezeption.contest.registrationQrError'),
+          title: t('rezeption.contest.registrationQrErrorTitle', 'Fehler'),
+          message: error?.response?.data?.error || t('rezeption.contest.registrationQrError', 'Fehler beim Laden des Registrierungs-QR-Codes'),
         });
       },
     }
@@ -680,7 +681,7 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
       {/* Contest Join QR Modal */}
       {showContestJoinQrModal && contestJoinQrToken && (
         <div className={`${cssPrefix}-modal-overlay`} onClick={() => setShowContestJoinQrModal(false)}>
-          <div className={`${cssPrefix}-modal`} onClick={(e) => e.stopPropagation()}>
+          <div className={`${cssPrefix}-modal`} style={{ maxWidth: '700px' }} onClick={(e) => e.stopPropagation()}>
             <div className={`${cssPrefix}-modal-header`}>
               <h3>{t('rezeption.contest.manage.edit.joinQrTitle', 'Join-QR-Code')}</h3>
               <button
@@ -691,7 +692,27 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
               </button>
             </div>
             <div className={`${cssPrefix}-modal-content`}>
-              <QRCode value={contestJoinQrToken} size={256} />
+              <QRCode value={contestJoinQrToken} size={400} />
+              <div style={{ 
+                marginTop: 'var(--spacing-md)', 
+                padding: 'var(--spacing-md)', 
+                background: 'var(--color-background-light, #f9fafb)', 
+                borderRadius: 'var(--border-radius)',
+                width: '100%',
+                textAlign: 'center'
+              }}>
+                <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
+                  {t('rezeption.contest.manage.edit.joinQrCodeLabel', 'QR-Code:')}
+                </p>
+                <code style={{ 
+                  fontSize: '0.85rem', 
+                  wordBreak: 'break-all', 
+                  color: 'var(--color-text)',
+                  fontFamily: 'monospace'
+                }}>
+                  {contestJoinQrToken}
+                </code>
+              </div>
               <p>{t('rezeption.contest.manage.edit.joinQrDescription', 'Bestehende Benutzer können diesen QR-Code scannen, um am Wettbewerb teilzunehmen')}</p>
             </div>
           </div>
@@ -701,7 +722,7 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
       {/* Contest Registration QR Modal */}
       {showContestRegistrationQrModal && contestRegistrationQrData && (
         <div className={`${cssPrefix}-modal-overlay`} onClick={() => setShowContestRegistrationQrModal(false)}>
-          <div className={`${cssPrefix}-modal`} onClick={(e) => e.stopPropagation()}>
+          <div className={`${cssPrefix}-modal`} style={{ maxWidth: '700px' }} onClick={(e) => e.stopPropagation()}>
             <div className={`${cssPrefix}-modal-header`}>
               <h3>{t('rezeption.contest.manage.edit.registrationQrTitle', 'Registrierungs-QR-Code')}</h3>
               <button
@@ -712,7 +733,27 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
               </button>
             </div>
             <div className={`${cssPrefix}-modal-content`}>
-              <QRCode value={contestRegistrationQrData.url} size={256} />
+              <QRCode value={contestRegistrationQrData.url} size={400} />
+              <div style={{ 
+                marginTop: 'var(--spacing-md)', 
+                padding: 'var(--spacing-md)', 
+                background: 'var(--color-background-light, #f9fafb)', 
+                borderRadius: 'var(--border-radius)',
+                width: '100%',
+                textAlign: 'center'
+              }}>
+                <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
+                  {t('rezeption.contest.manage.edit.registrationQrCodeLabel', 'QR-Code:')}
+                </p>
+                <code style={{ 
+                  fontSize: '0.85rem', 
+                  wordBreak: 'break-all', 
+                  color: 'var(--color-text)',
+                  fontFamily: 'monospace'
+                }}>
+                  {contestRegistrationQrData.token}
+                </code>
+              </div>
               <p>{t('rezeption.contest.manage.edit.registrationQrDescription', 'Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch am Wettbewerb teilzunehmen')}</p>
             </div>
           </div>

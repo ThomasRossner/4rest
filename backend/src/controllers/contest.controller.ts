@@ -332,6 +332,7 @@ export const enableContestRegistrationController: RequestHandler = asyncHandler(
 /**
  * GET /api/contests/:id/registration-qr-code
  * Ruft den Registrierungs-QR-Code eines Contests ab (nur für Administratoren)
+ * Generiert automatisch einen QR-Code, falls noch keiner existiert
  */
 export const getContestRegistrationQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -345,7 +346,19 @@ export const getContestRegistrationQrCodeController: RequestHandler = asyncHandl
   
   const { id } = req.params;
   
-  const registrationQr = await getContestRegistrationQrCode(id);
+  let registrationQr = await getContestRegistrationQrCode(id);
+  
+  // Wenn kein QR-Code existiert, generiere einen neuen
+  if (!registrationQr.qrToken) {
+    try {
+      const qrToken = await generateContestRegistrationQrCode(id);
+      registrationQr = await getContestRegistrationQrCode(id);
+    } catch (error: any) {
+      return res.status(400).json({ 
+        error: error.message || 'Failed to generate registration QR code. Contest may not exist or be inactive.' 
+      });
+    }
+  }
   
   if (!registrationQr.qrToken) {
     return res.status(404).json({ error: 'Registration QR code not found. Enable registration first.' });
