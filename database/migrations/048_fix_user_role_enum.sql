@@ -24,20 +24,16 @@ BEGIN
   -- Drop the old enum (CASCADE will handle dependencies)
   DROP TYPE IF EXISTS user_role_enum CASCADE;
   
-  -- Create new enum with correct values (include 'rezeption' and 'redaktion' if they exist in data)
-  -- Check what values exist in the data
-  IF EXISTS (SELECT 1 FROM users WHERE role::text IN ('rezeption', 'redaktion')) THEN
-    CREATE TYPE user_role_enum AS ENUM ('guest', 'front_office', 'rezeption', 'redaktion', 'administrator');
-  ELSE
-    CREATE TYPE user_role_enum AS ENUM ('guest', 'front_office', 'administrator');
-  END IF;
+  -- Step 4: Create new enum with all possible values
+  -- Always include rezeption and redaktion since they might exist from later migrations
+  CREATE TYPE user_role_enum AS ENUM ('guest', 'front_office', 'rezeption', 'redaktion', 'administrator');
   
-  -- Step 4: Change the column back to enum type
+  -- Step 5: Change the column back to enum type
   -- Map any remaining invalid values to 'guest'
   ALTER TABLE users 
     ALTER COLUMN role TYPE user_role_enum USING 
       CASE 
-        WHEN role::text IN ('guest', 'front_office', 'administrator', 'rezeption', 'redaktion') THEN role::text::user_role_enum
+        WHEN role IN ('guest', 'front_office', 'administrator', 'rezeption', 'redaktion') THEN role::user_role_enum
         ELSE 'guest'::user_role_enum
       END,
     ALTER COLUMN role SET DEFAULT 'guest';
