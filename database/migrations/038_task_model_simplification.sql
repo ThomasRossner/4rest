@@ -9,17 +9,23 @@
 -- 'guest' -> 'Gäste'
 -- 'stakeholder' -> 'Stakeholder'
 -- 'administrator' -> NULL (administrators see all tasks anyway)
-UPDATE tasks
-SET zielgruppe = CASE
-  WHEN zielgruppe IS NULL AND allowed_roles IS NOT NULL AND array_length(allowed_roles, 1) > 0 THEN
-    CASE
-      WHEN 'employee' = ANY(allowed_roles) THEN 'Mitarbeitende'::task_zielgruppe_enum
-      WHEN 'guest' = ANY(allowed_roles) THEN 'Gäste'::task_zielgruppe_enum
-      WHEN 'stakeholder' = ANY(allowed_roles) THEN 'Stakeholder'::task_zielgruppe_enum
-      ELSE NULL
-    END
-  ELSE zielgruppe
-END;
+-- Only update if the allowed_roles column exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tasks' AND column_name = 'allowed_roles') THEN
+    UPDATE tasks
+    SET zielgruppe = CASE
+      WHEN zielgruppe IS NULL AND allowed_roles IS NOT NULL AND array_length(allowed_roles, 1) > 0 THEN
+        CASE
+          WHEN 'employee' = ANY(allowed_roles) THEN 'Mitarbeitende'::task_zielgruppe_enum
+          WHEN 'guest' = ANY(allowed_roles) THEN 'Gäste'::task_zielgruppe_enum
+          WHEN 'stakeholder' = ANY(allowed_roles) THEN 'Stakeholder'::task_zielgruppe_enum
+          ELSE NULL
+        END
+      ELSE zielgruppe
+    END;
+  END IF;
+END $$;
 
 -- Step 2: Remove old columns
 ALTER TABLE tasks DROP COLUMN IF EXISTS allowed_hotel_ids;
