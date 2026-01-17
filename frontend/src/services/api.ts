@@ -188,13 +188,21 @@ export const api = {
     includeInactive?: boolean;
   }) {
     const apiStartTime = Date.now();
+    // Convert boolean to string 'true'/'false' for query params
+    const queryParams: any = { ...params };
+    if (queryParams.includeAll !== undefined) {
+      queryParams.includeAll = String(queryParams.includeAll);
+    }
+    if (queryParams.includeInactive !== undefined) {
+      queryParams.includeInactive = String(queryParams.includeInactive);
+    }
     // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:106',message:'getTasks API call started',data:{params},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getTasks',message:'API call',data:{params,queryParams},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
-    const response = await apiClient.get('/tasks', { params });
+    const response = await apiClient.get('/tasks', { params: queryParams });
     const apiEndTime = Date.now();
     // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:113',message:'getTasks API call completed',data:{duration:apiEndTime-apiStartTime,tasksCount:response.data?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getTasks:response',message:'API response',data:{status:response.status,dataType:typeof response.data,isArray:Array.isArray(response.data),length:Array.isArray(response.data)?response.data.length:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
     return response.data;
   },
@@ -385,7 +393,18 @@ export const api = {
 
   // Admin - Rewards
   async getRewardTemplates(params?: { includeInactive?: boolean }) {
-    const response = await apiClient.get('/rewards/templates', { params });
+    // Convert boolean to string 'true'/'false' for query params
+    const queryParams: any = {};
+    if (params?.includeInactive !== undefined) {
+      queryParams.includeInactive = String(params.includeInactive);
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getRewardTemplates',message:'API call',data:{params,queryParams},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    const response = await apiClient.get('/rewards/templates', { params: queryParams });
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getRewardTemplates:response',message:'API response',data:{status:response.status,dataType:typeof response.data,isArray:Array.isArray(response.data),length:Array.isArray(response.data)?response.data.length:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     return response.data;
   },
 
@@ -716,28 +735,16 @@ export const api = {
 
   // Team Admin
   async getAllTeams(options?: { includeInactive?: boolean }) {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:702',message:'getAllTeams API call start',data:{includeInactive:options?.includeInactive},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     const params = new URLSearchParams();
     if (options?.includeInactive) {
       params.append('includeInactive', 'true');
     }
     const queryString = params.toString();
     const url = `/teams/all${queryString ? `?${queryString}` : ''}`;
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:709',message:'getAllTeams API call before request',data:{url,baseURL:apiBaseUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     try {
       const response = await apiClient.get(url);
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:712',message:'getAllTeams API call success',data:{status:response.status,dataLength:response.data?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return response.data;
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:716',message:'getAllTeams API call error',data:{error:error?.message,status:error?.response?.status,responseData:error?.response?.data,url:error?.config?.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       throw error;
     }
   },

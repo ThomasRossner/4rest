@@ -407,9 +407,6 @@ export async function redeemRewardFromTeam(teamId: string, rewardId: string, use
  * Löst ein Team auf und verteilt Punkte gleichmäßig
  */
 export async function dissolveTeam(teamId: string, userId: string, skipCreatorCheck: boolean = false): Promise<void> {
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:409',message:'dissolveTeam entry',data:{teamId,userId,skipCreatorCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   const db = getPool();
   
   // Prüfe ob Benutzer der Ersteller ist
@@ -418,25 +415,13 @@ export async function dissolveTeam(teamId: string, userId: string, skipCreatorCh
     [teamId]
   );
   
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:418',message:'dissolveTeam after query',data:{teamFound:teamResult.rows.length>0,rowCount:teamResult.rows.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   if (teamResult.rows.length === 0) {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:419',message:'dissolveTeam team not found error',data:{teamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     throw new Error('Team not found');
   }
   
   const team = teamResult.rows[0];
   
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:424',message:'dissolveTeam before permission check',data:{teamCreatedBy:team.created_by,userId,isCreator:team.created_by===userId,skipCreatorCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   if (!skipCreatorCheck && team.created_by !== userId) {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:425',message:'dissolveTeam permission denied error',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     throw new Error('Only the team creator can dissolve the team');
   }
   
@@ -458,26 +443,14 @@ export async function dissolveTeam(teamId: string, userId: string, skipCreatorCh
       [teamId]
     );
     
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:459',message:'dissolveTeam DELETE executed',data:{teamId,rowCount:deleteResult.rowCount},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     
     if (deleteResult.rowCount === 0) {
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:463',message:'dissolveTeam DELETE no rows affected',data:{teamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       throw new Error('Team not found or could not be deleted');
     }
     
     await db.query('COMMIT');
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:469',message:'dissolveTeam DELETE committed',data:{teamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
   } catch (error) {
     await db.query('ROLLBACK');
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.service.ts:474',message:'dissolveTeam DELETE rolled back',data:{teamId,error:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     throw error;
   }
 }

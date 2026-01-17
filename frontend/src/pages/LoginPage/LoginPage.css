@@ -20,12 +20,13 @@
 .login-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-xl);
   flex-wrap: nowrap !important;
   min-width: 0;
   width: 100%;
+  position: relative;
 }
 
 .login-header-info {
@@ -39,18 +40,27 @@
   width: auto !important;
 }
 
+.login-logo-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .login-logo {
   width: 64px;
   height: 64px;
   display: block;
-  margin-bottom: var(--spacing-md);
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .login-header h1 {
   font-size: 1.75rem;
   color: var(--color-primary);
-  margin-bottom: var(--spacing-sm);
+  margin: 0;
   white-space: nowrap !important;
   overflow: visible !important;
   word-break: keep-all !important;
@@ -63,33 +73,44 @@
   letter-spacing: normal;
 }
 
-.login-header p {
-  color: var(--color-text-light);
-  margin: 0;
-}
-
 .login-language-switcher {
   align-self: flex-start;
   flex-shrink: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 @media (max-width: 480px) {
   .login-header {
-    flex-direction: column;
-    text-align: center;
+    flex-direction: row;
+    text-align: left;
     flex-wrap: nowrap !important;
+    align-items: flex-start;
   }
 
   .login-header-info {
-    text-align: center;
-    white-space: nowrap !important;
+    text-align: left;
+    white-space: normal !important;
     width: auto !important;
-    max-width: none !important;
+    max-width: calc(100% - 120px);
+    padding-right: var(--spacing-md);
+  }
+
+  .login-logo-row {
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .login-logo {
+    width: 48px;
+    height: 48px;
   }
   
   .login-header h1 {
-    white-space: nowrap !important;
-    font-size: 1.5rem !important;
+    white-space: normal !important;
+    font-size: 1.25rem !important;
+    word-break: break-word;
   }
   
   .login-container {
@@ -98,7 +119,9 @@
   }
 
   .login-language-switcher {
-    align-self: center;
+    position: absolute;
+    top: 0;
+    right: 0;
   }
 }
 

@@ -595,9 +595,6 @@ export async function awardContestRewards(contestId: string): Promise<void> {
  * Löst einen Contest auf (nur Ersteller)
  */
 export async function dissolveContest(contestId: string, userId: string, skipCreatorCheck: boolean = false): Promise<void> {
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:597',message:'dissolveContest entry',data:{contestId,userId,skipCreatorCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   const db = getPool();
   
   // Prüfe ob Benutzer der Ersteller ist
@@ -606,25 +603,13 @@ export async function dissolveContest(contestId: string, userId: string, skipCre
     [contestId]
   );
   
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:606',message:'dissolveContest after query',data:{contestFound:contestResult.rows.length>0,rowCount:contestResult.rows.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   if (contestResult.rows.length === 0) {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:607',message:'dissolveContest contest not found error',data:{contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     throw new Error('Contest not found');
   }
   
   const contest = contestResult.rows[0];
   
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:612',message:'dissolveContest before permission check',data:{contestCreatedBy:contest.created_by,userId,isCreator:contest.created_by===userId,skipCreatorCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   if (!skipCreatorCheck && contest.created_by !== userId) {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:613',message:'dissolveContest permission denied error',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     throw new Error('Only the contest creator can dissolve the contest');
   }
   
@@ -645,26 +630,14 @@ export async function dissolveContest(contestId: string, userId: string, skipCre
       [contestId]
     );
     
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:636',message:'dissolveContest DELETE executed',data:{contestId,rowCount:deleteResult.rowCount},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     
     if (deleteResult.rowCount === 0) {
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:640',message:'dissolveContest DELETE no rows affected',data:{contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       throw new Error('Contest not found or could not be deleted');
     }
     
     await db.query('COMMIT');
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:647',message:'dissolveContest DELETE committed',data:{contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
   } catch (error) {
     await db.query('ROLLBACK');
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'contest.service.ts:652',message:'dissolveContest DELETE rolled back',data:{contestId,error:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     throw error;
   }
 }

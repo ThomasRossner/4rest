@@ -6,7 +6,6 @@ import { buildTeamContestFilterClauses, getConfiguredHotelId } from '../utils/qu
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 import { updateContestPoints } from './contest.service.js';
 import { getUserActiveTeam, getTeamMembers } from './team.service.js';
-import fs from 'fs';
 export async function getAllTasks(filters, userId, options) {
     const db = getPool();
     let userType = null;
@@ -16,14 +15,20 @@ export async function getAllTasks(filters, userId, options) {
     let paramIndex = { current: 1 };
     let applyAudienceFilters = !(options?.includeAll ?? false);
     const includeInactive = options?.includeInactive ?? false;
+    // #region agent log
+    console.log('[DEBUG] task.service.ts:getAllTasks - Initial', JSON.stringify({ includeAll: options?.includeAll, applyAudienceFilters, includeInactive, hasUserId: !!userId }));
+    // #endregion
     if (userId) {
         // Get user info
         const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
         if (userResult.rows[0]) {
             const userRole = userResult.rows[0].role;
             userType = userResult.rows[0].user_type;
-            // Administrators see all tasks
-            if (userRole === 'administrator') {
+            // #region agent log
+            console.log('[DEBUG] task.service.ts:getAllTasks - User role', JSON.stringify({ userRole, applyAudienceFiltersBefore: applyAudienceFilters }));
+            // #endregion
+            // Administrators and redaktion see all tasks when includeAll is true
+            if (userRole === 'administrator' || userRole === 'redaktion') {
                 applyAudienceFilters = false;
             }
             else {
@@ -34,6 +39,9 @@ export async function getAllTasks(filters, userId, options) {
                 const contestResult = await db.query('SELECT contest_id FROM contest_participants WHERE user_id = $1', [userId]);
                 userContestIds = contestResult.rows.map((row) => row.contest_id);
             }
+            // #region agent log
+            console.log('[DEBUG] task.service.ts:getAllTasks - After role check', JSON.stringify({ applyAudienceFilters, userTeamIds: userTeamIds.length, userContestIds: userContestIds.length }));
+            // #endregion
         }
     }
     let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
@@ -50,7 +58,13 @@ export async function getAllTasks(filters, userId, options) {
         clauses.push('t.active = TRUE');
     }
     // Filter by team/contest assignments
+    // #region agent log
+    console.log('[DEBUG] task.service.ts:getAllTasks - Before filter check', JSON.stringify({ applyAudienceFilters, clausesCount: clauses.length }));
+    // #endregion
     if (applyAudienceFilters) {
+        // #region agent log
+        console.log('[DEBUG] task.service.ts:getAllTasks - Applying filters (this should NOT happen for admin/redaktion with includeAll=true)');
+        // #endregion
         const hotelId = getConfiguredHotelId();
         const filterClauses = buildTeamContestFilterClauses({
             userTeamIds: userTeamIds.length > 0 ? userTeamIds : null,
@@ -59,7 +73,19 @@ export async function getAllTasks(filters, userId, options) {
             hotelId,
             applyFilters: true,
         }, params, paramIndex);
-        clauses.push(...filterClauses);
+        // Add table prefix 't.' to column references (similar to reward.service.ts)
+        // Note: allowed_user_types and allowed_hotel_ids were removed in migration 038
+        const taskClauses = filterClauses.map(clause => clause.replace(/\ballowed_teams\b/g, 't.allowed_teams')
+            .replace(/\ballowed_contests\b/g, 't.allowed_contests'));
+        clauses.push(...taskClauses);
+        // #region agent log
+        console.log('[DEBUG] task.service.ts:getAllTasks - Filter clauses added', JSON.stringify({ filterClausesCount: filterClauses.length, taskClausesCount: taskClauses.length }));
+        // #endregion
+    }
+    else {
+        // #region agent log
+        console.log('[DEBUG] task.service.ts:getAllTasks - Skipping filters (includeAll=true or admin/redaktion)');
+        // #endregion
     }
     if (filters?.type) {
         clauses.push(`t.type = $${paramIndex.current++}`);
@@ -69,6 +95,9 @@ export async function getAllTasks(filters, userId, options) {
     if (clauses.length > 0) {
         query += ` WHERE ${clauses.join(' AND ')}`;
     }
+    // #region agent log
+    console.log('[DEBUG] task.service.ts:getAllTasks - Final query', JSON.stringify({ query: query.substring(0, 300), clausesCount: clauses.length, applyAudienceFilters }));
+    // #endregion
     query += ' ORDER BY t.id, t.created_at DESC';
     if (filters?.limit) {
         query += ` LIMIT $${paramIndex.current++}`;
@@ -78,7 +107,22 @@ export async function getAllTasks(filters, userId, options) {
         query += ` OFFSET $${paramIndex.current++}`;
         params.push(filters.offset);
     }
-    const result = await db.query(query, params);
+    let result;
+    try {
+        // #region agent log
+        console.log('[DEBUG] task.service.ts:getAllTasks - Executing query', JSON.stringify({ queryLength: query.length, paramsCount: params.length }));
+        // #endregion
+        result = await db.query(query, params);
+        // #region agent log
+        console.log('[DEBUG] task.service.ts:getAllTasks - Query executed successfully', JSON.stringify({ rowCount: result.rows.length }));
+        // #endregion
+    }
+    catch (error) {
+        // #region agent log
+        console.error('[DEBUG] task.service.ts:getAllTasks - Query failed', JSON.stringify({ error: error.message, query: query.substring(0, 500), paramsCount: params.length, errorCode: error.code }));
+        // #endregion
+        throw error;
+    }
     const unique = new Map();
     for (const row of result.rows) {
         unique.set(row.id, row);
@@ -465,34 +509,8 @@ export async function updateTask(id, data) {
     if ('thumbnail_url' in data) {
         updates.push(`thumbnail_url = $${paramIndex++}`);
         values.push(data.thumbnail_url ?? null);
-        // #region agent log
-        const logData = { location: 'task.service.ts:571', message: 'thumbnail_url ALWAYS added to updates', data: { hasThumbnailUrl: 'thumbnail_url' in data, thumbnailUrl: data.thumbnail_url, thumbnailUrlType: typeof data.thumbnail_url, value: data.thumbnail_url ?? null, updatesCount: updates.length, paramIndex }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' };
-        console.log('[DEBUG]', JSON.stringify(logData));
-        try {
-            const logDir = '/app/.cursor';
-            if (!fs.existsSync(logDir))
-                fs.mkdirSync(logDir, { recursive: true });
-            fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
-        }
-        catch (e) {
-            console.error('[DEBUG] Log error:', e);
-        }
-        // #endregion
     }
     else {
-        // #region agent log
-        const logData = { location: 'task.service.ts:585', message: 'thumbnail_url NOT in data', data: { hasThumbnailUrl: 'thumbnail_url' in data, dataKeys: Object.keys(data) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' };
-        console.log('[DEBUG]', JSON.stringify(logData));
-        try {
-            const logDir = '/app/.cursor';
-            if (!fs.existsSync(logDir))
-                fs.mkdirSync(logDir, { recursive: true });
-            fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
-        }
-        catch (e) {
-            console.error('[DEBUG] Log error:', e);
-        }
-        // #endregion
     }
     Object.entries(data).forEach(([key, value]) => {
         // Skip invalid fields, id, and thumbnail_url (already handled above)
@@ -552,33 +570,7 @@ export async function updateTask(id, data) {
     }
     updates.push('updated_at = CURRENT_TIMESTAMP');
     values.push(id);
-    // #region agent log
-    const logDataQuery = { location: 'task.service.ts:667', message: 'SQL UPDATE query', data: { updates: updates.join(', '), values: JSON.stringify(values), hasThumbnailInUpdates: updates.some(u => u.includes('thumbnail_url')), paramIndex }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' };
-    console.log('[DEBUG]', JSON.stringify(logDataQuery));
-    try {
-        const logDir = '/app/.cursor';
-        if (!fs.existsSync(logDir))
-            fs.mkdirSync(logDir, { recursive: true });
-        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataQuery) + '\n');
-    }
-    catch (e) {
-        console.error('[DEBUG] Log error:', e);
-    }
-    // #endregion
     const result = await db.query(`UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`, values);
-    // #region agent log
-    const logDataResult = { location: 'task.service.ts:672', message: 'SQL UPDATE result', data: { rowCount: result.rowCount, thumbnailUrl: result.rows[0]?.thumbnail_url, returnedTask: result.rows[0] ? JSON.stringify(result.rows[0]) : null }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' };
-    console.log('[DEBUG]', JSON.stringify(logDataResult));
-    try {
-        const logDir = '/app/.cursor';
-        if (!fs.existsSync(logDir))
-            fs.mkdirSync(logDir, { recursive: true });
-        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataResult) + '\n');
-    }
-    catch (e) {
-        console.error('[DEBUG] Log error:', e);
-    }
-    // #endregion
     return result.rows[0] || null;
 }
 export async function deleteTask(id) {

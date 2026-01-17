@@ -132,68 +132,6 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
 
   // Measure table column widths after render
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:useEffect-start',message:'useEffect triggered',data:{hasTableRef:!!tableRef.current,filteredContestsLength:filteredContests.length,cssPrefix},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    if (tableRef.current && filteredContests.length > 0) {
-      // Wait for next frame to ensure layout is complete
-      requestAnimationFrame(() => {
-        const tableEl = tableRef.current;
-        if (!tableEl) return;
-        
-        const allHeaders = Array.from(tableEl.querySelectorAll('thead tr th'));
-        const allCells = Array.from(tableEl.querySelectorAll('tbody tr:first-child td'));
-        const tableRect = tableEl.getBoundingClientRect();
-        const computedTable = window.getComputedStyle(tableEl);
-        const tableClasses = tableEl.className;
-        
-        const columnData = allHeaders.map((th, idx) => {
-          const cell = allCells[idx];
-          const thRect = th.getBoundingClientRect();
-          const cellRect = cell?.getBoundingClientRect();
-          const computedTh = window.getComputedStyle(th);
-          const computedCell = cell ? window.getComputedStyle(cell) : null;
-          
-          return {
-            index: idx + 1,
-            text: th.textContent?.trim(),
-            headerWidth: thRect.width,
-            headerPercent: (thRect.width / tableRect.width * 100).toFixed(2),
-            cellWidth: cellRect?.width,
-            cellPercent: cellRect ? (cellRect.width / tableRect.width * 100).toFixed(2) : null,
-            computedHeaderWidth: computedTh.width,
-            computedHeaderMaxWidth: computedTh.maxWidth,
-            computedHeaderMinWidth: computedTh.minWidth,
-            computedCellWidth: computedCell?.width,
-            computedCellMaxWidth: computedCell?.maxWidth,
-            computedCellMinWidth: computedCell?.minWidth,
-            allComputedStyles: {
-              width: computedTh.width,
-              maxWidth: computedTh.maxWidth,
-              minWidth: computedTh.minWidth,
-              display: computedTh.display,
-            }
-          };
-        });
-        
-        // Check buttons
-        const buttons = Array.from(tableEl.querySelectorAll('button'));
-        const buttonData = buttons.map((btn, idx) => {
-          const computed = window.getComputedStyle(btn);
-          return {
-            index: idx,
-            text: btn.textContent?.trim(),
-            className: btn.className,
-            backgroundColor: computed.backgroundColor,
-            color: computed.color,
-            hasDangerClass: btn.classList.contains('danger'),
-            allClasses: Array.from(btn.classList),
-          };
-        });
-        
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:useEffect',message:'Full table analysis',data:{tableWidth:tableRect.width,tableClasses,tableLayout:computedTable.tableLayout,cssPrefix,columns:columnData,buttons:buttonData,hasContestTeamClass:tableClasses.includes('contest-team-table')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      });
-    }
-    // #endregion
   }, [filteredContests.length, cssPrefix]);
 
   // Contest QR code generation
@@ -309,30 +247,15 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
     (contestId: string) => api.dissolveContest(contestId),
     {
       onSuccess: async (response, contestId) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:244',message:'deleteContestMutation onSuccess called',data:{contestId,response,includeInactiveContests,queryKey:['adminContests',includeInactiveContests]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:246',message:'before invalidateQueries',data:{queryKey:['adminContests'],allQueryKeys:queryClient.getQueryCache().getAll().map(q=>q.queryKey),currentContests:adminContests?.map(c=>c.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         // Update cache directly by removing the deleted contest
         queryClient.setQueriesData(['adminContests'], (oldData: any[] | undefined) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:250',message:'setQueriesData callback',data:{oldDataLength:oldData?.length,contestIdToRemove:contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           if (!oldData) return oldData;
           const filtered = oldData.filter((contest) => contest.id !== contestId);
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:254',message:'setQueriesData filtered',data:{oldLength:oldData.length,newLength:filtered.length,removedContestId:contestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           return filtered;
         });
         // Invalidate and refetch to ensure consistency
         await queryClient.invalidateQueries(['adminContests'], { exact: false });
         await refetchContests();
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:262',message:'after refetchContests',data:{contestsListLength:contestsList.length,adminContestsLength:adminContests?.length,filteredContestsLength:filteredContests.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         showToast({
           type: 'success',
           message: t('rezeption.contest.manage.deleteSuccess', 'Wettbewerb erfolgreich gelöscht'),
@@ -340,9 +263,6 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
         setContestConfirmDialog({ visible: false, contestId: null, action: null, contestName: '' });
       },
       onError: (error: any, contestId) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:262',message:'deleteContestMutation onError',data:{contestId,error:error?.message,status:error?.response?.status,responseData:error?.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         showToast({
           type: 'error',
           message: error?.response?.data?.error || t('rezeption.contest.manage.deleteError', 'Fehler beim Löschen des Wettbewerbs'),
@@ -403,11 +323,6 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
     }
   };
 
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:268',message:'ContestManagement render',data:{cssPrefix,enabled,contestsListLength:contestsList.length,adminContestsLength:adminContests?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-  }, [cssPrefix, enabled, contestsList.length, adminContests?.length]);
-  // #endregion
 
   return (
     <section className={`${cssPrefix}-section`}>
@@ -425,10 +340,6 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
                 type="button"
                 ref={(el) => {
                   if (el) {
-                    // #region agent log
-                    const computedStyle = window.getComputedStyle(el);
-                    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ContestManagement.tsx:356',message:'Create button styles',data:{className:el.className,backgroundColor:computedStyle.backgroundColor,color:computedStyle.color,border:computedStyle.border,allRules:Array.from(document.styleSheets).flatMap(sheet=>{try{return Array.from(sheet.cssRules||[]).filter(r=>r.selectorText&&r.selectorText.includes('action-button')).map(r=>({selector:r.selectorText,style:r.style.cssText}))}catch{return[]}})},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                    // #endregion
                   }
                 }}
               >

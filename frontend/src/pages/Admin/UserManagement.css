@@ -258,14 +258,13 @@
   color: var(--color-text-light, #6b7280);
 }
 
-
 /* User Management table buttons: green when enabled, red when disabled */
-.user-management-table-wrapper .admin-table td:last-child .admin-action-button {
+.user-management-table-wrapper .admin-action-button {
   background: var(--color-primary) !important;
   color: white !important;
 }
 
-.user-management-table-wrapper .admin-table td:last-child .admin-action-button:disabled {
+.user-management-table-wrapper .admin-action-button:disabled {
   background: var(--color-error) !important;
   color: white !important;
 }

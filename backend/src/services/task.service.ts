@@ -68,8 +68,8 @@ export async function getAllTasks(
       const userRole = userResult.rows[0].role;
       userType = userResult.rows[0].user_type as UserType;
       
-      // Administrators see all tasks
-      if (userRole === 'administrator') {
+      // Administrators and redaktion see all tasks when includeAll is true
+      if (userRole === 'administrator' || userRole === 'redaktion') {
         applyAudienceFilters = false;
       } else {
         // Get user's team memberships
@@ -119,7 +119,13 @@ export async function getAllTasks(
       params,
       paramIndex
     );
-    clauses.push(...filterClauses);
+    // Add table prefix 't.' to column references (similar to reward.service.ts)
+    // Note: allowed_user_types and allowed_hotel_ids were removed in migration 038
+    const taskClauses = filterClauses.map(clause => 
+      clause.replace(/\ballowed_teams\b/g, 't.allowed_teams')
+            .replace(/\ballowed_contests\b/g, 't.allowed_contests')
+    );
+    clauses.push(...taskClauses);
   }
 
   if (filters?.type) {
@@ -144,7 +150,13 @@ export async function getAllTasks(
     params.push(filters.offset);
   }
 
-  const result = await db.query(query, params);
+  let result;
+  try {
+    result = await db.query(query, params);
+  } catch (error: any) {
+    throw error;
+  }
+  
   const unique = new Map<string, any>();
   for (const row of result.rows) {
     unique.set(row.id, row);
@@ -589,29 +601,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   if ('thumbnail_url' in data) {
     updates.push(`thumbnail_url = $${paramIndex++}`);
     values.push(data.thumbnail_url ?? null);
-    // #region agent log
-    const logData = {location:'task.service.ts:571',message:'thumbnail_url ALWAYS added to updates',data:{hasThumbnailUrl:'thumbnail_url' in data,thumbnailUrl:data.thumbnail_url,thumbnailUrlType:typeof data.thumbnail_url,value:data.thumbnail_url ?? null,updatesCount:updates.length,paramIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'};
-    console.log('[DEBUG]', JSON.stringify(logData));
-    try {
-      const logDir = '/app/.cursor';
-      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-      fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
-    } catch (e) {
-      console.error('[DEBUG] Log error:', e);
-    }
-    // #endregion
   } else {
-    // #region agent log
-    const logData = {location:'task.service.ts:585',message:'thumbnail_url NOT in data',data:{hasThumbnailUrl:'thumbnail_url' in data,dataKeys:Object.keys(data)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'};
-    console.log('[DEBUG]', JSON.stringify(logData));
-    try {
-      const logDir = '/app/.cursor';
-      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-      fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
-    } catch (e) {
-      console.error('[DEBUG] Log error:', e);
-    }
-    // #endregion
   }
 
   Object.entries(data).forEach(([key, value]) => {
@@ -676,32 +666,10 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   updates.push('updated_at = CURRENT_TIMESTAMP');
   values.push(id);
 
-  // #region agent log
-  const logDataQuery = {location:'task.service.ts:667',message:'SQL UPDATE query',data:{updates:updates.join(', '),values:JSON.stringify(values),hasThumbnailInUpdates:updates.some(u => u.includes('thumbnail_url')),paramIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
-  console.log('[DEBUG]', JSON.stringify(logDataQuery));
-  try {
-    const logDir = '/app/.cursor';
-    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-    fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataQuery) + '\n');
-  } catch (e) {
-    console.error('[DEBUG] Log error:', e);
-  }
-  // #endregion
   const result = await db.query(
     `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
     values
   );
-  // #region agent log
-  const logDataResult = {location:'task.service.ts:672',message:'SQL UPDATE result',data:{rowCount:result.rowCount,thumbnailUrl:result.rows[0]?.thumbnail_url,returnedTask:result.rows[0] ? JSON.stringify(result.rows[0]) : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'};
-  console.log('[DEBUG]', JSON.stringify(logDataResult));
-  try {
-    const logDir = '/app/.cursor';
-    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-    fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataResult) + '\n');
-  } catch (e) {
-    console.error('[DEBUG] Log error:', e);
-  }
-  // #endregion
 
   return result.rows[0] || null;
 }

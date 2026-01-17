@@ -42,7 +42,6 @@ async function runMigrations() {
             '029_reward_metadata',
             '030_populate_reward_metadata',
             '031_task_zielgruppe',
-            '032_task_zielgruppe_multiselect',
             '033_parameter_tables',
             '034_add_parameter_weight',
             '035_points_calculation_factor',
@@ -53,11 +52,25 @@ async function runMigrations() {
             '040_reward_zielgruppe',
             '041_restore_moegliche_punkte',
             '042_zielgruppe_multiselect',
+            // Migration 043: Teams/Contests must come before other 043 migrations
             '043_teams_contests',
+            '043_add_front_office_to_zielgruppe',
+            // Migration 044: Replace mitarbeitende depends on 043_add_front_office
+            '044_replace_mitarbeitende_with_front_office',
             '044_reward_redemption_metadata',
+            // Migration 045: Contest start_date depends on 043_teams_contests
             '045_contest_start_date',
+            '045_remove_stakeholder_from_zielgruppe',
+            // Migration 046: Contest rewards_awarded depends on 043_teams_contests
             '046_contest_rewards_awarded',
+            '046_remove_duplicate_zielgruppe',
+            // Migration 047: Both are independent
+            '047_add_unique_constraint_qr_code',
             '047_task_reward_thumbnails',
+            '048_fix_user_role_enum',
+            '049_team_contest_registration_qr_codes',
+            '050_replace_front_office_with_rezeption_redaktion',
+            '051_replace_allowed_roles_with_teams_contests',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({

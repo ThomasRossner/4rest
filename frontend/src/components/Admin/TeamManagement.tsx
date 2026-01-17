@@ -5,6 +5,12 @@ import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import { TeamCreator } from '../Teams/TeamCreator';
 import { UserSelectionModal } from './UserSelectionModal';
+import { useSelection } from '../../hooks/useSelection';
+import { useBulkOperations } from '../../hooks/useBulkOperations';
+import { ManagementHeader } from '../Management/ManagementHeader';
+import { ManagementCard } from '../Management/ManagementCard';
+import { BulkActionsBar } from '../Management/BulkActionsBar';
+import { ManagementTable, type TableColumn } from '../Management/ManagementTable';
 import QRCode from 'qrcode.react';
 
 type TeamManagementProps = {
@@ -35,7 +41,6 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
   const [teamFilterStatus, setTeamFilterStatus] = useState<'active' | 'inactive' | null>(null);
   const [teamFilterName, setTeamFilterName] = useState('');
   const [teamFilterCreator, setTeamFilterCreator] = useState<string | null>(null);
-  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [teamManagementMessage, setTeamManagementMessage] = useState<
     { type: 'error' | 'success'; text: string } | null
   >(null);
@@ -66,18 +71,9 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
   } = useQuery<any[]>(
     ['adminTeams', includeInactiveTeams],
     () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:68',message:'getAllTeams called',data:{includeInactive:includeInactiveTeams,enabled},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       return api.getAllTeams({ includeInactive: includeInactiveTeams }).then((data) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:72',message:'getAllTeams success',data:{teamsCount:data?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         return data;
       }).catch((error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:76',message:'getAllTeams error',data:{error:error?.message,status:error?.response?.status,responseData:error?.response?.data,stack:error?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         throw error;
       });
     },
@@ -135,70 +131,43 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
     return filtered;
   }, [teamsList, teamFilterStatus, teamFilterName, teamFilterCreator]);
 
+  // Use selection hook for teams
+  const teamSelection = useSelection(filteredTeams);
+  const allTeamsSelected = teamSelection.allSelected;
+  const hasTeamSelection = teamSelection.hasSelection;
+
+  // Use bulk operations hook for teams
+  const teamBulkOperations = useBulkOperations(teamSelection.selectedIds, {
+    bulkUpdateStatus: async (ids, active) => {
+      await api.bulkUpdateTeamsStatus(ids, active);
+    },
+    bulkDelete: async (ids) => {
+      // Handle bulk delete through confirm dialog
+      setTeamConfirmDialog({
+        visible: true,
+        teamId: null,
+        action: 'delete',
+        teamName: `${ids.length} ${t('rezeption.team.manage.teams', 'Teams')}`,
+      });
+      // Store IDs for bulk delete
+      (teamConfirmDialog as any).bulkIds = ids;
+    },
+    refetch: async () => {
+      await refetchTeams();
+    },
+    getSuccessMessage: (action, count) => {
+      if (action === 'activate') return t('rezeption.team.manage.bulkActivateSuccess', 'Ausgewählte Teams wurden aktiviert');
+      if (action === 'deactivate') return t('rezeption.team.manage.bulkDeactivateSuccess', 'Ausgewählte Teams wurden deaktiviert');
+      return t('rezeption.team.manage.bulkDeleteSuccess', 'Ausgewählte Teams wurden gelöscht');
+    },
+    getErrorMessage: (action, error) => {
+      if (action === 'delete') return error?.response?.data?.error || t('rezeption.team.manage.bulkDeleteError', 'Fehler beim Löschen');
+      return error?.response?.data?.error || t('rezeption.team.manage.bulkStatusError', 'Fehler beim Ändern des Status');
+    },
+  });
+
   // Measure table column widths after render
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:useEffect-start',message:'useEffect triggered',data:{hasTableRef:!!tableRef.current,filteredTeamsLength:filteredTeams.length,cssPrefix},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    if (tableRef.current && filteredTeams.length > 0) {
-      // Wait for next frame to ensure layout is complete
-      requestAnimationFrame(() => {
-        const tableEl = tableRef.current;
-        if (!tableEl) return;
-        
-        const allHeaders = Array.from(tableEl.querySelectorAll('thead tr th'));
-        const allCells = Array.from(tableEl.querySelectorAll('tbody tr:first-child td'));
-        const tableRect = tableEl.getBoundingClientRect();
-        const computedTable = window.getComputedStyle(tableEl);
-        const tableClasses = tableEl.className;
-        
-        const columnData = allHeaders.map((th, idx) => {
-          const cell = allCells[idx];
-          const thRect = th.getBoundingClientRect();
-          const cellRect = cell?.getBoundingClientRect();
-          const computedTh = window.getComputedStyle(th);
-          const computedCell = cell ? window.getComputedStyle(cell) : null;
-          
-          return {
-            index: idx + 1,
-            text: th.textContent?.trim(),
-            headerWidth: thRect.width,
-            headerPercent: (thRect.width / tableRect.width * 100).toFixed(2),
-            cellWidth: cellRect?.width,
-            cellPercent: cellRect ? (cellRect.width / tableRect.width * 100).toFixed(2) : null,
-            computedHeaderWidth: computedTh.width,
-            computedHeaderMaxWidth: computedTh.maxWidth,
-            computedHeaderMinWidth: computedTh.minWidth,
-            computedCellWidth: computedCell?.width,
-            computedCellMaxWidth: computedCell?.maxWidth,
-            computedCellMinWidth: computedCell?.minWidth,
-            allComputedStyles: {
-              width: computedTh.width,
-              maxWidth: computedTh.maxWidth,
-              minWidth: computedTh.minWidth,
-              display: computedTh.display,
-            }
-          };
-        });
-        
-        // Check buttons
-        const buttons = Array.from(tableEl.querySelectorAll('button'));
-        const buttonData = buttons.map((btn, idx) => {
-          const computed = window.getComputedStyle(btn);
-          return {
-            index: idx,
-            text: btn.textContent?.trim(),
-            className: btn.className,
-            backgroundColor: computed.backgroundColor,
-            color: computed.color,
-            hasDangerClass: btn.classList.contains('danger'),
-            allClasses: Array.from(btn.classList),
-          };
-        });
-        
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:useEffect',message:'Full table analysis',data:{tableWidth:tableRect.width,tableClasses,tableLayout:computedTable.tableLayout,cssPrefix,columns:columnData,buttons:buttonData,hasContestTeamClass:tableClasses.includes('contest-team-table')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      });
-    }
-    // #endregion
   }, [filteredTeams.length, cssPrefix]);
 
   // Team QR code generation
@@ -314,30 +283,15 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
     (teamId: string) => api.dissolveTeam(teamId),
     {
       onSuccess: async (response, teamId) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:235',message:'deleteTeamMutation onSuccess called',data:{teamId,response,includeInactiveTeams,queryKey:['adminTeams',includeInactiveTeams]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:237',message:'before invalidateQueries',data:{queryKey:['adminTeams'],allQueryKeys:queryClient.getQueryCache().getAll().map(q=>q.queryKey),currentTeams:adminTeams?.map(t=>t.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         // Update cache directly by removing the deleted team
         queryClient.setQueriesData(['adminTeams'], (oldData: any[] | undefined) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:241',message:'setQueriesData callback',data:{oldDataLength:oldData?.length,teamIdToRemove:teamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           if (!oldData) return oldData;
           const filtered = oldData.filter((team) => team.id !== teamId);
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:245',message:'setQueriesData filtered',data:{oldLength:oldData.length,newLength:filtered.length,removedTeamId:teamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           return filtered;
         });
         // Invalidate and refetch to ensure consistency
         await queryClient.invalidateQueries(['adminTeams'], { exact: false });
         await refetchTeams();
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:252',message:'after refetchTeams',data:{teamsListLength:teamsList.length,adminTeamsLength:adminTeams?.length,filteredTeamsLength:filteredTeams.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         showToast({
           type: 'success',
           message: t('rezeption.team.manage.deleteSuccess', 'Team erfolgreich gelöscht'),
@@ -345,9 +299,6 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         setTeamConfirmDialog({ visible: false, teamId: null, action: null, teamName: '' });
       },
       onError: (error: any, teamId) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:252',message:'deleteTeamMutation onError',data:{teamId,error:error?.message,status:error?.response?.status,responseData:error?.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         showToast({
           type: 'error',
           message: error?.response?.data?.error || t('rezeption.team.manage.deleteError', 'Fehler beim Löschen des Teams'),
@@ -356,45 +307,23 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
     }
   );
 
-  // Bulk operations
-  const toggleTeamSelection = (teamId: string, checked: boolean) => {
-    setSelectedTeamIds((prev) => {
-      if (checked) {
-        return [...prev, teamId];
-      } else {
-        return prev.filter((id) => id !== teamId);
-      }
-    });
+  // Bulk operations handlers
+  const handleTeamBulkStatus = async (active: boolean) => {
+    await teamBulkOperations.handleBulkStatus(active);
+    teamSelection.deselectAll();
   };
 
-  const handleTeamBulkStatus = async (active: boolean) => {
-    if (!selectedTeamIds.length) return;
-    try {
-      setTeamManagementMessage(null);
-      await api.bulkUpdateTeamsStatus(selectedTeamIds, active);
-      setTeamManagementMessage({
-        type: 'success',
-        text: active 
-          ? t('rezeption.team.manage.bulkActivateSuccess', 'Ausgewählte Teams wurden aktiviert')
-          : t('rezeption.team.manage.bulkDeactivateSuccess', 'Ausgewählte Teams wurden deaktiviert'),
-      });
-      setSelectedTeamIds([]);
-      await refetchTeams();
-    } catch (error: any) {
-      setTeamManagementMessage({
-        type: 'error',
-        text: error?.response?.data?.error || t('rezeption.team.manage.bulkStatusError', 'Fehler beim Ändern des Status'),
-      });
-    }
-  };
+  // Store bulk IDs for delete confirmation
+  const bulkDeleteIdsRef = useRef<string[]>([]);
 
   const handleTeamBulkDelete = async () => {
-    if (!selectedTeamIds.length) return;
+    if (!teamSelection.selectedIds.length) return;
+    bulkDeleteIdsRef.current = teamSelection.selectedIds;
     setTeamConfirmDialog({
       visible: true,
       teamId: null,
       action: 'delete',
-      teamName: `${selectedTeamIds.length} ${t('rezeption.team.manage.teams', 'Teams')}`,
+      teamName: `${teamSelection.selectedIds.length} ${t('rezeption.team.manage.teams', 'Teams')}`,
     });
   };
 
@@ -408,56 +337,37 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
     }
   };
 
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:264',message:'TeamManagement render',data:{cssPrefix,enabled,teamsListLength:teamsList.length,adminTeamsLength:adminTeams?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-  }, [cssPrefix, enabled, teamsList.length, adminTeams?.length]);
-  // #endregion
 
   return (
     <section className={`${cssPrefix}-section`}>
-      <header className={`${cssPrefix}-section-header`}>
-        <div>
-          <h2>{t('rezeption.team.manage.title', 'Teams verwalten')}</h2>
-          <p>{t('rezeption.team.manage.subtitle', 'Verwalten Sie alle Teams')}</p>
-        </div>
-        <div className={`${cssPrefix}-actions`}>
-          {!editingTeamId && !isCreatingTeam && (
-            <>
-              <button
-                className={`${cssPrefix}-action-button`}
-                onClick={() => setIsCreatingTeam(true)}
-                type="button"
-              >
-                {t('rezeption.team.manage.createNew', 'Neues Team erstellen')}
-              </button>
-              <button
-                className={`${cssPrefix}-icon-button`}
-                onClick={() => refetchTeams()}
-                title={t('rezeption.team.manage.refresh', 'Aktualisieren')}
-              >
-                <Icon name="refresh" />
-                <span className="sr-only">{t('rezeption.team.manage.refresh', 'Aktualisieren')}</span>
-              </button>
-            </>
-          )}
-          <button
-            className={`${cssPrefix}-icon-button`}
-            onClick={handleBack}
-            title={t('common.actions.back', 'Zurück')}
-          >
-            <Icon name="back" />
-            <span className="sr-only">{t('common.actions.back', 'Zurück')}</span>
-          </button>
-        </div>
-      </header>
+      <ManagementHeader
+        title={t('rezeption.team.manage.title', 'Teams verwalten')}
+        subtitle={t('rezeption.team.manage.subtitle', 'Verwalten Sie alle Teams')}
+        cssPrefix={cssPrefix}
+        onBack={handleBack}
+        onRefresh={() => refetchTeams()}
+        showBack={true}
+        showRefresh={!editingTeamId && !isCreatingTeam}
+        isEditing={!!editingTeamId}
+        onCancelEdit={() => setEditingTeamId(null)}
+      />
+      {!editingTeamId && !isCreatingTeam && (
+        <button
+          className={`${cssPrefix}-action-button`}
+          onClick={() => setIsCreatingTeam(true)}
+          type="button"
+          style={{ marginBottom: '1rem' }}
+        >
+          {t('rezeption.team.manage.createNew', 'Neues Team erstellen')}
+        </button>
+      )}
 
       {teamsLoading && <p>{t('rezeption.team.manage.loading', 'Lade Teams...')}</p>}
       {Boolean(teamsError) && <p className={`${cssPrefix}-error`}>{t('rezeption.team.manage.loadError', 'Fehler beim Laden der Teams')}</p>}
 
-      {teamManagementMessage && (
-        <div className={`${cssPrefix}-message ${cssPrefix}-message-${teamManagementMessage.type}`}>
-          {teamManagementMessage.text}
+      {(teamBulkOperations.message || teamManagementMessage) && (
+        <div className={`${cssPrefix}-message ${cssPrefix}-message-${(teamBulkOperations.message || teamManagementMessage)?.type}`}>
+          {(teamBulkOperations.message || teamManagementMessage)?.text}
         </div>
       )}
 
@@ -550,187 +460,154 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
 
       {!editingTeamId && !isCreatingTeam && (
         <>
-          <div className={`${cssPrefix}-filters`}>
-            <div className={`${cssPrefix}-filter-group`}>
-              <label>
-                {t('rezeption.team.manage.filters.status', 'Status')}
-                <select
-                  value={teamFilterStatus || ''}
-                  onChange={(e) => setTeamFilterStatus(e.target.value as 'active' | 'inactive' | null || null)}
-                >
-                  <option value="">{t('common.all', 'Alle')}</option>
-                  <option value="active">{t('common.status.active', 'Aktiv')}</option>
-                  <option value="inactive">{t('common.status.inactive', 'Inaktiv')}</option>
-                </select>
-              </label>
-              <label>
-                {t('rezeption.team.manage.filters.name', 'Name')}
-                <input
-                  type="text"
-                  value={teamFilterName}
-                  onChange={(e) => setTeamFilterName(e.target.value)}
-                  placeholder={t('rezeption.team.manage.filters.namePlaceholder', 'Nach Name suchen...')}
-                />
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'row' }}>
-                <input
-                  type="checkbox"
-                  checked={includeInactiveTeams}
-                  onChange={(e) => setIncludeInactiveTeams(e.target.checked)}
-                />
-                {t('rezeption.team.manage.filters.includeInactive', 'Inaktive anzeigen')}
-              </label>
-            </div>
-          </div>
-
-          {/* Bulk action buttons */}
-          <div className={`${cssPrefix}-management-actions`}>
-            <span className={`${cssPrefix}-selection-count`}>
-              {selectedTeamIds.length > 0
-                ? t('rezeption.team.manage.selectedCount', '{{count}} ausgewählt', { count: selectedTeamIds.length })
-                : t('rezeption.team.manage.noSelection', 'Keine Auswahl')}
-            </span>
-            <div className={`${cssPrefix}-bulk-buttons`}>
-              <button
-                className={`${cssPrefix}-action-button`}
-                onClick={() => handleTeamBulkStatus(true)}
-                disabled={selectedTeamIds.length === 0}
-                type="button"
-              >
-                {t('rezeption.team.manage.activate', 'Aktivieren')}
-              </button>
-              <button
-                className={`${cssPrefix}-action-button`}
-                onClick={() => handleTeamBulkStatus(false)}
-                disabled={selectedTeamIds.length === 0}
-                type="button"
-              >
-                {t('rezeption.team.manage.deactivate', 'Deaktivieren')}
-              </button>
-              <button
-                className={`${cssPrefix}-action-button`}
-                onClick={handleTeamBulkDelete}
-                disabled={selectedTeamIds.length === 0}
-                type="button"
-              >
-                {t('common.actions.delete', 'Löschen')}
-              </button>
-            </div>
-          </div>
+          <ManagementCard
+            cssPrefix={cssPrefix}
+            title={t('rezeption.team.manage.existingTitle', 'Bestehende Teams')}
+            subtitle={t('rezeption.team.manage.existingSubtitle', 'Verwalten Sie Teams, bearbeiten Sie deren Details oder löschen Sie Teams')}
+            message={teamBulkOperations.message || teamManagementMessage}
+            topControls={
+              <>
+                <div className={`${cssPrefix}-filters`}>
+                  <div className={`${cssPrefix}-filter-group`}>
+                    <label>
+                      {t('rezeption.team.manage.filters.status', 'Status')}
+                      <select
+                        value={teamFilterStatus || ''}
+                        onChange={(e) => setTeamFilterStatus(e.target.value as 'active' | 'inactive' | null || null)}
+                      >
+                        <option value="">{t('common.all', 'Alle')}</option>
+                        <option value="active">{t('common.status.active', 'Aktiv')}</option>
+                        <option value="inactive">{t('common.status.inactive', 'Inaktiv')}</option>
+                      </select>
+                    </label>
+                    <label>
+                      {t('rezeption.team.manage.filters.name', 'Name')}
+                      <input
+                        type="text"
+                        value={teamFilterName}
+                        onChange={(e) => setTeamFilterName(e.target.value)}
+                        placeholder={t('rezeption.team.manage.filters.namePlaceholder', 'Nach Name suchen...')}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'row' }}>
+                      <input
+                        type="checkbox"
+                        checked={includeInactiveTeams}
+                        onChange={(e) => {
+                          setIncludeInactiveTeams(e.target.checked);
+                          teamSelection.deselectAll();
+                        }}
+                      />
+                      {t('rezeption.team.manage.filters.includeInactive', 'Inaktive anzeigen')}
+                    </label>
+                  </div>
+                </div>
+              </>
+            }
+          >
+            <BulkActionsBar
+              cssPrefix={cssPrefix}
+              hasSelection={hasTeamSelection}
+              selectionCount={teamSelection.selectedIds.length}
+              onActivate={() => handleTeamBulkStatus(true)}
+              onDeactivate={() => handleTeamBulkStatus(false)}
+              onDelete={handleTeamBulkDelete}
+              activateLabel={t('rezeption.team.manage.activate', 'Aktivieren')}
+              deactivateLabel={t('rezeption.team.manage.deactivate', 'Deaktivieren')}
+              deleteLabel={t('common.actions.delete', 'Löschen')}
+              selectionCountLabel={(count) => t('rezeption.team.manage.selectedCount', '{{count}} ausgewählt', { count })}
+              noSelectionLabel={t('rezeption.team.manage.noSelection', 'Keine Auswahl')}
+            />
 
           {/* Teams table */}
-          <div className={`${cssPrefix}-table-wrapper`}>
-            <table className={`${cssPrefix}-table contest-team-table`} ref={tableRef}>
-              <thead>
-                <tr>
-                  <th style={{ width: '3rem' }}>
-                    <input
-                      type="checkbox"
-                      className={`${cssPrefix}-checkbox`}
-                      checked={filteredTeams.length > 0 && selectedTeamIds.length === filteredTeams.length}
-                      disabled={filteredTeams.length === 0}
-                      onChange={(event) =>
-                        setSelectedTeamIds(
-                          event.target.checked
-                            ? filteredTeams.map((team) => team.id)
-                            : []
-                        )
-                      }
-                      aria-label={t('rezeption.team.manage.selectAll', 'Alle auswählen')}
-                    />
-                  </th>
-                  <th>{t('rezeption.team.manage.name', 'Name')}</th>
-                  <th>{t('rezeption.team.manage.createdBy', 'Erstellt von')}</th>
-                  <th>{t('rezeption.team.manage.status', 'Status')}</th>
-                  <th>{t('common.actions.title', 'Aktionen')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTeams.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className={`${cssPrefix}-table-empty`}>
-                      {t('rezeption.team.manage.noTeams', 'Keine Teams gefunden')}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTeams.map((team) => {
-                    const isSelected = selectedTeamIds.includes(team.id);
-                    return (
-                      <tr key={team.id}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            className={`${cssPrefix}-checkbox`}
-                            checked={isSelected}
-                            onChange={(event) =>
-                              toggleTeamSelection(team.id, event.target.checked)
-                            }
-                            aria-label={`${t('rezeption.team.manage.selectTeam', 'Team auswählen')} ${team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team')}`}
-                          />
-                        </td>
-                        <td data-label={t('rezeption.team.manage.name', 'Name')}>
-                          <div className={`${cssPrefix}-table-primary`}>
-                            <span className={`${cssPrefix}-table-title`}>
-                              {team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team')}
-                            </span>
-                          </div>
-                        </td>
-                        <td data-label={t('rezeption.team.manage.createdBy', 'Erstellt von')}>
-                          {team.creator_name || 'Unknown'}
-                        </td>
-                        <td data-label={t('rezeption.team.manage.status', 'Status')}>
-                          <span className={`${cssPrefix}-status-badge ${team.active ? 'active' : 'inactive'}`}>
-                            {team.active ? t('common.status.active', 'Aktiv') : t('common.status.inactive', 'Inaktiv')}
-                          </span>
-                        </td>
-                        <td data-label={t('common.actions.title', 'Aktionen')}>
-                          <div className={`${cssPrefix}-bulk-buttons`}>
-                            <button
-                              className={`${cssPrefix}-action-button`}
-                              onClick={() => setEditingTeamId(team.id)}
-                              type="button"
-                            >
-                              {t('common.actions.edit', 'Bearbeiten')}
-                            </button>
-                            <button
-                              className={`${cssPrefix}-action-button`}
-                              onClick={() => {
-                                setTeamConfirmDialog({
-                                  visible: true,
-                                  teamId: team.id,
-                                  action: 'toggleActive',
-                                  teamName: team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team'),
-                                });
-                              }}
-                              type="button"
-                            >
-                              {team.active
-                                ? t('rezeption.team.manage.deactivate', 'Deaktivieren')
-                                : t('rezeption.team.manage.activate', 'Aktivieren')}
-                            </button>
-                            <button
-                              className={`${cssPrefix}-action-button`}
-                              onClick={() => {
-                                setTeamConfirmDialog({
-                                  visible: true,
-                                  teamId: team.id,
-                                  action: 'delete',
-                                  teamName: team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team'),
-                                });
-                              }}
-                              type="button"
-                            >
-                              {t('common.actions.delete', 'Löschen')}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          {(() => {
+            const teamColumns: TableColumn<any>[] = [
+              {
+                key: 'name',
+                label: t('rezeption.team.manage.name', 'Name'),
+                render: (team) => (
+                  <div className={`${cssPrefix}-table-primary`}>
+                    <span className={`${cssPrefix}-table-title`}>
+                      {team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team')}
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                key: 'createdBy',
+                label: t('rezeption.team.manage.createdBy', 'Erstellt von'),
+                render: (team) => team.creator_name || 'Unknown',
+              },
+              {
+                key: 'status',
+                label: t('rezeption.team.manage.status', 'Status'),
+                render: (team) => (
+                  <span className={`${cssPrefix}-status-badge ${team.active ? 'active' : 'inactive'}`}>
+                    {team.active ? t('common.status.active', 'Aktiv') : t('common.status.inactive', 'Inaktiv')}
+                  </span>
+                ),
+              },
+            ];
+
+            return (
+              <ManagementTable
+                items={filteredTeams}
+                columns={teamColumns}
+                cssPrefix={cssPrefix}
+                selectedIds={teamSelection.selectedIds}
+                onSelectAll={(checked) =>
+                  checked ? teamSelection.selectAll() : teamSelection.deselectAll()
+                }
+                onSelectItem={(id, checked) => teamSelection.toggle(id, checked)}
+                allSelected={allTeamsSelected}
+                emptyMessage={t('rezeption.team.manage.noTeams', 'Keine Teams gefunden')}
+                actionsColumn={{
+                  render: (team) => (
+                    <>
+                      <button
+                        className={`${cssPrefix}-action-button`}
+                        onClick={() => setEditingTeamId(team.id)}
+                        type="button"
+                      >
+                        {t('common.actions.edit', 'Bearbeiten')}
+                      </button>
+                      <button
+                        className={`${cssPrefix}-action-button`}
+                        onClick={() => {
+                          setTeamConfirmDialog({
+                            visible: true,
+                            teamId: team.id,
+                            action: 'toggleActive',
+                            teamName: team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team'),
+                          });
+                        }}
+                        type="button"
+                      >
+                        {team.active
+                          ? t('rezeption.team.manage.deactivate', 'Deaktivieren')
+                          : t('rezeption.team.manage.activate', 'Aktivieren')}
+                      </button>
+                      <button
+                        className={`${cssPrefix}-action-button`}
+                        onClick={() => {
+                          setTeamConfirmDialog({
+                            visible: true,
+                            teamId: team.id,
+                            action: 'delete',
+                            teamName: team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team'),
+                          });
+                        }}
+                        type="button"
+                      >
+                        {t('common.actions.delete', 'Löschen')}
+                      </button>
+                    </>
+                  ),
+                }}
+              />
+            );
+          })()}
+          </ManagementCard>
         </>
       )}
 
@@ -838,20 +715,23 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                       deleteTeamMutation.mutate(teamConfirmDialog.teamId);
                     } else {
                       // Bulk delete
-                      try {
-                        setTeamManagementMessage(null);
-                        await api.bulkDeleteTeams(selectedTeamIds);
-                        setTeamManagementMessage({
-                          type: 'success',
-                          text: t('rezeption.team.manage.bulkDeleteSuccess', 'Ausgewählte Teams wurden gelöscht'),
-                        });
-                        setSelectedTeamIds([]);
-                        await refetchTeams();
-                      } catch (error: any) {
-                        setTeamManagementMessage({
-                          type: 'error',
-                          text: error?.response?.data?.error || t('rezeption.team.manage.bulkDeleteError', 'Fehler beim Löschen der Teams'),
-                        });
+                      const bulkIds = bulkDeleteIdsRef.current;
+                      if (bulkIds.length > 0) {
+                        try {
+                          await api.bulkDeleteTeams(bulkIds);
+                          teamBulkOperations.setMessage({
+                            type: 'success',
+                            text: t('rezeption.team.manage.bulkDeleteSuccess', 'Ausgewählte Teams wurden gelöscht'),
+                          });
+                          teamSelection.deselectAll();
+                          bulkDeleteIdsRef.current = [];
+                          await refetchTeams();
+                        } catch (error: any) {
+                          teamBulkOperations.setMessage({
+                            type: 'error',
+                            text: error?.response?.data?.error || t('rezeption.team.manage.bulkDeleteError', 'Fehler beim Löschen der Teams'),
+                          });
+                        }
                       }
                     }
                     setTeamConfirmDialog({ visible: false, teamId: null, action: null, teamName: '' });

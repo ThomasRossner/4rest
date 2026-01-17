@@ -125,3 +125,7 @@ temp/
 
 # Chat and conversation logs
 chat/
+
+# Vite build cache
+node_modules/.vite/
+frontend/node_modules/.vite/

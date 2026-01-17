@@ -59,27 +59,11 @@ export function buildTeamContestFilterClauses(
     clauses.push(`(${teamContestConditions.join(' OR ')})`);
   }
 
-  // User type filter (kept for backward compatibility, can be removed later)
-  if (userType) {
-    clauses.push(
-      `(allowed_user_types IS NULL OR COALESCE(array_length(allowed_user_types, 1), 0) = 0 OR $${paramIndex.current} = ANY(allowed_user_types))`
-    );
-    params.push(userType);
-    paramIndex.current++;
-  } else {
-    clauses.push('(allowed_user_types IS NULL OR COALESCE(array_length(allowed_user_types, 1), 0) = 0)');
-  }
-
-  // Hotel ID filter (kept for backward compatibility, can be removed later)
-  if (hotelId) {
-    clauses.push(
-      `(allowed_hotel_ids IS NULL OR COALESCE(array_length(allowed_hotel_ids, 1), 0) = 0 OR $${paramIndex.current} = ANY(allowed_hotel_ids))`
-    );
-    params.push(hotelId);
-    paramIndex.current++;
-  } else {
-    clauses.push('(allowed_hotel_ids IS NULL OR COALESCE(array_length(allowed_hotel_ids, 1), 0) = 0)');
-  }
+  // User type filter removed - column was dropped in migration 038
+  // These filters are no longer used as they were replaced by zielgruppe and team/contest filtering
+  
+  // Hotel ID filter removed - column was dropped in migration 038
+  // These filters are no longer used as they were replaced by team/contest filtering
 
   return clauses;
 }

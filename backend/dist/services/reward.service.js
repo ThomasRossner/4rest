@@ -40,10 +40,9 @@ export async function getRewardsService(userId) {
         }, params, paramIndex);
         // Convert clauses to SQL WHERE conditions
         // The clauses use table aliases, so we need to adapt them for rewards table
+        // Note: allowed_user_types and allowed_hotel_ids were removed in migration 038
         const rewardClauses = filterClauses.map(clause => clause.replace(/allowed_teams/g, 'r.allowed_teams')
-            .replace(/allowed_contests/g, 'r.allowed_contests')
-            .replace(/allowed_user_types/g, 'r.allowed_user_types')
-            .replace(/allowed_hotel_ids/g, 'r.allowed_hotel_ids'));
+            .replace(/allowed_contests/g, 'r.allowed_contests'));
         if (rewardClauses.length > 0) {
             query += ` AND ${rewardClauses.join(' AND ')}`;
         }

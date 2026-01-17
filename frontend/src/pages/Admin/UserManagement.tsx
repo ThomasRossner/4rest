@@ -6,6 +6,11 @@ import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 import { USER_ROLES, UserRole } from '../../constants/enums';
 import { pushToast } from '../../components/Toaster/Toaster';
+import { useSelection } from '../../hooks/useSelection';
+import { useBulkOperations } from '../../hooks/useBulkOperations';
+import { ManagementCard } from '../../components/Management/ManagementCard';
+import { BulkActionsBar } from '../../components/Management/BulkActionsBar';
+import { ManagementTable, type TableColumn } from '../../components/Management/ManagementTable';
 import './UserManagement.css';
 
 const COMPACT_TOGGLE_STYLE: React.CSSProperties = {
@@ -33,7 +38,6 @@ export function UserManagement() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [includeInactiveUsers, setIncludeInactiveUsers] = useState(false);
   const [userManagementMessage, setUserManagementMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const [showNewUserModal, setShowNewUserModal] = useState(false);
@@ -89,16 +93,10 @@ export function UserManagement() {
     return users;
   }, [users]);
 
-  const allUsersSelected = filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length;
-  const hasUserSelection = selectedUserIds.length > 0;
-
-  const toggleUserSelection = (userId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedUserIds([...selectedUserIds, userId]);
-    } else {
-      setSelectedUserIds(selectedUserIds.filter((id) => id !== userId));
-    }
-  };
+  // Use selection hook for users
+  const userSelection = useSelection(filteredUsers);
+  const allUsersSelected = userSelection.allSelected;
+  const hasUserSelection = userSelection.hasSelection;
 
   const updateRoleMutation = useMutation(
     ({ userId, role }: { userId: string; role: UserRole }) => api.updateUserRole(userId, role),
@@ -164,20 +162,11 @@ export function UserManagement() {
     ({ userId, password }: { userId: string; password: string }) => api.setUserPassword(userId, password),
     {
       onSuccess: () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserManagement.tsx:166',message:'setPasswordMutation onSuccess called',data:{selectedUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         pushToast({ type: 'success', message: t('admin.users.messages.passwordSetSuccess') });
         setShowPasswordFields(false);
         setNewPassword('');
         setConfirmPassword('');
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserManagement.tsx:175',message:'setPasswordMutation before setSelectedUserId(null)',data:{selectedUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         setSelectedUserId(null); // Close the user details modal
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserManagement.tsx:178',message:'setPasswordMutation after setSelectedUserId(null)',data:{selectedUserId:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
       },
       onError: (error: any) => {
         pushToast({ type: 'error', message: error?.response?.data?.error || t('admin.users.messages.passwordSetError') });
@@ -220,12 +209,11 @@ export function UserManagement() {
     }
   );
 
-  const handleUserBulkStatus = async (active: boolean) => {
-    if (!selectedUserIds.length) return;
-    try {
-      setUserManagementMessage(null);
+  // Use bulk operations hook for users
+  const userBulkOperations = useBulkOperations(userSelection.selectedIds, {
+    bulkUpdateStatus: async (ids, active) => {
       // Perform bulk operation by calling toggleUserActive for each user
-      const promises = selectedUserIds.map((userId) => {
+      const promises = ids.map((userId) => {
         // First get the user to check current status
         return api.getUserDetails(userId).then((userData) => {
           if (userData.user.active !== active) {
@@ -235,40 +223,36 @@ export function UserManagement() {
         });
       });
       await Promise.all(promises);
-      setUserManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.selectedUsersActivated', { count: selectedUserIds.length }) : t('admin.messages.selectedUsersDeactivated', { count: selectedUserIds.length }),
-      });
-      setSelectedUserIds([]);
-      void refetchUsers();
-    } catch (error: any) {
-      setUserManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to update selected users.',
-      });
-    }
+    },
+    bulkDelete: async (ids) => {
+      const promises = ids.map((userId) => api.deleteUser(userId, false));
+      await Promise.all(promises);
+    },
+    refetch: async () => {
+      await refetchUsers();
+    },
+    getSuccessMessage: (action, count) => {
+      if (action === 'activate') return t('admin.messages.selectedUsersActivated', { count });
+      if (action === 'deactivate') return t('admin.messages.selectedUsersDeactivated', { count });
+      return t('admin.messages.selectedUsersDeleted', { count });
+    },
+    getErrorMessage: (action, error) => {
+      if (action === 'delete') return error?.message || 'Failed to delete selected users.';
+      return error?.message || 'Failed to update selected users.';
+    },
+  });
+
+  const handleUserBulkStatus = async (active: boolean) => {
+    await userBulkOperations.handleBulkStatus(active);
+    userSelection.deselectAll();
   };
 
   const handleUserBulkDelete = async () => {
-    if (!selectedUserIds.length) return;
-    const message = t('admin.users.confirmBulkDelete', { count: selectedUserIds.length });
+    if (!userSelection.selectedIds.length) return;
+    const message = t('admin.users.confirmBulkDelete', { count: userSelection.selectedIds.length });
     if (!confirm(message)) return;
-    try {
-      setUserManagementMessage(null);
-      const promises = selectedUserIds.map((userId) => api.deleteUser(userId, false));
-      await Promise.all(promises);
-      setUserManagementMessage({
-        type: 'success',
-        text: t('admin.messages.selectedUsersDeleted', { count: selectedUserIds.length }),
-      });
-      setSelectedUserIds([]);
-      void refetchUsers();
-    } catch (error: any) {
-      setUserManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to delete selected users.',
-      });
-    }
+    await userBulkOperations.handleBulkDelete();
+    userSelection.deselectAll();
   };
 
   const handleUserClick = (userId: string) => {
@@ -352,13 +336,13 @@ export function UserManagement() {
         <div className="admin-loading">{t('admin.users.loading')}</div>
       ) : (
         <>
-          <div className="admin-management-card">
-            <div className="admin-management-top">
-              <div>
-                <h3>{t('admin.users.existing.title', 'Bestehende Benutzer')}</h3>
-                <p>{t('admin.users.existing.subtitle', 'Verwalten Sie Benutzer, bearbeiten Sie deren Details oder bereinigen Sie inaktive Einträge.')}</p>
-              </div>
-              <div className="admin-management-controls">
+          <ManagementCard
+            cssPrefix="admin"
+            title={t('admin.users.existing.title', 'Bestehende Benutzer')}
+            subtitle={t('admin.users.existing.subtitle', 'Verwalten Sie Benutzer, bearbeiten Sie deren Details oder bereinigen Sie inaktive Einträge.')}
+            message={userBulkOperations.message || userManagementMessage}
+            topControls={
+              <>
                 <label className="admin-toggle">
                   <input
                     type="checkbox"
@@ -367,7 +351,7 @@ export function UserManagement() {
                     checked={includeInactiveUsers}
                     onChange={(event) => {
                       setIncludeInactiveUsers(event.target.checked);
-                      setSelectedUserIds([]);
+                      userSelection.deselectAll();
                     }}
                   />
                   <span>{t('admin.taskManage.showInactive', 'Inaktive anzeigen')}</span>
@@ -375,151 +359,107 @@ export function UserManagement() {
                 <button className="admin-action-button" type="button" onClick={() => setShowNewUserModal(true)}>
                   {t('admin.users.newButton', 'Neuer Benutzer')}
                 </button>
-              </div>
-            </div>
-            {userManagementMessage && (
-              <p
-                className={
-                  userManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
-                }
-              >
-                {userManagementMessage.text}
-              </p>
-            )}
-            <div className="admin-management-actions">
-              <div className="admin-bulk-buttons">
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleUserBulkStatus(true)}
-                  disabled={!hasUserSelection}
-                  type="button"
-                >
-                  {t('admin.users.activate', 'Aktivieren')}
-                </button>
-                <button
-                  className="admin-action-button"
-                  onClick={() => handleUserBulkStatus(false)}
-                  disabled={!hasUserSelection}
-                  type="button"
-                >
-                  {t('admin.users.deactivate', 'Deaktivieren')}
-                </button>
-                <button
-                  className="admin-action-button"
-                  onClick={handleUserBulkDelete}
-                  disabled={!hasUserSelection}
-                  type="button"
-                >
-                  {t('common.actions.delete', 'Löschen')}
-                </button>
-              </div>
-              <span className="admin-selection-count">
-                {hasUserSelection
-                  ? t('admin.users.selectedCount', { count: selectedUserIds.length })
-                  : t('admin.users.noSelection', 'Keine Benutzer ausgewählt')}
-              </span>
-            </div>
-            <div className="user-management-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>
-                      <input
-                        type="checkbox"
-                        className="admin-checkbox"
-                        style={COMPACT_TOGGLE_STYLE}
-                        checked={allUsersSelected && filteredUsers.length > 0}
-                        disabled={!filteredUsers.length}
-                        onChange={(event) =>
-                          setSelectedUserIds(
-                            event.target.checked
-                              ? filteredUsers.map((user) => user.id)
-                              : []
-                          )
-                        }
-                        aria-label={t('admin.users.selectAll', 'Alle Benutzer auswählen')}
-                      />
-                    </th>
-                    <th>{t('admin.users.table.name')}</th>
-                    <th>{t('admin.users.table.email')}</th>
-                    <th>{t('admin.users.table.role')}</th>
-                    <th>{t('admin.users.table.points')}</th>
-                    <th>{t('admin.users.table.status')}</th>
-                    <th>{t('admin.users.table.created')}</th>
-                    <th>{t('admin.users.table.actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="admin-table-empty">
-                        {t('admin.users.noUsers')}
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredUsers.map((user) => {
-                      const isSelected = selectedUserIds.includes(user.id);
-                      return (
-                        <tr
-                          key={user.id}
-                          className={user.id === selectedUserId ? 'selected' : ''}
-                        >
-                          <td>
-                            <input
-                              type="checkbox"
-                              className="admin-checkbox"
-                              style={COMPACT_TOGGLE_STYLE}
-                              checked={isSelected}
-                              onChange={(event) =>
-                                toggleUserSelection(user.id, event.target.checked)
-                              }
-                              aria-label={`Select user ${user.name}`}
-                            />
-                          </td>
-                          <td data-label={t('admin.users.table.name')}>{user.name}</td>
-                          <td data-label={t('admin.users.table.email')}>{user.email || '-'}</td>
-                          <td data-label={t('admin.users.table.role')}>{t(`admin.users.roles.${user.role}`) || user.role}</td>
-                          <td data-label={t('admin.users.table.points')}>{user.points}</td>
-                          <td data-label={t('admin.users.table.status')}>
-                            <span className={user.active ? 'status-active' : 'status-inactive'}>
-                              {user.active ? t('admin.users.status.active') : t('admin.users.status.inactive')}
-                            </span>
-                          </td>
-                          <td data-label={t('admin.users.table.created')}>{new Date(user.created_at).toLocaleDateString()}</td>
-                          <td data-label={t('admin.users.table.actions')} className="admin-table-actions">
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => handleEditUser(user.id)}
-                            >
-                              {t('common.actions.edit', 'Bearbeiten')}
-                            </button>
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => handleToggleActive(user.id)}
-                              disabled={user.id === currentUser?.id}
-                            >
-                              {user.active ? t('admin.users.deactivate', 'Deaktivieren') : t('admin.users.activate', 'Aktivieren')}
-                            </button>
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => handleDeleteUser(user.id, false)}
-                              disabled={user.id === currentUser?.id}
-                            >
-                              {t('common.actions.delete', 'Löschen')}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+              </>
+            }
+          >
+            <BulkActionsBar
+              cssPrefix="admin"
+              hasSelection={hasUserSelection}
+              selectionCount={userSelection.selectedIds.length}
+              onActivate={() => handleUserBulkStatus(true)}
+              onDeactivate={() => handleUserBulkStatus(false)}
+              onDelete={handleUserBulkDelete}
+              activateLabel={t('admin.users.activate', 'Aktivieren')}
+              deactivateLabel={t('admin.users.deactivate', 'Deaktivieren')}
+              deleteLabel={t('common.actions.delete', 'Löschen')}
+              selectionCountLabel={(count) => t('admin.users.selectedCount', { count })}
+              noSelectionLabel={t('admin.users.noSelection', 'Keine Benutzer ausgewählt')}
+            />
+            {(() => {
+              const userColumns: TableColumn<UserListItem>[] = [
+                {
+                  key: 'name',
+                  label: t('admin.users.table.name'),
+                  render: (user) => user.name,
+                },
+                {
+                  key: 'email',
+                  label: t('admin.users.table.email'),
+                  render: (user) => user.email || '-',
+                },
+                {
+                  key: 'role',
+                  label: t('admin.users.table.role'),
+                  render: (user) => t(`admin.users.roles.${user.role}`) || user.role,
+                },
+                {
+                  key: 'points',
+                  label: t('admin.users.table.points'),
+                  render: (user) => user.points,
+                },
+                {
+                  key: 'status',
+                  label: t('admin.users.table.status'),
+                  render: (user) => (
+                    <span className={user.active ? 'status-active' : 'status-inactive'}>
+                      {user.active ? t('admin.users.status.active') : t('admin.users.status.inactive')}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'created',
+                  label: t('admin.users.table.created'),
+                  render: (user) => new Date(user.created_at).toLocaleDateString(),
+                },
+              ];
 
-            {totalPages > 1 && (
+              return (
+                <ManagementTable
+                  items={filteredUsers}
+                  columns={userColumns}
+                  cssPrefix="admin"
+                  selectedIds={userSelection.selectedIds}
+                  onSelectAll={(checked) =>
+                    checked ? userSelection.selectAll() : userSelection.deselectAll()
+                  }
+                  onSelectItem={(id, checked) => userSelection.toggle(id, checked)}
+                  allSelected={allUsersSelected}
+                  emptyMessage={t('admin.users.noUsers')}
+                  actionsColumn={{
+                    render: (user) => (
+                      <>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => handleEditUser(user.id)}
+                        >
+                          {t('common.actions.edit', 'Bearbeiten')}
+                        </button>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => handleToggleActive(user.id)}
+                          disabled={user.id === currentUser?.id}
+                        >
+                          {user.active ? t('admin.users.deactivate', 'Deaktivieren') : t('admin.users.activate', 'Aktivieren')}
+                        </button>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => handleDeleteUser(user.id, false)}
+                          disabled={user.id === currentUser?.id}
+                        >
+                          {t('common.actions.delete', 'Löschen')}
+                        </button>
+                      </>
+                    ),
+                  }}
+                />
+              );
+            })()}
+          </ManagementCard>
+
+          {totalPages > 1 && (
               <div className="user-management-pagination">
                 <button
                   disabled={page === 1}
@@ -538,7 +478,6 @@ export function UserManagement() {
                 </button>
               </div>
             )}
-          </div>
         </>
       )}
 

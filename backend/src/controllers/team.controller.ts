@@ -150,27 +150,15 @@ export const redeemRewardController: RequestHandler = asyncHandler(async (req, r
  */
 export const dissolveTeamController: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:146',message:'dissolveTeamController entry',data:{method:req.method,path:req.path,params:req.params,userId:authReq.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   if (!authReq.user) {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:149',message:'dissolveTeamController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   const { id } = req.params;
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:153',message:'dissolveTeamController before dissolveTeam',data:{teamId:id,userId:authReq.user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-  // #endregion
   
   // Administratoren und Rezeption können Teams löschen, auch wenn sie nicht der Ersteller sind
   const isAdminOrRezeption = authReq.user.role === 'administrator' || authReq.user.role === 'rezeption';
   await dissolveTeam(id, authReq.user.id, isAdminOrRezeption);
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'team.controller.ts:154',message:'dissolveTeamController after dissolveTeam success',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   res.json({ success: true });
 });
 
@@ -296,35 +284,20 @@ export const getTeamRankingController: RequestHandler = asyncHandler(async (req,
  * Query: ?includeInactive=true
  */
 export const getAllTeamsController: RequestHandler = asyncHandler(async (req, res) => {
-  // #region agent log
-  await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:298',message:'getAllTeamsController called',data:{hasUser:!!(req as AuthRequest).user,userRole:(req as AuthRequest).user?.role,includeInactive:req.query.includeInactive},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
-  // #endregion
   const authReq = req as AuthRequest;
   if (!authReq.user) {
-    // #region agent log
-    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:302',message:'getAllTeamsController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
-    // #endregion
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
-    // #region agent log
-    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:306',message:'getAllTeamsController forbidden',data:{userRole:authReq.user.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
-    // #endregion
     return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const includeInactive = req.query.includeInactive === 'true';
   try {
     const teams = await getAllTeams({ includeInactive });
-    // #region agent log
-    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:312',message:'getAllTeamsController success',data:{teamsCount:teams?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
-    // #endregion
     res.json(teams);
   } catch (error: any) {
-    // #region agent log
-    await import('fs').then(fs => fs.promises.appendFile('/Users/thomas/Development/4rest/.cursor/debug.log', JSON.stringify({location:'team.controller.ts:316',message:'getAllTeamsController error',data:{error:error?.message,stack:error?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n').catch(()=>{}));
-    // #endregion
     throw error;
   }
 });
@@ -380,48 +353,24 @@ export const enableTeamRegistrationController: RequestHandler = asyncHandler(asy
  * Ruft den Registrierungs-QR-Code eines Teams ab (nur für Administratoren)
  */
 export const getTeamRegistrationQrCodeController: RequestHandler = asyncHandler(async (req, res) => {
-  // #region agent log
-  const logPath='/Users/thomas/Development/4rest/.cursor/debug.log';try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:358',message:'getTeamRegistrationQrCodeController entry',data:{method:req.method,path:req.path,params:req.params,userId:(req as any).user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n');}catch(e){}
-  // #endregion
   const authReq = req as AuthRequest;
   if (!authReq.user) {
-    // #region agent log
-    try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:361',message:'getTeamRegistrationQrCodeController unauthorized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
-    // #endregion
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
   if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
-    // #region agent log
-    try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:365',message:'getTeamRegistrationQrCodeController forbidden',data:{userRole:authReq.user.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
-    // #endregion
     return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
   
   const { id } = req.params;
-  // #region agent log
-  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:370',message:'getTeamRegistrationQrCodeController before getTeamRegistrationQrCode',data:{teamId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})+'\n');}catch(e){}
-  // #endregion
   const registrationQr = await getTeamRegistrationQrCode(id);
-  // #region agent log
-  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:372',message:'getTeamRegistrationQrCodeController after getTeamRegistrationQrCode',data:{hasQrToken:!!registrationQr.qrToken,enabled:registrationQr.enabled},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})+'\n');}catch(e){}
-  // #endregion
   
   if (!registrationQr.qrToken) {
-    // #region agent log
-    try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:374',message:'getTeamRegistrationQrCodeController no qrToken found',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n');}catch(e){}
-    // #endregion
     return res.status(404).json({ error: 'Registration QR code not found. Enable registration first.' });
   }
   
   const frontendUrl = getFrontendUrlFromRequest(req);
-  // #region agent log
-  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:394',message:'getTeamRegistrationQrCodeController frontendUrl determined',data:{frontendUrl,hasEnvVar:!!(process.env.FRONTEND_URL||process.env.APP_URL),reqHost:req.headers?.host,reqProtocol:req.protocol},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n');}catch(e){}
-  // #endregion
   const registrationUrl = `${frontendUrl}/register?team=${registrationQr.qrToken}`;
-  // #region agent log
-  try{fs.appendFileSync(logPath,JSON.stringify({location:'team.controller.ts:397',message:'getTeamRegistrationQrCodeController returning response',data:{qrToken:registrationQr.qrToken,registrationUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})+'\n');}catch(e){}
-  // #endregion
   
   res.json({
     qrToken: registrationQr.qrToken,

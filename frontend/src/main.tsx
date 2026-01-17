@@ -16,12 +16,22 @@ const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <QueryClientProvider client={queryClient}>
-    <App />
-    {import.meta.env.VITE_UI_POLISH ? <Toaster /> : null}
-  </QueryClientProvider>
-);
+const root = document.getElementById('root');
+if (!root) {
+  console.error('Root element not found!');
+} else {
+  try {
+    ReactDOM.createRoot(root).render(
+      <QueryClientProvider client={queryClient}>
+        <App />
+        {import.meta.env.VITE_UI_POLISH ? <Toaster /> : null}
+      </QueryClientProvider>
+    );
+  } catch (error) {
+    console.error('Error rendering app:', error);
+    root.innerHTML = `<div style="padding: 20px; color: red;"><h1>Error loading app</h1><pre>${error}</pre></div>`;
+  }
+}
 
 // Register PWA service worker (disabled automatically in development by the helper)
 registerServiceWorker();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useQuery, useMutation } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
@@ -17,6 +17,8 @@ import {
 } from '../../constants/enums';
 import { TASK_TYPE_ICONS } from '../../constants/taskIcons.ts';
 import { REWARD_TYPE_ICONS } from '../../constants/rewardIcons.ts';
+import { TaskTypeIcon } from '../../components/TypeIcons/TaskTypeIcon';
+import { RewardTypeIcon } from '../../components/TypeIcons/RewardTypeIcon';
 import QrScannerPage from './QrScannerPage';
 import { LocationMap } from '../../components/LocationMap/LocationMap';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
@@ -29,6 +31,13 @@ import { UserSelectionModal } from '../../components/Admin/UserSelectionModal';
 import { TeamManagement } from '../../components/Admin/TeamManagement';
 import { ContestManagement } from '../../components/Admin/ContestManagement';
 import QRCode from 'qrcode.react';
+import { useSelection } from '../../hooks/useSelection';
+import { useEntityFilters, type FilterConfig } from '../../hooks/useEntityFilters';
+import { useBulkOperations } from '../../hooks/useBulkOperations';
+import { ManagementHeader } from '../../components/Management/ManagementHeader';
+import { ManagementCard } from '../../components/Management/ManagementCard';
+import { BulkActionsBar } from '../../components/Management/BulkActionsBar';
+import { ManagementTable, type TableColumn } from '../../components/Management/ManagementTable';
 
 type AdminMode =
   | 'task'
@@ -234,22 +243,7 @@ const defaultConfirmDialogState: ConfirmDialogState = {
   onConfirm: () => undefined,
 };
 
-const TaskTypeIcon = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
-  if (thumbnailUrl) {
-    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block', flexShrink: 0 }} />;
-  }
-  const typeIcon = TASK_TYPE_ICONS[type] ?? '🧩';
-  // Handle ReactNode (for QR code) vs string (for emojis)
-  if (typeof typeIcon === 'string') {
-    return (
-      <span aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block', flexShrink: 0 }}>
-        {typeIcon}
-      </span>
-    );
-  }
-  // For ReactNode (QRCodeIcon), render it directly
-  return <span style={{ display: 'inline-block', flexShrink: 0, fontSize: '48px', lineHeight: '1' }}>{typeIcon}</span>;
-};
+// TaskTypeIcon is now imported from shared component
 
 // TaskTypeBadge for use in forms (shows icon + type text)
 const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: string | null }) => {
@@ -269,17 +263,7 @@ const TaskTypeBadge = ({ type, thumbnailUrl }: { type: string; thumbnailUrl?: st
   );
 };
 
-const RewardTypeIcon = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
-  if (thumbnailUrl) {
-    return <img src={thumbnailUrl} alt={type} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px', display: 'block', flexShrink: 0 }} />;
-  }
-  const typeIcon = REWARD_TYPE_ICONS[type] ?? '🎁';
-  return (
-    <span aria-hidden="true" style={{ fontSize: '48px', lineHeight: '1', display: 'inline-block', flexShrink: 0 }}>
-      {typeIcon}
-    </span>
-  );
-};
+// RewardTypeIcon is now imported from shared component
 
 // RewardTypeBadge for use in forms (shows icon + type text)
 const RewardTypeBadge = ({ type, thumbnailUrl }: { type: RewardType; thumbnailUrl?: string | null }) => {
@@ -2534,11 +2518,8 @@ function AdminPage() {
   const [taskReturnMode, setTaskReturnMode] = useState<AdminMode | null>(null);
   const [isPrerequisiteModalOpen, setIsPrerequisiteModalOpen] = useState(false);
   const [prerequisiteModalMode, setPrerequisiteModalMode] = useState<'single' | 'multi'>('single');
-  const [taskManagementMessage, setTaskManagementMessage] = useState<
-    { type: 'error' | 'success'; text: string } | null
-  >(null);
+  // taskManagementMessage is now handled by taskBulkOperations hook
   const [includeInactiveTasks, setIncludeInactiveTasks] = useState(false);
-  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [taskConfirm, setTaskConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
   const [taskFilterLocation, setTaskFilterLocation] = useState<string | null>(null);
   const [taskFilterStatus, setTaskFilterStatus] = useState<'active' | 'inactive' | null>(null);
@@ -2566,7 +2547,6 @@ function AdminPage() {
     { type: 'error' | 'success'; text: string } | null
   >(null);
   const [includeInactiveRewards, setIncludeInactiveRewards] = useState(false);
-  const [selectedRewardIds, setSelectedRewardIds] = useState<string[]>([]);
   const [rewardConfirm, setRewardConfirm] = useState<ConfirmDialogState>(defaultConfirmDialogState);
   const [rewardFilterLocation, setRewardFilterLocation] = useState<string | null>(null);
   const [rewardFilterStatus, setRewardFilterStatus] = useState<'active' | 'inactive' | null>(null);
@@ -2762,7 +2742,6 @@ function AdminPage() {
   };
   const [locationReturnMode, setLocationReturnMode] = useState<AdminMode | null>(null);
   const [includeInactiveLocations, setIncludeInactiveLocations] = useState(false);
-  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
 
   const taskValidation = useMemo(
     () => validateTaskFormState({ taskSource, selectedExistingTaskId, taskForm, isEditing: isEditingTask, t }),
@@ -2901,6 +2880,11 @@ function AdminPage() {
     
     return filtered;
   }, [existingTemplates, taskFilterLocation, taskFilterStatus, taskFilterRecurrence, taskFilterType, taskFilterTitle, taskFilterPointsMin, taskFilterPointsMax]);
+
+  // Use selection hook for tasks - must be after filteredTasks
+  const taskSelection = useSelection(filteredTasks || []);
+  const allTasksSelected = taskSelection.allSelected;
+  const hasTaskSelection = taskSelection.hasSelection;
 
   const taskFilterOptions = useMemo(() => {
     const locations = new Map<string, string>();
@@ -3228,6 +3212,11 @@ function AdminPage() {
     return filtered;
   }, [normalizedRewardTemplates, rewardFilterLocation, rewardFilterStatus, rewardFilterRecurrence, rewardFilterType, rewardFilterTitle, rewardFilterCostMin, rewardFilterCostMax]);
 
+  // Use selection hook for rewards - must be after filteredRewards
+  const rewardSelection = useSelection(filteredRewards || []);
+  const allRewardsSelected = rewardSelection.allSelected;
+  const hasRewardSelection = rewardSelection.hasSelection;
+
   const rewardFilterOptions = useMemo(() => {
     const locations = new Map<string, string>();
     const statuses = new Set<'active' | 'inactive'>();
@@ -3318,6 +3307,16 @@ function AdminPage() {
   }, [rewardParametersData]);
 
   const locationsList = locationsData ?? [];
+  const selectableLocations = useMemo(
+    () => locationsList.filter((location) => !isDefaultLocationRecord(location)),
+    [locationsList]
+  );
+  
+  // Use selection hook for locations - must be after selectableLocations
+  const locationSelection = useSelection(selectableLocations);
+  const allLocationsSelected = locationSelection.allSelected;
+  const hasLocationSelection = locationSelection.hasSelection;
+  
   const locationOptions = useMemo(
     () =>
       locationsList.map((location) => ({
@@ -3328,14 +3327,7 @@ function AdminPage() {
         details: location.is_online ? t('admin.location.onlineLocation') : location.address || t('admin.location.physicalLocation'),
         location,
       })),
-    [locationsList]
-  );
-  const selectableLocationIds = useMemo(
-    () =>
-      locationsList
-        .filter((location) => !isDefaultLocationRecord(location))
-        .map((location) => location.id),
-    [locationsList]
+    [locationsList, t]
   );
   const taskLocationSelectOptions = useMemo(
     () =>
@@ -3353,10 +3345,6 @@ function AdminPage() {
   );
   const hasTaskLocationOptions = taskLocationSelectOptions.length > 0;
   const hasRewardLocationOptions = rewardLocationSelectOptions.length > 0;
-  const hasLocationSelection = selectedLocationIds.length > 0;
-  const allLocationsSelected =
-    selectableLocationIds.length > 0 &&
-    selectedLocationIds.length === selectableLocationIds.length;
 
   const rewardValidation = useMemo(
     () => validateRewardFormState({ rewardSource, selectedRewardTemplate, rewardForm, isEditing: isEditingReward }),
@@ -3776,9 +3764,6 @@ function AdminPage() {
             videoUrl = uploadedUrl;
             setTaskForm((prev) => ({ ...prev, video_url: uploadedUrl }));
           } catch (error: any) {
-            // #region agent log
-            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3780',message:'prepareVideoData upload error',data:{error:error?.message,status:error?.response?.status,responseData:error?.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-            // #endregion
             throw error;
           } finally {
             setIsUploadingVideo(false);
@@ -3965,9 +3950,6 @@ function AdminPage() {
         
         // Add thumbnail_url
         payload.thumbnail_url = thumbnailUrl;
-        // #region agent log
-        fetch('http://127.0.0.1:7244/ingest/9643f323-e171-4f32-ae8e-60028fa34a14',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:3497',message:'Payload before publishTask (existing template)',data:{payload:JSON.stringify(payload),thumbnailUrl,hasThumbnailUrl:'thumbnail_url' in payload},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
 
         await publishTaskMutation.mutateAsync(payload);
         return;
@@ -4265,7 +4247,7 @@ function AdminPage() {
     }
     prevTaskTemplateIdsRef.current = taskTemplateIdsKey;
 
-    setSelectedTaskIds((prev) => {
+    taskSelection.setSelectedIds((prev) => {
       const validIds = new Set(existingTemplatesRef.current.map((task) => task.id));
       const filtered = prev.filter((id) => validIds.has(id));
       // Only update if changed
@@ -4274,7 +4256,7 @@ function AdminPage() {
       }
       return prev;
     });
-  }, [taskTemplateIdsKey]);
+  }, [taskTemplateIdsKey, taskSelection]);
 
   useEffect(() => {
     if (prevRewardTemplateIdsRef.current === rewardTemplateIdsKey) {
@@ -4282,15 +4264,8 @@ function AdminPage() {
     }
     prevRewardTemplateIdsRef.current = rewardTemplateIdsKey;
 
-    setSelectedRewardIds((prev) => {
-      const validIds = new Set(normalizedRewardTemplatesRef.current.map((reward) => reward.id));
-      const filtered = prev.filter((id) => validIds.has(id));
-      // Only update if changed
-      if (filtered.length !== prev.length || !filtered.every((id, idx) => prev[idx] === id)) {
-        return filtered;
-      }
-      return prev;
-    });
+    // Reward selection is now handled by rewardSelection hook
+    // No need to manually sync selectedRewardIds anymore
   }, [rewardTemplateIdsKey]);
 
   useEffect(() => {
@@ -4299,7 +4274,7 @@ function AdminPage() {
     }
     prevLocationIdsRef.current = locationIdsKey;
 
-    setSelectedLocationIds((prev) => {
+    locationSelection.setSelectedIds((prev) => {
       const validIds = new Set(locationsListRef.current.map((location) => location.id));
       const filtered = prev.filter((id) => validIds.has(id));
       // Only update if changed
@@ -4308,7 +4283,7 @@ function AdminPage() {
       }
       return prev;
     });
-  }, [locationIdsKey]);
+  }, [locationIdsKey, locationSelection]);
 
   useEffect(() => {
     if (
@@ -4325,63 +4300,37 @@ function AdminPage() {
     }
   }, [locationsList, taskForm.locationId, rewardForm.locationId]);
 
-  const toggleTaskSelection = (taskId: string, checked: boolean) => {
-    setSelectedTaskIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(taskId);
-      } else {
-        next.delete(taskId);
-      }
-      return Array.from(next);
-    });
-  };
+  // toggleTaskSelection is now handled by taskSelection hook
 
-  const toggleRewardSelection = (rewardId: string, checked: boolean) => {
-    setSelectedRewardIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(rewardId);
-      } else {
-        next.delete(rewardId);
-      }
-      return Array.from(next);
-    });
-  };
+  // toggleRewardSelection is now handled by rewardSelection hook
 
-  const toggleLocationSelection = (locationId: string, checked: boolean) => {
-    setSelectedLocationIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(locationId);
-      } else {
-        next.delete(locationId);
-      }
-      return Array.from(next);
-    });
-  };
+  // Removed: toggleLocationSelection - now using locationSelection.toggle
+
+  // Use bulk operations hook for tasks
+  const taskBulkOperations = useBulkOperations(taskSelection.selectedIds, {
+    bulkUpdateStatus: async (ids, active) => {
+      await api.bulkUpdateTasksStatus(ids, active);
+    },
+    bulkDelete: async (ids) => {
+      await api.bulkDeleteTasks(ids);
+    },
+    refetch: async () => {
+      await refetchTasks();
+    },
+    getSuccessMessage: (action, count) => {
+      if (action === 'activate') return t('admin.messages.selectedTasksActivated');
+      if (action === 'deactivate') return t('admin.messages.selectedTasksDeactivated');
+      return t('admin.messages.selectedTasksDeleted');
+    },
+  });
 
   const handleTaskBulkStatus = async (active: boolean) => {
-    if (!selectedTaskIds.length) return;
-    try {
-      setTaskManagementMessage(null);
-      await api.bulkUpdateTasksStatus(selectedTaskIds, active);
-      setTaskManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.selectedTasksActivated') : t('admin.messages.selectedTasksDeactivated'),
-      });
-      setSelectedTaskIds([]);
-      void refetchTasks();
-    } catch (error: any) {
-      setTaskManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to update selected tasks.',
-      });
-    }
+    await taskBulkOperations.handleBulkStatus(active);
+    taskSelection.deselectAll();
   };
 
   const handleTaskBulkDelete = async () => {
-    if (!selectedTaskIds.length) return;
+    if (!taskSelection.selectedIds.length) return;
     setTaskConfirm({
       visible: true,
       title: t('admin.confirm.deleteSelectedTasks.title'),
@@ -4389,38 +4338,24 @@ function AdminPage() {
       confirmLabel: t('admin.confirm.deleteTasks'),
       confirmTone: 'danger',
       onConfirm: async () => {
-        try {
-          setTaskManagementMessage(null);
-          await api.bulkDeleteTasks(selectedTaskIds);
-          setTaskManagementMessage({
-            type: 'success',
-            text: t('admin.messages.selectedTasksDeleted'),
-          });
-          setSelectedTaskIds([]);
-          void refetchTasks();
-        } catch (error: any) {
-          setTaskManagementMessage({
-            type: 'error',
-            text: error?.message || t('admin.messages.failedToDeleteTasks'),
-          });
-        } finally {
-          setTaskConfirm(defaultConfirmDialogState);
-        }
+        await taskBulkOperations.handleBulkDelete();
+        taskSelection.deselectAll();
+        setTaskConfirm(defaultConfirmDialogState);
       },
     });
   };
 
   const handleTaskStatusChange = async (taskId: string, active: boolean) => {
     try {
-      setTaskManagementMessage(null);
+      taskBulkOperations.clearMessage();
       await api.bulkUpdateTasksStatus([taskId], active);
-      setTaskManagementMessage({
+      taskBulkOperations.setMessage({
         type: 'success',
         text: active ? t('admin.messages.taskActivated') : t('admin.messages.taskDeactivated'),
       });
       void refetchTasks();
     } catch (error: any) {
-      setTaskManagementMessage({
+      taskBulkOperations.setMessage({
         type: 'error',
         text: error?.message || t('admin.messages.failedToUpdateTask'),
       });
@@ -4436,9 +4371,9 @@ function AdminPage() {
       confirmTone: 'danger',
       onConfirm: async () => {
         try {
-          setTaskManagementMessage(null);
+          taskBulkOperations.clearMessage();
           await api.bulkDeleteTasks([taskId]);
-          setTaskManagementMessage({
+          taskBulkOperations.setMessage({
             type: 'success',
             text: 'Task deleted.',
           });
@@ -4447,7 +4382,7 @@ function AdminPage() {
           }
           void refetchTasks();
         } catch (error: any) {
-          setTaskManagementMessage({
+          taskBulkOperations.setMessage({
             type: 'error',
             text: error?.message || t('admin.messages.failedToDeleteTask'),
           });
@@ -4458,27 +4393,31 @@ function AdminPage() {
     });
   };
 
+  // Use bulk operations hook for rewards - must be after rewardSelection
+  const rewardBulkOperations = useBulkOperations(rewardSelection.selectedIds, {
+    bulkUpdateStatus: async (ids, active) => {
+      await api.bulkUpdateRewardsStatus(ids, active);
+    },
+    bulkDelete: async (ids) => {
+      await api.bulkDeleteRewards(ids);
+    },
+    refetch: async () => {
+      await refetchRewardTemplates();
+    },
+    getSuccessMessage: (action, count) => {
+      if (action === 'activate') return t('admin.messages.selectedRewardsActivated');
+      if (action === 'deactivate') return t('admin.messages.selectedRewardsDeactivated');
+      return t('admin.messages.selectedRewardsDeleted');
+    },
+  });
+
   const handleRewardBulkStatus = async (active: boolean) => {
-    if (!selectedRewardIds.length) return;
-    try {
-      setRewardManagementMessage(null);
-      await api.bulkUpdateRewardsStatus(selectedRewardIds, active);
-      setRewardManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.selectedRewardsActivated') : t('admin.messages.selectedRewardsDeactivated'),
-      });
-      setSelectedRewardIds([]);
-      void refetchRewardTemplates();
-    } catch (error: any) {
-      setRewardManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to update selected rewards.',
-      });
-    }
+    await rewardBulkOperations.handleBulkStatus(active);
+    rewardSelection.deselectAll();
   };
 
   const handleRewardBulkDelete = async () => {
-    if (!selectedRewardIds.length) return;
+    if (!rewardSelection.selectedIds.length) return;
     setRewardConfirm({
       visible: true,
       title: t('admin.confirm.deleteSelectedRewards.title'),
@@ -4486,23 +4425,9 @@ function AdminPage() {
       confirmLabel: t('admin.confirm.deleteRewards'),
       confirmTone: 'danger',
       onConfirm: async () => {
-        try {
-          setRewardManagementMessage(null);
-          await api.bulkDeleteRewards(selectedRewardIds);
-          setRewardManagementMessage({
-            type: 'success',
-            text: t('admin.messages.selectedRewardsDeleted'),
-          });
-          setSelectedRewardIds([]);
-          void refetchRewardTemplates();
-        } catch (error: any) {
-          setRewardManagementMessage({
-            type: 'error',
-            text: error?.message || t('admin.messages.failedToDeleteRewards'),
-          });
-        } finally {
-          setRewardConfirm(defaultConfirmDialogState);
-        }
+        await rewardBulkOperations.handleBulkDelete();
+        rewardSelection.deselectAll();
+        setRewardConfirm(defaultConfirmDialogState);
       },
     });
   };
@@ -4557,42 +4482,50 @@ function AdminPage() {
 
   const handleLocationStatusChange = async (locationId: string, active: boolean) => {
     try {
-      setLocationManagementMessage(null);
+      locationBulkOperations.clearMessage();
       await api.bulkUpdateLocationsStatus([locationId], active);
-      setLocationManagementMessage({
+      locationBulkOperations.setMessage({
         type: 'success',
         text: active ? t('admin.messages.locationActivated') : t('admin.messages.locationDeactivated'),
       });
       void refetchLocations();
     } catch (error: any) {
-      setLocationManagementMessage({
+      locationBulkOperations.setMessage({
         type: 'error',
         text: error?.message || 'Failed to update location.',
       });
     }
   };
 
+  // Use bulk operations hook for locations
+  const locationBulkOperations = useBulkOperations(locationSelection.selectedIds, {
+    bulkUpdateStatus: async (ids, active) => {
+      await api.bulkUpdateLocationsStatus(ids, active);
+    },
+    bulkDelete: async (ids) => {
+      await api.bulkDeleteLocations(ids);
+    },
+    refetch: async () => {
+      await refetchLocations();
+    },
+    getSuccessMessage: (action, count) => {
+      if (action === 'activate') return t('admin.messages.selectedLocationsActivated');
+      if (action === 'deactivate') return t('admin.messages.selectedLocationsDeactivated');
+      return t('admin.messages.selectedLocationsDeleted');
+    },
+    getErrorMessage: (action, error) => {
+      if (action === 'delete') return error?.message || t('admin.messages.failedToDeleteLocations');
+      return error?.message || 'Failed to update selected locations.';
+    },
+  });
+
   const handleLocationBulkStatus = async (active: boolean) => {
-    if (!selectedLocationIds.length) return;
-    try {
-      setLocationManagementMessage(null);
-      await api.bulkUpdateLocationsStatus(selectedLocationIds, active);
-      setLocationManagementMessage({
-        type: 'success',
-        text: active ? t('admin.messages.selectedLocationsActivated') : t('admin.messages.selectedLocationsDeactivated'),
-      });
-      setSelectedLocationIds([]);
-      void refetchLocations();
-    } catch (error: any) {
-      setLocationManagementMessage({
-        type: 'error',
-        text: error?.message || 'Failed to update selected locations.',
-      });
-    }
+    await locationBulkOperations.handleBulkStatus(active);
+    locationSelection.deselectAll();
   };
 
-  const handleLocationBulkDelete = () => {
-    if (!selectedLocationIds.length) return;
+  const handleLocationBulkDelete = async () => {
+    if (!locationSelection.selectedIds.length) return;
     setLocationConfirm({
       visible: true,
       title: t('admin.confirm.deleteSelectedLocations.title'),
@@ -4600,23 +4533,9 @@ function AdminPage() {
       confirmLabel: t('admin.confirm.deleteLocations'),
       confirmTone: 'danger',
       onConfirm: async () => {
-        try {
-          setLocationManagementMessage(null);
-          await api.bulkDeleteLocations(selectedLocationIds);
-          setLocationManagementMessage({
-            type: 'success',
-            text: t('admin.messages.selectedLocationsDeleted'),
-          });
-          setSelectedLocationIds([]);
-          void refetchLocations();
-        } catch (error: any) {
-          setLocationManagementMessage({
-            type: 'error',
-            text: error?.message || t('admin.messages.failedToDeleteLocations'),
-          });
-        } finally {
-          setLocationConfirm(defaultConfirmDialogState);
-        }
+        await locationBulkOperations.handleBulkDelete();
+        locationSelection.deselectAll();
+        setLocationConfirm(defaultConfirmDialogState);
       },
     });
   };
@@ -4624,7 +4543,7 @@ function AdminPage() {
   const startTaskEdit = (task: AdminTaskTemplate) => {
     setTaskReturnMode(mode === 'taskManage' ? 'taskManage' : null);
     setMode('task');
-    setTaskManagementMessage(null);
+    taskBulkOperations.clearMessage();
     setTaskMessage(null);
     const source: TaskSource =
       task.type === 'video' ? 'video' 
@@ -4922,31 +4841,31 @@ function AdminPage() {
     setMode('location');
   };
 
-const goToTaskCreation = () => {
-  setTaskReturnMode('taskManage');
-  setMode('task');
-  setTaskManagementMessage(null);
-  setTaskMessage(null);
-  setIsEditingTask(false);
-  setEditingTaskId(null);
-  setTaskSource('');
-  setSelectedExistingTaskId('');
-  setTaskForm(defaultTaskForm('video'));
-  setHasAttemptedPublish(false);
-};
+  const goToTaskCreation = () => {
+    setTaskReturnMode('taskManage');
+    setMode('task');
+    taskBulkOperations.clearMessage();
+    setTaskMessage(null);
+    setIsEditingTask(false);
+    setEditingTaskId(null);
+    setTaskSource('');
+    setSelectedExistingTaskId('');
+    setTaskForm(defaultTaskForm('video'));
+    setHasAttemptedPublish(false);
+  };
 
-const goToRewardCreation = () => {
-  setRewardReturnMode('rewardManage');
-  setMode('reward');
-  setRewardManagementMessage(null);
-  setRewardMessage(null);
-  setIsEditingReward(false);
-  setEditingRewardId(null);
-  setRewardSource('');
-  setSelectedRewardTemplate('');
-  setRewardForm(defaultRewardForm('discount'));
-  setHasAttemptedRewardPublish(false);
-};
+  const goToRewardCreation = () => {
+    setRewardReturnMode('rewardManage');
+    setMode('reward');
+    setRewardManagementMessage(null);
+    setRewardMessage(null);
+    setIsEditingReward(false);
+    setEditingRewardId(null);
+    setRewardSource('');
+    setSelectedRewardTemplate('');
+    setRewardForm(defaultRewardForm('discount'));
+    setHasAttemptedRewardPublish(false);
+  };
 
   const loadParameters = async () => {
     try {
@@ -5061,7 +4980,9 @@ const goToRewardCreation = () => {
           if (isEditingLocation && editingLocationId === location.id) {
             cancelLocationEdit();
           }
-          setSelectedLocationIds((prev) => prev.filter((id) => id !== location.id));
+          locationSelection.setSelectedIds(
+            locationSelection.selectedIds.filter((id) => id !== location.id)
+          );
           void refetchLocations();
         } catch (error: any) {
           setLocationManagementMessage({
@@ -5075,13 +4996,10 @@ const goToRewardCreation = () => {
     });
   };
 
-  const allTasksSelected =
-    filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length;
-  const allRewardsSelected =
-    filteredRewards.length > 0 &&
-    selectedRewardIds.length === filteredRewards.length;
-  const hasTaskSelection = selectedTaskIds.length > 0;
-  const hasRewardSelection = selectedRewardIds.length > 0;
+  // Use selection hooks - must be defined after filteredTasks and filteredRewards
+  // (moved to after filteredTasks definition)
+  
+  // rewardSelection is now defined after filteredRewards (see above)
 
   // Teams helper functions - inline like tasks
   const toggleTeamSelection = (teamId: string, checked: boolean) => {
@@ -7914,264 +7832,196 @@ const goToRewardCreation = () => {
         <QrScannerPage onBack={() => setMode(null)} />
       )}
 
-      {mode === 'locationManage' && (
-        <section className="admin-section">
-          <header className="admin-section-header">
-            <div>
-              <h2>{t('admin.locationManage.title')}</h2>
-              <p>Review existing locations, edit their details, or remove unused entries.</p>
-            </div>
-            <div className="admin-actions">
-              <button
-                className="admin-icon-button"
-                onClick={() => refetchLocations()}
-                title={t('admin.locationManage.refresh')}
-              >
-                <Icon name="refresh" />
-                <span className="sr-only">{t('admin.locationManage.refresh')}</span>
-              </button>
-              <button
-                className="admin-icon-button"
-                onClick={() => setMode(null)}
-                title={t('admin.locationManage.back')}
-              >
-                <Icon name="back" />
-                <span className="sr-only">{t('admin.locationManage.back')}</span>
-              </button>
-            </div>
-          </header>
-
-          {locationsLoading && <p>{t('admin.locationManage.loading')}</p>}
-          {Boolean(locationsError) && (
-            <p className="admin-error">{t('admin.locationManage.loadError')}</p>
-          )}
-
-          <div className="admin-management-card">
-            <div className="admin-management-top">
-              <div>
-                <h3>{t('admin.locationManage.existing.title')}</h3>
-                <p>{t('admin.locationManage.existing.subtitle')}</p>
+      {mode === 'locationManage' && (() => {
+        const locationColumns: TableColumn<AdminLocation>[] = [
+          {
+            key: 'name',
+            label: 'Name',
+            render: (location) => (
+              <div className="admin-table-primary">
+                <span className="admin-table-title">{location.name}</span>
+                {location.description && (
+                  <span className="admin-table-subtitle">{location.description}</span>
+                )}
               </div>
-              <div className="admin-management-controls">
-                <label className="admin-toggle">
-                  <input
-                    type="checkbox"
-                    className="admin-checkbox"
-                    style={COMPACT_TOGGLE_STYLE}
-                    checked={includeInactiveLocations}
-                    onChange={(event) => {
-                      setIncludeInactiveLocations(event.target.checked);
-                      setSelectedLocationIds([]);
-                    }}
-                  />
-                  <span>{t('admin.locationManage.showInactive')}</span>
-                </label>
-                <button className="admin-action-button" type="button" onClick={goToLocationCreation}>
-                  {t('admin.locationManage.newButton')}
-                </button>
-              </div>
-            </div>
-            {locationManagementMessage && (
-              <p
-                className={
-                  locationManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
-                }
-              >
-                {locationManagementMessage.text}
-              </p>
-            )}
-            <div className="admin-management-actions">
-              <div className="admin-bulk-buttons">
-                  <button
-                    className="admin-action-button"
-                    onClick={() => handleLocationBulkStatus(true)}
-                    disabled={!hasLocationSelection}
-                    type="button"
-                  >
-                    {t('admin.locationManage.activate')}
-                  </button>
-                  <button
-                    className="admin-action-button"
-                    onClick={() => handleLocationBulkStatus(false)}
-                    disabled={!hasLocationSelection}
-                    type="button"
-                  >
-                    {t('admin.locationManage.deactivate')}
-                  </button>
-                  <button
-                    className="admin-action-button"
-                    onClick={handleLocationBulkDelete}
-                    disabled={!hasLocationSelection}
-                    type="button"
-                  >
-                    {t('common.actions.delete', 'Löschen')}
-                  </button>
-              </div>
-              <span className="admin-selection-count">
-                {hasLocationSelection
-                  ? t('admin.locationManage.selectedCount', { count: selectedLocationIds.length })
-                  : t('admin.locationManage.noSelection')}
+            ),
+          },
+          {
+            key: 'type',
+            label: 'Type',
+            render: (location) => (
+              <span className="admin-status-badge">
+                {location.is_online ? 'Online' : 'Physical'}
               </span>
-            </div>
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '3rem' }}>
-                      <input
-                        type="checkbox"
-                        className="admin-checkbox"
-                        style={COMPACT_TOGGLE_STYLE}
-                        checked={allLocationsSelected && locationsList.length > 0}
-                        disabled={!locationsList.length}
-                        onChange={(event) =>
-                          setSelectedLocationIds(
-                            event.target.checked
-                              ? selectableLocationIds
-                              : []
-                          )
-                        }
-                        aria-label={t('admin.locationManage.selectAll')}
-                      />
-                    </th>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Details</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {locationsList.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="admin-table-empty">
-                        No locations found.
-                      </td>
-                    </tr>
-                  ) : (
-                    locationsList.map((location) => {
-                      const isDefaultLocation = isDefaultLocationRecord(location);
-                      const isSelected = selectedLocationIds.includes(location.id);
-                      return (
-                        <tr key={location.id}>
-                          <td>
-                            <input
-                              type="checkbox"
-                              className="admin-checkbox"
-                              style={COMPACT_TOGGLE_STYLE}
-                              checked={isSelected}
-                              onChange={(event) =>
-                                toggleLocationSelection(location.id, event.target.checked)
-                              }
-                              aria-label={`Select location ${location.name}`}
-                            />
-                          </td>
-                          <td data-label="Name">
-                            <div className="admin-table-primary">
-                              <span className="admin-table-title">{location.name}</span>
-                              {location.description && (
-                                <span className="admin-table-subtitle">{location.description}</span>
-                              )}
-                            </div>
-                          </td>
-                          <td data-label="Type">
-                            <span className="admin-status-badge">
-                              {location.is_online ? 'Online' : 'Physical'}
-                            </span>
-                          </td>
-                          <td data-label="Details">
-                            {location.is_online ? (
-                              <span className="admin-table-subtitle">{t('admin.locationManage.online')}</span>
-                            ) : (
-                              <div className="admin-table-secondary">
-                                {location.address && (
-                                  <span className="admin-table-subtitle">{location.address}</span>
-                                )}
-                                <span className="admin-table-subtitle">
-                                  {location.latitude}, {location.longitude}
-                                </span>
-                              </div>
-                            )}
-                          </td>
-                          <td data-label="Status">
-                            <span
-                              className={`admin-status-badge ${
-                                location.active ? 'active' : 'inactive'
-                              }`}
-                            >
-                              {location.active ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td data-label="Actions" className="admin-table-actions">
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => startLocationEdit(location)}
-                            >
-                              {t('common.actions.edit', 'Bearbeiten')}
-                            </button>
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => handleLocationStatusChange(location.id, !location.active)}
-                              disabled={isDefaultLocation}
-                            >
-                              {location.active ? t('admin.locationManage.deactivate') : t('admin.locationManage.activate')}
-                            </button>
-                            <button
-                              className="admin-action-button"
-                              type="button"
-                              onClick={() => handleLocationDelete(location)}
-                              disabled={isDefaultLocation}
-                            >
-                              {t('common.actions.delete', 'Löschen')}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
+            ),
+          },
+          {
+            key: 'details',
+            label: 'Details',
+            render: (location) =>
+              location.is_online ? (
+                <span className="admin-table-subtitle">{t('admin.locationManage.online')}</span>
+              ) : (
+                <div className="admin-table-secondary">
+                  {location.address && (
+                    <span className="admin-table-subtitle">{location.address}</span>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {mode === 'taskManage' && (
-        <section className="admin-section">
-          <header className="admin-section-header">
-            <div>
-              <h2>{t('admin.taskManage.title')}</h2>
-              <p>{t('admin.taskManage.subtitle')}</p>
-            </div>
-            <div className="admin-actions">
-              {!isEditingTask && (
-                <button
-                  className="admin-icon-button"
-                  onClick={() => refetchTasks()}
-                  title={t('admin.taskManage.refresh')}
-                >
-                  <Icon name="refresh" />
-                  <span className="sr-only">{t('admin.taskManage.refresh')}</span>
-                </button>
-              )}
-              <button
-                className="admin-icon-button"
-                onClick={() => {
-                  if (isEditingTask) {
-                    cancelTaskEdit();
-                  } else {
-                    setMode(null);
-                  }
-                }}
-                title={isEditingTask ? t('admin.task.cancelEditing') : t('admin.taskManage.back')}
+                  <span className="admin-table-subtitle">
+                    {location.latitude}, {location.longitude}
+                  </span>
+                </div>
+              ),
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            render: (location) => (
+              <span
+                className={`admin-status-badge ${location.active ? 'active' : 'inactive'}`}
               >
-                <Icon name="back" />
-                <span className="sr-only">{isEditingTask ? t('admin.task.cancelEditing') : t('admin.taskManage.back')}</span>
-              </button>
-            </div>
-          </header>
+                {location.active ? 'Active' : 'Inactive'}
+              </span>
+            ),
+          },
+        ];
+
+        return (
+          <section className="admin-section">
+            <ManagementHeader
+              title={t('admin.locationManage.title')}
+              subtitle={t('admin.locationManage.existing.subtitle')}
+              cssPrefix="admin"
+              onBack={() => setMode(null)}
+              onRefresh={() => refetchLocations()}
+              showBack={true}
+              showRefresh={!isEditingLocation}
+              isEditing={isEditingLocation}
+              onCancelEdit={cancelLocationEdit}
+            />
+
+            {locationsLoading && <p>{t('admin.locationManage.loading')}</p>}
+            {Boolean(locationsError) && (
+              <p className="admin-error">{t('admin.locationManage.loadError')}</p>
+            )}
+
+            <button
+              className="admin-action-button admin-mobile-new-location-button"
+              type="button"
+              onClick={goToLocationCreation}
+            >
+              {t('admin.locationManage.newButton')}
+            </button>
+
+            <ManagementCard
+              cssPrefix="admin"
+              title={t('admin.locationManage.existing.title')}
+              subtitle={t('admin.locationManage.existing.subtitle')}
+              message={locationBulkOperations.message}
+              topControls={
+                <>
+                  <label className="admin-toggle">
+                    <input
+                      type="checkbox"
+                      className="admin-checkbox"
+                      style={COMPACT_TOGGLE_STYLE}
+                      checked={includeInactiveLocations}
+                      onChange={(event) => {
+                        setIncludeInactiveLocations(event.target.checked);
+                        locationSelection.deselectAll();
+                      }}
+                    />
+                    <span>{t('admin.locationManage.showInactive')}</span>
+                  </label>
+                  <button
+                    className="admin-action-button"
+                    type="button"
+                    onClick={goToLocationCreation}
+                  >
+                    {t('admin.locationManage.newButton')}
+                  </button>
+                </>
+              }
+            >
+              <BulkActionsBar
+                cssPrefix="admin"
+                hasSelection={hasLocationSelection}
+                selectionCount={locationSelection.selectedIds.length}
+                onActivate={() => handleLocationBulkStatus(true)}
+                onDeactivate={() => handleLocationBulkStatus(false)}
+                onDelete={handleLocationBulkDelete}
+                activateLabel={t('admin.locationManage.activate')}
+                deactivateLabel={t('admin.locationManage.deactivate')}
+                deleteLabel={t('common.actions.delete', 'Löschen')}
+                selectionCountLabel={(count) =>
+                  t('admin.locationManage.selectedCount', { count })
+                }
+                noSelectionLabel={t('admin.locationManage.noSelection')}
+              />
+              <ManagementTable
+                items={locationsList}
+                columns={locationColumns}
+                cssPrefix="admin"
+                selectedIds={locationSelection.selectedIds}
+                onSelectAll={(checked) =>
+                  checked ? locationSelection.selectAll() : locationSelection.deselectAll()
+                }
+                onSelectItem={(id, checked) => locationSelection.toggle(id, checked)}
+                allSelected={allLocationsSelected}
+                emptyMessage={t('admin.locationManage.noLocations', 'No locations found.')}
+                actionsColumn={{
+                  render: (location) => {
+                    const isDefaultLocation = isDefaultLocationRecord(location);
+                    return (
+                      <>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => startLocationEdit(location)}
+                        >
+                          {t('common.actions.edit', 'Bearbeiten')}
+                        </button>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => handleLocationStatusChange(location.id, !location.active)}
+                          disabled={isDefaultLocation}
+                        >
+                          {location.active
+                            ? t('admin.locationManage.deactivate')
+                            : t('admin.locationManage.activate')}
+                        </button>
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => handleLocationDelete(location)}
+                          disabled={isDefaultLocation}
+                        >
+                          {t('common.actions.delete', 'Löschen')}
+                        </button>
+                      </>
+                    );
+                  },
+                }}
+              />
+            </ManagementCard>
+          </section>
+        );
+      })()}
+
+      {mode === 'taskManage' && (() => {
+        return (
+          <section className="admin-section">
+          <ManagementHeader
+            title={t('admin.taskManage.title')}
+            subtitle={t('admin.taskManage.subtitle')}
+            cssPrefix="admin"
+            onBack={() => setMode(null)}
+            onRefresh={() => refetchTasks()}
+            showBack={true}
+            showRefresh={!isEditingTask}
+            isEditing={isEditingTask}
+            onCancelEdit={cancelTaskEdit}
+          />
 
           {tasksLoading && <p>{t('admin.taskManage.loading')}</p>}
           {Boolean(tasksError) && <p className="admin-error">{t('admin.taskManage.loadError')}</p>}
@@ -8199,7 +8049,7 @@ const goToRewardCreation = () => {
                     checked={includeInactiveTasks}
                     onChange={(event) => {
                       setIncludeInactiveTasks(event.target.checked);
-                      setSelectedTaskIds([]);
+                      taskSelection.deselectAll();
                     }}
                   />
                   <span>{t('admin.taskManage.showInactive')}</span>
@@ -8222,46 +8072,23 @@ const goToRewardCreation = () => {
                 </button>
               </div>
             </div>
-            {taskManagementMessage && (
+            {taskBulkOperations.message && (
               <p
                 className={
-                  taskManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+                  taskBulkOperations.message.type === 'error' ? 'admin-error' : 'admin-success'
                 }
               >
-                {taskManagementMessage.text}
+                {taskBulkOperations.message.text}
               </p>
             )}
-            <div className="admin-management-actions">
-              <div className="admin-bulk-buttons">
-                  <button
-                    className="admin-action-button"
-                    onClick={() => handleTaskBulkStatus(true)}
-                    disabled={!hasTaskSelection}
-                    type="button"
-                  >
-                    {t('admin.taskManage.activate')}
-                  </button>
-                  <button
-                    className="admin-action-button"
-                    onClick={() => handleTaskBulkStatus(false)}
-                    disabled={!hasTaskSelection}
-                    type="button"
-                  >
-                    {t('admin.taskManage.deactivate')}
-                  </button>
-                  <button
-                    className="admin-action-button"
-                    onClick={handleTaskBulkDelete}
-                    disabled={!hasTaskSelection}
-                    type="button"
-                  >
-                    {t('common.actions.delete', 'Löschen')}
-                  </button>
-              </div>
-              <span className="admin-selection-count">
-                {hasTaskSelection ? t('admin.taskManage.selectedCount', { count: selectedTaskIds.length }) : t('admin.taskManage.noSelection')}
-              </span>
-            </div>
+            <BulkActionsBar
+              cssPrefix="admin"
+              hasSelection={hasTaskSelection}
+              selectionCount={taskSelection.selectedIds.length}
+              onActivate={() => handleTaskBulkStatus(true)}
+              onDeactivate={() => handleTaskBulkStatus(false)}
+              onDelete={handleTaskBulkDelete}
+            />
             <div className="admin-table-wrapper">
               <table className="admin-table">
                 <thead>
@@ -8274,11 +8101,9 @@ const goToRewardCreation = () => {
                         checked={allTasksSelected && filteredTasks.length > 0}
                         disabled={!filteredTasks.length}
                         onChange={(event) =>
-                          setSelectedTaskIds(
-                            event.target.checked
-                              ? filteredTasks.map((task) => task.id)
-                              : []
-                          )
+                          event.target.checked
+                            ? taskSelection.selectAll()
+                            : taskSelection.deselectAll()
                         }
                         aria-label={t('admin.taskManage.selectAll')}
                       />
@@ -8367,7 +8192,7 @@ const goToRewardCreation = () => {
                     </tr>
                   ) : (
                     filteredTasks.map((task) => {
-                      const isSelected = selectedTaskIds.includes(task.id);
+                      const isSelected = taskSelection.isSelected(task.id);
                       return (
                         <tr key={task.id}>
                           <td>
@@ -8377,7 +8202,7 @@ const goToRewardCreation = () => {
                               style={COMPACT_TOGGLE_STYLE}
                               checked={isSelected}
                               onChange={(event) =>
-                                toggleTaskSelection(task.id, event.target.checked)
+                                taskSelection.toggleSelection(task.id, event.target.checked)
                               }
                               aria-label={`Select task ${task.title}`}
                             />
@@ -8577,7 +8402,8 @@ const goToRewardCreation = () => {
             filterType="task"
           />
         </section>
-      )}
+        );
+      })()}
 
       {mode === 'rewardManage' && (
         <section className="admin-section">
@@ -8634,7 +8460,7 @@ const goToRewardCreation = () => {
                     checked={includeInactiveRewards}
                     onChange={(event) => {
                       setIncludeInactiveRewards(event.target.checked);
-                      setSelectedRewardIds([]);
+                      rewardSelection.deselectAll();
                     }}
                   />
                   <span>{t('admin.taskManage.showInactive')}</span>
@@ -8657,13 +8483,13 @@ const goToRewardCreation = () => {
                 </button>
               </div>
             </div>
-            {rewardManagementMessage && (
+            {rewardBulkOperations.message && (
               <p
                 className={
-                  rewardManagementMessage.type === 'error' ? 'admin-error' : 'admin-success'
+                  rewardBulkOperations.message.type === 'error' ? 'admin-error' : 'admin-success'
                 }
               >
-                {rewardManagementMessage.text}
+                {rewardBulkOperations.message.text}
               </p>
             )}
             <div className="admin-management-actions">
@@ -8695,7 +8521,7 @@ const goToRewardCreation = () => {
               </div>
               <span className="admin-selection-count">
                 {hasRewardSelection
-                  ? t('admin.rewardManage.selectedCount', { count: selectedRewardIds.length })
+                  ? t('admin.rewardManage.selectedCount', { count: rewardSelection.selectedIds.length })
                   : t('admin.rewardManage.noSelection')}
               </span>
             </div>
@@ -8711,11 +8537,9 @@ const goToRewardCreation = () => {
                         checked={allRewardsSelected && filteredRewards.length > 0}
                         disabled={!filteredRewards.length}
                         onChange={(event) =>
-                          setSelectedRewardIds(
-                            event.target.checked
-                              ? filteredRewards.map((reward) => reward.id)
-                              : []
-                          )
+                          event.target.checked
+                            ? rewardSelection.selectAll()
+                            : rewardSelection.deselectAll()
                         }
                         aria-label={t('admin.rewardManage.selectAll')}
                       />
@@ -8793,7 +8617,7 @@ const goToRewardCreation = () => {
                     </tr>
                   ) : (
                     filteredRewards.map((reward) => {
-                      const isSelected = selectedRewardIds.includes(reward.id);
+                      const isSelected = rewardSelection.isSelected(reward.id);
                       const cost =
                         reward.points_cost !== undefined && reward.points_cost !== null
                           ? Number(reward.points_cost)
@@ -9039,9 +8863,6 @@ const goToRewardCreation = () => {
 
       {/* Team Management - using TeamManagement component */}
       {mode === 'teamManage' && (() => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9046',message:'Rendering TeamManagement',data:{mode,cssPrefix:'admin'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion
         return (
           <TeamManagement
             cssPrefix="admin"
@@ -9221,40 +9042,16 @@ const goToRewardCreation = () => {
                         className="admin-action-button"
                         type="button"
                         onClick={async () => {
-                          // #region agent log
-                          fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9047',message:'showRegistrationQr button clicked',data:{editingTeamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                          // #endregion
                           try {
-                            // #region agent log
-                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9050',message:'calling enableTeamRegistration',data:{teamId:editingTeamId,enabled:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                            // #endregion
                             // Enable registration first if not enabled
                             await api.enableTeamRegistration(editingTeamId, true);
-                            // #region agent log
-                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9052',message:'enableTeamRegistration success',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                            // #endregion
-                            // #region agent log
-                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9053',message:'calling getTeamRegistrationQrCode',data:{teamId:editingTeamId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                            // #endregion
                             const qrData = await api.getTeamRegistrationQrCode(editingTeamId);
-                            // #region agent log
-                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9056',message:'getTeamRegistrationQrCode success',data:{qrToken:qrData?.qrToken,hasRegistrationUrl:!!qrData?.registrationUrl,registrationUrl:qrData?.registrationUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                            // #endregion
                             setTeamRegistrationQrData({
                               qrToken: qrData.qrToken,
                               registrationUrl: qrData.registrationUrl,
                             });
-                            // #region agent log
-                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9061',message:'setting teamRegistrationQrData and showing modal',data:{hasQrToken:!!qrData?.qrToken,hasRegistrationUrl:!!qrData?.registrationUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-                            // #endregion
                             setShowTeamRegistrationQrModal(true);
-                            // #region agent log
-                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9063',message:'modal state set to true',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-                            // #endregion
                           } catch (err: any) {
-                            // #region agent log
-                            fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9065',message:'error in registration QR flow',data:{error:err?.message,status:err?.response?.status,responseData:err?.response?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-                            // #endregion
                             setTeamManagementMessage({
                               type: 'error',
                               text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.registrationQrError', 'Fehler beim Laden des Registrierungs-QR-Codes'),
@@ -9717,9 +9514,6 @@ const goToRewardCreation = () => {
 
       {/* Contest Management - using ContestManagement component */}
       {mode === 'contestManage' && (() => {
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminPage.tsx:9719',message:'Rendering ContestManagement',data:{mode,cssPrefix:'admin'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion
         return (
           <ContestManagement
             cssPrefix="admin"

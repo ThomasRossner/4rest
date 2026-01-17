@@ -105,6 +105,7 @@ export default defineConfig({
         '**/docs/**',
         '**/e2e/**',
         '**/*.timestamp*.mjs',
+        '**/vite.config.ts.timestamp*',
         '**/.vite/**',
         '**/.cursor/**',
         '**/test-results/**',
@@ -139,7 +140,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['leaflet', 'leaflet-control-geocoder'],
+    include: ['leaflet', 'leaflet-control-geocoder', 'three'],
     esbuildOptions: {
       // Increase memory limit for esbuild
       target: 'es2020',
@@ -151,6 +152,6 @@ export default defineConfig({
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
   },
   resolve: {
-    dedupe: ['leaflet']
+    dedupe: ['leaflet', 'three']
   }
 });

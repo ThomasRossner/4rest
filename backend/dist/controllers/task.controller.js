@@ -1,17 +1,26 @@
-import fs from 'fs';
 import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, } from '../services/task.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
 export const getTasks = asyncHandler(async (req, res) => {
     const { limit, offset, type, includeAll, includeInactive } = req.query;
     const authReq = req;
-    const isAdmin = authReq.user?.role === 'administrator';
-    const includeInactiveFlag = isAdmin && includeInactive === 'true';
+    // #region agent log
+    console.log('[DEBUG] task.controller.ts:getTasks - Request', JSON.stringify({ includeAll, includeInactive, userRole: authReq.user?.role, userId: authReq.user?.id }));
+    // #endregion
+    const isAdminOrRedaktion = authReq.user?.role === 'administrator' || authReq.user?.role === 'redaktion';
+    const includeInactiveFlag = isAdminOrRedaktion && includeInactive === 'true';
+    const includeAllValue = isAdminOrRedaktion && includeAll === 'true';
+    // #region agent log
+    console.log('[DEBUG] task.controller.ts:getTasks - Options', JSON.stringify({ isAdminOrRedaktion, includeAllValue, includeInactiveFlag }));
+    // #endregion
     const tasks = await getAllTasks({
         limit: limit ? parseInt(limit, 10) : undefined,
         offset: offset ? parseInt(offset, 10) : undefined,
         type: type,
-    }, authReq.user?.id, { includeAll: isAdmin && includeAll === 'true', includeInactive: includeInactiveFlag });
+    }, authReq.user?.id, { includeAll: includeAllValue, includeInactive: includeInactiveFlag });
+    // #region agent log
+    console.log('[DEBUG] task.controller.ts:getTasks - Result', JSON.stringify({ taskCount: Array.isArray(tasks) ? tasks.length : null, isArray: Array.isArray(tasks) }));
+    // #endregion
     res.json(tasks);
 });
 export const getTask = asyncHandler(async (req, res) => {
@@ -71,19 +80,6 @@ export const createTask = asyncHandler(async (req, res) => {
     return res.status(201).json(task);
 });
 export const updateTask = asyncHandler(async (req, res) => {
-    // #region agent log
-    const logData = { location: 'task.controller.ts:98', message: 'updateTask controller entry', data: { id: req.params.id, bodyKeys: Object.keys(req.body), hasThumbnailUrl: 'thumbnail_url' in req.body, thumbnailUrl: req.body.thumbnail_url, thumbnailUrlType: typeof req.body.thumbnail_url, bodyString: JSON.stringify(req.body) }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' };
-    console.log('[DEBUG]', JSON.stringify(logData));
-    try {
-        const logDir = '/app/.cursor';
-        if (!fs.existsSync(logDir))
-            fs.mkdirSync(logDir, { recursive: true });
-        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logData) + '\n');
-    }
-    catch (e) {
-        console.error('[DEBUG] Log error:', e);
-    }
-    // #endregion
     const locationId = req.body.locationId ?? req.body.location_id;
     if (locationId !== undefined) {
         if (!locationId || typeof locationId !== 'string') {
@@ -97,19 +93,6 @@ export const updateTask = asyncHandler(async (req, res) => {
         req.body.location_id = location.id;
     }
     const task = await updateTaskService(req.params.id, req.body);
-    // #region agent log
-    const logDataResult = { location: 'task.controller.ts:112', message: 'updateTask service result', data: { task: task ? JSON.stringify(task) : null, thumbnailUrl: task?.thumbnail_url }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'E' };
-    console.log('[DEBUG]', JSON.stringify(logDataResult));
-    try {
-        const logDir = '/app/.cursor';
-        if (!fs.existsSync(logDir))
-            fs.mkdirSync(logDir, { recursive: true });
-        fs.appendFileSync('/app/.cursor/debug.log', JSON.stringify(logDataResult) + '\n');
-    }
-    catch (e) {
-        console.error('[DEBUG] Log error:', e);
-    }
-    // #endregion
     if (!task) {
         return res.status(404).json({ error: 'Task not found' });
     }
@@ -159,13 +142,7 @@ export const uploadVideo = asyncHandler(async (req, res) => {
     if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
-    // #region agent log
-    console.log('[DEBUG] task.controller.ts:uploadVideo - Video upload started', JSON.stringify({ filename: file.filename, path: file.path, size: file.size, uploadDir: process.env.UPLOAD_DIR, cwd: process.cwd() }));
-    // #endregion
     const videoUrl = await uploadVideoService(file);
-    // #region agent log
-    console.log('[DEBUG] task.controller.ts:uploadVideo - Video upload completed', JSON.stringify({ videoUrl, filePath: file.path }));
-    // #endregion
     res.json({ video_url: videoUrl });
 });
 export const uploadThumbnail = asyncHandler(async (req, res) => {
@@ -173,13 +150,7 @@ export const uploadThumbnail = asyncHandler(async (req, res) => {
     if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
-    // #region agent log
-    console.log('[DEBUG] task.controller.ts:uploadThumbnail - Thumbnail upload started', JSON.stringify({ filename: file.filename, path: file.path, size: file.size, uploadDir: process.env.UPLOAD_DIR, cwd: process.cwd() }));
-    // #endregion
     const thumbnailUrl = await uploadThumbnailService(file);
-    // #region agent log
-    console.log('[DEBUG] task.controller.ts:uploadThumbnail - Thumbnail upload completed', JSON.stringify({ thumbnailUrl, filePath: file.path }));
-    // #endregion
     res.json({ thumbnail_url: thumbnailUrl });
 });
 //# sourceMappingURL=task.controller.js.map

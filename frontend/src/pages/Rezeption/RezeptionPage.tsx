@@ -7,6 +7,8 @@ import { TeamManagement } from '../../components/Admin/TeamManagement';
 import { ContestManagement } from '../../components/Admin/ContestManagement';
 import QrScannerPage from '../Admin/QrScannerPage';
 import PointsBonusPage from '../Employee/PointsBonusPage';
+import { ManagementHeader } from '../../components/Management/ManagementHeader';
+import { ManagementCard } from '../../components/Management/ManagementCard';
 
 type RezeptionMode =
   | 'teamManage'
@@ -15,16 +17,6 @@ type RezeptionMode =
   | 'redeemRewards'
   | 'verifyTasks'
   | null;
-
-// Icon component helper
-const Icon = ({ name }: { name: string }) => {
-  const icons: Record<string, string> = {
-    back: '←',
-    refresh: '↻',
-    close: '×',
-  };
-  return <span>{icons[name] || name}</span>;
-};
 
 function RezeptionPage() {
   const { t } = useTranslation();
@@ -104,67 +96,47 @@ function RezeptionPage() {
 
       {mode === 'pointsBonus' && (
         <section className="rezeption-section">
-          <header className="rezeption-section-header">
-            <div>
-              <h2>{t('rezeption.pointsBonus.title', 'Bonuspunkte geben')}</h2>
-            </div>
-            <div className="rezeption-actions">
-              <button
-                className="rezeption-icon-button"
-                onClick={() => setMode(null)}
-                title={t('common.actions.back', 'Zurück')}
-              >
-                <Icon name="back" />
-                <span className="sr-only">{t('common.actions.back', 'Zurück')}</span>
-              </button>
-            </div>
-          </header>
+          <ManagementHeader
+            title={t('rezeption.pointsBonus.title', 'Bonuspunkte geben')}
+            subtitle={t('rezeption.actions.pointsBonus.description', 'QR-Codes für Bonuspunkte generieren')}
+            cssPrefix="rezeption"
+            onBack={() => setMode(null)}
+            showBack={true}
+            showRefresh={false}
+          />
           <PointsBonusPage />
         </section>
       )}
 
       {mode === 'redeemRewards' && (
         <section className="rezeption-section">
-          <header className="rezeption-section-header">
-            <div>
-              <h2>{t('rezeption.redeemRewards.title', 'Belohnungen einlösen')}</h2>
-            </div>
-            <div className="rezeption-actions">
-              <button
-                className="rezeption-icon-button"
-                onClick={() => setMode(null)}
-                title={t('common.actions.back', 'Zurück')}
-              >
-                <Icon name="back" />
-                <span className="sr-only">{t('common.actions.back', 'Zurück')}</span>
-              </button>
-            </div>
-          </header>
+          <ManagementHeader
+            title={t('rezeption.redeemRewards.title', 'Belohnungen einlösen')}
+            subtitle={t('rezeption.actions.redeemRewards.description', 'Scannen Sie QR-Codes, um Belohnungen zu verifizieren und einzulösen')}
+            cssPrefix="rezeption"
+            onBack={() => setMode(null)}
+            showBack={true}
+            showRefresh={false}
+          />
           <QrScannerPage onBack={() => setMode(null)} />
         </section>
       )}
 
       {mode === 'verifyTasks' && (
         <section className="rezeption-section">
-          <header className="rezeption-section-header">
-            <div>
-              <h2>{t('rezeption.verifyTasks.title', 'Aufgaben verifizieren')}</h2>
-              <p>{t('rezeption.verifyTasks.subtitle', 'Diese Funktion wird in Kürze verfügbar sein')}</p>
-            </div>
-            <div className="rezeption-actions">
-              <button
-                className="rezeption-icon-button"
-                onClick={() => setMode(null)}
-                title={t('common.actions.back', 'Zurück')}
-              >
-                <Icon name="back" />
-                <span className="sr-only">{t('common.actions.back', 'Zurück')}</span>
-              </button>
-            </div>
-          </header>
-          <div className="rezeption-placeholder">
-            <p>{t('rezeption.verifyTasks.placeholder', 'Die Funktion zum Verifizieren von Aufgaben ist noch nicht implementiert.')}</p>
-          </div>
+          <ManagementHeader
+            title={t('rezeption.verifyTasks.title', 'Aufgaben verifizieren')}
+            subtitle={t('rezeption.verifyTasks.subtitle', 'Diese Funktion wird in Kürze verfügbar sein')}
+            cssPrefix="rezeption"
+            onBack={() => setMode(null)}
+            showBack={true}
+            showRefresh={false}
+          />
+          <ManagementCard
+            cssPrefix="rezeption"
+            title={t('rezeption.verifyTasks.title', 'Aufgaben verifizieren')}
+            subtitle={t('rezeption.verifyTasks.placeholder', 'Die Funktion zum Verifizieren von Aufgaben ist noch nicht implementiert.')}
+          />
         </section>
       )}
     </div>

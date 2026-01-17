@@ -297,9 +297,10 @@ function LoginPage() {
       <div className="login-container">
         <div className="login-header">
           <div className="login-header-info">
-            <img src="/app-icon-128.png" alt="4rest" className="login-logo" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
-            <h1>{t('common.appName', { defaultValue: '4rest' })}</h1>
-            <p>{getModeTitle()}</p>
+            <div className="login-logo-row">
+              <img src="/app-icon-128.png" alt="4rest" className="login-logo" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+              <h1>{t('common.appName', { defaultValue: '4rest' })}</h1>
+            </div>
           </div>
           <LanguageSwitcher compact className="login-language-switcher" />
         </div>
