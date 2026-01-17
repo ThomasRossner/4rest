@@ -59,13 +59,172 @@ git reset --hard origin/dev || git reset --hard origin/main || git pull --rebase
 git clean -fd
 
 echo ""
-echo "==> Building Docker images..."
+echo "==> Pre-Deployment Checks..."
+
+# Check if docker-compose file exists
+if [ ! -f "docker-compose.homeserver.yml" ]; then
+    echo "ERROR: docker-compose.homeserver.yml not found!"
+    exit 1
+fi
+echo "✓ Docker compose file found"
+
+# Determine Docker Compose command
 if docker compose version >/dev/null 2>&1; then
     COMPOSE_CMD="docker compose"
 else
     COMPOSE_CMD="docker-compose"
 fi
 
+# Check if containers are running (for backup)
+CONTAINERS_RUNNING=false
+if $COMPOSE_CMD -f docker-compose.homeserver.yml ps | grep -q "Up"; then
+    CONTAINERS_RUNNING=true
+fi
+
+# Get database credentials from docker-compose
+POSTGRES_USER_LINE=$(grep POSTGRES_USER docker-compose.homeserver.yml | head -1)
+if echo "$POSTGRES_USER_LINE" | grep -q '\${POSTGRES_USER:-'; then
+    # Extract default value from ${POSTGRES_USER:-roots_user}
+    POSTGRES_USER=$(echo "$POSTGRES_USER_LINE" | sed -n 's/.*POSTGRES_USER:\${POSTGRES_USER:-\([^}]*\)}.*/\1/p')
+fi
+if [ -z "$POSTGRES_USER" ] || [ "$POSTGRES_USER" = "\${POSTGRES_USER:-roots_user}" ] || [ "$POSTGRES_USER" = "${POSTGRES_USER:-roots_user}" ]; then
+    POSTGRES_USER="roots_user"
+fi
+
+POSTGRES_DB_LINE=$(grep POSTGRES_DB docker-compose.homeserver.yml | head -1)
+if echo "$POSTGRES_DB_LINE" | grep -q '\${POSTGRES_DB:-'; then
+    # Extract default value from ${POSTGRES_DB:-roots_of_impact}
+    POSTGRES_DB=$(echo "$POSTGRES_DB_LINE" | sed -n 's/.*POSTGRES_DB:\${POSTGRES_DB:-\([^}]*\)}.*/\1/p')
+fi
+if [ -z "$POSTGRES_DB" ] || [ "$POSTGRES_DB" = "\${POSTGRES_DB:-roots_of_impact}" ] || [ "$POSTGRES_DB" = "${POSTGRES_DB:-roots_of_impact}" ]; then
+    POSTGRES_DB="roots_of_impact"
+fi
+
+# Create backup directory
+BACKUP_DIR="/root/backups"
+BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+CURRENT_BACKUP_DIR="$BACKUP_DIR/deployment_$BACKUP_TIMESTAMP"
+mkdir -p "$CURRENT_BACKUP_DIR"
+
+echo ""
+echo "==> Creating full backup before deployment..."
+echo "Backup directory: $CURRENT_BACKUP_DIR"
+
+# 1. Backup database
+if [ "$CONTAINERS_RUNNING" = true ]; then
+    POSTGRES_CONTAINER=$($COMPOSE_CMD -f docker-compose.homeserver.yml ps -q postgres 2>/dev/null || echo "")
+    if [ -n "$POSTGRES_CONTAINER" ]; then
+        echo "  -> Backing up database..."
+        docker exec "$POSTGRES_CONTAINER" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-acl > "$CURRENT_BACKUP_DIR/database_backup.sql" || {
+            echo "ERROR: Database backup failed!"
+            exit 1
+        }
+        echo "  ✓ Database backup created"
+    else
+        echo "  ⚠ WARNING: PostgreSQL container not found, skipping database backup"
+    fi
+else
+    echo "  ⚠ WARNING: Containers not running, skipping database backup"
+fi
+
+# 2. Backup uploads volume
+echo "  -> Backing up uploads volume..."
+# Try to find uploads volume name from docker-compose
+UPLOADS_VOLUME=$(grep -A 5 "volumes:" docker-compose.homeserver.yml | grep -E "uploads|uploads_data" | head -1 | sed 's/.*- *\([^:]*\):.*/\1/' | tr -d ' ' || echo "")
+# Fallback: try common volume names
+if [ -z "$UPLOADS_VOLUME" ]; then
+    UPLOADS_VOLUME=$(docker volume ls | grep -E "uploads|uploads_data" | awk '{print $2}' | head -1 || echo "")
+fi
+# Fallback: try to get from compose config
+if [ -z "$UPLOADS_VOLUME" ]; then
+    UPLOADS_VOLUME=$($COMPOSE_CMD -f docker-compose.homeserver.yml config --volumes 2>/dev/null | grep -E "uploads|uploads_data" | head -1 || echo "")
+fi
+
+if [ -n "$UPLOADS_VOLUME" ]; then
+    # Create a temporary container to access the volume
+    docker run --rm -v "${UPLOADS_VOLUME}:/data" -v "$CURRENT_BACKUP_DIR:/backup" alpine tar czf /backup/uploads_backup.tar.gz -C /data . || {
+        echo "ERROR: Uploads volume backup failed!"
+        exit 1
+    }
+    echo "  ✓ Uploads volume backup created (volume: $UPLOADS_VOLUME)"
+else
+    echo "  ⚠ WARNING: Uploads volume not found, skipping uploads backup"
+fi
+
+# 3. Backup container images (optional, but useful for rollback)
+echo "  -> Saving container image information..."
+$COMPOSE_CMD -f docker-compose.homeserver.yml images > "$CURRENT_BACKUP_DIR/container_images.txt" 2>/dev/null || true
+echo "  ✓ Container image info saved"
+
+# 4. Backup Git information (for rollback)
+echo "  -> Saving Git information..."
+git rev-parse HEAD > "$CURRENT_BACKUP_DIR/git_commit.txt" 2>/dev/null || true
+git branch --show-current > "$CURRENT_BACKUP_DIR/git_branch.txt" 2>/dev/null || true
+git log -1 --format="%H%n%an%n%ae%n%ad%n%s" > "$CURRENT_BACKUP_DIR/git_info.txt" 2>/dev/null || true
+echo "  ✓ Git information saved"
+
+# 5. Check which migrations are pending
+echo ""
+echo "==> Checking pending migrations..."
+if [ "$CONTAINERS_RUNNING" = true ] && [ -n "$POSTGRES_CONTAINER" ]; then
+    # Get list of executed migrations from database
+    EXECUTED_MIGRATIONS=$(docker exec "$POSTGRES_CONTAINER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT migration_name FROM schema_migrations ORDER BY migration_name;" 2>/dev/null | tr -d ' ' | grep -v '^$' || echo "")
+    
+    # Define all migrations (from migrate.ts)
+    ALL_MIGRATIONS=(
+        "001_initial_schema" "002_gdpr_consent" "003_oauth_support" "004_sihot_integration"
+        "005_user_default_role" "006_user_type" "007_tasks_rewards_audience" "008_task_reward_templates"
+        "009_drop_task_templates" "010_enum_user_fields" "011_drop_reward_templates" "012_email_verification_password_reset"
+        "013_passwordless_login" "014_allow_passwordless_accounts" "015_locations" "016_locations_active"
+        "017_reward_qr_tokens" "018_tree_growth_stages" "019_reward_recurrence" "020_task_recurrence"
+        "021_visit_location_task" "022_article_quiz_task" "023_survey_task" "024_reward_location_categories"
+        "025_points_bonus_qr_tokens" "026_task_prerequisites" "027_task_metadata" "028_populate_task_metadata"
+        "029_reward_metadata" "030_populate_reward_metadata" "031_task_zielgruppe" "033_parameter_tables"
+        "034_add_parameter_weight" "035_points_calculation_factor" "036_reward_cost_calculation_factor"
+        "037_reward_model_simplification" "038_task_model_simplification" "039_remove_reward_kosten_moegliche_punkte"
+        "040_reward_zielgruppe" "041_restore_moegliche_punkte" "042_zielgruppe_multiselect"
+        "043_teams_contests" "043_add_front_office_to_zielgruppe" "044_replace_mitarbeitende_with_front_office"
+        "044_reward_redemption_metadata" "045_contest_start_date" "045_remove_stakeholder_from_zielgruppe"
+        "046_contest_rewards_awarded" "046_remove_duplicate_zielgruppe" "047_add_unique_constraint_qr_code"
+        "047_task_reward_thumbnails" "048_fix_user_role_enum" "049_team_contest_registration_qr_codes"
+        "050_replace_front_office_with_rezeption_redaktion" "051_replace_allowed_roles_with_teams_contests"
+        "052_photo_task_verification" "053_mailbox_messages"
+    )
+    
+    PENDING_MIGRATIONS=()
+    for migration in "${ALL_MIGRATIONS[@]}"; do
+        # Check if migration file exists
+        if [ ! -f "database/migrations/${migration}.sql" ]; then
+            echo "  ⚠ WARNING: Migration file ${migration}.sql not found!"
+            continue
+        fi
+        
+        # Check if migration was executed
+        if echo "$EXECUTED_MIGRATIONS" | grep -q "^${migration}$"; then
+            echo "  ✓ Migration ${migration} already executed"
+        else
+            echo "  ⏳ Migration ${migration} is pending"
+            PENDING_MIGRATIONS+=("$migration")
+        fi
+    done
+    
+    if [ ${#PENDING_MIGRATIONS[@]} -eq 0 ]; then
+        echo "  ✓ All migrations are up to date"
+    else
+        echo "  → Found ${#PENDING_MIGRATIONS[@]} pending migration(s)"
+        echo "$(IFS=','; echo "${PENDING_MIGRATIONS[*]}")" > "$CURRENT_BACKUP_DIR/pending_migrations.txt"
+    fi
+else
+    echo "  ⚠ WARNING: Cannot check migrations - containers not running or database not accessible"
+    echo "  → Will run all migrations after deployment"
+fi
+
+echo ""
+echo "✓ Pre-deployment checks and backup completed"
+echo "  Backup location: $CURRENT_BACKUP_DIR"
+
+echo ""
+echo "==> Building Docker images..."
 $COMPOSE_CMD -f docker-compose.homeserver.yml build --no-cache
 
 echo ""
@@ -78,11 +237,87 @@ $COMPOSE_CMD -f docker-compose.homeserver.yml up -d
 
 echo ""
 echo "==> Waiting for services to start..."
-sleep 5
+sleep 10
+
+echo ""
+echo "==> Running database migrations..."
+# Wait for backend to be ready
+BACKEND_CONTAINER=$($COMPOSE_CMD -f docker-compose.homeserver.yml ps -q backend 2>/dev/null || echo "")
+if [ -n "$BACKEND_CONTAINER" ]; then
+    echo "Waiting for backend to be ready..."
+    for i in {1..30}; do
+        if $COMPOSE_CMD -f docker-compose.homeserver.yml exec -T backend curl -f http://localhost:5000/health >/dev/null 2>&1; then
+            echo "Backend is ready"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            echo "WARNING: Backend health check failed, but continuing..."
+        fi
+        sleep 2
+    done
+    
+    # Run migrations (migrate.ts automatically runs only pending migrations)
+    echo "Executing database migrations..."
+    echo "  → Only pending migrations will be executed"
+    $COMPOSE_CMD -f docker-compose.homeserver.yml exec -T backend npm run migrate || {
+        echo "ERROR: Database migrations failed!"
+        echo "==> Recent backend logs:"
+        $COMPOSE_CMD -f docker-compose.homeserver.yml logs --tail=50 backend
+        echo ""
+        echo "⚠️  IMPORTANT: If migrations failed, you can restore from backup:"
+        echo "   Backup location: $CURRENT_BACKUP_DIR"
+        exit 1
+    }
+    echo "✓ Database migrations completed"
+    
+    # Verify migrations (re-get container after restart)
+    POSTGRES_CONTAINER_AFTER=$($COMPOSE_CMD -f docker-compose.homeserver.yml ps -q postgres 2>/dev/null || echo "")
+    if [ -f "$CURRENT_BACKUP_DIR/pending_migrations.txt" ] && [ -n "$POSTGRES_CONTAINER_AFTER" ]; then
+        echo "  → Verifying pending migrations were executed..."
+        NEW_EXECUTED_MIGRATIONS=$(docker exec "$POSTGRES_CONTAINER_AFTER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT migration_name FROM schema_migrations ORDER BY migration_name;" 2>/dev/null | tr -d ' ' | grep -v '^$' || echo "")
+        PENDING_LIST=$(cat "$CURRENT_BACKUP_DIR/pending_migrations.txt" | tr ',' '\n')
+        PENDING_COUNT=$(echo "$PENDING_LIST" | wc -l | tr -d ' ')
+        VERIFIED_COUNT=0
+        for migration in $PENDING_LIST; do
+            if echo "$NEW_EXECUTED_MIGRATIONS" | grep -q "^${migration}$"; then
+                VERIFIED_COUNT=$((VERIFIED_COUNT + 1))
+            fi
+        done
+        
+        if [ "$VERIFIED_COUNT" -eq "$PENDING_COUNT" ]; then
+            echo "  ✓ All pending migrations verified"
+        else
+            echo "  ⚠ WARNING: Not all pending migrations were executed ($VERIFIED_COUNT/$PENDING_COUNT)"
+        fi
+    fi
+else
+    echo "WARNING: Backend container not found, skipping migrations"
+fi
 
 echo ""
 echo "==> Container status:"
 $COMPOSE_CMD -f docker-compose.homeserver.yml ps
+
+echo ""
+echo "==> Health checks..."
+# Check backend health
+if [ -n "$BACKEND_CONTAINER" ]; then
+    if $COMPOSE_CMD -f docker-compose.homeserver.yml exec -T backend curl -f http://localhost:5000/health >/dev/null 2>&1; then
+        echo "✓ Backend health check passed"
+    else
+        echo "⚠ WARNING: Backend health check failed"
+    fi
+fi
+
+# Check frontend
+FRONTEND_CONTAINER=$($COMPOSE_CMD -f docker-compose.homeserver.yml ps -q frontend 2>/dev/null || echo "")
+if [ -n "$FRONTEND_CONTAINER" ]; then
+    if $COMPOSE_CMD -f docker-compose.homeserver.yml exec -T frontend curl -f http://localhost:80 >/dev/null 2>&1; then
+        echo "✓ Frontend health check passed"
+    else
+        echo "⚠ WARNING: Frontend health check failed"
+    fi
+fi
 
 echo ""
 echo "==> Recent logs:"

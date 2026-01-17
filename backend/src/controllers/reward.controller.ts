@@ -60,7 +60,6 @@ export const createReward: RequestHandler = asyncHandler(async (req, res) => {
     reward_art: payload.reward_art ?? payload.rewardArt ?? null,
     kategorie: payload.kategorie ?? payload.category ?? null,
     event_group: payload.event_group ?? payload.eventGroup ?? null,
-    moegliche_punkte: payload.moegliche_punkte ?? payload.possible_points ?? null,
     thumbnail_url: payload.thumbnail_url ?? payload.thumbnailUrl ?? null,
   });
 
@@ -99,9 +98,6 @@ export const updateReward: RequestHandler = asyncHandler(async (req, res) => {
     }
     if (payload.event_group !== undefined || payload.eventGroup !== undefined) {
       updatePayload.event_group = payload.event_group ?? payload.eventGroup ?? null;
-    }
-    if (payload.moegliche_punkte !== undefined || payload.possible_points !== undefined) {
-      updatePayload.moegliche_punkte = payload.moegliche_punkte ?? payload.possible_points ?? null;
     }
     if (payload.locationId !== undefined || payload.location_id !== undefined) {
       const locationId = payload.locationId ?? payload.location_id;
