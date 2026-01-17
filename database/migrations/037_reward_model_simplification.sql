@@ -8,12 +8,24 @@ ALTER TABLE rewards ADD COLUMN IF NOT EXISTS allowed_role VARCHAR(50);
 -- Step 2: Migrate data from allowed_roles and allowed_user_types to allowed_role
 -- Priority: if allowed_roles has values, use first one; otherwise use first from allowed_user_types
 -- Convert enum types to text for storage
-UPDATE rewards
-SET allowed_role = CASE
-  WHEN allowed_roles IS NOT NULL AND array_length(allowed_roles, 1) > 0 THEN allowed_roles[1]::text
-  WHEN allowed_user_types IS NOT NULL AND array_length(allowed_user_types, 1) > 0 THEN allowed_user_types[1]::text
-  ELSE NULL
-END;
+-- Only update if the source columns exist
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rewards' AND column_name = 'allowed_roles') THEN
+    UPDATE rewards
+    SET allowed_role = CASE
+      WHEN allowed_roles IS NOT NULL AND array_length(allowed_roles, 1) > 0 THEN allowed_roles[1]::text
+      WHEN allowed_user_types IS NOT NULL AND array_length(allowed_user_types, 1) > 0 THEN allowed_user_types[1]::text
+      ELSE NULL
+    END;
+  ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rewards' AND column_name = 'allowed_user_types') THEN
+    UPDATE rewards
+    SET allowed_role = CASE
+      WHEN allowed_user_types IS NOT NULL AND array_length(allowed_user_types, 1) > 0 THEN allowed_user_types[1]::text
+      ELSE NULL
+    END;
+  END IF;
+END $$;
 
 -- Step 3: Remove old columns
 ALTER TABLE rewards DROP COLUMN IF EXISTS allowed_hotel_ids;
