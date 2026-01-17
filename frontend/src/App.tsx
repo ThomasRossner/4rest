@@ -15,6 +15,7 @@ import PointsBonusPage from './pages/Employee/PointsBonusPage';
 import ContestRankingPage from './pages/ContestRankingPage/ContestRankingPage';
 import EmployeeContestsPage from './pages/EmployeeContestsPage/EmployeeContestsPage';
 import RezeptionPage from './pages/Rezeption/RezeptionPage';
+import RedaktionPage from './pages/Redaktion/RedaktionPage';
 
 function ProtectedApp() {
   const { isAuthenticated, user } = useAuthStore();
@@ -36,6 +37,15 @@ function ProtectedApp() {
     return (
       <Routes>
         <Route path="/" element={<RezeptionPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  if (user.role === 'redaktion') {
+    return (
+      <Routes>
+        <Route path="/" element={<RedaktionPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );

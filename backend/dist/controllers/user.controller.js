@@ -1,4 +1,4 @@
-import { getUserProgressService, getUserProfileService, updateUserProfileService, getMeService, listUsersService, getUserDetailsService, updateUserRoleService, updateUserPointsService, toggleUserActiveService, resetUserPasswordService, deleteUserService, getUserStatisticsService, getUserTimelineService, createUserByAdminService, } from '../services/user.service.js';
+import { getUserProgressService, getUserProfileService, updateUserProfileService, getMeService, listUsersService, getUserDetailsService, updateUserRoleService, updateUserPointsService, toggleUserActiveService, resetUserPasswordService, setUserPasswordService, deleteUserService, getUserStatisticsService, getUserTimelineService, createUserByAdminService, } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendAdminCreatedUserEmail } from '../services/auth-email.service.js';
 import { USER_ROLES } from '../constants/enums.js';
@@ -101,6 +101,18 @@ export const resetUserPassword = asyncHandler(async (req, res) => {
     }
     const result = await resetUserPasswordService(req.params.id);
     res.json(result);
+});
+export const setUserPassword = asyncHandler(async (req, res) => {
+    const authReq = req;
+    if (!authReq.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const { password } = req.body;
+    if (!password) {
+        return res.status(400).json({ error: 'Password is required' });
+    }
+    await setUserPasswordService(req.params.id, password);
+    res.json({ message: 'Password set successfully' });
 });
 export const deleteUser = asyncHandler(async (req, res) => {
     const authReq = req;

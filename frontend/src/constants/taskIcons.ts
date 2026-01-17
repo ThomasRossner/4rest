@@ -3,7 +3,7 @@ import { QRCodeIcon } from '../components/Icons/QRCodeIcon';
 
 export const TASK_TYPE_ICONS: Record<string, ReactNode> = {
   video: '🎥',
-  qr: createElement(QRCodeIcon, { size: 24 }),
+  qr: createElement(QRCodeIcon, { size: 48 }),
   photo: '📷',
   visit_location: '📍',
 };

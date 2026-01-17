@@ -18,7 +18,8 @@
       "delete": "Delete",
       "edit": "Edit",
       "show": "Show",
-      "hide": "Hide"
+      "hide": "Hide",
+      "refresh": "Refresh"
     },
     "status": {
       "active": "Active",
@@ -1218,6 +1219,7 @@
         "activate": "Activate",
         "deactivate": "Deactivate",
         "resetPassword": "Reset Password",
+        "setPassword": "Set Password",
         "deleteUser": "Delete User (Soft Delete)",
         "hardDeleteUser": "Delete User (Hard Delete)"
       },
@@ -1236,7 +1238,15 @@
       "confirmRoleChange": "Are you sure you want to change this user's role?",
       "confirmPointsChange": "Are you sure you want to change this user's points?",
       "confirmToggleActive": "Are you sure you want to change this user's status?",
-      "confirmPasswordReset": "Are you sure you want to reset the password for this user?",
+      "confirmPasswordReset": "Are you sure you want to reset the password for this user? An email with a reset link will be sent to the user.",
+      "setPassword": {
+        "title": "Set Password",
+        "newPassword": "New Password",
+        "newPasswordPlaceholder": "Enter password (at least 6 characters)",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter password",
+        "submit": "Set Password"
+      },
       "confirmSoftDelete": "Are you sure you want to delete this user? (Soft Delete - can be restored)",
       "confirmHardDelete": "Are you sure you want to permanently delete this user? This action cannot be undone!",
       "pagination": {
@@ -2056,6 +2066,59 @@
       "subtitle": "This feature will be available soon",
       "placeholder": "The function to verify tasks is not yet implemented."
     }
+  },
+  "redaktion": {
+    "title": "Redaktion",
+    "subtitle": "Management of tasks, rewards, locations and surveys",
+    "actions": {
+      "manageTasks": {
+        "title": "Manage Tasks",
+        "description": "Browse, edit, activate or deactivate tasks"
+      },
+      "manageRewards": {
+        "title": "Manage Rewards",
+        "description": "Browse, edit and manage rewards"
+      },
+      "manageLocations": {
+        "title": "Manage Locations",
+        "description": "Browse, edit or remove locations"
+      },
+      "surveyAnalytics": {
+        "title": "Survey Analytics",
+        "description": "View aggregated survey responses with visual charts and statistics"
+      }
+    },
+    "surveyAnalytics": {
+      "title": "Survey Analytics"
+    },
+    "locationManage": {
+      "title": "Manage Locations",
+      "subtitle": "Browse existing locations, edit their details, or remove unused entries",
+      "loading": "Loading locations...",
+      "loadError": "Failed to load locations",
+      "existing": {
+        "title": "Existing locations",
+        "subtitle": "Each task and reward references one of these locations"
+      },
+      "showInactive": "Show inactive",
+      "filterByName": "Filter by name...",
+      "filterAll": "All status",
+      "filterActive": "Active",
+      "filterInactive": "Inactive",
+      "noLocations": "No locations found",
+      "untitled": "Untitled location",
+      "active": "Active",
+      "inactive": "Inactive",
+      "online": "Online"
+    },
+    "taskManage": {
+      "subtitle": "Browse, edit, activate or deactivate tasks"
+    },
+    "rewardManage": {
+      "subtitle": "Browse, edit and manage rewards"
+    },
+    "comingSoon": "This feature will be available soon.",
+    "useAdminPage": "Please use the administrator page temporarily."
   }
 }
 

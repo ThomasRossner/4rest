@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getMe, getUserProgress, getUserProfile, updateUserProfile, listUsers, getUserDetails, updateUserRole, updateUserPoints, toggleUserActive, resetUserPassword, deleteUser, getUserStatistics, getUserTimeline, createUserByAdmin, } from '../controllers/user.controller.js';
+import { getMe, getUserProgress, getUserProfile, updateUserProfile, listUsers, getUserDetails, updateUserRole, updateUserPoints, toggleUserActive, resetUserPassword, setUserPassword, deleteUser, getUserStatistics, getUserTimeline, createUserByAdmin, } from '../controllers/user.controller.js';
 const router = Router();
 // Public routes (authenticated users)
 router.get('/me', authenticate, getMe);
@@ -17,6 +17,7 @@ router.put('/:id/role', authenticate, requireRole('administrator'), updateUserRo
 router.put('/:id/points', authenticate, requireRole('administrator'), updateUserPoints);
 router.post('/:id/toggle-active', authenticate, requireRole('administrator'), toggleUserActive);
 router.post('/:id/reset-password', authenticate, requireRole('administrator'), resetUserPassword);
+router.post('/:id/set-password', authenticate, requireRole('administrator'), setUserPassword);
 router.delete('/:id', authenticate, requireRole('administrator'), deleteUser);
 router.get('/:id/statistics', authenticate, requireRole('administrator'), getUserStatistics);
 export default router;

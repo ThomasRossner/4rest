@@ -1,5 +1,6 @@
 import { getPool } from '../database/connection.js';
 import { USER_ROLES, USER_TYPES } from '../constants/enums.js';
+import bcrypt from 'bcryptjs';
 function ensureRole(value) {
     const rolesArray = Array.from(USER_ROLES);
     if (typeof value === 'string' && rolesArray.includes(value)) {
@@ -222,6 +223,13 @@ export async function updateUserProfileService(userId, data) {
     const result = await db.query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, name, role, points, avatar_url`, values);
     return result.rows[0];
 }
+export async function setUserPasswordService(userId, password) {
+    if (!password || password.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+    }
+    const passwordHash = await bcrypt.hash(password, 10);
+    await updateUserPassword(userId, passwordHash);
+}
 export async function updateUserPassword(userId, passwordHash) {
     const db = getPool();
     await db.query('UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [passwordHash, userId]);
@@ -387,16 +395,19 @@ export async function toggleUserActiveService(userId, adminUserId) {
 }
 export async function resetUserPasswordService(userId) {
     const db = getPool();
-    const crypto = await import('node:crypto');
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpires = new Date();
-    resetExpires.setHours(resetExpires.getHours() + 24); // Token expires in 24 hours
-    await db.query(`UPDATE users 
-     SET password_reset_token = $1, 
-         password_reset_expires = $2, 
-         updated_at = CURRENT_TIMESTAMP 
-     WHERE id = $3 AND deleted_at IS NULL`, [resetToken, resetExpires, userId]);
-    return { resetToken };
+    const { sendPasswordResetEmail } = await import('./auth-email.service.js');
+    // Get user details
+    const userResult = await db.query(`SELECT id, email, name FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
+    if (userResult.rows.length === 0) {
+        throw new Error('User not found');
+    }
+    const user = userResult.rows[0];
+    if (!user.email) {
+        throw new Error('User has no email address');
+    }
+    // Send password reset email
+    await sendPasswordResetEmail(user.id, user.email, user.name);
+    return { message: 'Password reset email sent successfully' };
 }
 export async function deleteUserService(userId, adminUserId, hardDelete = false) {
     const db = getPool();

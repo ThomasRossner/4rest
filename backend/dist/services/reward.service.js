@@ -84,18 +84,6 @@ export async function createCustomReward(data) {
     const rewardType = validateRewardType(data.rewardType);
     const pointsCost = normalizePointsCost(data.pointsCost);
     const recurrence = validateRecurrence(data.recurrence);
-    // Handle zielgruppe array: allow null, empty array, or array of valid enum values
-    let zielgruppeValue = null;
-    if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
-        // Ensure it's an array
-        const zielgruppeArray = Array.isArray(data.zielgruppe) ? data.zielgruppe : [data.zielgruppe];
-        // Filter out empty strings and null values
-        zielgruppeValue = zielgruppeArray.filter((v) => v !== null && v !== undefined && v !== '');
-        // If resulting array is empty, set to null
-        if (zielgruppeValue.length === 0) {
-            zielgruppeValue = null;
-        }
-    }
     const result = await db.query(`INSERT INTO rewards (
        title,
        description,
@@ -103,7 +91,6 @@ export async function createCustomReward(data) {
        reward_type,
        voucher_code,
        external_api_id,
-       zielgruppe,
        location_id,
        active,
        recurrence,
@@ -113,7 +100,7 @@ export async function createCustomReward(data) {
        moegliche_punkte,
        thumbnail_url
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`, [
         title,
         data.description ?? null,
@@ -121,7 +108,6 @@ export async function createCustomReward(data) {
         rewardType,
         data.voucherCode ?? null,
         data.externalApiId ?? null,
-        zielgruppeValue, // PostgreSQL will automatically convert JavaScript arrays to PostgreSQL arrays
         data.location_id,
         data.active ?? true,
         recurrence,
@@ -192,58 +178,6 @@ export async function updateReward(id, data) {
     if (data.externalApiId !== undefined) {
         updates.push(`external_api_id = $${paramIndex++}`);
         values.push(data.externalApiId ?? null);
-    }
-    if (data.zielgruppe !== undefined) {
-        // Handle zielgruppe array: allow null, empty array, or array of valid enum values
-        let zielgruppeValue = null;
-        if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
-            let zielgruppeArray;
-            // Check if value is a string (might be JSON stringified array or PostgreSQL array string)
-            if (typeof data.zielgruppe === 'string') {
-                // Try to parse as JSON first
-                try {
-                    zielgruppeArray = JSON.parse(data.zielgruppe);
-                }
-                catch {
-                    // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}" or "{""Front Office""}"
-                    // Remove curly braces and split by comma
-                    let cleaned = data.zielgruppe.replace(/^{|}$/g, '').trim();
-                    // Remove double quotes that might wrap values (e.g., ""Front Office"" -> Front Office)
-                    cleaned = cleaned.replace(/^"|"$/g, '');
-                    zielgruppeArray = cleaned ? cleaned.split(',').map((v) => {
-                        // Remove quotes from each value and trim
-                        return v.trim().replace(/^"|"$/g, '');
-                    }) : [];
-                }
-            }
-            else if (Array.isArray(data.zielgruppe)) {
-                zielgruppeArray = data.zielgruppe.map((v) => {
-                    // If array contains strings with quotes, remove them
-                    if (typeof v === 'string') {
-                        return v.replace(/^"|"$/g, '').trim();
-                    }
-                    return v;
-                });
-            }
-            else {
-                zielgruppeArray = [data.zielgruppe];
-            }
-            // Filter out empty strings and null values, and remove any remaining quotes
-            zielgruppeValue = zielgruppeArray
-                .map((v) => {
-                if (typeof v === 'string') {
-                    return v.replace(/^"|"$/g, '').trim();
-                }
-                return v;
-            })
-                .filter((v) => v !== null && v !== undefined && v !== '');
-            // If resulting array is empty, set to null
-            if (zielgruppeValue.length === 0) {
-                zielgruppeValue = null;
-            }
-        }
-        updates.push(`zielgruppe = $${paramIndex++}`);
-        values.push(zielgruppeValue);
     }
     if (data.location_id !== undefined) {
         updates.push(`location_id = $${paramIndex++}`);

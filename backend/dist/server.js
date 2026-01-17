@@ -21,7 +21,7 @@ console.log(`[SERVER] EMAIL_MOCK_MODE: ${process.env.EMAIL_MOCK_MODE}`);
 console.log(`[SERVER] NODE_ENV: ${process.env.NODE_ENV}`);
 import passport from './config/passport.js';
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
 // Middleware
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));

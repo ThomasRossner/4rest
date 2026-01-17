@@ -1,5 +1,6 @@
 import { getPool } from '../database/connection.js';
 import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums.js';
+import bcrypt from 'bcryptjs';
 
 export interface User {
   id: string;
@@ -318,6 +319,15 @@ export async function updateUserProfileService(userId: string, data: Partial<Use
   return result.rows[0];
 }
 
+export async function setUserPasswordService(userId: string, password: string): Promise<void> {
+  if (!password || password.length < 6) {
+    throw new Error('Password must be at least 6 characters long');
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await updateUserPassword(userId, passwordHash);
+}
+
 export async function updateUserPassword(userId: string, passwordHash: string): Promise<void> {
   const db = getPool();
   await db.query(
@@ -574,23 +584,30 @@ export async function toggleUserActiveService(userId: string, adminUserId: strin
   return result.rows[0];
 }
 
-export async function resetUserPasswordService(userId: string): Promise<{ resetToken: string }> {
+export async function resetUserPasswordService(userId: string): Promise<{ message: string }> {
   const db = getPool();
-  const crypto = await import('node:crypto');
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const resetExpires = new Date();
-  resetExpires.setHours(resetExpires.getHours() + 24); // Token expires in 24 hours
-
-  await db.query(
-    `UPDATE users 
-     SET password_reset_token = $1, 
-         password_reset_expires = $2, 
-         updated_at = CURRENT_TIMESTAMP 
-     WHERE id = $3 AND deleted_at IS NULL`,
-    [resetToken, resetExpires, userId]
+  const { sendPasswordResetEmail } = await import('./auth-email.service.js');
+  
+  // Get user details
+  const userResult = await db.query(
+    `SELECT id, email, name FROM users WHERE id = $1 AND deleted_at IS NULL`,
+    [userId]
   );
 
-  return { resetToken };
+  if (userResult.rows.length === 0) {
+    throw new Error('User not found');
+  }
+
+  const user = userResult.rows[0];
+
+  if (!user.email) {
+    throw new Error('User has no email address');
+  }
+
+  // Send password reset email
+  await sendPasswordResetEmail(user.id, user.email, user.name);
+
+  return { message: 'Password reset email sent successfully' };
 }
 
 export async function deleteUserService(userId: string, adminUserId: string, hardDelete: boolean = false): Promise<void> {

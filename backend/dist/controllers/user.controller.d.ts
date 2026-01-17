@@ -9,6 +9,7 @@ export declare const updateUserRole: RequestHandler;
 export declare const updateUserPoints: RequestHandler;
 export declare const toggleUserActive: RequestHandler;
 export declare const resetUserPassword: RequestHandler;
+export declare const setUserPassword: RequestHandler;
 export declare const deleteUser: RequestHandler;
 export declare const getUserStatistics: RequestHandler;
 /**

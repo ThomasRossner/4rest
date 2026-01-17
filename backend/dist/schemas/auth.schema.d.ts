@@ -16,15 +16,15 @@ export declare const registerSchema: z.ZodObject<{
     role: z.ZodOptional<z.ZodEnum<["guest", "rezeption", "redaktion", "administrator"]>>;
     userType: z.ZodOptional<z.ZodEnum<["explorer", "guest_in_house", "observer", "advocate"]>>;
 }, "strip", z.ZodTypeAny, {
-    email?: string;
-    name?: string;
     role?: "guest" | "rezeption" | "redaktion" | "administrator";
+    name?: string;
+    email?: string;
     password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
 }, {
-    email?: string;
-    name?: string;
     role?: "guest" | "rezeption" | "redaktion" | "administrator";
+    name?: string;
+    email?: string;
     password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
 }>;

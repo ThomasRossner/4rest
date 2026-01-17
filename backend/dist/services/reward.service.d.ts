@@ -16,7 +16,6 @@ interface CreateCustomRewardInput {
     rewardType?: string;
     voucherCode?: string | null;
     externalApiId?: string | null;
-    zielgruppe?: ('Front Office' | 'Gäste')[] | null;
     location_id: string;
     active?: boolean;
     recurrence?: string | null;
@@ -33,7 +32,6 @@ interface UpdateRewardInput {
     rewardType?: string | null;
     voucherCode?: string | null;
     externalApiId?: string | null;
-    zielgruppe?: ('Front Office' | 'Gäste')[] | null;
     location_id?: string | null;
     active?: boolean;
     recurrence?: string | null;

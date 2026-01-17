@@ -116,8 +116,17 @@ export const api = {
   },
 
   async resetUserPassword(userId: string) {
-    const res = await apiClient.post(`/users/${userId}/reset-password`);
-    return res.data;
+    const response = await apiClient.post(`/users/${userId}/reset-password`);
+    return response.data;
+  },
+
+  async setUserPassword(userId: string, password: string) {
+    try {
+      const response = await apiClient.post(`/users/${userId}/set-password`, { password });
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
   },
 
   async deleteUser(userId: string, hardDelete: boolean = false) {

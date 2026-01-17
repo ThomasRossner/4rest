@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
@@ -41,6 +42,9 @@ export function UserManagement() {
   const [newUserName, setNewUserName] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 20;
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const filters = useMemo(() => {
     const f: any = {
@@ -147,11 +151,36 @@ export function UserManagement() {
   const resetPasswordMutation = useMutation(
     (userId: string) => api.resetUserPassword(userId),
     {
-      onSuccess: (data) => {
-        pushToast({ type: 'success', message: t('admin.users.messages.passwordReset', { token: data.resetToken }) });
+      onSuccess: () => {
+        pushToast({ type: 'success', message: t('admin.users.messages.passwordResetEmailSent') });
       },
       onError: (error: any) => {
         pushToast({ type: 'error', message: error?.response?.data?.error || t('admin.users.messages.passwordResetError') });
+      },
+    }
+  );
+
+  const setPasswordMutation = useMutation(
+    ({ userId, password }: { userId: string; password: string }) => api.setUserPassword(userId, password),
+    {
+      onSuccess: () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserManagement.tsx:166',message:'setPasswordMutation onSuccess called',data:{selectedUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        pushToast({ type: 'success', message: t('admin.users.messages.passwordSetSuccess') });
+        setShowPasswordFields(false);
+        setNewPassword('');
+        setConfirmPassword('');
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserManagement.tsx:175',message:'setPasswordMutation before setSelectedUserId(null)',data:{selectedUserId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        setSelectedUserId(null); // Close the user details modal
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'UserManagement.tsx:178',message:'setPasswordMutation after setSelectedUserId(null)',data:{selectedUserId:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+      },
+      onError: (error: any) => {
+        pushToast({ type: 'error', message: error?.response?.data?.error || t('admin.users.messages.passwordSetError') });
       },
     }
   );
@@ -270,6 +299,30 @@ export function UserManagement() {
     if (confirm(t('admin.users.confirmPasswordReset'))) {
       resetPasswordMutation.mutate(userId);
     }
+  };
+
+  const handleTogglePasswordFields = () => {
+    setShowPasswordFields(!showPasswordFields);
+    if (!showPasswordFields) {
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+  };
+
+  const handleSetPasswordSubmit = () => {
+    if (!selectedUserId) return;
+
+    if (!newPassword || newPassword.length < 6) {
+      pushToast({ type: 'error', message: t('admin.users.messages.passwordTooShort') });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      pushToast({ type: 'error', message: t('admin.users.messages.passwordsDoNotMatch') });
+      return;
+    }
+
+    setPasswordMutation.mutate({ userId: selectedUserId, password: newPassword });
   };
 
   const handleDeleteUser = (userId: string, hardDelete: boolean = false) => {
@@ -605,6 +658,44 @@ export function UserManagement() {
                   </div>
                 )}
 
+                {showPasswordFields && (
+                  <div className="user-details-section">
+                    <h3>{t('admin.users.setPassword.title', 'Passwort setzen')}</h3>
+                    <div className="user-details-field">
+                      <label>{t('admin.users.setPassword.newPassword', 'Neues Passwort')}</label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder={t('admin.users.setPassword.newPasswordPlaceholder', 'Passwort eingeben (mindestens 6 Zeichen)')}
+                      />
+                    </div>
+                    <div className="user-details-field">
+                      <label>{t('admin.users.setPassword.confirmPassword', 'Passwort bestätigen')}</label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder={t('admin.users.setPassword.confirmPasswordPlaceholder', 'Passwort erneut eingeben')}
+                      />
+                    </div>
+                    {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                      <p className="admin-error" style={{ marginTop: '0.5rem' }}>
+                        {t('admin.users.messages.passwordsDoNotMatch', 'Die Passwörter stimmen nicht überein')}
+                      </p>
+                    )}
+                    <div style={{ marginTop: '1rem' }}>
+                      <button
+                        className="admin-action-button"
+                        onClick={handleSetPasswordSubmit}
+                        disabled={setPasswordMutation.isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                      >
+                        {t('admin.users.setPassword.submit', 'Passwort setzen')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="user-details-actions">
                   <button
                     className="admin-button-secondary"
@@ -612,6 +703,18 @@ export function UserManagement() {
                     disabled={resetPasswordMutation.isLoading}
                   >
                     {t('admin.users.actions.resetPassword')}
+                  </button>
+                  <button
+                    className="admin-button-secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleTogglePasswordFields();
+                    }}
+                    disabled={setPasswordMutation.isLoading}
+                    style={{ marginLeft: '0.5rem' }}
+                  >
+                    {showPasswordFields ? t('admin.users.actions.cancelPassword', 'Abbrechen') : t('admin.users.actions.setPassword')}
                   </button>
                   {selectedUserId !== currentUser?.id && (
                     <>

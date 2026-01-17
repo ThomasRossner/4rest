@@ -18,7 +18,8 @@
       "delete": "Löschen",
       "edit": "Bearbeiten",
       "show": "Anzeigen",
-      "hide": "Ausblenden"
+      "hide": "Ausblenden",
+      "refresh": "Aktualisieren"
     },
     "status": {
       "active": "Aktiv",
@@ -1222,6 +1223,7 @@
         "activate": "Aktivieren",
         "deactivate": "Deaktivieren",
         "resetPassword": "Passwort zurücksetzen",
+        "setPassword": "Passwort setzen",
         "deleteUser": "Benutzer löschen (Soft Delete)",
         "hardDeleteUser": "Benutzer löschen (Hard Delete)"
       },
@@ -1232,15 +1234,27 @@
         "pointsUpdateError": "Fehler beim Aktualisieren der Punkte",
         "activeToggled": "Status erfolgreich geändert",
         "activeToggleError": "Fehler beim Ändern des Status",
-        "passwordReset": "Passwort-Reset-Token: {{token}}",
+        "passwordResetEmailSent": "Passwort-Reset-E-Mail wurde erfolgreich gesendet",
         "passwordResetError": "Fehler beim Zurücksetzen des Passworts",
+        "passwordSetSuccess": "Passwort wurde erfolgreich gesetzt",
+        "passwordSetError": "Fehler beim Setzen des Passworts",
+        "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen lang sein",
+        "passwordsDoNotMatch": "Die Passwörter stimmen nicht überein",
         "userDeleted": "Benutzer erfolgreich gelöscht",
         "userDeleteError": "Fehler beim Löschen des Benutzers"
       },
       "confirmRoleChange": "Möchten Sie die Rolle dieses Benutzers wirklich ändern?",
       "confirmPointsChange": "Möchten Sie die Punkte dieses Benutzers wirklich ändern?",
       "confirmToggleActive": "Möchten Sie den Status dieses Benutzers wirklich ändern?",
-      "confirmPasswordReset": "Möchten Sie das Passwort für diesen Benutzer wirklich zurücksetzen?",
+      "confirmPasswordReset": "Möchten Sie das Passwort für diesen Benutzer wirklich zurücksetzen? Eine E-Mail mit einem Reset-Link wird an den Benutzer gesendet.",
+      "setPassword": {
+        "title": "Passwort setzen",
+        "newPassword": "Neues Passwort",
+        "newPasswordPlaceholder": "Passwort eingeben (mindestens 6 Zeichen)",
+        "confirmPassword": "Passwort bestätigen",
+        "confirmPasswordPlaceholder": "Passwort erneut eingeben",
+        "submit": "Passwort setzen"
+      },
       "confirmSoftDelete": "Möchten Sie diesen Benutzer wirklich löschen? (Soft Delete - kann wiederhergestellt werden)",
       "confirmHardDelete": "Möchten Sie diesen Benutzer wirklich permanent löschen? Diese Aktion kann nicht rückgängig gemacht werden!",
       "pagination": {
@@ -2041,6 +2055,59 @@
       "subtitle": "Diese Funktion wird in Kürze verfügbar sein",
       "placeholder": "Die Funktion zum Verifizieren von Aufgaben ist noch nicht implementiert."
     }
+  },
+  "redaktion": {
+    "title": "Redaktion",
+    "subtitle": "Verwaltung von Aufgaben, Belohnungen, Standorten und Umfragen",
+    "actions": {
+      "manageTasks": {
+        "title": "Aufgaben verwalten",
+        "description": "Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren"
+      },
+      "manageRewards": {
+        "title": "Belohnungen verwalten",
+        "description": "Belohnungen durchsuchen, bearbeiten und verwalten"
+      },
+      "manageLocations": {
+        "title": "Standorte verwalten",
+        "description": "Standorte durchsuchen, bearbeiten oder entfernen"
+      },
+      "surveyAnalytics": {
+        "title": "Umfrage-Analysen",
+        "description": "Aggregierte Umfrageantworten mit visuellen Diagrammen und Statistiken anzeigen"
+      }
+    },
+    "surveyAnalytics": {
+      "title": "Umfrage-Analysen"
+    },
+    "locationManage": {
+      "title": "Standorte verwalten",
+      "subtitle": "Bestehende Standorte durchsuchen, bearbeiten oder entfernen",
+      "loading": "Lade Standorte...",
+      "loadError": "Fehler beim Laden der Standorte",
+      "existing": {
+        "title": "Bestehende Standorte",
+        "subtitle": "Jede Aufgabe und Belohnung verweist auf einen dieser Standorte"
+      },
+      "showInactive": "Inaktive anzeigen",
+      "filterByName": "Nach Name filtern...",
+      "filterAll": "Alle Status",
+      "filterActive": "Aktiv",
+      "filterInactive": "Inaktiv",
+      "noLocations": "Keine Standorte gefunden",
+      "untitled": "Unbenannter Standort",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "online": "Online"
+    },
+    "taskManage": {
+      "subtitle": "Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren"
+    },
+    "rewardManage": {
+      "subtitle": "Belohnungen durchsuchen, bearbeiten und verwalten"
+    },
+    "comingSoon": "Diese Funktion wird in Kürze verfügbar sein.",
+    "useAdminPage": "Bitte verwenden Sie vorübergehend die Administrator-Seite."
   }
 }
 

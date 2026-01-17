@@ -30,7 +30,6 @@ export const createReward = asyncHandler(async (req, res) => {
         rewardType: payload.rewardType ?? payload.reward_type,
         voucherCode: payload.voucherCode ?? payload.voucher_code,
         externalApiId: payload.externalApiId ?? payload.external_api_id,
-        zielgruppe: payload.zielgruppe ?? payload.Zielgruppe ?? null,
         location_id: location.id,
         active: payload.active,
         recurrence: payload.recurrence ?? null,
@@ -63,9 +62,6 @@ export const updateReward = asyncHandler(async (req, res) => {
     }
     if (payload.externalApiId !== undefined || payload.external_api_id !== undefined) {
         updatePayload.externalApiId = payload.externalApiId ?? payload.external_api_id;
-    }
-    if (payload.zielgruppe !== undefined || payload.Zielgruppe !== undefined) {
-        updatePayload.zielgruppe = payload.zielgruppe ?? payload.Zielgruppe ?? null;
     }
     if (payload.reward_art !== undefined || payload.rewardArt !== undefined) {
         updatePayload.reward_art = payload.reward_art ?? payload.rewardArt ?? null;

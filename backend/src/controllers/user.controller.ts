@@ -11,6 +11,7 @@ import {
   updateUserPointsService,
   toggleUserActiveService,
   resetUserPasswordService,
+  setUserPasswordService,
   deleteUserService,
   getUserStatisticsService,
   getUserTimelineService,
@@ -137,6 +138,21 @@ export const resetUserPassword: RequestHandler = asyncHandler(async (req, res) =
 
   const result = await resetUserPasswordService(req.params.id);
   res.json(result);
+});
+
+export const setUserPassword: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required' });
+  }
+
+  await setUserPasswordService(req.params.id, password);
+  res.json({ message: 'Password set successfully' });
 });
 
 export const deleteUser: RequestHandler = asyncHandler(async (req, res) => {

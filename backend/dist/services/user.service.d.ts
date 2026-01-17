@@ -82,6 +82,7 @@ export declare function getUserProfileService(userId: string): Promise<{
     sihotReservations: any;
 }>;
 export declare function updateUserProfileService(userId: string, data: Partial<User>): Promise<any>;
+export declare function setUserPasswordService(userId: string, password: string): Promise<void>;
 export declare function updateUserPassword(userId: string, passwordHash: string): Promise<void>;
 /**
  * Delete user_tasks entries for a user (oldest first)
@@ -129,7 +130,7 @@ export declare function updateUserRoleService(userId: string, role: UserRole, ad
 export declare function updateUserPointsService(userId: string, points: number): Promise<User>;
 export declare function toggleUserActiveService(userId: string, adminUserId: string): Promise<User>;
 export declare function resetUserPasswordService(userId: string): Promise<{
-    resetToken: string;
+    message: string;
 }>;
 export declare function deleteUserService(userId: string, adminUserId: string, hardDelete?: boolean): Promise<void>;
 /**

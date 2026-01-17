@@ -216,7 +216,7 @@ type ConfirmDialogState = {
   title: string;
   description: string;
   confirmLabel: string;
-  confirmTone?: 'default';
+  confirmTone?: 'default' | 'danger';
   onConfirm: () => void;
 };
 
@@ -2501,7 +2501,7 @@ const ConfirmDialog = ({
           </button>
           <button
             type="button"
-            className="admin-action-button"
+            className={`admin-action-button ${confirmTone === 'danger' ? 'danger' : ''}`}
             onClick={onConfirm}
           >
             {confirmLabel}
@@ -4387,6 +4387,7 @@ function AdminPage() {
       title: t('admin.confirm.deleteSelectedTasks.title'),
       description: t('admin.confirm.deleteSelectedTasks.description'),
       confirmLabel: t('admin.confirm.deleteTasks'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTaskManagementMessage(null);
@@ -4432,6 +4433,7 @@ function AdminPage() {
       title: t('admin.confirm.deleteTaskSingle.title'),
       description: t('admin.confirm.deleteTaskSingle.description'),
       confirmLabel: t('admin.confirm.deleteTask'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTaskManagementMessage(null);
@@ -4482,6 +4484,7 @@ function AdminPage() {
       title: t('admin.confirm.deleteSelectedRewards.title'),
       description: t('admin.confirm.deleteSelectedRewards.description'),
       confirmLabel: t('admin.confirm.deleteRewards'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setRewardManagementMessage(null);
@@ -4527,6 +4530,7 @@ function AdminPage() {
       title: t('admin.confirm.deleteRewardSingle.title'),
       description: t('admin.confirm.deleteRewardSingle.description'),
       confirmLabel: t('admin.confirm.deleteReward'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setRewardManagementMessage(null);
@@ -4594,6 +4598,7 @@ function AdminPage() {
       title: t('admin.confirm.deleteSelectedLocations.title'),
       description: t('admin.confirm.deleteSelectedLocations.description'),
       confirmLabel: t('admin.confirm.deleteLocations'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setLocationManagementMessage(null);
@@ -5044,6 +5049,7 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteLocationWithName.title', { name: location.name }),
       description: t('admin.confirm.deleteLocationWithName.description'),
       confirmLabel: t('admin.confirm.deleteLocation'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setLocationManagementMessage(null);
@@ -5119,6 +5125,7 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteSelectedTeams.title'),
       description: t('admin.confirm.deleteSelectedTeams.description'),
       confirmLabel: t('admin.confirm.deleteTeams'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTeamManagementMessage(null);
@@ -5164,6 +5171,7 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteTeamSingle.title'),
       description: t('admin.confirm.deleteTeamSingle.description'),
       confirmLabel: t('admin.confirm.deleteTeam'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTeamManagementMessage(null);
@@ -5230,6 +5238,7 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteSelectedContests.title'),
       description: t('admin.confirm.deleteSelectedContests.description'),
       confirmLabel: t('admin.confirm.deleteContests'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setContestManagementMessage(null);
@@ -5275,6 +5284,7 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteContestSingle.title'),
       description: t('admin.confirm.deleteContestSingle.description'),
       confirmLabel: t('admin.confirm.deleteContest'),
+      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setContestManagementMessage(null);

@@ -12,6 +12,7 @@ import {
   updateUserPoints,
   toggleUserActive,
   resetUserPassword,
+  setUserPassword,
   deleteUser,
   getUserStatistics,
   getUserTimeline,
@@ -35,6 +36,7 @@ router.put('/:id/role', authenticate, requireRole('administrator'), updateUserRo
 router.put('/:id/points', authenticate, requireRole('administrator'), updateUserPoints);
 router.post('/:id/toggle-active', authenticate, requireRole('administrator'), toggleUserActive);
 router.post('/:id/reset-password', authenticate, requireRole('administrator'), resetUserPassword);
+router.post('/:id/set-password', authenticate, requireRole('administrator'), setUserPassword);
 router.delete('/:id', authenticate, requireRole('administrator'), deleteUser);
 router.get('/:id/statistics', authenticate, requireRole('administrator'), getUserStatistics);
 
