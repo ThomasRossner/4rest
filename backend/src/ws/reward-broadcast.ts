@@ -18,3 +18,9 @@ export function broadcastRedemptionUpdate({ userId, redemptionId, status, points
   });
 }
 
+export function broadcastRewardUpdate(): void {
+  broadcast({
+    type: 'reward:update',
+    timestamp: new Date().toISOString(),
+  });
+}

@@ -16,6 +16,7 @@ import systemConfigRoutes from './system-config.routes.js';
 import userQrRoutes from './user-qr.routes.js';
 import teamRoutes from './team.routes.js';
 import contestRoutes from './contest.routes.js';
+import messageRoutes from './message.routes.js';
 
 export function setupRoutes(): Router {
   const router = Router();
@@ -37,6 +38,7 @@ export function setupRoutes(): Router {
   router.use('/user/qr-code', userQrRoutes);
   router.use('/teams', teamRoutes);
   router.use('/contests', contestRoutes);
+  router.use('/messages', messageRoutes);
 
   return router;
 }

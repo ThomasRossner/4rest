@@ -196,14 +196,7 @@ export const api = {
     if (queryParams.includeInactive !== undefined) {
       queryParams.includeInactive = String(queryParams.includeInactive);
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getTasks',message:'API call',data:{params,queryParams},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     const response = await apiClient.get('/tasks', { params: queryParams });
-    const apiEndTime = Date.now();
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getTasks:response',message:'API response',data:{status:response.status,dataType:typeof response.data,isArray:Array.isArray(response.data),length:Array.isArray(response.data)?response.data.length:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     return response.data;
   },
 
@@ -240,6 +233,34 @@ export const api = {
     }
     // Sync from server to update any other fields consistently
     await api.refreshMe();
+    return response.data;
+  },
+
+  // Photo Task Verification
+  async approvePhotoTask(userTaskId: string) {
+    const response = await apiClient.post('/tasks/approve-photo', { userTaskId });
+    return response.data;
+  },
+
+  async rejectPhotoTask(userTaskId: string, reason?: string) {
+    const response = await apiClient.post('/tasks/reject-photo', { userTaskId, rejectionReason: reason });
+    return response.data;
+  },
+
+  async getPendingPhotoTasks() {
+    const response = await apiClient.get('/tasks/pending-photos');
+    return response.data;
+  },
+
+  async getGalleryImages(filters?: { userId?: string; taskId?: string; limit?: number; offset?: number }) {
+    const params = new URLSearchParams();
+    if (filters?.userId) params.append('userId', filters.userId);
+    if (filters?.taskId) params.append('taskId', filters.taskId);
+    if (filters?.limit) params.append('limit', String(filters.limit));
+    if (filters?.offset) params.append('offset', String(filters.offset));
+    const queryString = params.toString();
+    const url = `/tasks/gallery${queryString ? `?${queryString}` : ''}`;
+    const response = await apiClient.get(url);
     return response.data;
   },
 
@@ -398,13 +419,7 @@ export const api = {
     if (params?.includeInactive !== undefined) {
       queryParams.includeInactive = String(params.includeInactive);
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getRewardTemplates',message:'API call',data:{params,queryParams},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     const response = await apiClient.get('/rewards/templates', { params: queryParams });
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.ts:getRewardTemplates:response',message:'API response',data:{status:response.status,dataType:typeof response.data,isArray:Array.isArray(response.data),length:Array.isArray(response.data)?response.data.length:null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     return response.data;
   },
 
@@ -889,6 +904,32 @@ export const api = {
 
   async removeContestParticipants(contestId: string, userIds: string[]) {
     const response = await apiClient.post(`/contests/${contestId}/participants/remove`, { userIds });
+    return response.data;
+  },
+
+  // Messages (Mailbox)
+  async getMessages(includeRead: boolean = false) {
+    const response = await apiClient.get('/messages', { params: { includeRead: String(includeRead) } });
+    return response.data;
+  },
+
+  async getUnreadMessageCount() {
+    const response = await apiClient.get('/messages/unread-count');
+    return response.data.count || 0;
+  },
+
+  async markMessageAsRead(messageId: string) {
+    const response = await apiClient.post(`/messages/${messageId}/read`);
+    return response.data;
+  },
+
+  async markAllMessagesAsRead() {
+    const response = await apiClient.post('/messages/read-all');
+    return response.data;
+  },
+
+  async deleteMessage(messageId: string) {
+    const response = await apiClient.delete(`/messages/${messageId}`);
     return response.data;
   },
 };

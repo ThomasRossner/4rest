@@ -13,6 +13,10 @@ export interface TeamContestFilterOptions {
  * Tasks/Rewards without team/contest assignments are visible to all (if active)
  * Tasks/Rewards with team/contest assignments are only visible to members/participants
  * Used by both tasks and rewards services (DRY principle)
+ * 
+ * NOTE: This function assumes that allowed_teams and allowed_contests columns exist.
+ * If they don't exist (migration 051 not run), this function should not be called.
+ * The caller is responsible for checking if columns exist before calling this function.
  */
 export function buildTeamContestFilterClauses(
   options: TeamContestFilterOptions,
@@ -26,6 +30,10 @@ export function buildTeamContestFilterClauses(
     return clauses;
   }
 
+  // IMPORTANT: This function generates SQL that references allowed_teams and allowed_contests columns.
+  // If these columns don't exist, the SQL will fail.
+  // The caller MUST check if columns exist before calling this function.
+  
   // Team and Contest filter (OR logic: user must be in team OR contest)
   // Tasks/Rewards without assignments (NULL or empty arrays) are visible to all
   const teamContestConditions: string[] = [];

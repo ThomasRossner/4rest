@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef } from 'react';
-import { useQuery } from 'react-query';
+import React, { useMemo, useState, useRef } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
@@ -17,7 +17,22 @@ function RewardsPage() {
   const user = useAuthStore((s) => s.user);
   const userId = useAuthStore((s) => s.user?.id);
   const points = useAuthStore((s) => s.user?.points || 0);
+  const queryClient = useQueryClient();
   const { data: rewards, isLoading, isError } = useQuery('rewards', () => api.getRewards());
+
+  // Listen for WebSocket reward updates
+  React.useEffect(() => {
+    const handleUpdate = (event: CustomEvent) => {
+      if (event.detail?.type === 'reward:update') {
+        queryClient.invalidateQueries(['rewards']);
+      }
+    };
+
+    window.addEventListener('data:update', handleUpdate as EventListener);
+    return () => {
+      window.removeEventListener('data:update', handleUpdate as EventListener);
+    };
+  }, [queryClient]);
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 

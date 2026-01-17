@@ -34,7 +34,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       return api.completeTask(taskId, { photo_url: photoUrl });
     },
     {
-      onSuccess: async () => {
+      onSuccess: async (data) => {
         // Invalidate task and progress queries
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
@@ -56,12 +56,29 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
           console.debug('Failed to refresh user data:', userError);
         }
         
-        showToast({
-          type: 'success',
-          title: t('tasks.toast.completedTitle'),
-          message: t('tasks.toast.completedMessage', { points: task?.points ?? 0, trees: TREES_PER_TASK }),
-        });
+        // Check if task requires verification
+        if (data?.requiresVerification) {
+          showToast({
+            type: 'info',
+            title: t('tasks.toast.verificationPendingTitle', 'Warte auf Validierung'),
+            message: t('tasks.toast.verificationPendingMessage', 'Ihr Foto wurde hochgeladen und wartet auf die Validierung durch einen Administrator. Sie erhalten die Punkte nach der Freigabe.'),
+          });
+        } else {
+          showToast({
+            type: 'success',
+            title: t('tasks.toast.completedTitle'),
+            message: t('tasks.toast.completedMessage', { points: task?.points ?? 0, trees: TREES_PER_TASK }),
+          });
+        }
         onComplete?.();
+      },
+      onError: (error: any) => {
+        console.error('Task completion error:', error);
+        showToast({
+          type: 'error',
+          title: t('tasks.toast.errorTitle', 'Fehler'),
+          message: error?.message || t('tasks.toast.errorMessage', 'Fehler beim Abschließen der Aufgabe.'),
+        });
       },
     }
   );
@@ -107,11 +124,19 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       }
 
       const { photo_url } = await uploadResponse.json();
-      completeMutation.mutate(photo_url);
-    } catch (error) {
-      alert(t('tasksComponents.photo.uploadFailed'));
-    } finally {
+      if (!photo_url) {
+        throw new Error('No photo URL returned from server');
+      }
+      await completeMutation.mutateAsync(photo_url);
       setUploading(false);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setUploading(false);
+      showToast({
+        type: 'error',
+        title: t('tasksComponents.photo.uploadFailed', 'Upload fehlgeschlagen'),
+        message: error?.message || t('tasksComponents.photo.uploadFailedMessage', 'Das Foto konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.'),
+      });
     }
   };
 
@@ -180,8 +205,23 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
 
         {completeMutation.isSuccess && (
           <div className="task-success">
-            <span className="success-icon">✅</span>
-            <p>{t('tasksComponents.photo.success')}</p>
+            {completeMutation.data?.requiresVerification ? (
+              <>
+                <span className="success-icon">⏳</span>
+                <p>{t('tasksComponents.photo.verificationPending', 'Foto hochgeladen. Warte auf Validierung...')}</p>
+              </>
+            ) : (
+              <>
+                <span className="success-icon">✅</span>
+                <p>{t('tasksComponents.photo.success')}</p>
+              </>
+            )}
+          </div>
+        )}
+        {completeMutation.isError && (
+          <div className="task-error">
+            <span className="error-icon">❌</span>
+            <p>{t('tasksComponents.photo.error', 'Fehler beim Hochladen. Bitte versuchen Sie es erneut.')}</p>
           </div>
         )}
       </div>

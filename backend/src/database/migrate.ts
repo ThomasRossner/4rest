@@ -75,6 +75,8 @@ async function runMigrations() {
       '049_team_contest_registration_qr_codes',
       '050_replace_front_office_with_rezeption_redaktion',
       '051_replace_allowed_roles_with_teams_contests',
+      '052_photo_task_verification',
+      '053_mailbox_messages',
     ];
     
     // Read all migration files

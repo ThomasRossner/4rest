@@ -5,6 +5,7 @@ import './RezeptionPage.css';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { TeamManagement } from '../../components/Admin/TeamManagement';
 import { ContestManagement } from '../../components/Admin/ContestManagement';
+import { PhotoValidation } from '../../components/Admin/PhotoValidation';
 import QrScannerPage from '../Admin/QrScannerPage';
 import PointsBonusPage from '../Employee/PointsBonusPage';
 import { ManagementHeader } from '../../components/Management/ManagementHeader';
@@ -123,21 +124,10 @@ function RezeptionPage() {
       )}
 
       {mode === 'verifyTasks' && (
-        <section className="rezeption-section">
-          <ManagementHeader
-            title={t('rezeption.verifyTasks.title', 'Aufgaben verifizieren')}
-            subtitle={t('rezeption.verifyTasks.subtitle', 'Diese Funktion wird in Kürze verfügbar sein')}
-            cssPrefix="rezeption"
-            onBack={() => setMode(null)}
-            showBack={true}
-            showRefresh={false}
-          />
-          <ManagementCard
-            cssPrefix="rezeption"
-            title={t('rezeption.verifyTasks.title', 'Aufgaben verifizieren')}
-            subtitle={t('rezeption.verifyTasks.placeholder', 'Die Funktion zum Verifizieren von Aufgaben ist noch nicht implementiert.')}
-          />
-        </section>
+        <PhotoValidation
+          cssPrefix="rezeption"
+          onBack={() => setMode(null)}
+        />
       )}
     </div>
   );

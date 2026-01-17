@@ -66,7 +66,8 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 3000,
+    // Frontend läuft auf Port 3001 (3000 kann bei manchen Systemen belegt sein)
+    port: 3001,
     host: '0.0.0.0', // Allow external access
     https: (() => {
       // Only enable HTTPS if explicitly requested (e.g., for external device camera access)
@@ -88,7 +89,7 @@ export default defineConfig({
       // For local development, use localhost
       // Only use external domain when VITE_HMR_HOST is explicitly set
       host: process.env.VITE_HMR_HOST || 'localhost',
-      port: 3000,
+      port: 3001, // Muss mit server.port übereinstimmen
       protocol: process.env.VITE_HMR_HOST ? 'wss' : 'ws', // Use ws for local, wss for external
     },
     watch: {
@@ -117,6 +118,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
+        // WICHTIG: Backend läuft auf Port 5001 (Port 5000 ist bei Apple belegt)
         target: process.env.VITE_API_TARGET || 'http://localhost:5001',
         changeOrigin: true,
         secure: false, // Allow self-signed certificates

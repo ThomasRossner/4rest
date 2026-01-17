@@ -139,6 +139,40 @@ export async function sendWelcomeEmail(userId: string, email: string, name: stri
   }
 }
 
+export async function sendPhotoRejectionEmail(userId: string, taskTitle: string, rejectionReason?: string): Promise<void> {
+  try {
+    const db = getPool();
+    const userResult = await db.query('SELECT email, name FROM users WHERE id = $1', [userId]);
+    
+    if (userResult.rows.length === 0) {
+      throw new Error('User not found');
+    }
+
+    const user = userResult.rows[0];
+    const appUrl = process.env.APP_URL || process.env.FRONTEND_URL;
+    if (!appUrl) {
+      console.warn('APP_URL or FRONTEND_URL not set, rejection email may contain invalid links');
+    }
+
+    const html = emailTemplates.getPhotoRejectionEmail({
+      name: user.name,
+      email: user.email,
+      taskTitle,
+      rejectionReason,
+      appUrl,
+    });
+
+    await emailService.sendEmail({
+      to: user.email,
+      subject: `Aufgabe abgelehnt: ${taskTitle}`,
+      html,
+    });
+  } catch (error: any) {
+    console.error('Failed to send photo rejection email:', error);
+    // Don't throw - email failure shouldn't block the rejection process
+  }
+}
+
 export async function sendEmailVerificationEmail(
   userId: string,
   email: string,

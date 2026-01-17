@@ -19,6 +19,7 @@ import {
   redeemPointsBonusQr,
 } from '../services/points-bonus.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { broadcastRewardUpdate } from '../ws/reward-broadcast.js';
 
 export const getRewards: RequestHandler = asyncHandler(async (req, res) => {
   const authReq = req as AuthRequest;
@@ -63,6 +64,8 @@ export const createReward: RequestHandler = asyncHandler(async (req, res) => {
     thumbnail_url: payload.thumbnail_url ?? payload.thumbnailUrl ?? null,
   });
 
+  // Broadcast update to all clients
+  broadcastRewardUpdate();
   res.status(201).json(reward);
 });
 
@@ -128,6 +131,8 @@ export const updateReward: RequestHandler = asyncHandler(async (req, res) => {
 
     const reward = await updateRewardService(req.params.id, updatePayload);
 
+    // Broadcast update to all clients
+    broadcastRewardUpdate();
     res.json(reward);
 });
 
@@ -159,6 +164,8 @@ export const bulkUpdateRewardStatus: RequestHandler = asyncHandler(async (req, r
   }
 
   await setRewardsActiveState(ids, active);
+  // Broadcast update to all clients
+  broadcastRewardUpdate();
   res.status(204).send();
 });
 
@@ -168,6 +175,8 @@ export const bulkDeleteRewardsController: RequestHandler = asyncHandler(async (r
     return res.status(400).json({ error: 'Provide an array of reward ids.' });
   }
   await bulkDeleteRewards(ids);
+  // Broadcast update to all clients
+  broadcastRewardUpdate();
   res.status(204).send();
 });
 

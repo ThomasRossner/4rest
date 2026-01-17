@@ -24,8 +24,11 @@ console.log(`[SERVER] NODE_ENV: ${process.env.NODE_ENV}`);
 import passport from './config/passport.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
+// WICHTIG: Port 5000 ist bei Apple belegt (AirPlay Receiver)
+// Backend läuft daher auf Port 5001
+const PORT = process.env.PORT || 5001;
+// Frontend läuft auf Port 3001
+const CORS_ORIGIN = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3001';
 
 // Middleware
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));

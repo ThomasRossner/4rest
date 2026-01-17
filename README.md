@@ -43,8 +43,10 @@ docker-compose down
 The Docker setup includes:
 - **Postgres Container**: PostgreSQL 15 database
 - **Backend Container**: Node.js backend API (port 5001)
-- **Frontend Container**: React development server (port 3000)
+- **Frontend Container**: React development server (port 3001)
 - **Redis Container**: Redis cache (port 6379)
+
+**WICHTIG**: Siehe [PORTS.md](./PORTS.md) für Details zur Port-Konfiguration.
 
 #### Option 2: Local Development
 
@@ -70,15 +72,15 @@ To enable GitHub social login:
 1. Create a GitHub OAuth App:
    - Go to GitHub Settings → Developer settings → OAuth Apps
    - Click "New OAuth App"
-   - Set Authorization callback URL to: `http://localhost:5000/api/auth/github/callback` (development)
+   - Set Authorization callback URL to: `http://localhost:5001/api/auth/github/callback` (development)
    - For production, use your production backend URL
 
 2. Add environment variables to `backend/.env`:
    ```env
    GITHUB_CLIENT_ID=your_github_client_id
    GITHUB_CLIENT_SECRET=your_github_client_secret
-   GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
-   FRONTEND_URL=http://localhost:3000
+   GITHUB_CALLBACK_URL=http://localhost:5001/api/auth/github/callback
+   FRONTEND_URL=http://localhost:3001
    SESSION_SECRET=your_session_secret_key
    ```
 
@@ -116,8 +118,10 @@ See `docs/README.md` for details on viewing the diagrams.
 
 ## Development
 
-- Frontend runs on `http://localhost:3000`
-- Backend API runs on `http://localhost:5000`
+- Frontend runs on `http://localhost:3001`
+- Backend API runs on `http://localhost:5001`
+
+**WICHTIG**: Siehe [PORTS.md](./PORTS.md) für Details zur Port-Konfiguration.
 
 ## Testing
 

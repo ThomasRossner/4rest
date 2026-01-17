@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { PointsBonusScanner } from '../Rewards/PointsBonusScanner';
+import { Mailbox } from '../Mailbox/Mailbox';
 import './Navigation.css';
 
 function Navigation() {
@@ -19,11 +20,19 @@ function Navigation() {
   const logout = useAuthStore((s) => s.logout);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
+  const [showMailbox, setShowMailbox] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+
+  // Get unread message count
+  const { data: unreadCount = 0 } = useQuery(
+    ['unreadMessageCount', userId],
+    () => api.getUnreadMessageCount(),
+    { enabled: !!userId, refetchInterval: 10000 } // Refetch every 10 seconds
+  );
 
   // Get active team and total points
   const { data: activeTeam } = useQuery(
@@ -139,6 +148,19 @@ function Navigation() {
       <nav className="navigation navigation-top">
         <div className="navigation-container">
           <div className="navigation-left">
+            {/* Mailbox Icon */}
+            <button
+              className="navigation-mailbox-button"
+              onClick={() => setShowMailbox(true)}
+              title={t('navigation.mailbox', 'Nachrichten')}
+            >
+              <span className={`navigation-mailbox-icon ${unreadCount > 0 ? 'has-unread' : ''}`}>
+                ✉️
+              </span>
+              {unreadCount > 0 && (
+                <span className="navigation-mailbox-badge">{unreadCount}</span>
+              )}
+            </button>
             {userRole !== 'administrator' && employeeTopItems.length > 0 && (
               <div className="navigation-items navigation-items-top">
                 {employeeTopItems.map((item) => (
@@ -243,6 +265,10 @@ function Navigation() {
             }}
           />
         </div>,
+        document.body
+      )}
+      {showMailbox && createPortal(
+        <Mailbox onClose={() => setShowMailbox(false)} />,
         document.body
       )}
     </>

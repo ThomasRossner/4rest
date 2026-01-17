@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useQuery } from 'react-query';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { VideoTask } from '../../components/Tasks/VideoTask';
@@ -33,12 +33,27 @@ const getTaskTypeIcon = (type: string) => {
 function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed' | 'completed'>('all');
+  const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed' | 'completed' | 'validating'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineTasks, setShowOnlineTasks] = useState(false);
   const [prerequisiteTaskIdsFilter, setPrerequisiteTaskIdsFilter] = useState<string[] | null>(null);
+  const queryClient = useQueryClient();
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
+
+  // Listen for WebSocket task updates
+  React.useEffect(() => {
+    const handleUpdate = (event: CustomEvent) => {
+      if (event.detail?.type === 'task:update' || event.detail?.type === 'photo:task:update') {
+        queryClient.invalidateQueries(['tasks']);
+      }
+    };
+
+    window.addEventListener('data:update', handleUpdate as EventListener);
+    return () => {
+      window.removeEventListener('data:update', handleUpdate as EventListener);
+    };
+  }, [queryClient]);
   const { data: taskTypeParameters } = useQuery('taskTypeParameters', () => api.getTaskParameters('type'), {
     retry: 2,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
@@ -85,7 +100,9 @@ function TasksPage() {
     if (completionFilter === 'not_completed') {
       filtered = filtered.filter((task: any) => !task.completed);
     } else if (completionFilter === 'completed') {
-      filtered = filtered.filter((task: any) => !!task.completed);
+      filtered = filtered.filter((task: any) => !!task.completed && task.verification_status !== 'pending');
+    } else if (completionFilter === 'validating') {
+      filtered = filtered.filter((task: any) => task.verification_status === 'pending');
     }
     // If completionFilter === 'all', show both completed and not completed
 
@@ -99,19 +116,37 @@ function TasksPage() {
       });
     }
 
-    // Always show unfinished tasks first
+    // Sort: unfinished first, then validating, then completed
     filtered.sort((a: any, b: any) => {
       const aCompleted = !!a.completed;
       const bCompleted = !!b.completed;
-      if (aCompleted === bCompleted) return 0;
-      return aCompleted ? 1 : -1;
+      const aValidating = a.verification_status === 'pending';
+      const bValidating = b.verification_status === 'pending';
+      
+      // Not completed tasks first
+      if (!aCompleted && bCompleted) return -1;
+      if (aCompleted && !bCompleted) return 1;
+      
+      // Among completed tasks, validating comes before fully completed
+      if (aCompleted && bCompleted) {
+        if (aValidating && !bValidating) return -1;
+        if (!aValidating && bValidating) return 1;
+      }
+      
+      // Among non-completed tasks, show normal tasks first
+      if (!aCompleted && !bCompleted) {
+        return 0;
+      }
+      
+      return 0;
     });
 
     return filtered;
   }, [tasks, typeFilter, completionFilter, timeFilter, showOnlineTasks, prerequisiteTaskIdsFilter]);
 
   const handleTaskClick = (task: any) => {
-    if (task.completed) return;
+    if (task.completed && task.verification_status !== 'pending') return;
+    if (task.verification_status === 'pending') return;
     if (task.is_available === false) return; // Don't allow clicking locked tasks
     setSelectedTask(task.id);
   };
@@ -296,6 +331,7 @@ function TasksPage() {
           options={[
             { value: 'all', label: t('tasks.filters.completion.all') },
             { value: 'not_completed', label: t('tasks.filters.completion.not_completed') },
+            { value: 'validating', label: t('tasks.filters.completion.validating', 'Validierung') },
             { value: 'completed', label: t('tasks.filters.completion.completed') },
           ]}
         />
@@ -318,9 +354,10 @@ function TasksPage() {
         <div className="tasks-grid">
           {filteredTasks.map((task: any) => {
             const isLocked = task.is_available === false;
-            const isCompleted = !!task.completed;
+            const isCompleted = !!task.completed && task.verification_status !== 'pending';
+            const isValidating = task.verification_status === 'pending';
             return (
-            <div key={task.id} className={`task-card ${isCompleted ? 'task-card-completed' : ''} ${isLocked ? 'task-card-locked' : ''}`}>
+            <div key={task.id} className={`task-card ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''}`}>
             <div className="task-header">
               <span className="task-icon">
                 {task.thumbnail_url ? (
@@ -338,6 +375,11 @@ function TasksPage() {
               {isCompleted && (
                 <span className="task-completed-badge" title={t('tasks.badges.completed')}>
                   ✓
+                </span>
+              )}
+              {isValidating && (
+                <span className="task-validating-badge" title={t('tasks.badges.validating', 'Warte auf Validierung')}>
+                  ⏳
                 </span>
               )}
               {isLocked && (
@@ -378,9 +420,9 @@ function TasksPage() {
             <button
               className="task-button"
               onClick={() => handleTaskClick(task)}
-              disabled={isCompleted || isLocked}
+              disabled={isCompleted || isValidating || isLocked}
             >
-              {isCompleted ? t('tasks.buttons.completed') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
+              {isCompleted ? t('tasks.buttons.completed') : isValidating ? t('tasks.buttons.validating', 'Warte auf Validierung') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
             </button>
           </div>
           );

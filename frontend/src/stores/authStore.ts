@@ -64,40 +64,51 @@ function handleSihotMessage(event: MessageEvent) {
 
   try {
     const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-    if (!payload || payload.type !== 'sihot:update') {
+    if (!payload || !payload.type) {
       return;
     }
 
-    // Use setTimeout to avoid circular dependency during initialization
-    setTimeout(() => {
-      const state = useAuthStore.getState();
-      if (!state.user || state.user.id !== payload.userId) {
-        return;
-      }
+    // Handle SIHOT updates
+    if (payload.type === 'sihot:update') {
+      // Use setTimeout to avoid circular dependency during initialization
+      setTimeout(() => {
+        const state = useAuthStore.getState();
+        if (!state.user || state.user.id !== payload.userId) {
+          return;
+        }
 
-      useAuthStore.setState((current) => {
-      if (!current.user) {
-        return current;
-      }
+        useAuthStore.setState((current) => {
+        if (!current.user) {
+          return current;
+        }
 
-      const updated: User = {
-        ...current.user,
-        role: (payload.role && USER_ROLES.includes(payload.role as UserRole)
-          ? (payload.role as UserRole)
-          : current.user.role),
-        userType: (payload.userType && USER_TYPES.includes(payload.userType as UserType)
-          ? (payload.userType as UserType)
-          : current.user.userType),
-        sihotGuestId: payload.payload?.guest?.guestId ?? current.user.sihotGuestId ?? null,
-        sihotGuest: payload.payload?.guest ?? current.user.sihotGuest ?? null,
-        sihotReservations: payload.payload?.reservations ?? current.user.sihotReservations ?? [],
-      };
+        const updated: User = {
+          ...current.user,
+          role: (payload.role && USER_ROLES.includes(payload.role as UserRole)
+            ? (payload.role as UserRole)
+            : current.user.role),
+          userType: (payload.userType && USER_TYPES.includes(payload.userType as UserType)
+            ? (payload.userType as UserType)
+            : current.user.userType),
+          sihotGuestId: payload.payload?.guest?.guestId ?? current.user.sihotGuestId ?? null,
+          sihotGuest: payload.payload?.guest ?? current.user.sihotGuest ?? null,
+          sihotReservations: payload.payload?.reservations ?? current.user.sihotReservations ?? [],
+        };
 
-        return { ...current, user: updated };
-      });
-    }, 0);
+          return { ...current, user: updated };
+        });
+      }, 0);
+    }
+    
+    // Handle task, reward, and photo task updates - dispatch custom events for components to listen to
+    if (payload.type === 'task:update' || payload.type === 'reward:update' || payload.type === 'photo:task:update') {
+      // Dispatch custom event that components can listen to
+      window.dispatchEvent(new CustomEvent('data:update', { 
+        detail: { type: payload.type } 
+      }));
+    }
   } catch (error) {
-    console.warn('[SIHOT] Failed to process realtime message:', error);
+    console.warn('[WebSocket] Failed to process realtime message:', error);
   }
 }
 
@@ -301,6 +312,12 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.warn('[AuthStore] rehydrate error', error);
+          // Clear state on error
+          useAuthStore.setState({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+          });
           return;
         }
         // Use setTimeout to avoid circular dependency during initialization
@@ -322,6 +339,7 @@ export const useAuthStore = create<AuthState>()(
             startSihotSocket();
           } else {
             // Clear invalid state if token exists but no user, or vice versa
+            console.log('[AuthStore] Clearing invalid state - missing user or token');
             useAuthStore.setState({
               user: null,
               token: null,

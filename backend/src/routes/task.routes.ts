@@ -16,6 +16,10 @@ import {
   uploadThumbnail,
   bulkUpdateTaskStatus,
   bulkDeleteTasks,
+  approvePhotoTask,
+  rejectPhotoTask,
+  getPendingPhotoTasks,
+  getGallery,
 } from '../controllers/task.controller.js';
 
 const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
@@ -104,11 +108,11 @@ const router = Router();
 router.get('/', authenticate, getTasks);
 router.post('/bulk/status', authenticate, requireRole('redaktion', 'administrator'), bulkUpdateTaskStatus);
 router.post('/bulk/delete', authenticate, requireRole('redaktion', 'administrator'), bulkDeleteTasks);
-router.get('/:id', getTask);
-router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);
-router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), updateTask);
-router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
-router.post('/:id/complete', authenticate, completeTask);
+// Specific routes must come BEFORE the generic /:id route
+router.post('/approve-photo', authenticate, requireRole('administrator', 'rezeption'), approvePhotoTask);
+router.post('/reject-photo', authenticate, requireRole('administrator', 'rezeption'), rejectPhotoTask);
+router.get('/pending-photos', authenticate, requireRole('administrator', 'rezeption'), getPendingPhotoTasks);
+router.get('/gallery', authenticate, getGallery);
 router.post('/upload', authenticate, uploadPhotoMiddleware.single('photo'), uploadPhoto);
 router.post(
   '/upload/video',
@@ -124,5 +128,11 @@ router.post(
   uploadThumbnailMiddleware.single('thumbnail'),
   uploadThumbnail
 );
+// Generic routes must come AFTER specific routes
+router.get('/:id', getTask);
+router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);
+router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), updateTask);
+router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
+router.post('/:id/complete', authenticate, completeTask);
 
 export default router;

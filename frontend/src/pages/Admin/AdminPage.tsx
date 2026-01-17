@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { useQuery, useMutation } from 'react-query';
+import React, { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
@@ -30,6 +30,7 @@ import { ContestCreator } from '../../components/Contests/ContestCreator';
 import { UserSelectionModal } from '../../components/Admin/UserSelectionModal';
 import { TeamManagement } from '../../components/Admin/TeamManagement';
 import { ContestManagement } from '../../components/Admin/ContestManagement';
+import { PhotoValidation } from '../../components/Admin/PhotoValidation';
 import QRCode from 'qrcode.react';
 import { useSelection } from '../../hooks/useSelection';
 import { useEntityFilters, type FilterConfig } from '../../hooks/useEntityFilters';
@@ -54,6 +55,7 @@ type AdminMode =
   | 'userManage'
   | 'teamManage'
   | 'contestManage'
+  | 'photoValidation'
   | null;
 type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
@@ -2499,11 +2501,36 @@ const ConfirmDialog = ({
 
 function AdminPage() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const showToast = useToastStore((s) => s.showToast);
   const isAdmin = user?.role === 'administrator';
   const [mode, setMode] = useState<AdminMode>(null);
+
+  // Get pending photo tasks count for badge
+  const { data: pendingPhotoTasks = [] } = useQuery(
+    ['pendingPhotoTasks'],
+    () => api.getPendingPhotoTasks(),
+    { 
+      refetchInterval: 30000, // Refetch every 30 seconds
+      enabled: isAdmin || user?.role === 'rezeption',
+    }
+  );
+
+  // Listen for WebSocket photo task updates
+  React.useEffect(() => {
+    const handleUpdate = (event: CustomEvent) => {
+      if (event.detail?.type === 'photo:task:update') {
+        queryClient.invalidateQueries(['pendingPhotoTasks']);
+      }
+    };
+
+    window.addEventListener('data:update', handleUpdate as EventListener);
+    return () => {
+      window.removeEventListener('data:update', handleUpdate as EventListener);
+    };
+  }, [queryClient]);
 
   const [taskSource, setTaskSource] = useState<TaskSource>('');
   const [selectedExistingTaskId, setSelectedExistingTaskId] = useState<string>('');
@@ -5331,6 +5358,31 @@ function AdminPage() {
               <span className="admin-choice-icon">🏆</span>
               <h2>{t('admin.actions.manageContests.title')}</h2>
               <p>{t('admin.actions.manageContests.description')}</p>
+            </button>
+            <button className="admin-choice-card" onClick={() => setMode('photoValidation')} style={{ position: 'relative' }}>
+              <span className="admin-choice-icon">📸</span>
+              <h2>{t('admin.actions.photoValidation.title', 'Foto-Aufgaben verifizieren')}</h2>
+              <p>{t('admin.actions.photoValidation.description', 'Foto-Aufgaben prüfen und freigeben oder ablehnen')}</p>
+              {pendingPhotoTasks.length > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '0.75rem',
+                  right: '0.75rem',
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                }}>
+                  {pendingPhotoTasks.length}
+                </span>
+              )}
             </button>
           </div>
           {/* 3. Reihe: Der Rest */}
@@ -9522,6 +9574,14 @@ function AdminPage() {
           />
         );
       })()}
+
+      {/* Photo Validation */}
+      {mode === 'photoValidation' && (
+        <PhotoValidation
+          cssPrefix="admin"
+          onBack={() => setMode(null)}
+        />
+      )}
     </div>
   );
 }

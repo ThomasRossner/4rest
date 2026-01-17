@@ -13,22 +13,22 @@ import {
   uploadThumbnail as uploadThumbnailService,
   setTasksActiveState,
   bulkDeleteTasks as bulkDeleteTasksService,
+  approvePhotoTask as approvePhotoTaskService,
+  rejectPhotoTask as rejectPhotoTaskService,
+  getPendingPhotoTasks as getPendingPhotoTasksService,
+  getGalleryImages as getGalleryImagesService,
 } from '../services/task.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
+import { broadcastTaskUpdate } from '../ws/task-broadcast.js';
 
 export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
   const { limit, offset, type, includeAll, includeInactive } = req.query;
   const authReq = req as AuthRequest;
-  // #region agent log
-  console.log('[DEBUG] task.controller.ts:getTasks - Request', JSON.stringify({includeAll,includeInactive,userRole:authReq.user?.role,userId:authReq.user?.id}));
-  // #endregion
   const isAdminOrRedaktion = authReq.user?.role === 'administrator' || authReq.user?.role === 'redaktion';
   const includeInactiveFlag = isAdminOrRedaktion && includeInactive === 'true';
   const includeAllValue = isAdminOrRedaktion && includeAll === 'true';
-  // #region agent log
-  console.log('[DEBUG] task.controller.ts:getTasks - Options', JSON.stringify({isAdminOrRedaktion,includeAllValue,includeInactiveFlag}));
-  // #endregion
+  
   const tasks = await getAllTasks(
     {
       limit: limit ? parseInt(limit as string, 10) : undefined,
@@ -38,9 +38,7 @@ export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
     authReq.user?.id,
     { includeAll: includeAllValue, includeInactive: includeInactiveFlag }
   );
-  // #region agent log
-  console.log('[DEBUG] task.controller.ts:getTasks - Result', JSON.stringify({taskCount:Array.isArray(tasks)?tasks.length:null,isArray:Array.isArray(tasks)}));
-  // #endregion
+  
   res.json(tasks);
 });
 
@@ -72,12 +70,13 @@ export const createTask: RequestHandler = asyncHandler(async (req, res) => {
     }
 
     // allowed_roles is deprecated, use allowed_teams and allowed_contests instead
-    if (payload.allowed_teams && !Array.isArray(payload.allowed_teams)) {
-      return res.status(400).json({ error: 'allowed_teams must be an array of UUIDs' });
-    }
-    if (payload.allowed_contests && !Array.isArray(payload.allowed_contests)) {
-      return res.status(400).json({ error: 'allowed_contests must be an array of UUIDs' });
-    }
+    // DISABLED: Migration 051 not run, columns don't exist
+    // if (payload.allowed_teams && !Array.isArray(payload.allowed_teams)) {
+    //   return res.status(400).json({ error: 'allowed_teams must be an array of UUIDs' });
+    // }
+    // if (payload.allowed_contests && !Array.isArray(payload.allowed_contests)) {
+    //   return res.status(400).json({ error: 'allowed_contests must be an array of UUIDs' });
+    // }
     if (payload.allowed_user_types && !Array.isArray(payload.allowed_user_types)) {
       return res.status(400).json({ error: 'allowed_user_types must be an array of strings' });
     }
@@ -107,6 +106,8 @@ export const createTask: RequestHandler = asyncHandler(async (req, res) => {
     }
 
     const task = await createTaskService(payload);
+    // Broadcast update to all clients
+    broadcastTaskUpdate();
     return res.status(201).json(task);
 });
 
@@ -128,15 +129,20 @@ export const updateTask: RequestHandler = asyncHandler(async (req, res) => {
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
   }
+  // Broadcast update to all clients
+  broadcastTaskUpdate();
   res.json(task);
 });
 
 export const deleteTask: RequestHandler = asyncHandler(async (req, res) => {
   await deleteTaskService(req.params.id);
+  // Broadcast update to all clients
+  broadcastTaskUpdate();
   res.status(204).send();
 });
 
 export const bulkUpdateTaskStatus: RequestHandler = asyncHandler(async (req, res) => {
+  // Broadcast will be called after successful update
   const { ids, active } = req.body ?? {};
 
   if (!Array.isArray(ids) || ids.length === 0) {
@@ -147,6 +153,8 @@ export const bulkUpdateTaskStatus: RequestHandler = asyncHandler(async (req, res
   }
 
   await setTasksActiveState(ids, active);
+  // Broadcast update to all clients
+  broadcastTaskUpdate();
   res.status(204).send();
 });
 
@@ -156,6 +164,8 @@ export const bulkDeleteTasks: RequestHandler = asyncHandler(async (req, res) => 
     return res.status(400).json({ error: 'Provide an array of task ids.' });
   }
   await bulkDeleteTasksService(ids);
+  // Broadcast update to all clients
+  broadcastTaskUpdate();
   res.status(204).send();
 });
 
@@ -193,4 +203,59 @@ export const uploadThumbnail: RequestHandler = asyncHandler(async (req, res) => 
   }
   const thumbnailUrl = await uploadThumbnailService(file);
   res.json({ thumbnail_url: thumbnailUrl });
+});
+
+export const approvePhotoTask: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { userTaskId } = req.body;
+  if (!userTaskId) {
+    return res.status(400).json({ error: 'userTaskId is required' });
+  }
+  const result = await approvePhotoTaskService(userTaskId, authReq.user.id);
+  res.json(result);
+});
+
+export const rejectPhotoTask: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { userTaskId, rejectionReason } = req.body;
+  if (!userTaskId) {
+    return res.status(400).json({ error: 'userTaskId is required' });
+  }
+  const result = await rejectPhotoTaskService(userTaskId, authReq.user.id, rejectionReason);
+  res.json({ success: result.success, message: result.message });
+});
+
+export const getPendingPhotoTasks: RequestHandler = asyncHandler(async (req, res) => {
+  try {
+    const tasks = await getPendingPhotoTasksService();
+    console.log('[CONTROLLER] getPendingPhotoTasks - Returning', tasks?.length || 0, 'tasks');
+    if (tasks && tasks.length > 0) {
+      console.log('[CONTROLLER] getPendingPhotoTasks - Sample task:', {
+        user_task_id: tasks[0].user_task_id,
+        task_title: tasks[0].task_title,
+      });
+    }
+    res.json(tasks);
+  } catch (error: any) {
+    console.error('[CONTROLLER] getPendingPhotoTasks - Error:', error);
+    console.error('[CONTROLLER] getPendingPhotoTasks - Error stack:', error.stack);
+    throw error;
+  }
+});
+
+export const getGallery: RequestHandler = asyncHandler(async (req, res) => {
+  const { userId, taskId, limit, offset } = req.query;
+  const filters: any = {};
+  if (userId) filters.userId = userId as string;
+  if (taskId) filters.taskId = taskId as string;
+  if (limit) filters.limit = parseInt(limit as string, 10);
+  if (offset) filters.offset = parseInt(offset as string, 10);
+  const images = await getGalleryImagesService(filters);
+  res.json(images);
 });

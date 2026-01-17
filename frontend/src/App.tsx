@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import Layout from './components/Layout/Layout';
@@ -18,9 +19,10 @@ import RezeptionPage from './pages/Rezeption/RezeptionPage';
 import RedaktionPage from './pages/Redaktion/RedaktionPage';
 
 function ProtectedApp() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, token } = useAuthStore();
 
-  if (!isAuthenticated || !user) {
+  // Ensure we redirect to login if not authenticated
+  if (!isAuthenticated || !user || !token) {
     return <Navigate to="/login" replace />;
   }
 
@@ -75,6 +77,16 @@ function ProtectedApp() {
 }
 
 function App() {
+  // Clear invalid auth state on mount if needed
+  React.useEffect(() => {
+    const { user, token, isAuthenticated } = useAuthStore.getState();
+    // If isAuthenticated is true but user or token is missing, clear the state
+    if (isAuthenticated && (!user || !token)) {
+      console.log('[App] Clearing invalid auth state');
+      useAuthStore.getState().logout();
+    }
+  }, []);
+
   return (
     <Router
       future={{

@@ -21,34 +21,68 @@ export async function getRewardsService(userId: string) {
   const params: any[] = [];
   let paramIndex = { current: 1 };
 
-  let query =
-    'SELECT r.*, row_to_json(l.*) AS location FROM rewards r JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE';
+  // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles, allowed_role were removed in migrations 037/040)
+  // Use LEFT JOIN to include rewards even if location doesn't exist or is inactive
+  let query = `SELECT 
+    r.id, r.title, r.description, r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
+    r.active, r.reward_art, r.kategorie, r.event_group, 
+    r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
+    r.created_at, r.updated_at, 
+    row_to_json(l.*) AS location 
+    FROM rewards r LEFT JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE`;
+
+  // Check if allowed_teams and allowed_contests columns exist
+  // IMPORTANT: We need BOTH columns to exist, not just one, because buildTeamContestFilterClauses
+  // references both columns in the SQL it generates
+  let columnsExist = false;
+  try {
+    const checkResult = await db.query(`
+      SELECT COUNT(*) as count
+      FROM information_schema.columns 
+      WHERE table_name = 'rewards' 
+      AND column_name IN ('allowed_teams', 'allowed_contests')
+    `);
+    // Both columns must exist (count = 2)
+    columnsExist = checkResult.rows[0]?.count === 2;
+  } catch (error) {
+    // If check fails, assume columns don't exist
+    columnsExist = false;
+  }
 
   let userTeamIds: string[] = [];
   let userContestIds: string[] = [];
   let applyFilters = true;
 
-  if (role === 'administrator') {
-    // Administrators see all rewards
+  // Administrators and redaktion see all rewards (consistent with task.service.ts)
+  if (role === 'administrator' || role === 'redaktion') {
+    // Administrators and redaktion see all rewards
     applyFilters = false;
   } else {
-    // Get user's team memberships
-    const teamResult = await db.query(
-      'SELECT team_id FROM team_members WHERE user_id = $1',
-      [userId]
-    );
-    userTeamIds = teamResult.rows.map((row: any) => row.team_id);
-    
-    // Get user's contest participations
-    const contestResult = await db.query(
-      'SELECT contest_id FROM contest_participants WHERE user_id = $1',
-      [userId]
-    );
-    userContestIds = contestResult.rows.map((row: any) => row.contest_id);
+    // Only get team/contest info if columns exist
+    if (columnsExist) {
+      // Get user's team memberships
+      const teamResult = await db.query(
+        'SELECT team_id FROM team_members WHERE user_id = $1',
+        [userId]
+      );
+      userTeamIds = teamResult.rows.map((row: any) => row.team_id);
+      
+      // Get user's contest participations
+      const contestResult = await db.query(
+        'SELECT contest_id FROM contest_participants WHERE user_id = $1',
+        [userId]
+      );
+      userContestIds = contestResult.rows.map((row: any) => row.contest_id);
+    } else {
+      // If columns don't exist, disable filtering
+      applyFilters = false;
+    }
   }
 
   // Filter by team/contest assignments
-  if (applyFilters) {
+  // Only enable if both allowed_teams AND allowed_contests columns exist
+  // The buildTeamContestFilterClauses function requires BOTH columns to work correctly
+  if (applyFilters && columnsExist) {
     const hotelId = getConfiguredHotelId();
     const filterClauses = buildTeamContestFilterClauses(
       {
@@ -72,6 +106,11 @@ export async function getRewardsService(userId: string) {
     
     if (rewardClauses.length > 0) {
       query += ` AND ${rewardClauses.join(' AND ')}`;
+    }
+  } else {
+    // Log why filtering is disabled for debugging
+    if (applyFilters && !columnsExist) {
+      console.log('[REWARD SERVICE] Team/contest filtering disabled: columns do not exist');
     }
   }
 
@@ -120,7 +159,6 @@ interface CreateCustomRewardInput {
   reward_art?: string;
   kategorie?: string;
   event_group?: string | null;
-  moegliche_punkte?: number | null;
   thumbnail_url?: string | null;
 }
 
@@ -137,7 +175,6 @@ interface UpdateRewardInput {
   reward_art?: string | null;
   kategorie?: string | null;
   event_group?: string | null;
-  moegliche_punkte?: number | null;
   thumbnail_url?: string | null;
 }
 
@@ -165,10 +202,9 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        reward_art,
        kategorie,
        event_group,
-       moegliche_punkte,
        thumbnail_url
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
     [
       title,
@@ -183,7 +219,6 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       data.reward_art ?? null,
       data.kategorie ?? null,
       data.event_group ?? null,
-      data.moegliche_punkte ?? null,
       data.thumbnail_url ?? null,
     ]
   );
@@ -294,10 +329,6 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
     values.push(data.event_group ?? null);
   }
 
-  if (data.moegliche_punkte !== undefined) {
-    updates.push(`moegliche_punkte = $${paramIndex++}`);
-    values.push(data.moegliche_punkte ?? null);
-  }
 
   if (data.thumbnail_url !== undefined) {
     updates.push(`thumbnail_url = $${paramIndex++}`);
@@ -361,9 +392,15 @@ export async function listRewardsForAdmin(includeInactive = false) {
     clauses.push('r.active = TRUE');
   }
 
-  let query = `SELECT r.*, row_to_json(l.*) AS location
-               FROM rewards r
-               JOIN locations l ON l.id = r.location_id`;
+  // Use explicit column list to avoid selecting non-existent columns
+  let query = `SELECT 
+    r.id, r.title, r.description, r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
+    r.active, r.reward_art, r.kategorie, r.event_group, 
+    r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
+    r.created_at, r.updated_at, 
+    row_to_json(l.*) AS location
+    FROM rewards r
+    JOIN locations l ON l.id = r.location_id`;
 
   if (clauses.length > 0) {
     query += ` WHERE ${clauses.join(' AND ')}`;
@@ -500,7 +537,7 @@ export async function getRewardInfoFromQrCode(qrToken: string, employeeUserId: s
 
   // Find redemption by QR token
   const redemptionResult = await db.query(
-    `SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+    `SELECT rr.*, r.points_cost, r.title as reward_title, r.description as reward_description, 
             u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
@@ -548,7 +585,7 @@ export async function verifyQrCodeService(qrToken: string, adminUserId: string) 
 
   // Find redemption by QR token
   const redemptionResult = await db.query(
-    `SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
+    `SELECT rr.*, r.points_cost, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
      JOIN users u ON rr.user_id = u.id
@@ -572,8 +609,8 @@ export async function verifyQrCodeService(qrToken: string, adminUserId: string) 
     throw new Error('User no longer has sufficient points for this redemption');
   }
 
-  // Deduct points cost and add possible points (moegliche_punkte) now that QR code is verified
-  const pointsToAdd = redemption.moegliche_punkte || 0;
+  // Deduct points cost (moegliche_punkte column was removed in migration 039)
+  const pointsToAdd = 0;
   await db.query(
     'UPDATE users SET points = points - $1 + $2 WHERE id = $3',
     [redemption.points_cost, pointsToAdd, redemption.user_id]
@@ -634,7 +671,7 @@ export async function redeemRewardQrCodeService(qrToken: string, employeeUserId:
 
   // Find redemption by QR token
   const redemptionResult = await db.query(
-    `SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+    `SELECT rr.*, r.points_cost, r.title as reward_title, r.description as reward_description, 
             u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
@@ -685,8 +722,8 @@ export async function redeemRewardQrCodeService(qrToken: string, employeeUserId:
     }
   }
 
-  // Deduct points cost and add possible points (moegliche_punkte) now that QR code is redeemed
-  const pointsToAdd = redemption.moegliche_punkte || 0;
+  // Deduct points cost (moegliche_punkte column was removed in migration 039)
+  const pointsToAdd = 0;
   
   if (useTeamPoints && teamId) {
     // Deduct points from team members (user's points first, then distribute remainder)
