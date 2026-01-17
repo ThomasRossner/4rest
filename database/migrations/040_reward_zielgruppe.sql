@@ -14,8 +14,27 @@ BEGIN
   END IF;
 END $$;
 
--- Step 2: Add zielgruppe column
-ALTER TABLE rewards ADD COLUMN IF NOT EXISTS zielgruppe reward_zielgruppe_enum;
+-- Step 2: Add zielgruppe column (only if it doesn't exist or if it's not the right type)
+DO $$
+BEGIN
+  -- Check if column exists and what type it is
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'rewards' AND column_name = 'zielgruppe'
+  ) THEN
+    -- Column doesn't exist, add it
+    ALTER TABLE rewards ADD COLUMN zielgruppe reward_zielgruppe_enum;
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'rewards' 
+    AND column_name = 'zielgruppe' 
+    AND data_type = 'ARRAY'
+  ) THEN
+    -- Column exists as array, drop it and recreate as single enum
+    ALTER TABLE rewards DROP COLUMN zielgruppe;
+    ALTER TABLE rewards ADD COLUMN zielgruppe reward_zielgruppe_enum;
+  END IF;
+END $$;
 
 -- Step 3: Migrate data from allowed_role to zielgruppe
 -- Map old allowed_role values to zielgruppe:
