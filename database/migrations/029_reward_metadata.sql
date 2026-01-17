@@ -5,24 +5,36 @@
 -- mögliche Punkte: INTEGER (number)
 -- Event/Gruppe: VARCHAR (optional text)
 
--- Create ENUM types for new metadata fields
-CREATE TYPE reward_art_enum AS ENUM (
-  'Rabatt',
-  'Erlebnis',
-  'Add-on',
-  'physisches Geschenk'
-);
+-- Create ENUM types for new metadata fields (only if they don't exist)
+DO $$ BEGIN
+  CREATE TYPE reward_art_enum AS ENUM (
+    'Rabatt',
+    'Erlebnis',
+    'Add-on',
+    'physisches Geschenk'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE reward_kategorie_enum AS ENUM (
-  'Hotel',
-  'nicht Hotel'
-);
+DO $$ BEGIN
+  CREATE TYPE reward_kategorie_enum AS ENUM (
+    'Hotel',
+    'nicht Hotel'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE reward_kosten_enum AS ENUM (
-  'niedrig',
-  'mittel',
-  'hoch'
-);
+DO $$ BEGIN
+  CREATE TYPE reward_kosten_enum AS ENUM (
+    'niedrig',
+    'mittel',
+    'hoch'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Add new columns to the rewards table
 ALTER TABLE rewards
