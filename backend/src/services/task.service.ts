@@ -721,6 +721,11 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
 
 export async function deleteTask(id: string): Promise<void> {
   const db = getPool();
+  // Delete dependent records first
+  await db.query('DELETE FROM forest_trees WHERE task_id = $1', [id]);
+  await db.query('DELETE FROM user_tasks WHERE task_id = $1', [id]);
+  await db.query('DELETE FROM gallery_images WHERE task_id = $1', [id]);
+  // Now delete the task
   await db.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 
@@ -740,6 +745,11 @@ export async function bulkDeleteTasks(ids: string[]): Promise<void> {
     return;
   }
   const db = getPool();
+  // Delete dependent records first (in correct order to respect foreign key constraints)
+  await db.query('DELETE FROM forest_trees WHERE task_id = ANY($1::uuid[])', [ids]);
+  await db.query('DELETE FROM user_tasks WHERE task_id = ANY($1::uuid[])', [ids]);
+  await db.query('DELETE FROM gallery_images WHERE task_id = ANY($1::uuid[])', [ids]);
+  // Now delete the tasks
   await db.query('DELETE FROM tasks WHERE id = ANY($1::uuid[])', [ids]);
 }
 
