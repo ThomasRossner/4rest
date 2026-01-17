@@ -41,6 +41,8 @@ RUN if [ -f package-lock.json ]; then npm ci --only=production; else npm install
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/../database ../database
 COPY --from=builder /app/../scripts ../scripts
+# Copy source files needed for migrations (migrate.ts uses tsx)
+COPY --from=builder /app/src/database ./src/database
 # Copy email templates (they are not compiled by TypeScript)
 COPY --from=builder /app/src/templates ./dist/templates
 
