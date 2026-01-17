@@ -2,36 +2,39 @@
 -- Date: 2026-01-16
 -- This migration removes role-based filtering and introduces team/contest-based filtering for tasks and rewards
 
+-- Tasks
+ALTER TABLE tasks
+  ADD COLUMN IF NOT EXISTS allowed_teams UUID[] DEFAULT ARRAY[]::UUID[],
+  ADD COLUMN IF NOT EXISTS allowed_contests UUID[] DEFAULT ARRAY[]::UUID[];
+
+-- Rewards
+ALTER TABLE rewards
+  ADD COLUMN IF NOT EXISTS allowed_teams UUID[] DEFAULT ARRAY[]::UUID[],
+  ADD COLUMN IF NOT EXISTS allowed_contests UUID[] DEFAULT ARRAY[]::UUID[];
+
+-- Reward templates (if table exists)
 DO $$
 BEGIN
-  -- Step 1: Add new columns for team and contest assignments
-  -- Tasks
-  ALTER TABLE tasks
-    ADD COLUMN IF NOT EXISTS allowed_teams UUID[] DEFAULT ARRAY[]::UUID[],
-    ADD COLUMN IF NOT EXISTS allowed_contests UUID[] DEFAULT ARRAY[]::UUID[];
-  
-  -- Rewards
-  ALTER TABLE rewards
-    ADD COLUMN IF NOT EXISTS allowed_teams UUID[] DEFAULT ARRAY[]::UUID[],
-    ADD COLUMN IF NOT EXISTS allowed_contests UUID[] DEFAULT ARRAY[]::UUID[];
-  
-  -- Reward templates (if table exists)
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'reward_templates') THEN
     ALTER TABLE reward_templates
       ADD COLUMN IF NOT EXISTS allowed_teams UUID[] DEFAULT ARRAY[]::UUID[],
       ADD COLUMN IF NOT EXISTS allowed_contests UUID[] DEFAULT ARRAY[]::UUID[];
   END IF;
-  
-  -- Step 2: Remove old role-based columns
-  -- Note: allowed_user_types and allowed_hotel_ids are kept for now (can be removed later if not needed)
-  ALTER TABLE tasks DROP COLUMN IF EXISTS allowed_roles;
-  ALTER TABLE rewards DROP COLUMN IF EXISTS allowed_roles;
-  
+END $$;
+
+-- Step 2: Remove old role-based columns
+-- Note: allowed_user_types and allowed_hotel_ids are kept for now (can be removed later if not needed)
+ALTER TABLE tasks DROP COLUMN IF EXISTS allowed_roles;
+ALTER TABLE rewards DROP COLUMN IF EXISTS allowed_roles;
+
+DO $$
+BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'reward_templates') THEN
     ALTER TABLE reward_templates DROP COLUMN IF EXISTS allowed_roles;
   END IF;
-  
-  -- Step 3: Create function to automatically deactivate tasks/rewards when teams/contests are deleted
+END $$;
+
+-- Step 3: Create function to automatically deactivate tasks/rewards when teams/contests are deleted
   CREATE OR REPLACE FUNCTION deactivate_tasks_for_deleted_team()
   RETURNS TRIGGER AS $$
   BEGIN
@@ -193,14 +196,9 @@ BEGIN
     WHEN (NEW.end_date IS NOT NULL AND NEW.end_date < CURRENT_DATE)
     EXECUTE FUNCTION deactivate_tasks_for_ended_contest();
   
-  DROP TRIGGER IF EXISTS trigger_deactivate_rewards_on_contest_end ON contests;
-  CREATE TRIGGER trigger_deactivate_rewards_on_contest_end
-    AFTER UPDATE OF end_date ON contests
-    FOR EACH ROW
-    WHEN (NEW.end_date IS NOT NULL AND NEW.end_date < CURRENT_DATE)
-    EXECUTE FUNCTION deactivate_rewards_for_ended_contest();
-  
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'Error during migration: %', SQLERRM;
-  RAISE;
-END $$;
+DROP TRIGGER IF EXISTS trigger_deactivate_rewards_on_contest_end ON contests;
+CREATE TRIGGER trigger_deactivate_rewards_on_contest_end
+  AFTER UPDATE OF end_date ON contests
+  FOR EACH ROW
+  WHEN (NEW.end_date IS NOT NULL AND NEW.end_date < CURRENT_DATE)
+  EXECUTE FUNCTION deactivate_rewards_for_ended_contest();
