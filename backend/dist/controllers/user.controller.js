@@ -151,8 +151,11 @@ export const createUserByAdmin = asyncHandler(async (req, res) => {
     try {
         // Create user without password and set as inactive
         const user = await createUserByAdminService(email, role, name);
-        // Send admin created user email (different from password setup email)
-        await sendAdminCreatedUserEmail(user.id, user.email, user.name);
+        // Send admin created user email (different from password setup email) - non-blocking
+        sendAdminCreatedUserEmail(user.id, user.email, user.name).catch((error) => {
+            console.error('[CREATE_USER] Failed to send admin created user email:', error);
+            // Continue anyway - user is created
+        });
         res.status(201).json({
             success: true,
             message: 'User created successfully. Activation email has been sent.',

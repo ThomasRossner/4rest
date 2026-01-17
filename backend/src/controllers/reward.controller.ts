@@ -53,7 +53,6 @@ export const createReward: RequestHandler = asyncHandler(async (req, res) => {
     rewardType: payload.rewardType ?? payload.reward_type,
     voucherCode: payload.voucherCode ?? payload.voucher_code,
     externalApiId: payload.externalApiId ?? payload.external_api_id,
-    zielgruppe: payload.zielgruppe ?? payload.Zielgruppe ?? null,
     location_id: location.id,
     active: payload.active,
     recurrence: payload.recurrence ?? null,
@@ -88,9 +87,6 @@ export const updateReward: RequestHandler = asyncHandler(async (req, res) => {
     }
     if (payload.externalApiId !== undefined || payload.external_api_id !== undefined) {
       updatePayload.externalApiId = payload.externalApiId ?? payload.external_api_id;
-    }
-    if (payload.zielgruppe !== undefined || payload.Zielgruppe !== undefined) {
-      updatePayload.zielgruppe = payload.zielgruppe ?? payload.Zielgruppe ?? null;
     }
     if (payload.reward_art !== undefined || payload.rewardArt !== undefined) {
       updatePayload.reward_art = payload.reward_art ?? payload.rewardArt ?? null;
@@ -281,6 +277,12 @@ export const uploadThumbnail: RequestHandler = asyncHandler(async (req, res) => 
   if (!file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
+  // #region agent log
+  console.log('[DEBUG] reward.controller.ts:uploadThumbnail - Reward thumbnail upload started', JSON.stringify({filename:file.filename,path:file.path,size:file.size,uploadDir:process.env.UPLOAD_DIR,cwd:process.cwd()}));
+  // #endregion
   const thumbnailUrl = await uploadThumbnailService(file);
+  // #region agent log
+  console.log('[DEBUG] reward.controller.ts:uploadThumbnail - Reward thumbnail upload completed', JSON.stringify({thumbnailUrl,filePath:file.path}));
+  // #endregion
   res.json({ thumbnail_url: thumbnailUrl });
 });

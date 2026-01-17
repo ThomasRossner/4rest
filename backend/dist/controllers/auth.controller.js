@@ -111,6 +111,98 @@ export async function register(req, res) {
         const { email, password, name, role = 'guest', userType = 'explorer', teamRegistrationToken, contestRegistrationToken } = req.body;
         const existingUser = await getUserByEmail(email);
         if (existingUser) {
+            // Check if user is soft-deleted
+            // deleted_at might not be in the TypeScript interface, but it's in the database result
+            // Get deleted_at directly from database to ensure we have the correct value
+            const db = getPool();
+            const userCheckResult = await db.query('SELECT deleted_at, active FROM users WHERE email = $1', [email]);
+            const dbUser = userCheckResult.rows[0];
+            // PostgreSQL returns null as null, but we need to check explicitly
+            const deletedAt = dbUser?.deleted_at;
+            const isActive = dbUser?.active !== false; // active can be null, false, or true
+            console.log('[REGISTER] Existing user found:', {
+                email: existingUser.email,
+                deleted_at_from_getUserByEmail: existingUser.deleted_at,
+                deleted_at_from_db: deletedAt,
+                deleted_at_type: typeof deletedAt,
+                deleted_at_value: deletedAt,
+                isDeleted: !!deletedAt,
+                isNotNull: deletedAt !== null,
+                isNotUndefined: deletedAt !== undefined,
+                active: dbUser?.active,
+                isActive: isActive,
+            });
+            // Check if user is soft-deleted (deleted_at is not null and not undefined)
+            // Also check if user is inactive (active is false)
+            const isSoftDeleted = (deletedAt !== null && deletedAt !== undefined) || !isActive;
+            if (isSoftDeleted) {
+                // Reactivate soft-deleted user
+                const passwordHash = await bcrypt.hash(password, 10);
+                const { combinedName, sihotGuestPayload, sihotGuest } = await enrichWithSihotData(email, name);
+                const normalizedRole = normalizeRole(role);
+                const normalizedUserType = normalizeUserType(userType);
+                const updateResult = await db.query(`UPDATE users 
+           SET password_hash = $1,
+               name = $2,
+               role = $3,
+               user_type = $4,
+               points = 0,
+               email_verified = false,
+               active = true,
+               deleted_at = NULL,
+               sihot_guest_id = $5,
+               sihot_guest_data = $6,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $7
+           RETURNING *`, [passwordHash, combinedName, normalizedRole, normalizedUserType, sihotGuest?.guestId || null, sihotGuestPayload, existingUser.id]);
+                if (!updateResult.rows[0]) {
+                    return res.status(500).json({ error: 'Failed to reactivate user' });
+                }
+                const user = updateResult.rows[0];
+                // Send verification email for reactivated user (non-blocking)
+                // Don't block registration if email fails
+                sendEmailVerificationEmail(user.id, user.email || '', user.name).catch((error) => {
+                    console.error('[REGISTER] Failed to send verification email after reactivation:', error);
+                    // Continue anyway - user is reactivated
+                });
+                // Automatisch Team oder Contest beitreten (falls Token vorhanden)
+                let joinedTeam = null;
+                let joinedContest = null;
+                if (teamRegistrationToken) {
+                    const teamId = await validateTeamRegistrationToken(teamRegistrationToken);
+                    if (teamId) {
+                        try {
+                            joinedTeam = await joinTeamById(user.id, teamId);
+                        }
+                        catch (error) {
+                            console.error('Failed to join team after reactivation:', error);
+                        }
+                    }
+                }
+                if (contestRegistrationToken) {
+                    const contestId = await validateContestRegistrationToken(contestRegistrationToken);
+                    if (contestId) {
+                        try {
+                            joinedContest = await joinContestById(user.id, contestId);
+                        }
+                        catch (error) {
+                            console.error('Failed to join contest after reactivation:', error);
+                        }
+                    }
+                }
+                return res.status(200).json({
+                    message: 'User reactivated successfully. Please verify your email.',
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role,
+                        userType: user.user_type,
+                    },
+                    ...(joinedTeam && { team: joinedTeam }),
+                    ...(joinedContest && { contest: joinedContest }),
+                });
+            }
             return res.status(400).json({ error: 'User already exists' });
         }
         // Validiere Team/Contest-Registrierungs-Token (falls vorhanden)

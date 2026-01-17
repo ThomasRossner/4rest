@@ -1011,7 +1011,7 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 640px;
-  table-layout: auto;
+  table-layout: fixed;
 }
 
 .admin-table th,
@@ -1089,8 +1089,9 @@
 }
 
 /* Title/Name column - flexible but constrained */
-.admin-table th:nth-child(2),
-.admin-table td:nth-child(2) {
+/* BUT: Don't apply to Contest/Team tables */
+.admin-table:not(.contest-team-table) th:nth-child(2),
+.admin-table:not(.contest-team-table) td:nth-child(2) {
   width: 15%;
   min-width: 8rem;
   /* max-width removed to allow more flexibility */
@@ -1098,16 +1099,19 @@
 }
 
 /* Type column - compact */
-.admin-table th:nth-child(3),
-.admin-table td:nth-child(3) {
+/* BUT: Don't apply to Contest/Team tables */
+.admin-table:not(.contest-team-table) th:nth-child(3),
+.admin-table:not(.contest-team-table) td:nth-child(3) {
   width: 7%;
   min-width: 5rem;
   /* max-width removed to allow more flexibility */
 }
 
 /* Location column - medium */
-.admin-table th:nth-child(4),
-.admin-table td:nth-child(4) {
+/* BUT: Don't apply to Contest/Team tables (they have 5 columns, not 13+) */
+/* Use :not() to exclude contest-team-table */
+.admin-table:not(.contest-team-table) th:nth-child(4),
+.admin-table:not(.contest-team-table) td:nth-child(4) {
   width: 12%;
   min-width: 7rem;
   /* max-width removed to allow more flexibility */
@@ -1170,12 +1174,52 @@
   text-overflow: ellipsis;
 }
 
-/* Contest table: Status column (11th column, before Actions) - max 10% width */
-.admin-table th:nth-child(11):not(:last-child),
-.admin-table td:nth-child(11):not(:last-child) {
-  width: 10%;
-  max-width: 10%;
-  min-width: 4rem;
+/* ============================================
+   CONTEST/TEAM TABLES (5 columns only)
+   ============================================ */
+/* These tables have: Checkbox | Name | Created By | Status | Actions */
+
+/* Contest/Team table: Checkbox column (1st column) */
+.admin-table.contest-team-table th:first-child,
+.admin-table.contest-team-table td:first-child {
+  width: 3rem !important;
+  min-width: 3rem !important;
+  max-width: 3rem !important;
+}
+
+/* Contest/Team table: Name column (2nd column) - make it wider */
+.admin-table.contest-team-table th:nth-child(2),
+.admin-table.contest-team-table td:nth-child(2) {
+  width: 45% !important;
+  min-width: 15rem !important;
+  max-width: none !important;
+}
+
+/* Contest/Team table: Created By column (3rd column) */
+.admin-table.contest-team-table th:nth-child(3),
+.admin-table.contest-team-table td:nth-child(3) {
+  width: 20% !important;
+  min-width: 8rem !important;
+  max-width: none !important;
+}
+
+/* Contest/Team table: Status column (4th column) - make it narrower */
+.admin-table.contest-team-table th:nth-child(4),
+.admin-table.contest-team-table td:nth-child(4) {
+  width: 5% !important;
+  max-width: 5% !important;
+  min-width: 2rem !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Contest/Team table: Actions column (5th column) */
+.admin-table.contest-team-table th:last-child,
+.admin-table.contest-team-table td:last-child {
+  width: auto !important;
+  min-width: 14rem !important;
+  max-width: none !important;
 }
 
 /* Actions column - fills remaining space */
@@ -1304,16 +1348,7 @@
   opacity: 0.6;
 }
 
-/* Danger button style - only for warning popups ("Willst du wirklich...") */
-.admin-action-button.danger {
-  background: #ef4444 !important;
-  color: white !important;
-}
-
-.admin-action-button.danger:hover {
-  background: #dc2626 !important;
-  color: white !important;
-}
+/* Removed danger button style - all buttons use unified green design */
 
 .admin-status-badge {
   display: inline-flex;
@@ -1549,8 +1584,9 @@
 /* Priority 4: Keep only essential columns (Checkbox, Title, Type, Location, Points/Cost, Status, Actions) */
 @media (max-width: 1000px) {
   /* Hide Location if space is very tight */
-  .admin-table th:nth-child(4),
-  .admin-table td:nth-child(4) {
+  /* BUT: Don't hide Status column in Contest/Team tables */
+  .admin-table:not(.contest-team-table) th:nth-child(4),
+  .admin-table:not(.contest-team-table) td:nth-child(4) {
     display: none;
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
@@ -134,6 +134,72 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
     
     return filtered;
   }, [teamsList, teamFilterStatus, teamFilterName, teamFilterCreator]);
+
+  // Measure table column widths after render
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:useEffect-start',message:'useEffect triggered',data:{hasTableRef:!!tableRef.current,filteredTeamsLength:filteredTeams.length,cssPrefix},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    if (tableRef.current && filteredTeams.length > 0) {
+      // Wait for next frame to ensure layout is complete
+      requestAnimationFrame(() => {
+        const tableEl = tableRef.current;
+        if (!tableEl) return;
+        
+        const allHeaders = Array.from(tableEl.querySelectorAll('thead tr th'));
+        const allCells = Array.from(tableEl.querySelectorAll('tbody tr:first-child td'));
+        const tableRect = tableEl.getBoundingClientRect();
+        const computedTable = window.getComputedStyle(tableEl);
+        const tableClasses = tableEl.className;
+        
+        const columnData = allHeaders.map((th, idx) => {
+          const cell = allCells[idx];
+          const thRect = th.getBoundingClientRect();
+          const cellRect = cell?.getBoundingClientRect();
+          const computedTh = window.getComputedStyle(th);
+          const computedCell = cell ? window.getComputedStyle(cell) : null;
+          
+          return {
+            index: idx + 1,
+            text: th.textContent?.trim(),
+            headerWidth: thRect.width,
+            headerPercent: (thRect.width / tableRect.width * 100).toFixed(2),
+            cellWidth: cellRect?.width,
+            cellPercent: cellRect ? (cellRect.width / tableRect.width * 100).toFixed(2) : null,
+            computedHeaderWidth: computedTh.width,
+            computedHeaderMaxWidth: computedTh.maxWidth,
+            computedHeaderMinWidth: computedTh.minWidth,
+            computedCellWidth: computedCell?.width,
+            computedCellMaxWidth: computedCell?.maxWidth,
+            computedCellMinWidth: computedCell?.minWidth,
+            allComputedStyles: {
+              width: computedTh.width,
+              maxWidth: computedTh.maxWidth,
+              minWidth: computedTh.minWidth,
+              display: computedTh.display,
+            }
+          };
+        });
+        
+        // Check buttons
+        const buttons = Array.from(tableEl.querySelectorAll('button'));
+        const buttonData = buttons.map((btn, idx) => {
+          const computed = window.getComputedStyle(btn);
+          return {
+            index: idx,
+            text: btn.textContent?.trim(),
+            className: btn.className,
+            backgroundColor: computed.backgroundColor,
+            color: computed.color,
+            hasDangerClass: btn.classList.contains('danger'),
+            allClasses: Array.from(btn.classList),
+          };
+        });
+        
+        fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TeamManagement.tsx:useEffect',message:'Full table analysis',data:{tableWidth:tableRect.width,tableClasses,tableLayout:computedTable.tableLayout,cssPrefix,columns:columnData,buttons:buttonData,hasContestTeamClass:tableClasses.includes('contest-team-table')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      });
+    }
+    // #endregion
+  }, [filteredTeams.length, cssPrefix]);
 
   // Team QR code generation
   const generateTeamJoinQrMutation = useMutation(
@@ -554,7 +620,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
 
           {/* Teams table */}
           <div className={`${cssPrefix}-table-wrapper`}>
-            <table className={`${cssPrefix}-table`}>
+            <table className={`${cssPrefix}-table contest-team-table`} ref={tableRef}>
               <thead>
                 <tr>
                   <th style={{ width: '3rem' }}>

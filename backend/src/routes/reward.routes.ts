@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import {
@@ -20,15 +21,36 @@ import {
   uploadThumbnail,
 } from '../controllers/reward.controller.js';
 
-const uploadDir = process.env.UPLOAD_DIR || './uploads';
+const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+// Ensure upload directory exists
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reward.routes.ts:uploadDir',message:'Upload directory check',data:{uploadDir,exists:fs.existsSync(uploadDir),cwd:process.cwd(),envUploadDir:process.env.UPLOAD_DIR},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+} catch (e) {
+  console.warn('Could not ensure upload directory exists:', e);
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/17f21783-26de-498c-a621-6ba896fb1ded',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'reward.routes.ts:uploadDir',message:'Upload directory creation failed',data:{uploadDir,error:String(e)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+}
 
 const thumbnailStorage = multer.diskStorage({
   destination: (req, file, cb) => {
+    // #region agent log
+    console.log('[DEBUG] reward.routes.ts:thumbnailStorage.destination - Reward thumbnail storage destination', JSON.stringify({uploadDir,exists:fs.existsSync(uploadDir)}));
+    // #endregion
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'reward-thumbnail-' + uniqueSuffix + path.extname(file.originalname));
+    const filename = 'reward-thumbnail-' + uniqueSuffix + path.extname(file.originalname);
+    // #region agent log
+    console.log('[DEBUG] reward.routes.ts:thumbnailStorage.filename - Reward thumbnail filename generated', JSON.stringify({filename,uploadDir,fullPath:path.join(uploadDir,filename)}));
+    // #endregion
+    cb(null, filename);
   },
 });
 

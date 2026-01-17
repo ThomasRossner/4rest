@@ -194,7 +194,13 @@ export const uploadVideo: RequestHandler = asyncHandler(async (req, res) => {
   if (!file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
+  // #region agent log
+  console.log('[DEBUG] task.controller.ts:uploadVideo - Video upload started', JSON.stringify({filename:file.filename,path:file.path,size:file.size,uploadDir:process.env.UPLOAD_DIR,cwd:process.cwd()}));
+  // #endregion
   const videoUrl = await uploadVideoService(file);
+  // #region agent log
+  console.log('[DEBUG] task.controller.ts:uploadVideo - Video upload completed', JSON.stringify({videoUrl,filePath:file.path}));
+  // #endregion
   res.json({ video_url: videoUrl });
 });
 
@@ -203,6 +209,12 @@ export const uploadThumbnail: RequestHandler = asyncHandler(async (req, res) => 
   if (!file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
+  // #region agent log
+  console.log('[DEBUG] task.controller.ts:uploadThumbnail - Thumbnail upload started', JSON.stringify({filename:file.filename,path:file.path,size:file.size,uploadDir:process.env.UPLOAD_DIR,cwd:process.cwd()}));
+  // #endregion
   const thumbnailUrl = await uploadThumbnailService(file);
+  // #region agent log
+  console.log('[DEBUG] task.controller.ts:uploadThumbnail - Thumbnail upload completed', JSON.stringify({thumbnailUrl,filePath:file.path}));
+  // #endregion
   res.json({ thumbnail_url: thumbnailUrl });
 });

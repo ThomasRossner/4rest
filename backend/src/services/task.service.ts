@@ -43,7 +43,6 @@ export interface Task {
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
   event_group?: string;
-  zielgruppe?: ('Front Office' | 'Gäste')[];
   thumbnail_url?: string;
 }
 
@@ -316,19 +315,6 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       : JSON.parse((data as any).prerequisite_task_ids)
     : null;
 
-  // Handle zielgruppe array: allow null, empty array, or array of valid enum values
-  let zielgruppeValue: string[] | null = null;
-  if (data.zielgruppe !== null && data.zielgruppe !== undefined) {
-    // Ensure it's an array
-    const zielgruppeArray = Array.isArray(data.zielgruppe) ? data.zielgruppe : [data.zielgruppe];
-    // Filter out empty strings and null values
-    zielgruppeValue = zielgruppeArray.filter((v: any) => v !== null && v !== undefined && v !== '');
-    // If resulting array is empty, set to null
-    if (zielgruppeValue.length === 0) {
-      zielgruppeValue = null;
-    }
-  }
-  
   // Calculate points automatically if difficulty and time_required are provided
   // Always use calculated points if both values are present, regardless of manually set points
   let points = data.points ?? 0;
@@ -368,10 +354,9 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        time_required,
        location_tool,
        event_group,
-       zielgruppe,
        thumbnail_url
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
      RETURNING *`,
     [
       data.title,
@@ -401,7 +386,6 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.time_required ?? null,
       data.location_tool ?? null,
       data.event_group ?? null,
-      zielgruppeValue, // PostgreSQL will automatically convert JavaScript arrays to PostgreSQL arrays
       data.thumbnail_url ?? null,
     ]
   );
@@ -519,7 +503,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     'target_latitude', 'target_longitude', 'article_url', 'article_content',
     'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
     'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-    'event_group', 'zielgruppe', 'thumbnail_url'
+      'event_group', 'thumbnail_url'
   ]);
 
   // If type is being changed, reset type-specific fields of the old type
@@ -645,54 +629,6 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     } else if (key === 'prerequisite_task_ids' && Array.isArray(value)) {
       updates.push(`${key} = $${paramIndex++}`);
       values.push(value);
-    } else if (key === 'zielgruppe') {
-      // Handle zielgruppe array: allow null, empty array, or array of valid enum values
-      let zielgruppeValue: string[] | null = null;
-      if (value !== null && value !== undefined && value !== '') {
-        let zielgruppeArray: any[];
-        // Check if value is a string (might be JSON stringified array or PostgreSQL array string)
-        if (typeof value === 'string') {
-          // Try to parse as JSON first
-          try {
-            zielgruppeArray = JSON.parse(value);
-          } catch {
-            // If not JSON, might be PostgreSQL array format like "{Gäste,Front Office}" or "{""Front Office""}"
-            // Remove curly braces and split by comma
-            let cleaned = value.replace(/^{|}$/g, '').trim();
-            // Remove double quotes that might wrap values (e.g., ""Front Office"" -> Front Office)
-            cleaned = cleaned.replace(/^"|"$/g, '');
-            zielgruppeArray = cleaned ? cleaned.split(',').map((v: string) => {
-              // Remove quotes from each value and trim
-              return v.trim().replace(/^"|"$/g, '');
-            }) : [];
-          }
-        } else if (Array.isArray(value)) {
-          zielgruppeArray = value.map((v: any) => {
-            // If array contains strings with quotes, remove them
-            if (typeof v === 'string') {
-              return v.replace(/^"|"$/g, '').trim();
-            }
-            return v;
-          });
-        } else {
-          zielgruppeArray = [value];
-        }
-        // Filter out empty strings and null values, and remove any remaining quotes
-        zielgruppeValue = zielgruppeArray
-          .map((v: any) => {
-            if (typeof v === 'string') {
-              return v.replace(/^"|"$/g, '').trim();
-            }
-            return v;
-          })
-          .filter((v: any) => v !== null && v !== undefined && v !== '');
-        // If resulting array is empty, set to null
-        if (zielgruppeValue.length === 0) {
-          zielgruppeValue = null;
-        }
-      }
-      updates.push(`${key} = $${paramIndex++}`);
-      values.push(zielgruppeValue);
     } else {
       if (key === 'points') {
         pointsIndex = updates.length; // Remember where points update is

@@ -19,6 +19,8 @@ export interface User {
     password_reset_token?: string | null;
     password_reset_expires?: Date | null;
     email_notifications_enabled?: boolean;
+    deleted_at?: Date | null;
+    active?: boolean;
 }
 export interface CreateUserData {
     email?: string | null;

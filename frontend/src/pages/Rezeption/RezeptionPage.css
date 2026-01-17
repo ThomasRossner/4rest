@@ -464,6 +464,7 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 640px;
+  table-layout: fixed;
 }
 
 .rezeption-table th,
@@ -487,12 +488,53 @@
   text-align: center;
 }
 
-/* Status column (4th column) - max 10% width */
-.rezeption-table th:nth-child(4),
-.rezeption-table td:nth-child(4) {
-  width: 10%;
-  max-width: 10%;
-  min-width: 4rem;
+/* ============================================
+   CONTEST/TEAM TABLES (5 columns only)
+   ============================================ */
+/* These tables have: Checkbox | Name | Created By | Status | Actions */
+/* Use specific class selector instead of :has() for better browser support */
+
+/* Contest/Team table: Checkbox column (1st column) */
+.rezeption-table.contest-team-table th:first-child,
+.rezeption-table.contest-team-table td:first-child {
+  width: 3rem !important;
+  min-width: 3rem !important;
+  max-width: 3rem !important;
+}
+
+/* Contest/Team table: Name column (2nd column) - make it wider */
+.rezeption-table.contest-team-table th:nth-child(2),
+.rezeption-table.contest-team-table td:nth-child(2) {
+  width: 45% !important;
+  min-width: 15rem !important;
+  max-width: none !important;
+}
+
+/* Contest/Team table: Created By column (3rd column) */
+.rezeption-table.contest-team-table th:nth-child(3),
+.rezeption-table.contest-team-table td:nth-child(3) {
+  width: 20% !important;
+  min-width: 8rem !important;
+  max-width: none !important;
+}
+
+/* Contest/Team table: Status column (4th column) - make it narrower */
+.rezeption-table.contest-team-table th:nth-child(4),
+.rezeption-table.contest-team-table td:nth-child(4) {
+  width: 5% !important;
+  max-width: 5% !important;
+  min-width: 2rem !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Contest/Team table: Actions column (5th column) */
+.rezeption-table.contest-team-table th:last-child,
+.rezeption-table.contest-team-table td:last-child {
+  width: auto !important;
+  min-width: 14rem !important;
+  max-width: none !important;
 }
 
 .rezeption-table th {

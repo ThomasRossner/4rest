@@ -77,7 +77,6 @@ type AdminTaskTemplate = {
   time_required?: string | null;
   location_tool?: string | null;
   event_group?: string | null;
-  zielgruppe?: ('Front Office' | 'Gäste')[] | null;
   thumbnail_url?: string | null;
 };
 
@@ -149,7 +148,6 @@ type TaskFormState = {
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
   event_group?: string;
-  zielgruppe?: 'Front Office' | 'Gäste';
   thumbnailFile?: File | null;
   thumbnailUrl?: string | null;
 };
@@ -161,7 +159,6 @@ type RewardFormState = {
   pointsCost: number;
   voucherCode: string;
   externalApiId: string;
-  zielgruppe?: ('Front Office' | 'Gäste')[] | null;
   locationId: string;
   active: boolean;
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
@@ -219,7 +216,7 @@ type ConfirmDialogState = {
   title: string;
   description: string;
   confirmLabel: string;
-  confirmTone: 'default' | 'danger';
+  confirmTone?: 'default';
   onConfirm: () => void;
 };
 
@@ -1377,7 +1374,6 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   time_required: undefined,
   location_tool: undefined,
   event_group: undefined,
-  zielgruppe: undefined,
   allowed_teams: [],
   allowed_contests: [],
   thumbnailFile: null,
@@ -1391,7 +1387,6 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   pointsCost: 0,
   voucherCode: '',
   externalApiId: '',
-  zielgruppe: undefined,
   locationId: '',
   active: true,
   recurrence: 'once',
@@ -2506,7 +2501,7 @@ const ConfirmDialog = ({
           </button>
           <button
             type="button"
-            className={confirmTone === 'danger' ? 'admin-action-button danger' : 'admin-action-button'}
+            className="admin-action-button"
             onClick={onConfirm}
           >
             {confirmLabel}
@@ -4392,7 +4387,6 @@ function AdminPage() {
       title: t('admin.confirm.deleteSelectedTasks.title'),
       description: t('admin.confirm.deleteSelectedTasks.description'),
       confirmLabel: t('admin.confirm.deleteTasks'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTaskManagementMessage(null);
@@ -4438,7 +4432,6 @@ function AdminPage() {
       title: t('admin.confirm.deleteTaskSingle.title'),
       description: t('admin.confirm.deleteTaskSingle.description'),
       confirmLabel: t('admin.confirm.deleteTask'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTaskManagementMessage(null);
@@ -4489,7 +4482,6 @@ function AdminPage() {
       title: t('admin.confirm.deleteSelectedRewards.title'),
       description: t('admin.confirm.deleteSelectedRewards.description'),
       confirmLabel: t('admin.confirm.deleteRewards'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setRewardManagementMessage(null);
@@ -4535,7 +4527,6 @@ function AdminPage() {
       title: t('admin.confirm.deleteRewardSingle.title'),
       description: t('admin.confirm.deleteRewardSingle.description'),
       confirmLabel: t('admin.confirm.deleteReward'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setRewardManagementMessage(null);
@@ -4603,7 +4594,6 @@ function AdminPage() {
       title: t('admin.confirm.deleteSelectedLocations.title'),
       description: t('admin.confirm.deleteSelectedLocations.description'),
       confirmLabel: t('admin.confirm.deleteLocations'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setLocationManagementMessage(null);
@@ -5054,7 +5044,6 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteLocationWithName.title', { name: location.name }),
       description: t('admin.confirm.deleteLocationWithName.description'),
       confirmLabel: t('admin.confirm.deleteLocation'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setLocationManagementMessage(null);
@@ -5130,7 +5119,6 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteSelectedTeams.title'),
       description: t('admin.confirm.deleteSelectedTeams.description'),
       confirmLabel: t('admin.confirm.deleteTeams'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTeamManagementMessage(null);
@@ -5176,7 +5164,6 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteTeamSingle.title'),
       description: t('admin.confirm.deleteTeamSingle.description'),
       confirmLabel: t('admin.confirm.deleteTeam'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setTeamManagementMessage(null);
@@ -5243,7 +5230,6 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteSelectedContests.title'),
       description: t('admin.confirm.deleteSelectedContests.description'),
       confirmLabel: t('admin.confirm.deleteContests'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setContestManagementMessage(null);
@@ -5289,7 +5275,6 @@ const goToRewardCreation = () => {
       title: t('admin.confirm.deleteContestSingle.title'),
       description: t('admin.confirm.deleteContestSingle.description'),
       confirmLabel: t('admin.confirm.deleteContest'),
-      confirmTone: 'danger',
       onConfirm: async () => {
         try {
           setContestManagementMessage(null);
