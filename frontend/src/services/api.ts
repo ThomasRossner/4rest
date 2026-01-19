@@ -358,21 +358,26 @@ export const api = {
   },
 
   async redeemPointsBonusQr(qrToken: string) {
-    const response = await apiClient.post('/rewards/points-bonus/redeem', { qrToken });
-    // Update user points from response
-    if (response.data?.newPointsBalance !== undefined) {
-      try {
-        const store = useAuthStore.getState();
-        const currentUser = store.user;
-        if (currentUser) {
-          store.setUser({ ...currentUser, points: response.data.newPointsBalance });
+    try {
+      const response = await apiClient.post('/rewards/points-bonus/redeem', { qrToken });
+      // Update user points from response
+      if (response.data?.newPointsBalance !== undefined) {
+        try {
+          const store = useAuthStore.getState();
+          const currentUser = store.user;
+          if (currentUser) {
+            store.setUser({ ...currentUser, points: response.data.newPointsBalance });
+          }
+        } catch (error) {
+          // Silently fail if store update fails - points are already updated on server
+          console.warn('[API] Failed to update user points in store (non-critical):', error);
         }
-      } catch (error) {
-        // Silently fail if store update fails - points are already updated on server
-        console.warn('Failed to update user points in store:', error);
       }
+      return response.data;
+    } catch (error: any) {
+      // Re-throw axios errors so they can be handled by the caller
+      throw error;
     }
-    return response.data;
   },
 
   async redeemRewardQrCode(qrToken: string) {

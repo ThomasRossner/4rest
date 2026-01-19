@@ -154,8 +154,20 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
     setIsRedeeming(true);
 
     try {
+      console.log('[PointsBonusScanner] Attempting to redeem QR code:', qrData);
       const result = await api.redeemPointsBonusQr(qrData);
-      if (result && result.success) {
+      console.log('[PointsBonusScanner] API response:', result);
+      
+      // Check if result indicates success (either success flag or valid data)
+      const isSuccess = result && (
+        result.success === true || 
+        (result.pointsAwarded !== undefined && result.newPointsBalance !== undefined)
+      );
+      
+      console.log('[PointsBonusScanner] Is success?', isSuccess, { success: result?.success, hasPoints: result?.pointsAwarded !== undefined, hasBalance: result?.newPointsBalance !== undefined });
+      
+      if (isSuccess) {
+        // Show success toast - only once
         showToast({
           type: 'success',
           title: t('rewards.pointsBonus.toast.title'),
@@ -164,28 +176,67 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
             balance: result.newPointsBalance || 0,
           }),
         });
-        // Call onSuccess safely
+        
+        // Call onSuccess safely - don't throw errors from callback
         try {
           onSuccess?.(result.pointsAwarded || 0, result.newPointsBalance || 0);
         } catch (callbackError) {
-          console.warn('Error in onSuccess callback:', callbackError);
+          console.warn('[PointsBonusScanner] Error in onSuccess callback (ignored):', callbackError);
         }
+        
+        // Reset redeeming state immediately
+        setIsRedeeming(false);
+        
         // Close scanner after successful redemption
         setTimeout(() => {
           onClose?.();
         }, 2000);
+        
+        // Return early to prevent any error handling
+        return;
       } else {
-        // If result doesn't have success flag, treat as error
-        throw new Error(result?.error || 'Invalid response from server');
+        // If result doesn't indicate success, treat as error
+        console.warn('[PointsBonusScanner] Invalid response structure:', result);
+        const errorMessage = result?.error || 'Invalid response from server';
+        showToast({
+          type: 'error',
+          title: t('rewards.pointsBonus.toast.errorTitle'),
+          message: errorMessage,
+        });
+        // Clear lastScanned on error to allow retry
+        setTimeout(() => {
+          setLastScanned(null);
+          setIsRedeeming(false);
+        }, 2000);
       }
     } catch (error: any) {
-      // Only show error toast if it's not already handled
-      const errorMessage = error?.response?.data?.error || error?.message || t('rewards.pointsBonus.redeemError') || 'Failed to redeem QR code';
-      showToast({
-        type: 'error',
-        title: t('rewards.pointsBonus.toast.errorTitle'),
-        message: errorMessage,
+      console.error('[PointsBonusScanner] Error redeeming QR code:', error);
+      console.error('[PointsBonusScanner] Error details:', {
+        isAxiosError: error?.response !== undefined,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
       });
+      
+      // Only show error toast if it's a real error (axios error with status >= 400)
+      const isAxiosError = error?.response !== undefined;
+      const isServerError = isAxiosError && error.response?.status >= 400;
+      
+      // Don't show error if it's a successful response that was caught as error
+      if (isAxiosError && error.response?.status < 400) {
+        console.log('[PointsBonusScanner] Response was successful, ignoring error');
+        return;
+      }
+      
+      if (isServerError || !isAxiosError) {
+        const errorMessage = error?.response?.data?.error || error?.response?.data?.message || error?.message || t('rewards.pointsBonus.redeemError') || 'Failed to redeem QR code';
+        showToast({
+          type: 'error',
+          title: t('rewards.pointsBonus.toast.errorTitle'),
+          message: errorMessage,
+        });
+      }
+      
       // Clear lastScanned on error to allow retry
       setTimeout(() => {
         setLastScanned(null);
