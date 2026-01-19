@@ -20,6 +20,8 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
   const [error, setError] = useState<string | null>(null);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
+  const isRedeemingRef = useRef(false);
+  const lastScannedRef = useRef<string | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -96,6 +98,12 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
         setTimeout(waitForVideoElement, 100);
 
         const scan = () => {
+          // Stop scanning if currently redeeming
+          if (isRedeemingRef.current) {
+            animationFrameId = requestAnimationFrame(scan);
+            return;
+          }
+
           if (videoRef.current && canvasRef.current) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
@@ -109,7 +117,10 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
               const code = jsQR(imageData.data, imageData.width, imageData.height);
 
               if (code && code.data) {
-                handleQrCodeDetected(code.data);
+                // Check if this code was already scanned recently (using ref for immediate check)
+                if (lastScannedRef.current !== code.data) {
+                  handleQrCodeDetected(code.data);
+                }
               }
             }
           }
@@ -146,10 +157,15 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
   }, [t]);
 
   const handleQrCodeDetected = async (qrData: string) => {
-    if (lastScanned === qrData || isRedeeming) {
+    // Use refs for immediate check to prevent race conditions
+    if (lastScannedRef.current === qrData || isRedeemingRef.current) {
+      console.log('[PointsBonusScanner] Ignoring duplicate scan:', qrData, { lastScanned: lastScannedRef.current, isRedeeming: isRedeemingRef.current });
       return;
     }
 
+    // Set refs immediately to prevent race conditions
+    lastScannedRef.current = qrData;
+    isRedeemingRef.current = true;
     setLastScanned(qrData);
     setIsRedeeming(true);
 
@@ -184,8 +200,8 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
           console.warn('[PointsBonusScanner] Error in onSuccess callback (ignored):', callbackError);
         }
         
-        // Reset redeeming state immediately
-        setIsRedeeming(false);
+        // Keep redeeming state true to prevent further scans while closing
+        // Don't reset isRedeemingRef here - let it stay true until component unmounts
         
         // Close scanner after successful redemption
         setTimeout(() => {
@@ -203,11 +219,13 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
           title: t('rewards.pointsBonus.toast.errorTitle'),
           message: errorMessage,
         });
-        // Clear lastScanned on error to allow retry
+        // Clear lastScanned on error to allow retry (with longer cooldown)
         setTimeout(() => {
+          lastScannedRef.current = null;
+          isRedeemingRef.current = false;
           setLastScanned(null);
           setIsRedeeming(false);
-        }, 2000);
+        }, 5000); // Increased cooldown to 5 seconds
       }
     } catch (error: any) {
       console.error('[PointsBonusScanner] Error redeeming QR code:', error);
@@ -237,11 +255,13 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
         });
       }
       
-      // Clear lastScanned on error to allow retry
+      // Clear lastScanned on error to allow retry (with longer cooldown)
       setTimeout(() => {
+        lastScannedRef.current = null;
+        isRedeemingRef.current = false;
         setLastScanned(null);
         setIsRedeeming(false);
-      }, 2000);
+      }, 5000); // Increased cooldown to 5 seconds
     }
   };
 
