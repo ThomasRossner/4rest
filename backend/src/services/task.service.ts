@@ -9,6 +9,61 @@ import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode
 import { updateContestPoints } from './contest.service.js';
 import { getUserActiveTeam, getTeamMembers } from './team.service.js';
 import fs from 'fs';
+import { generateQrToken } from './user-qr.service.js';
+
+/**
+ * Generiert oder ruft den QR-Code einer Aufgabe ab
+ */
+export async function generateOrGetTaskQrCode(taskId: string): Promise<string | null> {
+  const db = getPool();
+  
+  // Prüfe ob Aufgabe existiert und QR-Code-Typ ist
+  const taskResult = await db.query(
+    'SELECT id, type, qr_code FROM tasks WHERE id = $1',
+    [taskId]
+  );
+  
+  if (taskResult.rows.length === 0) {
+    throw new Error('Task not found');
+  }
+  
+  const task = taskResult.rows[0];
+  
+  if (task.type !== 'qr') {
+    throw new Error('Task is not a QR code task');
+  }
+  
+  // Wenn bereits ein QR-Code existiert, gib ihn zurück
+  if (task.qr_code) {
+    return task.qr_code;
+  }
+  
+  // Generiere neuen QR-Code
+  let qrCode: string;
+  let attempts = 0;
+  do {
+    qrCode = generateQrToken();
+    const existing = await db.query(
+      'SELECT id FROM tasks WHERE qr_code = $1 AND active = TRUE LIMIT 1',
+      [qrCode]
+    );
+    if (existing.rows.length === 0) {
+      break; // QR code is unique
+    }
+    attempts++;
+    if (attempts > 10) {
+      throw new Error('Failed to generate unique QR code after multiple attempts');
+    }
+  } while (true);
+  
+  // Speichere den QR-Code in der Aufgabe
+  await db.query(
+    'UPDATE tasks SET qr_code = $1 WHERE id = $2',
+    [qrCode, taskId]
+  );
+  
+  return qrCode;
+}
 
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
 
@@ -324,7 +379,27 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
     validateUrl(data.video_url, 'Video URL');
   }
   
-  if (data.type === 'qr' && data.qr_code) {
+  // For QR code tasks, generate QR code if not provided
+  if (data.type === 'qr' && !data.qr_code) {
+    // Generate a unique QR code for this task
+    let qrCode: string;
+    let attempts = 0;
+    do {
+      qrCode = generateQrToken();
+      const existing = await db.query(
+        'SELECT id FROM tasks WHERE qr_code = $1 AND active = TRUE LIMIT 1',
+        [qrCode]
+      );
+      if (existing.rows.length === 0) {
+        break; // QR code is unique
+      }
+      attempts++;
+      if (attempts > 10) {
+        throw new Error('Failed to generate unique QR code after multiple attempts');
+      }
+    } while (true);
+    data.qr_code = qrCode;
+  } else if (data.type === 'qr' && data.qr_code) {
     validateQrCode(data.qr_code);
   }
   

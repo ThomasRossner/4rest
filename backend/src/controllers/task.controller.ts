@@ -17,6 +17,7 @@ import {
   rejectPhotoTask as rejectPhotoTaskService,
   getPendingPhotoTasks as getPendingPhotoTasksService,
   getGalleryImages as getGalleryImagesService,
+  generateOrGetTaskQrCode,
 } from '../services/task.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
@@ -258,4 +259,29 @@ export const getGallery: RequestHandler = asyncHandler(async (req, res) => {
   if (offset) filters.offset = parseInt(offset as string, 10);
   const images = await getGalleryImagesService(filters);
   res.json(images);
+});
+
+/**
+ * GET /api/tasks/:id/qr-code
+ * Ruft den QR-Code einer Aufgabe ab (nur für Administratoren und Redaktion)
+ * Generiert automatisch einen QR-Code, falls noch keiner existiert
+ */
+export const getTaskQrCode: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  if (authReq.user.role !== 'administrator' && authReq.user.role !== 'redaktion') {
+    return res.status(403).json({ error: 'Forbidden: Administrator or Redaktion access required' });
+  }
+  
+  const { id } = req.params;
+  
+  try {
+    const qrCode = await generateOrGetTaskQrCode(id);
+    res.json({ qrCode });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message || 'Failed to get task QR code' });
+  }
 });

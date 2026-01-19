@@ -1692,9 +1692,10 @@ const validateTaskFormState = ({
     }
   }
 
-  if (taskForm.type === 'qr' && !taskForm.qr_code.trim()) {
-    return { isValid: false, message: 'Enter the QR code value for QR tasks.' };
-  }
+    // QR code is optional - will be auto-generated if not provided
+    // if (taskForm.type === 'qr' && !taskForm.qr_code.trim()) {
+    //   return { isValid: false, message: 'Enter the QR code value for QR tasks.' };
+    // }
 
   if (taskForm.type === 'visit_location') {
     if (!taskForm.target_latitude || !taskForm.target_longitude) {
@@ -2543,6 +2544,9 @@ function AdminPage() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskReturnMode, setTaskReturnMode] = useState<AdminMode | null>(null);
+  const [showTaskQrModal, setShowTaskQrModal] = useState(false);
+  const [taskQrCode, setTaskQrCode] = useState<string | null>(null);
+  const [loadingTaskQr, setLoadingTaskQr] = useState(false);
   const [isPrerequisiteModalOpen, setIsPrerequisiteModalOpen] = useState(false);
   const [prerequisiteModalMode, setPrerequisiteModalMode] = useState<'single' | 'multi'>('single');
   // taskManagementMessage is now handled by taskBulkOperations hook
@@ -6673,16 +6677,60 @@ function AdminPage() {
                       </>
                     )}
                     {taskForm.type === 'qr' && (
-                      <label className="admin-field admin-field-span-2">
-                        <FieldLabel label={t('admin.task.fields.qrCodeValue')} required />
-                        <input
-                          type="text"
-                          value={taskForm.qr_code}
-                          onChange={(event) =>
-                            setTaskForm((prev) => ({ ...prev, qr_code: event.target.value }))
-                          }
-                        />
-                      </label>
+                      <>
+                        <label className="admin-field admin-field-span-2">
+                          <FieldLabel label={t('admin.task.fields.qrCodeValue', 'QR-Code (optional - wird automatisch generiert)')} />
+                          <input
+                            type="text"
+                            value={taskForm.qr_code}
+                            onChange={(event) =>
+                              setTaskForm((prev) => ({ ...prev, qr_code: event.target.value }))
+                            }
+                            placeholder={t('admin.task.fields.qrCodePlaceholder', 'Leer lassen für automatische Generierung')}
+                          />
+                          <p className="admin-field-note">
+                            {t('admin.task.fields.qrCodeNote', 'Wenn kein QR-Code angegeben wird, wird automatisch ein eindeutiger Code generiert.')}
+                          </p>
+                        </label>
+                        {taskForm.qr_code && taskForm.qr_code.trim() && (
+                          <div className="admin-field admin-field-span-2" style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center',
+                            gap: 'var(--spacing-md)',
+                            padding: 'var(--spacing-lg)',
+                            background: 'var(--color-background-light, #f9fafb)',
+                            borderRadius: 'var(--border-radius)',
+                            marginTop: 'var(--spacing-sm)'
+                          }}>
+                            <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-text)' }}>
+                              {t('admin.task.fields.qrCodePreview', 'QR-Code Vorschau')}
+                            </h4>
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--spacing-md)', background: 'white', borderRadius: 'var(--border-radius)' }}>
+                              <QRCode value={taskForm.qr_code.trim()} size={256} />
+                            </div>
+                            <div style={{ 
+                              width: '100%',
+                              padding: 'var(--spacing-md)', 
+                              background: 'white', 
+                              borderRadius: 'var(--border-radius)',
+                              textAlign: 'center'
+                            }}>
+                              <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
+                                {t('admin.task.fields.qrCodeLabel', 'QR-Code:')}
+                              </p>
+                              <code style={{ 
+                                fontSize: '0.85rem', 
+                                wordBreak: 'break-all', 
+                                color: 'var(--color-text)',
+                                fontFamily: 'monospace'
+                              }}>
+                                {taskForm.qr_code.trim()}
+                              </code>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                     {taskForm.type === 'photo' && (
                       <div className="admin-form-full">
@@ -8345,6 +8393,31 @@ function AdminPage() {
                             >
                               {t('common.actions.edit', 'Bearbeiten')}
                             </button>
+                            {task.type === 'qr' && (
+                              <button
+                                className="admin-action-button"
+                                type="button"
+                                onClick={async () => {
+                                  setLoadingTaskQr(true);
+                                  try {
+                                    const response = await api.getTaskQrCode(task.id);
+                                    setTaskQrCode(response.qrCode);
+                                    setShowTaskQrModal(true);
+                                  } catch (error: any) {
+                                    showToast({
+                                      type: 'error',
+                                      title: t('admin.task.qrCodeError', 'Fehler'),
+                                      message: error?.response?.data?.error || t('admin.task.qrCodeErrorMessage', 'QR-Code konnte nicht geladen werden'),
+                                    });
+                                  } finally {
+                                    setLoadingTaskQr(false);
+                                  }
+                                }}
+                                disabled={loadingTaskQr}
+                              >
+                                {loadingTaskQr ? t('common.loading', 'Lädt...') : t('admin.task.showQrCode', 'QR-Code anzeigen')}
+                              </button>
+                            )}
                             <button
                               className="admin-action-button"
                               type="button"
@@ -9550,6 +9623,52 @@ function AdminPage() {
                           onClick={() => {
                             setShowTeamRegistrationQrModal(false);
                             setTeamRegistrationQrData(null);
+                          }}
+                        >
+                          {t('common.actions.close', 'Schließen')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Task QR Code Modal */}
+              {showTaskQrModal && taskQrCode && (
+                <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
+                  <div className="admin-form-card" style={{ maxWidth: '700px', margin: '2rem auto' }}>
+                    <div className="admin-form-section">
+                      <h3>{t('admin.task.qrCodeTitle', 'QR-Code für Aufgabe')}</h3>
+                      <p className="admin-field-note">{t('admin.task.qrCodeDescription', 'Dieser QR-Code kann ausgedruckt und für die Aufgabe verwendet werden.')}</p>
+                      <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                        <QRCode value={taskQrCode} size={400} />
+                      </div>
+                      <div style={{ 
+                        marginTop: 'var(--spacing-md)', 
+                        padding: 'var(--spacing-md)', 
+                        background: 'var(--color-background-light, #f9fafb)', 
+                        borderRadius: 'var(--border-radius)',
+                        width: '100%',
+                        textAlign: 'center'
+                      }}>
+                        <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
+                          {t('admin.task.qrCodeLabel', 'QR-Code:')}
+                        </p>
+                        <code style={{ 
+                          fontSize: '0.85rem', 
+                          wordBreak: 'break-all', 
+                          color: 'var(--color-text)',
+                          fontFamily: 'monospace'
+                        }}>
+                          {taskQrCode}
+                        </code>
+                      </div>
+                      <div className="admin-form-actions">
+                        <button
+                          className="admin-action-button"
+                          type="button"
+                          onClick={() => {
+                            setShowTaskQrModal(false);
+                            setTaskQrCode(null);
                           }}
                         >
                           {t('common.actions.close', 'Schließen')}

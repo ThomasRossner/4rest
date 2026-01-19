@@ -205,6 +205,11 @@ export const api = {
     return response.data;
   },
 
+  async getTaskQrCode(taskId: string) {
+    const response = await apiClient.get(`/tasks/${taskId}/qr-code`);
+    return response.data;
+  },
+
   async updateTask(id: string, payload: any) {
     const response = await apiClient.put(`/tasks/${id}`, payload);
     return response.data;

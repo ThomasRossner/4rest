@@ -69,10 +69,18 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   // Check if device has camera (for real QR scanning)
   const [hasCamera, setHasCamera] = useState(false);
   const [canDecode, setCanDecode] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
       try {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          const isHttp = window.location.protocol === 'http:';
+          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isHttp && !isLocalhost) {
+            setCameraError(t('tasksComponents.qr.cameraRequiresHttps', 'Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.'));
+          } else {
+            setCameraError(t('tasksComponents.qr.cameraNotSupported', 'Kamera-Zugriff wird in diesem Browser nicht unterstützt. Bitte verwenden Sie einen modernen Browser mit Kamera-Unterstützung.'));
+          }
           setHasCamera(false);
           return;
         }
@@ -84,12 +92,16 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
         setHasCamera(true);
+        setCameraError(null);
         // Attach to video element if present
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           // Some browsers require play() after metadata
           videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().catch(() => {});
+            videoRef.current?.play().catch((err) => {
+              console.error('Error playing video:', err);
+              setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+            });
           };
         }
         // Check decoding capability (BarcodeDetector API)
@@ -99,8 +111,16 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               .then((formats: string[]) => formats.includes('qr_code'))
           : false;
         setCanDecode(!!supported);
-      } catch (_) {
+      } catch (err: any) {
+        console.error('Error accessing camera:', err);
         setHasCamera(false);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setCameraError(t('tasksComponents.qr.cameraPermissionDenied', 'Kamera-Zugriff wurde verweigert. Bitte erlauben Sie den Kamera-Zugriff in den Browser-Einstellungen.'));
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setCameraError(t('tasksComponents.qr.cameraNotFound', 'Keine Kamera gefunden. Bitte stellen Sie sicher, dass eine Kamera angeschlossen ist.'));
+        } else {
+          setCameraError(err.message || t('tasksComponents.qr.cameraError', 'Kamera-Zugriff fehlgeschlagen'));
+        }
       }
     })();
 
@@ -304,7 +324,45 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
 
       <div className="qr-container">
         <div className="qr-scanner-area">
-          {hasCamera ? (
+          {/* Manual input field - always shown */}
+          <div className="qr-manual" style={{ width: '100%', maxWidth: '400px', marginBottom: hasCamera ? 'var(--spacing-lg)' : '0' }}>
+            {cameraError && !hasCamera && (
+              <div style={{ 
+                padding: 'var(--spacing-md)', 
+                background: '#fee2e2', 
+                color: '#991b1b', 
+                borderRadius: 'var(--border-radius)',
+                marginBottom: 'var(--spacing-md)'
+              }}>
+                <strong>{t('tasksComponents.qr.cameraErrorTitle', 'Kamera-Fehler')}</strong>
+                <p style={{ margin: 'var(--spacing-xs) 0 0 0' }}>{cameraError}</p>
+              </div>
+            )}
+            <p>{t('tasksComponents.qr.manualPrompt', 'Bitte geben Sie den QR-Code manuell ein:')}</p>
+            <input
+              type="text"
+              value={scannedCode}
+              onChange={(e) => setScannedCode(e.target.value)}
+              placeholder={t('tasksComponents.qr.manualPlaceholder', 'QR-Code eingeben')}
+              className="qr-input"
+            />
+            <button
+              onClick={() => {
+                if (scannedCode === qrCode) {
+                  completeMutation.mutate();
+                } else {
+                  alert(t('tasksComponents.qr.invalid', 'Ungültiger QR-Code'));
+                }
+              }}
+              disabled={!scannedCode || completeMutation.isLoading}
+              className="verify-button"
+            >
+              {t('tasksComponents.qr.verify', 'Verifizieren')}
+            </button>
+          </div>
+
+          {/* Camera preview - shown if camera is available */}
+          {hasCamera && (
             <div className="qr-scanner">
               {/* Camera preview */}
               <video
@@ -332,30 +390,6 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                   {t('tasksComponents.qr.completing')}
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="qr-manual">
-              <p>{t('tasksComponents.qr.manualPrompt')}</p>
-              <input
-                type="text"
-                value={scannedCode}
-                onChange={(e) => setScannedCode(e.target.value)}
-                placeholder={t('tasksComponents.qr.manualPlaceholder')}
-                className="qr-input"
-              />
-              <button
-                onClick={() => {
-                  if (scannedCode === qrCode) {
-                    completeMutation.mutate();
-                  } else {
-                    alert(t('tasksComponents.qr.invalid'));
-                  }
-                }}
-                disabled={!scannedCode || completeMutation.isLoading}
-                className="verify-button"
-              >
-                {t('tasksComponents.qr.verify')}
-              </button>
             </div>
           )}
         </div>

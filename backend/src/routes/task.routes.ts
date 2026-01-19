@@ -20,6 +20,7 @@ import {
   rejectPhotoTask,
   getPendingPhotoTasks,
   getGallery,
+  getTaskQrCode,
 } from '../controllers/task.controller.js';
 
 const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
@@ -130,6 +131,7 @@ router.post(
 );
 // Generic routes must come AFTER specific routes
 router.get('/:id', getTask);
+router.get('/:id/qr-code', authenticate, requireRole('redaktion', 'administrator'), getTaskQrCode);
 router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);
 router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), updateTask);
 router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
