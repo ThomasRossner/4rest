@@ -39,6 +39,7 @@ import { ManagementHeader } from '../../components/Management/ManagementHeader';
 import { ManagementCard } from '../../components/Management/ManagementCard';
 import { BulkActionsBar } from '../../components/Management/BulkActionsBar';
 import { ManagementTable, type TableColumn } from '../../components/Management/ManagementTable';
+import PointsBonusPage from '../Employee/PointsBonusPage';
 
 type AdminMode =
   | 'task'
@@ -56,6 +57,7 @@ type AdminMode =
   | 'teamManage'
   | 'contestManage'
   | 'photoValidation'
+  | 'pointsBonus'
   | null;
 type TaskSource = '' | 'existing' | 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location';
 
@@ -5198,6 +5200,11 @@ function AdminPage() {
               <h2>{t('admin.actions.redeemRewards.title')}</h2>
               <p>{t('admin.actions.redeemRewards.description')}</p>
             </button>
+            <button className="admin-choice-card" onClick={() => setMode('pointsBonus')}>
+              <span className="admin-choice-icon">🎫</span>
+              <h2>{t('admin.actions.pointsBonus.title', 'Bonus-Codes generieren')}</h2>
+              <p>{t('admin.actions.pointsBonus.description', 'QR-Codes für Bonuspunkte generieren')}</p>
+            </button>
           </div>
         </>
       )}
@@ -8496,7 +8503,7 @@ function AdminPage() {
                               style={COMPACT_TOGGLE_STYLE}
                               checked={isSelected}
                               onChange={(event) =>
-                                toggleRewardSelection(reward.id, event.target.checked)
+                                rewardSelection.toggle(reward.id, event.target.checked)
                               }
                               aria-label={`Select reward ${reward.title}`}
                             />
@@ -9122,7 +9129,7 @@ function AdminPage() {
                               style={COMPACT_TOGGLE_STYLE}
                               checked={isSelected}
                               onChange={(event) =>
-                                toggleTeamSelection(team.id, event.target.checked)
+                                teamSelection.toggle(team.id, event.target.checked)
                               }
                               aria-label={`Select team ${team.name}`}
                             />
@@ -9428,6 +9435,26 @@ function AdminPage() {
           cssPrefix="admin"
           onBack={() => setMode(null)}
         />
+      )}
+
+      {/* Points Bonus */}
+      {mode === 'pointsBonus' && (
+        <div style={{ padding: '20px' }}>
+          <button
+            onClick={() => setMode(null)}
+            style={{
+              marginBottom: '20px',
+              padding: '10px 20px',
+              backgroundColor: '#f0f0f0',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            {t('common.actions.back', 'Zurück')}
+          </button>
+          <PointsBonusPage />
+        </div>
       )}
     </div>
   );

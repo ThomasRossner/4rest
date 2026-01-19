@@ -402,6 +402,10 @@
       "manageContests": {
         "title": "Wettbewerbe verwalten",
         "description": "Alle Wettbewerbe anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "pointsBonus": {
+        "title": "Bonus-Codes generieren",
+        "description": "QR-Codes für Bonuspunkte generieren"
       }
     },
     "debugMode": {

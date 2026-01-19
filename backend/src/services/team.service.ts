@@ -130,6 +130,25 @@ export async function joinTeamById(userId: string, teamId: string): Promise<Team
     [teamId, userId]
   );
   
+  // Sende Benachrichtigung an Benutzer
+  try {
+    const { createMessage } = await import('./message.service.js');
+    const teamName = teamResult.rows[0].name || 'Team';
+    await createMessage({
+      user_id: userId,
+      type: 'team_joined',
+      title: `Du bist dem Team "${teamName}" beigetreten`,
+      content: `Du wurdest erfolgreich dem Team "${teamName}" hinzugefügt. Du kannst jetzt gemeinsam mit deinem Team Punkte sammeln!`,
+      metadata: {
+        team_id: teamId,
+        team_name: teamName,
+      },
+    });
+  } catch (error) {
+    console.error('[TEAM SERVICE] Failed to send notification for joinTeamById:', error);
+    // Fehler nicht weiterwerfen, da Team-Beitritt erfolgreich war
+  }
+  
   return teamResult.rows[0];
 }
 
@@ -188,6 +207,25 @@ export async function joinTeam(userId: string, teamQrToken: string): Promise<Tea
     'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
     [teamId, userId]
   );
+  
+  // Sende Benachrichtigung an Benutzer
+  try {
+    const { createMessage } = await import('./message.service.js');
+    const teamName = teamResult.rows[0].name || 'Team';
+    await createMessage({
+      user_id: userId,
+      type: 'team_joined',
+      title: `Du bist dem Team "${teamName}" beigetreten`,
+      content: `Du hast erfolgreich dem Team "${teamName}" beigetreten. Du kannst jetzt gemeinsam mit deinem Team Punkte sammeln!`,
+      metadata: {
+        team_id: teamId,
+        team_name: teamName,
+      },
+    });
+  } catch (error) {
+    console.error('[TEAM SERVICE] Failed to send notification for joinTeam:', error);
+    // Fehler nicht weiterwerfen, da Team-Beitritt erfolgreich war
+  }
   
   return teamResult.rows[0];
 }
@@ -502,6 +540,31 @@ export async function leaveTeam(userId: string, teamId: string): Promise<void> {
       'DELETE FROM team_members WHERE team_id = $1 AND user_id = $2',
       [teamId, userId]
     );
+    
+    // Hole Team-Name für Benachrichtigung
+    const teamNameResult = await db.query(
+      'SELECT name FROM teams WHERE id = $1',
+      [teamId]
+    );
+    const teamName = teamNameResult.rows[0]?.name || 'Team';
+    
+    // Sende Benachrichtigung an Benutzer
+    try {
+      const { createMessage } = await import('./message.service.js');
+      await createMessage({
+        user_id: userId,
+        type: 'team_left',
+        title: `Du hast das Team "${teamName}" verlassen`,
+        content: `Du hast das Team "${teamName}" verlassen. Deine persönlichen Punkte bleiben erhalten.`,
+        metadata: {
+          team_id: teamId,
+          team_name: teamName,
+        },
+      });
+    } catch (error) {
+      console.error('[TEAM SERVICE] Failed to send notification for leaveTeam:', error);
+      // Fehler nicht weiterwerfen, da Team-Verlassen erfolgreich war
+    }
     
     await db.query('COMMIT');
   } catch (error) {
@@ -1010,13 +1073,16 @@ export async function addTeamMembers(teamId: string, userIds: string[]): Promise
   
   // Prüfe ob Team existiert
   const teamResult = await db.query(
-    'SELECT id, active FROM teams WHERE id = $1',
+    'SELECT id, name, active FROM teams WHERE id = $1',
     [teamId]
   );
   
   if (teamResult.rows.length === 0) {
     throw new Error('Team not found');
   }
+  
+  const teamName = teamResult.rows[0].name || 'Team';
+  const addedUserIds: string[] = [];
   
   // Füge Benutzer hinzu (ignoriere Duplikate)
   for (const userId of userIds) {
@@ -1041,7 +1107,27 @@ export async function addTeamMembers(teamId: string, userIds: string[]): Promise
           'INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)',
           [teamId, userId]
         );
+        addedUserIds.push(userId);
       }
+    }
+  }
+  
+  // Sende Benachrichtigungen an alle hinzugefügten Benutzer
+  if (addedUserIds.length > 0) {
+    try {
+      const { createMessagesForUsers } = await import('./message.service.js');
+      await createMessagesForUsers(addedUserIds, {
+        type: 'team_added',
+        title: `Du wurdest zum Team "${teamName}" hinzugefügt`,
+        content: `Du wurdest von einem Administrator zum Team "${teamName}" hinzugefügt. Du kannst jetzt gemeinsam mit deinem Team Punkte sammeln!`,
+        metadata: {
+          team_id: teamId,
+          team_name: teamName,
+        },
+      });
+    } catch (error) {
+      console.error('[TEAM SERVICE] Failed to send notifications for addTeamMembers:', error);
+      // Fehler nicht weiterwerfen, da Team-Hinzufügung erfolgreich war
     }
   }
 }
@@ -1058,7 +1144,7 @@ export async function removeTeamMembers(teamId: string, userIds: string[]): Prom
   
   // Prüfe ob Team existiert
   const teamResult = await db.query(
-    'SELECT id, created_by FROM teams WHERE id = $1',
+    'SELECT id, name, created_by FROM teams WHERE id = $1',
     [teamId]
   );
   
@@ -1067,6 +1153,8 @@ export async function removeTeamMembers(teamId: string, userIds: string[]): Prom
   }
   
   const team = teamResult.rows[0];
+  const teamName = team.name || 'Team';
+  const removedUserIds: string[] = [];
   
   // Entferne Benutzer (außer Ersteller)
   for (const userId of userIds) {
@@ -1079,6 +1167,26 @@ export async function removeTeamMembers(teamId: string, userIds: string[]): Prom
       'DELETE FROM team_members WHERE team_id = $1 AND user_id = $2',
       [teamId, userId]
     );
+    removedUserIds.push(userId);
+  }
+  
+  // Sende Benachrichtigungen an alle entfernten Benutzer
+  if (removedUserIds.length > 0) {
+    try {
+      const { createMessagesForUsers } = await import('./message.service.js');
+      await createMessagesForUsers(removedUserIds, {
+        type: 'team_removed',
+        title: `Du wurdest aus dem Team "${teamName}" entfernt`,
+        content: `Du wurdest von einem Administrator aus dem Team "${teamName}" entfernt. Deine persönlichen Punkte bleiben erhalten.`,
+        metadata: {
+          team_id: teamId,
+          team_name: teamName,
+        },
+      });
+    } catch (error) {
+      console.error('[TEAM SERVICE] Failed to send notifications for removeTeamMembers:', error);
+      // Fehler nicht weiterwerfen, da Team-Entfernung erfolgreich war
+    }
   }
 }
 

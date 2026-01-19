@@ -26,6 +26,7 @@ function QrScannerPage({ onBack }: QrScannerPageProps) {
     let stream: MediaStream | null = null;
     let animationFrameId: number | null = null;
     let jsQR: any = null;
+    const streamRef = { current: stream };
 
     const startScanning = async () => {
       try {
@@ -33,17 +34,72 @@ function QrScannerPage({ onBack }: QrScannerPageProps) {
         const jsQRModule = await import('jsqr');
         jsQR = jsQRModule.default;
 
-        // Request camera access
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }, // Use back camera on mobile
-        });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setIsScanning(true);
-          setError(null);
+        // Check if mediaDevices API is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          const isHttp = window.location.protocol === 'http:';
+          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isHttp && !isLocalhost) {
+            setError(t('admin.qrScanner.cameraRequiresHttps') || 'Camera access requires HTTPS when accessing from another device. Please use HTTPS or access from localhost.');
+          } else {
+            setError(t('admin.qrScanner.cameraNotSupported') || 'Camera access is not supported in this browser. Please use a modern browser with camera support.');
+          }
+          setIsScanning(false);
+          return;
         }
+
+        // Prefer environment camera when available (mobile), fallback to user
+        const constraints: MediaStreamConstraints = {
+          video: { 
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false,
+        };
+
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+
+        // Attach stream to video element
+        const attachStream = () => {
+          if (videoRef.current && streamRef.current) {
+            const video = videoRef.current;
+            video.srcObject = streamRef.current;
+            
+            // Set playsInline for iOS compatibility (both attributes)
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            
+            // Handle video ready events
+            const handleLoadedMetadata = () => {
+              video.play().catch((err) => {
+                console.error('[QrScannerPage] Error playing video after metadata:', err);
+                setError(t('admin.qrScanner.cameraError') || 'Failed to start camera');
+              });
+            };
+            
+            video.addEventListener('loadedmetadata', handleLoadedMetadata);
+            
+            // Try to play immediately
+            video.play().catch((err) => {
+              console.log('[QrScannerPage] Initial play() failed (expected on some browsers), will retry on loadedmetadata:', err);
+            });
+          }
+        };
+        
+        // Wait for video element to be rendered, then attach
+        const waitForVideoElement = () => {
+          if (videoRef.current) {
+            attachStream();
+            setIsScanning(true);
+            setError(null);
+          } else {
+            setTimeout(waitForVideoElement, 100);
+          }
+        };
+        
+        // Start attaching after a short delay
+        setTimeout(waitForVideoElement, 100);
 
         // Start scanning loop
         const scan = () => {
@@ -70,9 +126,17 @@ function QrScannerPage({ onBack }: QrScannerPageProps) {
 
         scan();
       } catch (err: any) {
-        console.error('Error accessing camera:', err);
-        setError(err.message || t('admin.qrScanner.cameraError'));
+        console.error('[QrScannerPage] Error accessing camera:', err);
         setIsScanning(false);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setError(t('admin.qrScanner.cameraPermissionDenied') || 'Camera access was denied. Please allow camera access in your browser settings.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setError(t('admin.qrScanner.cameraNotFound') || 'No camera found. Please ensure a camera is connected.');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setError(t('admin.qrScanner.cameraInUse') || 'Camera is already in use by another application. Please close other applications using the camera.');
+        } else {
+          setError(err.message || t('admin.qrScanner.cameraError') || 'Failed to access camera');
+        }
       }
     };
 
@@ -82,8 +146,9 @@ function QrScannerPage({ onBack }: QrScannerPageProps) {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
     };
   }, [t]);
@@ -165,6 +230,17 @@ function QrScannerPage({ onBack }: QrScannerPageProps) {
           playsInline
           muted
           autoPlay
+          onLoadedMetadata={() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch((err) => {
+                console.error('[QrScannerPage] Error playing video after metadata:', err);
+              });
+            }
+          }}
+          onError={(e) => {
+            console.error('[QrScannerPage] Video error:', e);
+            setError(t('admin.qrScanner.cameraError') || 'Failed to start camera');
+          }}
         />
         <canvas ref={canvasRef} className="qr-scanner-canvas" />
         {isScanning && (

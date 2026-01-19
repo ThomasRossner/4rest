@@ -26,12 +26,12 @@ export function RewardScanner({ onClose, onSuccess }: RewardScannerProps) {
   useEffect(() => {
     let stream: MediaStream | null = null;
     let animationFrameId: number | null = null;
+    const streamRef = { current: stream };
 
     const startScanning = async () => {
       try {
         // Check if mediaDevices API is available
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          // Check if it's a security issue (HTTP from non-localhost)
           const isHttp = window.location.protocol === 'http:';
           const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           if (isHttp && !isLocalhost) {
@@ -43,16 +43,59 @@ export function RewardScanner({ onClose, onSuccess }: RewardScannerProps) {
           return;
         }
 
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-        });
+        // Prefer environment camera when available (mobile), fallback to user
+        const constraints: MediaStreamConstraints = {
+          video: { 
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false,
+        };
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setIsScanning(true);
-          setError(null);
-        }
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+
+        // Attach stream to video element
+        const attachStream = () => {
+          if (videoRef.current && streamRef.current) {
+            const video = videoRef.current;
+            video.srcObject = streamRef.current;
+            
+            // Set playsInline for iOS compatibility (both attributes)
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            
+            // Handle video ready events
+            const handleLoadedMetadata = () => {
+              video.play().catch((err) => {
+                console.error('[RewardScanner] Error playing video after metadata:', err);
+                setError(t('rewards.scanner.cameraError') || 'Failed to start camera');
+              });
+            };
+            
+            video.addEventListener('loadedmetadata', handleLoadedMetadata);
+            
+            // Try to play immediately
+            video.play().catch((err) => {
+              console.log('[RewardScanner] Initial play() failed (expected on some browsers), will retry on loadedmetadata:', err);
+            });
+          }
+        };
+        
+        // Wait for video element to be rendered, then attach
+        const waitForVideoElement = () => {
+          if (videoRef.current) {
+            attachStream();
+            setIsScanning(true);
+            setError(null);
+          } else {
+            setTimeout(waitForVideoElement, 100);
+          }
+        };
+        
+        // Start attaching after a short delay
+        setTimeout(waitForVideoElement, 100);
 
         const scan = () => {
           if (videoRef.current && canvasRef.current && !scannedReward) {
@@ -77,9 +120,17 @@ export function RewardScanner({ onClose, onSuccess }: RewardScannerProps) {
 
         scan();
       } catch (err: any) {
-        console.error('Error accessing camera:', err);
-        setError(err.message || t('rewards.scanner.cameraError') || 'Failed to access camera');
+        console.error('[RewardScanner] Error accessing camera:', err);
         setIsScanning(false);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setError(t('rewards.scanner.cameraPermissionDenied') || 'Camera access was denied. Please allow camera access in your browser settings.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setError(t('rewards.scanner.cameraNotFound') || 'No camera found. Please ensure a camera is connected.');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setError(t('rewards.scanner.cameraInUse') || 'Camera is already in use by another application. Please close other applications using the camera.');
+        } else {
+          setError(err.message || t('rewards.scanner.cameraError') || 'Failed to access camera');
+        }
       }
     };
 
@@ -91,8 +142,9 @@ export function RewardScanner({ onClose, onSuccess }: RewardScannerProps) {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
     };
   }, [t, scannedReward]);
@@ -232,6 +284,17 @@ export function RewardScanner({ onClose, onSuccess }: RewardScannerProps) {
           playsInline
           muted
           autoPlay
+          onLoadedMetadata={() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch((err) => {
+                console.error('[RewardScanner] Error playing video after metadata:', err);
+              });
+            }
+          }}
+          onError={(e) => {
+            console.error('[RewardScanner] Video error:', e);
+            setError(t('rewards.scanner.cameraError') || 'Failed to start camera');
+          }}
         />
         <canvas ref={canvasRef} className="qr-scanner-canvas" />
         {isScanning && (

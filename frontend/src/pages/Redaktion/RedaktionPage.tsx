@@ -678,6 +678,24 @@ function RedaktionPage() {
                         >
                           {t('common.actions.edit', 'Bearbeiten')}
                         </button>
+                        {task.type === 'qr' && (
+                          <button
+                            className="redaktion-action-button"
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const response = await api.getTaskQrCode(task.id);
+                                // Open QR code in new modal (similar to AdminPage)
+                                // For now, show in alert - can be improved with modal later
+                                alert(`${t('admin.task.qrCodeLabel', 'QR-Code:')}\n${response.qrCode}`);
+                              } catch (error: any) {
+                                alert(error?.response?.data?.error || t('admin.task.qrCodeErrorMessage', 'QR-Code konnte nicht geladen werden'));
+                              }
+                            }}
+                          >
+                            {t('admin.task.showQrCode', 'QR-Code anzeigen')}
+                          </button>
+                        )}
                         <button
                           className="redaktion-action-button"
                           type="button"

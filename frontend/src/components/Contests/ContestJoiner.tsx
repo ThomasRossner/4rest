@@ -23,6 +23,7 @@ export function ContestJoiner({ onSuccess, onClose }: ContestJoinerProps) {
   useEffect(() => {
     let stream: MediaStream | null = null;
     let animationFrameId: number | null = null;
+    const streamRef = { current: stream };
 
     const startScanning = async () => {
       try {
@@ -38,16 +39,59 @@ export function ContestJoiner({ onSuccess, onClose }: ContestJoinerProps) {
           return;
         }
 
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-        });
+        // Prefer environment camera when available (mobile), fallback to user
+        const constraints: MediaStreamConstraints = {
+          video: { 
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false,
+        };
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setIsScanning(true);
-          setError(null);
-        }
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+
+        // Attach stream to video element
+        const attachStream = () => {
+          if (videoRef.current && streamRef.current) {
+            const video = videoRef.current;
+            video.srcObject = streamRef.current;
+            
+            // Set playsInline for iOS compatibility (both attributes)
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            
+            // Handle video ready events
+            const handleLoadedMetadata = () => {
+              video.play().catch((err) => {
+                console.error('[ContestJoiner] Error playing video after metadata:', err);
+                setError(t('contests.join.cameraError') || 'Failed to start camera');
+              });
+            };
+            
+            video.addEventListener('loadedmetadata', handleLoadedMetadata);
+            
+            // Try to play immediately
+            video.play().catch((err) => {
+              console.log('[ContestJoiner] Initial play() failed (expected on some browsers), will retry on loadedmetadata:', err);
+            });
+          }
+        };
+        
+        // Wait for video element to be rendered, then attach
+        const waitForVideoElement = () => {
+          if (videoRef.current) {
+            attachStream();
+            setIsScanning(true);
+            setError(null);
+          } else {
+            setTimeout(waitForVideoElement, 100);
+          }
+        };
+        
+        // Start attaching after a short delay
+        setTimeout(waitForVideoElement, 100);
 
         const scan = () => {
           if (videoRef.current && canvasRef.current && !isJoining) {
@@ -72,9 +116,17 @@ export function ContestJoiner({ onSuccess, onClose }: ContestJoinerProps) {
 
         scan();
       } catch (err: any) {
-        console.error('Error accessing camera:', err);
-        setError(err.message || t('contests.join.cameraError') || 'Failed to access camera');
+        console.error('[ContestJoiner] Error accessing camera:', err);
         setIsScanning(false);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setError(t('contests.join.cameraPermissionDenied') || 'Camera access was denied. Please allow camera access in your browser settings.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setError(t('contests.join.cameraNotFound') || 'No camera found. Please ensure a camera is connected.');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setError(t('contests.join.cameraInUse') || 'Camera is already in use by another application. Please close other applications using the camera.');
+        } else {
+          setError(err.message || t('contests.join.cameraError') || 'Failed to access camera');
+        }
       }
     };
 
@@ -84,8 +136,9 @@ export function ContestJoiner({ onSuccess, onClose }: ContestJoinerProps) {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
     };
   }, [t, isJoining]);
@@ -143,7 +196,24 @@ export function ContestJoiner({ onSuccess, onClose }: ContestJoinerProps) {
       {error && <div className="qr-scanner-error">{error}</div>}
       
       <div className="qr-scanner-video-container">
-        <video ref={videoRef} className="qr-scanner-video" playsInline muted />
+        <video 
+          ref={videoRef} 
+          className="qr-scanner-video" 
+          playsInline 
+          muted 
+          autoPlay
+          onLoadedMetadata={() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch((err) => {
+                console.error('[ContestJoiner] Error playing video after metadata:', err);
+              });
+            }
+          }}
+          onError={(e) => {
+            console.error('[ContestJoiner] Video error:', e);
+            setError(t('contests.join.cameraError') || 'Failed to start camera');
+          }}
+        />
         <canvas ref={canvasRef} className="qr-scanner-canvas" />
       </div>
       

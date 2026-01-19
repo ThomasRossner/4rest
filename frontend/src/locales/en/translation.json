@@ -1938,6 +1938,10 @@
         "description": "View, edit all contests and manage registration QR codes"
       },
       "pointsBonus": {
+        "title": "Generate Bonus Codes",
+        "description": "Generate QR codes for bonus points"
+      },
+      "pointsBonus": {
         "title": "Give Bonus Points",
         "description": "Generate QR codes for bonus points"
       },

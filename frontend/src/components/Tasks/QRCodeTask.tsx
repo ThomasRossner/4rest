@@ -70,12 +70,22 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const [hasCamera, setHasCamera] = useState(false);
   const [canDecode, setCanDecode] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  
   useEffect(() => {
-    (async () => {
+    let stream: MediaStream | null = null;
+    
+    const initializeCamera = async () => {
       try {
+        console.log('[QRCodeTask] Checking camera availability...');
+        console.log('[QRCodeTask] Protocol:', window.location.protocol);
+        console.log('[QRCodeTask] Hostname:', window.location.hostname);
+        console.log('[QRCodeTask] mediaDevices available:', !!navigator.mediaDevices);
+        console.log('[QRCodeTask] getUserMedia available:', !!(navigator.mediaDevices?.getUserMedia));
+        
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           const isHttp = window.location.protocol === 'http:';
           const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          console.log('[QRCodeTask] Camera API not available', { isHttp, isLocalhost });
           if (isHttp && !isLocalhost) {
             setCameraError(t('tasksComponents.qr.cameraRequiresHttps', 'Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.'));
           } else {
@@ -84,50 +94,128 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
           setHasCamera(false);
           return;
         }
+        
         // Prefer environment camera when available (mobile), fallback to user
         const constraints: MediaStreamConstraints = {
-          video: { facingMode: { ideal: 'environment' } },
+          video: { 
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
           audio: false,
         };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        console.log('[QRCodeTask] Requesting camera access...');
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
+        console.log('[QRCodeTask] Camera access granted, stream:', stream);
+        console.log('[QRCodeTask] Video tracks:', stream.getVideoTracks().length);
+        
         setHasCamera(true);
         setCameraError(null);
-        // Attach to video element if present
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          // Some browsers require play() after metadata
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().catch((err) => {
-              console.error('Error playing video:', err);
+        
+        // Attach stream to video element
+        const attachStream = () => {
+          if (videoRef.current && streamRef.current) {
+            console.log('[QRCodeTask] Attaching stream to video element');
+            const video = videoRef.current;
+            video.srcObject = streamRef.current;
+            
+            // Set playsInline for iOS compatibility (both attributes)
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            
+            // Handle video ready events
+            const handleLoadedMetadata = () => {
+              console.log('[QRCodeTask] Video metadata loaded, readyState:', video.readyState);
+              console.log('[QRCodeTask] Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+              video.play().catch((err) => {
+                console.error('[QRCodeTask] Error playing video after metadata:', err);
+                setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+              });
+            };
+            
+            const handlePlay = () => {
+              console.log('[QRCodeTask] Video is playing');
+            };
+            
+            const handleError = (e: Event) => {
+              console.error('[QRCodeTask] Video error event:', e);
               setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+            };
+            
+            video.addEventListener('loadedmetadata', handleLoadedMetadata);
+            video.addEventListener('play', handlePlay);
+            video.addEventListener('error', handleError);
+            
+            // Try to play immediately
+            video.play().catch((err) => {
+              console.log('[QRCodeTask] Initial play() failed (expected on some browsers), will retry on loadedmetadata:', err);
             });
-          };
-        }
+          } else {
+            console.log('[QRCodeTask] Video element not ready yet', {
+              hasVideo: !!videoRef.current,
+              hasStream: !!streamRef.current
+            });
+          }
+        };
+        
+        // Wait for video element to be rendered, then attach
+        const waitForVideoElement = () => {
+          if (videoRef.current) {
+            attachStream();
+          } else {
+            console.log('[QRCodeTask] Waiting for video element...');
+            setTimeout(waitForVideoElement, 100);
+          }
+        };
+        
+        // Start attaching after a short delay
+        setTimeout(waitForVideoElement, 100);
+        
         // Check decoding capability (BarcodeDetector API)
-        const supported = (window as any).BarcodeDetector &&
-          typeof (window as any).BarcodeDetector.getSupportedFormats === 'function'
-          ? await (window as any).BarcodeDetector.getSupportedFormats()
-              .then((formats: string[]) => formats.includes('qr_code'))
-          : false;
-        setCanDecode(!!supported);
+        try {
+          const BD = (window as any).BarcodeDetector;
+          if (BD && typeof BD.getSupportedFormats === 'function') {
+            const formats = await BD.getSupportedFormats();
+            const supportsQR = formats.includes('qr_code');
+            console.log('[QRCodeTask] BarcodeDetector available:', supportsQR, 'formats:', formats);
+            setCanDecode(supportsQR);
+          } else {
+            console.log('[QRCodeTask] BarcodeDetector not available, using jsQR fallback');
+            setCanDecode(false);
+          }
+        } catch (err) {
+          console.log('[QRCodeTask] Error checking BarcodeDetector:', err);
+          setCanDecode(false);
+        }
       } catch (err: any) {
-        console.error('Error accessing camera:', err);
+        console.error('[QRCodeTask] Error accessing camera:', err);
+        console.error('[QRCodeTask] Error name:', err.name);
+        console.error('[QRCodeTask] Error message:', err.message);
         setHasCamera(false);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
           setCameraError(t('tasksComponents.qr.cameraPermissionDenied', 'Kamera-Zugriff wurde verweigert. Bitte erlauben Sie den Kamera-Zugriff in den Browser-Einstellungen.'));
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
           setCameraError(t('tasksComponents.qr.cameraNotFound', 'Keine Kamera gefunden. Bitte stellen Sie sicher, dass eine Kamera angeschlossen ist.'));
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setCameraError(t('tasksComponents.qr.cameraInUse', 'Kamera wird bereits von einer anderen Anwendung verwendet. Bitte schließen Sie andere Anwendungen, die die Kamera verwenden.'));
         } else {
           setCameraError(err.message || t('tasksComponents.qr.cameraError', 'Kamera-Zugriff fehlgeschlagen'));
         }
       }
-    })();
+    };
+
+    initializeCamera();
 
     return () => {
+      console.log('[QRCodeTask] Cleaning up camera...');
       // Stop camera when component unmounts
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current.getTracks().forEach((t) => {
+          console.log('[QRCodeTask] Stopping track:', t.label);
+          t.stop();
+        });
         streamRef.current = null;
       }
       if (rafRef.current) {
@@ -135,7 +223,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
         rafRef.current = null;
       }
     };
-  }, []);
+  }, [t]);
 
   // Real-time QR decoding using BarcodeDetector (if available) or jsQR as fallback
   useEffect(() => {
@@ -364,29 +452,74 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
           {/* Camera preview - shown if camera is available */}
           {hasCamera && (
             <div className="qr-scanner">
-              {/* Camera preview */}
+              {/* Camera preview - always render video element, even if stream not attached yet */}
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover',
+                  backgroundColor: '#000',
+                  display: 'block',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+                onLoadedMetadata={() => {
+                  console.log('[QRCodeTask] Video metadata loaded, video should be visible now');
+                  console.log('[QRCodeTask] Video readyState:', videoRef.current?.readyState);
+                  console.log('[QRCodeTask] Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+                  // Force play on iOS
+                  if (videoRef.current) {
+                    videoRef.current.play().catch((err) => {
+                      console.error('[QRCodeTask] Error playing video after metadata:', err);
+                      setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+                    });
+                  }
+                }}
+                onPlay={() => {
+                  console.log('[QRCodeTask] Video is playing');
+                }}
+                onError={(e) => {
+                  console.error('[QRCodeTask] Video error event:', e);
+                  const video = e.target as HTMLVideoElement;
+                  console.error('[QRCodeTask] Video error code:', video.error?.code);
+                  console.error('[QRCodeTask] Video error message:', video.error?.message);
+                  setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+                }}
               />
+              {/* Loading indicator if video is not ready */}
+              {videoRef.current && (!videoRef.current.srcObject || videoRef.current.readyState < 2) && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: '50%', 
+                  transform: 'translate(-50%, -50%)',
+                  color: 'white',
+                  textAlign: 'center',
+                  zIndex: 2
+                }}>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📷</div>
+                  <div>{t('tasksComponents.qr.cameraLoading', 'Kamera wird geladen...')}</div>
+                </div>
+              )}
               <div className="scanner-overlay">
                 <div className="scanner-frame"></div>
               </div>
               {scannedCode && (
-                <div style={{ position: 'absolute', top: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12 }}>
+                <div style={{ position: 'absolute', top: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, zIndex: 3 }}>
                   {t('tasksComponents.qr.scanned', { value: scannedCode })}
                 </div>
               )}
               {decodeError && (
-                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(255,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12 }}>
+                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(255,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, zIndex: 3 }}>
                   {decodeError}
                 </div>
               )}
               {completeMutation.isLoading && (
-                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, textAlign: 'center' }}>
+                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, textAlign: 'center', zIndex: 3 }}>
                   {t('tasksComponents.qr.completing')}
                 </div>
               )}

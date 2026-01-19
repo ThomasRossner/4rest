@@ -45,6 +45,7 @@ export function useSelection<T extends { id: string }>(items: T[] = []) {
     selectedIds,
     selectedItems,
     toggleSelection,
+    toggle: toggleSelection, // Alias for toggleSelection for convenience
     selectAll,
     deselectAll,
     isSelected,

@@ -77,6 +77,7 @@ async function runMigrations() {
       '051_replace_allowed_roles_with_teams_contests',
       '052_photo_task_verification',
       '053_mailbox_messages',
+      '054_remove_event_group',
     ];
     
     // Read all migration files

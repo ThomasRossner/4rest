@@ -97,8 +97,9 @@ export interface Task {
   difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
-  event_group?: string;
   thumbnail_url?: string;
+  allowed_teams?: string[] | null;
+  allowed_contests?: string[] | null;
 }
 
 export async function getAllTasks(
@@ -120,15 +121,18 @@ export async function getAllTasks(
   // IMPORTANT: We need BOTH columns to exist, not just one, because buildTeamContestFilterClauses
   // references both columns in the SQL it generates
   let columnsExist = false;
+  let checkCount = 0;
   try {
     const checkResult = await db.query(`
-      SELECT COUNT(*) as count
+      SELECT COUNT(*)::int as count
       FROM information_schema.columns 
-      WHERE table_name = 'tasks' 
+      WHERE table_schema = 'public'
+      AND table_name = 'tasks' 
       AND column_name IN ('allowed_teams', 'allowed_contests')
     `);
     // Both columns must exist (count = 2)
-    columnsExist = checkResult.rows[0]?.count === 2;
+    checkCount = parseInt(checkResult.rows[0]?.count) || 0;
+    columnsExist = checkCount === 2;
   } catch (error) {
     // If check fails, assume columns don't exist
     columnsExist = false;
@@ -174,9 +178,15 @@ export async function getAllTasks(
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
-    t.category, t.difficulty, t.time_required, t.location_tool, t.event_group, t.thumbnail_url, 
-    t.zielgruppe, t.created_at, t.updated_at, 
-    row_to_json(l.*) AS location`;
+    t.category, t.difficulty, t.time_required, t.location_tool, t.thumbnail_url, 
+    t.zielgruppe, t.created_at, t.updated_at`;
+  
+  // Add allowed_teams and allowed_contests if columns exist
+  if (columnsExist) {
+    select += `, t.allowed_teams, t.allowed_contests`;
+  }
+  
+  select += `, row_to_json(l.*) AS location`;
   let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
   if (userId) {
     // Add verification_status and completed status
@@ -274,20 +284,49 @@ export async function getAllTasks(
 
 export async function getTaskById(id: string): Promise<Task | null> {
   const db = getPool();
+  
+  // Check if allowed_teams and allowed_contests columns exist
+  // IMPORTANT: We need BOTH columns to exist, not just one, because buildTeamContestFilterClauses
+  // references both columns in the SQL it generates
+  let columnsExist = false;
+  try {
+    const checkResult = await db.query(`
+      SELECT COUNT(*)::int as count
+      FROM information_schema.columns 
+      WHERE table_schema = 'public'
+      AND table_name = 'tasks' 
+      AND column_name IN ('allowed_teams', 'allowed_contests')
+    `);
+    // Both columns must exist (count = 2)
+    const count = parseInt(checkResult.rows[0]?.count) || 0;
+    columnsExist = count === 2;
+  } catch (error) {
+    // If check fails, assume columns don't exist
+    columnsExist = false;
+  }
+  
+  let select = `t.id, t.title, t.description, t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
+    t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
+    t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
+    t.category, t.difficulty, t.time_required, t.location_tool, t.thumbnail_url, 
+    t.zielgruppe, t.created_at, t.updated_at`;
+  
+  // Add allowed_teams and allowed_contests if columns exist
+  if (columnsExist) {
+    select += `, t.allowed_teams, t.allowed_contests`;
+  }
+  
+  select += `, row_to_json(l.*) AS location`;
+  
   const result = await db.query(
-    `SELECT 
-      t.id, t.title, t.description, t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
-      t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
-      t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
-      t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
-      t.category, t.difficulty, t.time_required, t.location_tool, t.event_group, t.thumbnail_url, 
-      t.zielgruppe, t.created_at, t.updated_at, 
-      row_to_json(l.*) AS location
+    `SELECT ${select}
      FROM tasks t
      JOIN locations l ON l.id = t.location_id
      WHERE t.id = $1`,
     [id]
   );
+  
   return result.rows[0] || null;
 }
 
@@ -485,10 +524,11 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        difficulty,
        time_required,
        location_tool,
-       event_group,
-       thumbnail_url
+       thumbnail_url,
+       allowed_teams,
+       allowed_contests
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
      RETURNING *`,
     [
       data.title,
@@ -517,8 +557,9 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.difficulty ?? null,
       data.time_required ?? null,
       data.location_tool ?? null,
-      data.event_group ?? null,
       data.thumbnail_url ?? null,
+      data.allowed_teams ?? null,
+      data.allowed_contests ?? null,
     ]
   );
   return result.rows[0];
@@ -635,7 +676,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     'target_latitude', 'target_longitude', 'article_url', 'article_content',
     'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
     'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-      'event_group', 'thumbnail_url'
+    'thumbnail_url', 'allowed_teams', 'allowed_contests'
   ]);
 
   // If type is being changed, reset type-specific fields of the old type
@@ -716,17 +757,25 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     }
   }
 
-  // Explicitly handle thumbnail_url before the loop to ensure it's always processed
-  // ALWAYS set thumbnail_url if it exists in data, even if null
+  // Explicitly handle thumbnail_url, allowed_teams, and allowed_contests before the loop
+  // ALWAYS set these if they exist in data, even if null
   if ('thumbnail_url' in data) {
     updates.push(`thumbnail_url = $${paramIndex++}`);
     values.push(data.thumbnail_url ?? null);
-  } else {
+  }
+  
+  if ('allowed_teams' in data) {
+    updates.push(`allowed_teams = $${paramIndex++}`);
+    values.push(data.allowed_teams ?? null);
+  }
+  if ('allowed_contests' in data) {
+    updates.push(`allowed_contests = $${paramIndex++}`);
+    values.push(data.allowed_contests ?? null);
   }
 
   Object.entries(data).forEach(([key, value]) => {
-    // Skip invalid fields, id, and thumbnail_url (already handled above)
-    if (value === undefined || key === 'id' || key === 'thumbnail_url' || !validColumns.has(key)) {
+    // Skip invalid fields, id, and fields already handled above
+    if (value === undefined || key === 'id' || key === 'thumbnail_url' || key === 'allowed_teams' || key === 'allowed_contests' || !validColumns.has(key)) {
       return;
     }
 
@@ -784,10 +833,12 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   }
 
   updates.push('updated_at = CURRENT_TIMESTAMP');
+  // Add id as the last parameter - use the current paramIndex (which is already the next available index)
+  const whereParamIndex = paramIndex;
   values.push(id);
 
   const result = await db.query(
-    `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+    `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${whereParamIndex} RETURNING *`,
     values
   );
 

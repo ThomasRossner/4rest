@@ -25,7 +25,7 @@ export async function getRewardsService(userId: string) {
   // Use LEFT JOIN to include rewards even if location doesn't exist or is inactive
   let query = `SELECT 
     r.id, r.title, r.description, r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
-    r.active, r.reward_art, r.kategorie, r.event_group, 
+    r.active, r.reward_art, r.kategorie, 
     r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
     r.created_at, r.updated_at, 
     row_to_json(l.*) AS location 
@@ -158,8 +158,9 @@ interface CreateCustomRewardInput {
   recurrence?: string | null;
   reward_art?: string;
   kategorie?: string;
-  event_group?: string | null;
   thumbnail_url?: string | null;
+  allowed_teams?: string[] | null;
+  allowed_contests?: string[] | null;
 }
 
 interface UpdateRewardInput {
@@ -174,8 +175,9 @@ interface UpdateRewardInput {
   recurrence?: string | null;
   reward_art?: string | null;
   kategorie?: string | null;
-  event_group?: string | null;
   thumbnail_url?: string | null;
+  allowed_teams?: string[] | null;
+  allowed_contests?: string[] | null;
 }
 
 export async function createCustomReward(data: CreateCustomRewardInput) {
@@ -201,10 +203,11 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        recurrence,
        reward_art,
        kategorie,
-       event_group,
-       thumbnail_url
+       thumbnail_url,
+       allowed_teams,
+       allowed_contests
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`,
     [
       title,
@@ -218,8 +221,9 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       recurrence,
       data.reward_art ?? null,
       data.kategorie ?? null,
-      data.event_group ?? null,
       data.thumbnail_url ?? null,
+      data.allowed_teams ?? null,
+      data.allowed_contests ?? null,
     ]
   );
 
@@ -324,15 +328,21 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
     values.push(data.kategorie ?? null);
   }
 
-  if (data.event_group !== undefined) {
-    updates.push(`event_group = $${paramIndex++}`);
-    values.push(data.event_group ?? null);
-  }
 
 
   if (data.thumbnail_url !== undefined) {
     updates.push(`thumbnail_url = $${paramIndex++}`);
     values.push(data.thumbnail_url ?? null);
+  }
+
+  if (data.allowed_teams !== undefined) {
+    updates.push(`allowed_teams = $${paramIndex++}`);
+    values.push(data.allowed_teams ?? null);
+  }
+
+  if (data.allowed_contests !== undefined) {
+    updates.push(`allowed_contests = $${paramIndex++}`);
+    values.push(data.allowed_contests ?? null);
   }
 
   if (updates.length === 0) {
@@ -395,7 +405,7 @@ export async function listRewardsForAdmin(includeInactive = false) {
   // Use explicit column list to avoid selecting non-existent columns
   let query = `SELECT 
     r.id, r.title, r.description, r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
-    r.active, r.reward_art, r.kategorie, r.event_group, 
+    r.active, r.reward_art, r.kategorie, 
     r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
     r.created_at, r.updated_at, 
     row_to_json(l.*) AS location

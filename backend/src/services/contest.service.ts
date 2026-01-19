@@ -592,6 +592,301 @@ export async function awardContestRewards(contestId: string): Promise<void> {
 }
 
 /**
+ * Prüft und benachrichtigt Teilnehmer über gestartete Contests
+ */
+export async function processStartedContests(): Promise<{
+  processed: number;
+  notified: number;
+  errors: string[];
+}> {
+  const db = getPool();
+  const result = {
+    processed: 0,
+    notified: 0,
+    errors: [] as string[],
+  };
+
+  try {
+    // Finde alle Contests, die gerade gestartet sind (start_date <= NOW() und end_date > NOW())
+    const startedContests = await db.query(
+      `SELECT * FROM contests 
+       WHERE start_date <= NOW() 
+       AND end_date > NOW()
+       AND active = TRUE
+       ORDER BY start_date ASC`,
+      []
+    );
+
+    console.log(`[CONTEST SCHEDULER] Found ${startedContests.rows.length} started contests to process`);
+
+    for (const contest of startedContests.rows) {
+      try {
+        // Prüfe, ob bereits eine Start-Benachrichtigung gesendet wurde
+        // (durch Prüfung, ob es eine Nachricht vom Typ 'contest_started' für diesen Contest gibt)
+        const existingNotification = await db.query(
+          `SELECT COUNT(*) as count FROM messages 
+           WHERE type = 'contest_started' 
+           AND metadata->>'contest_id' = $1
+           LIMIT 1`,
+          [contest.id]
+        );
+
+        if (parseInt(existingNotification.rows[0]?.count || '0', 10) > 0) {
+          // Bereits benachrichtigt, überspringe
+          continue;
+        }
+
+        result.processed++;
+
+        // Hole alle Teilnehmer
+        const participants = await db.query(
+          `SELECT user_id FROM contest_participants WHERE contest_id = $1`,
+          [contest.id]
+        );
+
+        const participantIds = participants.rows.map((p: any) => p.user_id);
+
+        if (participantIds.length === 0) {
+          console.log(`[CONTEST SCHEDULER] Contest ${contest.id} has no participants, skipping`);
+          continue;
+        }
+
+        // Erstelle Nachrichtentext
+        const contestName = contest.name || 'Wettbewerb';
+        const startDate = new Date(contest.start_date);
+        const endDate = new Date(contest.end_date);
+        const startDateStr = startDate.toLocaleDateString('de-DE', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        const endDateStr = endDate.toLocaleDateString('de-DE', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        let messageContent = `Der Wettbewerb "${contestName}" hat begonnen!\n\n`;
+        messageContent += `Start: ${startDateStr}\n`;
+        messageContent += `Ende: ${endDateStr}\n\n`;
+        messageContent += `Sammle jetzt Punkte, um zu gewinnen!`;
+
+        // Sende Benachrichtigungen an alle Teilnehmer
+        try {
+          const { createMessagesForUsers } = await import('./message.service.js');
+          
+          await createMessagesForUsers(participantIds, {
+            type: 'contest_started',
+            title: `Wettbewerb "${contestName}" gestartet`,
+            content: messageContent,
+            metadata: {
+              contest_id: contest.id,
+              contest_name: contestName,
+              start_date: contest.start_date,
+              end_date: contest.end_date,
+            },
+          });
+
+          result.notified += participantIds.length;
+          console.log(`[CONTEST SCHEDULER] Sent start notifications to ${participantIds.length} participants for contest ${contest.id}`);
+        } catch (error: any) {
+          console.error(`[CONTEST SCHEDULER] Failed to send start notifications for contest ${contest.id}:`, error);
+          result.errors.push(`Failed to send start notifications for contest ${contest.id}: ${error.message}`);
+        }
+
+      } catch (error: any) {
+        console.error(`[CONTEST SCHEDULER] Error processing started contest ${contest.id}:`, error);
+        result.errors.push(`Error processing started contest ${contest.id}: ${error.message}`);
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('[CONTEST SCHEDULER] Fatal error in processStartedContests:', error);
+    result.errors.push(`Fatal error: ${error.message}`);
+    return result;
+  }
+}
+
+/**
+ * Verarbeitet abgelaufene Contests: Vergibt Belohnungen und sendet Benachrichtigungen
+ */
+export async function processExpiredContests(): Promise<{
+  processed: number;
+  awarded: number;
+  notified: number;
+  errors: string[];
+}> {
+  const db = getPool();
+  const result = {
+    processed: 0,
+    awarded: 0,
+    notified: 0,
+    errors: [] as string[],
+  };
+
+  try {
+    // Finde alle abgelaufenen Contests, bei denen Belohnungen noch nicht vergeben wurden
+    const expiredContests = await db.query(
+      `SELECT * FROM contests 
+       WHERE end_date < NOW() 
+       AND active = TRUE 
+       AND (rewards_awarded IS NULL OR rewards_awarded = FALSE)
+       ORDER BY end_date ASC`,
+      []
+    );
+
+    console.log(`[CONTEST SCHEDULER] Found ${expiredContests.rows.length} expired contests to process`);
+
+    for (const contest of expiredContests.rows) {
+      try {
+        result.processed++;
+
+        // Prüfe ob Belohnungen definiert sind
+        const hasRewards = contest.reward_first_place || contest.reward_second_place || contest.reward_third_place;
+
+        // Hole Ranking
+        const ranking = await getContestRanking(contest.id);
+
+        // Hole alle Teilnehmer
+        const participants = await db.query(
+          `SELECT user_id FROM contest_participants WHERE contest_id = $1`,
+          [contest.id]
+        );
+
+        const participantIds = participants.rows.map((p: any) => p.user_id);
+
+        if (participantIds.length === 0) {
+          console.log(`[CONTEST SCHEDULER] Contest ${contest.id} has no participants, skipping`);
+          // Markiere trotzdem als verarbeitet, wenn keine Teilnehmer
+          if (hasRewards) {
+            await db.query(
+              'UPDATE contests SET rewards_awarded = TRUE WHERE id = $1',
+              [contest.id]
+            );
+          }
+          continue;
+        }
+
+        // Vergib Belohnungen, falls definiert
+        if (hasRewards && ranking.length > 0) {
+          try {
+            await checkAndAwardContestRewards(contest.id);
+            result.awarded++;
+            console.log(`[CONTEST SCHEDULER] Awarded rewards for contest ${contest.id}`);
+          } catch (error: any) {
+            console.error(`[CONTEST SCHEDULER] Failed to award rewards for contest ${contest.id}:`, error);
+            result.errors.push(`Failed to award rewards for contest ${contest.id}: ${error.message}`);
+            // Weiter mit Benachrichtigungen, auch wenn Belohnungen fehlgeschlagen sind
+          }
+        } else if (!hasRewards) {
+          // Markiere als verarbeitet, auch wenn keine Belohnungen definiert sind
+          await db.query(
+            'UPDATE contests SET rewards_awarded = TRUE WHERE id = $1',
+            [contest.id]
+          );
+        }
+
+        // Erstelle personalisierte Nachrichten für jeden Teilnehmer
+        const contestName = contest.name || 'Wettbewerb';
+        const { createMessage } = await import('./message.service.js');
+
+        // Sende personalisierte Nachrichten an alle Teilnehmer
+        try {
+          for (const participantId of participantIds) {
+            // Finde den Rang dieses Teilnehmers
+            const participantRank = ranking.findIndex((r: any) => r.user_id === participantId);
+            const participantEntry = participantRank !== -1 ? ranking[participantRank] : null;
+
+            // Erstelle Nachrichtentext mit Top 3 und eigenem Rang
+            let messageContent = `Der Wettbewerb "${contestName}" ist abgelaufen.\n\n`;
+
+            if (ranking.length > 0) {
+              messageContent += '🏆 Die Top 3:\n\n';
+              
+              if (ranking.length >= 1) {
+                const first = ranking[0];
+                const rewardText = contest.reward_first_place ? ` (+${contest.reward_first_place} Punkte)` : '';
+                messageContent += `🥇 Platz 1: ${first.user_name} mit ${first.points} Punkten${rewardText}\n`;
+              }
+              
+              if (ranking.length >= 2) {
+                const second = ranking[1];
+                const rewardText = contest.reward_second_place ? ` (+${contest.reward_second_place} Punkte)` : '';
+                messageContent += `🥈 Platz 2: ${second.user_name} mit ${second.points} Punkten${rewardText}\n`;
+              }
+              
+              if (ranking.length >= 3) {
+                const third = ranking[2];
+                const rewardText = contest.reward_third_place ? ` (+${contest.reward_third_place} Punkte)` : '';
+                messageContent += `🥉 Platz 3: ${third.user_name} mit ${third.points} Punkten${rewardText}\n`;
+              }
+
+              // Zeige eigenen Rang
+              if (participantEntry) {
+                messageContent += `\nDein Rang: Platz ${participantRank + 1} mit ${participantEntry.points} Punkten`;
+              } else {
+                messageContent += `\nDu hast an diesem Wettbewerb teilgenommen, aber keine Punkte gesammelt.`;
+              }
+            } else {
+              messageContent += 'Es gab keine Teilnehmer in diesem Wettbewerb.';
+            }
+
+            // Erstelle personalisierte Nachricht für diesen Teilnehmer
+            await createMessage({
+              user_id: participantId,
+              type: 'contest_ended',
+              title: `Wettbewerb "${contestName}" beendet`,
+              content: messageContent,
+              metadata: {
+                contest_id: contest.id,
+                contest_name: contestName,
+                own_rank: participantRank !== -1 ? participantRank + 1 : null,
+                own_points: participantEntry?.points || 0,
+                ranking: ranking.slice(0, 3).map((r: any) => ({
+                  rank: r.rank,
+                  user_name: r.user_name,
+                  points: r.points,
+                })),
+              },
+            });
+          }
+
+          result.notified += participantIds.length;
+          console.log(`[CONTEST SCHEDULER] Sent personalized notifications to ${participantIds.length} participants for contest ${contest.id}`);
+          
+          // Markiere Contest als verarbeitet, auch wenn keine Belohnungen vergeben wurden
+          // (wichtig für Contests ohne Belohnungen)
+          if (!hasRewards) {
+            await db.query(
+              'UPDATE contests SET rewards_awarded = TRUE WHERE id = $1',
+              [contest.id]
+            );
+          }
+        } catch (error: any) {
+          console.error(`[CONTEST SCHEDULER] Failed to send notifications for contest ${contest.id}:`, error);
+          result.errors.push(`Failed to send notifications for contest ${contest.id}: ${error.message}`);
+        }
+
+      } catch (error: any) {
+        console.error(`[CONTEST SCHEDULER] Error processing contest ${contest.id}:`, error);
+        result.errors.push(`Error processing contest ${contest.id}: ${error.message}`);
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('[CONTEST SCHEDULER] Fatal error in processExpiredContests:', error);
+    result.errors.push(`Fatal error: ${error.message}`);
+    return result;
+  }
+}
+
+/**
  * Löst einen Contest auf (nur Ersteller)
  */
 export async function dissolveContest(contestId: string, userId: string, skipCreatorCheck: boolean = false): Promise<void> {
@@ -681,6 +976,31 @@ export async function leaveContest(contestId: string, userId: string): Promise<v
     'DELETE FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
     [contestId, userId]
   );
+  
+  // Hole Contest-Name für Benachrichtigung
+  const contestNameResult = await db.query(
+    'SELECT name FROM contests WHERE id = $1',
+    [contestId]
+  );
+  const contestName = contestNameResult.rows[0]?.name || 'Wettbewerb';
+  
+  // Sende Benachrichtigung an Benutzer
+  try {
+    const { createMessage } = await import('./message.service.js');
+    await createMessage({
+      user_id: userId,
+      type: 'contest_left',
+      title: `Du hast den Wettbewerb "${contestName}" verlassen`,
+      content: `Du hast den Wettbewerb "${contestName}" verlassen. Deine persönlichen Punkte bleiben erhalten.`,
+      metadata: {
+        contest_id: contestId,
+        contest_name: contestName,
+      },
+    });
+  } catch (error) {
+    console.error('[CONTEST SERVICE] Failed to send notification for leaveContest:', error);
+    // Fehler nicht weiterwerfen, da Contest-Verlassen erfolgreich war
+  }
 }
 
 /**
@@ -1013,13 +1333,16 @@ export async function addContestParticipants(contestId: string, userIds: string[
   
   // Prüfe ob Contest existiert
   const contestResult = await db.query(
-    'SELECT id, active FROM contests WHERE id = $1',
+    'SELECT id, name, active FROM contests WHERE id = $1',
     [contestId]
   );
   
   if (contestResult.rows.length === 0) {
     throw new Error('Contest not found');
   }
+  
+  const contestName = contestResult.rows[0].name || 'Wettbewerb';
+  const addedUserIds: string[] = [];
   
   // Füge Benutzer hinzu (ignoriere Duplikate)
   for (const userId of userIds) {
@@ -1035,6 +1358,26 @@ export async function addContestParticipants(contestId: string, userIds: string[
         'INSERT INTO contest_participants (contest_id, user_id, points) VALUES ($1, $2, 0)',
         [contestId, userId]
       );
+      addedUserIds.push(userId);
+    }
+  }
+  
+  // Sende Benachrichtigungen an alle hinzugefügten Benutzer
+  if (addedUserIds.length > 0) {
+    try {
+      const { createMessagesForUsers } = await import('./message.service.js');
+      await createMessagesForUsers(addedUserIds, {
+        type: 'contest_added',
+        title: `Du wurdest zum Wettbewerb "${contestName}" hinzugefügt`,
+        content: `Du wurdest von einem Administrator zum Wettbewerb "${contestName}" hinzugefügt. Sammle Punkte, um zu gewinnen!`,
+        metadata: {
+          contest_id: contestId,
+          contest_name: contestName,
+        },
+      });
+    } catch (error) {
+      console.error('[CONTEST SERVICE] Failed to send notifications for addContestParticipants:', error);
+      // Fehler nicht weiterwerfen, da Contest-Hinzufügung erfolgreich war
     }
   }
 }
@@ -1051,7 +1394,7 @@ export async function removeContestParticipants(contestId: string, userIds: stri
   
   // Prüfe ob Contest existiert
   const contestResult = await db.query(
-    'SELECT id, created_by FROM contests WHERE id = $1',
+    'SELECT id, name, created_by FROM contests WHERE id = $1',
     [contestId]
   );
   
@@ -1060,6 +1403,8 @@ export async function removeContestParticipants(contestId: string, userIds: stri
   }
   
   const contest = contestResult.rows[0];
+  const contestName = contest.name || 'Wettbewerb';
+  const removedUserIds: string[] = [];
   
   // Entferne Benutzer (außer Ersteller)
   for (const userId of userIds) {
@@ -1072,6 +1417,26 @@ export async function removeContestParticipants(contestId: string, userIds: stri
       'DELETE FROM contest_participants WHERE contest_id = $1 AND user_id = $2',
       [contestId, userId]
     );
+    removedUserIds.push(userId);
+  }
+  
+  // Sende Benachrichtigungen an alle entfernten Benutzer
+  if (removedUserIds.length > 0) {
+    try {
+      const { createMessagesForUsers } = await import('./message.service.js');
+      await createMessagesForUsers(removedUserIds, {
+        type: 'contest_removed',
+        title: `Du wurdest aus dem Wettbewerb "${contestName}" entfernt`,
+        content: `Du wurdest von einem Administrator aus dem Wettbewerb "${contestName}" entfernt. Deine persönlichen Punkte bleiben erhalten.`,
+        metadata: {
+          contest_id: contestId,
+          contest_name: contestName,
+        },
+      });
+    } catch (error) {
+      console.error('[CONTEST SERVICE] Failed to send notifications for removeContestParticipants:', error);
+      // Fehler nicht weiterwerfen, da Contest-Entfernung erfolgreich war
+    }
   }
 }
 

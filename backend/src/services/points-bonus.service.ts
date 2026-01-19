@@ -53,16 +53,21 @@ export async function generatePointsBonusQr(
     [qrToken, pointsAmount, employeeUserId, expiresAt]
   );
 
+  if (!result.rows || result.rows.length === 0) {
+    throw new Error('Failed to create points bonus QR token');
+  }
+
+  const row = result.rows[0];
   return {
-    id: result.rows[0].id,
-    qr_token: result.rows[0].qr_token,
-    points_amount: result.rows[0].points_amount,
-    generated_by: result.rows[0].generated_by,
-    generated_at: result.rows[0].generated_at,
-    redeemed_by: result.rows[0].redeemed_by,
-    redeemed_at: result.rows[0].redeemed_at,
-    status: result.rows[0].status,
-    expires_at: result.rows[0].expires_at,
+    id: row.id,
+    qr_token: row.qr_token,
+    points_amount: row.points_amount,
+    generated_by: row.generated_by,
+    generated_at: row.generated_at,
+    redeemed_by: row.redeemed_by,
+    redeemed_at: row.redeemed_at,
+    status: row.status,
+    expires_at: row.expires_at,
   };
 }
 
@@ -130,6 +135,9 @@ export async function redeemPointsBonusQr(
 
   // Get updated user points
   const updatedUserResult = await db.query('SELECT points FROM users WHERE id = $1', [userId]);
+  if (!updatedUserResult.rows || updatedUserResult.rows.length === 0) {
+    throw new Error('Failed to retrieve updated user points');
+  }
   const newPointsBalance = updatedUserResult.rows[0]?.points || 0;
 
   return {

@@ -36,6 +36,7 @@ export function buildTeamContestFilterClauses(
   
   // Team and Contest filter (OR logic: user must be in team OR contest)
   // Tasks/Rewards without assignments (NULL or empty arrays) are visible to all
+  // Tasks/Rewards with assignments are only visible to members/participants
   const teamContestConditions: string[] = [];
   
   // If task/reward has no team/contest assignments, it's visible to all
@@ -43,11 +44,15 @@ export function buildTeamContestFilterClauses(
     `(allowed_teams IS NULL OR COALESCE(array_length(allowed_teams, 1), 0) = 0) AND (allowed_contests IS NULL OR COALESCE(array_length(allowed_contests, 1), 0) = 0)`
   );
   
+  // Build conditions for team and contest matches
+  const teamMatchConditions: string[] = [];
+  const contestMatchConditions: string[] = [];
+  
   // If user has team memberships, check if task/reward is assigned to any of those teams
   if (userTeamIds && userTeamIds.length > 0) {
     const teamPlaceholders = userTeamIds.map((_, i) => `$${paramIndex.current + i}`).join(', ');
     userTeamIds.forEach(id => params.push(id));
-    teamContestConditions.push(
+    teamMatchConditions.push(
       `(allowed_teams IS NOT NULL AND COALESCE(array_length(allowed_teams, 1), 0) > 0 AND allowed_teams && ARRAY[${teamPlaceholders}]::UUID[])`
     );
     paramIndex.current += userTeamIds.length;
@@ -57,10 +62,36 @@ export function buildTeamContestFilterClauses(
   if (userContestIds && userContestIds.length > 0) {
     const contestPlaceholders = userContestIds.map((_, i) => `$${paramIndex.current + i}`).join(', ');
     userContestIds.forEach(id => params.push(id));
-    teamContestConditions.push(
+    contestMatchConditions.push(
       `(allowed_contests IS NOT NULL AND COALESCE(array_length(allowed_contests, 1), 0) > 0 AND allowed_contests && ARRAY[${contestPlaceholders}]::UUID[])`
     );
     paramIndex.current += userContestIds.length;
+  }
+  
+  // If task/reward has team assignments, user must be in one of those teams (or task has no team assignments)
+  // If task/reward has contest assignments, user must be in one of those contests (or task has no contest assignments)
+  // Task is visible if: (no team assignments OR user matches team) AND (no contest assignments OR user matches contest)
+  const matchConditions: string[] = [];
+  
+  // Team condition: task has no team assignments OR user matches
+  if (teamMatchConditions.length > 0) {
+    matchConditions.push(`((allowed_teams IS NULL OR COALESCE(array_length(allowed_teams, 1), 0) = 0) OR ${teamMatchConditions[0]})`);
+  } else {
+    // If user has no team memberships, task must not have team assignments
+    matchConditions.push(`(allowed_teams IS NULL OR COALESCE(array_length(allowed_teams, 1), 0) = 0)`);
+  }
+  
+  // Contest condition: task has no contest assignments OR user matches
+  if (contestMatchConditions.length > 0) {
+    matchConditions.push(`((allowed_contests IS NULL OR COALESCE(array_length(allowed_contests, 1), 0) = 0) OR ${contestMatchConditions[0]})`);
+  } else {
+    // If user has no contest participations, task must not have contest assignments
+    matchConditions.push(`(allowed_contests IS NULL OR COALESCE(array_length(allowed_contests, 1), 0) = 0)`);
+  }
+  
+  // Task is visible if it has no assignments OR user matches at least one team OR one contest
+  if (matchConditions.length > 0) {
+    teamContestConditions.push(`(${matchConditions.join(' AND ')})`);
   }
   
   if (teamContestConditions.length > 0) {
