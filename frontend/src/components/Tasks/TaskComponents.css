@@ -138,7 +138,7 @@
   width: 100%;
   max-width: 400px;
   aspect-ratio: 1;
-  background: var(--color-surface);
+  background: #000;
   border-radius: var(--border-radius);
   display: flex;
   flex-direction: column;
@@ -162,6 +162,13 @@
   display: block;
   min-height: 100%;
   min-width: 100%;
+}
+
+/* Ensure video is visible when stream is attached */
+.qr-scanner video[srcObject],
+.qr-scanner .qr-scanner-video-element[srcObject] {
+  opacity: 1;
+  visibility: visible;
 }
 
 .scanner-overlay {

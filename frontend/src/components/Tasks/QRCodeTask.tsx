@@ -70,6 +70,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const [hasCamera, setHasCamera] = useState(false);
   const [canDecode, setCanDecode] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -129,6 +130,9 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
             const handleLoadedMetadata = () => {
               console.log('[QRCodeTask] Video metadata loaded, readyState:', video.readyState);
               console.log('[QRCodeTask] Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+              if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                setIsVideoReady(true);
+              }
               video.play().catch((err) => {
                 console.error('[QRCodeTask] Error playing video after metadata:', err);
                 setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
@@ -137,6 +141,16 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
             
             const handlePlay = () => {
               console.log('[QRCodeTask] Video is playing');
+              if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                setIsVideoReady(true);
+              }
+            };
+            
+            const handleCanPlay = () => {
+              console.log('[QRCodeTask] Video can play, readyState:', video.readyState);
+              if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                setIsVideoReady(true);
+              }
             };
             
             const handleError = (e: Event) => {
@@ -146,7 +160,13 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
             
             video.addEventListener('loadedmetadata', handleLoadedMetadata);
             video.addEventListener('play', handlePlay);
+            video.addEventListener('canplay', handleCanPlay);
             video.addEventListener('error', handleError);
+            
+            // Check if video is already ready
+            if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+              setIsVideoReady(true);
+            }
             
             // Try to play immediately
             video.play().catch((err) => {
@@ -194,6 +214,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
         console.error('[QRCodeTask] Error name:', err.name);
         console.error('[QRCodeTask] Error message:', err.message);
         setHasCamera(false);
+        setIsVideoReady(false);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
           setCameraError(t('tasksComponents.qr.cameraPermissionDenied', 'Kamera-Zugriff wurde verweigert. Bitte erlauben Sie den Kamera-Zugriff in den Browser-Einstellungen.'));
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
@@ -469,12 +490,17 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 left: 0,
                 zIndex: 1,
                 minHeight: '100%',
-                minWidth: '100%'
+                minWidth: '100%',
+                opacity: isVideoReady ? 1 : 0,
+                transition: 'opacity 0.3s ease-in-out'
               }}
               onLoadedMetadata={() => {
                 console.log('[QRCodeTask] Video metadata loaded, video should be visible now');
                 console.log('[QRCodeTask] Video readyState:', videoRef.current?.readyState);
                 console.log('[QRCodeTask] Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+                if (videoRef.current && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                  setIsVideoReady(true);
+                }
                 // Force play on iOS
                 if (videoRef.current) {
                   videoRef.current.play().catch((err) => {
@@ -485,6 +511,15 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               }}
               onPlay={() => {
                 console.log('[QRCodeTask] Video is playing');
+                if (videoRef.current && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                  setIsVideoReady(true);
+                }
+              }}
+              onCanPlay={() => {
+                console.log('[QRCodeTask] Video can play');
+                if (videoRef.current && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                  setIsVideoReady(true);
+                }
               }}
               onError={(e) => {
                 console.error('[QRCodeTask] Video error event:', e);
@@ -495,7 +530,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               }}
             />
             {/* Loading indicator or error message */}
-            {(!hasCamera || !videoRef.current?.srcObject || (videoRef.current && videoRef.current.readyState < 2)) && (
+            {(!hasCamera || !videoRef.current?.srcObject || !isVideoReady) && (
               <div style={{ 
                 position: 'absolute', 
                 top: '50%', 
@@ -522,7 +557,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               </div>
             )}
             {/* Scanner overlay - only show if camera is ready */}
-            {hasCamera && videoRef.current?.srcObject && videoRef.current.readyState >= 2 && (
+            {hasCamera && videoRef.current?.srcObject && isVideoReady && (
               <div className="scanner-overlay">
                 <div className="scanner-frame"></div>
               </div>
