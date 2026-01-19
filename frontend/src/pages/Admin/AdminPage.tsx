@@ -9367,55 +9367,56 @@ function AdminPage() {
                   </div>
                 </div>
               )}
-              {/* Task QR Code Modal */}
-              {showTaskQrModal && taskQrCode && (
-                <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
-                  <div className="admin-form-card" style={{ maxWidth: '700px', margin: '2rem auto' }}>
-                    <div className="admin-form-section">
-                      <h3>{t('admin.task.qrCodeTitle', 'QR-Code für Aufgabe')}</h3>
-                      <p className="admin-field-note">{t('admin.task.qrCodeDescription', 'Dieser QR-Code kann ausgedruckt und für die Aufgabe verwendet werden.')}</p>
-                      <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
-                        <QRCode value={taskQrCode} size={400} />
-                      </div>
-                      <div style={{ 
-                        marginTop: 'var(--spacing-md)', 
-                        padding: 'var(--spacing-md)', 
-                        background: 'var(--color-background-light, #f9fafb)', 
-                        borderRadius: 'var(--border-radius)',
-                        width: '100%',
-                        textAlign: 'center'
-                      }}>
-                        <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
-                          {t('admin.task.qrCodeLabel', 'QR-Code:')}
-                        </p>
-                        <code style={{ 
-                          fontSize: '0.85rem', 
-                          wordBreak: 'break-all', 
-                          color: 'var(--color-text)',
-                          fontFamily: 'monospace'
-                        }}>
-                          {taskQrCode}
-                        </code>
-                      </div>
-                      <div className="admin-form-actions">
-                        <button
-                          className="admin-action-button"
-                          type="button"
-                          onClick={() => {
-                            setShowTaskQrModal(false);
-                            setTaskQrCode(null);
-                          }}
-                        >
-                          {t('common.actions.close', 'Schließen')}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </section>
+      )}
+
+      {/* Task QR Code Modal - outside of any mode-specific block so it's always available */}
+      {showTaskQrModal && taskQrCode && (
+        <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="admin-form-card" style={{ maxWidth: '700px', margin: '2rem auto' }}>
+            <div className="admin-form-section">
+              <h3>{t('admin.task.qrCodeTitle', 'QR-Code für Aufgabe')}</h3>
+              <p className="admin-field-note">{t('admin.task.qrCodeDescription', 'Dieser QR-Code kann ausgedruckt und für die Aufgabe verwendet werden.')}</p>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                <QRCode value={taskQrCode} size={400} />
+              </div>
+              <div style={{ 
+                marginTop: 'var(--spacing-md)', 
+                padding: 'var(--spacing-md)', 
+                background: 'var(--color-background-light, #f9fafb)', 
+                borderRadius: 'var(--border-radius)',
+                width: '100%',
+                textAlign: 'center'
+              }}>
+                <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
+                  {t('admin.task.qrCodeLabel', 'QR-Code:')}
+                </p>
+                <code style={{ 
+                  fontSize: '0.85rem', 
+                  wordBreak: 'break-all', 
+                  color: 'var(--color-text)',
+                  fontFamily: 'monospace'
+                }}>
+                  {taskQrCode}
+                </code>
+              </div>
+              <div className="admin-form-actions">
+                <button
+                  className="admin-action-button"
+                  type="button"
+                  onClick={() => {
+                    setShowTaskQrModal(false);
+                    setTaskQrCode(null);
+                  }}
+                >
+                  {t('common.actions.close', 'Schließen')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Contest Management - using ContestManagement component */}
