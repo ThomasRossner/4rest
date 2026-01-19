@@ -449,82 +449,100 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
             </button>
           </div>
 
-          {/* Camera preview - shown if camera is available */}
-          {hasCamera && (
-            <div className="qr-scanner">
-              {/* Camera preview - always render video element, even if stream not attached yet */}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  objectFit: 'cover',
-                  backgroundColor: '#000',
-                  display: 'block',
-                  position: 'relative',
-                  zIndex: 1
-                }}
-                onLoadedMetadata={() => {
-                  console.log('[QRCodeTask] Video metadata loaded, video should be visible now');
-                  console.log('[QRCodeTask] Video readyState:', videoRef.current?.readyState);
-                  console.log('[QRCodeTask] Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
-                  // Force play on iOS
-                  if (videoRef.current) {
-                    videoRef.current.play().catch((err) => {
-                      console.error('[QRCodeTask] Error playing video after metadata:', err);
-                      setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
-                    });
-                  }
-                }}
-                onPlay={() => {
-                  console.log('[QRCodeTask] Video is playing');
-                }}
-                onError={(e) => {
-                  console.error('[QRCodeTask] Video error event:', e);
-                  const video = e.target as HTMLVideoElement;
-                  console.error('[QRCodeTask] Video error code:', video.error?.code);
-                  console.error('[QRCodeTask] Video error message:', video.error?.message);
-                  setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
-                }}
-              />
-              {/* Loading indicator if video is not ready */}
-              {videoRef.current && (!videoRef.current.srcObject || videoRef.current.readyState < 2) && (
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '50%', 
-                  left: '50%', 
-                  transform: 'translate(-50%, -50%)',
-                  color: 'white',
-                  textAlign: 'center',
-                  zIndex: 2
-                }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📷</div>
-                  <div>{t('tasksComponents.qr.cameraLoading', 'Kamera wird geladen...')}</div>
-                </div>
-              )}
+          {/* Camera preview - always show scanner area, even if camera not ready yet */}
+          <div className="qr-scanner">
+            {/* Camera preview - always render video element */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="qr-scanner-video-element"
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover',
+                backgroundColor: '#000',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 1,
+                minHeight: '100%',
+                minWidth: '100%'
+              }}
+              onLoadedMetadata={() => {
+                console.log('[QRCodeTask] Video metadata loaded, video should be visible now');
+                console.log('[QRCodeTask] Video readyState:', videoRef.current?.readyState);
+                console.log('[QRCodeTask] Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+                // Force play on iOS
+                if (videoRef.current) {
+                  videoRef.current.play().catch((err) => {
+                    console.error('[QRCodeTask] Error playing video after metadata:', err);
+                    setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+                  });
+                }
+              }}
+              onPlay={() => {
+                console.log('[QRCodeTask] Video is playing');
+              }}
+              onError={(e) => {
+                console.error('[QRCodeTask] Video error event:', e);
+                const video = e.target as HTMLVideoElement;
+                console.error('[QRCodeTask] Video error code:', video.error?.code);
+                console.error('[QRCodeTask] Video error message:', video.error?.message);
+                setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+              }}
+            />
+            {/* Loading indicator or error message */}
+            {(!hasCamera || !videoRef.current?.srcObject || (videoRef.current && videoRef.current.readyState < 2)) && (
+              <div style={{ 
+                position: 'absolute', 
+                top: '50%', 
+                left: '50%', 
+                transform: 'translate(-50%, -50%)',
+                color: 'white',
+                textAlign: 'center',
+                zIndex: 2,
+                padding: 'var(--spacing-md)',
+                background: 'rgba(0,0,0,0.7)',
+                borderRadius: 'var(--border-radius)'
+              }}>
+                {cameraError ? (
+                  <>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>⚠️</div>
+                    <div style={{ fontSize: '0.9rem' }}>{cameraError}</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📷</div>
+                    <div>{t('tasksComponents.qr.cameraLoading', 'Kamera wird geladen...')}</div>
+                  </>
+                )}
+              </div>
+            )}
+            {/* Scanner overlay - only show if camera is ready */}
+            {hasCamera && videoRef.current?.srcObject && videoRef.current.readyState >= 2 && (
               <div className="scanner-overlay">
                 <div className="scanner-frame"></div>
               </div>
-              {scannedCode && (
-                <div style={{ position: 'absolute', top: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, zIndex: 3 }}>
-                  {t('tasksComponents.qr.scanned', { value: scannedCode })}
-                </div>
-              )}
-              {decodeError && (
-                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(255,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, zIndex: 3 }}>
-                  {decodeError}
-                </div>
-              )}
-              {completeMutation.isLoading && (
-                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, textAlign: 'center', zIndex: 3 }}>
-                  {t('tasksComponents.qr.completing')}
-                </div>
-              )}
-            </div>
-          )}
+            )}
+            {scannedCode && (
+              <div style={{ position: 'absolute', top: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, zIndex: 3 }}>
+                {t('tasksComponents.qr.scanned', { value: scannedCode })}
+              </div>
+            )}
+            {decodeError && (
+              <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(255,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, zIndex: 3 }}>
+                {decodeError}
+              </div>
+            )}
+            {completeMutation.isLoading && (
+              <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '8px', borderRadius: '4px', fontSize: 12, textAlign: 'center', zIndex: 3 }}>
+                {t('tasksComponents.qr.completing')}
+              </div>
+            )}
+          </div>
         </div>
 
         {completeMutation.isSuccess && (
