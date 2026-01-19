@@ -87,7 +87,6 @@ type AdminTaskTemplate = {
   difficulty?: string | null;
   time_required?: string | null;
   location_tool?: string | null;
-  event_group?: string | null;
   thumbnail_url?: string | null;
 };
 
@@ -109,7 +108,6 @@ type RewardTemplate = {
   active?: boolean | null;
   reward_art?: string | null;
   kategorie?: string | null;
-  event_group?: string | null;
 };
 
 type AdminLocation = {
@@ -158,9 +156,10 @@ type TaskFormState = {
   difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
-  event_group?: string;
   thumbnailFile?: File | null;
   thumbnailUrl?: string | null;
+  allowed_teams?: string[];
+  allowed_contests?: string[];
 };
 
 type RewardFormState = {
@@ -175,10 +174,11 @@ type RewardFormState = {
   recurrence: 'once' | 'daily' | 'weekly' | 'monthly';
   reward_art?: string;
   kategorie?: string;
-  event_group?: string | null;
   moegliche_punkte?: number | null;
   thumbnailFile?: File | null;
   thumbnailUrl?: string | null;
+  allowed_teams?: string[];
+  allowed_contests?: string[];
 };
 
 type LocationFormState = {
@@ -1359,7 +1359,6 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   difficulty: undefined,
   time_required: undefined,
   location_tool: undefined,
-  event_group: undefined,
   allowed_teams: [],
   allowed_contests: [],
   thumbnailFile: null,
@@ -1378,7 +1377,6 @@ const defaultRewardForm = (type: RewardType): RewardFormState => ({
   recurrence: 'once',
   reward_art: undefined,
   kategorie: undefined,
-  event_group: undefined,
   moegliche_punkte: undefined,
   allowed_teams: [],
   allowed_contests: [],
@@ -1614,11 +1612,11 @@ const validateTaskFormState = ({
     return { isValid: false, message: 'Select an existing task to continue.' };
   }
 
-  if (!taskForm.title.trim()) {
+  if (!taskForm.title || !taskForm.title.trim()) {
     return { isValid: false, message: 'Title is required.' };
   }
 
-  if (!taskForm.description.trim()) {
+  if (!taskForm.description || !taskForm.description.trim()) {
     return { isValid: false, message: 'Description is required.' };
   }
 
@@ -1632,11 +1630,16 @@ const validateTaskFormState = ({
 
   if (taskForm.type === 'video') {
     if (taskForm.videoSource === 'url') {
-      if (!taskForm.video_url.trim()) {
+      if (!taskForm.video_url || !taskForm.video_url.trim()) {
         return { isValid: false, message: 'Video URL is required for video tasks.' };
       }
     } else {
-      if (!taskForm.videoFile) {
+      // For upload source: require videoFile (new upload) OR existing video_url (already uploaded)
+      // If video_url exists (even if it's a local upload URL), the video is already uploaded and valid
+      const hasVideoUrl = !!(taskForm.video_url && taskForm.video_url.trim());
+      const hasVideoFile = !!taskForm.videoFile;
+      // Accept if either a new file is uploaded OR an existing video_url is present
+      if (!hasVideoFile && !hasVideoUrl) {
         return { isValid: false, message: 'Upload a video file for video tasks.' };
       }
     }
@@ -1736,7 +1739,7 @@ const validateTaskFormState = ({
     return { isValid: false, message: t('admin.task.prerequisites.validation.idsRequired') };
   }
 
-  if (!taskForm.locationId) {
+  if (!taskForm.locationId || !taskForm.locationId.trim()) {
     return { isValid: false, message: 'Select a location for this task.' };
   }
 
@@ -2795,50 +2798,7 @@ function AdminPage() {
   const existingTemplates = useMemo<AdminTaskTemplate[]>(() => {
     const list = Array.isArray(adminTasks) ? adminTasks : [];
     return list.map((task) => {
-      // Normalize zielgruppe array (handle PostgreSQL array strings)
-      const z = (task as any).zielgruppe;
-      let normalizedZielgruppe: string[] | null = null;
-      if (z) {
-        if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
-          const cleaned = z.filter((item: any) => {
-            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
-              return false; // This is a PostgreSQL array string, skip it
-            }
-            return true;
-          }).map((item: any) => {
-            // Remove quotes from array items
-            if (typeof item === 'string') {
-              return item.replace(/^"|"$/g, '').trim();
-            }
-            return item;
-          });
-          // If we found a PostgreSQL array string, parse it
-          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
-          if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
-              // Remove quotes from each value
-              return v.trim().replace(/^"|"$/g, '');
-            });
-            // Merge with existing cleaned array and remove duplicates
-            normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
-          } else {
-            normalizedZielgruppe = cleaned.length > 0 ? cleaned : null;
-          }
-        } else if (typeof z === 'string') {
-          if (z.startsWith('{') && z.endsWith('}')) {
-            // Parse PostgreSQL array format
-            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => {
-              // Remove quotes from each value
-              return v.trim().replace(/^"|"$/g, '');
-            });
-          } else {
-            // Remove quotes if present
-            normalizedZielgruppe = [z.replace(/^"|"$/g, '')];
-          }
-        }
-      }
+      // Zielgruppe is always null - tasks are visible to all users by default
       
       return {
         ...task,
@@ -2856,7 +2816,7 @@ function AdminPage() {
         allowed_contests: normalizeEnumArray((task as any).allowed_contests) as string[],
         allowed_user_types: normalizeEnumArray(task.allowed_user_types) as UserType[],
         allowed_hotel_ids: normalizeEnumArray(task.allowed_hotel_ids) as HotelId[],
-        zielgruppe: normalizedZielgruppe,
+        zielgruppe: null, // Tasks are visible to all users by default
         location_id: (task as any).location_id ?? (task as any).location?.id ?? null,
         location: (task as any).location ?? null,
         active: task.active ?? true,
@@ -2945,6 +2905,7 @@ function AdminPage() {
   }, [existingTemplates]);
 
   // Teams and Contests queries - must be defined before use
+  // Load teams and contests for both management and form selection
   const {
     data: adminTeams,
     isLoading: teamsLoading,
@@ -2954,7 +2915,7 @@ function AdminPage() {
     ['adminTeams', includeInactiveTeams],
     () => api.getAllTeams({ includeInactive: includeInactiveTeams }),
     {
-      enabled: isAdmin && mode === 'teamManage',
+      enabled: isAdmin && (mode === 'teamManage' || mode === 'task' || mode === 'reward'),
     }
   );
 
@@ -2967,7 +2928,7 @@ function AdminPage() {
     ['adminContests', includeInactiveContests],
     () => api.getAllContests({ includeInactive: includeInactiveContests }),
     {
-      enabled: isAdmin && mode === 'contestManage',
+      enabled: isAdmin && (mode === 'contestManage' || mode === 'task' || mode === 'reward'),
     }
   );
 
@@ -3137,50 +3098,7 @@ function AdminPage() {
   const rewardTemplates = rewardTemplatesData ?? [];
   const normalizedRewardTemplates = useMemo(() => {
     return rewardTemplates.map((template) => {
-      // Normalize zielgruppe array (handle PostgreSQL array strings)
-      const z = (template as any).zielgruppe;
-      let normalizedZielgruppe: string[] | null = null;
-      if (z) {
-        if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
-          const cleaned = z.filter((item: any) => {
-            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
-              return false; // This is a PostgreSQL array string, skip it
-            }
-            return true;
-          }).map((item: any) => {
-            // Remove quotes from array items
-            if (typeof item === 'string') {
-              return item.replace(/^"|"$/g, '').trim();
-            }
-            return item;
-          });
-          // If we found a PostgreSQL array string, parse it
-          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
-          if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
-              // Remove quotes from each value
-              return v.trim().replace(/^"|"$/g, '');
-            });
-            // Merge with existing cleaned array and remove duplicates
-            normalizedZielgruppe = [...new Set([...parsed, ...cleaned])];
-          } else {
-            normalizedZielgruppe = cleaned.length > 0 ? cleaned : null;
-          }
-        } else if (typeof z === 'string') {
-          if (z.startsWith('{') && z.endsWith('}')) {
-            // Parse PostgreSQL array format
-            normalizedZielgruppe = z.replace(/^{|}$/g, '').split(',').map((v: string) => {
-              // Remove quotes from each value
-              return v.trim().replace(/^"|"$/g, '');
-            });
-          } else {
-            // Remove quotes if present
-            normalizedZielgruppe = [z.replace(/^"|"$/g, '')];
-          }
-        }
-      }
+      // Zielgruppe is always null - rewards are visible to all users by default
       
       return {
         ...template,
@@ -3188,7 +3106,7 @@ function AdminPage() {
         allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[],
         allowed_user_types: normalizeEnumArray(template.allowed_user_types),
         allowed_hotel_ids: normalizeEnumArray(template.allowed_hotel_ids),
-        zielgruppe: normalizedZielgruppe,
+        zielgruppe: null, // Rewards are visible to all users by default
         location_id: template.location_id ?? template.location?.id ?? null,
         location: template.location ?? null,
         active: template.active ?? true,
@@ -3565,8 +3483,8 @@ function AdminPage() {
       difficulty: (template as any).difficulty ?? undefined,
       time_required: (template as any).time_required ?? undefined,
       location_tool: (template as any).location_tool ?? undefined,
-      event_group: (template as any).event_group ?? undefined,
-      zielgruppe: (template as any).zielgruppe ?? undefined,
+ // Event/Gruppe removed
+      zielgruppe: undefined, // Tasks/Rewards are visible to all users by default
       allowed_teams: normalizeEnumArray((template as any).allowed_teams) as string[] || [],
       allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[] || [],
     });
@@ -3611,48 +3529,8 @@ function AdminPage() {
       difficulty: (task as any).difficulty ?? undefined,
       time_required: (task as any).time_required ?? undefined,
       location_tool: (task as any).location_tool ?? undefined,
-      event_group: (task as any).event_group ?? undefined,
-      zielgruppe: (() => {
-        const z = (task as any).zielgruppe;
-        if (!z) return undefined;
-        // If it's already an array, check if it contains a PostgreSQL array string
-        if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
-          const cleaned = z.filter((item: any) => {
-            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
-              return false; // This is a PostgreSQL array string, skip it
-            }
-            return true;
-          }).map((item: any) => {
-            // Remove quotes from array items
-            if (typeof item === 'string') {
-              return item.replace(/^"|"$/g, '').trim();
-            }
-            return item;
-          });
-          // If we found a PostgreSQL array string, parse it
-          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
-          if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
-              // Remove quotes from each value
-              return v.trim().replace(/^"|"$/g, '');
-            });
-            // Merge with existing cleaned array and remove duplicates
-            return [...new Set([...parsed, ...cleaned])];
-          }
-          return cleaned.length > 0 ? cleaned : undefined;
-        }
-        // If it's a string, check if it's PostgreSQL array format
-        if (typeof z === 'string') {
-          if (z.startsWith('{') && z.endsWith('}')) {
-            // Parse PostgreSQL array format
-            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
-          }
-          return [z];
-        }
-        return undefined;
-      })(),
+ // Event/Gruppe removed
+      zielgruppe: undefined, // Tasks are visible to all users by default
       allowed_teams: normalizeEnumArray((task as any).allowed_teams) as string[] || [],
       allowed_contests: normalizeEnumArray((task as any).allowed_contests) as string[] || [],
       thumbnailFile: prev.thumbnailFile, // Behalte bestehende Datei
@@ -3721,7 +3599,7 @@ function AdminPage() {
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
       recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
-      zielgruppe: (template as any).zielgruppe ?? undefined,
+      zielgruppe: undefined, // Tasks/Rewards are visible to all users by default
       allowed_teams: normalizeEnumArray((template as any).allowed_teams) as string[] || [],
       allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[] || [],
     });
@@ -3782,22 +3660,25 @@ function AdminPage() {
 
         if (taskForm.videoSource === 'upload') {
           const file = taskForm.videoFile;
-          if (!file) {
-            throw new Error('Upload a video file for video tasks.');
-          }
-          setIsUploadingVideo(true);
-          try {
-            const uploadResponse = await api.uploadTaskVideo(file);
-            const uploadedUrl = uploadResponse?.video_url || uploadResponse?.url;
-            if (!uploadedUrl || typeof uploadedUrl !== 'string') {
-              throw new Error('Video upload failed.');
+          if (file) {
+            // New file uploaded - upload it
+            setIsUploadingVideo(true);
+            try {
+              const uploadResponse = await api.uploadTaskVideo(file);
+              const uploadedUrl = uploadResponse?.video_url || uploadResponse?.url;
+              if (!uploadedUrl || typeof uploadedUrl !== 'string') {
+                throw new Error('Video upload failed.');
+              }
+              videoUrl = uploadedUrl;
+              setTaskForm((prev) => ({ ...prev, video_url: uploadedUrl }));
+            } catch (error: any) {
+              throw error;
+            } finally {
+              setIsUploadingVideo(false);
             }
-            videoUrl = uploadedUrl;
-            setTaskForm((prev) => ({ ...prev, video_url: uploadedUrl }));
-          } catch (error: any) {
-            throw error;
-          } finally {
-            setIsUploadingVideo(false);
+          } else {
+            // No new file, but video_url exists (already uploaded) - use existing URL
+            // videoUrl is already set from taskForm.video_url.trim() above
           }
         }
 
@@ -3876,15 +3757,14 @@ function AdminPage() {
         if (taskForm.location_tool) {
           payload.location_tool = taskForm.location_tool;
         }
-        if (taskForm.event_group) {
-          payload.event_group = taskForm.event_group.trim();
-        }
-        // Always include zielgruppe, even if undefined/null, so it can be cleared
-        payload.zielgruppe = taskForm.zielgruppe || null;
+        // Event/Gruppe removed - always set to null
+        // Zielgruppe is always null - tasks are visible to all users by default
+        payload.zielgruppe = null;
         
         // Add team/contest assignments
         payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
         payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
+        console.log('[DEBUG] Update Task - Full payload:', JSON.stringify(payload, null, 2));
         
         // Add thumbnail_url (null if no thumbnail, to allow deletion)
         payload.thumbnail_url = thumbnailUrl;
@@ -3969,11 +3849,9 @@ function AdminPage() {
         if (taskForm.location_tool) {
           payload.location_tool = taskForm.location_tool;
         }
-        if (taskForm.event_group) {
-          payload.event_group = taskForm.event_group.trim();
-        }
-        // Always include zielgruppe, even if undefined/null, so it can be cleared
-        payload.zielgruppe = taskForm.zielgruppe || null;
+        // Event/Gruppe removed - always set to null
+        // Zielgruppe is always null - tasks are visible to all users by default
+        payload.zielgruppe = null;
         
         // Add team/contest assignments
         payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
@@ -4060,15 +3938,13 @@ function AdminPage() {
       if (taskForm.location_tool) {
         payload.location_tool = taskForm.location_tool;
       }
-      if (taskForm.event_group) {
-        payload.event_group = taskForm.event_group.trim();
-      }
       // Always include zielgruppe, even if undefined/null, so it can be cleared
-      payload.zielgruppe = taskForm.zielgruppe || null;
+      payload.zielgruppe = null; // Tasks are visible to all users by default
       
       // Add team/contest assignments
       payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
       payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
+      console.log('[DEBUG] Create Task - Full payload:', JSON.stringify(payload, null, 2));
       
       // Add thumbnail_url
       payload.thumbnail_url = thumbnailUrl;
@@ -4116,7 +3992,7 @@ function AdminPage() {
         description: rewardForm.description,
         pointsCost,
         rewardType: rewardForm.type,
-        zielgruppe: rewardForm.zielgruppe || null,
+        zielgruppe: null, // Rewards are visible to all users by default
         active: Boolean(rewardForm.active),
         recurrence: rewardForm.recurrence,
       };
@@ -4138,9 +4014,7 @@ function AdminPage() {
       if (rewardForm.kategorie) {
         basePayload.kategorie = rewardForm.kategorie;
       }
-      if (rewardForm.event_group?.trim()) {
-        basePayload.event_group = rewardForm.event_group.trim();
-      }
+      // Event/Gruppe removed - always set to null
       if (rewardForm.moegliche_punkte !== undefined && rewardForm.moegliche_punkte !== null) {
         basePayload.moegliche_punkte = Number(rewardForm.moegliche_punkte) || null;
       }
@@ -4618,48 +4492,8 @@ function AdminPage() {
       difficulty: (task as any).difficulty ?? undefined,
       time_required: (task as any).time_required ?? undefined,
       location_tool: (task as any).location_tool ?? undefined,
-      event_group: (task as any).event_group ?? undefined,
-      zielgruppe: (() => {
-        const z = (task as any).zielgruppe;
-        if (!z) return undefined;
-        // If it's already an array, check if it contains a PostgreSQL array string
-        if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
-          const cleaned = z.filter((item: any) => {
-            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
-              return false; // This is a PostgreSQL array string, skip it
-            }
-            return true;
-          }).map((item: any) => {
-            // Remove quotes from array items
-            if (typeof item === 'string') {
-              return item.replace(/^"|"$/g, '').trim();
-            }
-            return item;
-          });
-          // If we found a PostgreSQL array string, parse it
-          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
-          if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
-              // Remove quotes from each value
-              return v.trim().replace(/^"|"$/g, '');
-            });
-            // Merge with existing cleaned array and remove duplicates
-            return [...new Set([...parsed, ...cleaned])];
-          }
-          return cleaned.length > 0 ? cleaned : undefined;
-        }
-        // If it's a string, check if it's PostgreSQL array format
-        if (typeof z === 'string') {
-          if (z.startsWith('{') && z.endsWith('}')) {
-            // Parse PostgreSQL array format
-            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
-          }
-          return [z];
-        }
-        return undefined;
-      })(),
+ // Event/Gruppe removed
+      zielgruppe: undefined, // Tasks are visible to all users by default
       thumbnailFile: null,
       thumbnailUrl: (task as any).thumbnail_url ?? null,
     });
@@ -4748,53 +4582,13 @@ function AdminPage() {
       pointsCost: normalizedPointsCost,
       voucherCode: template.voucher_code ?? '',
       externalApiId: template.external_api_id ?? '',
-      zielgruppe: (() => {
-        const z = (template as any).zielgruppe;
-        if (!z) return null;
-        // If it's already an array, check if it contains a PostgreSQL array string
-        if (Array.isArray(z)) {
-          // Filter out any PostgreSQL array format strings like "{Gäste,Front Office}"
-          const cleaned = z.filter((item: any) => {
-            if (typeof item === 'string' && item.startsWith('{') && item.endsWith('}')) {
-              return false; // This is a PostgreSQL array string, skip it
-            }
-            return true;
-          }).map((item: any) => {
-            // Remove quotes from array items
-            if (typeof item === 'string') {
-              return item.replace(/^"|"$/g, '').trim();
-            }
-            return item;
-          });
-          // If we found a PostgreSQL array string, parse it
-          const pgString = z.find((item: any) => typeof item === 'string' && item.startsWith('{') && item.endsWith('}'));
-          if (pgString) {
-            // Parse PostgreSQL array format: "{Gäste,Front Office}" or "{""Front Office""}" -> ["Gäste", "Front Office"]
-            const parsed = pgString.replace(/^{|}$/g, '').split(',').map((v: string) => {
-              // Remove quotes from each value
-              return v.trim().replace(/^"|"$/g, '');
-            });
-            // Merge with existing cleaned array and remove duplicates
-            return [...new Set([...parsed, ...cleaned])];
-          }
-          return cleaned.length > 0 ? cleaned : null;
-        }
-        // If it's a string, check if it's PostgreSQL array format
-        if (typeof z === 'string') {
-          if (z.startsWith('{') && z.endsWith('}')) {
-            // Parse PostgreSQL array format
-            return z.replace(/^{|}$/g, '').split(',').map((v: string) => v.trim());
-          }
-          return [z];
-        }
-        return null;
-      })(),
+      zielgruppe: null, // Rewards are visible to all users by default
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
       recurrence: (template.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
       reward_art: (template as any).reward_art ?? undefined,
       kategorie: (template as any).kategorie ?? undefined,
-      event_group: (template as any).event_group ?? undefined,
+ // Event/Gruppe removed
       moegliche_punkte: (template as any).moegliche_punkte ?? undefined,
       allowed_teams: normalizeEnumArray((template as any).allowed_teams) as string[] || [],
       allowed_contests: normalizeEnumArray((template as any).allowed_contests) as string[] || [],
@@ -6954,8 +6748,8 @@ function AdminPage() {
                 </section>
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Zielgruppe & Zugriff</h3>
-                    <p>Zielgruppe, Metadaten und zusätzliche Informationen zur Aufgabe</p>
+                    <h3>Metadaten & Zugriff</h3>
+                    <p>Metadaten und zusätzliche Informationen zur Aufgabe</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
@@ -7038,99 +6832,81 @@ function AdminPage() {
                         ))}
                       </select>
                     </div>
-                    <div className="admin-field">
-                      <FieldLabel label="Zielgruppe" />
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {(['Front Office', 'Gäste'] as const).map((role) => (
-                          <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              checked={(taskForm.zielgruppe || []).includes(role)}
-                              onChange={(e) => {
-                                const currentZielgruppe = taskForm.zielgruppe || [];
-                                if (e.target.checked) {
-                                  setTaskForm((prev) => ({
-                                    ...prev,
-                                    zielgruppe: [...currentZielgruppe, role],
-                                  }));
-                                } else {
-                                  setTaskForm((prev) => ({
-                                    ...prev,
-                                    zielgruppe: currentZielgruppe.filter((z) => z !== role).length > 0
-                                      ? currentZielgruppe.filter((z) => z !== role)
-                                      : undefined,
-                                  }));
-                                }
-                              }}
-                            />
-                            <span>{role}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
                     <div className="admin-field admin-field-span-2">
                       <FieldLabel label="Teams (optional)" />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Teams ausgewählt werden, ist diese Aufgabe nur für Mitglieder dieser Teams sichtbar. Leer = allgemein sichtbar.
+                        Wenn Teams ausgewählt werden, ist diese Aufgabe nur für Mitglieder dieser Teams sichtbar. Keine Auswahl = für alle sichtbar.
                       </p>
-                      <select
-                        multiple
-                        value={taskForm.allowed_teams || []}
-                        onChange={(e) => {
-                          const selected = Array.from(e.target.selectedOptions, option => option.value);
-                          setTaskForm((prev) => ({
-                            ...prev,
-                            allowed_teams: selected.length > 0 ? selected : [],
-                          }));
-                        }}
-                        className="admin-select"
-                        style={{ minHeight: '100px' }}
-                      >
-                        {teamsList.filter(t => t.active).map((team) => (
-                          <option key={team.id} value={team.id}>
-                            {team.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
+                        {teamsLoading ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Teams...</div>
+                        ) : teamsList.filter(t => t.active).length === 0 ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Teams verfügbar</div>
+                        ) : (
+                          teamsList.filter(t => t.active).map((team) => (
+                            <label key={team.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={(taskForm.allowed_teams || []).includes(team.id)}
+                                onChange={(e) => {
+                                  const currentTeams = taskForm.allowed_teams || [];
+                                  if (e.target.checked) {
+                                    const newTeams = [...currentTeams, team.id];
+                                    setTaskForm((prev) => ({
+                                      ...prev,
+                                      allowed_teams: newTeams,
+                                    }));
+                                  } else {
+                                    const newTeams = currentTeams.filter((id) => id !== team.id);
+                                    setTaskForm((prev) => ({
+                                      ...prev,
+                                      allowed_teams: newTeams,
+                                    }));
+                                  }
+                                }}
+                              />
+                              <span>{team.name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
                     </div>
                     <div className="admin-field admin-field-span-2">
                       <FieldLabel label="Wettbewerbe (optional)" />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Wettbewerbe ausgewählt werden, ist diese Aufgabe nur für Teilnehmer dieser Wettbewerbe sichtbar. Leer = allgemein sichtbar.
+                        Wenn Wettbewerbe ausgewählt werden, ist diese Aufgabe nur für Teilnehmer dieser Wettbewerbe sichtbar. Keine Auswahl = für alle sichtbar.
                       </p>
-                      <select
-                        multiple
-                        value={taskForm.allowed_contests || []}
-                        onChange={(e) => {
-                          const selected = Array.from(e.target.selectedOptions, option => option.value);
-                          setTaskForm((prev) => ({
-                            ...prev,
-                            allowed_contests: selected.length > 0 ? selected : [],
-                          }));
-                        }}
-                        className="admin-select"
-                        style={{ minHeight: '100px' }}
-                      >
-                        {contestsList.filter(c => c.active).map((contest) => (
-                          <option key={contest.id} value={contest.id}>
-                            {contest.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Event/Gruppe" />
-                      <input
-                        type="text"
-                        value={taskForm.event_group || ''}
-                        onChange={(event) =>
-                          setTaskForm((prev) => ({
-                            ...prev,
-                            event_group: event.target.value || undefined,
-                          }))
-                        }
-                        placeholder="Optional: Event oder Gruppe zuordnen"
-                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
+                        {contestsLoading ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Wettbewerbe...</div>
+                        ) : contestsList.filter(c => c.active).length === 0 ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Wettbewerbe verfügbar</div>
+                        ) : (
+                          contestsList.filter(c => c.active).map((contest) => (
+                            <label key={contest.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={(taskForm.allowed_contests || []).includes(contest.id)}
+                                onChange={(e) => {
+                                  const currentContests = taskForm.allowed_contests || [];
+                                  if (e.target.checked) {
+                                    setTaskForm((prev) => ({
+                                      ...prev,
+                                      allowed_contests: [...currentContests, contest.id],
+                                    }));
+                                  } else {
+                                    setTaskForm((prev) => ({
+                                      ...prev,
+                                      allowed_contests: currentContests.filter((id) => id !== contest.id),
+                                    }));
+                                  }
+                                }}
+                              />
+                              <span>{contest.name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -7481,89 +7257,83 @@ function AdminPage() {
 
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Zielgruppe & Zugriff</h3>
-                    <p>Zielgruppe, Metadaten und zusätzliche Informationen zur Belohnung</p>
+                    <h3>Metadaten & Zugriff</h3>
+                    <p>Metadaten und zusätzliche Informationen zur Belohnung</p>
                   </div>
                   <div className="admin-form-grid">
-                    <div className="admin-field">
-                      <FieldLabel label="Zielgruppe" />
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {(['Front Office', 'Gäste'] as const).map((role) => (
-                          <label key={role} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              checked={(rewardForm.zielgruppe || []).includes(role)}
-                              onChange={(e) => {
-                                const currentZielgruppe = rewardForm.zielgruppe || [];
-                                if (e.target.checked) {
-                                  setRewardForm((prev) => ({
-                                    ...prev,
-                                    zielgruppe: [...currentZielgruppe, role],
-                                  }));
-                                } else {
-                                  setRewardForm((prev) => ({
-                                    ...prev,
-                                    zielgruppe: currentZielgruppe.filter((z) => z !== role).length > 0
-                                      ? currentZielgruppe.filter((z) => z !== role)
-                                      : null,
-                                  }));
-                                }
-                              }}
-                            />
-                            <span>{role}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
                     <div className="admin-field admin-field-span-2">
                       <FieldLabel label="Teams (optional)" />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Teams ausgewählt werden, ist diese Belohnung nur für Mitglieder dieser Teams sichtbar. Leer = allgemein sichtbar.
+                        Wenn Teams ausgewählt werden, ist diese Belohnung nur für Mitglieder dieser Teams sichtbar. Keine Auswahl = für alle sichtbar.
                       </p>
-                      <select
-                        multiple
-                        value={rewardForm.allowed_teams || []}
-                        onChange={(e) => {
-                          const selected = Array.from(e.target.selectedOptions, option => option.value);
-                          setRewardForm((prev) => ({
-                            ...prev,
-                            allowed_teams: selected.length > 0 ? selected : [],
-                          }));
-                        }}
-                        className="admin-select"
-                        style={{ minHeight: '100px' }}
-                      >
-                        {teamsList.filter(t => t.active).map((team) => (
-                          <option key={team.id} value={team.id}>
-                            {team.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
+                        {teamsLoading ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Teams...</div>
+                        ) : teamsList.filter(t => t.active).length === 0 ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Teams verfügbar</div>
+                        ) : (
+                          teamsList.filter(t => t.active).map((team) => (
+                            <label key={team.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={(rewardForm.allowed_teams || []).includes(team.id)}
+                                onChange={(e) => {
+                                  const currentTeams = rewardForm.allowed_teams || [];
+                                  if (e.target.checked) {
+                                    setRewardForm((prev) => ({
+                                      ...prev,
+                                      allowed_teams: [...currentTeams, team.id],
+                                    }));
+                                  } else {
+                                    setRewardForm((prev) => ({
+                                      ...prev,
+                                      allowed_teams: currentTeams.filter((id) => id !== team.id),
+                                    }));
+                                  }
+                                }}
+                              />
+                              <span>{team.name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
                     </div>
                     <div className="admin-field admin-field-span-2">
                       <FieldLabel label="Wettbewerbe (optional)" />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Wettbewerbe ausgewählt werden, ist diese Belohnung nur für Teilnehmer dieser Wettbewerbe sichtbar. Leer = allgemein sichtbar.
+                        Wenn Wettbewerbe ausgewählt werden, ist diese Belohnung nur für Teilnehmer dieser Wettbewerbe sichtbar. Keine Auswahl = für alle sichtbar.
                       </p>
-                      <select
-                        multiple
-                        value={rewardForm.allowed_contests || []}
-                        onChange={(e) => {
-                          const selected = Array.from(e.target.selectedOptions, option => option.value);
-                          setRewardForm((prev) => ({
-                            ...prev,
-                            allowed_contests: selected.length > 0 ? selected : [],
-                          }));
-                        }}
-                        className="admin-select"
-                        style={{ minHeight: '100px' }}
-                      >
-                        {contestsList.filter(c => c.active).map((contest) => (
-                          <option key={contest.id} value={contest.id}>
-                            {contest.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
+                        {contestsLoading ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Wettbewerbe...</div>
+                        ) : contestsList.filter(c => c.active).length === 0 ? (
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Wettbewerbe verfügbar</div>
+                        ) : (
+                          contestsList.filter(c => c.active).map((contest) => (
+                            <label key={contest.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={(rewardForm.allowed_contests || []).includes(contest.id)}
+                                onChange={(e) => {
+                                  const currentContests = rewardForm.allowed_contests || [];
+                                  if (e.target.checked) {
+                                    setRewardForm((prev) => ({
+                                      ...prev,
+                                      allowed_contests: [...currentContests, contest.id],
+                                    }));
+                                  } else {
+                                    setRewardForm((prev) => ({
+                                      ...prev,
+                                      allowed_contests: currentContests.filter((id) => id !== contest.id),
+                                    }));
+                                  }
+                                }}
+                              />
+                              <span>{contest.name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
                     </div>
                     <div className="admin-field">
                       <FieldLabel label="Art" />
@@ -7604,20 +7374,6 @@ function AdminPage() {
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Event/Gruppe" />
-                      <input
-                        type="text"
-                        value={rewardForm.event_group || ''}
-                        onChange={(event) =>
-                          setRewardForm((prev) => ({
-                            ...prev,
-                            event_group: event.target.value || undefined,
-                          }))
-                        }
-                        placeholder="Optional: Event oder Gruppe zuordnen"
-                      />
                     </div>
                     <div className="admin-field">
                       <FieldLabel label="Mögliche Punkte" />
@@ -8241,7 +7997,6 @@ function AdminPage() {
                     >
                       Location {taskFilterLocation && '✓'}
                     </th>
-                    <th>Zielgruppe</th>
                     <th
                       className="admin-filter-header"
                       onClick={(e) => {
@@ -8279,7 +8034,6 @@ function AdminPage() {
                     <th>Schwierigkeit</th>
                     <th>Zeitaufwand</th>
                     <th>Ort/Werkzeug</th>
-                    <th>Event/Gruppe</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -8335,13 +8089,6 @@ function AdminPage() {
                               ) : null}
                             </div>
                           </td>
-                          <td data-label="Zielgruppe">
-                            <span className="admin-table-secondary">
-                              {Array.isArray((task as any).zielgruppe) && (task as any).zielgruppe.length > 0
-                                ? (task as any).zielgruppe.join(', ')
-                                : '—'}
-                            </span>
-                          </td>
                           <td data-label="Points">{task.points}</td>
                           <td data-label="Status">
                             <span
@@ -8378,11 +8125,6 @@ function AdminPage() {
                           <td data-label="Ort/Werkzeug">
                             <span className="admin-table-secondary">
                               {(task as any).location_tool || '—'}
-                            </span>
-                          </td>
-                          <td data-label="Event/Gruppe">
-                            <span className="admin-table-secondary">
-                              {(task as any).event_group || '—'}
                             </span>
                           </td>
                           <td data-label="Actions" className="admin-table-actions">
@@ -8702,7 +8444,6 @@ function AdminPage() {
                     >
                       Location {rewardFilterLocation && '✓'}
                     </th>
-                    <th>Zielgruppe</th>
                     <th>Cost</th>
                     <th
                       className="admin-filter-header"
@@ -8728,7 +8469,6 @@ function AdminPage() {
                     </th>
                     <th>Art</th>
                     <th>Kategorie</th>
-                    <th>Event/Gruppe</th>
                     <th>Mögliche Punkte</th>
                     <th>Actions</th>
                   </tr>
@@ -8789,13 +8529,6 @@ function AdminPage() {
                               ) : null}
                             </div>
                           </td>
-                          <td data-label="Zielgruppe">
-                            <span className="admin-table-secondary">
-                              {Array.isArray((reward as any).zielgruppe) && (reward as any).zielgruppe.length > 0
-                                ? (reward as any).zielgruppe.join(', ')
-                                : '—'}
-                            </span>
-                          </td>
                           <td data-label="Cost">
                             <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{cost}</span>
                           </td>
@@ -8824,11 +8557,6 @@ function AdminPage() {
                           <td data-label="Kategorie">
                             <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                               {(reward as any).kategorie || '—'}
-                            </span>
-                          </td>
-                          <td data-label="Event/Gruppe">
-                            <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
-                              {(reward as any).event_group || '—'}
                             </span>
                           </td>
                           <td data-label="Mögliche Punkte">
