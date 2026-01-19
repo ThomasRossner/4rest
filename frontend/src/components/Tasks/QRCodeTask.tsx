@@ -72,6 +72,38 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
   
+  // Poll video ready state periodically
+  useEffect(() => {
+    if (!hasCamera || !videoRef.current) {
+      return;
+    }
+    
+    const checkVideoReady = () => {
+      const video = videoRef.current;
+      if (video && video.srcObject && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+        console.log('[QRCodeTask] Video is ready (polling check)', {
+          readyState: video.readyState,
+          dimensions: `${video.videoWidth}x${video.videoHeight}`
+        });
+        setIsVideoReady(true);
+      }
+    };
+    
+    // Check immediately
+    checkVideoReady();
+    
+    // Poll every 100ms until ready
+    const interval = setInterval(() => {
+      if (!isVideoReady) {
+        checkVideoReady();
+      } else {
+        clearInterval(interval);
+      }
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [hasCamera, isVideoReady]);
+  
   useEffect(() => {
     let stream: MediaStream | null = null;
     
@@ -498,12 +530,14 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 console.log('[QRCodeTask] Video metadata loaded, video should be visible now');
                 console.log('[QRCodeTask] Video readyState:', videoRef.current?.readyState);
                 console.log('[QRCodeTask] Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
-                if (videoRef.current && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                const video = videoRef.current;
+                if (video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                  console.log('[QRCodeTask] Setting isVideoReady to true (onLoadedMetadata)');
                   setIsVideoReady(true);
                 }
                 // Force play on iOS
-                if (videoRef.current) {
-                  videoRef.current.play().catch((err) => {
+                if (video) {
+                  video.play().catch((err) => {
                     console.error('[QRCodeTask] Error playing video after metadata:', err);
                     setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
                   });
@@ -511,13 +545,25 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               }}
               onPlay={() => {
                 console.log('[QRCodeTask] Video is playing');
-                if (videoRef.current && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                const video = videoRef.current;
+                if (video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                  console.log('[QRCodeTask] Setting isVideoReady to true (onPlay)');
                   setIsVideoReady(true);
                 }
               }}
               onCanPlay={() => {
                 console.log('[QRCodeTask] Video can play');
-                if (videoRef.current && videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                const video = videoRef.current;
+                if (video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                  console.log('[QRCodeTask] Setting isVideoReady to true (onCanPlay)');
+                  setIsVideoReady(true);
+                }
+              }}
+              onPlaying={() => {
+                console.log('[QRCodeTask] Video is playing (playing event)');
+                const video = videoRef.current;
+                if (video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                  console.log('[QRCodeTask] Setting isVideoReady to true (onPlaying)');
                   setIsVideoReady(true);
                 }
               }}
@@ -530,7 +576,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               }}
             />
             {/* Loading indicator or error message */}
-            {(!hasCamera || !videoRef.current?.srcObject || !isVideoReady) && (
+            {(!hasCamera || !isVideoReady) && (
               <div style={{ 
                 position: 'absolute', 
                 top: '50%', 
