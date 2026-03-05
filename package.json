@@ -28,7 +28,8 @@
     "concurrently": "^8.2.2",
     "dotenv": "^16.6.1",
     "pg": "^8.17.1",
-    "playwright": "^1.57.0"
+    "playwright": "^1.57.0",
+    "pptxgenjs": "^4.0.1"
   },
   "engines": {
     "node": ">=18.0.0",
