@@ -98,6 +98,7 @@ export async function login(req: Request, res: Response) {
     const userEmail = user.email || user.oauth_email || '';
     const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
 
+    const preferredLanguage = (user as any).preferred_language === 'en' ? 'en' : 'de';
     res.json({
       token,
       user: {
@@ -111,6 +112,7 @@ export async function login(req: Request, res: Response) {
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
+        preferredLanguage,
       },
     });
   } catch (error: any) {
@@ -137,7 +139,7 @@ export async function login(req: Request, res: Response) {
 
 export async function register(req: Request, res: Response) {
   try {
-    const { email, password, name, role = 'guest', userType = 'explorer', teamRegistrationToken, contestRegistrationToken } = req.body;
+    const { email, password, name, role = 'guest', userType = 'explorer', teamRegistrationToken, contestRegistrationToken, preferredLanguage: preferredLang } = req.body;
 
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
@@ -295,6 +297,7 @@ export async function register(req: Request, res: Response) {
       user_type: normalizedUserType,
       sihot_guest_id: sihotGuest?.guestId || null,
       sihot_guest_data: sihotGuestPayload,
+      preferred_language: preferredLang === 'en' ? 'en' : 'de',
     });
 
     // Automatisch Team oder Contest beitreten (falls Token vorhanden)
@@ -329,6 +332,7 @@ export async function register(req: Request, res: Response) {
       console.error('Failed to send verification email:', error);
     });
 
+    const preferredLanguage = (user as any).preferred_language === 'en' ? 'en' : 'de';
     res.status(201).json({
       token,
       user: {
@@ -342,6 +346,7 @@ export async function register(req: Request, res: Response) {
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
+        preferredLanguage,
       },
       joinedTeam: joinedTeam ? { id: joinedTeam.id, name: joinedTeam.name } : null,
       joinedContest: joinedContest ? { id: joinedContest.id, name: joinedContest.name } : null,
@@ -728,6 +733,7 @@ export async function loginWithCode(req: Request, res: Response) {
     const userEmail = user.email || user.oauth_email || '';
     const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
 
+    const preferredLanguage = (user as any).preferred_language === 'en' ? 'en' : 'de';
     res.json({
       token,
       user: {
@@ -741,6 +747,7 @@ export async function loginWithCode(req: Request, res: Response) {
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
+        preferredLanguage,
       },
     });
   } catch (error: any) {

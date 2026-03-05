@@ -27,13 +27,13 @@ export function RewardRedemptionDisplay({
     <div className="reward-redemption-display">
       <div className="reward-redemption-content">
         <h2 className="reward-redemption-title">
-          {t('rewards.redemption.title') || 'Belohnung gefunden'}
+          {t('rewards.redemption.title')}
         </h2>
         
         <div className="reward-redemption-info">
           <div className="reward-redemption-section">
             <h3 className="reward-redemption-section-title">
-              {t('rewards.redemption.reward') || 'Belohnung'}
+              {t('rewards.redemption.reward')}
             </h3>
             <p className="reward-redemption-reward-title">{redemption.rewardTitle}</p>
             {redemption.rewardDescription && (
@@ -42,16 +42,16 @@ export function RewardRedemptionDisplay({
               </p>
             )}
             <p className="reward-redemption-points">
-              {t('rewards.redemption.pointsCost', { count: redemption.pointsCost }) || `${redemption.pointsCost} Punkte`}
+              {t('rewards.redemption.pointsCost', { count: redemption.pointsCost })}
             </p>
           </div>
 
           <div className="reward-redemption-section">
             <h3 className="reward-redemption-section-title">
-              {t('rewards.redemption.guest') || 'Gast'}
+              {t('rewards.redemption.guest')}
             </h3>
             <p className="reward-redemption-guest-name">
-              {redemption.userName || redemption.userEmail || t('rewards.redemption.unknownGuest') || 'Unbekannter Gast'}
+              {redemption.userName || redemption.userEmail || t('rewards.redemption.unknownGuest')}
             </p>
             {redemption.userEmail && redemption.userName && (
               <p className="reward-redemption-guest-email">{redemption.userEmail}</p>
@@ -66,7 +66,7 @@ export function RewardRedemptionDisplay({
             onClick={onCancel}
             disabled={isRedeeming}
           >
-            {t('common.actions.cancel', 'Abbrechen')}
+            {t('common.actions.cancel')}
           </button>
           <button
             type="button"
@@ -75,8 +75,8 @@ export function RewardRedemptionDisplay({
             disabled={isRedeeming}
           >
             {isRedeeming
-              ? (t('rewards.redemption.redeeming') || 'Wird eingelöst...')
-              : (t('rewards.redemption.redeem') || 'Belohnung eingelöst')}
+              ? t('rewards.redemption.redeeming')
+              : t('rewards.redemption.redeem')}
           </button>
         </div>
       </div>

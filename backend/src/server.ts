@@ -9,6 +9,7 @@ import { WebSocketServer } from 'ws';
 import { setupRoutes } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { initializeDatabase } from './database/connection.js';
+import { runMigrations } from './database/migrate.js';
 import { startSihotSyncScheduler } from './services/sihot-sync.service.js';
 import { startRecurringRewardsScheduler } from './services/reward-recurrence.service.js';
 import { startContestScheduler } from './services/contest-scheduler.service.js';
@@ -129,7 +130,8 @@ async function start() {
   try {
     await initializeDatabase();
     console.log('Database connected');
-    
+    await runMigrations();
+
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);

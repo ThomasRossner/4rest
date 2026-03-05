@@ -1,4 +1,5 @@
 import { getPool } from '../database/connection.js';
+import { resolveI18n, normalizeContentLang } from '../utils/i18n.js';
 import { getTaskParameters } from './parameter.service.js';
 import { getPointsCalculationFactor } from './system-config.service.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
@@ -71,6 +72,9 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
+  title_i18n?: Record<string, string>;
+  description_i18n?: Record<string, string>;
+  article_content_i18n?: Record<string, string>;
   type: string;
   points: number;
   video_url?: string;
@@ -105,7 +109,7 @@ export interface Task {
 export async function getAllTasks(
   filters?: { limit?: number; offset?: number; type?: string },
   userId?: string,
-  options?: { includeAll?: boolean; includeInactive?: boolean }
+  options?: { includeAll?: boolean; includeInactive?: boolean; preferredLanguage?: string }
 ) {
   const db = getPool();
   let userType: UserType | null = null;
@@ -174,7 +178,8 @@ export async function getAllTasks(
 
   // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles were removed in migration 038)
   let select = `DISTINCT ON (t.id) 
-    t.id, t.title, t.description, t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.id, t.title, t.description, t.title_i18n, t.description_i18n, t.article_content_i18n,
+    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
@@ -265,8 +270,14 @@ export async function getAllTasks(
     unique.set(row.id, row);
   }
   
-  const tasks = Array.from(unique.values());
-  
+  let tasks = Array.from(unique.values());
+
+  // Resolve title/description/article_content from *_i18n when preferredLanguage is set
+  const preferredLanguage = options?.preferredLanguage != null ? normalizeContentLang(options.preferredLanguage) : null;
+  if (preferredLanguage) {
+    tasks = tasks.map((task) => resolveTaskI18n(task, preferredLanguage));
+  }
+
   // Check availability for each task if userId is provided
   if (userId) {
     for (const task of tasks) {
@@ -278,11 +289,28 @@ export async function getAllTasks(
       task.is_available = true;
     }
   }
-  
+
   return tasks;
 }
 
-export async function getTaskById(id: string): Promise<Task | null> {
+function resolveTaskI18n(task: any, lang: 'de' | 'en'): any {
+  const title = resolveI18n(task.title_i18n, lang, task.title);
+  const description = resolveI18n(task.description_i18n, lang, task.description);
+  const article_content = resolveI18n(task.article_content_i18n, lang, task.article_content);
+  const out = { ...task, title, description, article_content };
+  if (out.location && typeof out.location === 'object') {
+    out.location = {
+      ...out.location,
+      name: resolveI18n(out.location.name_i18n, lang, out.location.name),
+      description: resolveI18n(out.location.description_i18n, lang, out.location.description),
+      address: resolveI18n(out.location.address_i18n, lang, out.location.address),
+      category_description: resolveI18n(out.location.category_description_i18n, lang, out.location.category_description),
+    };
+  }
+  return out;
+}
+
+export async function getTaskById(id: string, preferredLanguage?: string): Promise<Task | null> {
   const db = getPool();
   
   // Check if allowed_teams and allowed_contests columns exist
@@ -305,20 +333,21 @@ export async function getTaskById(id: string): Promise<Task | null> {
     columnsExist = false;
   }
   
-  let select = `t.id, t.title, t.description, t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+  let select = `t.id, t.title, t.description, t.title_i18n, t.description_i18n, t.article_content_i18n,
+    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
     t.category, t.difficulty, t.time_required, t.location_tool, t.thumbnail_url, 
     t.zielgruppe, t.created_at, t.updated_at`;
-  
+
   // Add allowed_teams and allowed_contests if columns exist
   if (columnsExist) {
     select += `, t.allowed_teams, t.allowed_contests`;
   }
-  
+
   select += `, row_to_json(l.*) AS location`;
-  
+
   const result = await db.query(
     `SELECT ${select}
      FROM tasks t
@@ -326,8 +355,12 @@ export async function getTaskById(id: string): Promise<Task | null> {
      WHERE t.id = $1`,
     [id]
   );
-  
-  return result.rows[0] || null;
+
+  const row = result.rows[0] || null;
+  if (row && preferredLanguage) {
+    return resolveTaskI18n(row, normalizeContentLang(preferredLanguage));
+  }
+  return row;
 }
 
 /**
@@ -496,10 +529,27 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
     }
   }
 
+  // Build *_i18n from request; fallback to legacy title/description/article_content
+  const titleI18n = (data as any).title_i18n && typeof (data as any).title_i18n === 'object'
+    ? (data as any).title_i18n
+    : { de: data.title ?? '', en: data.title ?? '' };
+  const descriptionI18n = (data as any).description_i18n && typeof (data as any).description_i18n === 'object'
+    ? (data as any).description_i18n
+    : { de: data.description ?? '', en: data.description ?? '' };
+  const articleContentI18n = (data as any).article_content_i18n && typeof (data as any).article_content_i18n === 'object'
+    ? (data as any).article_content_i18n
+    : { de: (data as any).article_content ?? '', en: (data as any).article_content ?? '' };
+  const legacyTitle = data.title ?? titleI18n.de ?? titleI18n.en ?? '';
+  const legacyDescription = data.description ?? descriptionI18n.de ?? descriptionI18n.en ?? null;
+  const legacyArticleContent = (data as any).article_content ?? articleContentI18n.de ?? articleContentI18n.en ?? null;
+
   const result = await db.query(
     `INSERT INTO tasks (
        title,
        description,
+       title_i18n,
+       description_i18n,
+       article_content_i18n,
        type,
        points,
        video_url,
@@ -528,11 +578,14 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        allowed_teams,
        allowed_contests
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
      RETURNING *`,
     [
-      data.title,
-      data.description ?? null,
+      legacyTitle,
+      legacyDescription,
+      JSON.stringify(titleI18n),
+      JSON.stringify(descriptionI18n),
+      JSON.stringify(articleContentI18n),
       data.type,
       points,
       data.video_url ?? null,
@@ -547,7 +600,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       (data as any).target_latitude ?? null,
       (data as any).target_longitude ?? null,
       (data as any).article_url ?? null,
-      (data as any).article_content ?? null,
+      legacyArticleContent,
       surveyPayload,
       (data as any).survey_type ?? null,
       (data as any).prerequisite_task_id ?? null,
@@ -674,6 +727,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     'title', 'description', 'type', 'points', 'video_url', 'quiz_questions', 'qr_code',
     'photo_required', 'co2_savings_kg', 'location_id', 'active', 'recurrence',
     'target_latitude', 'target_longitude', 'article_url', 'article_content',
+    'title_i18n', 'description_i18n', 'article_content_i18n',
     'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
     'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
     'thumbnail_url', 'allowed_teams', 'allowed_contests'
@@ -779,6 +833,32 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       return;
     }
 
+    if (key === 'title_i18n' && typeof value === 'object') {
+      updates.push(`title_i18n = $${paramIndex++}`);
+      values.push(JSON.stringify(value));
+      const resolved = (value as Record<string, string>).de ?? (value as Record<string, string>).en;
+      if (resolved != null) {
+        updates.push(`title = $${paramIndex++}`);
+        values.push(resolved);
+      }
+      return;
+    }
+    if (key === 'description_i18n' && typeof value === 'object') {
+      updates.push(`description_i18n = $${paramIndex++}`);
+      values.push(JSON.stringify(value));
+      const resolved = (value as Record<string, string>).de ?? (value as Record<string, string>).en;
+      updates.push(`description = $${paramIndex++}`);
+      values.push(resolved ?? null);
+      return;
+    }
+    if (key === 'article_content_i18n' && typeof value === 'object') {
+      updates.push(`article_content_i18n = $${paramIndex++}`);
+      values.push(JSON.stringify(value));
+      const resolved = (value as Record<string, string>).de ?? (value as Record<string, string>).en;
+      updates.push(`article_content = $${paramIndex++}`);
+      values.push(resolved ?? null);
+      return;
+    }
     if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
       updates.push(`${key} = $${paramIndex++}`);
       values.push(JSON.stringify(value));

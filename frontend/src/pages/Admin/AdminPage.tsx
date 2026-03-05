@@ -21,7 +21,6 @@ import { TaskTypeIcon } from '../../components/TypeIcons/TaskTypeIcon';
 import { RewardTypeIcon } from '../../components/TypeIcons/RewardTypeIcon';
 import QrScannerPage from './QrScannerPage';
 import { LocationMap } from '../../components/LocationMap/LocationMap';
-import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { SurveyAnalytics } from './SurveyAnalytics';
 import { DebugTools } from './DebugTools';
 import { UserManagement } from './UserManagement';
@@ -691,7 +690,7 @@ const MobileFilterModal = ({
     <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="mobile-filter-title">
       <div ref={modalRef} className="admin-mobile-filter-modal">
         <div className="admin-mobile-filter-header">
-          <h3 id="mobile-filter-title">Filters {activeFilterCount > 0 && `(${activeFilterCount})`}</h3>
+          <h3 id="mobile-filter-title">{t('admin.filters.mobileTitle', { count: activeFilterCount })}</h3>
           <button
             type="button"
             className="admin-icon-button"
@@ -705,7 +704,7 @@ const MobileFilterModal = ({
           {/* Location Filter */}
           {filterOptions.locations && filterOptions.locations.length > 0 && (
             <div className="admin-mobile-filter-section">
-              <h4>Location</h4>
+              <h4>{t('admin.table.location')}</h4>
               <div className="admin-mobile-filter-options">
                 <button
                   type="button"
@@ -735,7 +734,7 @@ const MobileFilterModal = ({
           {/* Status Filter */}
           {filterOptions.statuses && filterOptions.statuses.length > 0 && (
             <div className="admin-mobile-filter-section">
-              <h4>Status</h4>
+              <h4>{t('admin.table.status')}</h4>
               <div className="admin-mobile-filter-options">
                 <button
                   type="button"
@@ -813,7 +812,7 @@ const MobileFilterModal = ({
           {/* Title Filter */}
           {onTitleChange && (
             <div className="admin-mobile-filter-section">
-              <h4>{t('admin.filters.title')}</h4>
+              <h4>{t('admin.filters.titleLabel')}</h4>
               <div className="admin-mobile-filter-options">
                 <input
                   type="text"
@@ -2489,7 +2488,7 @@ const ConfirmDialog = ({
         </div>
         <div className="admin-modal-footer">
           <button type="button" className="admin-action-button secondary" onClick={onCancel}>
-            {t('common.actions.cancel', 'Abbrechen')}
+            {t('common.actions.cancel')}
           </button>
           <button
             type="button"
@@ -2541,6 +2540,12 @@ function AdminPage() {
   const [taskSource, setTaskSource] = useState<TaskSource>('');
   const [selectedExistingTaskId, setSelectedExistingTaskId] = useState<string>('');
   const [taskForm, setTaskForm] = useState<TaskFormState>(() => defaultTaskForm('video'));
+  const [contentLanguage, setContentLanguage] = useState<'de' | 'en'>('de');
+  const [contentI18n, setContentI18n] = useState<{
+    title_i18n: { de: string; en: string };
+    description_i18n: { de: string; en: string };
+    article_content_i18n: { de: string; en: string };
+  }>(() => ({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } }));
   const [taskMessage, setTaskMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
     null
   );
@@ -2572,6 +2577,11 @@ function AdminPage() {
   const [rewardSource, setRewardSource] = useState<RewardSource>('');
   const [selectedRewardTemplate, setSelectedRewardTemplate] = useState<string>('');
   const [rewardForm, setRewardForm] = useState<RewardFormState>(() => defaultRewardForm('discount'));
+  const [rewardContentLanguage, setRewardContentLanguage] = useState<'de' | 'en'>('de');
+  const [rewardContentI18n, setRewardContentI18n] = useState<{
+    title_i18n: { de: string; en: string };
+    description_i18n: { de: string; en: string };
+  }>(() => ({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' } }));
   const [rewardMessage, setRewardMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
     null
   );
@@ -2663,6 +2673,18 @@ function AdminPage() {
   const [isMobileRewardFilterOpen, setIsMobileRewardFilterOpen] = useState(false);
 
   const [locationForm, setLocationForm] = useState<LocationFormState>(defaultLocationForm);
+  const [locationContentLanguage, setLocationContentLanguage] = useState<'de' | 'en'>('de');
+  const [locationContentI18n, setLocationContentI18n] = useState<{
+    name_i18n: { de: string; en: string };
+    description_i18n: { de: string; en: string };
+    address_i18n: { de: string; en: string };
+    category_description_i18n: { de: string; en: string };
+  }>(() => ({
+    name_i18n: { de: '', en: '' },
+    description_i18n: { de: '', en: '' },
+    address_i18n: { de: '', en: '' },
+    category_description_i18n: { de: '', en: '' },
+  }));
   const [locationMessage, setLocationMessage] = useState<
     { type: 'error' | 'success'; text: string } | null
   >(null);
@@ -2754,7 +2776,7 @@ function AdminPage() {
         visible: true,
         title: t('admin.forestStats.validation.error'),
         description: error?.message || t('admin.forestStats.validation.startFailed'),
-        confirmLabel: t('common.actions.close', 'Schließen'),
+        confirmLabel: t('common.actions.close'),
         onConfirm: () => setValidationConfirm(defaultConfirmDialogState),
       });
     }
@@ -3318,6 +3340,8 @@ function AdminPage() {
       setTaskSource('');
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
+      setContentLanguage('de');
+      setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
       setHasAttemptedPublish(false);
       setTaskReturnMode(null);
       void refetchTasks();
@@ -3338,6 +3362,8 @@ function AdminPage() {
         setTaskSource('');
         setSelectedExistingTaskId('');
         setTaskForm(defaultTaskForm('video'));
+        setContentLanguage('de');
+        setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
         setHasAttemptedPublish(false);
         setTaskReturnMode(null);
         void refetchTasks();
@@ -3440,9 +3466,13 @@ function AdminPage() {
     if (taskSource === 'existing') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
+      setContentLanguage('de');
+      setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     } else if (taskSource === 'video' || taskSource === 'quiz' || taskSource === 'article_quiz' || taskSource === 'survey' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm(taskSource));
+      setContentLanguage('de');
+      setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     }
   }, [taskSource, isEditingTask]);
 
@@ -3577,6 +3607,8 @@ function AdminPage() {
     setHasAttemptedRewardPublish(false);
     if (!selectedRewardTemplate) {
       setRewardForm(defaultRewardForm('discount'));
+      setRewardContentLanguage('de');
+      setRewardContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' } });
       return;
     }
     const template = normalizedRewardTemplates.find((item) => item.id === selectedRewardTemplate);
@@ -3591,9 +3623,17 @@ function AdminPage() {
         ? Number(template.points_cost)
         : 0;
     const normalizedPointsCost = Number.isNaN(pointsCostRaw) ? 0 : pointsCostRaw;
+    const titleI18n = (template as any).title_i18n && typeof (template as any).title_i18n === 'object'
+      ? (template as any).title_i18n
+      : { de: template.title ?? '', en: template.title ?? '' };
+    const descriptionI18n = (template as any).description_i18n && typeof (template as any).description_i18n === 'object'
+      ? (template as any).description_i18n
+      : { de: template.description ?? '', en: template.description ?? '' };
+    setRewardContentI18n({ title_i18n: titleI18n, description_i18n: descriptionI18n });
+    setRewardContentLanguage('de');
     setRewardForm({
-      title: template.title ?? '',
-      description: template.description ?? '',
+      title: titleI18n.de ?? template.title ?? '',
+      description: descriptionI18n.de ?? template.description ?? '',
       type: templateType,
       pointsCost: normalizedPointsCost,
       voucherCode: template.voucher_code ?? '',
@@ -3617,6 +3657,13 @@ function AdminPage() {
     setLocationMessage(null);
     setHasAttemptedLocationSubmit(false);
     setLocationForm(defaultLocationForm());
+    setLocationContentLanguage('de');
+    setLocationContentI18n({
+      name_i18n: { de: '', en: '' },
+      description_i18n: { de: '', en: '' },
+      address_i18n: { de: '', en: '' },
+      category_description_i18n: { de: '', en: '' },
+    });
   }, [mode, isEditingLocation]);
 
   const handlePublishTask = async () => {
@@ -3694,6 +3741,8 @@ function AdminPage() {
         const payload: any = {
           title: taskForm.title,
           description: taskForm.description,
+          title_i18n: contentI18n.title_i18n,
+          description_i18n: contentI18n.description_i18n,
           type: taskForm.type,
           points: Number(taskForm.points) || 0,
           co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
@@ -3716,8 +3765,10 @@ function AdminPage() {
           if (taskForm.articleSource === 'url') {
             payload.article_url = taskForm.article_url.trim();
             payload.article_content = null;
+            payload.article_content_i18n = null;
           } else {
             payload.article_content = taskForm.article_content.trim();
+            payload.article_content_i18n = contentI18n.article_content_i18n;
             payload.article_url = null;
           }
           payload.quiz_questions = quizPayload;
@@ -3787,6 +3838,8 @@ function AdminPage() {
         const payload: any = {
           title: taskForm.title,
           description: taskForm.description,
+          title_i18n: contentI18n.title_i18n,
+          description_i18n: contentI18n.description_i18n,
           type: template.type,
           points: Number(taskForm.points) || 0,
           co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
@@ -3808,8 +3861,10 @@ function AdminPage() {
           if (taskForm.articleSource === 'url') {
             payload.article_url = taskForm.article_url.trim();
             payload.article_content = null;
+            payload.article_content_i18n = null;
           } else {
             payload.article_content = taskForm.article_content.trim();
+            payload.article_content_i18n = contentI18n.article_content_i18n;
             payload.article_url = null;
           }
           payload.quiz_questions = quizPayload;
@@ -3875,6 +3930,8 @@ function AdminPage() {
       const payload: any = {
         title: taskForm.title,
         description: taskForm.description,
+        title_i18n: contentI18n.title_i18n,
+        description_i18n: contentI18n.description_i18n,
         type: taskForm.type,
         points: Number(taskForm.points) || 0,
         co2_savings_kg: Number(taskForm.co2_savings_kg) || 0,
@@ -3897,8 +3954,10 @@ function AdminPage() {
         if (taskForm.articleSource === 'url') {
           payload.article_url = taskForm.article_url.trim();
           payload.article_content = null;
+          payload.article_content_i18n = null;
         } else {
           payload.article_content = taskForm.article_content.trim();
+          payload.article_content_i18n = contentI18n.article_content_i18n;
           payload.article_url = null;
         }
         payload.quiz_questions = quizPayload;
@@ -3992,6 +4051,8 @@ function AdminPage() {
       const basePayload: any = {
         title: rewardForm.title,
         description: rewardForm.description,
+        title_i18n: rewardContentI18n.title_i18n,
+        description_i18n: rewardContentI18n.description_i18n,
         pointsCost,
         rewardType: rewardForm.type,
         zielgruppe: null, // Rewards are visible to all users by default
@@ -4087,12 +4148,15 @@ function AdminPage() {
       const payload: any = {
         name: locationForm.name.trim(),
         description: locationForm.description.trim(),
+        name_i18n: locationContentI18n.name_i18n,
+        description_i18n: locationContentI18n.description_i18n,
         mode: locationForm.mode,
         active: Boolean(locationForm.active),
       };
 
       if (locationForm.mode === 'physical') {
         payload.address = locationForm.address.trim();
+        payload.address_i18n = locationContentI18n.address_i18n;
         payload.latitude = Number.parseFloat(locationForm.latitude);
         payload.longitude = Number.parseFloat(locationForm.longitude);
       }
@@ -4103,6 +4167,7 @@ function AdminPage() {
       if (locationForm.categoryDescription) {
         payload.categoryDescription = locationForm.categoryDescription.trim();
       }
+      payload.category_description_i18n = locationContentI18n.category_description_i18n;
 
       if (isEditingLocation && editingLocationId) {
         await updateLocationMutation.mutateAsync({ id: editingLocationId, payload });
@@ -4463,9 +4528,20 @@ function AdminPage() {
       : '';
     setTaskSource(source);
     setSelectedExistingTaskId('');
+    const titleI18n = (task as any).title_i18n && typeof (task as any).title_i18n === 'object'
+      ? (task as any).title_i18n
+      : { de: task.title ?? '', en: task.title ?? '' };
+    const descriptionI18n = (task as any).description_i18n && typeof (task as any).description_i18n === 'object'
+      ? (task as any).description_i18n
+      : { de: task.description ?? '', en: task.description ?? '' };
+    const articleContentI18n = (task as any).article_content_i18n && typeof (task as any).article_content_i18n === 'object'
+      ? (task as any).article_content_i18n
+      : { de: (task as any).article_content ?? '', en: (task as any).article_content ?? '' };
+    setContentI18n({ title_i18n: titleI18n, description_i18n: descriptionI18n, article_content_i18n: articleContentI18n });
+    setContentLanguage('de');
     setTaskForm({
-      title: task.title ?? '',
-      description: task.description ?? '',
+      title: titleI18n.de ?? task.title ?? '',
+      description: descriptionI18n.de ?? task.description ?? '',
       type: task.type,
       points: task.points ?? 0,
       video_url: task.video_url ?? '',
@@ -4474,7 +4550,7 @@ function AdminPage() {
       quizQuestions:
         (task.type === 'video' || task.type === 'quiz' || task.type === 'article_quiz') ? normalizeQuizQuestions(task.quiz_questions ?? []) : [],
       article_url: (task as any).article_url ?? '',
-      article_content: (task as any).article_content ?? '',
+      article_content: articleContentI18n.de ?? (task as any).article_content ?? '',
       articleSource: (task as any).article_url ? 'url' : 'content',
       surveyQuestions: (task as any).survey_questions ?? [],
       surveyType: (task as any).survey_type ?? 'mixed',
@@ -4552,6 +4628,8 @@ function AdminPage() {
     setTaskSource('');
     setSelectedExistingTaskId('');
     setTaskForm(defaultTaskForm('video'));
+    setContentLanguage('de');
+    setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     setTaskMessage(null);
     setHasAttemptedPublish(false);
     if (taskReturnMode) {
@@ -4577,9 +4655,17 @@ function AdminPage() {
         ? Number(template.points_cost)
         : 0;
     const normalizedPointsCost = Number.isNaN(pointsCostRaw) ? 0 : pointsCostRaw;
+    const titleI18n = (template as any).title_i18n && typeof (template as any).title_i18n === 'object'
+      ? (template as any).title_i18n
+      : { de: template.title ?? '', en: template.title ?? '' };
+    const descriptionI18n = (template as any).description_i18n && typeof (template as any).description_i18n === 'object'
+      ? (template as any).description_i18n
+      : { de: template.description ?? '', en: template.description ?? '' };
+    setRewardContentI18n({ title_i18n: titleI18n, description_i18n: descriptionI18n });
+    setRewardContentLanguage('de');
     setRewardForm({
-      title: template.title ?? '',
-      description: template.description ?? '',
+      title: titleI18n.de ?? template.title ?? '',
+      description: descriptionI18n.de ?? template.description ?? '',
       type: templateType,
       pointsCost: normalizedPointsCost,
       voucherCode: template.voucher_code ?? '',
@@ -4608,6 +4694,8 @@ function AdminPage() {
     setRewardSource('');
     setSelectedRewardTemplate('');
     setRewardForm(defaultRewardForm('discount'));
+    setRewardContentLanguage('de');
+    setRewardContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' } });
     setRewardMessage(null);
     setHasAttemptedRewardPublish(false);
     if (rewardReturnMode) {
@@ -4623,11 +4711,30 @@ function AdminPage() {
     setMode('location');
     setLocationManagementMessage(null);
     setLocationMessage(null);
+    const nameI18n = (location as any).name_i18n && typeof (location as any).name_i18n === 'object'
+      ? (location as any).name_i18n
+      : { de: location.name ?? '', en: location.name ?? '' };
+    const descriptionI18n = (location as any).description_i18n && typeof (location as any).description_i18n === 'object'
+      ? (location as any).description_i18n
+      : { de: location.description ?? '', en: location.description ?? '' };
+    const addressI18n = (location as any).address_i18n && typeof (location as any).address_i18n === 'object'
+      ? (location as any).address_i18n
+      : { de: (location as any).address ?? '', en: (location as any).address ?? '' };
+    const categoryDescI18n = (location as any).category_description_i18n && typeof (location as any).category_description_i18n === 'object'
+      ? (location as any).category_description_i18n
+      : { de: (location as any).category_description ?? '', en: (location as any).category_description ?? '' };
+    setLocationContentI18n({
+      name_i18n: nameI18n,
+      description_i18n: descriptionI18n,
+      address_i18n: addressI18n,
+      category_description_i18n: categoryDescI18n,
+    });
+    setLocationContentLanguage('de');
     setLocationForm({
-      name: location.name ?? '',
-      description: location.description ?? '',
+      name: nameI18n.de ?? location.name ?? '',
+      description: descriptionI18n.de ?? location.description ?? '',
       mode: location.is_online ? 'online' : 'physical',
-      address: location.address ?? '',
+      address: addressI18n.de ?? (location as any).address ?? '',
       latitude:
         location.latitude !== null && location.latitude !== undefined
           ? String(location.latitude)
@@ -4638,7 +4745,7 @@ function AdminPage() {
           : '',
       active: location.active ?? true,
       category: (location as any).category ?? '',
-      categoryDescription: (location as any).category_description ?? '',
+      categoryDescription: categoryDescI18n.de ?? (location as any).category_description ?? '',
     });
     setIsEditingLocation(true);
     setEditingLocationId(location.id);
@@ -4649,6 +4756,13 @@ function AdminPage() {
     setIsEditingLocation(false);
     setEditingLocationId(null);
     setLocationForm(defaultLocationForm());
+    setLocationContentLanguage('de');
+    setLocationContentI18n({
+      name_i18n: { de: '', en: '' },
+      description_i18n: { de: '', en: '' },
+      address_i18n: { de: '', en: '' },
+      category_description_i18n: { de: '', en: '' },
+    });
     setLocationMessage(null);
     setHasAttemptedLocationSubmit(false);
     if (locationReturnMode) {
@@ -4663,6 +4777,13 @@ function AdminPage() {
     setLocationReturnMode(mode);
     setLocationMessage(null);
     setLocationForm(defaultLocationForm());
+    setLocationContentLanguage('de');
+    setLocationContentI18n({
+      name_i18n: { de: '', en: '' },
+      description_i18n: { de: '', en: '' },
+      address_i18n: { de: '', en: '' },
+      category_description_i18n: { de: '', en: '' },
+    });
     setIsEditingLocation(false);
     setEditingLocationId(null);
     setMode('location');
@@ -4678,6 +4799,8 @@ function AdminPage() {
     setTaskSource('');
     setSelectedExistingTaskId('');
     setTaskForm(defaultTaskForm('video'));
+    setContentLanguage('de');
+    setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     setHasAttemptedPublish(false);
   };
 
@@ -4691,6 +4814,8 @@ function AdminPage() {
     setRewardSource('');
     setSelectedRewardTemplate('');
     setRewardForm(defaultRewardForm('discount'));
+    setRewardContentLanguage('de');
+    setRewardContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' } });
     setHasAttemptedRewardPublish(false);
   };
 
@@ -5084,9 +5209,6 @@ function AdminPage() {
       <header className="admin-header">
         <nav className="admin-navbar">
           <div className="admin-navbar-space" aria-hidden="true" />
-          <div className="admin-navbar-language">
-            <LanguageSwitcher />
-          </div>
           <button className="admin-logout-button" onClick={logout} type="button">
             {t('navigation.logout')}
           </button>
@@ -5161,8 +5283,8 @@ function AdminPage() {
             </button>
             <button className="admin-choice-card" onClick={() => setMode('photoValidation')} style={{ position: 'relative' }}>
               <span className="admin-choice-icon">📸</span>
-              <h2>{t('admin.actions.photoValidation.title', 'Foto-Aufgaben verifizieren')}</h2>
-              <p>{t('admin.actions.photoValidation.description', 'Foto-Aufgaben prüfen und freigeben oder ablehnen')}</p>
+              <h2>{t('admin.actions.photoValidation.title')}</h2>
+              <p>{t('admin.actions.photoValidation.description')}</p>
               {pendingPhotoTasks.length > 0 && (
                 <span style={{
                   position: 'absolute',
@@ -5202,8 +5324,8 @@ function AdminPage() {
             </button>
             <button className="admin-choice-card" onClick={() => setMode('pointsBonus')}>
               <span className="admin-choice-icon">🎫</span>
-              <h2>{t('admin.actions.pointsBonus.title', 'Bonus-Codes generieren')}</h2>
-              <p>{t('admin.actions.pointsBonus.description', 'QR-Codes für Bonuspunkte generieren')}</p>
+              <h2>{t('admin.actions.pointsBonus.title')}</h2>
+              <p>{t('admin.actions.pointsBonus.description')}</p>
             </button>
           </div>
         </>
@@ -5471,7 +5593,7 @@ function AdminPage() {
                         setValidationJobStatus(null);
                       }}
                     >
-                      {t('common.actions.close', 'Schließen')}
+                      {t('common.actions.close')}
                     </button>
                   </div>
                 )}
@@ -5954,7 +6076,7 @@ function AdminPage() {
                       try {
                         const factorValue = Number.parseFloat(editingFactorValue);
                         if (isNaN(factorValue) || factorValue <= 0) {
-                          setParameterMessage({ type: 'error', text: 'Faktor muss eine positive Zahl sein' });
+                          setParameterMessage({ type: 'error', text: t('admin.parameterManage.factorMustBePositive') });
                           return;
                         }
                         await api.setSystemConfig('points_calculation_factor', String(factorValue), 'Factor for calculating task points: (difficulty_weight * time_required_weight) * factor');
@@ -6093,6 +6215,59 @@ function AdminPage() {
                     </div>
                     <TaskTypeBadge type={taskForm.type} thumbnailUrl={taskForm.thumbnailUrl} />
                   </div>
+                  <div className="admin-field" style={{ marginBottom: '1rem' }}>
+                    <span className="admin-field-label">{t('admin.task.contentLanguage')}</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                      <button
+                        type="button"
+                        className={contentLanguage === 'de' ? 'admin-button primary' : 'admin-button secondary'}
+                        onClick={() => {
+                          if (contentLanguage === 'en') {
+                            const nextI18n = {
+                              ...contentI18n,
+                              title_i18n: { ...contentI18n.title_i18n, en: taskForm.title },
+                              description_i18n: { ...contentI18n.description_i18n, en: taskForm.description },
+                              article_content_i18n: { ...contentI18n.article_content_i18n, en: taskForm.article_content },
+                            };
+                            setContentI18n(nextI18n);
+                            setContentLanguage('de');
+                            setTaskForm((prev) => ({
+                              ...prev,
+                              title: nextI18n.title_i18n.de,
+                              description: nextI18n.description_i18n.de,
+                              article_content: nextI18n.article_content_i18n.de,
+                            }));
+                          }
+                        }}
+                      >
+                        {t('admin.task.contentLanguageDe')}
+                      </button>
+                      <button
+                        type="button"
+                        className={contentLanguage === 'en' ? 'admin-button primary' : 'admin-button secondary'}
+                        onClick={() => {
+                          if (contentLanguage === 'de') {
+                            const nextI18n = {
+                              ...contentI18n,
+                              title_i18n: { ...contentI18n.title_i18n, de: taskForm.title },
+                              description_i18n: { ...contentI18n.description_i18n, de: taskForm.description },
+                              article_content_i18n: { ...contentI18n.article_content_i18n, de: taskForm.article_content },
+                            };
+                            setContentI18n(nextI18n);
+                            setContentLanguage('en');
+                            setTaskForm((prev) => ({
+                              ...prev,
+                              title: nextI18n.title_i18n.en,
+                              description: nextI18n.description_i18n.en,
+                              article_content: nextI18n.article_content_i18n.en,
+                            }));
+                          }
+                        }}
+                      >
+                        {t('admin.task.contentLanguageEn')}
+                      </button>
+                    </div>
+                  </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     {isEditingTask && (
                       <label className="admin-field">
@@ -6122,23 +6297,33 @@ function AdminPage() {
                       <input
                         type="text"
                         value={taskForm.title}
-                        onChange={(event) =>
-                          setTaskForm((prev) => ({ ...prev, title: event.target.value }))
-                        }
+                        onChange={(event) => {
+                          const v = event.target.value;
+                          setTaskForm((prev) => ({ ...prev, title: v }));
+                          setContentI18n((prev) => ({
+                            ...prev,
+                            title_i18n: { ...prev.title_i18n, [contentLanguage]: v },
+                          }));
+                        }}
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
                       <FieldLabel label={t('admin.task.fields.description')} required />
                       <textarea
                         value={taskForm.description}
-                        onChange={(event) =>
-                          setTaskForm((prev) => ({ ...prev, description: event.target.value }))
-                        }
+                        onChange={(event) => {
+                          const v = event.target.value;
+                          setTaskForm((prev) => ({ ...prev, description: v }));
+                          setContentI18n((prev) => ({
+                            ...prev,
+                            description_i18n: { ...prev.description_i18n, [contentLanguage]: v },
+                          }));
+                        }}
                         rows={3}
                       />
                     </label>
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Thumbnail (optional)" />
+                      <FieldLabel label={t('admin.task.fields.thumbnailOptional')} />
                       <div className="admin-upload-field">
                         {(taskForm.thumbnailUrl || taskForm.thumbnailFile) && (
                           <div style={{ marginBottom: '0.5rem' }}>
@@ -6160,7 +6345,7 @@ function AdminPage() {
                         )}
                         <div className="admin-upload-control">
                           <label className="admin-upload-button">
-                            <span>Choose Thumbnail</span>
+                            <span>{t('admin.task.chooseThumbnail')}</span>
                             <input
                               type="file"
                               accept="image/png,image/jpeg,image/jpg"
@@ -6178,7 +6363,7 @@ function AdminPage() {
                             {taskForm.thumbnailFile ? taskForm.thumbnailFile.name : taskForm.thumbnailUrl ? 'Current thumbnail' : 'No thumbnail selected'}
                           </span>
                         </div>
-                        <p className="admin-field-note">PNG or JPG, max 2MB. Will be resized to 48x48px.</p>
+                        <p className="admin-field-note">{t('admin.task.thumbnailNote')}</p>
                       </div>
                     </div>
                     <label className="admin-field">
@@ -6443,7 +6628,7 @@ function AdminPage() {
                                     }}
                                     style={{ marginLeft: 'auto' }}
                                   >
-                                    {t('common.actions.delete', 'Löschen')}
+                                    {t('common.actions.delete')}
                                   </button>
                                 )}
                               </div>
@@ -6451,7 +6636,7 @@ function AdminPage() {
                             {/* Video Preview */}
                             {(taskForm.videoFile || (taskForm.video_url && taskForm.video_url.includes('/uploads/'))) && (
                               <div style={{ marginTop: '1rem' }}>
-                                <FieldLabel label={t('admin.task.videoPreview', 'Video-Vorschau')} />
+                                <FieldLabel label={t('admin.task.videoPreview')} />
                                 <div style={{ marginTop: '0.5rem', border: '1px solid var(--color-border)', borderRadius: 'var(--border-radius)', overflow: 'hidden', maxWidth: '100%' }}>
                                   {taskForm.videoFile ? (
                                     <video
@@ -6480,17 +6665,17 @@ function AdminPage() {
                     {taskForm.type === 'qr' && (
                       <>
                         <label className="admin-field admin-field-span-2">
-                          <FieldLabel label={t('admin.task.fields.qrCodeValue', 'QR-Code (optional - wird automatisch generiert)')} />
+                          <FieldLabel label={t('admin.task.fields.qrCodeValue')} />
                           <input
                             type="text"
                             value={taskForm.qr_code}
                             onChange={(event) =>
                               setTaskForm((prev) => ({ ...prev, qr_code: event.target.value }))
                             }
-                            placeholder={t('admin.task.fields.qrCodePlaceholder', 'Leer lassen für automatische Generierung')}
+                            placeholder={t('admin.task.fields.qrCodePlaceholder')}
                           />
                           <p className="admin-field-note">
-                            {t('admin.task.fields.qrCodeNote', 'Wenn kein QR-Code angegeben wird, wird automatisch ein eindeutiger Code generiert.')}
+                            {t('admin.task.fields.qrCodeNote')}
                           </p>
                         </label>
                         {taskForm.qr_code && taskForm.qr_code.trim() && (
@@ -6505,7 +6690,7 @@ function AdminPage() {
                             marginTop: 'var(--spacing-sm)'
                           }}>
                             <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-text)' }}>
-                              {t('admin.task.fields.qrCodePreview', 'QR-Code Vorschau')}
+                              {t('admin.task.fields.qrCodePreview')}
                             </h4>
                             <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--spacing-md)', background: 'white', borderRadius: 'var(--border-radius)' }}>
                               <QRCode value={taskForm.qr_code.trim()} size={256} />
@@ -6518,7 +6703,7 @@ function AdminPage() {
                               textAlign: 'center'
                             }}>
                               <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
-                                {t('admin.task.fields.qrCodeLabel', 'QR-Code:')}
+                                {t('admin.task.fields.qrCodeLabel')}
                               </p>
                               <code style={{ 
                                 fontSize: '0.85rem', 
@@ -6666,9 +6851,14 @@ function AdminPage() {
                             <FieldLabel label={t('admin.task.fields.articleContent')} required />
                             <textarea
                               value={taskForm.article_content}
-                              onChange={(event) =>
-                                setTaskForm((prev) => ({ ...prev, article_content: event.target.value }))
-                              }
+                              onChange={(event) => {
+                                const v = event.target.value;
+                                setTaskForm((prev) => ({ ...prev, article_content: v }));
+                                setContentI18n((prev) => ({
+                                  ...prev,
+                                  article_content_i18n: { ...prev.article_content_i18n, [contentLanguage]: v },
+                                }));
+                              }}
                               rows={10}
                               placeholder={t('admin.task.articleContentPlaceholder')}
                             />
@@ -6755,12 +6945,12 @@ function AdminPage() {
                 </section>
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Metadaten & Zugriff</h3>
-                    <p>Metadaten und zusätzliche Informationen zur Aufgabe</p>
+                    <h3>{t('admin.task.metadataTitle')}</h3>
+                    <p>{t('admin.task.metadataDescription')}</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field">
-                      <FieldLabel label="Kategorie" />
+                      <FieldLabel label={t('admin.task.fields.category')} />
                       <select
                         value={taskForm.category || ''}
                         onChange={(event) =>
@@ -6771,7 +6961,7 @@ function AdminPage() {
                         }
                         className="admin-select"
                       >
-                        <option value="">-- Keine Auswahl --</option>
+                        <option value="">{t('admin.noSelection')}</option>
                         {(taskParametersByType['category'] || []).map((param) => (
                           <option key={param.id} value={param.value}>
                             {param.value}
@@ -6780,7 +6970,7 @@ function AdminPage() {
                       </select>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Schwierigkeitsgrad" />
+                      <FieldLabel label={t('admin.task.fields.difficulty')} />
                       <select
                         value={taskForm.difficulty || ''}
                         onChange={(event) =>
@@ -6791,7 +6981,7 @@ function AdminPage() {
                         }
                         className="admin-select"
                       >
-                        <option value="">-- Keine Auswahl --</option>
+                        <option value="">{t('admin.noSelection')}</option>
                         {(taskParametersByType['difficulty'] || []).map((param) => (
                           <option key={param.id} value={param.value}>
                             {param.value}
@@ -6800,7 +6990,7 @@ function AdminPage() {
                       </select>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Zeitaufwand" />
+                      <FieldLabel label={t('admin.task.fields.timeRequired')} />
                       <select
                         value={taskForm.time_required || ''}
                         onChange={(event) =>
@@ -6811,7 +7001,7 @@ function AdminPage() {
                         }
                         className="admin-select"
                       >
-                        <option value="">-- Keine Auswahl --</option>
+                        <option value="">{t('admin.noSelection')}</option>
                         {(taskParametersByType['time_required'] || []).map((param) => (
                           <option key={param.id} value={param.value}>
                             {param.value}
@@ -6820,7 +7010,7 @@ function AdminPage() {
                       </select>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Ort/Werkzeug" />
+                      <FieldLabel label={t('admin.task.fields.locationTool')} />
                       <select
                         value={taskForm.location_tool || ''}
                         onChange={(event) =>
@@ -6831,7 +7021,7 @@ function AdminPage() {
                         }
                         className="admin-select"
                       >
-                        <option value="">-- Keine Auswahl --</option>
+                        <option value="">{t('admin.noSelection')}</option>
                         {(taskParametersByType['location_tool'] || []).map((param) => (
                           <option key={param.id} value={param.value}>
                             {param.value}
@@ -6840,15 +7030,15 @@ function AdminPage() {
                       </select>
                     </div>
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Teams (optional)" />
+                      <FieldLabel label={t('admin.task.fields.teamsOptional')} />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Teams ausgewählt werden, ist diese Aufgabe nur für Mitglieder dieser Teams sichtbar. Keine Auswahl = für alle sichtbar.
+                        {t('admin.task.fields.taskTeamsHint')}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
                         {teamsLoading ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Teams...</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.teams.loading')}</div>
                         ) : teamsList.filter(t => t.active).length === 0 ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Teams verfügbar</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.teams.noneAvailable')}</div>
                         ) : (
                           teamsList.filter(t => t.active).map((team) => (
                             <label key={team.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -6879,15 +7069,15 @@ function AdminPage() {
                       </div>
                     </div>
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Wettbewerbe (optional)" />
+                      <FieldLabel label={t('admin.task.fields.contestsOptional')} />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Wettbewerbe ausgewählt werden, ist diese Aufgabe nur für Teilnehmer dieser Wettbewerbe sichtbar. Keine Auswahl = für alle sichtbar.
+                        {t('admin.task.fields.taskContestsHint')}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
                         {contestsLoading ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Wettbewerbe...</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.contests.loading')}</div>
                         ) : contestsList.filter(c => c.active).length === 0 ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Wettbewerbe verfügbar</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.contests.noneAvailable')}</div>
                         ) : (
                           contestsList.filter(c => c.active).map((contest) => (
                             <label key={contest.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -6944,7 +7134,7 @@ function AdminPage() {
                         className="admin-action-button secondary"
                         onClick={cancelTaskEdit}
                       >
-                        {t('common.actions.cancel', 'Abbrechen')}
+                        {t('common.actions.cancel')}
                       </button>
                     )}
                     <button
@@ -7001,9 +7191,9 @@ function AdminPage() {
             </div>
           </header>
 
-          {rewardTemplatesLoading && <p>Loading reward templates…</p>}
+          {rewardTemplatesLoading && <p>{t('admin.reward.loadingTemplates')}</p>}
           {Boolean(rewardTemplatesError) && (
-            <p className="admin-error">Failed to load reward templates.</p>
+            <p className="admin-error">{t('admin.reward.failedLoadTemplates')}</p>
           )}
           {Boolean(locationsError) && (
             <p className="admin-error">
@@ -7032,7 +7222,7 @@ function AdminPage() {
 
             {!isEditingReward && rewardSource === 'existing' && (
               <label className="admin-field">
-                <span>Select existing reward</span>
+                <span>{t('admin.reward.selectExistingReward')}</span>
                 <select
                   value={selectedRewardTemplate}
                   onChange={(event) => setSelectedRewardTemplate(event.target.value)}
@@ -7061,9 +7251,48 @@ function AdminPage() {
                   <div className="admin-form-section-header">
                     <div>
                       <h3>{t('admin.reward.details.title')}</h3>
-                      <p>Define the reward content and optional integrations.</p>
+                      <p>{t('admin.reward.defineContent')}</p>
                     </div>
                     <RewardTypeBadge type={rewardForm.type} thumbnailUrl={rewardForm.thumbnailUrl} />
+                  </div>
+                  <div className="admin-field" style={{ marginBottom: '1rem' }}>
+                    <span className="admin-field-label">{t('admin.task.contentLanguage')}</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                      <button
+                        type="button"
+                        className={rewardContentLanguage === 'de' ? 'admin-button primary' : 'admin-button secondary'}
+                        onClick={() => {
+                          if (rewardContentLanguage === 'en') {
+                            const nextI18n = {
+                              title_i18n: { ...rewardContentI18n.title_i18n, en: rewardForm.title },
+                              description_i18n: { ...rewardContentI18n.description_i18n, en: rewardForm.description },
+                            };
+                            setRewardContentI18n(nextI18n);
+                            setRewardContentLanguage('de');
+                            setRewardForm((prev) => ({ ...prev, title: nextI18n.title_i18n.de, description: nextI18n.description_i18n.de }));
+                          }
+                        }}
+                      >
+                        {t('admin.task.contentLanguageDe')}
+                      </button>
+                      <button
+                        type="button"
+                        className={rewardContentLanguage === 'en' ? 'admin-button primary' : 'admin-button secondary'}
+                        onClick={() => {
+                          if (rewardContentLanguage === 'de') {
+                            const nextI18n = {
+                              title_i18n: { ...rewardContentI18n.title_i18n, de: rewardForm.title },
+                              description_i18n: { ...rewardContentI18n.description_i18n, de: rewardForm.description },
+                            };
+                            setRewardContentI18n(nextI18n);
+                            setRewardContentLanguage('en');
+                            setRewardForm((prev) => ({ ...prev, title: nextI18n.title_i18n.en, description: nextI18n.description_i18n.en }));
+                          }
+                        }}
+                      >
+                        {t('admin.task.contentLanguageEn')}
+                      </button>
+                    </div>
                   </div>
                   <div className="admin-form-grid admin-form-grid-two">
                     {isEditingReward && (
@@ -7092,23 +7321,27 @@ function AdminPage() {
                       <input
                         type="text"
                         value={rewardForm.title}
-                        onChange={(event) =>
-                          setRewardForm((prev) => ({ ...prev, title: event.target.value }))
-                        }
+                        onChange={(event) => {
+                          const v = event.target.value;
+                          setRewardForm((prev) => ({ ...prev, title: v }));
+                          setRewardContentI18n((prev) => ({ ...prev, title_i18n: { ...prev.title_i18n, [rewardContentLanguage]: v } }));
+                        }}
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">
                       <FieldLabel label={t('admin.task.fields.description')} required />
                       <textarea
                         value={rewardForm.description}
-                        onChange={(event) =>
-                          setRewardForm((prev) => ({ ...prev, description: event.target.value }))
-                        }
+                        onChange={(event) => {
+                          const v = event.target.value;
+                          setRewardForm((prev) => ({ ...prev, description: v }));
+                          setRewardContentI18n((prev) => ({ ...prev, description_i18n: { ...prev.description_i18n, [rewardContentLanguage]: v } }));
+                        }}
                         rows={3}
                       />
                     </label>
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Thumbnail (optional)" />
+                      <FieldLabel label={t('admin.task.fields.thumbnailOptional')} />
                       <div className="admin-upload-field">
                         {(rewardForm.thumbnailUrl || rewardForm.thumbnailFile) && (
                           <div style={{ marginBottom: '0.5rem' }}>
@@ -7130,7 +7363,7 @@ function AdminPage() {
                         )}
                         <div className="admin-upload-control">
                           <label className="admin-upload-button">
-                            <span>Choose Thumbnail</span>
+                            <span>{t('admin.reward.chooseThumbnail')}</span>
                             <input
                               type="file"
                               accept="image/png,image/jpeg,image/jpg"
@@ -7148,7 +7381,7 @@ function AdminPage() {
                             {rewardForm.thumbnailFile ? rewardForm.thumbnailFile.name : rewardForm.thumbnailUrl ? 'Current thumbnail' : 'No thumbnail selected'}
                           </span>
                         </div>
-                        <p className="admin-field-note">PNG or JPG, max 2MB. Will be resized to 48x48px.</p>
+                        <p className="admin-field-note">{t('admin.reward.thumbnailNote')}</p>
                       </div>
                     </div>
                     <label className="admin-field">
@@ -7264,20 +7497,20 @@ function AdminPage() {
 
                 <section className="admin-form-section">
                   <div className="admin-form-section-header">
-                    <h3>Metadaten & Zugriff</h3>
-                    <p>Metadaten und zusätzliche Informationen zur Belohnung</p>
+                    <h3>{t('admin.reward.metadataTitle')}</h3>
+                    <p>{t('admin.reward.metadataDescription')}</p>
                   </div>
                   <div className="admin-form-grid">
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Teams (optional)" />
+                      <FieldLabel label={t('admin.reward.fields.teamsOptional')} />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Teams ausgewählt werden, ist diese Belohnung nur für Mitglieder dieser Teams sichtbar. Keine Auswahl = für alle sichtbar.
+                        {t('admin.reward.fields.rewardTeamsHint')}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
                         {teamsLoading ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Teams...</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.teams.loading')}</div>
                         ) : teamsList.filter(t => t.active).length === 0 ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Teams verfügbar</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.teams.noneAvailable')}</div>
                         ) : (
                           teamsList.filter(t => t.active).map((team) => (
                             <label key={team.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -7306,15 +7539,15 @@ function AdminPage() {
                       </div>
                     </div>
                     <div className="admin-field admin-field-span-2">
-                      <FieldLabel label="Wettbewerbe (optional)" />
+                      <FieldLabel label={t('admin.reward.fields.contestsOptional')} />
                       <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '0.5rem' }}>
-                        Wenn Wettbewerbe ausgewählt werden, ist diese Belohnung nur für Teilnehmer dieser Wettbewerbe sichtbar. Keine Auswahl = für alle sichtbar.
+                        {t('admin.reward.fields.rewardContestsHint')}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '0.75rem' }}>
                         {contestsLoading ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Lade Wettbewerbe...</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.contests.loading')}</div>
                         ) : contestsList.filter(c => c.active).length === 0 ? (
-                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>Keine aktiven Wettbewerbe verfügbar</div>
+                          <div style={{ padding: '0.5rem', color: 'var(--color-text-light)' }}>{t('admin.contests.noneAvailable')}</div>
                         ) : (
                           contestsList.filter(c => c.active).map((contest) => (
                             <label key={contest.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -7343,7 +7576,7 @@ function AdminPage() {
                       </div>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Art" />
+                      <FieldLabel label={t('admin.reward.fields.art')} />
                       <select
                         value={rewardForm.reward_art || ''}
                         onChange={(event) =>
@@ -7354,7 +7587,7 @@ function AdminPage() {
                         }
                         className="admin-select"
                       >
-                        <option value="">-- Keine Auswahl --</option>
+                        <option value="">{t('admin.noSelection')}</option>
                         {(rewardParametersByType['reward_art'] || []).map((param) => (
                           <option key={param.id} value={param.value}>
                             {param.value}
@@ -7363,7 +7596,7 @@ function AdminPage() {
                       </select>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Kategorie" />
+                      <FieldLabel label={t('admin.reward.fields.kategorie')} />
                       <select
                         value={rewardForm.kategorie || ''}
                         onChange={(event) =>
@@ -7374,7 +7607,7 @@ function AdminPage() {
                         }
                         className="admin-select"
                       >
-                        <option value="">-- Keine Auswahl --</option>
+                        <option value="">{t('admin.noSelection')}</option>
                         {(rewardParametersByType['kategorie'] || []).map((param) => (
                           <option key={param.id} value={param.value}>
                             {param.value}
@@ -7383,7 +7616,7 @@ function AdminPage() {
                       </select>
                     </div>
                     <div className="admin-field">
-                      <FieldLabel label="Mögliche Punkte" />
+                      <FieldLabel label={t('admin.taskManage.table.possiblePoints')} />
                       <input
                         type="number"
                         min={0}
@@ -7394,7 +7627,7 @@ function AdminPage() {
                             moegliche_punkte: event.target.value ? Number.parseInt(event.target.value || '0', 10) : undefined,
                           }))
                         }
-                        placeholder="Optional: Punkte beim Einlösen"
+                        placeholder={t('admin.reward.optionalPointsPlaceholder')}
                       />
                     </div>
                   </div>
@@ -7425,7 +7658,7 @@ function AdminPage() {
                         className="admin-action-button secondary"
                         onClick={cancelRewardEdit}
                       >
-                        {t('common.actions.cancel', 'Abbrechen')}
+                        {t('common.actions.cancel')}
                       </button>
                     )}
                     <button
@@ -7479,7 +7712,62 @@ function AdminPage() {
                 <div className="admin-form-section-header">
                   <div>
                     <h3>{t('admin.location.details.title')}</h3>
-                    <p>Provide the basic information for this location.</p>
+                    <p>{t('admin.location.provideBasicInfo')}</p>
+                  </div>
+                </div>
+                <div className="admin-field" style={{ marginBottom: '1rem' }}>
+                  <span className="admin-field-label">{t('admin.task.contentLanguage')}</span>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <button
+                      type="button"
+                      className={locationContentLanguage === 'de' ? 'admin-button primary' : 'admin-button secondary'}
+                      onClick={() => {
+                        if (locationContentLanguage === 'en') {
+                          const nextI18n = {
+                            name_i18n: { ...locationContentI18n.name_i18n, en: locationForm.name },
+                            description_i18n: { ...locationContentI18n.description_i18n, en: locationForm.description },
+                            address_i18n: { ...locationContentI18n.address_i18n, en: locationForm.address },
+                            category_description_i18n: { ...locationContentI18n.category_description_i18n, en: locationForm.categoryDescription },
+                          };
+                          setLocationContentI18n(nextI18n);
+                          setLocationContentLanguage('de');
+                          setLocationForm((prev) => ({
+                            ...prev,
+                            name: nextI18n.name_i18n.de,
+                            description: nextI18n.description_i18n.de,
+                            address: nextI18n.address_i18n.de,
+                            categoryDescription: nextI18n.category_description_i18n.de,
+                          }));
+                        }
+                      }}
+                    >
+                      {t('admin.task.contentLanguageDe')}
+                    </button>
+                    <button
+                      type="button"
+                      className={locationContentLanguage === 'en' ? 'admin-button primary' : 'admin-button secondary'}
+                      onClick={() => {
+                        if (locationContentLanguage === 'de') {
+                          const nextI18n = {
+                            name_i18n: { ...locationContentI18n.name_i18n, de: locationForm.name },
+                            description_i18n: { ...locationContentI18n.description_i18n, de: locationForm.description },
+                            address_i18n: { ...locationContentI18n.address_i18n, de: locationForm.address },
+                            category_description_i18n: { ...locationContentI18n.category_description_i18n, de: locationForm.categoryDescription },
+                          };
+                          setLocationContentI18n(nextI18n);
+                          setLocationContentLanguage('en');
+                          setLocationForm((prev) => ({
+                            ...prev,
+                            name: nextI18n.name_i18n.en,
+                            description: nextI18n.description_i18n.en,
+                            address: nextI18n.address_i18n.en,
+                            categoryDescription: nextI18n.category_description_i18n.en,
+                          }));
+                        }
+                      }}
+                    >
+                      {t('admin.task.contentLanguageEn')}
+                    </button>
                   </div>
                 </div>
                 <div className={`admin-form-grid admin-form-grid-two ${locationForm.mode === 'physical' ? 'admin-form-grid-location' : ''}`}>
@@ -7488,9 +7776,11 @@ function AdminPage() {
                     <input
                       type="text"
                       value={locationForm.name}
-                      onChange={(event) =>
-                        setLocationForm((prev) => ({ ...prev, name: event.target.value }))
-                      }
+                      onChange={(event) => {
+                        const v = event.target.value;
+                        setLocationForm((prev) => ({ ...prev, name: v }));
+                        setLocationContentI18n((prev) => ({ ...prev, name_i18n: { ...prev.name_i18n, [locationContentLanguage]: v } }));
+                      }}
                     />
                   </label>
                   <label className="admin-field admin-field-span-2">
@@ -7498,9 +7788,11 @@ function AdminPage() {
                     <textarea
                       rows={3}
                       value={locationForm.description}
-                      onChange={(event) =>
-                        setLocationForm((prev) => ({ ...prev, description: event.target.value }))
-                      }
+                      onChange={(event) => {
+                        const v = event.target.value;
+                        setLocationForm((prev) => ({ ...prev, description: v }));
+                        setLocationContentI18n((prev) => ({ ...prev, description_i18n: { ...prev.description_i18n, [locationContentLanguage]: v } }));
+                      }}
                     />
                   </label>
                   <div className="admin-field">
@@ -7541,7 +7833,7 @@ function AdminPage() {
                             }))
                           }
                         />
-                        <span>Online</span>
+                        <span>{t('admin.location.online')}</span>
                       </label>
                       <label className="admin-radio-option">
                         <input
@@ -7557,7 +7849,7 @@ function AdminPage() {
                             }))
                           }
                         />
-                        <span>Physical</span>
+                        <span>{t('admin.location.physical')}</span>
                       </label>
                     </div>
                   </div>
@@ -7569,10 +7861,12 @@ function AdminPage() {
                           <textarea
                             rows={3}
                             value={locationForm.address}
-                            onChange={(event) =>
-                              setLocationForm((prev) => ({ ...prev, address: event.target.value }))
-                            }
-                            placeholder="Enter the full address"
+                            onChange={(event) => {
+                              const v = event.target.value;
+                              setLocationForm((prev) => ({ ...prev, address: v }));
+                              setLocationContentI18n((prev) => ({ ...prev, address_i18n: { ...prev.address_i18n, [locationContentLanguage]: v } }));
+                            }}
+                            placeholder={t('admin.location.enterAddress')}
                             style={{ flex: 1 }}
                           />
                           <button
@@ -7580,7 +7874,7 @@ function AdminPage() {
                             onClick={handleGeocodeAddress}
                             className="admin-action-button"
                             style={{ whiteSpace: 'nowrap', padding: '0.5rem 1rem', marginTop: 0 }}
-                            title="Generate coordinates from address"
+                            title={t('admin.location.generateCoordinates')}
                           >
                             📍 Geocode
                           </button>
@@ -7595,7 +7889,7 @@ function AdminPage() {
                           onChange={(event) =>
                             setLocationForm((prev) => ({ ...prev, latitude: event.target.value }))
                           }
-                          placeholder="e.g. 52.520008"
+                          placeholder={t('admin.location.latPlaceholder')}
                         />
                       </label>
                       <label className="admin-field">
@@ -7607,7 +7901,7 @@ function AdminPage() {
                           onChange={(event) =>
                             setLocationForm((prev) => ({ ...prev, longitude: event.target.value }))
                           }
-                          placeholder="e.g. 13.404954"
+                          placeholder={t('admin.location.lngPlaceholder')}
                         />
                       </label>
                     </>
@@ -7640,9 +7934,11 @@ function AdminPage() {
                     <textarea
                       rows={2}
                       value={locationForm.categoryDescription}
-                      onChange={(event) =>
-                        setLocationForm((prev) => ({ ...prev, categoryDescription: event.target.value }))
-                      }
+                      onChange={(event) => {
+                        const v = event.target.value;
+                        setLocationForm((prev) => ({ ...prev, categoryDescription: v }));
+                        setLocationContentI18n((prev) => ({ ...prev, category_description_i18n: { ...prev.category_description_i18n, [locationContentLanguage]: v } }));
+                      }}
                       placeholder={t('admin.location.categoryDescriptionPlaceholder')}
                     />
                   </label>
@@ -7674,7 +7970,7 @@ function AdminPage() {
                       className="admin-action-button secondary"
                       onClick={cancelLocationEdit}
                     >
-                      {t('common.actions.cancel', 'Abbrechen')}
+                      {t('common.actions.cancel')}
                     </button>
                   )}
                   <button
@@ -7699,7 +7995,7 @@ function AdminPage() {
         const locationColumns: TableColumn<AdminLocation>[] = [
           {
             key: 'name',
-            label: 'Name',
+            label: t('admin.locationManage.table.name'),
             render: (location) => (
               <div className="admin-table-primary">
                 <span className="admin-table-title">{location.name}</span>
@@ -7711,16 +8007,16 @@ function AdminPage() {
           },
           {
             key: 'type',
-            label: 'Type',
+            label: t('admin.locationManage.table.type'),
             render: (location) => (
               <span className="admin-status-badge">
-                {location.is_online ? 'Online' : 'Physical'}
+                {location.is_online ? t('admin.locationManage.online') : t('admin.locationManage.physical')}
               </span>
             ),
           },
           {
             key: 'details',
-            label: 'Details',
+            label: t('admin.locationManage.table.details'),
             render: (location) =>
               location.is_online ? (
                 <span className="admin-table-subtitle">{t('admin.locationManage.online')}</span>
@@ -7737,12 +8033,12 @@ function AdminPage() {
           },
           {
             key: 'status',
-            label: 'Status',
+            label: t('admin.locationManage.table.status'),
             render: (location) => (
               <span
                 className={`admin-status-badge ${location.active ? 'active' : 'inactive'}`}
               >
-                {location.active ? 'Active' : 'Inactive'}
+                {location.active ? t('common.status.active') : t('common.status.inactive')}
               </span>
             ),
           },
@@ -7814,7 +8110,7 @@ function AdminPage() {
                 onDelete={handleLocationBulkDelete}
                 activateLabel={t('admin.locationManage.activate')}
                 deactivateLabel={t('admin.locationManage.deactivate')}
-                deleteLabel={t('common.actions.delete', 'Löschen')}
+                deleteLabel={t('common.actions.delete')}
                 selectionCountLabel={(count) =>
                   t('admin.locationManage.selectedCount', { count })
                 }
@@ -7830,7 +8126,7 @@ function AdminPage() {
                 }
                 onSelectItem={(id, checked) => locationSelection.toggle(id, checked)}
                 allSelected={allLocationsSelected}
-                emptyMessage={t('admin.locationManage.noLocations', 'No locations found.')}
+                emptyMessage={t('admin.locationManage.noLocations')}
                 actionsColumn={{
                   render: (location) => {
                     const isDefaultLocation = isDefaultLocationRecord(location);
@@ -7841,7 +8137,7 @@ function AdminPage() {
                           type="button"
                           onClick={() => startLocationEdit(location)}
                         >
-                          {t('common.actions.edit', 'Bearbeiten')}
+                          {t('common.actions.edit')}
                         </button>
                         <button
                           className="admin-action-button"
@@ -7859,7 +8155,7 @@ function AdminPage() {
                           onClick={() => handleLocationDelete(location)}
                           disabled={isDefaultLocation}
                         >
-                          {t('common.actions.delete', 'Löschen')}
+                          {t('common.actions.delete')}
                         </button>
                       </>
                     );
@@ -7901,7 +8197,7 @@ function AdminPage() {
             <div className="admin-management-top">
               <div>
                 <h3>{t('admin.taskManage.existing.title')}</h3>
-                <p>Review, edit, activate, deactivate, or delete tasks directly.</p>
+                <p>{t('admin.taskManage.reviewDescription')}</p>
               </div>
               <div className="admin-management-controls">
                 <label className="admin-toggle">
@@ -7980,7 +8276,7 @@ function AdminPage() {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Task {taskFilterTitle && '✓'}
+                      {t('admin.taskManage.table.task')} {taskFilterTitle && '✓'}
                     </th>
                     <th
                       className="admin-filter-header"
@@ -8002,7 +8298,7 @@ function AdminPage() {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Location {taskFilterLocation && '✓'}
+                      {t('admin.taskManage.table.location')} {taskFilterLocation && '✓'}
                     </th>
                     <th
                       className="admin-filter-header"
@@ -8013,7 +8309,7 @@ function AdminPage() {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Points {(taskFilterPointsMin || taskFilterPointsMax) && '✓'}
+                      {t('admin.taskManage.table.points')} {(taskFilterPointsMin || taskFilterPointsMax) && '✓'}
                     </th>
                     <th
                       className="admin-filter-header"
@@ -8024,7 +8320,7 @@ function AdminPage() {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Status {taskFilterStatus && '✓'}
+                      {t('admin.table.status')} {taskFilterStatus && '✓'}
                     </th>
                     <th
                       className="admin-filter-header"
@@ -8037,18 +8333,18 @@ function AdminPage() {
                     >
                       {t('admin.filters.recurrence')} {taskFilterRecurrence && '✓'}
                     </th>
-                    <th>Kategorie</th>
-                    <th>Schwierigkeit</th>
-                    <th>Zeitaufwand</th>
-                    <th>Ort/Werkzeug</th>
-                    <th>Actions</th>
+                    <th>{t('admin.table.category')}</th>
+                    <th>{t('admin.table.difficulty')}</th>
+                    <th>{t('admin.table.timeRequired')}</th>
+                    <th>{t('admin.table.locationTool')}</th>
+                    <th>{t('admin.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredTasks.length === 0 ? (
                     <tr>
                       <td colSpan={14} className="admin-table-empty">
-                        No tasks found.
+                        {t('admin.table.noTasksFound')}
                       </td>
                     </tr>
                   ) : (
@@ -8084,26 +8380,26 @@ function AdminPage() {
                               <span>{task.type}</span>
                             </div>
                           </td>
-                          <td data-label="Location">
+                          <td data-label={t('admin.table.location')}>
                             <div className="admin-table-secondary">
                               <span className="admin-table-title">
                                 {task.location?.name || '—'}
                               </span>
                               {task.location?.is_online ? (
-                                <span className="admin-table-subtitle">Online</span>
+                                <span className="admin-table-subtitle">{t('admin.location.online')}</span>
                               ) : task.location?.address ? (
                                 <span className="admin-table-subtitle">{task.location.address}</span>
                               ) : null}
                             </div>
                           </td>
-                          <td data-label="Points">{task.points}</td>
-                          <td data-label="Status">
+                          <td data-label={t('admin.table.points')}>{task.points}</td>
+                          <td data-label={t('admin.table.status')}>
                             <span
                               className={`admin-status-badge ${
                                 task.active ? 'active' : 'inactive'
                               }`}
                             >
-                              {task.active ? 'Active' : 'Inactive'}
+                              {task.active ? t('admin.table.active') : t('admin.table.inactive')}
                             </span>
                           </td>
                           <td data-label={t('admin.filters.recurrence')}>
@@ -8114,33 +8410,33 @@ function AdminPage() {
                               })()}
                             </span>
                           </td>
-                          <td data-label="Kategorie">
+                          <td data-label={t('admin.table.category')}>
                             <span className="admin-table-secondary">
                               {(task as any).category || '—'}
                             </span>
                           </td>
-                          <td data-label="Schwierigkeit">
+                          <td data-label={t('admin.table.difficulty')}>
                             <span className="admin-table-secondary">
                               {(task as any).difficulty || '—'}
                             </span>
                           </td>
-                          <td data-label="Zeitaufwand">
+                          <td data-label={t('admin.table.timeRequired')}>
                             <span className="admin-table-secondary">
                               {(task as any).time_required || '—'}
                             </span>
                           </td>
-                          <td data-label="Ort/Werkzeug">
+                          <td data-label={t('admin.table.locationTool')}>
                             <span className="admin-table-secondary">
                               {(task as any).location_tool || '—'}
                             </span>
                           </td>
-                          <td data-label="Actions" className="admin-table-actions">
+                          <td data-label={t('admin.table.actions')} className="admin-table-actions">
                             <button
                               className="admin-action-button"
                               type="button"
                               onClick={() => startTaskEdit(task)}
                             >
-                              {t('common.actions.edit', 'Bearbeiten')}
+                              {t('common.actions.edit')}
                             </button>
                             {task.type === 'qr' && (
                               <button
@@ -8155,8 +8451,8 @@ function AdminPage() {
                                   } catch (error: any) {
                                     showToast({
                                       type: 'error',
-                                      title: t('admin.task.qrCodeError', 'Fehler'),
-                                      message: error?.response?.data?.error || t('admin.task.qrCodeErrorMessage', 'QR-Code konnte nicht geladen werden'),
+                                      title: t('admin.task.qrCodeError'),
+                                      message: error?.response?.data?.error || t('admin.task.qrCodeErrorMessage'),
                                     });
                                   } finally {
                                     setLoadingTaskQr(false);
@@ -8164,7 +8460,7 @@ function AdminPage() {
                                 }}
                                 disabled={loadingTaskQr}
                               >
-                                {loadingTaskQr ? t('common.loading', 'Lädt...') : t('admin.task.showQrCode', 'QR-Code anzeigen')}
+                                {loadingTaskQr ? t('common.loading') : t('admin.task.showQrCode')}
                               </button>
                             )}
                             <button
@@ -8179,7 +8475,7 @@ function AdminPage() {
                               type="button"
                               onClick={() => handleTaskDelete(task.id)}
                             >
-                              {t('common.actions.delete', 'Löschen')}
+                              {t('common.actions.delete')}
                             </button>
                           </td>
                         </tr>
@@ -8390,7 +8686,7 @@ function AdminPage() {
                     disabled={!hasRewardSelection}
                     type="button"
                   >
-                    {t('common.actions.delete', 'Löschen')}
+                    {t('common.actions.delete')}
                   </button>
               </div>
               <span className="admin-selection-count">
@@ -8449,9 +8745,9 @@ function AdminPage() {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Location {rewardFilterLocation && '✓'}
+                      {t('admin.taskManage.table.location')} {rewardFilterLocation && '✓'}
                     </th>
-                    <th>Cost</th>
+                    <th>{t('admin.taskManage.table.cost')}</th>
                     <th
                       className="admin-filter-header"
                       onClick={(e) => {
@@ -8461,7 +8757,7 @@ function AdminPage() {
                       }}
                       style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                      Status {rewardFilterStatus && '✓'}
+                      {t('admin.taskManage.table.status')} {rewardFilterStatus && '✓'}
                     </th>
                     <th
                       className="admin-filter-header"
@@ -8474,17 +8770,17 @@ function AdminPage() {
                     >
                       {t('admin.filters.recurrence')} {rewardFilterRecurrence && '✓'}
                     </th>
-                    <th>Art</th>
-                    <th>Kategorie</th>
-                    <th>Mögliche Punkte</th>
-                    <th>Actions</th>
+                    <th>{t('admin.reward.fields.art')}</th>
+                    <th>{t('admin.table.category')}</th>
+                    <th>{t('admin.table.possiblePoints')}</th>
+                    <th>{t('admin.taskManage.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRewards.length === 0 ? (
                     <tr>
                       <td colSpan={14} className="admin-table-empty">
-                        No rewards found.
+                        {t('admin.taskManage.table.noRewardsFound')}
                       </td>
                     </tr>
                   ) : (
@@ -8505,10 +8801,10 @@ function AdminPage() {
                               onChange={(event) =>
                                 rewardSelection.toggle(reward.id, event.target.checked)
                               }
-                              aria-label={`Select reward ${reward.title}`}
+                              aria-label={t('admin.taskManage.table.selectReward', { title: reward.title || '' })}
                             />
                           </td>
-                          <td data-label="Reward">
+                            <td data-label={t('admin.taskManage.table.reward')}>
                              <div className="admin-table-primary">
                                <span className="admin-table-title">
                                  {reward.title || t('admin.reward.untitled')}
@@ -8524,28 +8820,28 @@ function AdminPage() {
                               <span>{reward.reward_type}</span>
                             </div>
                           </td>
-                          <td data-label="Location">
+                          <td data-label={t('admin.taskManage.table.location')}>
                             <div className="admin-table-secondary">
                               <span className="admin-table-title">
                                 {reward.location?.name || '—'}
                               </span>
                               {reward.location?.is_online ? (
-                                <span className="admin-table-subtitle">Online</span>
+                                <span className="admin-table-subtitle">{t('admin.location.online')}</span>
                               ) : reward.location?.address ? (
                                 <span className="admin-table-subtitle">{reward.location.address}</span>
                               ) : null}
                             </div>
                           </td>
-                          <td data-label="Cost">
+                          <td data-label={t('admin.taskManage.table.cost')}>
                             <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{cost}</span>
                           </td>
-                          <td data-label="Status">
+                          <td data-label={t('admin.taskManage.table.status')}>
                              <span
                                className={`admin-status-badge ${
                                  reward.active ? 'active' : 'inactive'
                                }`}
                              >
-                               {reward.active ? 'Active' : 'Inactive'}
+                               {reward.active ? t('common.status.active') : t('common.status.inactive')}
                              </span>
                            </td>
                           <td data-label={t('admin.filters.recurrence')}>
@@ -8561,23 +8857,23 @@ function AdminPage() {
                               {(reward as any).reward_art || '—'}
                             </span>
                           </td>
-                          <td data-label="Kategorie">
+                          <td data-label={t('admin.table.category')}>
                             <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                               {(reward as any).kategorie || '—'}
                             </span>
                           </td>
-                          <td data-label="Mögliche Punkte">
+                          <td data-label={t('admin.table.possiblePoints')}>
                             <span className="admin-table-secondary" style={{ fontSize: '0.75rem' }}>
                               {(reward as any).moegliche_punkte !== undefined && (reward as any).moegliche_punkte !== null ? (reward as any).moegliche_punkte : '—'}
                             </span>
                           </td>
-                          <td data-label="Actions" className="admin-table-actions">
+                          <td data-label={t('admin.table.actions')} className="admin-table-actions">
                              <button
                                className="admin-action-button"
                                type="button"
                                onClick={() => startRewardEdit(reward)}
                              >
-                               {t('common.actions.edit', 'Bearbeiten')}
+                               {t('common.actions.edit')}
                              </button>
                              <button
                                className="admin-action-button"
@@ -8591,7 +8887,7 @@ function AdminPage() {
                                type="button"
                                onClick={() => handleRewardDelete(reward.id)}
                              >
-                               {t('common.actions.delete', 'Löschen')}
+                               {t('common.actions.delete')}
                              </button>
                            </td>
                         </tr>
@@ -8748,7 +9044,7 @@ function AdminPage() {
                     onClick={() => setIsCreatingTeam(true)}
                     type="button"
                   >
-                    {t('admin.team.manage.createNew', 'Neues Team erstellen')}
+                    {t('admin.team.manage.createNew')}
                   </button>
                 <button
                   className="admin-icon-button"
@@ -8790,7 +9086,7 @@ function AdminPage() {
                   await refetchTeams();
                   setTeamManagementMessage({
                     type: 'success',
-                    text: t('admin.team.manage.createSuccess', 'Team erfolgreich erstellt'),
+                    text: t('admin.team.manage.createSuccess'),
                   });
                 }}
                 onClose={() => setIsCreatingTeam(false)}
@@ -8809,10 +9105,10 @@ function AdminPage() {
             return (
               <div className="admin-form-card">
               <div className="admin-form-section">
-                  <h3>{t('admin.team.manage.edit.title', 'Team bearbeiten')}</h3>
+                  <h3>{t('admin.team.manage.edit.title')}</h3>
                 <div className="admin-field">
                   <label>
-                      {t('admin.team.manage.edit.name', 'Team-Name')}
+                      {t('admin.team.manage.edit.name')}
                     <input
                       type="text"
                       value={editingTeam.name || ''}
@@ -8822,13 +9118,13 @@ function AdminPage() {
                           await refetchTeams();
                             setTeamManagementMessage({
                               type: 'success',
-                              text: t('admin.team.manage.edit.nameUpdated', 'Team-Name aktualisiert'),
+                              text: t('admin.team.manage.edit.nameUpdated'),
                             });
                           } catch (err: any) {
                           console.error('Failed to update team name:', err);
                             setTeamManagementMessage({
                               type: 'error',
-                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.nameUpdateError', 'Fehler beim Aktualisieren des Team-Namens'),
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.nameUpdateError'),
                             });
                         }
                       }}
@@ -8847,30 +9143,30 @@ function AdminPage() {
                             setTeamManagementMessage({
                               type: 'success',
                               text: e.target.checked 
-                                ? t('admin.team.manage.teamActivated', 'Team aktiviert')
-                                : t('admin.team.manage.teamDeactivated', 'Team deaktiviert'),
+                                ? t('admin.team.manage.teamActivated')
+                                : t('admin.team.manage.teamDeactivated'),
                             });
                           } catch (err: any) {
                           console.error('Failed to update team status:', err);
                             setTeamManagementMessage({
                               type: 'error',
-                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.statusUpdateError', 'Fehler beim Aktualisieren des Team-Status'),
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.statusUpdateError'),
                             });
                         }
                       }}
                     />
-                      {t('admin.team.manage.edit.active', 'Aktiv')}
+                      {t('admin.team.manage.edit.active')}
                   </label>
                   </div>
                   <div className="admin-form-section" style={{ marginTop: '2rem' }}>
-                    <h4>{t('admin.team.manage.edit.members', 'Mitglieder')}</h4>
+                    <h4>{t('admin.team.manage.edit.members')}</h4>
                     <div className="admin-form-actions" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <button
                         className="admin-action-button"
                         type="button"
                         onClick={() => setShowTeamAddUsersModal(true)}
                       >
-                        {t('admin.team.manage.edit.addMembers', 'Benutzer hinzufügen')}
+                        {t('admin.team.manage.edit.addMembers')}
                       </button>
                       <button
                         className="admin-action-button"
@@ -8878,7 +9174,7 @@ function AdminPage() {
                         onClick={() => setShowTeamRemoveUsersModal(true)}
                         disabled={teamMembers.length === 0}
                       >
-                        {t('admin.team.manage.edit.removeMembers', 'Benutzer entfernen')}
+                        {t('admin.team.manage.edit.removeMembers')}
                       </button>
                       <button
                         className="admin-action-button"
@@ -8891,12 +9187,12 @@ function AdminPage() {
                           } catch (err: any) {
                             setTeamManagementMessage({
                               type: 'error',
-                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.qrError', 'Fehler beim Laden des QR-Codes'),
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.qrError'),
                             });
                           }
                         }}
                       >
-                        {t('admin.team.manage.edit.showJoinQr', 'QR-Code zum Beitreten')}
+                        {t('admin.team.manage.edit.showJoinQr')}
                       </button>
                       <button
                         className="admin-action-button"
@@ -8914,27 +9210,27 @@ function AdminPage() {
                           } catch (err: any) {
                             setTeamManagementMessage({
                               type: 'error',
-                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.registrationQrError', 'Fehler beim Laden des Registrierungs-QR-Codes'),
+                              text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.registrationQrError'),
                             });
                           }
                         }}
                       >
-                        {t('admin.team.manage.edit.showRegistrationQr', 'QR-Code für Registrierung')}
+                        {t('admin.team.manage.edit.showRegistrationQr')}
                       </button>
                     </div>
                     {teamMembersLoading ? (
-                      <p>{t('admin.team.manage.edit.loadingMembers', 'Lade Mitglieder...')}</p>
+                      <p>{t('admin.team.manage.edit.loadingMembers')}</p>
                     ) : teamMembers.length === 0 ? (
-                      <p className="admin-field-note">{t('admin.team.manage.edit.noMembers', 'Keine Mitglieder')}</p>
+                      <p className="admin-field-note">{t('admin.team.manage.edit.noMembers')}</p>
                     ) : (
                       <div className="admin-table-wrapper">
                         <table className="admin-table">
                           <thead>
                             <tr>
-                              <th>{t('admin.team.manage.edit.memberName', 'Name')}</th>
-                              <th>{t('admin.team.manage.edit.memberEmail', 'E-Mail')}</th>
-                              <th>{t('admin.team.manage.edit.memberPoints', 'Beigetragene Punkte')}</th>
-                              <th>{t('admin.team.manage.edit.memberJoined', 'Beigetreten')}</th>
+                              <th>{t('admin.team.manage.edit.memberName')}</th>
+                              <th>{t('admin.team.manage.edit.memberEmail')}</th>
+                              <th>{t('admin.team.manage.edit.memberPoints')}</th>
+                              <th>{t('admin.team.manage.edit.memberJoined')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -8963,7 +9259,7 @@ function AdminPage() {
                         setTeamRegistrationQrData(null);
                       }}
                     >
-                      {t('common.actions.done', 'Fertig')}
+                      {t('common.actions.done')}
                     </button>
                   </div>
                 </div>
@@ -9040,7 +9336,7 @@ function AdminPage() {
                   disabled={!hasTeamSelection}
                   type="button"
                 >
-                  {t('common.actions.delete', 'Löschen')}
+                  {t('common.actions.delete')}
                 </button>
               </div>
               <span className="admin-selection-count">
@@ -9107,7 +9403,7 @@ function AdminPage() {
                     >
                       {t('admin.team.manage.list.active')} {teamFilterStatus && '✓'}
                     </th>
-                    <th>Aktionen</th>
+                    <th>{t('admin.taskManage.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -9164,7 +9460,7 @@ function AdminPage() {
                                 team.active ? 'active' : 'inactive'
                               }`}
                             >
-                              {team.active ? 'Active' : 'Inactive'}
+                              {team.active ? t('common.status.active') : t('common.status.inactive')}
                             </span>
                           </td>
                           <td data-label={t('common.actions')} className="admin-table-actions">
@@ -9173,7 +9469,7 @@ function AdminPage() {
                               type="button"
                               onClick={() => setEditingTeamId(team.id)}
                             >
-                              {t('common.actions.edit', 'Bearbeiten')}
+                              {t('common.actions.edit')}
                             </button>
                             <button
                               className="admin-action-button"
@@ -9187,7 +9483,7 @@ function AdminPage() {
                               type="button"
                               onClick={() => handleTeamDelete(team.id)}
                             >
-                              {t('common.actions.delete', 'Löschen')}
+                              {t('common.actions.delete')}
                             </button>
                           </td>
                         </tr>
@@ -9274,13 +9570,13 @@ function AdminPage() {
                   } catch (err: any) {
                     setTeamManagementMessage({
                       type: 'error',
-                      text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.membersAddError', 'Fehler beim Hinzufügen der Benutzer'),
+                      text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.membersAddError'),
                     });
                   }
                 }}
                 excludeUserIds={teamMembers.map((m: any) => m.user_id)}
-                title={t('admin.team.manage.edit.addMembersTitle', 'Benutzer zum Team hinzufügen')}
-                addButtonLabel={t('admin.team.manage.edit.add', 'Hinzufügen')}
+                title={t('admin.team.manage.edit.addMembersTitle')}
+                addButtonLabel={t('admin.team.manage.edit.add')}
               />
               <UserSelectionModal
                 isOpen={showTeamRemoveUsersModal}
@@ -9297,21 +9593,21 @@ function AdminPage() {
                   } catch (err: any) {
                     setTeamManagementMessage({
                       type: 'error',
-                      text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.membersRemoveError', 'Fehler beim Entfernen der Benutzer'),
+                      text: err?.response?.data?.error || err?.message || t('admin.team.manage.edit.membersRemoveError'),
                     });
                   }
                 }}
                 includeOnlyUserIds={teamMembers.map((m: any) => m.user_id)}
-                title={t('admin.team.manage.edit.removeMembersTitle', 'Benutzer aus Team entfernen')}
-                addButtonLabel={t('admin.team.manage.edit.remove', 'Entfernen')}
+                title={t('admin.team.manage.edit.removeMembersTitle')}
+                addButtonLabel={t('admin.team.manage.edit.remove')}
                 roleFilter="all"
               />
               {showTeamJoinQrModal && teamJoinQrToken && (
                 <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
                   <div className="admin-form-card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
                     <div className="admin-form-section">
-                      <h3>{t('admin.team.manage.edit.joinQrTitle', 'QR-Code zum Beitreten')}</h3>
-                      <p className="admin-field-note">{t('admin.team.manage.edit.joinQrDescription', 'Bestehende Benutzer können diesen QR-Code scannen, um dem Team beizutreten.')}</p>
+                      <h3>{t('admin.team.manage.edit.joinQrTitle')}</h3>
+                      <p className="admin-field-note">{t('admin.team.manage.edit.joinQrDescription')}</p>
                       <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
                         <QRCode value={teamJoinQrToken} size={256} />
                       </div>
@@ -9324,7 +9620,7 @@ function AdminPage() {
                             setTeamJoinQrToken(null);
                           }}
                         >
-                          {t('common.actions.close', 'Schließen')}
+                          {t('common.actions.close')}
                         </button>
                       </div>
                     </div>
@@ -9335,14 +9631,14 @@ function AdminPage() {
                 <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
                   <div className="admin-form-card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
                     <div className="admin-form-section">
-                      <h3>{t('admin.team.manage.edit.registrationQrTitle', 'QR-Code für Registrierung')}</h3>
-                      <p className="admin-field-note">{t('admin.team.manage.edit.registrationQrDescription', 'Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch dem Team beizutreten.')}</p>
+                      <h3>{t('admin.team.manage.edit.registrationQrTitle')}</h3>
+                      <p className="admin-field-note">{t('admin.team.manage.edit.registrationQrDescription')}</p>
                       <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
                         <QRCode value={teamRegistrationQrData.registrationUrl} size={256} />
                       </div>
                       <div className="admin-field" style={{ marginTop: '1rem' }}>
                         <label>
-                          {t('admin.team.manage.edit.registrationUrl', 'Registrierungs-URL')}
+                          {t('admin.team.manage.edit.registrationUrl')}
                           <input
                             type="text"
                             value={teamRegistrationQrData.registrationUrl}
@@ -9360,7 +9656,7 @@ function AdminPage() {
                             setTeamRegistrationQrData(null);
                           }}
                         >
-                          {t('common.actions.close', 'Schließen')}
+                          {t('common.actions.close')}
                         </button>
                       </div>
                     </div>
@@ -9377,8 +9673,8 @@ function AdminPage() {
         <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
           <div className="admin-form-card" style={{ maxWidth: '700px', margin: '2rem auto' }}>
             <div className="admin-form-section">
-              <h3>{t('admin.task.qrCodeTitle', 'QR-Code für Aufgabe')}</h3>
-              <p className="admin-field-note">{t('admin.task.qrCodeDescription', 'Dieser QR-Code kann ausgedruckt und für die Aufgabe verwendet werden.')}</p>
+              <h3>{t('admin.task.qrCodeTitle')}</h3>
+              <p className="admin-field-note">{t('admin.task.qrCodeDescription')}</p>
               <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
                 <QRCode value={taskQrCode} size={400} />
               </div>
@@ -9391,7 +9687,7 @@ function AdminPage() {
                 textAlign: 'center'
               }}>
                 <p style={{ margin: '0 0 var(--spacing-xs) 0', fontSize: '0.9rem', color: 'var(--color-text-light)' }}>
-                  {t('admin.task.qrCodeLabel', 'QR-Code:')}
+                  {t('admin.task.qrCodeLabel')}
                 </p>
                 <code style={{ 
                   fontSize: '0.85rem', 
@@ -9411,7 +9707,7 @@ function AdminPage() {
                     setTaskQrCode(null);
                   }}
                 >
-                  {t('common.actions.close', 'Schließen')}
+                  {t('common.actions.close')}
                 </button>
               </div>
             </div>
@@ -9452,7 +9748,7 @@ function AdminPage() {
               cursor: 'pointer',
             }}
           >
-            {t('common.actions.back', 'Zurück')}
+            {t('common.actions.back')}
           </button>
           <PointsBonusPage />
         </div>

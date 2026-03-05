@@ -1,7 +1,14 @@
 import { getPool } from '../database/connection.js';
+import { resolveI18n, normalizeContentLang } from '../utils/i18n.js';
 import { getUserById } from './user.service.js';
 import { generateQrToken } from './user-qr.service.js';
 import { UserRole } from '../constants/enums.js';
+
+function resolveContestName(contest: any, lang: 'de' | 'en'): any {
+  if (!contest) return contest;
+  const name = resolveI18n(contest.name_i18n, lang, contest.name);
+  return { ...contest, name };
+}
 
 export interface Contest {
   id: string;
@@ -89,13 +96,15 @@ export async function createContest(
   
   // Erstelle Contest
   const finalContestName = contestName || `Contest ${creator.name}`;
+  const nameI18n = { de: finalContestName, en: finalContestName };
   const contestResult = await db.query(
-    `INSERT INTO contests (created_by, name, start_date, end_date, reward_first_place, reward_second_place, reward_third_place) 
-     VALUES ($1, $2, $3, $4, $5, $6, $7) 
+    `INSERT INTO contests (created_by, name, name_i18n, start_date, end_date, reward_first_place, reward_second_place, reward_third_place) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
      RETURNING *`,
     [
       creatorId,
       finalContestName,
+      JSON.stringify(nameI18n),
       startDate,
       endDate,
       rewards?.reward_first_place || null,
@@ -203,10 +212,9 @@ export async function joinContest(userId: string, contestQrToken: string): Promi
 /**
  * Ruft alle Contests eines Benutzers ab
  */
-export async function getUserContests(userId: string): Promise<Contest[]> {
+export async function getUserContests(userId: string, preferredLanguage?: string): Promise<Contest[]> {
   const db = getPool();
   
-  // Nur aktive Contests, die noch nicht abgelaufen sind
   const result = await db.query(
     `SELECT c.* FROM contests c
      INNER JOIN contest_participants cp ON cp.contest_id = c.id
@@ -217,16 +225,16 @@ export async function getUserContests(userId: string): Promise<Contest[]> {
     [userId]
   );
   
-  return result.rows;
+  const lang = preferredLanguage ? normalizeContentLang(preferredLanguage) : null;
+  return lang ? result.rows.map((row) => resolveContestName(row, lang)) : result.rows;
 }
 
 /**
  * Ruft alle Contests eines Benutzers ab (inkl. abgelaufene) - für Rankings-Seite
  */
-export async function getAllUserContests(userId: string): Promise<Contest[]> {
+export async function getAllUserContests(userId: string, preferredLanguage?: string): Promise<Contest[]> {
   const db = getPool();
   
-  // Alle Contests, auch abgelaufene
   const result = await db.query(
     `SELECT c.* FROM contests c
      INNER JOIN contest_participants cp ON cp.contest_id = c.id
@@ -235,13 +243,14 @@ export async function getAllUserContests(userId: string): Promise<Contest[]> {
     [userId]
   );
   
-  return result.rows;
+  const lang = preferredLanguage ? normalizeContentLang(preferredLanguage) : null;
+  return lang ? result.rows.map((row) => resolveContestName(row, lang)) : result.rows;
 }
 
 /**
  * Ruft alle Contests für Front Office ab (nur Contests mit Gästen)
  */
-export async function getEmployeeContests(userId: string): Promise<Contest[]> {
+export async function getEmployeeContests(userId: string, preferredLanguage?: string): Promise<Contest[]> {
   const db = getPool();
   
   // Hole alle Contests, die der Front Office Mitarbeiter erstellt hat
@@ -283,14 +292,16 @@ export async function getEmployeeContests(userId: string): Promise<Contest[]> {
      ORDER BY c.end_date ASC`,
     [userId]
   );
-  
-  return updatedResult.rows;
+
+  const lang = preferredLanguage ? normalizeContentLang(preferredLanguage) : null;
+  const rows = lang ? updatedResult.rows.map((row) => resolveContestName(row, lang)) : updatedResult.rows;
+  return rows;
 }
 
 /**
  * Ruft Contest-Details mit Teilnehmern und Ranking ab
  */
-export async function getContestDetails(contestId: string, userId: string): Promise<ContestDetails | null> {
+export async function getContestDetails(contestId: string, userId: string, preferredLanguage?: string): Promise<ContestDetails | null> {
   const db = getPool();
   
   // Prüfe ob Benutzer Teilnehmer ist
@@ -314,9 +325,10 @@ export async function getContestDetails(contestId: string, userId: string): Prom
   if (contestResult.rows.length === 0) {
     return null;
   }
-  
-  const contest = contestResult.rows[0];
-  
+
+  const lang = preferredLanguage ? normalizeContentLang(preferredLanguage) : null;
+  const contest = lang ? resolveContestName(contestResult.rows[0], lang) : contestResult.rows[0];
+
   // Hole Ersteller-Informationen
   const creatorResult = await db.query(
     'SELECT name, email FROM users WHERE id = $1',
@@ -1214,7 +1226,7 @@ export async function validateContestRegistrationToken(qrToken: string): Promise
 /**
  * Ruft alle Contests ab (für Admin-Verwaltung)
  */
-export async function getAllContests(options?: { includeInactive?: boolean }): Promise<Contest[]> {
+export async function getAllContests(options?: { includeInactive?: boolean; preferredLanguage?: string }): Promise<Contest[]> {
   const db = getPool();
   
   const includeInactive = options?.includeInactive ?? false;
@@ -1229,7 +1241,8 @@ export async function getAllContests(options?: { includeInactive?: boolean }): P
      ORDER BY c.created_at DESC`
   );
   
-  return result.rows;
+  const lang = options?.preferredLanguage ? normalizeContentLang(options.preferredLanguage) : null;
+  return lang ? result.rows.map((row) => resolveContestName(row, lang)) : result.rows;
 }
 
 /**
@@ -1286,11 +1299,20 @@ export async function updateContest(contestId: string, data: Partial<{ name: str
   const values: any[] = [];
   let paramIndex = 1;
   
-  if (data.name !== undefined) {
+  if ((data as any).name_i18n !== undefined && (data as any).name_i18n !== null && typeof (data as any).name_i18n === 'object') {
+    const nameI18n = (data as any).name_i18n;
+    updates.push(`name_i18n = $${paramIndex++}`);
+    values.push(JSON.stringify(nameI18n));
+    const resolved = nameI18n.de ?? nameI18n.en;
+    if (resolved != null) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(resolved);
+    }
+  } else if (data.name !== undefined) {
     updates.push(`name = $${paramIndex++}`);
     values.push(data.name);
   }
-  
+
   if (data.active !== undefined) {
     updates.push(`active = $${paramIndex++}`);
     values.push(data.active);

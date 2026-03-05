@@ -34,7 +34,7 @@ export function TimelineChart({ data }: TimelineChartProps) {
   }, [data]);
 
   if (!chartData || chartData.points.length === 0) {
-    return <div className="timeline-chart-empty">{t('rankings.timeline.noData', 'Keine Daten verfügbar')}</div>;
+    return <div className="timeline-chart-empty">{t('rankings.timeline.noData')}</div>;
   }
 
   const formatDate = (dateStr: string) => {
@@ -47,15 +47,15 @@ export function TimelineChart({ data }: TimelineChartProps) {
       <div className="timeline-chart-legend">
         <div className="timeline-legend-item">
           <span className="timeline-legend-color timeline-legend-points"></span>
-          <span>{t('rankings.timeline.points', 'Punkte')}</span>
+          <span>{t('rankings.timeline.points')}</span>
         </div>
         <div className="timeline-legend-item">
           <span className="timeline-legend-color timeline-legend-trees"></span>
-          <span>{t('rankings.timeline.trees', 'Bäume')}</span>
+          <span>{t('rankings.timeline.trees')}</span>
         </div>
         <div className="timeline-legend-item">
           <span className="timeline-legend-color timeline-legend-co2"></span>
-          <span>{t('rankings.timeline.co2', 'CO₂ (kg)')}</span>
+          <span>{t('rankings.timeline.co2')}</span>
         </div>
       </div>
       <div className="timeline-chart-container">
@@ -67,12 +67,12 @@ export function TimelineChart({ data }: TimelineChartProps) {
                 <div
                   className="timeline-bar timeline-bar-points"
                   style={{ height: `${point.normalized * 100}%` }}
-                  title={`${point.points} ${t('rankings.points', 'Punkte')}`}
+                  title={`${point.points} ${t('rankings.points')}`}
                 ></div>
                 <div
                   className="timeline-bar timeline-bar-trees"
                   style={{ height: `${chartData.trees[index].normalized * 100}%` }}
-                  title={`${chartData.trees[index].trees} ${t('rankings.timeline.trees', 'Bäume')}`}
+                  title={`${chartData.trees[index].trees} ${t('rankings.timeline.trees')}`}
                 ></div>
                 <div
                   className="timeline-bar timeline-bar-co2"
@@ -85,13 +85,13 @@ export function TimelineChart({ data }: TimelineChartProps) {
         </div>
         <div className="timeline-chart-values">
           <div className="timeline-value-row">
-            <span>{t('rankings.timeline.maxPoints', 'Max. Punkte')}: {chartData.maxPoints}</span>
+            <span>{t('rankings.timeline.maxPoints')}: {chartData.maxPoints}</span>
           </div>
           <div className="timeline-value-row">
-            <span>{t('rankings.timeline.maxTrees', 'Max. Bäume')}: {chartData.maxTrees}</span>
+            <span>{t('rankings.timeline.maxTrees')}: {chartData.maxTrees}</span>
           </div>
           <div className="timeline-value-row">
-            <span>{t('rankings.timeline.maxCo2', 'Max. CO₂')}: {chartData.maxCo2.toFixed(2)} kg</span>
+            <span>{t('rankings.timeline.maxCo2')}: {chartData.maxCo2.toFixed(2)} kg</span>
           </div>
         </div>
       </div>

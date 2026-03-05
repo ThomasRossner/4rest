@@ -150,7 +150,8 @@ function StatisticsPage() {
 // Rankings page for guests
 function RankingsPage() {
   const userId = useAuthStore((s) => s.user?.id);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
   const [expandedContests, setExpandedContests] = useState<Set<string>>(new Set());
   const [expandedTeam, setExpandedTeam] = useState(false);
 
@@ -244,12 +245,12 @@ function RankingsPage() {
 
   return (
     <div className="rankings-page">
-      <h1 className="rankings-title">{t('rankings.title', 'Rankings')}</h1>
+      <h1 className="rankings-title">{t('rankings.title')}</h1>
 
       {/* Active Contests */}
       {activeContestsWithRankings.length > 0 && (
         <section className="rankings-section">
-          <h2 className="rankings-section-title">{t('rankings.contests.title', 'Aktive Contests')}</h2>
+          <h2 className="rankings-section-title">{t('rankings.contests.title')}</h2>
           {activeContestsWithRankings.map((contest: any) => {
             const isExpanded = expandedContests.has(contest.id);
             const top5 = contest.ranking.slice(0, 5);
@@ -262,9 +263,9 @@ function RankingsPage() {
             return (
               <div key={contest.id} className="rankings-contest-card">
                 <div className="rankings-contest-header">
-                  <h3 className="rankings-contest-name">{contest.name || t('rankings.contests.unnamed', 'Unbenannter Contest')}</h3>
+                  <h3 className="rankings-contest-name">{contest.name || t('rankings.contests.unnamed')}</h3>
                   <div className="rankings-contest-duration">
-                    {t('rankings.contests.duration', 'Laufzeit')}: {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+                    {t('rankings.contests.duration')}: {startDate.toLocaleDateString(dateLocale)} - {endDate.toLocaleDateString(dateLocale)}
                   </div>
                 </div>
                 <div className="rankings-list">
@@ -272,7 +273,7 @@ function RankingsPage() {
                     <div key={entry.user_id} className="rankings-item">
                       <div className="rankings-rank">#{entry.rank}</div>
                       <div className="rankings-name">{entry.user_name}</div>
-                      <div className="rankings-points">{entry.points} {t('rankings.points', 'Punkte')}</div>
+                      <div className="rankings-points">{entry.points} {t('rankings.points')}</div>
                     </div>
                   ))}
                 </div>
@@ -282,8 +283,8 @@ function RankingsPage() {
                     onClick={() => toggleContestExpanded(contest.id)}
                   >
                     {isExpanded
-                      ? t('rankings.contests.showLess', 'Weniger anzeigen')
-                      : t('rankings.contests.showAll', `Alle ${contest.ranking.length} Teilnehmer anzeigen`)}
+                      ? t('rankings.contests.showLess')
+                      : t('rankings.contests.showAll', { count: contest.ranking.length })}
                   </button>
                 )}
               </div>
@@ -295,7 +296,7 @@ function RankingsPage() {
       {/* Expired Contests */}
       {expiredContestsWithRankings.length > 0 && (
         <section className="rankings-section">
-          <h2 className="rankings-section-title">{t('rankings.contests.expired', 'Abgeschlossene Contests')}</h2>
+          <h2 className="rankings-section-title">{t('rankings.contests.expired')}</h2>
           {expiredContestsWithRankings.map((contest: any) => {
             const startDate = new Date(contest.start_date);
             const endDate = new Date(contest.end_date);
@@ -303,9 +304,9 @@ function RankingsPage() {
             return (
               <div key={contest.id} className="rankings-contest-card">
                 <div className="rankings-contest-header">
-                  <h3 className="rankings-contest-name">{contest.name || t('rankings.contests.unnamed', 'Unbenannter Contest')}</h3>
+                  <h3 className="rankings-contest-name">{contest.name || t('rankings.contests.unnamed')}</h3>
                   <div className="rankings-contest-duration">
-                    {t('rankings.contests.duration', 'Laufzeit')}: {startDate.toLocaleDateString('de-DE')} - {endDate.toLocaleDateString('de-DE')}
+                    {t('rankings.contests.duration')}: {startDate.toLocaleDateString(dateLocale)} - {endDate.toLocaleDateString(dateLocale)}
                   </div>
                 </div>
                 <div className="rankings-list">
@@ -314,11 +315,11 @@ function RankingsPage() {
                       <div key={entry.user_id} className="rankings-item">
                         <div className="rankings-rank">#{entry.rank}</div>
                         <div className="rankings-name">{entry.user_name}</div>
-                        <div className="rankings-points">{entry.points} {t('rankings.points', 'Punkte')}</div>
+                        <div className="rankings-points">{entry.points} {t('rankings.points')}</div>
                       </div>
                     ))
                   ) : (
-                    <p className="rankings-empty">{t('rankings.contests.noParticipants', 'Keine Teilnehmer')}</p>
+                    <p className="rankings-empty">{t('rankings.contests.noParticipants')}</p>
                   )}
                 </div>
               </div>
@@ -330,17 +331,17 @@ function RankingsPage() {
       {/* Team Ranking */}
       {activeTeam && teamRanking && (
         <section className="rankings-section">
-          <h2 className="rankings-section-title">{t('rankings.team.title', 'Mein Team')}</h2>
+          <h2 className="rankings-section-title">{t('rankings.team.title')}</h2>
           <div className="rankings-team-card">
             <div className="rankings-team-header">
-              <h3 className="rankings-team-name">{activeTeam.name || t('rankings.team.unnamed', 'Unbenanntes Team')}</h3>
+              <h3 className="rankings-team-name">{activeTeam.name || t('rankings.team.unnamed')}</h3>
             </div>
             <div className="rankings-list">
               {(expandedTeam ? teamRanking : teamRanking.slice(0, 5)).map((entry: any) => (
                 <div key={entry.user_id} className="rankings-item">
                   <div className="rankings-rank">#{entry.rank}</div>
                   <div className="rankings-name">{entry.user_name}</div>
-                  <div className="rankings-points">{entry.points} {t('rankings.points', 'Punkte')}</div>
+                  <div className="rankings-points">{entry.points} {t('rankings.points')}</div>
                 </div>
               ))}
             </div>
@@ -350,7 +351,7 @@ function RankingsPage() {
                 onClick={() => setExpandedTeam(!expandedTeam)}
               >
                 {expandedTeam
-                  ? t('rankings.team.showLess', 'Weniger anzeigen')
+                  ? t('rankings.team.showLess')
                   : t('rankings.team.showAll', `Alle ${teamRanking.length} Mitglieder anzeigen`)}
               </button>
             )}
@@ -361,7 +362,7 @@ function RankingsPage() {
       {/* Timeline Chart */}
       {timeline && timeline.length > 0 && (
         <section className="rankings-section">
-          <h2 className="rankings-section-title">{t('rankings.timeline.title', 'Mein Fortschritt')}</h2>
+          <h2 className="rankings-section-title">{t('rankings.timeline.title')}</h2>
           <div className="rankings-timeline-card">
             <TimelineChart data={timeline} />
           </div>

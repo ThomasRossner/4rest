@@ -7,9 +7,10 @@ import { getPool } from './connection.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-async function runMigrations() {
+/** Run all pending migrations. When used from server, do not pass any argument. When run as CLI, call runMigrations().then(...).finally(...) with exit/pool.end(). */
+export async function runMigrations(): Promise<void> {
   const pool = getPool();
-  
+
   try {
     console.log('Starting database migrations...');
     
@@ -48,6 +49,7 @@ async function runMigrations() {
       '031_task_zielgruppe',
       '033_parameter_tables',
       '034_add_parameter_weight',
+      '034_users_active',
       '035_points_calculation_factor',
       '036_reward_cost_calculation_factor',
       '037_reward_model_simplification',
@@ -78,6 +80,12 @@ async function runMigrations() {
       '052_photo_task_verification',
       '053_mailbox_messages',
       '054_remove_event_group',
+      '055_users_preferred_language',
+      '056_tasks_i18n',
+      '057_rewards_i18n',
+      '058_locations_i18n',
+      '059_contests_i18n',
+      '060_teams_i18n',
     ];
     
     // Read all migration files
@@ -121,15 +129,19 @@ async function runMigrations() {
     }
     }
     
-    console.log('\nAll migrations completed successfully!');
-    process.exit(0);
+    console.log('All migrations completed successfully.');
   } catch (error: any) {
     console.error('Migration failed:', error.message);
     console.error(error);
-    process.exit(1);
-  } finally {
-    await pool.end();
+    throw error;
   }
 }
 
-runMigrations();
+// When run as standalone script (npm run migrate)
+const isMainModule = process.argv[1]?.endsWith('migrate.ts') || process.argv[1]?.includes('migrate.js');
+if (isMainModule) {
+  runMigrations()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1))
+    .finally(() => getPool().end());
+}

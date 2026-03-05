@@ -33,17 +33,24 @@ export const api = {
     role: UserRole = 'guest',
     userType: UserType = 'explorer',
     teamRegistrationToken?: string,
-    contestRegistrationToken?: string
+    contestRegistrationToken?: string,
+    preferredLanguage?: 'de' | 'en'
   ) {
-    const res = await apiClient.post('/auth/register', { 
-      email, 
-      password, 
-      name, 
-      role, 
+    const res = await apiClient.post('/auth/register', {
+      email,
+      password,
+      name,
+      role,
       userType,
       teamRegistrationToken,
-      contestRegistrationToken
+      contestRegistrationToken,
+      preferredLanguage,
     });
+    return res.data;
+  },
+
+  async updateUserProfile(userId: string, data: { name?: string; preferredLanguage?: 'de' | 'en' }) {
+    const res = await apiClient.put(`/users/${userId}/profile`, data);
     return res.data;
   },
 

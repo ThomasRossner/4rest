@@ -19,6 +19,7 @@ import {
   getGalleryImages as getGalleryImagesService,
   generateOrGetTaskQrCode,
 } from '../services/task.service.js';
+import { getPreferredLanguage } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
 import { broadcastTaskUpdate } from '../ws/task-broadcast.js';
@@ -29,7 +30,8 @@ export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
   const isAdminOrRedaktion = authReq.user?.role === 'administrator' || authReq.user?.role === 'redaktion';
   const includeInactiveFlag = isAdminOrRedaktion && includeInactive === 'true';
   const includeAllValue = isAdminOrRedaktion && includeAll === 'true';
-  
+  const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
+
   const tasks = await getAllTasks(
     {
       limit: limit ? parseInt(limit as string, 10) : undefined,
@@ -37,14 +39,16 @@ export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
       type: type as string,
     },
     authReq.user?.id,
-    { includeAll: includeAllValue, includeInactive: includeInactiveFlag }
+    { includeAll: includeAllValue, includeInactive: includeInactiveFlag, preferredLanguage: preferredLanguage ?? undefined }
   );
-  
+
   res.json(tasks);
 });
 
 export const getTask: RequestHandler = asyncHandler(async (req, res) => {
-  const task = await getTaskById(req.params.id);
+  const authReq = req as AuthRequest;
+  const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
+  const task = await getTaskById(req.params.id, preferredLanguage ?? undefined);
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
   }

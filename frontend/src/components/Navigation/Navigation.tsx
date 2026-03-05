@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
-import { LanguageSwitcher } from '../LanguageSwitcher/LanguageSwitcher';
 import { PointsBonusScanner } from '../Rewards/PointsBonusScanner';
 import { Mailbox } from '../Mailbox/Mailbox';
 import './Navigation.css';
@@ -138,8 +137,8 @@ function Navigation() {
   // Top bar items for rezeption (Points Bonus and Contests)
   const employeeTopItems = (userRole === 'rezeption' || userRole === 'administrator')
     ? [
-        { path: '/points-bonus', label: t('navigation.pointsBonus') || 'Points Bonus', icon: '🎫' },
-        { path: '/employee-contests', label: t('navigation.contests', 'Contests') || 'Contests', icon: '🏆' },
+        { path: '/points-bonus', label: t('navigation.pointsBonus'), icon: '🎫' },
+        { path: '/employee-contests', label: t('navigation.contests'), icon: '🏆' },
       ]
     : [];
 
@@ -152,7 +151,7 @@ function Navigation() {
             <button
               className="navigation-mailbox-button"
               onClick={() => setShowMailbox(true)}
-              title={t('navigation.mailbox', 'Nachrichten')}
+              title={t('navigation.mailbox')}
             >
               <span className={`navigation-mailbox-icon ${unreadCount > 0 ? 'has-unread' : ''}`}>
                 ✉️
@@ -217,7 +216,7 @@ function Navigation() {
                   onClick={handleScanBonusQrClick}
                 >
                   <span className="navigation-user-menu-icon">📷</span>
-                  <span>{t('navigation.scanBonusQr') || 'Bonus-QR-Code scannen'}</span>
+                  <span>{t('navigation.scanBonusQr')}</span>
                 </button>
                 <button
                   className="navigation-user-menu-item navigation-user-menu-item-logout"
@@ -239,7 +238,7 @@ function Navigation() {
             className={`navigation-logo-bottom ${location.pathname === '/' ? 'active' : ''}`}
           >
             <span className="navigation-logo-icon">🌳</span>
-            <span className="navigation-logo-text">{t('navigation.home', 'Roots') || 'Roots'}</span>
+            <span className="navigation-logo-text">{t('navigation.home')}</span>
           </Link>
           {bottomNavItems.map((item) => (
             <Link

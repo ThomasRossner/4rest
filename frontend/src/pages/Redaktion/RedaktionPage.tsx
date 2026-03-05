@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { DashboardCard } from '../../components/DashboardCard/DashboardCard';
 import { SurveyAnalytics } from '../Admin/SurveyAnalytics';
 import { LocationMap } from '../../components/LocationMap/LocationMap';
@@ -310,16 +309,13 @@ function RedaktionPage() {
       <header className="redaktion-header">
         <nav className="redaktion-navbar">
           <div className="redaktion-navbar-space" />
-          <div className="redaktion-navbar-language">
-            <LanguageSwitcher />
-          </div>
           <button className="redaktion-logout-button" onClick={logout} type="button">
             {t('navigation.logout')}
           </button>
         </nav>
         <div className="redaktion-hero">
-          <h1 className="redaktion-hero-title">{t('redaktion.title', 'Redaktion')}</h1>
-          <p className="redaktion-hero-subtitle">{t('redaktion.subtitle', 'Verwaltung von Aufgaben, Belohnungen, Standorten und Umfragen')}</p>
+          <h1 className="redaktion-hero-title">{t('redaktion.title')}</h1>
+          <p className="redaktion-hero-subtitle">{t('redaktion.subtitle')}</p>
         </div>
       </header>
 
@@ -329,14 +325,14 @@ function RedaktionPage() {
           <div className="redaktion-dashboard-grid">
             <DashboardCard
               icon="🗂️"
-              title={t('redaktion.actions.manageTasks.title', 'Aufgaben verwalten')}
-              description={t('redaktion.actions.manageTasks.description', 'Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren')}
+              title={t('redaktion.actions.manageTasks.title')}
+              description={t('redaktion.actions.manageTasks.description')}
               onClick={() => setMode('taskManage')}
             />
             <DashboardCard
               icon="🧾"
-              title={t('redaktion.actions.manageRewards.title', 'Belohnungen verwalten')}
-              description={t('redaktion.actions.manageRewards.description', 'Belohnungen durchsuchen, bearbeiten und verwalten')}
+              title={t('redaktion.actions.manageRewards.title')}
+              description={t('redaktion.actions.manageRewards.description')}
               onClick={() => setMode('rewardManage')}
             />
           </div>
@@ -344,14 +340,14 @@ function RedaktionPage() {
           <div className="redaktion-dashboard-grid">
             <DashboardCard
               icon="🗺️"
-              title={t('redaktion.actions.manageLocations.title', 'Standorte verwalten')}
-              description={t('redaktion.actions.manageLocations.description', 'Standorte durchsuchen, bearbeiten oder entfernen')}
+              title={t('redaktion.actions.manageLocations.title')}
+              description={t('redaktion.actions.manageLocations.description')}
               onClick={() => setMode('locationManage')}
             />
             <DashboardCard
               icon="📊"
-              title={t('redaktion.actions.surveyAnalytics.title', 'Umfrage-Analysen')}
-              description={t('redaktion.actions.surveyAnalytics.description', 'Aggregierte Umfrageantworten mit visuellen Diagrammen und Statistiken anzeigen')}
+              title={t('redaktion.actions.surveyAnalytics.title')}
+              description={t('redaktion.actions.surveyAnalytics.description')}
               onClick={() => setMode('surveyAnalytics')}
             />
           </div>
@@ -362,17 +358,17 @@ function RedaktionPage() {
         <section className="redaktion-section">
           <header className="redaktion-section-header">
             <div>
-              <h2>{t('redaktion.surveyAnalytics.title', 'Umfrage-Analysen')}</h2>
+              <h2>{t('redaktion.surveyAnalytics.title')}</h2>
             </div>
             <div className="redaktion-actions">
               <button
                 className="redaktion-icon-button"
                 onClick={() => setMode(null)}
-                title={t('common.actions.back', 'Zurück')}
+                title={t('common.actions.back')}
                 type="button"
               >
                 <Icon name="back" />
-                <span className="sr-only">{t('common.actions.back', 'Zurück')}</span>
+                <span className="sr-only">{t('common.actions.back')}</span>
               </button>
             </div>
           </header>
@@ -383,8 +379,8 @@ function RedaktionPage() {
       {mode === 'locationManage' && (
         <section className="redaktion-section">
           <ManagementHeader
-            title={t('redaktion.locationManage.title', 'Standorte verwalten')}
-            subtitle={t('redaktion.locationManage.subtitle', 'Bestehende Standorte durchsuchen, bearbeiten oder entfernen')}
+            title={t('redaktion.locationManage.title')}
+            subtitle={t('redaktion.locationManage.subtitle')}
             cssPrefix="redaktion"
             onBack={() => setMode(null)}
             onRefresh={() => refetchLocations()}
@@ -392,22 +388,22 @@ function RedaktionPage() {
             showRefresh={true}
           />
 
-          {locationsLoading && <p>{t('redaktion.locationManage.loading', 'Lade Standorte...')}</p>}
+          {locationsLoading && <p>{t('redaktion.locationManage.loading')}</p>}
           {Boolean(locationsError) && (
-            <p className="redaktion-error">{t('redaktion.locationManage.loadError', 'Fehler beim Laden der Standorte')}</p>
+            <p className="redaktion-error">{t('redaktion.locationManage.loadError')}</p>
           )}
 
           <ManagementCard
             cssPrefix="redaktion"
-            title={t('redaktion.locationManage.existing.title', 'Bestehende Standorte')}
-            subtitle={t('redaktion.locationManage.existing.subtitle', 'Jede Aufgabe und Belohnung verweist auf einen dieser Standorte')}
+            title={t('redaktion.locationManage.existing.title')}
+            subtitle={t('redaktion.locationManage.existing.subtitle')}
             message={locationBulkOperations.message}
             topControls={
               <>
                 <div className="redaktion-filters">
                   <input
                     type="text"
-                    placeholder={t('redaktion.locationManage.filterByName', 'Nach Name filtern...')}
+                    placeholder={t('redaktion.locationManage.filterByName')}
                     value={locationFilterName}
                     onChange={(e) => setLocationFilterName(e.target.value)}
                     className="redaktion-filter-input"
@@ -417,9 +413,9 @@ function RedaktionPage() {
                     onChange={(e) => setLocationFilterStatus(e.target.value as 'active' | 'inactive' | null || null)}
                     className="redaktion-filter-select"
                   >
-                    <option value="">{t('redaktion.locationManage.filterAll', 'Alle Status')}</option>
-                    <option value="active">{t('redaktion.locationManage.filterActive', 'Aktiv')}</option>
-                    <option value="inactive">{t('redaktion.locationManage.filterInactive', 'Inaktiv')}</option>
+                    <option value="">{t('redaktion.locationManage.filterAll')}</option>
+                    <option value="active">{t('redaktion.locationManage.filterActive')}</option>
+                    <option value="inactive">{t('redaktion.locationManage.filterInactive')}</option>
                   </select>
                 </div>
                 <label className="redaktion-toggle">
@@ -432,7 +428,7 @@ function RedaktionPage() {
                       locationSelection.deselectAll();
                     }}
                   />
-                  <span>{t('redaktion.locationManage.showInactive', 'Inaktive anzeigen')}</span>
+                  <span>{t('redaktion.locationManage.showInactive')}</span>
                 </label>
               </>
             }
@@ -446,7 +442,7 @@ function RedaktionPage() {
               onDelete={handleLocationBulkDelete}
               activateLabel={t('admin.locationManage.activate')}
               deactivateLabel={t('admin.locationManage.deactivate')}
-              deleteLabel={t('common.actions.delete', 'Löschen')}
+              deleteLabel={t('common.actions.delete')}
               selectionCountLabel={(count) => t('admin.locationManage.selectedCount', { count })}
               noSelectionLabel={t('admin.locationManage.noSelection')}
             />
@@ -454,7 +450,7 @@ function RedaktionPage() {
               const locationColumns: TableColumn<any>[] = [
                 {
                   key: 'name',
-                  label: t('admin.locationManage.table.name', 'Name'),
+                  label: t('admin.locationManage.table.name'),
                   render: (location) => (
                     <div className="redaktion-table-primary">
                       <span className="redaktion-table-title">{location.name}</span>
@@ -466,16 +462,16 @@ function RedaktionPage() {
                 },
                 {
                   key: 'type',
-                  label: t('admin.locationManage.table.type', 'Type'),
+                  label: t('admin.locationManage.table.type'),
                   render: (location) => (
                     <span className="redaktion-status-badge">
-                      {location.is_online ? 'Online' : 'Physical'}
+                      {location.is_online ? t('admin.locationManage.online') : t('admin.locationManage.physical')}
                     </span>
                   ),
                 },
                 {
                   key: 'details',
-                  label: t('admin.locationManage.table.details', 'Details'),
+                  label: t('admin.locationManage.table.details'),
                   render: (location) =>
                     location.is_online ? (
                       <span className="redaktion-table-subtitle">{t('admin.locationManage.online')}</span>
@@ -492,12 +488,12 @@ function RedaktionPage() {
                 },
                 {
                   key: 'status',
-                  label: t('admin.locationManage.table.status', 'Status'),
+                  label: t('admin.locationManage.table.status'),
                   render: (location) => (
                     <span
                       className={`redaktion-status-badge ${location.active ? 'active' : 'inactive'}`}
                     >
-                      {location.active ? 'Active' : 'Inactive'}
+                      {location.active ? t('common.status.active') : t('common.status.inactive')}
                     </span>
                   ),
                 },
@@ -514,7 +510,7 @@ function RedaktionPage() {
                   }
                   onSelectItem={(id, checked) => locationSelection.toggle(id, checked)}
                   allSelected={locationSelection.allSelected}
-                  emptyMessage={t('redaktion.locationManage.noLocations', 'Keine Standorte gefunden')}
+                  emptyMessage={t('redaktion.locationManage.noLocations')}
                   actionsColumn={{
                     render: (location) => (
                       <>
@@ -532,7 +528,7 @@ function RedaktionPage() {
                           type="button"
                           onClick={() => handleLocationDelete(location.id)}
                         >
-                          {t('common.actions.delete', 'Löschen')}
+                          {t('common.actions.delete')}
                         </button>
                       </>
                     ),
@@ -547,8 +543,8 @@ function RedaktionPage() {
       {mode === 'taskManage' && (
         <section className="redaktion-section">
           <ManagementHeader
-            title={t('redaktion.actions.manageTasks.title', 'Aufgaben verwalten')}
-            subtitle={t('redaktion.taskManage.subtitle', 'Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren')}
+            title={t('redaktion.actions.manageTasks.title')}
+            subtitle={t('redaktion.taskManage.subtitle')}
             cssPrefix="redaktion"
             onBack={() => setMode(null)}
             onRefresh={() => refetchTasks()}
@@ -564,7 +560,7 @@ function RedaktionPage() {
           <ManagementCard
             cssPrefix="redaktion"
             title={t('admin.taskManage.existing.title')}
-            subtitle={t('admin.taskManage.existing.subtitle', 'Review, edit, activate, deactivate, or delete tasks directly.')}
+            subtitle={t('admin.taskManage.reviewDescription')}
             message={taskBulkOperations.message}
             topControls={
               <label className="redaktion-toggle">
@@ -590,7 +586,7 @@ function RedaktionPage() {
               onDelete={handleTaskBulkDelete}
               activateLabel={t('admin.taskManage.activate')}
               deactivateLabel={t('admin.taskManage.deactivate')}
-              deleteLabel={t('common.actions.delete', 'Löschen')}
+              deleteLabel={t('common.actions.delete')}
               selectionCountLabel={(count) => t('admin.taskManage.selectedCount', { count })}
               noSelectionLabel={t('admin.taskManage.noSelection')}
             />
@@ -598,7 +594,7 @@ function RedaktionPage() {
               const taskColumns: TableColumn<any>[] = [
                 {
                   key: 'title',
-                  label: t('admin.taskManage.table.title', 'Task'),
+                  label: t('admin.taskManage.table.title'),
                   render: (task) => (
                     <div className="redaktion-table-primary">
                       <span className="redaktion-table-title">
@@ -622,14 +618,14 @@ function RedaktionPage() {
                 },
                 {
                   key: 'location',
-                  label: t('admin.taskManage.table.location', 'Location'),
+                  label: t('admin.taskManage.table.location'),
                   render: (task) => (
                     <div className="redaktion-table-secondary">
                       <span className="redaktion-table-title">
                         {task.location?.name || '—'}
                       </span>
                       {task.location?.is_online ? (
-                        <span className="redaktion-table-subtitle">Online</span>
+                        <span className="redaktion-table-subtitle">{t('common.online')}</span>
                       ) : task.location?.address ? (
                         <span className="redaktion-table-subtitle">{task.location.address}</span>
                       ) : null}
@@ -638,19 +634,19 @@ function RedaktionPage() {
                 },
                 {
                   key: 'points',
-                  label: t('admin.taskManage.table.points', 'Points'),
+                  label: t('admin.taskManage.table.points'),
                   render: (task) => task.points,
                 },
                 {
                   key: 'status',
-                  label: t('admin.taskManage.table.status', 'Status'),
+                  label: t('admin.taskManage.table.status'),
                   render: (task) => (
                     <span
                       className={`redaktion-status-badge ${
                         task.active ? 'active' : 'inactive'
                       }`}
                     >
-                      {task.active ? 'Active' : 'Inactive'}
+                      {task.active ? t('common.status.active') : t('common.status.inactive')}
                     </span>
                   ),
                 },
@@ -667,7 +663,7 @@ function RedaktionPage() {
                   }
                   onSelectItem={(id, checked) => taskSelection.toggle(id, checked)}
                   allSelected={taskSelection.allSelected}
-                  emptyMessage={t('admin.taskManage.noTasks', 'No tasks found.')}
+                  emptyMessage={t('admin.taskManage.noTasks')}
                   actionsColumn={{
                     render: (task) => (
                       <>
@@ -676,7 +672,7 @@ function RedaktionPage() {
                           type="button"
                           onClick={() => handleTaskEdit(task.id)}
                         >
-                          {t('common.actions.edit', 'Bearbeiten')}
+                          {t('common.actions.edit')}
                         </button>
                         {task.type === 'qr' && (
                           <button
@@ -687,13 +683,13 @@ function RedaktionPage() {
                                 const response = await api.getTaskQrCode(task.id);
                                 // Open QR code in new modal (similar to AdminPage)
                                 // For now, show in alert - can be improved with modal later
-                                alert(`${t('admin.task.qrCodeLabel', 'QR-Code:')}\n${response.qrCode}`);
+                                alert(`${t('admin.task.qrCodeLabel')}\n${response.qrCode}`);
                               } catch (error: any) {
-                                alert(error?.response?.data?.error || t('admin.task.qrCodeErrorMessage', 'QR-Code konnte nicht geladen werden'));
+                                alert(error?.response?.data?.error || t('admin.task.qrCodeErrorMessage'));
                               }
                             }}
                           >
-                            {t('admin.task.showQrCode', 'QR-Code anzeigen')}
+                            {t('admin.task.showQrCode')}
                           </button>
                         )}
                         <button
@@ -708,7 +704,7 @@ function RedaktionPage() {
                           type="button"
                           onClick={() => handleTaskDelete(task.id)}
                         >
-                          {t('common.actions.delete', 'Löschen')}
+                          {t('common.actions.delete')}
                         </button>
                       </>
                     ),
@@ -723,8 +719,8 @@ function RedaktionPage() {
       {mode === 'rewardManage' && (
         <section className="redaktion-section">
           <ManagementHeader
-            title={t('redaktion.actions.manageRewards.title', 'Belohnungen verwalten')}
-            subtitle={t('redaktion.rewardManage.subtitle', 'Belohnungen durchsuchen, bearbeiten und verwalten')}
+            title={t('redaktion.actions.manageRewards.title')}
+            subtitle={t('redaktion.rewardManage.subtitle')}
             cssPrefix="redaktion"
             onBack={() => setMode(null)}
             onRefresh={() => refetchRewardTemplates()}
@@ -766,7 +762,7 @@ function RedaktionPage() {
               onDelete={handleRewardBulkDelete}
               activateLabel={t('admin.rewardManage.activate')}
               deactivateLabel={t('admin.rewardManage.deactivate')}
-              deleteLabel={t('common.actions.delete', 'Löschen')}
+              deleteLabel={t('common.actions.delete')}
               selectionCountLabel={(count) => t('admin.rewardManage.selectedCount', { count })}
               noSelectionLabel={t('admin.rewardManage.noSelection')}
             />
@@ -774,7 +770,7 @@ function RedaktionPage() {
               const rewardColumns: TableColumn<any>[] = [
                 {
                   key: 'title',
-                  label: t('admin.rewardManage.table.title', 'Reward'),
+                  label: t('admin.rewardManage.table.title'),
                   render: (reward) => (
                     <div className="redaktion-table-primary">
                       <span className="redaktion-table-title">
@@ -798,14 +794,14 @@ function RedaktionPage() {
                 },
                 {
                   key: 'location',
-                  label: t('admin.rewardManage.table.location', 'Location'),
+                  label: t('admin.rewardManage.table.location'),
                   render: (reward) => (
                     <div className="redaktion-table-secondary">
                       <span className="redaktion-table-title">
                         {reward.location?.name || '—'}
                       </span>
                       {reward.location?.is_online ? (
-                        <span className="redaktion-table-subtitle">Online</span>
+                        <span className="redaktion-table-subtitle">{t('common.online')}</span>
                       ) : reward.location?.address ? (
                         <span className="redaktion-table-subtitle">{reward.location.address}</span>
                       ) : null}
@@ -814,7 +810,7 @@ function RedaktionPage() {
                 },
                 {
                   key: 'cost',
-                  label: t('admin.rewardManage.table.cost', 'Cost'),
+                  label: t('admin.rewardManage.table.cost'),
                   render: (reward) => {
                     const cost = reward.points_cost !== undefined && reward.points_cost !== null
                       ? Number(reward.points_cost)
@@ -824,14 +820,14 @@ function RedaktionPage() {
                 },
                 {
                   key: 'status',
-                  label: t('admin.rewardManage.table.status', 'Status'),
+                  label: t('admin.rewardManage.table.status'),
                   render: (reward) => (
                     <span
                       className={`redaktion-status-badge ${
                         reward.active ? 'active' : 'inactive'
                       }`}
                     >
-                      {reward.active ? 'Active' : 'Inactive'}
+                      {reward.active ? t('common.status.active') : t('common.status.inactive')}
                     </span>
                   ),
                 },
@@ -848,7 +844,7 @@ function RedaktionPage() {
                   }
                   onSelectItem={(id, checked) => rewardSelection.toggle(id, checked)}
                   allSelected={rewardSelection.allSelected}
-                  emptyMessage={t('admin.rewardManage.noRewards', 'No rewards found.')}
+                  emptyMessage={t('admin.rewardManage.noRewards')}
                   actionsColumn={{
                     render: (reward) => (
                       <>
@@ -857,7 +853,7 @@ function RedaktionPage() {
                           type="button"
                           onClick={() => handleRewardEdit(reward.id)}
                         >
-                          {t('common.actions.edit', 'Bearbeiten')}
+                          {t('common.actions.edit')}
                         </button>
                         <button
                           className="redaktion-action-button"
@@ -871,7 +867,7 @@ function RedaktionPage() {
                           type="button"
                           onClick={() => handleRewardDelete(reward.id)}
                         >
-                          {t('common.actions.delete', 'Löschen')}
+                          {t('common.actions.delete')}
                         </button>
                       </>
                     ),

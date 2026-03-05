@@ -12,7 +12,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const login = useAuthStore((state) => state.login);
   const register = useAuthStore((state) => state.register);
   const [email, setEmail] = useState('');
@@ -170,7 +170,7 @@ function LoginPage() {
           throw new Error(t('login.messages.passwordTooShort'));
         }
         try {
-          await register(email, password, name, 'guest', 'explorer', teamRegistrationToken || undefined, contestRegistrationToken || undefined);
+          await register(email, password, name, 'guest', 'explorer', teamRegistrationToken || undefined, contestRegistrationToken || undefined, (i18n.language === 'en' ? 'en' : 'de'));
           setSuccess(t('login.messages.accountCreated'));
           setMode('login');
           setEmail('');

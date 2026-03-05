@@ -459,10 +459,10 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
                   }}
                 >
                   {isRedeeming
-                    ? t('rewards.swipe.redeeming') || 'Wird eingelöst...'
+                    ? t('rewards.swipe.redeeming')
                     : progressPercentage >= SWIPE_THRESHOLD * 100
-                    ? t('rewards.swipe.releasing') || 'Loslassen zum Bestätigen'
-                    : t('rewards.swipe.swipe') || 'Wischen zum Einlösen'}
+                    ? t('rewards.swipe.releasing')
+                    : t('rewards.swipe.swipe')}
                 </div>
               </div>
             ) : (

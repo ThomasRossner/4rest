@@ -1,4 +1,5 @@
 import { getPool } from '../database/connection.js';
+import { resolveI18n } from '../utils/i18n.js';
 
 export interface Location {
   id: string;
@@ -13,11 +14,19 @@ export interface Location {
   category_description?: string | null;
   created_at?: string;
   updated_at?: string;
+  name_i18n?: Record<string, string>;
+  description_i18n?: Record<string, string>;
+  address_i18n?: Record<string, string>;
+  category_description_i18n?: Record<string, string>;
 }
 
 interface LocationInput {
   name: string;
   description?: string | null;
+  name_i18n?: Record<string, string>;
+  description_i18n?: Record<string, string>;
+  address_i18n?: Record<string, string>;
+  category_description_i18n?: Record<string, string>;
   is_online: boolean;
   address?: string | null;
   latitude?: number | null;
@@ -30,6 +39,10 @@ interface LocationInput {
 interface LocationUpdateInput {
   name?: string;
   description?: string | null;
+  name_i18n?: Record<string, string> | null;
+  description_i18n?: Record<string, string> | null;
+  address_i18n?: Record<string, string> | null;
+  category_description_i18n?: Record<string, string> | null;
   is_online?: boolean;
   address?: string | null;
   latitude?: number | null;
@@ -39,23 +52,28 @@ interface LocationUpdateInput {
 }
 
 const SELECT_FIELDS =
-  'id, name, description, is_online, address, latitude, longitude, active, category, category_description, created_at, updated_at';
+  'id, name, description, is_online, address, latitude, longitude, active, category, category_description, created_at, updated_at, name_i18n, description_i18n, address_i18n, category_description_i18n';
 
-function mapLocation(row: any): Location {
+function mapLocation(row: any, lang?: 'de' | 'en'): Location {
   if (!row) return row;
+  const name = lang ? resolveI18n(row.name_i18n, lang, row.name) : row.name;
+  const description = lang ? resolveI18n(row.description_i18n, lang, row.description) : row.description;
+  const address = lang ? resolveI18n(row.address_i18n, lang, row.address) : row.address;
+  const category_description = lang ? resolveI18n(row.category_description_i18n, lang, row.category_description) : (row.category_description ?? null);
   return {
     id: row.id,
-    name: row.name,
-    description: row.description,
+    name,
+    description,
     is_online: row.is_online,
-    address: row.address,
+    address,
     latitude: row.latitude !== null ? Number(row.latitude) : row.latitude,
     longitude: row.longitude !== null ? Number(row.longitude) : row.longitude,
     active: row.active,
     category: row.category ?? null,
-    category_description: row.category_description ?? null,
+    category_description,
     created_at: row.created_at,
     updated_at: row.updated_at,
+    ...(lang ? {} : { name_i18n: row.name_i18n, description_i18n: row.description_i18n, address_i18n: row.address_i18n, category_description_i18n: row.category_description_i18n }),
   };
 }
 
@@ -185,7 +203,7 @@ function normalizeLocationInput(
   return normalized;
 }
 
-export async function getLocations(includeInactive = false): Promise<Location[]> {
+export async function getLocations(includeInactive = false, preferredLanguage?: string): Promise<Location[]> {
   const db = getPool();
   const clauses: string[] = [];
   if (!includeInactive) {
@@ -196,22 +214,28 @@ export async function getLocations(includeInactive = false): Promise<Location[]>
     `SELECT ${SELECT_FIELDS} FROM locations ${where} ORDER BY name ASC`,
     []
   );
-  return result.rows.map(mapLocation);
+  const lang = preferredLanguage === 'en' ? 'en' : preferredLanguage === 'de' ? 'de' : undefined;
+  return result.rows.map((row) => mapLocation(row, lang));
 }
 
-export async function getLocationById(id: string): Promise<Location | null> {
+export async function getLocationById(id: string, preferredLanguage?: string): Promise<Location | null> {
   const db = getPool();
   const result = await db.query(`SELECT ${SELECT_FIELDS} FROM locations WHERE id = $1`, [id]);
-  return mapLocation(result.rows[0]) || null;
+  const lang = preferredLanguage === 'en' ? 'en' : preferredLanguage === 'de' ? 'de' : undefined;
+  return mapLocation(result.rows[0], lang) || null;
 }
 
 export async function createLocation(data: LocationInput & { active?: boolean }): Promise<Location> {
   const db = getPool();
   const payload = normalizeLocationInput(data);
+  const nameI18n = data.name_i18n && typeof data.name_i18n === 'object' ? data.name_i18n : { de: payload.name ?? '', en: payload.name ?? '' };
+  const descI18n = data.description_i18n && typeof data.description_i18n === 'object' ? data.description_i18n : { de: payload.description ?? '', en: payload.description ?? '' };
+  const addrI18n = data.address_i18n && typeof data.address_i18n === 'object' ? data.address_i18n : { de: payload.address ?? '', en: payload.address ?? '' };
+  const catDescI18n = data.category_description_i18n && typeof data.category_description_i18n === 'object' ? data.category_description_i18n : { de: payload.category_description ?? '', en: payload.category_description ?? '' };
 
   const result = await db.query(
-    `INSERT INTO locations (name, description, is_online, address, latitude, longitude, active, category, category_description)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO locations (name, description, is_online, address, latitude, longitude, active, category, category_description, name_i18n, description_i18n, address_i18n, category_description_i18n)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING ${SELECT_FIELDS}`,
     [
       payload.name,
@@ -223,6 +247,10 @@ export async function createLocation(data: LocationInput & { active?: boolean })
       data.active ?? true,
       payload.category ?? null,
       payload.category_description ?? null,
+      JSON.stringify(nameI18n),
+      JSON.stringify(descI18n),
+      JSON.stringify(addrI18n),
+      JSON.stringify(catDescI18n),
     ]
   );
 
@@ -234,7 +262,7 @@ export async function updateLocation(
   data: LocationUpdateInput & { active?: boolean }
 ): Promise<Location> {
   const db = getPool();
-  const existing = await getLocationById(id);
+  const existing = await getLocationById(id, undefined);
   if (!existing) {
     throw new Error('Location not found.');
   }
@@ -251,33 +279,47 @@ export async function updateLocation(
   };
 
   const payload = normalizeLocationInput(mergedInput);
+  const updates: string[] = [
+    'name = $1', 'description = $2', 'is_online = $3', 'address = $4', 'latitude = $5', 'longitude = $6',
+    'active = $7', 'category = $8', 'category_description = $9', 'updated_at = CURRENT_TIMESTAMP',
+  ];
+  const values: any[] = [
+    payload.name,
+    payload.description ?? null,
+    payload.is_online,
+    payload.address ?? null,
+    payload.latitude ?? null,
+    payload.longitude ?? null,
+    data.active ?? existing.active,
+    payload.category ?? null,
+    payload.category_description ?? null,
+  ];
+  let idx = 10;
+  if (data.name_i18n !== undefined && data.name_i18n !== null && typeof data.name_i18n === 'object') {
+    updates.push(`name_i18n = $${idx}`);
+    values.push(JSON.stringify(data.name_i18n));
+    idx++;
+  }
+  if (data.description_i18n !== undefined && data.description_i18n !== null && typeof data.description_i18n === 'object') {
+    updates.push(`description_i18n = $${idx}`);
+    values.push(JSON.stringify(data.description_i18n));
+    idx++;
+  }
+  if (data.address_i18n !== undefined && data.address_i18n !== null && typeof data.address_i18n === 'object') {
+    updates.push(`address_i18n = $${idx}`);
+    values.push(JSON.stringify(data.address_i18n));
+    idx++;
+  }
+  if (data.category_description_i18n !== undefined && data.category_description_i18n !== null && typeof data.category_description_i18n === 'object') {
+    updates.push(`category_description_i18n = $${idx}`);
+    values.push(JSON.stringify(data.category_description_i18n));
+    idx++;
+  }
+  values.push(id);
 
   const result = await db.query(
-    `UPDATE locations
-     SET name = $1,
-         description = $2,
-         is_online = $3,
-         address = $4,
-         latitude = $5,
-         longitude = $6,
-         active = $7,
-         category = $8,
-         category_description = $9,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = $10
-     RETURNING ${SELECT_FIELDS}`,
-    [
-      payload.name,
-      payload.description ?? null,
-      payload.is_online,
-      payload.address ?? null,
-      payload.latitude ?? null,
-      payload.longitude ?? null,
-      data.active ?? existing.active,
-      payload.category ?? null,
-      payload.category_description ?? null,
-      id,
-    ]
+    `UPDATE locations SET ${updates.join(', ')} WHERE id = $${idx} RETURNING ${SELECT_FIELDS}`,
+    values
   );
 
   return mapLocation(result.rows[0]);

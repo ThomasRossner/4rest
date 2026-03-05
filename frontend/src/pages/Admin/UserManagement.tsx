@@ -338,8 +338,8 @@ export function UserManagement() {
         <>
           <ManagementCard
             cssPrefix="admin"
-            title={t('admin.users.existing.title', 'Bestehende Benutzer')}
-            subtitle={t('admin.users.existing.subtitle', 'Verwalten Sie Benutzer, bearbeiten Sie deren Details oder bereinigen Sie inaktive Einträge.')}
+            title={t('admin.users.existing.title')}
+            subtitle={t('admin.users.existing.subtitle')}
             message={userBulkOperations.message || userManagementMessage}
             topControls={
               <>
@@ -354,10 +354,10 @@ export function UserManagement() {
                       userSelection.deselectAll();
                     }}
                   />
-                  <span>{t('admin.taskManage.showInactive', 'Inaktive anzeigen')}</span>
+                  <span>{t('admin.taskManage.showInactive')}</span>
                 </label>
                 <button className="admin-action-button" type="button" onClick={() => setShowNewUserModal(true)}>
-                  {t('admin.users.newButton', 'Neuer Benutzer')}
+                  {t('admin.users.newButton')}
                 </button>
               </>
             }
@@ -369,11 +369,11 @@ export function UserManagement() {
               onActivate={() => handleUserBulkStatus(true)}
               onDeactivate={() => handleUserBulkStatus(false)}
               onDelete={handleUserBulkDelete}
-              activateLabel={t('admin.users.activate', 'Aktivieren')}
-              deactivateLabel={t('admin.users.deactivate', 'Deaktivieren')}
-              deleteLabel={t('common.actions.delete', 'Löschen')}
+              activateLabel={t('admin.users.activate')}
+              deactivateLabel={t('admin.users.deactivate')}
+              deleteLabel={t('common.actions.delete')}
               selectionCountLabel={(count) => t('admin.users.selectedCount', { count })}
-              noSelectionLabel={t('admin.users.noSelection', 'Keine Benutzer ausgewählt')}
+              noSelectionLabel={t('admin.users.noSelection')}
             />
             {(() => {
               const userColumns: TableColumn<UserListItem>[] = [
@@ -433,7 +433,7 @@ export function UserManagement() {
                           type="button"
                           onClick={() => handleEditUser(user.id)}
                         >
-                          {t('common.actions.edit', 'Bearbeiten')}
+                          {t('common.actions.edit')}
                         </button>
                         <button
                           className="admin-action-button"
@@ -441,7 +441,7 @@ export function UserManagement() {
                           onClick={() => handleToggleActive(user.id)}
                           disabled={user.id === currentUser?.id}
                         >
-                          {user.active ? t('admin.users.deactivate', 'Deaktivieren') : t('admin.users.activate', 'Aktivieren')}
+                          {user.active ? t('admin.users.deactivate') : t('admin.users.activate')}
                         </button>
                         <button
                           className="admin-action-button"
@@ -449,7 +449,7 @@ export function UserManagement() {
                           onClick={() => handleDeleteUser(user.id, false)}
                           disabled={user.id === currentUser?.id}
                         >
-                          {t('common.actions.delete', 'Löschen')}
+                          {t('common.actions.delete')}
                         </button>
                       </>
                     ),
@@ -599,28 +599,28 @@ export function UserManagement() {
 
                 {showPasswordFields && (
                   <div className="user-details-section">
-                    <h3>{t('admin.users.setPassword.title', 'Passwort setzen')}</h3>
+                    <h3>{t('admin.users.setPassword.title')}</h3>
                     <div className="user-details-field">
-                      <label>{t('admin.users.setPassword.newPassword', 'Neues Passwort')}</label>
+                      <label>{t('admin.users.setPassword.newPassword')}</label>
                       <input
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder={t('admin.users.setPassword.newPasswordPlaceholder', 'Passwort eingeben (mindestens 6 Zeichen)')}
+                        placeholder={t('admin.users.setPassword.newPasswordPlaceholder')}
                       />
                     </div>
                     <div className="user-details-field">
-                      <label>{t('admin.users.setPassword.confirmPassword', 'Passwort bestätigen')}</label>
+                      <label>{t('admin.users.setPassword.confirmPassword')}</label>
                       <input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder={t('admin.users.setPassword.confirmPasswordPlaceholder', 'Passwort erneut eingeben')}
+                        placeholder={t('admin.users.setPassword.confirmPasswordPlaceholder')}
                       />
                     </div>
                     {newPassword && confirmPassword && newPassword !== confirmPassword && (
                       <p className="admin-error" style={{ marginTop: '0.5rem' }}>
-                        {t('admin.users.messages.passwordsDoNotMatch', 'Die Passwörter stimmen nicht überein')}
+                        {t('admin.users.messages.passwordsDoNotMatch')}
                       </p>
                     )}
                     <div style={{ marginTop: '1rem' }}>
@@ -629,7 +629,7 @@ export function UserManagement() {
                         onClick={handleSetPasswordSubmit}
                         disabled={setPasswordMutation.isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
                       >
-                        {t('admin.users.setPassword.submit', 'Passwort setzen')}
+                        {t('admin.users.setPassword.submit')}
                       </button>
                     </div>
                   </div>
@@ -653,7 +653,7 @@ export function UserManagement() {
                     disabled={setPasswordMutation.isLoading}
                     style={{ marginLeft: '0.5rem' }}
                   >
-                    {showPasswordFields ? t('admin.users.actions.cancelPassword', 'Abbrechen') : t('admin.users.actions.setPassword')}
+                    {showPasswordFields ? t('admin.users.actions.cancelPassword') : t('admin.users.actions.setPassword')}
                   </button>
                   {selectedUserId !== currentUser?.id && (
                     <>
@@ -687,7 +687,7 @@ export function UserManagement() {
         <div className="user-details-modal" onClick={() => setShowNewUserModal(false)}>
           <div className="user-details-content" onClick={(e) => e.stopPropagation()}>
             <div className="user-details-header">
-              <h2>{t('admin.users.newUser.title', 'Neuen Benutzer anlegen')}</h2>
+              <h2>{t('admin.users.newUser.title')}</h2>
               <button className="admin-icon-button" onClick={() => setShowNewUserModal(false)}>
                 ✕
               </button>
@@ -695,16 +695,16 @@ export function UserManagement() {
             <div className="user-details-body">
               <div className="user-details-section">
                 <div className="user-details-field">
-                  <label>{t('admin.users.newUser.email', 'E-Mail-Adresse')} *</label>
+                  <label>{t('admin.users.newUser.email')} *</label>
                   <input
                     type="email"
                     value={newUserEmail}
                     onChange={(e) => setNewUserEmail(e.target.value)}
-                    placeholder={t('admin.users.newUser.emailPlaceholder', 'benutzer@example.com')}
+                    placeholder={t('admin.users.newUser.emailPlaceholder')}
                   />
                 </div>
                 <div className="user-details-field">
-                  <label>{t('admin.users.newUser.role', 'Rolle')} *</label>
+                  <label>{t('admin.users.newUser.role')} *</label>
                   <select
                     value={newUserRole}
                     onChange={(e) => setNewUserRole(e.target.value as UserRole)}
@@ -717,12 +717,12 @@ export function UserManagement() {
                   </select>
                 </div>
                 <div className="user-details-field">
-                  <label>{t('admin.users.newUser.name', 'Name')} ({t('admin.users.newUser.optional', 'Optional')})</label>
+                  <label>{t('admin.users.newUser.name')} ({t('admin.users.newUser.optional')})</label>
                   <input
                     type="text"
                     value={newUserName}
                     onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder={t('admin.users.newUser.namePlaceholder', 'Wird aus E-Mail abgeleitet, falls leer')}
+                    placeholder={t('admin.users.newUser.namePlaceholder')}
                   />
                 </div>
               </div>
@@ -732,13 +732,13 @@ export function UserManagement() {
                   onClick={() => setShowNewUserModal(false)}
                   disabled={createUserMutation.isLoading}
                 >
-                  {t('common.actions.cancel', 'Abbrechen')}
+                  {t('common.actions.cancel')}
                 </button>
                 <button
                   className="admin-button-secondary"
                   onClick={() => {
                     if (!newUserEmail.trim()) {
-                      pushToast({ type: 'error', message: t('admin.users.newUser.emailRequired', 'E-Mail-Adresse ist erforderlich') });
+                      pushToast({ type: 'error', message: t('admin.users.newUser.emailRequired') });
                       return;
                     }
                     createUserMutation.mutate({ 
@@ -750,8 +750,8 @@ export function UserManagement() {
                   disabled={createUserMutation.isLoading || !newUserEmail.trim()}
                 >
                   {createUserMutation.isLoading 
-                    ? t('admin.users.newUser.creating', 'Wird erstellt...') 
-                    : t('admin.users.newUser.create', 'Benutzer anlegen')}
+                    ? t('admin.users.newUser.creating') 
+                    : t('admin.users.newUser.create')}
                 </button>
               </div>
             </div>

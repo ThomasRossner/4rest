@@ -74,6 +74,37 @@
   justify-content: space-between;
 }
 
+.profile-language {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+.profile-language-label {
+  font-weight: 500;
+  color: var(--color-text);
+}
+.profile-language-buttons {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+.profile-language-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-background);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.profile-language-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+.profile-language-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 .profile-language-switcher {
   margin-left: auto;
 }

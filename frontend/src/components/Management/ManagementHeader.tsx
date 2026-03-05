@@ -46,8 +46,8 @@ export function ManagementHeader({
   };
 
   const backTitle = isEditing
-    ? t('admin.task.cancelEditing', 'Bearbeitung abbrechen')
-    : t('admin.taskManage.back', 'Zurück');
+    ? t('admin.task.cancelEditing')
+    : t('admin.taskManage.back');
 
   return (
     <header className={`${cssPrefix}-section-header`}>
@@ -60,11 +60,11 @@ export function ManagementHeader({
           <button
             className={`${cssPrefix}-icon-button`}
             onClick={onRefresh}
-            title={t('admin.taskManage.refresh', 'Aktualisieren')}
+            title={t('admin.taskManage.refresh')}
             type="button"
           >
             <Icon name="refresh" />
-            <span className="sr-only">{t('admin.taskManage.refresh', 'Aktualisieren')}</span>
+            <span className="sr-only">{t('admin.taskManage.refresh')}</span>
           </button>
         )}
         {showBack && (

@@ -99,8 +99,8 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
     if (!startDate || !startTime || !endDate || !endTime) {
       showToast({
         type: 'error',
-        title: t('contests.create.errorTitle') || 'Error',
-        message: t('contests.create.missingFields') || 'Please fill in all required fields',
+        title: t('contests.create.errorTitle'),
+        message: t('contests.create.missingFields'),
       });
       return;
     }
@@ -112,8 +112,8 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
     if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       showToast({
         type: 'error',
-        title: t('contests.create.errorTitle') || 'Error',
-        message: t('contests.create.invalidDateTime') || 'Invalid date or time',
+        title: t('contests.create.errorTitle'),
+        message: t('contests.create.invalidDateTime'),
       });
       return;
     }
@@ -121,8 +121,8 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
     if (startDateTime >= endDateTime) {
       showToast({
         type: 'error',
-        title: t('contests.create.errorTitle') || 'Error',
-        message: t('contests.create.startAfterEnd') || 'Start date must be before end date',
+        title: t('contests.create.errorTitle'),
+        message: t('contests.create.startAfterEnd'),
       });
       return;
     }
@@ -130,8 +130,8 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
     if (endDateTime <= new Date()) {
       showToast({
         type: 'error',
-        title: t('contests.create.errorTitle') || 'Error',
-        message: t('contests.create.invalidEndDate') || 'End date must be in the future',
+        title: t('contests.create.errorTitle'),
+        message: t('contests.create.invalidEndDate'),
       });
       return;
     }
@@ -152,17 +152,17 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
       
       showToast({
         type: 'success',
-        title: t('contests.create.success') || 'Contest created',
-        message: t('contests.create.successMessage') || 'Contest created successfully',
+        title: t('contests.create.success'),
+        message: t('contests.create.successMessage'),
       });
 
       onSuccess?.(contest.id);
       onClose?.();
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.error || error?.message || t('contests.create.error') || 'Failed to create contest';
+      const errorMessage = error?.response?.data?.error || error?.message || t('contests.create.error');
       showToast({
         type: 'error',
-        title: t('contests.create.errorTitle') || 'Error',
+        title: t('contests.create.errorTitle'),
         message: errorMessage,
       });
     } finally {
@@ -173,13 +173,13 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
   return (
     <div className="contest-creator-form">
       <div className="contest-creator-header">
-        <h2>{t('contests.create.title') || 'Create Contest'}</h2>
+        <h2>{t('contests.create.title')}</h2>
         {onClose && (
           <button
             type="button"
             className="admin-icon-button"
             onClick={onClose}
-            title={t('common.actions.close') || 'Close'}
+            title={t('common.actions.close')}
           >
             ✕
           </button>
@@ -188,20 +188,20 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
 
       <div className="contest-form-field">
         <label>
-          {t('contests.create.contestName') || 'Contest Name'} (optional)
+          {t('contests.create.contestName')} (optional)
           <input
             type="text"
             value={contestName}
             onChange={(e) => setContestName(e.target.value)}
-            placeholder={t('contests.create.contestNamePlaceholder') || 'Enter contest name (optional)'}
+            placeholder={t('contests.create.contestNamePlaceholder')}
           />
         </label>
-        <p className="contest-form-hint">{t('contests.create.nameHint') || 'If no name is provided, your name will be used as the contest name.'}</p>
+        <p className="contest-form-hint">{t('contests.create.nameHint')}</p>
       </div>
 
       <div className="contest-form-field">
         <label>
-          {t('contests.create.startDate') || 'Start Date'} *
+          {t('contests.create.startDate')} *
         </label>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
           <input
@@ -224,7 +224,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
 
       <div className="contest-form-field">
         <label>
-          {t('contests.create.endDate') || 'End Date'} *
+          {t('contests.create.endDate')} *
         </label>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
           <input
@@ -247,10 +247,10 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
 
       {isEmployee && (
         <>
-          <h3>{t('contests.create.rewardsTitle') || 'Rewards (Optional)'}</h3>
+          <h3>{t('contests.create.rewardsTitle')}</h3>
           <div className="contest-form-field">
             <label>
-              {t('contests.create.rewardFirst') || 'Points for 1st Place'}
+              {t('contests.create.rewardFirst')}
               <input
                 type="number"
                 value={rewardFirst}
@@ -262,7 +262,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           </div>
           <div className="contest-form-field">
             <label>
-              {t('contests.create.rewardSecond') || 'Points for 2nd Place'}
+              {t('contests.create.rewardSecond')}
               <input
                 type="number"
                 value={rewardSecond}
@@ -274,7 +274,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           </div>
           <div className="contest-form-field">
             <label>
-              {t('contests.create.rewardThird') || 'Points for 3rd Place'}
+              {t('contests.create.rewardThird')}
               <input
                 type="number"
                 value={rewardThird}
@@ -289,29 +289,29 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
 
       {isEmployee && (
         <>
-          <h3>{t('contests.create.participantsTitle', 'Teilnehmer hinzufügen')}</h3>
+          <h3>{t('contests.create.participantsTitle')}</h3>
           <div className="contest-form-field">
             <label>
-              {t('contests.create.filterByRole', 'Nach Typ filtern')}
+              {t('contests.create.filterByRole')}
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="contest-role-filter"
               >
-                <option value="all">{t('contests.create.allRoles', 'Alle Typen')}</option>
-                <option value="guest">{t('contests.create.roleGuest', 'Gast')}</option>
-                <option value="rezeption">{t('contests.create.roleRezeption', 'Rezeption')}</option>
-                <option value="redaktion">{t('contests.create.roleRedaktion', 'Redaktion')}</option>
-                <option value="administrator">{t('contests.create.roleAdministrator', 'Administrator')}</option>
+                <option value="all">{t('contests.create.allRoles')}</option>
+                <option value="guest">{t('contests.create.roleGuest')}</option>
+                <option value="rezeption">{t('contests.create.roleRezeption')}</option>
+                <option value="redaktion">{t('contests.create.roleRedaktion')}</option>
+                <option value="administrator">{t('contests.create.roleAdministrator')}</option>
               </select>
             </label>
           </div>
           <div className="contest-participants-list">
             {usersLoading ? (
-              <p>{t('contests.create.loadingUsers', 'Benutzer werden geladen...')}</p>
+              <p>{t('contests.create.loadingUsers')}</p>
             ) : usersError ? (
               <div style={{ color: 'red', padding: 'var(--spacing-md)', border: '1px solid red', borderRadius: 'var(--border-radius-sm)' }}>
-                <p><strong>{t('contests.create.errorLoadingUsers', 'Fehler beim Laden der Benutzer')}</strong></p>
+                <p><strong>{t('contests.create.errorLoadingUsers')}</strong></p>
                 <p style={{ fontSize: '0.9rem' }}>{usersError?.response?.data?.error || usersError?.message || 'Unknown error'}</p>
                 {usersError?.response?.status && (
                   <p style={{ fontSize: '0.85rem', marginTop: 'var(--spacing-xs)' }}>
@@ -321,10 +321,10 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
               </div>
             ) : users.length === 0 ? (
               <div style={{ padding: 'var(--spacing-md)' }}>
-                <p>{t('contests.create.noUsers', 'Keine Benutzer gefunden')}</p>
+                <p>{t('contests.create.noUsers')}</p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginTop: 'var(--spacing-xs)' }}>
-                  Filter: {roleFilter === 'all' ? 'Alle Rollen' : roleFilter}
-                  {onlyEmployeeParticipants && ' (nur Rezeption)'}
+                  {t('contests.create.filter')} {roleFilter === 'all' ? t('contests.create.filterAllRoles') : roleFilter}
+                  {onlyEmployeeParticipants && ` ${t('contests.create.onlyRezeption')}`}
                 </p>
               </div>
             ) : (
@@ -345,7 +345,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
                       }}
                     />
                     <span>
-                      {userItem.name} ({userItem.email || t('contests.create.noEmail', 'keine E-Mail')}) - {t(`admin.users.roles.${userItem.role}`, userItem.role)}
+                      {userItem.name} ({userItem.email || t('contests.create.noEmail')}) - {t(`admin.users.roles.${userItem.role}`)}
                     </span>
                   </label>
                 ))}
@@ -354,7 +354,7 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           </div>
           {selectedParticipants.size > 0 && (
             <p className="contest-form-hint">
-              {t('contests.create.selectedParticipants', { count: selectedParticipants.size }, `${selectedParticipants.size} Teilnehmer ausgewählt`)}
+              {t('contests.create.selectedParticipants', { count: selectedParticipants.size })}
             </p>
           )}
         </>
@@ -366,14 +366,14 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
           onClick={onClose}
           disabled={isCreating}
         >
-          {t('common.actions.cancel', 'Abbrechen')}
+          {t('common.actions.cancel')}
         </button>
         <button
           type="button"
           onClick={handleCreateContest}
           disabled={isCreating || !startDate || !startTime || !endDate || !endTime}
         >
-          {isCreating ? (t('contests.create.creating') || 'Creating...') : (t('contests.create.createButton') || 'Create Contest')}
+          {isCreating ? (t('contests.create.creating')) : (t('contests.create.createButton'))}
         </button>
       </div>
     </div>

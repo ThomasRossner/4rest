@@ -188,7 +188,7 @@ export function UserSelectionModal({
     <div className="admin-modal-backdrop" role="dialog" aria-modal="true">
       <div ref={modalRef} className="user-selection-modal">
         <div className="user-selection-header">
-          <h3>{title || t('admin.userSelection.title', 'Benutzer auswählen')}</h3>
+          <h3>{title || t('admin.userSelection.title')}</h3>
           <button
             type="button"
             className="admin-icon-button"
@@ -203,18 +203,18 @@ export function UserSelectionModal({
           <div className="user-selection-filters">
             <input
               type="text"
-              placeholder={t('admin.userSelection.search', 'Suche nach Name, E-Mail oder Rolle...')}
+              placeholder={t('admin.userSelection.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="user-selection-search"
             />
             <div className="user-selection-sort">
-              <label>{t('admin.userSelection.sortBy', 'Sortieren nach:')}</label>
+              <label>{t('admin.userSelection.sortBy')}</label>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
-                <option value="name">{t('admin.userSelection.sortName', 'Name')}</option>
-                <option value="email">{t('admin.userSelection.sortEmail', 'E-Mail')}</option>
-                <option value="role">{t('admin.userSelection.sortRole', 'Rolle')}</option>
-                <option value="points">{t('admin.userSelection.sortPoints', 'Punkte')}</option>
+                <option value="name">{t('admin.userSelection.sortName')}</option>
+                <option value="email">{t('admin.userSelection.sortEmail')}</option>
+                <option value="role">{t('admin.userSelection.sortRole')}</option>
+                <option value="points">{t('admin.userSelection.sortPoints')}</option>
               </select>
               <button
                 type="button"
@@ -226,10 +226,10 @@ export function UserSelectionModal({
             </div>
           </div>
 
-          {isLoading && <p>{t('admin.userSelection.loading', 'Lade Benutzer...')}</p>}
+          {isLoading && <p>{t('admin.userSelection.loading')}</p>}
           {error && (
             <p className="admin-error">
-              {t('admin.userSelection.error', 'Fehler beim Laden der Benutzer')}
+              {t('admin.userSelection.error')}
             </p>
           )}
 
@@ -242,20 +242,20 @@ export function UserSelectionModal({
                   className="admin-action-button secondary"
                 >
                   {selectedUserIds.size === filteredAndSortedUsers.length
-                    ? t('admin.userSelection.deselectAll', 'Alle abwählen')
-                    : t('admin.userSelection.selectAll', 'Alle auswählen')}
+                    ? t('admin.userSelection.deselectAll')
+                    : t('admin.userSelection.selectAll')}
                 </button>
                 <span className="user-selection-count">
                   {selectedUserIds.size > 0
-                    ? t('admin.userSelection.selected', { count: selectedUserIds.size }, `${selectedUserIds.size} ausgewählt`)
-                    : t('admin.userSelection.noSelection', 'Keine Auswahl')}
+                    ? t('admin.userSelection.selected', { count: selectedUserIds.size })
+                    : t('admin.userSelection.noSelection')}
                 </span>
               </div>
 
               <div className="user-selection-list">
                 {filteredAndSortedUsers.length === 0 ? (
                   <p className="user-selection-empty">
-                    {t('admin.userSelection.noUsers', 'Keine Benutzer gefunden')}
+                    {t('admin.userSelection.noUsers')}
                   </p>
                 ) : (
                   filteredAndSortedUsers.map((user: any) => (
@@ -275,7 +275,7 @@ export function UserSelectionModal({
                           {t(`admin.users.roles.${user.role}`, user.role)}
                         </span>
                         <span className="user-selection-item-points">
-                          {t('admin.userSelection.points', 'Punkte')}: {user.points || 0}
+                          {t('admin.userSelection.points')}: {user.points || 0}
                         </span>
                       </div>
                     </label>
@@ -292,7 +292,7 @@ export function UserSelectionModal({
             onClick={onClose}
             className="admin-action-button secondary"
           >
-            {t('common.actions.cancel', 'Abbrechen')}
+            {t('common.actions.cancel')}
           </button>
           <button
             type="button"
@@ -300,7 +300,7 @@ export function UserSelectionModal({
             disabled={selectedUserIds.size === 0}
             className="admin-action-button"
           >
-            {addButtonLabel || t('admin.userSelection.add', 'Hinzufügen')} ({selectedUserIds.size})
+            {addButtonLabel || t('admin.userSelection.add')} ({selectedUserIds.size})
           </button>
         </div>
       </div>

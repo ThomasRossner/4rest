@@ -16,6 +16,7 @@ export interface User {
   oauth_email?: string | null;
   sihot_guest_id?: string | null;
   sihot_guest_data?: Record<string, any> | null;
+  preferred_language?: string | null;
   email_verified?: boolean;
   email_verification_token?: string | null;
   email_verification_expires?: Date | null;
@@ -39,6 +40,7 @@ export interface CreateUserData {
   oauth_email?: string | null;
   sihot_guest_id?: string | null;
   sihot_guest_data?: Record<string, any> | null;
+  preferred_language?: string | null;
 }
 
 function ensureRole(value: unknown): UserRole {
@@ -62,6 +64,7 @@ export async function createUser(data: CreateUserData): Promise<User> {
     const resolvedRole = ensureRole(data.role);
     const resolvedUserType = ensureUserType(data.user_type);
 
+    const preferredLang = data.preferred_language === 'en' ? 'en' : 'de';
     const values = [
       data.email || null,
       data.password_hash || null,
@@ -75,20 +78,12 @@ export async function createUser(data: CreateUserData): Promise<User> {
       data.oauth_email || null,
       data.sihot_guest_id || null,
       data.sihot_guest_data ? JSON.stringify(data.sihot_guest_data) : null,
+      preferredLang,
     ];
-    
-    console.log('Creating user with values:', {
-      email: values[0],
-      hasPassword: !!values[1],
-      name: values[2],
-      role: values[3],
-      oauth_provider: values[6],
-      oauth_id: values[7],
-    });
-    
+
     const result = await db.query(
-      `INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb)
+      `INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data, preferred_language)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb, $13)
        RETURNING *`,
       values
     );
@@ -229,10 +224,21 @@ export async function getUserProgressService(userId: string) {
   };
 }
 
+export async function getPreferredLanguage(userId: string): Promise<'de' | 'en' | null> {
+  const db = getPool();
+  const result = await db.query(
+    'SELECT preferred_language FROM users WHERE id = $1',
+    [userId]
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  return row.preferred_language === 'en' ? 'en' : 'de';
+}
+
 export async function getMeService(userId: string) {
   const db = getPool();
   const result = await db.query(
-    `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data
+    `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -240,7 +246,7 @@ export async function getMeService(userId: string) {
     return null;
   }
   const user = result.rows[0];
-  // Return email || oauth_email for OAuth users
+  const lang = user.preferred_language === 'en' ? 'en' : 'de';
   return {
     id: user.id,
     email: user.email || user.oauth_email || null,
@@ -252,13 +258,14 @@ export async function getMeService(userId: string) {
     sihotGuestId: user.sihot_guest_id || null,
     sihotGuest: user.sihot_guest_data?.guest ?? null,
     sihotReservations: user.sihot_guest_data?.reservations ?? [],
+    preferredLanguage: lang,
   };
 }
 
 export async function getUserProfileService(userId: string) {
   const db = getPool();
   const result = await db.query(
-    `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data
+    `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -266,7 +273,7 @@ export async function getUserProfileService(userId: string) {
     return null;
   }
   const user = result.rows[0];
-  // Return email || oauth_email for OAuth users
+  const lang = user.preferred_language === 'en' ? 'en' : 'de';
   return {
     id: user.id,
     email: user.email || user.oauth_email || null,
@@ -278,6 +285,7 @@ export async function getUserProfileService(userId: string) {
     sihotGuestId: user.sihot_guest_id || null,
     sihotGuest: user.sihot_guest_data?.guest ?? null,
     sihotReservations: user.sihot_guest_data?.reservations ?? [],
+    preferredLanguage: lang,
   };
 }
 
@@ -303,6 +311,12 @@ export async function updateUserProfileService(userId: string, data: Partial<Use
     updates.push(`user_type = $${paramIndex++}`);
     values.push(ensureUserType(data.user_type));
   }
+  const preferredLang = data.preferred_language ?? (data as any).preferredLanguage;
+  if (preferredLang !== undefined) {
+    const lang = preferredLang === 'en' ? 'en' : 'de';
+    updates.push(`preferred_language = $${paramIndex++}`);
+    values.push(lang);
+  }
 
   if (updates.length === 0) {
     return getUserProfileService(userId);
@@ -312,7 +326,7 @@ export async function updateUserProfileService(userId: string, data: Partial<Use
   values.push(userId);
 
   const result = await db.query(
-    `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, name, role, points, avatar_url`,
+    `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, name, role, points, avatar_url, preferred_language`,
     values
   );
 

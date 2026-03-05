@@ -24,17 +24,17 @@ export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
       
       showToast({
         type: 'success',
-        title: t('teams.create.success') || 'Team created',
-        message: t('teams.create.successMessage') || 'Team created successfully',
+        title: t('teams.create.success'),
+        message: t('teams.create.successMessage'),
       });
 
       onSuccess?.(team.id);
       onClose?.();
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.error || error?.message || t('teams.create.error') || 'Failed to create team';
+      const errorMessage = error?.response?.data?.error || error?.message || t('teams.create.error');
       showToast({
         type: 'error',
-        title: t('teams.create.errorTitle') || 'Error',
+        title: t('teams.create.errorTitle'),
         message: errorMessage,
       });
     } finally {
@@ -45,13 +45,13 @@ export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
   return (
     <div className="team-creator-form">
       <div className="team-creator-header">
-        <h2>{t('teams.create.title') || 'Create Team'}</h2>
+        <h2>{t('teams.create.title')}</h2>
         {onClose && (
           <button
             type="button"
             className="admin-icon-button"
             onClick={onClose}
-            title={t('common.actions.close') || 'Close'}
+            title={t('common.actions.close')}
           >
             ✕
           </button>
@@ -60,15 +60,15 @@ export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
 
       <div className="team-form-field">
         <label>
-          {t('teams.create.teamName') || 'Team Name'} (optional)
+          {t('teams.create.teamName')} (optional)
           <input
             type="text"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
-            placeholder={t('teams.create.teamNamePlaceholder') || 'Enter team name (optional)'}
+            placeholder={t('teams.create.teamNamePlaceholder')}
           />
         </label>
-        <p className="team-form-hint">{t('teams.create.hint') || 'If no name is provided, your name will be used as the team name.'}</p>
+        <p className="team-form-hint">{t('teams.create.hint')}</p>
       </div>
 
       <div className="team-form-actions">
@@ -77,14 +77,14 @@ export function TeamCreator({ onSuccess, onClose }: TeamCreatorProps) {
           onClick={onClose}
           disabled={isCreating}
         >
-          {t('common.actions.cancel', 'Abbrechen')}
+          {t('common.actions.cancel')}
         </button>
         <button
           type="button"
           onClick={handleCreate}
           disabled={isCreating}
         >
-          {isCreating ? (t('teams.create.creating') || 'Creating...') : (t('teams.create.createButton') || 'Create Team')}
+          {isCreating ? (t('teams.create.creating')) : (t('teams.create.createButton'))}
         </button>
       </div>
     </div>

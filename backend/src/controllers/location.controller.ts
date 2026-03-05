@@ -7,11 +7,15 @@ import {
   setLocationsActiveState,
   updateLocation,
 } from '../services/location.service.js';
+import { getPreferredLanguage } from '../services/user.service.js';
+import { AuthRequest } from '../middleware/authenticate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const listLocations: RequestHandler = asyncHandler(async (req, res) => {
   const includeInactive = req.query.includeInactive === 'true';
-  const locations = await getLocations(includeInactive);
+  const authReq = req as AuthRequest;
+  const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
+  const locations = await getLocations(includeInactive, preferredLanguage ?? undefined);
   res.json(locations);
 });
 
@@ -35,6 +39,10 @@ export const createLocationController: RequestHandler = asyncHandler(async (req,
   const location = await createLocation({
     name: payload.name,
     description: payload.description,
+    name_i18n: payload.name_i18n,
+    description_i18n: payload.description_i18n,
+    address_i18n: payload.address_i18n,
+    category_description_i18n: payload.category_description_i18n,
     is_online: is_online,
     address: payload.address,
     latitude: payload.latitude,
@@ -62,6 +70,10 @@ export const updateLocationController: RequestHandler = asyncHandler(async (req,
   const updateData: any = {};
   if (payload.name !== undefined) updateData.name = payload.name;
   if (payload.description !== undefined) updateData.description = payload.description;
+  if (payload.name_i18n !== undefined) updateData.name_i18n = payload.name_i18n;
+  if (payload.description_i18n !== undefined) updateData.description_i18n = payload.description_i18n;
+  if (payload.address_i18n !== undefined) updateData.address_i18n = payload.address_i18n;
+  if (payload.category_description_i18n !== undefined) updateData.category_description_i18n = payload.category_description_i18n;
   if (is_online !== undefined) updateData.is_online = is_online;
   if (payload.address !== undefined) updateData.address = payload.address;
   if (payload.latitude !== undefined) updateData.latitude = payload.latitude;

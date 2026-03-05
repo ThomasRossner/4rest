@@ -168,7 +168,7 @@ function TasksPage() {
 
   if (selectedTask) {
     const task = tasks?.find((t: any) => t.id === selectedTask);
-    if (!task) return <div>Task not found</div>;
+    if (!task) return <div>{t('tasks.notFound')}</div>;
 
     if (task.type === 'video') {
       return <VideoTask taskId={task.id} onComplete={handleTaskComplete} />;
@@ -220,9 +220,9 @@ function TasksPage() {
           <button
             className="location-button"
             onClick={() => setShowLocationMap(false)}
-            title={t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+            title={t('tasks.prerequisites.clearFilter') }
           >
-            {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+            {t('tasks.prerequisites.clearFilter') }
           </button>
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
@@ -257,7 +257,7 @@ function TasksPage() {
               className="location-button"
               onClick={() => setPrerequisiteTaskIdsFilter(null)}
             >
-              {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+              {t('tasks.prerequisites.clearFilter') }
             </button>
           ) : showOnlineTasks ? (
             <button
@@ -267,7 +267,7 @@ function TasksPage() {
                 setShowOnlineTasks(false);
               }}
             >
-              {t('tasks.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+              {t('tasks.prerequisites.clearFilter') }
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
@@ -277,9 +277,9 @@ function TasksPage() {
                   setShowLocationMap(true);
                   setShowOnlineTasks(false);
                 }}
-                title={t('tasks.showLocation') || 'Hier'}
+                title={t('tasks.showLocation')}
               >
-                {t('tasks.locationButton') || 'Hier'}
+                {t('tasks.locationButton')}
               </button>
               <button
                 className="location-button"
@@ -287,9 +287,9 @@ function TasksPage() {
                   setShowLocationMap(false);
                   setShowOnlineTasks(true);
                 }}
-                title={t('tasks.showOnline') || 'Online'}
+                title={t('tasks.showOnline')}
               >
-                {t('tasks.onlineButton') || 'Online'}
+                {t('tasks.onlineButton')}
               </button>
             </div>
           )}
@@ -331,7 +331,7 @@ function TasksPage() {
           options={[
             { value: 'all', label: t('tasks.filters.completion.all') },
             { value: 'not_completed', label: t('tasks.filters.completion.not_completed') },
-            { value: 'validating', label: t('tasks.filters.completion.validating', 'Validierung') },
+            { value: 'validating', label: t('tasks.filters.completion.validating') },
             { value: 'completed', label: t('tasks.filters.completion.completed') },
           ]}
         />
@@ -378,7 +378,7 @@ function TasksPage() {
                 </span>
               )}
               {isValidating && (
-                <span className="task-validating-badge" title={t('tasks.badges.validating', 'Warte auf Validierung')}>
+                <span className="task-validating-badge" title={t('tasks.badges.validating')}>
                   ⏳
                 </span>
               )}
@@ -414,7 +414,7 @@ function TasksPage() {
                   transition: 'all 0.2s',
                 }}
               >
-                {t('tasks.prerequisites.showPrerequisites') || 'Vorbedingungen anzeigen'}
+                {t('tasks.prerequisites.showPrerequisites')}
               </button>
             )}
             <button
@@ -422,7 +422,7 @@ function TasksPage() {
               onClick={() => handleTaskClick(task)}
               disabled={isCompleted || isValidating || isLocked}
             >
-              {isCompleted ? t('tasks.buttons.completed') : isValidating ? t('tasks.buttons.validating', 'Warte auf Validierung') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
+              {isCompleted ? t('tasks.buttons.completed') : isValidating ? t('tasks.buttons.validating') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
             </button>
           </div>
           );

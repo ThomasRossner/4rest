@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './UserLocationMap.css';
@@ -112,6 +113,7 @@ interface UserLocationMapProps {
 }
 
 export function UserLocationMap({ height = '500px', tasks = [], rewards = [], onTaskClick, onRewardClick }: UserLocationMapProps) {
+  const { t, i18n } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -125,7 +127,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
   // Get user's current location
   useEffect(() => {
     if (!navigator.geolocation) {
-      setLocationError('Geolocation wird von Ihrem Browser nicht unterstützt.');
+      setLocationError(t('tasks.visit_location.geolocationNotSupported'));
       setIsLoading(false);
       return;
     }
@@ -139,7 +141,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         setIsLoading(false);
       },
       (error) => {
-        setLocationError(`Fehler beim Abrufen der Position: ${error.message}`);
+        setLocationError(t('tasks.visit_location.positionError', { message: error.message }));
         setIsLoading(false);
       },
       {
@@ -179,7 +181,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         setIsMapReady(true);
       } catch (error) {
         console.error('Error initializing map:', error);
-        setLocationError(`Fehler beim Initialisieren der Karte: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+        setLocationError(t('tasks.visit_location.mapInitError', { message: error instanceof Error ? error.message : t('tasks.visit_location.mapUnknownError') }));
         setIsLoading(false);
       }
     });
@@ -214,7 +216,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
     // Add marker for user location
     const marker = L.marker([userLocation.lat, userLocation.lng]).addTo(mapInstanceRef.current);
     markerRef.current = marker;
-    marker.bindPopup('Ihre aktuelle Position');
+    marker.bindPopup(t('tasks.visit_location.yourCurrentPosition'));
 
     // If there are task or reward markers, fit bounds to include user location
     // Otherwise, center on user location
@@ -389,8 +391,8 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
             ` : ''}
             ${task.description ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 0.9rem;">${escapeHtml(task.description)}</p>` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-              <span style="font-weight: 600; color: #f59e0b;">⭐ ${task.points} Punkte</span>
-              ${onTaskClick ? `<button class="task-popup-button" data-task-id="${task.id}" style="padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">Aufgabe starten</button>` : ''}
+              <span style="font-weight: 600; color: #f59e0b;">⭐ ${t('common.points', { count: task.points })}</span>
+              ${onTaskClick ? `<button class="task-popup-button" data-task-id="${task.id}" style="padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">${escapeHtml(t('tasks.visit_location.startTask'))}</button>` : ''}
             </div>
           </div>
         `;
@@ -530,8 +532,8 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
               ` : ''}
               ${reward.description ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 0.9rem;">${escapeHtml(reward.description)}</p>` : ''}
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                <span style="font-weight: 600; color: #f59e0b;">💰 ${reward.pointsCost} Punkte</span>
-                ${onRewardClick ? `<button class="reward-popup-button" data-reward-id="${reward.id}" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">Details</button>` : ''}
+                <span style="font-weight: 600; color: #f59e0b;">💰 ${t('common.points', { count: reward.pointsCost })}</span>
+                ${onRewardClick ? `<button class="reward-popup-button" data-reward-id="${reward.id}" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">${escapeHtml(t('tasks.visit_location.details'))}</button>` : ''}
               </div>
             </div>
           `;
@@ -579,13 +581,13 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       // If no tasks/rewards and no user location, keep default view (Berlin)
       // Map is already initialized with default center
     }
-  }, [tasks, rewards, isMapReady, userLocation, onTaskClick, onRewardClick]);
+  }, [tasks, rewards, isMapReady, userLocation, onTaskClick, onRewardClick, i18n.language]);
 
   return (
     <div style={{ width: '100%', minHeight: height }}>
       {isLoading && !isMapReady && (
         <div style={{ padding: '1rem', textAlign: 'center' }}>
-          Position wird ermittelt...
+          {t('tasks.visit_location.locatingPosition')}
         </div>
       )}
       {locationError && (
@@ -595,7 +597,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       )}
       {!isMapReady && !isLoading && !locationError && (
         <div style={{ padding: '1rem', textAlign: 'center' }}>
-          Karte wird geladen...
+          {t('tasks.visit_location.loadingMap')}
         </div>
       )}
       <div

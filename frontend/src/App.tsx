@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import i18n from './i18n';
 import Layout from './components/Layout/Layout';
 import { ToastContainer } from './components/Feedback/ToastContainer';
 import HomePage from './pages/HomePage/HomePage';
@@ -20,6 +21,13 @@ import RedaktionPage from './pages/Redaktion/RedaktionPage';
 
 function ProtectedApp() {
   const { isAuthenticated, user, token } = useAuthStore();
+
+  // Sync UI language to user's preferred language
+  useEffect(() => {
+    if (user?.preferredLanguage && user.preferredLanguage !== i18n.language) {
+      i18n.changeLanguage(user.preferredLanguage);
+    }
+  }, [user?.preferredLanguage]);
 
   // Ensure we redirect to login if not authenticated
   if (!isAuthenticated || !user || !token) {

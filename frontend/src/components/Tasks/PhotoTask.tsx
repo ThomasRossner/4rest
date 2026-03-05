@@ -60,8 +60,8 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
         if (data?.requiresVerification) {
           showToast({
             type: 'info',
-            title: t('tasks.toast.verificationPendingTitle', 'Warte auf Validierung'),
-            message: t('tasks.toast.verificationPendingMessage', 'Ihr Foto wurde hochgeladen und wartet auf die Validierung durch einen Administrator. Sie erhalten die Punkte nach der Freigabe.'),
+            title: t('tasks.toast.verificationPendingTitle'),
+            message: t('tasks.toast.verificationPendingMessage'),
           });
         } else {
           showToast({
@@ -76,8 +76,8 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
         console.error('Task completion error:', error);
         showToast({
           type: 'error',
-          title: t('tasks.toast.errorTitle', 'Fehler'),
-          message: error?.message || t('tasks.toast.errorMessage', 'Fehler beim Abschließen der Aufgabe.'),
+          title: t('tasks.toast.errorTitle'),
+          message: error?.message || t('tasks.toast.errorMessage'),
         });
       },
     }
@@ -134,8 +134,8 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       setUploading(false);
       showToast({
         type: 'error',
-        title: t('tasksComponents.photo.uploadFailed', 'Upload fehlgeschlagen'),
-        message: error?.message || t('tasksComponents.photo.uploadFailedMessage', 'Das Foto konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.'),
+        title: t('tasksComponents.photo.uploadFailed'),
+        message: error?.message || t('tasksComponents.photo.uploadFailedMessage'),
       });
     }
   };
@@ -208,7 +208,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
             {completeMutation.data?.requiresVerification ? (
               <>
                 <span className="success-icon">⏳</span>
-                <p>{t('tasksComponents.photo.verificationPending', 'Foto hochgeladen. Warte auf Validierung...')}</p>
+                <p>{t('tasksComponents.photo.verificationPending')}</p>
               </>
             ) : (
               <>
@@ -221,7 +221,7 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
         {completeMutation.isError && (
           <div className="task-error">
             <span className="error-icon">❌</span>
-            <p>{t('tasksComponents.photo.error', 'Fehler beim Hochladen. Bitte versuchen Sie es erneut.')}</p>
+            <p>{t('tasksComponents.photo.error')}</p>
           </div>
         )}
       </div>

@@ -24,7 +24,7 @@ function EmployeeContestsPage() {
   if (isLoading) {
     return (
       <div className="employee-contests-page">
-        <h1 className="employee-contests-title">{t('employee.contests.title', 'Contest-Verwaltung')}</h1>
+        <h1 className="employee-contests-title">{t('employee.contests.title')}</h1>
         <LoadingSkeleton lines={10} />
       </div>
     );
@@ -32,8 +32,8 @@ function EmployeeContestsPage() {
 
   return (
     <div className="employee-contests-page">
-      <h1 className="employee-contests-title">{t('employee.contests.title', 'Contest-Verwaltung')}</h1>
-      <p className="employee-contests-subtitle">{t('employee.contests.subtitle', 'Verwalten Sie Contests für Gäste')}</p>
+      <h1 className="employee-contests-title">{t('employee.contests.title')}</h1>
+      <p className="employee-contests-subtitle">{t('employee.contests.subtitle')}</p>
 
       <div className="employee-contests-actions">
         <button
@@ -41,7 +41,7 @@ function EmployeeContestsPage() {
           className="employee-contests-create-button"
           onClick={() => setShowContestCreator(true)}
         >
-          {t('employee.contests.createButton', 'Neuen Contest anlegen')}
+          {t('employee.contests.createButton')}
         </button>
       </div>
 
@@ -72,7 +72,7 @@ function EmployeeContestsPage() {
           ))}
         </div>
       ) : (
-        <p className="employee-contests-empty">{t('employee.contests.empty', 'Noch keine Contests für Gäste')}</p>
+        <p className="employee-contests-empty">{t('employee.contests.empty')}</p>
       )}
     </div>
   );

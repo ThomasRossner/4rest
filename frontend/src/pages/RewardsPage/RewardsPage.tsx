@@ -69,7 +69,7 @@ function RewardsPage() {
 
     if (availablePoints < cost) {
       const infoMessage = shouldUseTeamPoints 
-        ? t('rewards.messages.notEnoughTeamPoints') || 'Nicht genug Team-Punkte'
+        ? t('rewards.messages.notEnoughTeamPoints')
         : t('rewards.messages.notEnoughPoints');
       if (import.meta.env.VITE_UI_POLISH) {
         pushToast({ type: 'info', message: infoMessage });
@@ -169,9 +169,9 @@ function RewardsPage() {
           <button
             className="location-button"
             onClick={() => setShowLocationMap(false)}
-            title={t('rewards.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+            title={t('rewards.prerequisites.clearFilter')}
           >
-            {t('rewards.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+            {t('rewards.prerequisites.clearFilter')}
           </button>
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
@@ -208,7 +208,7 @@ function RewardsPage() {
               setShowOnlineRewards(false);
             }}
           >
-            {t('rewards.prerequisites.clearFilter') || 'Filter zurücksetzen'}
+            {t('rewards.prerequisites.clearFilter')}
           </button>
         ) : (
           <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
@@ -218,9 +218,9 @@ function RewardsPage() {
                 setShowLocationMap(true);
                 setShowOnlineRewards(false);
               }}
-              title={t('rewards.showLocation') || 'Hier'}
+              title={t('rewards.showLocation')}
             >
-              {t('rewards.locationButton') || 'Hier'}
+              {t('rewards.locationButton')}
             </button>
             <button
               className="location-button"
@@ -228,9 +228,9 @@ function RewardsPage() {
                 setShowLocationMap(false);
                 setShowOnlineRewards(true);
               }}
-              title={t('rewards.showOnline') || 'Online'}
+              title={t('rewards.showOnline')}
             >
-              {t('rewards.onlineButton') || 'Online'}
+              {t('rewards.onlineButton')}
             </button>
           </div>
         )}
@@ -266,7 +266,7 @@ function RewardsPage() {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           }}
         >
-          {t('rewards.scanner.button') || 'Belohnung von Gast einlösen'}
+          {t('rewards.scanner.button')}
         </button>
       )}
       {/* Only show scanner button for guests */}
@@ -288,7 +288,7 @@ function RewardsPage() {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           }}
         >
-          {t('rewards.scanPointsBonus') || '📷 Punkte-Bonus QR-Code scannen'}
+          {t('rewards.scanPointsBonus')}
         </button>
       )}
       {uiPolish && (

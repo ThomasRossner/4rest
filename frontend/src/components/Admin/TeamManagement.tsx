@@ -147,7 +147,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         visible: true,
         teamId: null,
         action: 'delete',
-        teamName: `${ids.length} ${t('rezeption.team.manage.teams', 'Teams')}`,
+        teamName: `${ids.length} ${t('rezeption.team.manage.teams')}`,
       });
       // Store IDs for bulk delete
       (teamConfirmDialog as any).bulkIds = ids;
@@ -156,13 +156,13 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
       await refetchTeams();
     },
     getSuccessMessage: (action, count) => {
-      if (action === 'activate') return t('rezeption.team.manage.bulkActivateSuccess', 'Ausgewählte Teams wurden aktiviert');
-      if (action === 'deactivate') return t('rezeption.team.manage.bulkDeactivateSuccess', 'Ausgewählte Teams wurden deaktiviert');
-      return t('rezeption.team.manage.bulkDeleteSuccess', 'Ausgewählte Teams wurden gelöscht');
+      if (action === 'activate') return t('rezeption.team.manage.bulkActivateSuccess');
+      if (action === 'deactivate') return t('rezeption.team.manage.bulkDeactivateSuccess');
+      return t('rezeption.team.manage.bulkDeleteSuccess');
     },
     getErrorMessage: (action, error) => {
-      if (action === 'delete') return error?.response?.data?.error || t('rezeption.team.manage.bulkDeleteError', 'Fehler beim Löschen');
-      return error?.response?.data?.error || t('rezeption.team.manage.bulkStatusError', 'Fehler beim Ändern des Status');
+      if (action === 'delete') return error?.response?.data?.error || t('rezeption.team.manage.bulkDeleteError');
+      return error?.response?.data?.error || t('rezeption.team.manage.bulkStatusError');
     },
   });
 
@@ -265,14 +265,14 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         await refetchTeams();
         showToast({
           type: 'success',
-          message: t('rezeption.team.manage.toggleSuccess', 'Team-Status erfolgreich geändert'),
+          message: t('rezeption.team.manage.toggleSuccess'),
         });
         setTeamConfirmDialog({ visible: false, teamId: null, action: null, teamName: '' });
       },
       onError: (error: any) => {
         showToast({
           type: 'error',
-          message: error?.response?.data?.error || t('rezeption.team.manage.toggleError', 'Fehler beim Ändern des Team-Status'),
+          message: error?.response?.data?.error || t('rezeption.team.manage.toggleError'),
         });
       },
     }
@@ -294,14 +294,14 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         await refetchTeams();
         showToast({
           type: 'success',
-          message: t('rezeption.team.manage.deleteSuccess', 'Team erfolgreich gelöscht'),
+          message: t('rezeption.team.manage.deleteSuccess'),
         });
         setTeamConfirmDialog({ visible: false, teamId: null, action: null, teamName: '' });
       },
       onError: (error: any, teamId) => {
         showToast({
           type: 'error',
-          message: error?.response?.data?.error || t('rezeption.team.manage.deleteError', 'Fehler beim Löschen des Teams'),
+          message: error?.response?.data?.error || t('rezeption.team.manage.deleteError'),
         });
       },
     }
@@ -323,7 +323,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
       visible: true,
       teamId: null,
       action: 'delete',
-      teamName: `${teamSelection.selectedIds.length} ${t('rezeption.team.manage.teams', 'Teams')}`,
+      teamName: `${teamSelection.selectedIds.length} ${t('rezeption.team.manage.teams')}`,
     });
   };
 
@@ -341,8 +341,8 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
   return (
     <section className={`${cssPrefix}-section`}>
       <ManagementHeader
-        title={t('rezeption.team.manage.title', 'Teams verwalten')}
-        subtitle={t('rezeption.team.manage.subtitle', 'Verwalten Sie alle Teams')}
+        title={t('rezeption.team.manage.title')}
+        subtitle={t('rezeption.team.manage.subtitle')}
         cssPrefix={cssPrefix}
         onBack={handleBack}
         onRefresh={() => refetchTeams()}
@@ -358,12 +358,12 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
           type="button"
           style={{ marginBottom: '1rem' }}
         >
-          {t('rezeption.team.manage.createNew', 'Neues Team erstellen')}
+          {t('rezeption.team.manage.createNew')}
         </button>
       )}
 
-      {teamsLoading && <p>{t('rezeption.team.manage.loading', 'Lade Teams...')}</p>}
-      {Boolean(teamsError) && <p className={`${cssPrefix}-error`}>{t('rezeption.team.manage.loadError', 'Fehler beim Laden der Teams')}</p>}
+      {teamsLoading && <p>{t('rezeption.team.manage.loading')}</p>}
+      {Boolean(teamsError) && <p className={`${cssPrefix}-error`}>{t('rezeption.team.manage.loadError')}</p>}
 
       {(teamBulkOperations.message || teamManagementMessage) && (
         <div className={`${cssPrefix}-message ${cssPrefix}-message-${(teamBulkOperations.message || teamManagementMessage)?.type}`}>
@@ -379,7 +379,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
               await refetchTeams();
               setTeamManagementMessage({
                 type: 'success',
-                text: t('rezeption.team.manage.createSuccess', 'Team erfolgreich erstellt'),
+                text: t('rezeption.team.manage.createSuccess'),
               });
             }}
             onClose={() => setIsCreatingTeam(false)}
@@ -396,10 +396,10 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         return (
           <div className={`${cssPrefix}-form-card`}>
             <div className={`${cssPrefix}-form-section`}>
-              <h3>{t('rezeption.team.manage.edit.title', 'Team bearbeiten')}</h3>
+              <h3>{t('rezeption.team.manage.edit.title')}</h3>
               <div className={`${cssPrefix}-field`}>
                 <label>
-                  {t('rezeption.team.manage.edit.name', 'Team-Name')}
+                  {t('rezeption.team.manage.edit.name')}
                   <input
                     type="text"
                     value={editingTeam.name || ''}
@@ -409,12 +409,12 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                         await refetchTeams();
                         setTeamManagementMessage({
                           type: 'success',
-                          text: t('rezeption.team.manage.edit.nameUpdated', 'Team-Name aktualisiert'),
+                          text: t('rezeption.team.manage.edit.nameUpdated'),
                         });
                       } catch (err: any) {
                         setTeamManagementMessage({
                           type: 'error',
-                          text: err?.response?.data?.error || err?.message || t('rezeption.team.manage.edit.nameUpdateError', 'Fehler beim Aktualisieren'),
+                          text: err?.response?.data?.error || err?.message || t('rezeption.team.manage.edit.nameUpdateError'),
                         });
                       }
                     }}
@@ -426,31 +426,31 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                   className={`${cssPrefix}-button`}
                   onClick={() => setShowTeamAddUsersModal(true)}
                 >
-                  {t('rezeption.team.manage.edit.addMembers', 'Mitglieder hinzufügen')}
+                  {t('rezeption.team.manage.edit.addMembers')}
                 </button>
                 <button
                   className={`${cssPrefix}-button`}
                   onClick={() => setShowTeamRemoveUsersModal(true)}
                 >
-                  {t('rezeption.team.manage.edit.removeMembers', 'Mitglieder entfernen')}
+                  {t('rezeption.team.manage.edit.removeMembers')}
                 </button>
                 <button
                   className={`${cssPrefix}-button`}
                   onClick={() => generateTeamJoinQrMutation.mutate(editingTeamId)}
                 >
-                  {t('rezeption.team.manage.edit.showJoinQr', 'Join-QR-Code anzeigen')}
+                  {t('rezeption.team.manage.edit.showJoinQr')}
                 </button>
                 <button
                   className={`${cssPrefix}-button`}
                   onClick={() => generateTeamRegistrationQrMutation.mutate(editingTeamId)}
                 >
-                  {t('rezeption.team.manage.edit.showRegistrationQr', 'Registrierungs-QR-Code anzeigen')}
+                  {t('rezeption.team.manage.edit.showRegistrationQr')}
                 </button>
                 <button
                   className={`${cssPrefix}-button`}
                   onClick={() => setEditingTeamId(null)}
                 >
-                  {t('common.actions.back', 'Fertig')}
+                  {t('common.actions.back')}
                 </button>
               </div>
             </div>
@@ -462,31 +462,31 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         <>
           <ManagementCard
             cssPrefix={cssPrefix}
-            title={t('rezeption.team.manage.existingTitle', 'Bestehende Teams')}
-            subtitle={t('rezeption.team.manage.existingSubtitle', 'Verwalten Sie Teams, bearbeiten Sie deren Details oder löschen Sie Teams')}
+            title={t('rezeption.team.manage.existingTitle')}
+            subtitle={t('rezeption.team.manage.existingSubtitle')}
             message={teamBulkOperations.message || teamManagementMessage}
             topControls={
               <>
                 <div className={`${cssPrefix}-filters`}>
                   <div className={`${cssPrefix}-filter-group`}>
                     <label>
-                      {t('rezeption.team.manage.filters.status', 'Status')}
+                      {t('rezeption.team.manage.filters.status')}
                       <select
                         value={teamFilterStatus || ''}
                         onChange={(e) => setTeamFilterStatus(e.target.value as 'active' | 'inactive' | null || null)}
                       >
-                        <option value="">{t('common.all', 'Alle')}</option>
-                        <option value="active">{t('common.status.active', 'Aktiv')}</option>
-                        <option value="inactive">{t('common.status.inactive', 'Inaktiv')}</option>
+                        <option value="">{t('common.all')}</option>
+                        <option value="active">{t('common.status.active')}</option>
+                        <option value="inactive">{t('common.status.inactive')}</option>
                       </select>
                     </label>
                     <label>
-                      {t('rezeption.team.manage.filters.name', 'Name')}
+                      {t('rezeption.team.manage.filters.name')}
                       <input
                         type="text"
                         value={teamFilterName}
                         onChange={(e) => setTeamFilterName(e.target.value)}
-                        placeholder={t('rezeption.team.manage.filters.namePlaceholder', 'Nach Name suchen...')}
+                        placeholder={t('rezeption.team.manage.filters.namePlaceholder')}
                       />
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'row' }}>
@@ -498,7 +498,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                           teamSelection.deselectAll();
                         }}
                       />
-                      {t('rezeption.team.manage.filters.includeInactive', 'Inaktive anzeigen')}
+                      {t('rezeption.team.manage.filters.includeInactive')}
                     </label>
                   </div>
                 </div>
@@ -512,11 +512,11 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
               onActivate={() => handleTeamBulkStatus(true)}
               onDeactivate={() => handleTeamBulkStatus(false)}
               onDelete={handleTeamBulkDelete}
-              activateLabel={t('rezeption.team.manage.activate', 'Aktivieren')}
-              deactivateLabel={t('rezeption.team.manage.deactivate', 'Deaktivieren')}
-              deleteLabel={t('common.actions.delete', 'Löschen')}
-              selectionCountLabel={(count) => t('rezeption.team.manage.selectedCount', '{{count}} ausgewählt', { count })}
-              noSelectionLabel={t('rezeption.team.manage.noSelection', 'Keine Auswahl')}
+              activateLabel={t('rezeption.team.manage.activate')}
+              deactivateLabel={t('rezeption.team.manage.deactivate')}
+              deleteLabel={t('common.actions.delete')}
+              selectionCountLabel={(count) => t('rezeption.team.manage.selectedCount', { count })}
+              noSelectionLabel={t('rezeption.team.manage.noSelection')}
             />
 
           {/* Teams table */}
@@ -524,26 +524,26 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
             const teamColumns: TableColumn<any>[] = [
               {
                 key: 'name',
-                label: t('rezeption.team.manage.name', 'Name'),
+                label: t('rezeption.team.manage.name'),
                 render: (team) => (
                   <div className={`${cssPrefix}-table-primary`}>
                     <span className={`${cssPrefix}-table-title`}>
-                      {team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team')}
+                      {team.name || t('rezeption.team.manage.unnamed')}
                     </span>
                   </div>
                 ),
               },
               {
                 key: 'createdBy',
-                label: t('rezeption.team.manage.createdBy', 'Erstellt von'),
+                label: t('rezeption.team.manage.createdBy'),
                 render: (team) => team.creator_name || 'Unknown',
               },
               {
                 key: 'status',
-                label: t('rezeption.team.manage.status', 'Status'),
+                label: t('rezeption.team.manage.status'),
                 render: (team) => (
                   <span className={`${cssPrefix}-status-badge ${team.active ? 'active' : 'inactive'}`}>
-                    {team.active ? t('common.status.active', 'Aktiv') : t('common.status.inactive', 'Inaktiv')}
+                    {team.active ? t('common.status.active') : t('common.status.inactive')}
                   </span>
                 ),
               },
@@ -560,7 +560,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                 }
                 onSelectItem={(id, checked) => teamSelection.toggle(id, checked)}
                 allSelected={allTeamsSelected}
-                emptyMessage={t('rezeption.team.manage.noTeams', 'Keine Teams gefunden')}
+                emptyMessage={t('rezeption.team.manage.noTeams')}
                 actionsColumn={{
                   render: (team) => (
                     <>
@@ -569,7 +569,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                         onClick={() => setEditingTeamId(team.id)}
                         type="button"
                       >
-                        {t('common.actions.edit', 'Bearbeiten')}
+                        {t('common.actions.edit')}
                       </button>
                       <button
                         className={`${cssPrefix}-action-button`}
@@ -578,14 +578,14 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                             visible: true,
                             teamId: team.id,
                             action: 'toggleActive',
-                            teamName: team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team'),
+                            teamName: team.name || t('rezeption.team.manage.unnamed'),
                           });
                         }}
                         type="button"
                       >
                         {team.active
-                          ? t('rezeption.team.manage.deactivate', 'Deaktivieren')
-                          : t('rezeption.team.manage.activate', 'Aktivieren')}
+                          ? t('rezeption.team.manage.deactivate')
+                          : t('rezeption.team.manage.activate')}
                       </button>
                       <button
                         className={`${cssPrefix}-action-button`}
@@ -594,12 +594,12 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                             visible: true,
                             teamId: team.id,
                             action: 'delete',
-                            teamName: team.name || t('rezeption.team.manage.unnamed', 'Unbenanntes Team'),
+                            teamName: team.name || t('rezeption.team.manage.unnamed'),
                           });
                         }}
                         type="button"
                       >
-                        {t('common.actions.delete', 'Löschen')}
+                        {t('common.actions.delete')}
                       </button>
                     </>
                   ),
@@ -620,8 +620,8 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
             addTeamMembersMutation.mutate({ teamId: editingTeamId, userIds });
           }}
           excludeUserIds={teamMembersData?.map((m: any) => m.user_id) || []}
-          title={t('rezeption.team.manage.edit.addMembers', 'Mitglieder hinzufügen')}
-          addButtonLabel={t('rezeption.team.manage.edit.add', 'Hinzufügen')}
+          title={t('rezeption.team.manage.edit.addMembers')}
+          addButtonLabel={t('rezeption.team.manage.edit.add')}
         />
       )}
 
@@ -634,8 +634,8 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
             removeTeamMembersMutation.mutate({ teamId: editingTeamId, userIds });
           }}
           includeOnlyUserIds={teamMembersForRemove.map((m: any) => m.user_id)}
-          title={t('rezeption.team.manage.edit.removeMembers', 'Mitglieder entfernen')}
-          addButtonLabel={t('rezeption.team.manage.edit.remove', 'Entfernen')}
+          title={t('rezeption.team.manage.edit.removeMembers')}
+          addButtonLabel={t('rezeption.team.manage.edit.remove')}
         />
       )}
 
@@ -644,7 +644,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         <div className={`${cssPrefix}-modal-overlay`} onClick={() => setShowTeamJoinQrModal(false)}>
           <div className={`${cssPrefix}-modal`} onClick={(e) => e.stopPropagation()}>
             <div className={`${cssPrefix}-modal-header`}>
-              <h3>{t('rezeption.team.manage.edit.joinQrTitle', 'Join-QR-Code')}</h3>
+              <h3>{t('rezeption.team.manage.edit.joinQrTitle')}</h3>
               <button
                 className={`${cssPrefix}-icon-button`}
                 onClick={() => setShowTeamJoinQrModal(false)}
@@ -654,7 +654,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
             </div>
             <div className={`${cssPrefix}-modal-content`}>
               <QRCode value={teamJoinQrToken} size={256} />
-              <p>{t('rezeption.team.manage.edit.joinQrDescription', 'Bestehende Benutzer können diesen QR-Code scannen, um dem Team beizutreten')}</p>
+              <p>{t('rezeption.team.manage.edit.joinQrDescription')}</p>
             </div>
           </div>
         </div>
@@ -665,7 +665,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
         <div className={`${cssPrefix}-modal-overlay`} onClick={() => setShowTeamRegistrationQrModal(false)}>
           <div className={`${cssPrefix}-modal`} onClick={(e) => e.stopPropagation()}>
             <div className={`${cssPrefix}-modal-header`}>
-              <h3>{t('rezeption.team.manage.edit.registrationQrTitle', 'Registrierungs-QR-Code')}</h3>
+              <h3>{t('rezeption.team.manage.edit.registrationQrTitle')}</h3>
               <button
                 className={`${cssPrefix}-icon-button`}
                 onClick={() => setShowTeamRegistrationQrModal(false)}
@@ -675,7 +675,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
             </div>
             <div className={`${cssPrefix}-modal-content`}>
               <QRCode value={teamRegistrationQrData.url} size={256} />
-              <p>{t('rezeption.team.manage.edit.registrationQrDescription', 'Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch dem Team beizutreten')}</p>
+              <p>{t('rezeption.team.manage.edit.registrationQrDescription')}</p>
             </div>
           </div>
         </div>
@@ -688,15 +688,15 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
             <div className={`${cssPrefix}-modal-header`}>
               <h3>
                 {teamConfirmDialog.action === 'delete'
-                  ? t('rezeption.team.manage.deleteConfirm.title', 'Team löschen')
-                  : t('rezeption.team.manage.toggleConfirm.title', 'Team-Status ändern')}
+                  ? t('rezeption.team.manage.deleteConfirm.title')
+                  : t('rezeption.team.manage.toggleConfirm.title')}
               </h3>
             </div>
             <div className={`${cssPrefix}-modal-content`}>
               <p>
                 {teamConfirmDialog.action === 'delete'
-                  ? t('rezeption.team.manage.deleteConfirm.description', 'Möchten Sie das Team "{{name}}" wirklich löschen?', { name: teamConfirmDialog.teamName })
-                  : t('rezeption.team.manage.toggleConfirm.description', 'Möchten Sie den Status des Teams "{{name}}" wirklich ändern?', { name: teamConfirmDialog.teamName })}
+                  ? t('rezeption.team.manage.deleteConfirm.description', { name: teamConfirmDialog.teamName })
+                  : t('rezeption.team.manage.toggleConfirm.description', { name: teamConfirmDialog.teamName })}
               </p>
             </div>
             <div className={`${cssPrefix}-modal-footer`}>
@@ -704,7 +704,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                 className={`${cssPrefix}-button`}
                 onClick={() => setTeamConfirmDialog({ visible: false, teamId: null, action: null, teamName: '' })}
               >
-                {t('common.actions.cancel', 'Abbrechen')}
+                {t('common.actions.cancel')}
               </button>
               <button
                 className={`${cssPrefix}-button`}
@@ -721,7 +721,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                           await api.bulkDeleteTeams(bulkIds);
                           teamBulkOperations.setMessage({
                             type: 'success',
-                            text: t('rezeption.team.manage.bulkDeleteSuccess', 'Ausgewählte Teams wurden gelöscht'),
+                            text: t('rezeption.team.manage.bulkDeleteSuccess'),
                           });
                           teamSelection.deselectAll();
                           bulkDeleteIdsRef.current = [];
@@ -729,7 +729,7 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                         } catch (error: any) {
                           teamBulkOperations.setMessage({
                             type: 'error',
-                            text: error?.response?.data?.error || t('rezeption.team.manage.bulkDeleteError', 'Fehler beim Löschen der Teams'),
+                            text: error?.response?.data?.error || t('rezeption.team.manage.bulkDeleteError'),
                           });
                         }
                       }
@@ -745,8 +745,8 @@ export function TeamManagement({ cssPrefix = 'rezeption', onBack, enabled = true
                 }}
               >
                 {teamConfirmDialog.action === 'delete'
-                  ? t('common.actions.delete', 'Löschen')
-                  : t('common.actions.save', 'Bestätigen')}
+                  ? t('common.actions.delete')
+                  : t('common.actions.save')}
               </button>
             </div>
           </div>

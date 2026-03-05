@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 
 function AuthCallbackPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setToken = useAuthStore((state) => state.setToken);
@@ -38,7 +40,7 @@ function AuthCallbackPage() {
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <div>Authenticating...</div>
+      <div>{t('login.messages.authenticating')}</div>
     </div>
   );
 }

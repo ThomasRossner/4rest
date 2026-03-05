@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import './BarChart.css';
 
 interface BarChartData {
@@ -40,11 +41,12 @@ const BAR_HOVER_COLORS = [
 ];
 
 export function BarChart({ data, title, maxValue }: BarChartProps) {
+  const { t } = useTranslation();
   if (!data || data.length === 0) {
     return (
       <div className="bar-chart-container">
         {title && <h3 className="bar-chart-title">{title}</h3>}
-        <div className="bar-chart-empty">No data available</div>
+        <div className="bar-chart-empty">{t('common.noData')}</div>
       </div>
     );
   }

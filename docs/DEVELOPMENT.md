@@ -7,10 +7,21 @@ For local development, it's often easier to run the backend and frontend directl
 ### Option 1: Database Only with Docker
 
 1. **Start only PostgreSQL and Redis:**
+
+   **Mit Docker Compose (Docker Desktop oder Colima):**
    ```bash
-   # In WSL
-   wsl bash -c "cd /mnt/c/Users/werner/Documents/roots-of-impact && docker-compose -f docker-compose.dev.yml up -d"
+   cd roots-of-impact
+   ./scripts/dev-up.sh
    ```
+   Oder manuell: `docker compose -f docker-compose.dev.yml up -d` bzw. `docker-compose -f docker-compose.dev.yml up -d`
+
+   **Colima (macOS):** Zuerst Colima starten: `colima start`. Wenn die Docker-CLI den Daemon nicht findet, z.B.:
+   ```bash
+   export DOCKER_HOST=unix://$HOME/.colima/default/docker.sock
+   ./scripts/dev-up.sh
+   ```
+   Optional: Symlink für Standard-Socket (damit alle Tools funktionieren):  
+   `sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock`
 
 2. **Set up environment variables:**
    

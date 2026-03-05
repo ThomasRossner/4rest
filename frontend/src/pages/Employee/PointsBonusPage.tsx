@@ -111,7 +111,7 @@ function PointsBonusPage() {
             {qrToken ? (
               <QRCodeSVG value={qrToken} size={256} level="M" includeMargin />
             ) : (
-              <p>No QR token available</p>
+              <p>{t('rewards.pointsBonus.noToken')}</p>
             )}
           </div>
           <p className="points-bonus-qr-instruction">

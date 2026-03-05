@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { ConsentManager } from '../../components/GDPR/ConsentManager';
-import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import { TeamCreator } from '../../components/Teams/TeamCreator';
 import { TeamJoiner } from '../../components/Teams/TeamJoiner';
 import { ContestCreator } from '../../components/Contests/ContestCreator';
@@ -18,7 +17,9 @@ function ProfilePage() {
   const userId = useAuthStore((s) => s.user?.id);
   const points = useAuthStore((s) => s.user?.points || 0);
   const [showConsent, setShowConsent] = useState(false);
+  const [languageSaving, setLanguageSaving] = useState(false);
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
   const locale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
 
   const { data: progress } = useQuery(
@@ -120,6 +121,65 @@ function ProfilePage() {
               🌲 {progress?.treesPlanted || 0}
             </span>
             <span className="profile-stat-label">{t('profile.stats.trees')}</span>
+          </div>
+        </div>
+        <div className="profile-language">
+          <span className="profile-language-label">{t('profile.language.label')}</span>
+          <div className="profile-language-buttons">
+            <button
+              type="button"
+              className={`profile-language-btn ${(user?.preferredLanguage || i18n.language || 'de').startsWith('de') ? 'active' : ''}`}
+              onClick={async () => {
+                if (!userId || (user?.preferredLanguage || 'de') === 'de') return;
+                setLanguageSaving(true);
+                try {
+                  await api.updateUserProfile(userId, { preferredLanguage: 'de' });
+                  i18n.changeLanguage('de');
+                  await api.refreshMe();
+                  // Content (tasks, rewards, teams, contests) is resolved by backend from preferred_language – refetch so UI shows new language
+                  await Promise.all([
+                    queryClient.invalidateQueries('tasks'),
+                    queryClient.invalidateQueries('rewards'),
+                    queryClient.invalidateQueries(['task']),
+                    queryClient.invalidateQueries(['userActiveTeam', userId]),
+                    queryClient.invalidateQueries(['userTeams', userId]),
+                    queryClient.invalidateQueries(['userContests']),
+                  ]);
+                } finally {
+                  setLanguageSaving(false);
+                }
+              }}
+              disabled={languageSaving}
+            >
+              {t('language.de')}
+            </button>
+            <button
+              type="button"
+              className={`profile-language-btn ${(user?.preferredLanguage || i18n.language || 'de') === 'en' ? 'active' : ''}`}
+              onClick={async () => {
+                if (!userId || user?.preferredLanguage === 'en') return;
+                setLanguageSaving(true);
+                try {
+                  await api.updateUserProfile(userId, { preferredLanguage: 'en' });
+                  i18n.changeLanguage('en');
+                  await api.refreshMe();
+                  // Content (tasks, rewards, teams, contests) is resolved by backend from preferred_language – refetch so UI shows new language
+                  await Promise.all([
+                    queryClient.invalidateQueries('tasks'),
+                    queryClient.invalidateQueries('rewards'),
+                    queryClient.invalidateQueries(['task']),
+                    queryClient.invalidateQueries(['userActiveTeam', userId]),
+                    queryClient.invalidateQueries(['userTeams', userId]),
+                    queryClient.invalidateQueries(['userContests']),
+                  ]);
+                } finally {
+                  setLanguageSaving(false);
+                }
+              }}
+              disabled={languageSaving}
+            >
+              {t('language.en')}
+            </button>
           </div>
         </div>
         <div className="profile-actions">
@@ -234,7 +294,7 @@ function ProfilePage() {
       {/* Teams */}
       <section className="profile-section">
         <div className="profile-section-header">
-          <h2>{t('profile.teams.title') || 'My Teams'}</h2>
+          <h2>{t('profile.teams.title')}</h2>
           {(!teams || teams.length === 0) && (
             <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
               <button
@@ -242,14 +302,14 @@ function ProfilePage() {
                 className="profile-action-button"
                 onClick={() => setShowTeamJoiner(true)}
               >
-                {t('profile.teams.joinButton') || 'Team beitreten'}
+                {t('profile.teams.joinButton')}
               </button>
               <button
                 type="button"
                 className="profile-action-button"
                 onClick={() => setShowTeamCreator(true)}
               >
-                {t('profile.teams.createButton') || 'Team anlegen'}
+                {t('profile.teams.createButton')}
               </button>
             </div>
           )}
@@ -286,28 +346,28 @@ function ProfilePage() {
             ))}
           </div>
         ) : (
-          <p className="profile-empty-state">{t('profile.teams.empty') || 'Noch keine Teams. Erstelle eines oder trete einem bei!'}</p>
+          <p className="profile-empty-state">{t('profile.teams.empty')}</p>
         )}
       </section>
 
       {/* Contests */}
       <section className="profile-section">
         <div className="profile-section-header">
-          <h2>{t('profile.contests.title') || 'My Contests'}</h2>
+          <h2>{t('profile.contests.title')}</h2>
           <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
             <button
               type="button"
               className="profile-action-button"
               onClick={() => setShowContestJoiner(true)}
             >
-              {t('profile.contests.joinButton') || 'Contest beitreten'}
+              {t('profile.contests.joinButton')}
             </button>
             <button
               type="button"
               className="profile-action-button"
               onClick={() => setShowContestCreator(true)}
             >
-              {t('profile.contests.createButton') || 'Contest anlegen'}
+              {t('profile.contests.createButton')}
             </button>
           </div>
         </div>
@@ -344,7 +404,7 @@ function ProfilePage() {
             ))}
           </div>
         ) : (
-          <p className="profile-empty-state">{t('profile.contests.empty') || 'Noch keine Contests. Erstelle einen oder trete einem bei!'}</p>
+          <p className="profile-empty-state">{t('profile.contests.empty')}</p>
         )}
       </section>
     </div>

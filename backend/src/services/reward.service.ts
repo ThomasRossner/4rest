@@ -1,4 +1,5 @@
 import { getPool } from '../database/connection.js';
+import { resolveI18n, normalizeContentLang } from '../utils/i18n.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
@@ -24,7 +25,8 @@ export async function getRewardsService(userId: string) {
   // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles, allowed_role were removed in migrations 037/040)
   // Use LEFT JOIN to include rewards even if location doesn't exist or is inactive
   let query = `SELECT 
-    r.id, r.title, r.description, r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
+    r.id, r.title, r.description, r.title_i18n, r.description_i18n,
+    r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
     r.active, r.reward_art, r.kategorie, 
     r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
     r.created_at, r.updated_at, 
@@ -122,16 +124,21 @@ export async function getRewardsService(userId: string) {
     unique.set(row.id, row);
   }
 
-  return Array.from(unique.values()).map((row) => ({
-    id: row.id,
-    title: row.title,
-    description: row.description,
-    pointsCost: row.points_cost,
-    rewardType: row.reward_type,
-    icon: getRewardIcon(row.reward_type),
-    thumbnail_url: row.thumbnail_url ?? null,
-    location: row.location as Location,
-  }));
+  const lang = user?.preferred_language === 'en' ? 'en' : 'de';
+  return Array.from(unique.values()).map((row) => {
+    const title = resolveI18n(row.title_i18n, lang, row.title);
+    const description = resolveI18n(row.description_i18n, lang, row.description);
+    return {
+      id: row.id,
+      title,
+      description,
+      pointsCost: row.points_cost,
+      rewardType: row.reward_type,
+      icon: getRewardIcon(row.reward_type),
+      thumbnail_url: row.thumbnail_url ?? null,
+      location: row.location as Location,
+    };
+  });
 }
 
 function getRewardIcon(type: string): string {
@@ -149,6 +156,8 @@ function getRewardIcon(type: string): string {
 interface CreateCustomRewardInput {
   title?: string;
   description?: string | null;
+  title_i18n?: Record<string, string>;
+  description_i18n?: Record<string, string>;
   pointsCost?: number | string;
   rewardType?: string;
   voucherCode?: string | null;
@@ -166,6 +175,8 @@ interface CreateCustomRewardInput {
 interface UpdateRewardInput {
   title?: string | null;
   description?: string | null;
+  title_i18n?: Record<string, string> | null;
+  description_i18n?: Record<string, string> | null;
   pointsCost?: number | string | null;
   rewardType?: string | null;
   voucherCode?: string | null;
@@ -182,8 +193,14 @@ interface UpdateRewardInput {
 
 export async function createCustomReward(data: CreateCustomRewardInput) {
   const db = getPool();
-  const title = data.title?.trim();
-  if (!title) {
+  const titleI18n = data.title_i18n && typeof data.title_i18n === 'object'
+    ? data.title_i18n
+    : { de: data.title ?? '', en: data.title ?? '' };
+  const descriptionI18n = data.description_i18n && typeof data.description_i18n === 'object'
+    ? data.description_i18n
+    : { de: data.description ?? '', en: data.description ?? '' };
+  const legacyTitle = data.title?.trim() ?? titleI18n.de ?? titleI18n.en ?? '';
+  if (!legacyTitle) {
     throw new Error('Title is required.');
   }
   const rewardType = validateRewardType(data.rewardType);
@@ -194,6 +211,8 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
     `INSERT INTO rewards (
        title,
        description,
+       title_i18n,
+       description_i18n,
        points_cost,
        reward_type,
        voucher_code,
@@ -207,11 +226,13 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
        allowed_teams,
        allowed_contests
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
      RETURNING *`,
     [
-      title,
+      legacyTitle,
       data.description ?? null,
+      JSON.stringify(titleI18n),
+      JSON.stringify(descriptionI18n),
       pointsCost,
       rewardType,
       data.voucherCode ?? null,
@@ -250,7 +271,15 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
   const values: any[] = [];
   let paramIndex = 1;
 
-  if (data.title !== undefined) {
+  if (data.title_i18n !== undefined && data.title_i18n !== null && typeof data.title_i18n === 'object') {
+    updates.push(`title_i18n = $${paramIndex++}`);
+    values.push(JSON.stringify(data.title_i18n));
+    const resolved = data.title_i18n.de ?? data.title_i18n.en;
+    if (resolved != null) {
+      updates.push(`title = $${paramIndex++}`);
+      values.push(resolved);
+    }
+  } else if (data.title !== undefined) {
     const trimmed = data.title === null ? null : data.title?.toString().trim() ?? null;
     if (trimmed === '') {
       throw new Error('Title cannot be empty.');
@@ -259,7 +288,13 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
     values.push(trimmed);
   }
 
-  if (data.description !== undefined) {
+  if (data.description_i18n !== undefined && data.description_i18n !== null && typeof data.description_i18n === 'object') {
+    updates.push(`description_i18n = $${paramIndex++}`);
+    values.push(JSON.stringify(data.description_i18n));
+    const resolved = data.description_i18n.de ?? data.description_i18n.en;
+    updates.push(`description = $${paramIndex++}`);
+    values.push(resolved ?? null);
+  } else if (data.description !== undefined) {
     updates.push(`description = $${paramIndex++}`);
     values.push(data.description ?? null);
   }
@@ -404,7 +439,8 @@ export async function listRewardsForAdmin(includeInactive = false) {
 
   // Use explicit column list to avoid selecting non-existent columns
   let query = `SELECT 
-    r.id, r.title, r.description, r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
+    r.id, r.title, r.description, r.title_i18n, r.description_i18n,
+    r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
     r.active, r.reward_art, r.kategorie, 
     r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
     r.created_at, r.updated_at, 

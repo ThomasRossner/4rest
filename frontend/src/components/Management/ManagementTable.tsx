@@ -66,7 +66,7 @@ export function ManagementTable<T extends { id: string }>({
                 checked={allSelected && items.length > 0}
                 disabled={items.length === 0}
                 onChange={(event) => onSelectAll(event.target.checked)}
-                aria-label={t('admin.taskManage.selectAll', 'Alle auswählen')}
+                aria-label={t('admin.taskManage.selectAll')}
               />
             </th>
             {columns.map((column) => (
@@ -83,14 +83,14 @@ export function ManagementTable<T extends { id: string }>({
                 {column.label} {column.filterActive && '✓'}
               </th>
             ))}
-            {actionsColumn && <th>Actions</th>}
+            {actionsColumn && <th>{t('admin.taskManage.actionsColumn')}</th>}
           </tr>
         </thead>
         <tbody>
           {items.length === 0 ? (
             <tr>
               <td colSpan={colSpan} className={`${cssPrefix}-table-empty`}>
-                {emptyMessage || t('admin.taskManage.noItems', 'Keine Einträge gefunden')}
+                {emptyMessage || t('admin.taskManage.noItems')}
               </td>
             </tr>
           ) : (

@@ -29,13 +29,13 @@ export function BulkActionsBar({
 }: BulkActionsBarProps) {
   const { t } = useTranslation();
 
-  const defaultActivateLabel = activateLabel || t('admin.taskManage.activate', 'Aktivieren');
-  const defaultDeactivateLabel = deactivateLabel || t('admin.taskManage.deactivate', 'Deaktivieren');
-  const defaultDeleteLabel = deleteLabel || t('common.actions.delete', 'Löschen');
+  const defaultActivateLabel = activateLabel || t('admin.taskManage.activate');
+  const defaultDeactivateLabel = deactivateLabel || t('admin.taskManage.deactivate');
+  const defaultDeleteLabel = deleteLabel || t('common.actions.delete');
   const defaultSelectionCountLabel = selectionCountLabel || ((count: number) => 
-    t('admin.taskManage.selectedCount', { count }, `${count} ausgewählt`)
+    t('admin.taskManage.selectedCount', { count })
   );
-  const defaultNoSelectionLabel = noSelectionLabel || t('admin.taskManage.noSelection', 'Keine Auswahl');
+  const defaultNoSelectionLabel = noSelectionLabel || t('admin.taskManage.noSelection');
 
   return (
     <div className={`${cssPrefix}-management-actions`}>

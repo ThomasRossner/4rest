@@ -31,7 +31,7 @@ function ContestRankingPage() {
     return (
       <div className="contest-ranking-page">
         <div className="contest-ranking-header">
-          <h1 className="contest-ranking-title">{t('contests.ranking.title', 'Contest Ranking')}</h1>
+          <h1 className="contest-ranking-title">{t('contests.ranking.title')}</h1>
         </div>
         <LoadingSkeleton lines={10} />
       </div>
@@ -46,13 +46,13 @@ function ContestRankingPage() {
             className="contest-ranking-back"
             onClick={() => navigate('/')}
           >
-            ← {t('common.actions.back', 'Zurück')}
+            ← {t('common.actions.back')}
           </button>
-          <h1 className="contest-ranking-title">{t('contests.ranking.title', 'Contest Ranking')}</h1>
+          <h1 className="contest-ranking-title">{t('contests.ranking.title')}</h1>
         </div>
         <EmptyState
-          title={t('contests.ranking.notFound', 'Contest not found')}
-          description={t('contests.ranking.notFoundDescription', 'The contest you are looking for does not exist or has been deleted.')}
+          title={t('contests.ranking.notFound')}
+          description={t('contests.ranking.notFoundDescription')}
         />
       </div>
     );
@@ -75,23 +75,23 @@ function ContestRankingPage() {
           className="contest-ranking-back"
           onClick={() => navigate('/')}
         >
-          ← {t('common.actions.back', 'Zurück')}
+          ← {t('common.actions.back')}
         </button>
-        <h1 className="contest-ranking-title">{contest.name || t('contests.ranking.unnamed', 'Unnamed Contest')}</h1>
+        <h1 className="contest-ranking-title">{contest.name || t('contests.ranking.unnamed')}</h1>
       </div>
 
       <div className="contest-ranking-info">
         <div className="contest-ranking-time">
-          <span className="contest-ranking-time-label">{t('contests.ranking.timeRemaining', 'Time remaining')}:</span>
+          <span className="contest-ranking-time-label">{t('contests.ranking.timeRemaining')}:</span>
           <span className="contest-ranking-time-value">
             {timeRemaining > 0 ? (
               <>
-                {daysRemaining > 0 && `${daysRemaining} ${t('contests.ranking.days', 'days')} `}
-                {hoursRemaining > 0 && `${hoursRemaining} ${t('contests.ranking.hours', 'hours')} `}
-                {minutesRemaining > 0 && `${minutesRemaining} ${t('contests.ranking.minutes', 'minutes')}`}
+                {daysRemaining > 0 && `${daysRemaining} ${t('contests.ranking.days')} `}
+                {hoursRemaining > 0 && `${hoursRemaining} ${t('contests.ranking.hours')} `}
+                {minutesRemaining > 0 && `${minutesRemaining} ${t('contests.ranking.minutes')}`}
               </>
             ) : (
-              t('contests.ranking.ended', 'Contest has ended')
+              t('contests.ranking.ended')
             )}
           </span>
         </div>
@@ -100,9 +100,9 @@ function ContestRankingPage() {
       {ranking && ranking.length > 0 ? (
         <div className="contest-ranking-list">
           <div className="contest-ranking-list-header">
-            <div className="contest-ranking-list-header-rank">{t('contests.ranking.rank', 'Rank')}</div>
-            <div className="contest-ranking-list-header-name">{t('contests.ranking.name', 'Name')}</div>
-            <div className="contest-ranking-list-header-points">{t('contests.ranking.points', 'Points')}</div>
+            <div className="contest-ranking-list-header-rank">{t('contests.ranking.rank')}</div>
+            <div className="contest-ranking-list-header-name">{t('contests.ranking.name')}</div>
+            <div className="contest-ranking-list-header-points">{t('contests.ranking.points')}</div>
           </div>
           {ranking.map((entry: any, index: number) => (
             <div
@@ -118,7 +118,7 @@ function ContestRankingPage() {
               <div className="contest-ranking-entry-name">
                 {entry.user_name}
                 {entry.user_id === userId && (
-                  <span className="contest-ranking-entry-you"> ({t('contests.ranking.you', 'You')})</span>
+                  <span className="contest-ranking-entry-you"> ({t('contests.ranking.you')})</span>
                 )}
               </div>
               <div className="contest-ranking-entry-points">{entry.points}</div>
@@ -127,8 +127,8 @@ function ContestRankingPage() {
         </div>
       ) : (
         <EmptyState
-          title={t('contests.ranking.noParticipants', 'No participants yet')}
-          description={t('contests.ranking.noParticipantsDescription', 'Be the first to join this contest!')}
+          title={t('contests.ranking.noParticipants')}
+          description={t('contests.ranking.noParticipantsDescription')}
         />
       )}
     </div>

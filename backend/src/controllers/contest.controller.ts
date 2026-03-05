@@ -23,6 +23,7 @@ import {
   removeContestParticipants,
   getContestParticipantsAdmin,
 } from '../services/contest.service.js';
+import { getPreferredLanguage } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 /**
@@ -108,8 +109,8 @@ export const getUserContestsController: RequestHandler = asyncHandler(async (req
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
-  const contests = await getUserContests(authReq.user.id);
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const contests = await getUserContests(authReq.user.id, preferredLanguage ?? undefined);
   res.json(contests);
 });
 
@@ -122,8 +123,8 @@ export const getAllUserContestsController: RequestHandler = asyncHandler(async (
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
-  const contests = await getAllUserContests(authReq.user.id);
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const contests = await getAllUserContests(authReq.user.id, preferredLanguage ?? undefined);
   res.json(contests);
 });
 
@@ -136,12 +137,11 @@ export const getEmployeeContestsController: RequestHandler = asyncHandler(async 
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
   if (authReq.user.role !== 'rezeption' && authReq.user.role !== 'administrator') {
     return res.status(403).json({ error: 'Forbidden: Only rezeption and administrators can access this endpoint' });
   }
-  
-  const contests = await getEmployeeContests(authReq.user.id);
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const contests = await getEmployeeContests(authReq.user.id, preferredLanguage ?? undefined);
   res.json(contests);
 });
 
@@ -154,14 +154,12 @@ export const getContestDetailsController: RequestHandler = asyncHandler(async (r
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
   const { id } = req.params;
-  const contestDetails = await getContestDetails(id, authReq.user.id);
-  
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const contestDetails = await getContestDetails(id, authReq.user.id, preferredLanguage ?? undefined);
   if (!contestDetails) {
     return res.status(404).json({ error: 'Contest not found or access denied' });
   }
-  
   res.json(contestDetails);
 });
 
@@ -268,7 +266,8 @@ export const getAllContestsAdminController: RequestHandler = asyncHandler(async 
   }
   
   const includeInactive = req.query.includeInactive === 'true';
-  const contests = await getAllContests({ includeInactive });
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const contests = await getAllContests({ includeInactive, preferredLanguage: preferredLanguage ?? undefined });
   res.json(contests);
 });
 
@@ -287,9 +286,10 @@ export const updateContestController: RequestHandler = asyncHandler(async (req, 
   }
   
   const { id } = req.params;
-  const { name, active, endDate } = req.body;
+  const { name, name_i18n, active, endDate } = req.body;
   
   const updateData: any = {};
+  if (name_i18n !== undefined) updateData.name_i18n = name_i18n;
   if (name !== undefined) updateData.name = name;
   if (active !== undefined) updateData.active = active;
   if (endDate !== undefined) {

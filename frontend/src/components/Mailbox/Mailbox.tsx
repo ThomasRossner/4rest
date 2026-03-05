@@ -22,7 +22,7 @@ interface MailboxProps {
 }
 
 export function Mailbox({ onClose }: MailboxProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -92,7 +92,7 @@ export function Mailbox({ onClose }: MailboxProps) {
 
   const handleDelete = () => {
     if (selectedMessage) {
-      if (confirm(t('mailbox.confirmDelete', 'Möchten Sie diese Nachricht wirklich löschen?'))) {
+      if (confirm(t('mailbox.confirmDelete'))) {
         deleteMutation.mutate(selectedMessage.id);
       }
     }
@@ -126,25 +126,25 @@ export function Mailbox({ onClose }: MailboxProps) {
     }}>
       <div className="mailbox-container">
         <div className="mailbox-header">
-          <h2>{t('mailbox.title', 'Nachrichten')}</h2>
+          <h2>{t('mailbox.title')}</h2>
           <button className="mailbox-close-button" onClick={onClose}>×</button>
         </div>
 
         {isLoading ? (
-          <div className="mailbox-loading">{t('mailbox.loading', 'Lade Nachrichten...')}</div>
+          <div className="mailbox-loading">{t('mailbox.loading')}</div>
         ) : messages.length === 0 ? (
           <div className="mailbox-empty">
-            <p>{t('mailbox.noMessages', 'Keine Nachrichten')}</p>
+            <p>{t('mailbox.noMessages')}</p>
           </div>
         ) : selectedMessage ? (
           <div className="mailbox-detail">
             <button className="mailbox-back-button" onClick={() => setSelectedMessage(null)}>
-              ← {t('mailbox.back', 'Zurück')}
+              ← {t('mailbox.back')}
             </button>
             <div className="mailbox-detail-header">
               <h3>{selectedMessage.title}</h3>
               <span className="mailbox-detail-date">
-                {new Date(selectedMessage.created_at).toLocaleString('de-DE')}
+                {new Date(selectedMessage.created_at).toLocaleString(i18n.language === 'de' ? 'de-DE' : 'en-GB')}
               </span>
             </div>
             {selectedMessage.type === 'photo_rejection' && (
@@ -152,7 +152,7 @@ export function Mailbox({ onClose }: MailboxProps) {
                 {selectedMessage.metadata?.rejection_reason && (
                   <div className="mailbox-detail-content" style={{ marginTop: '1rem', marginBottom: '1rem', padding: '1rem', backgroundColor: '#fee', borderRadius: '8px', border: '1px solid #fcc' }}>
                     <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#c00' }}>
-                      {t('mailbox.rejectionReason', 'Ablehnungsgrund:')}
+                      {t('mailbox.rejectionReason')}
                     </strong>
                     <p style={{ whiteSpace: 'pre-wrap', margin: 0, color: '#333' }}>{selectedMessage.metadata.rejection_reason}</p>
                   </div>
@@ -178,7 +178,7 @@ export function Mailbox({ onClose }: MailboxProps) {
                     setShowPhotoValidation(true);
                   }}
                 >
-                  {t('mailbox.reviewPhoto', 'Foto prüfen')}
+                  {t('mailbox.reviewPhoto')}
                 </button>
               </div>
             )}
@@ -189,8 +189,8 @@ export function Mailbox({ onClose }: MailboxProps) {
                 disabled={deleteMutation.isLoading}
               >
                 {deleteMutation.isLoading
-                  ? t('mailbox.deleting', 'Löschen...')
-                  : t('mailbox.delete', 'Löschen')}
+                  ? t('mailbox.deleting')
+                  : t('mailbox.delete')}
               </button>
             </div>
           </div>
@@ -207,7 +207,7 @@ export function Mailbox({ onClose }: MailboxProps) {
                   {!message.read && <span className="mailbox-item-unread-badge">●</span>}
                 </div>
                 <span className="mailbox-item-date">
-                  {new Date(message.created_at).toLocaleString('de-DE')}
+                  {new Date(message.created_at).toLocaleString(i18n.language === 'de' ? 'de-DE' : 'en-GB')}
                 </span>
                 {message.content && (
                   <p className="mailbox-item-preview">

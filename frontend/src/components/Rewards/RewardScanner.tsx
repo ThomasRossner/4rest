@@ -197,7 +197,7 @@ export function RewardScanner({ onClose, onSuccess }: RewardScannerProps) {
       if (result && result.success) {
         showToast({
           type: 'success',
-          title: t('rewards.scanner.redeemSuccess') || 'Belohnung eingelöst',
+          title: t('rewards.scanner.redeemSuccess'),
           message: t('rewards.scanner.redeemMessage', {
             reward: scannedReward.redemption.rewardTitle,
             guest: scannedReward.redemption.userName || scannedReward.redemption.userEmail,
@@ -246,8 +246,8 @@ export function RewardScanner({ onClose, onSuccess }: RewardScannerProps) {
     <div className="qr-scanner-page">
       <div className="qr-scanner-header">
         <div className="qr-scanner-header-content">
-          <h1 className="qr-scanner-title">{t('rewards.scanner.title') || 'Belohnung von Gast einlösen'}</h1>
-          <p className="qr-scanner-subtitle">{t('rewards.scanner.subtitle') || 'Scannen Sie den QR-Code der Belohnung'}</p>
+          <h1 className="qr-scanner-title">{t('rewards.scanner.title')}</h1>
+          <p className="qr-scanner-subtitle">{t('rewards.scanner.subtitle')}</p>
         </div>
         {onClose && (
           <button

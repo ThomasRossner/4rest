@@ -26,6 +26,7 @@ import {
   removeTeamMembers,
   getTeamMembersAdmin,
 } from '../services/team.service.js';
+import { getPreferredLanguage } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 /**
@@ -75,8 +76,8 @@ export const getUserTeamsController: RequestHandler = asyncHandler(async (req, r
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
-  const teams = await getUserTeams(authReq.user.id);
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const teams = await getUserTeams(authReq.user.id, preferredLanguage ?? undefined);
   res.json(teams);
 });
 
@@ -89,14 +90,12 @@ export const getTeamDetailsController: RequestHandler = asyncHandler(async (req,
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
   const { id } = req.params;
-  const teamDetails = await getTeamDetails(id, authReq.user.id);
-  
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const teamDetails = await getTeamDetails(id, authReq.user.id, preferredLanguage ?? undefined);
   if (!teamDetails) {
     return res.status(404).json({ error: 'Team not found or access denied' });
   }
-  
   res.json(teamDetails);
 });
 
@@ -240,8 +239,8 @@ export const getUserActiveTeamController: RequestHandler = asyncHandler(async (r
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
-  const team = await getUserActiveTeam(authReq.user.id);
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
+  const team = await getUserActiveTeam(authReq.user.id, preferredLanguage ?? undefined);
   
   if (!team) {
     return res.json(null);
@@ -294,8 +293,9 @@ export const getAllTeamsController: RequestHandler = asyncHandler(async (req, re
   }
   
   const includeInactive = req.query.includeInactive === 'true';
+  const preferredLanguage = await getPreferredLanguage(authReq.user.id);
   try {
-    const teams = await getAllTeams({ includeInactive });
+    const teams = await getAllTeams({ includeInactive, preferredLanguage: preferredLanguage ?? undefined });
     res.json(teams);
   } catch (error: any) {
     throw error;
@@ -311,15 +311,12 @@ export const updateTeamController: RequestHandler = asyncHandler(async (req, res
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
   if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
     return res.status(403).json({ error: 'Forbidden: Administrator or Rezeption access required' });
   }
-  
   const { id } = req.params;
-  const { name, active } = req.body;
-  
-  const team = await updateTeam(id, { name, active });
+  const { name, name_i18n, active } = req.body;
+  const team = await updateTeam(id, { name, name_i18n, active });
   res.json(team);
 });
 

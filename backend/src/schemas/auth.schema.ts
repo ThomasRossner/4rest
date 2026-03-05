@@ -12,4 +12,5 @@ export const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   role: z.enum([...USER_ROLES]).optional(),
   userType: z.enum([...USER_TYPES]).optional(),
+  preferredLanguage: z.enum(['de', 'en']).optional(),
 });

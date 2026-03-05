@@ -199,6 +199,7 @@ export interface User {
   userType: UserType;
   avatar?: string;
   emailVerified?: boolean;
+  preferredLanguage?: 'de' | 'en';
   sihotGuestId?: string | null;
   sihotGuest?: SihotGuestProfile | null;
   sihotReservations?: SihotReservationSummary[];
@@ -209,7 +210,7 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role?: UserRole, userType?: UserType, teamRegistrationToken?: string, contestRegistrationToken?: string) => Promise<void>;
+  register: (email: string, password: string, name: string, role?: UserRole, userType?: UserType, teamRegistrationToken?: string, contestRegistrationToken?: string, preferredLanguage?: 'de' | 'en') => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
   setToken: (token: string, user?: User | null) => void;
@@ -253,9 +254,10 @@ export const useAuthStore = create<AuthState>()(
         role: UserRole = 'guest',
         userType: UserType = 'explorer',
         teamRegistrationToken?: string,
-        contestRegistrationToken?: string
+        contestRegistrationToken?: string,
+        preferredLanguage?: 'de' | 'en'
       ) => {
-        const data = await api.register(email, password, name, role, userType, teamRegistrationToken, contestRegistrationToken);
+        const data = await api.register(email, password, name, role, userType, teamRegistrationToken, contestRegistrationToken, preferredLanguage);
         if (!data || !data.token || !data.user) {
           throw new Error('Registration failed');
         }

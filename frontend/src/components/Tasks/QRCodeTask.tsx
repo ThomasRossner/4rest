@@ -120,9 +120,9 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
           const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           console.log('[QRCodeTask] Camera API not available', { isHttp, isLocalhost });
           if (isHttp && !isLocalhost) {
-            setCameraError(t('tasksComponents.qr.cameraRequiresHttps', 'Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.'));
+            setCameraError(t('tasksComponents.qr.cameraRequiresHttps'));
           } else {
-            setCameraError(t('tasksComponents.qr.cameraNotSupported', 'Kamera-Zugriff wird in diesem Browser nicht unterstützt. Bitte verwenden Sie einen modernen Browser mit Kamera-Unterstützung.'));
+            setCameraError(t('tasksComponents.qr.cameraNotSupported'));
           }
           setHasCamera(false);
           return;
@@ -167,7 +167,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
               }
               video.play().catch((err) => {
                 console.error('[QRCodeTask] Error playing video after metadata:', err);
-                setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+                setCameraError(t('tasksComponents.qr.cameraPlayError'));
               });
             };
             
@@ -187,7 +187,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
             
             const handleError = (e: Event) => {
               console.error('[QRCodeTask] Video error event:', e);
-              setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+              setCameraError(t('tasksComponents.qr.cameraPlayError'));
             };
             
             video.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -248,13 +248,13 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
         setHasCamera(false);
         setIsVideoReady(false);
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setCameraError(t('tasksComponents.qr.cameraPermissionDenied', 'Kamera-Zugriff wurde verweigert. Bitte erlauben Sie den Kamera-Zugriff in den Browser-Einstellungen.'));
+          setCameraError(t('tasksComponents.qr.cameraPermissionDenied'));
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-          setCameraError(t('tasksComponents.qr.cameraNotFound', 'Keine Kamera gefunden. Bitte stellen Sie sicher, dass eine Kamera angeschlossen ist.'));
+          setCameraError(t('tasksComponents.qr.cameraNotFound'));
         } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-          setCameraError(t('tasksComponents.qr.cameraInUse', 'Kamera wird bereits von einer anderen Anwendung verwendet. Bitte schließen Sie andere Anwendungen, die die Kamera verwenden.'));
+          setCameraError(t('tasksComponents.qr.cameraInUse'));
         } else {
-          setCameraError(err.message || t('tasksComponents.qr.cameraError', 'Kamera-Zugriff fehlgeschlagen'));
+          setCameraError(err.message || t('tasksComponents.qr.cameraError'));
         }
       }
     };
@@ -475,16 +475,16 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 borderRadius: 'var(--border-radius)',
                 marginBottom: 'var(--spacing-md)'
               }}>
-                <strong>{t('tasksComponents.qr.cameraErrorTitle', 'Kamera-Fehler')}</strong>
+                <strong>{t('tasksComponents.qr.cameraErrorTitle')}</strong>
                 <p style={{ margin: 'var(--spacing-xs) 0 0 0' }}>{cameraError}</p>
               </div>
             )}
-            <p>{t('tasksComponents.qr.manualPrompt', 'Bitte geben Sie den QR-Code manuell ein:')}</p>
+            <p>{t('tasksComponents.qr.manualPrompt')}</p>
             <input
               type="text"
               value={scannedCode}
               onChange={(e) => setScannedCode(e.target.value)}
-              placeholder={t('tasksComponents.qr.manualPlaceholder', 'QR-Code eingeben')}
+              placeholder={t('tasksComponents.qr.manualPlaceholder')}
               className="qr-input"
             />
             <button
@@ -492,13 +492,13 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 if (scannedCode === qrCode) {
                   completeMutation.mutate();
                 } else {
-                  alert(t('tasksComponents.qr.invalid', 'Ungültiger QR-Code'));
+                  alert(t('tasksComponents.qr.invalid'));
                 }
               }}
               disabled={!scannedCode || completeMutation.isLoading}
               className="verify-button"
             >
-              {t('tasksComponents.qr.verify', 'Verifizieren')}
+              {t('tasksComponents.qr.verify')}
             </button>
           </div>
 
@@ -539,7 +539,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 if (video) {
                   video.play().catch((err) => {
                     console.error('[QRCodeTask] Error playing video after metadata:', err);
-                    setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+                    setCameraError(t('tasksComponents.qr.cameraPlayError'));
                   });
                 }
               }}
@@ -572,7 +572,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 const video = e.target as HTMLVideoElement;
                 console.error('[QRCodeTask] Video error code:', video.error?.code);
                 console.error('[QRCodeTask] Video error message:', video.error?.message);
-                setCameraError(t('tasksComponents.qr.cameraPlayError', 'Kamera konnte nicht gestartet werden'));
+                setCameraError(t('tasksComponents.qr.cameraPlayError'));
               }}
             />
             {/* Loading indicator or error message */}
@@ -597,7 +597,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
                 ) : (
                   <>
                     <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📷</div>
-                    <div>{t('tasksComponents.qr.cameraLoading', 'Kamera wird geladen...')}</div>
+                    <div>{t('tasksComponents.qr.cameraLoading')}</div>
                   </>
                 )}
               </div>

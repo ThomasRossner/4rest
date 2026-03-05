@@ -1,7 +1,14 @@
 import { getPool } from '../database/connection.js';
+import { resolveI18n, normalizeContentLang } from '../utils/i18n.js';
 import { getUserById } from './user.service.js';
 import { generateQrToken } from './user-qr.service.js';
 import { getOrCreateUserQrCode } from './user-qr.service.js';
+
+function resolveTeamName(team: any, lang: 'de' | 'en'): any {
+  if (!team) return team;
+  const name = resolveI18n(team.name_i18n, lang, team.name);
+  return { ...team, name };
+}
 
 export interface Team {
   id: string;
@@ -56,11 +63,12 @@ export async function createTeam(creatorId: string, teamName?: string): Promise<
   
   // Erstelle Team
   const finalTeamName = teamName || `Team ${creator.name}`;
+  const nameI18n = { de: finalTeamName, en: finalTeamName };
   const teamResult = await db.query(
-    `INSERT INTO teams (created_by, name) 
-     VALUES ($1, $2) 
+    `INSERT INTO teams (created_by, name, name_i18n) 
+     VALUES ($1, $2, $3) 
      RETURNING *`,
-    [creatorId, finalTeamName]
+    [creatorId, finalTeamName, JSON.stringify(nameI18n)]
   );
   
   const team = teamResult.rows[0];
@@ -233,7 +241,7 @@ export async function joinTeam(userId: string, teamQrToken: string): Promise<Tea
 /**
  * Ruft alle Teams eines Benutzers ab
  */
-export async function getUserTeams(userId: string): Promise<Team[]> {
+export async function getUserTeams(userId: string, preferredLanguage?: string): Promise<Team[]> {
   const db = getPool();
   
   const result = await db.query(
@@ -243,14 +251,15 @@ export async function getUserTeams(userId: string): Promise<Team[]> {
      ORDER BY t.created_at DESC`,
     [userId]
   );
-  
-  return result.rows;
+
+  const lang = preferredLanguage ? normalizeContentLang(preferredLanguage) : null;
+  return lang ? result.rows.map((row) => resolveTeamName(row, lang)) : result.rows;
 }
 
 /**
  * Ruft Team-Details mit Mitgliedern ab
  */
-export async function getTeamDetails(teamId: string, userId: string): Promise<TeamDetails | null> {
+export async function getTeamDetails(teamId: string, userId: string, preferredLanguage?: string): Promise<TeamDetails | null> {
   const db = getPool();
   
   // Prüfe ob Benutzer Mitglied ist
@@ -272,16 +281,17 @@ export async function getTeamDetails(teamId: string, userId: string): Promise<Te
   if (teamResult.rows.length === 0) {
     return null;
   }
-  
-  const team = teamResult.rows[0];
-  
+
+  const lang = preferredLanguage ? normalizeContentLang(preferredLanguage) : null;
+  const team = lang ? resolveTeamName(teamResult.rows[0], lang) : teamResult.rows[0];
+
   // Hole Ersteller-Informationen
   const creatorResult = await db.query(
     'SELECT name, email FROM users WHERE id = $1',
     [team.created_by]
   );
   const creator = creatorResult.rows[0];
-  
+
   // Hole Mitglieder
   const membersResult = await db.query(
     `SELECT tm.*, u.name as user_name, u.email as user_email
@@ -291,7 +301,7 @@ export async function getTeamDetails(teamId: string, userId: string): Promise<Te
      ORDER BY tm.joined_at ASC`,
     [teamId]
   );
-  
+
   return {
     ...team,
     members: membersResult.rows,
@@ -637,7 +647,7 @@ export async function getTeamTotalPoints(teamId: string): Promise<number> {
 /**
  * Ruft das aktive Team eines Benutzers ab (falls vorhanden)
  */
-export async function getUserActiveTeam(userId: string): Promise<Team | null> {
+export async function getUserActiveTeam(userId: string, preferredLanguage?: string): Promise<Team | null> {
   const db = getPool();
   
   const result = await db.query(
@@ -647,12 +657,13 @@ export async function getUserActiveTeam(userId: string): Promise<Team | null> {
      LIMIT 1`,
     [userId]
   );
-  
+
   if (result.rows.length === 0) {
     return null;
   }
-  
-  return result.rows[0];
+
+  const lang = preferredLanguage ? normalizeContentLang(preferredLanguage) : null;
+  return lang ? resolveTeamName(result.rows[0], lang) : result.rows[0];
 }
 
 /**
@@ -827,7 +838,7 @@ export async function validateTeamRegistrationToken(qrToken: string): Promise<st
 /**
  * Ruft alle Teams ab (für Admin-Verwaltung)
  */
-export async function getAllTeams(options?: { includeInactive?: boolean }): Promise<Team[]> {
+export async function getAllTeams(options?: { includeInactive?: boolean; preferredLanguage?: string }): Promise<Team[]> {
   const db = getPool();
   
   try {
@@ -842,8 +853,9 @@ export async function getAllTeams(options?: { includeInactive?: boolean }): Prom
        ${whereClause}
        ORDER BY t.created_at DESC`
     );
-    
-    return result.rows;
+
+    const lang = options?.preferredLanguage ? normalizeContentLang(options.preferredLanguage) : null;
+    return lang ? result.rows.map((row) => resolveTeamName(row, lang)) : result.rows;
   } catch (error: any) {
     console.error('Error in getAllTeams:', error);
     throw error;
@@ -904,11 +916,20 @@ export async function updateTeam(teamId: string, data: Partial<{ name: string | 
   const values: any[] = [];
   let paramIndex = 1;
   
-  if (data.name !== undefined) {
+  if ((data as any).name_i18n !== undefined && (data as any).name_i18n !== null && typeof (data as any).name_i18n === 'object') {
+    const nameI18n = (data as any).name_i18n;
+    updates.push(`name_i18n = $${paramIndex++}`);
+    values.push(JSON.stringify(nameI18n));
+    const resolved = nameI18n.de ?? nameI18n.en;
+    if (resolved != null) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(resolved);
+    }
+  } else if (data.name !== undefined) {
     updates.push(`name = $${paramIndex++}`);
     values.push(data.name);
   }
-  
+
   if (data.active !== undefined) {
     updates.push(`active = $${paramIndex++}`);
     values.push(data.active);

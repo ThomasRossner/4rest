@@ -25,7 +25,7 @@ interface PhotoValidationProps {
 }
 
 export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId }: PhotoValidationProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
   const queryClient = useQueryClient();
   const [rejectingTaskId, setRejectingTaskId] = useState<string | null>(null);
@@ -72,8 +72,8 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
       onSuccess: () => {
         showToast({
           type: 'success',
-          title: t('photoValidation.approvedTitle', 'Foto freigegeben'),
-          message: t('photoValidation.approvedMessage', 'Das Foto wurde freigegeben und die Punkte wurden vergeben.'),
+          title: t('photoValidation.approvedTitle'),
+          message: t('photoValidation.approvedMessage'),
         });
         // Invalidate both pending photos and tasks queries so the guest sees the update
         queryClient.invalidateQueries(['pendingPhotoTasks']);
@@ -83,8 +83,8 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
       onError: (error: any) => {
         showToast({
           type: 'error',
-          title: t('photoValidation.approveErrorTitle', 'Fehler'),
-          message: error?.message || t('photoValidation.approveErrorMessage', 'Fehler beim Freigeben des Fotos.'),
+          title: t('photoValidation.approveErrorTitle'),
+          message: error?.message || t('photoValidation.approveErrorMessage'),
         });
       },
     }
@@ -97,8 +97,8 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
       onSuccess: () => {
         showToast({
           type: 'success',
-          title: t('photoValidation.rejectedTitle', 'Foto abgelehnt'),
-          message: t('photoValidation.rejectedMessage', 'Das Foto wurde abgelehnt und der Benutzer wurde benachrichtigt.'),
+          title: t('photoValidation.rejectedTitle'),
+          message: t('photoValidation.rejectedMessage'),
         });
         setShowRejectDialog(null);
         setRejectionReason('');
@@ -110,15 +110,15 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
       onError: (error: any) => {
         showToast({
           type: 'error',
-          title: t('photoValidation.rejectErrorTitle', 'Fehler'),
-          message: error?.message || t('photoValidation.rejectErrorMessage', 'Fehler beim Ablehnen des Fotos.'),
+          title: t('photoValidation.rejectErrorTitle'),
+          message: error?.message || t('photoValidation.rejectErrorMessage'),
         });
       },
     }
   );
 
   const handleApprove = (userTaskId: string) => {
-    if (confirm(t('photoValidation.confirmApprove', 'Möchten Sie dieses Foto wirklich freigeben?'))) {
+    if (confirm(t('photoValidation.confirmApprove'))) {
       approveMutation.mutate(userTaskId);
     }
   };
@@ -140,7 +140,7 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
   if (isLoading) {
     return (
       <div className={`${cssPrefix}-section`}>
-        <div className={`${cssPrefix}-loading`}>{t('photoValidation.loading', 'Lade ausstehende Fotos...')}</div>
+        <div className={`${cssPrefix}-loading`}>{t('photoValidation.loading')}</div>
       </div>
     );
   }
@@ -149,25 +149,25 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
     <div className={`${cssPrefix}-section`}>
       {onBack && (
         <button onClick={onBack} className={`${cssPrefix}-back-button`}>
-          ← {t('common.back', 'Zurück')}
+          ← {t('common.actions.back')}
         </button>
       )}
 
       <h2 className={`${cssPrefix}-section-title`}>
-        {t('photoValidation.title', 'Foto-Aufgaben verifizieren')}
+        {t('photoValidation.title')}
       </h2>
 
       {error && (
         <div className={`${cssPrefix}-error-state`}>
-          <p>{t('photoValidation.error', 'Fehler beim Laden der Foto-Aufgaben:')} {error instanceof Error ? error.message : String(error)}</p>
+          <p>{t('photoValidation.error')} {error instanceof Error ? error.message : String(error)}</p>
         </div>
       )}
 
       {!error && (!filteredTasks || filteredTasks.length === 0) ? (
         <div className={`${cssPrefix}-empty-state`}>
-          <p>{t('photoValidation.noPendingTasks', 'Keine ausstehenden Foto-Aufgaben.')}</p>
+          <p>{t('photoValidation.noPendingTasks')}</p>
           {pendingTasks.length > 0 && filteredTasks.length === 0 && filterUserTaskId && (
-            <p>Filter: {filterUserTaskId} - Keine passende Aufgabe gefunden</p>
+            <p>{t('photoValidation.filterNoMatch', { id: filterUserTaskId })}</p>
           )}
         </div>
       ) : (
@@ -180,14 +180,14 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
               <div className="photo-validation-info">
                 <h3>{task.task_title}</h3>
                 <p className="photo-validation-user">
-                  <strong>{t('photoValidation.user', 'Benutzer')}:</strong> {task.user_name} ({task.user_email})
+                  <strong>{t('photoValidation.user')}:</strong> {task.user_name} ({task.user_email})
                 </p>
                 <p className="photo-validation-points">
-                  <strong>{t('photoValidation.points', 'Punkte')}:</strong> {task.points}
+                  <strong>{t('photoValidation.points')}:</strong> {task.points}
                 </p>
                 <p className="photo-validation-date">
-                  <strong>{t('photoValidation.uploadedAt', 'Hochgeladen am')}:</strong>{' '}
-                  {new Date(task.completed_at).toLocaleString('de-DE')}
+                  <strong>{t('photoValidation.uploadedAt')}:</strong>{' '}
+                  {new Date(task.completed_at).toLocaleString(i18n.language === 'de' ? 'de-DE' : 'en-GB')}
                 </p>
                 {task.task_description && (
                   <p className="photo-validation-description">{task.task_description}</p>
@@ -199,8 +199,8 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
                     className="photo-validation-approve-button"
                   >
                     {approveMutation.isLoading
-                      ? t('photoValidation.approving', 'Freigeben...')
-                      : t('photoValidation.approve', 'Freigeben')}
+                      ? t('photoValidation.approving')
+                      : t('photoValidation.approve')}
                   </button>
                   <button
                     onClick={() => handleReject(task.user_task_id)}
@@ -208,8 +208,8 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
                     className="photo-validation-reject-button"
                   >
                     {rejectMutation.isLoading
-                      ? t('photoValidation.rejecting', 'Ablehnen...')
-                      : t('photoValidation.reject', 'Ablehnen')}
+                      ? t('photoValidation.rejecting')
+                      : t('photoValidation.reject')}
                   </button>
                 </div>
               </div>
@@ -221,12 +221,12 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
       {showRejectDialog && (
         <div className="photo-validation-reject-dialog-overlay">
           <div className="photo-validation-reject-dialog">
-            <h3>{t('photoValidation.rejectDialogTitle', 'Foto ablehnen')}</h3>
-            <p>{t('photoValidation.rejectDialogMessage', 'Möchten Sie dieses Foto wirklich ablehnen? Optional können Sie eine Begründung angeben.')}</p>
+            <h3>{t('photoValidation.rejectDialogTitle')}</h3>
+            <p>{t('photoValidation.rejectDialogMessage')}</p>
             <textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder={t('photoValidation.rejectionReasonPlaceholder', 'Begründung (optional)')}
+              placeholder={t('photoValidation.rejectionReasonPlaceholder')}
               className="photo-validation-rejection-reason"
               rows={4}
             />
@@ -238,7 +238,7 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
                 }}
                 className="photo-validation-cancel-button"
               >
-                {t('common.cancel', 'Abbrechen')}
+                {t('common.actions.cancel')}
               </button>
               <button
                 onClick={confirmReject}
@@ -246,8 +246,8 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
                 className="photo-validation-confirm-reject-button"
               >
                 {rejectMutation.isLoading
-                  ? t('photoValidation.rejecting', 'Ablehnen...')
-                  : t('photoValidation.confirmReject', 'Ablehnen')}
+                  ? t('photoValidation.rejecting')
+                  : t('photoValidation.confirmReject')}
               </button>
             </div>
           </div>
