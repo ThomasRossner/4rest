@@ -52,7 +52,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin: 0 0 var(--spacing-sm);
-  background: linear-gradient(135deg, var(--color-primary) 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -246,7 +246,7 @@
   border-radius: var(--border-radius);
   font-size: 0.75rem;
   font-weight: 600;
-  background: #dbeafe;
+  background: var(--color-primary-light);
   color: #1e40af;
 }
 
@@ -262,7 +262,7 @@
 
 .redaktion-action-button {
   padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-error);
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: var(--border-radius);
@@ -273,11 +273,21 @@
 }
 
 .redaktion-action-button:hover:not(:disabled) {
-  background-color: #d32f2f;
+  background-color: var(--color-primary-dark);
+}
+
+.redaktion-action-button.danger {
+  background-color: var(--color-error);
+}
+
+.redaktion-action-button.danger:hover:not(:disabled) {
+  background-color: var(--color-error-dark);
 }
 
 .redaktion-action-button:disabled {
-  opacity: 0.6;
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-light);
+  opacity: 0.85;
   cursor: not-allowed;
 }
 

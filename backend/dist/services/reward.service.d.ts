@@ -1,8 +1,8 @@
 import { Location } from './location.service.js';
 export declare function getRewardsService(userId: string): Promise<{
     id: any;
-    title: any;
-    description: any;
+    title: string;
+    description: string;
     pointsCost: any;
     rewardType: any;
     icon: string;
@@ -12,6 +12,8 @@ export declare function getRewardsService(userId: string): Promise<{
 interface CreateCustomRewardInput {
     title?: string;
     description?: string | null;
+    title_i18n?: Record<string, string>;
+    description_i18n?: Record<string, string>;
     pointsCost?: number | string;
     rewardType?: string;
     voucherCode?: string | null;
@@ -21,13 +23,15 @@ interface CreateCustomRewardInput {
     recurrence?: string | null;
     reward_art?: string;
     kategorie?: string;
-    event_group?: string | null;
-    moegliche_punkte?: number | null;
     thumbnail_url?: string | null;
+    allowed_teams?: string[] | null;
+    allowed_contests?: string[] | null;
 }
 interface UpdateRewardInput {
     title?: string | null;
     description?: string | null;
+    title_i18n?: Record<string, string> | null;
+    description_i18n?: Record<string, string> | null;
     pointsCost?: number | string | null;
     rewardType?: string | null;
     voucherCode?: string | null;
@@ -37,9 +41,9 @@ interface UpdateRewardInput {
     recurrence?: string | null;
     reward_art?: string | null;
     kategorie?: string | null;
-    event_group?: string | null;
-    moegliche_punkte?: number | null;
     thumbnail_url?: string | null;
+    allowed_teams?: string[] | null;
+    allowed_contests?: string[] | null;
 }
 export declare function createCustomReward(data: CreateCustomRewardInput): Promise<any>;
 export declare function updateReward(id: string, data: UpdateRewardInput): Promise<any>;

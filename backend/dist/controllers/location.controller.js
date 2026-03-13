@@ -1,8 +1,11 @@
 import { bulkDeleteLocations, createLocation, deleteLocation, getLocations, setLocationsActiveState, updateLocation, } from '../services/location.service.js';
+import { getPreferredLanguage } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 export const listLocations = asyncHandler(async (req, res) => {
     const includeInactive = req.query.includeInactive === 'true';
-    const locations = await getLocations(includeInactive);
+    const authReq = req;
+    const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
+    const locations = await getLocations(includeInactive, preferredLanguage ?? undefined);
     res.json(locations);
 });
 export const createLocationController = asyncHandler(async (req, res) => {
@@ -26,6 +29,10 @@ export const createLocationController = asyncHandler(async (req, res) => {
     const location = await createLocation({
         name: payload.name,
         description: payload.description,
+        name_i18n: payload.name_i18n,
+        description_i18n: payload.description_i18n,
+        address_i18n: payload.address_i18n,
+        category_description_i18n: payload.category_description_i18n,
         is_online: is_online,
         address: payload.address,
         latitude: payload.latitude,
@@ -54,6 +61,14 @@ export const updateLocationController = asyncHandler(async (req, res) => {
         updateData.name = payload.name;
     if (payload.description !== undefined)
         updateData.description = payload.description;
+    if (payload.name_i18n !== undefined)
+        updateData.name_i18n = payload.name_i18n;
+    if (payload.description_i18n !== undefined)
+        updateData.description_i18n = payload.description_i18n;
+    if (payload.address_i18n !== undefined)
+        updateData.address_i18n = payload.address_i18n;
+    if (payload.category_description_i18n !== undefined)
+        updateData.category_description_i18n = payload.category_description_i18n;
     if (is_online !== undefined)
         updateData.is_online = is_online;
     if (payload.address !== undefined)

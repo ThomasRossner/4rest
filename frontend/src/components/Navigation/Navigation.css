@@ -1,6 +1,6 @@
 /* Desktop Navigation - Single bar at top */
 .navigation {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary-light) 100%);
   color: white;
   padding: var(--spacing-md) 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
@@ -59,7 +59,7 @@
   right: 0;
   padding: var(--spacing-xs) 0;
   z-index: 1000;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary-light) 100%);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
   border-top: 2px solid rgba(255, 255, 255, 0.2);
   max-height: 80px;
@@ -524,7 +524,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 50%, var(--color-primary-dark) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -721,7 +721,7 @@
     right: 0;
     padding: var(--spacing-xs) 0;
     z-index: 1000;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, #10b981 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary-light) 100%);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
     border-top: 2px solid rgba(255, 255, 255, 0.2);
     max-height: 80px;

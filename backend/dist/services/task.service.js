@@ -1,4 +1,5 @@
 import { getPool } from '../database/connection.js';
+import { resolveI18n, normalizeContentLang } from '../utils/i18n.js';
 import { getTaskParameters } from './parameter.service.js';
 import { getPointsCalculationFactor } from './system-config.service.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
@@ -6,6 +7,44 @@ import { buildTeamContestFilterClauses, getConfiguredHotelId } from '../utils/qu
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 import { updateContestPoints } from './contest.service.js';
 import { getUserActiveTeam, getTeamMembers } from './team.service.js';
+import fs from 'fs';
+import { generateQrToken } from './user-qr.service.js';
+/**
+ * Generiert oder ruft den QR-Code einer Aufgabe ab
+ */
+export async function generateOrGetTaskQrCode(taskId) {
+    const db = getPool();
+    // Prüfe ob Aufgabe existiert und QR-Code-Typ ist
+    const taskResult = await db.query('SELECT id, type, qr_code FROM tasks WHERE id = $1', [taskId]);
+    if (taskResult.rows.length === 0) {
+        throw new Error('Task not found');
+    }
+    const task = taskResult.rows[0];
+    if (task.type !== 'qr') {
+        throw new Error('Task is not a QR code task');
+    }
+    // Wenn bereits ein QR-Code existiert, gib ihn zurück
+    if (task.qr_code) {
+        return task.qr_code;
+    }
+    // Generiere neuen QR-Code
+    let qrCode;
+    let attempts = 0;
+    do {
+        qrCode = generateQrToken();
+        const existing = await db.query('SELECT id FROM tasks WHERE qr_code = $1 AND active = TRUE LIMIT 1', [qrCode]);
+        if (existing.rows.length === 0) {
+            break; // QR code is unique
+        }
+        attempts++;
+        if (attempts > 10) {
+            throw new Error('Failed to generate unique QR code after multiple attempts');
+        }
+    } while (true);
+    // Speichere den QR-Code in der Aufgabe
+    await db.query('UPDATE tasks SET qr_code = $1 WHERE id = $2', [qrCode, taskId]);
+    return qrCode;
+}
 export async function getAllTasks(filters, userId, options) {
     const db = getPool();
     let userType = null;
@@ -15,56 +54,89 @@ export async function getAllTasks(filters, userId, options) {
     let paramIndex = { current: 1 };
     let applyAudienceFilters = !(options?.includeAll ?? false);
     const includeInactive = options?.includeInactive ?? false;
-    // #region agent log
-    console.log('[DEBUG] task.service.ts:getAllTasks - Initial', JSON.stringify({ includeAll: options?.includeAll, applyAudienceFilters, includeInactive, hasUserId: !!userId }));
-    // #endregion
+    // Check if allowed_teams and allowed_contests columns exist
+    // IMPORTANT: We need BOTH columns to exist, not just one, because buildTeamContestFilterClauses
+    // references both columns in the SQL it generates
+    let columnsExist = false;
+    let checkCount = 0;
+    try {
+        const checkResult = await db.query(`
+      SELECT COUNT(*)::int as count
+      FROM information_schema.columns 
+      WHERE table_schema = 'public'
+      AND table_name = 'tasks' 
+      AND column_name IN ('allowed_teams', 'allowed_contests')
+    `);
+        // Both columns must exist (count = 2)
+        checkCount = parseInt(checkResult.rows[0]?.count) || 0;
+        columnsExist = checkCount === 2;
+    }
+    catch (error) {
+        // If check fails, assume columns don't exist
+        columnsExist = false;
+    }
     if (userId) {
         // Get user info
         const userResult = await db.query('SELECT role, user_type FROM users WHERE id = $1', [userId]);
         if (userResult.rows[0]) {
             const userRole = userResult.rows[0].role;
             userType = userResult.rows[0].user_type;
-            // #region agent log
-            console.log('[DEBUG] task.service.ts:getAllTasks - User role', JSON.stringify({ userRole, applyAudienceFiltersBefore: applyAudienceFilters }));
-            // #endregion
             // Administrators and redaktion see all tasks when includeAll is true
             if (userRole === 'administrator' || userRole === 'redaktion') {
                 applyAudienceFilters = false;
             }
             else {
-                // Get user's team memberships
-                const teamResult = await db.query('SELECT team_id FROM team_members WHERE user_id = $1', [userId]);
-                userTeamIds = teamResult.rows.map((row) => row.team_id);
-                // Get user's contest participations
-                const contestResult = await db.query('SELECT contest_id FROM contest_participants WHERE user_id = $1', [userId]);
-                userContestIds = contestResult.rows.map((row) => row.contest_id);
+                // Only get team/contest info if columns exist
+                if (columnsExist) {
+                    // Get user's team memberships
+                    const teamResult = await db.query('SELECT team_id FROM team_members WHERE user_id = $1', [userId]);
+                    userTeamIds = teamResult.rows.map((row) => row.team_id);
+                    // Get user's contest participations
+                    const contestResult = await db.query('SELECT contest_id FROM contest_participants WHERE user_id = $1', [userId]);
+                    userContestIds = contestResult.rows.map((row) => row.contest_id);
+                }
+                else {
+                    // If columns don't exist, disable filtering
+                    applyAudienceFilters = false;
+                }
             }
-            // #region agent log
-            console.log('[DEBUG] task.service.ts:getAllTasks - After role check', JSON.stringify({ applyAudienceFilters, userTeamIds: userTeamIds.length, userContestIds: userContestIds.length }));
-            // #endregion
         }
     }
-    let select = 'DISTINCT ON (t.id) t.*, row_to_json(l.*) AS location';
+    // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles were removed in migration 038)
+    let select = `DISTINCT ON (t.id) 
+    t.id, t.title, t.description, t.title_i18n, t.description_i18n, t.article_content_i18n,
+    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
+    t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
+    t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
+    t.category, t.difficulty, t.time_required, t.location_tool, t.thumbnail_url, 
+    t.zielgruppe, t.created_at, t.updated_at`;
+    // Add allowed_teams and allowed_contests if columns exist
+    if (columnsExist) {
+        select += `, t.allowed_teams, t.allowed_contests`;
+    }
+    select += `, row_to_json(l.*) AS location`;
     let from = ' FROM tasks t JOIN locations l ON l.id = t.location_id';
     if (userId) {
-        select += `, (ut.user_id IS NOT NULL) AS completed`;
+        // Add verification_status and completed status
+        // A task is only completed if it has a user_task entry AND verification_status is not 'pending'
+        select += `, ut.verification_status, (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed`;
         from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex.current++}`;
         params.push(userId);
     }
-    // Add prerequisite fields to select
-    select += ', t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids';
     const clauses = [];
     if (!includeInactive) {
         clauses.push('t.active = TRUE');
     }
     // Filter by team/contest assignments
-    // #region agent log
-    console.log('[DEBUG] task.service.ts:getAllTasks - Before filter check', JSON.stringify({ applyAudienceFilters, clausesCount: clauses.length }));
-    // #endregion
-    if (applyAudienceFilters) {
-        // #region agent log
-        console.log('[DEBUG] task.service.ts:getAllTasks - Applying filters (this should NOT happen for admin/redaktion with includeAll=true)');
-        // #endregion
+    // DISABLED: Only enable if both allowed_teams AND allowed_contests columns exist
+    // The buildTeamContestFilterClauses function requires BOTH columns to work correctly
+    if (applyAudienceFilters && columnsExist) {
+        console.log('[getAllTasks] Applying team/contest filter', {
+            userId,
+            userTeamIdsCount: userTeamIds.length,
+            userContestIdsCount: userContestIds.length,
+        });
         const hotelId = getConfiguredHotelId();
         const filterClauses = buildTeamContestFilterClauses({
             userTeamIds: userTeamIds.length > 0 ? userTeamIds : null,
@@ -78,14 +150,12 @@ export async function getAllTasks(filters, userId, options) {
         const taskClauses = filterClauses.map(clause => clause.replace(/\ballowed_teams\b/g, 't.allowed_teams')
             .replace(/\ballowed_contests\b/g, 't.allowed_contests'));
         clauses.push(...taskClauses);
-        // #region agent log
-        console.log('[DEBUG] task.service.ts:getAllTasks - Filter clauses added', JSON.stringify({ filterClausesCount: filterClauses.length, taskClausesCount: taskClauses.length }));
-        // #endregion
     }
     else {
-        // #region agent log
-        console.log('[DEBUG] task.service.ts:getAllTasks - Skipping filters (includeAll=true or admin/redaktion)');
-        // #endregion
+        // Log why filtering is disabled for debugging
+        if (applyAudienceFilters && !columnsExist) {
+            console.log('[TASK SERVICE] Team/contest filtering disabled: columns do not exist');
+        }
     }
     if (filters?.type) {
         clauses.push(`t.type = $${paramIndex.current++}`);
@@ -95,9 +165,6 @@ export async function getAllTasks(filters, userId, options) {
     if (clauses.length > 0) {
         query += ` WHERE ${clauses.join(' AND ')}`;
     }
-    // #region agent log
-    console.log('[DEBUG] task.service.ts:getAllTasks - Final query', JSON.stringify({ query: query.substring(0, 300), clausesCount: clauses.length, applyAudienceFilters }));
-    // #endregion
     query += ' ORDER BY t.id, t.created_at DESC';
     if (filters?.limit) {
         query += ` LIMIT $${paramIndex.current++}`;
@@ -109,25 +176,21 @@ export async function getAllTasks(filters, userId, options) {
     }
     let result;
     try {
-        // #region agent log
-        console.log('[DEBUG] task.service.ts:getAllTasks - Executing query', JSON.stringify({ queryLength: query.length, paramsCount: params.length }));
-        // #endregion
         result = await db.query(query, params);
-        // #region agent log
-        console.log('[DEBUG] task.service.ts:getAllTasks - Query executed successfully', JSON.stringify({ rowCount: result.rows.length }));
-        // #endregion
     }
     catch (error) {
-        // #region agent log
-        console.error('[DEBUG] task.service.ts:getAllTasks - Query failed', JSON.stringify({ error: error.message, query: query.substring(0, 500), paramsCount: params.length, errorCode: error.code }));
-        // #endregion
         throw error;
     }
     const unique = new Map();
     for (const row of result.rows) {
         unique.set(row.id, row);
     }
-    const tasks = Array.from(unique.values());
+    let tasks = Array.from(unique.values());
+    // Resolve title/description/article_content from *_i18n when preferredLanguage is set
+    const preferredLanguage = options?.preferredLanguage != null ? normalizeContentLang(options.preferredLanguage) : null;
+    if (preferredLanguage) {
+        tasks = tasks.map((task) => resolveTaskI18n(task, preferredLanguage));
+    }
     // Check availability for each task if userId is provided
     if (userId) {
         for (const task of tasks) {
@@ -142,13 +205,65 @@ export async function getAllTasks(filters, userId, options) {
     }
     return tasks;
 }
-export async function getTaskById(id) {
+function resolveTaskI18n(task, lang) {
+    const title = resolveI18n(task.title_i18n, lang, task.title);
+    const description = resolveI18n(task.description_i18n, lang, task.description);
+    const article_content = resolveI18n(task.article_content_i18n, lang, task.article_content);
+    const out = { ...task, title, description, article_content };
+    if (out.location && typeof out.location === 'object') {
+        out.location = {
+            ...out.location,
+            name: resolveI18n(out.location.name_i18n, lang, out.location.name),
+            description: resolveI18n(out.location.description_i18n, lang, out.location.description),
+            address: resolveI18n(out.location.address_i18n, lang, out.location.address),
+            category_description: resolveI18n(out.location.category_description_i18n, lang, out.location.category_description),
+        };
+    }
+    return out;
+}
+export async function getTaskById(id, preferredLanguage) {
     const db = getPool();
-    const result = await db.query(`SELECT t.*, row_to_json(l.*) AS location
+    // Check if allowed_teams and allowed_contests columns exist
+    // IMPORTANT: We need BOTH columns to exist, not just one, because buildTeamContestFilterClauses
+    // references both columns in the SQL it generates
+    let columnsExist = false;
+    try {
+        const checkResult = await db.query(`
+      SELECT COUNT(*)::int as count
+      FROM information_schema.columns 
+      WHERE table_schema = 'public'
+      AND table_name = 'tasks' 
+      AND column_name IN ('allowed_teams', 'allowed_contests')
+    `);
+        // Both columns must exist (count = 2)
+        const count = parseInt(checkResult.rows[0]?.count) || 0;
+        columnsExist = count === 2;
+    }
+    catch (error) {
+        // If check fails, assume columns don't exist
+        columnsExist = false;
+    }
+    let select = `t.id, t.title, t.description, t.title_i18n, t.description_i18n, t.article_content_i18n,
+    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
+    t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
+    t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
+    t.category, t.difficulty, t.time_required, t.location_tool, t.thumbnail_url, 
+    t.zielgruppe, t.created_at, t.updated_at`;
+    // Add allowed_teams and allowed_contests if columns exist
+    if (columnsExist) {
+        select += `, t.allowed_teams, t.allowed_contests`;
+    }
+    select += `, row_to_json(l.*) AS location`;
+    const result = await db.query(`SELECT ${select}
      FROM tasks t
      JOIN locations l ON l.id = t.location_id
      WHERE t.id = $1`, [id]);
-    return result.rows[0] || null;
+    const row = result.rows[0] || null;
+    if (row && preferredLanguage) {
+        return resolveTaskI18n(row, normalizeContentLang(preferredLanguage));
+    }
+    return row;
 }
 /**
  * Calculate task points automatically based on difficulty and time_required weights
@@ -215,7 +330,25 @@ export async function createTask(data) {
     if (data.type === 'video' && data.video_url) {
         validateUrl(data.video_url, 'Video URL');
     }
-    if (data.type === 'qr' && data.qr_code) {
+    // For QR code tasks, generate QR code if not provided
+    if (data.type === 'qr' && !data.qr_code) {
+        // Generate a unique QR code for this task
+        let qrCode;
+        let attempts = 0;
+        do {
+            qrCode = generateQrToken();
+            const existing = await db.query('SELECT id FROM tasks WHERE qr_code = $1 AND active = TRUE LIMIT 1', [qrCode]);
+            if (existing.rows.length === 0) {
+                break; // QR code is unique
+            }
+            attempts++;
+            if (attempts > 10) {
+                throw new Error('Failed to generate unique QR code after multiple attempts');
+            }
+        } while (true);
+        data.qr_code = qrCode;
+    }
+    else if (data.type === 'qr' && data.qr_code) {
         validateQrCode(data.qr_code);
     }
     if (data.type === 'visit_location') {
@@ -262,9 +395,25 @@ export async function createTask(data) {
             points = calculatedPoints; // Override manually set points with calculated value
         }
     }
+    // Build *_i18n from request; fallback to legacy title/description/article_content
+    const titleI18n = data.title_i18n && typeof data.title_i18n === 'object'
+        ? data.title_i18n
+        : { de: data.title ?? '', en: data.title ?? '' };
+    const descriptionI18n = data.description_i18n && typeof data.description_i18n === 'object'
+        ? data.description_i18n
+        : { de: data.description ?? '', en: data.description ?? '' };
+    const articleContentI18n = data.article_content_i18n && typeof data.article_content_i18n === 'object'
+        ? data.article_content_i18n
+        : { de: data.article_content ?? '', en: data.article_content ?? '' };
+    const legacyTitle = data.title ?? titleI18n.de ?? titleI18n.en ?? '';
+    const legacyDescription = data.description ?? descriptionI18n.de ?? descriptionI18n.en ?? null;
+    const legacyArticleContent = data.article_content ?? articleContentI18n.de ?? articleContentI18n.en ?? null;
     const result = await db.query(`INSERT INTO tasks (
        title,
        description,
+       title_i18n,
+       description_i18n,
+       article_content_i18n,
        type,
        points,
        video_url,
@@ -289,13 +438,17 @@ export async function createTask(data) {
        difficulty,
        time_required,
        location_tool,
-       event_group,
-       thumbnail_url
+       thumbnail_url,
+       allowed_teams,
+       allowed_contests
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
      RETURNING *`, [
-        data.title,
-        data.description ?? null,
+        legacyTitle,
+        legacyDescription,
+        JSON.stringify(titleI18n),
+        JSON.stringify(descriptionI18n),
+        JSON.stringify(articleContentI18n),
         data.type,
         points,
         data.video_url ?? null,
@@ -310,7 +463,7 @@ export async function createTask(data) {
         data.target_latitude ?? null,
         data.target_longitude ?? null,
         data.article_url ?? null,
-        data.article_content ?? null,
+        legacyArticleContent,
         surveyPayload,
         data.survey_type ?? null,
         data.prerequisite_task_id ?? null,
@@ -320,8 +473,9 @@ export async function createTask(data) {
         data.difficulty ?? null,
         data.time_required ?? null,
         data.location_tool ?? null,
-        data.event_group ?? null,
         data.thumbnail_url ?? null,
+        data.allowed_teams ?? null,
+        data.allowed_contests ?? null,
     ]);
     return result.rows[0];
 }
@@ -430,9 +584,10 @@ export async function updateTask(id, data) {
         'title', 'description', 'type', 'points', 'video_url', 'quiz_questions', 'qr_code',
         'photo_required', 'co2_savings_kg', 'location_id', 'active', 'recurrence',
         'target_latitude', 'target_longitude', 'article_url', 'article_content',
+        'title_i18n', 'description_i18n', 'article_content_i18n',
         'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
         'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-        'event_group', 'thumbnail_url'
+        'thumbnail_url', 'allowed_teams', 'allowed_contests'
     ]);
     // If type is being changed, reset type-specific fields of the old type
     if (typeChanged) {
@@ -504,17 +659,49 @@ export async function updateTask(id, data) {
             }
         }
     }
-    // Explicitly handle thumbnail_url before the loop to ensure it's always processed
-    // ALWAYS set thumbnail_url if it exists in data, even if null
+    // Explicitly handle thumbnail_url, allowed_teams, and allowed_contests before the loop
+    // ALWAYS set these if they exist in data, even if null
     if ('thumbnail_url' in data) {
         updates.push(`thumbnail_url = $${paramIndex++}`);
         values.push(data.thumbnail_url ?? null);
     }
-    else {
+    if ('allowed_teams' in data) {
+        updates.push(`allowed_teams = $${paramIndex++}`);
+        values.push(data.allowed_teams ?? null);
+    }
+    if ('allowed_contests' in data) {
+        updates.push(`allowed_contests = $${paramIndex++}`);
+        values.push(data.allowed_contests ?? null);
     }
     Object.entries(data).forEach(([key, value]) => {
-        // Skip invalid fields, id, and thumbnail_url (already handled above)
-        if (value === undefined || key === 'id' || key === 'thumbnail_url' || !validColumns.has(key)) {
+        // Skip invalid fields, id, and fields already handled above
+        if (value === undefined || key === 'id' || key === 'thumbnail_url' || key === 'allowed_teams' || key === 'allowed_contests' || !validColumns.has(key)) {
+            return;
+        }
+        if (key === 'title_i18n' && typeof value === 'object') {
+            updates.push(`title_i18n = $${paramIndex++}`);
+            values.push(JSON.stringify(value));
+            const resolved = value.de ?? value.en;
+            if (resolved != null) {
+                updates.push(`title = $${paramIndex++}`);
+                values.push(resolved);
+            }
+            return;
+        }
+        if (key === 'description_i18n' && typeof value === 'object') {
+            updates.push(`description_i18n = $${paramIndex++}`);
+            values.push(JSON.stringify(value));
+            const resolved = value.de ?? value.en;
+            updates.push(`description = $${paramIndex++}`);
+            values.push(resolved ?? null);
+            return;
+        }
+        if (key === 'article_content_i18n' && typeof value === 'object') {
+            updates.push(`article_content_i18n = $${paramIndex++}`);
+            values.push(JSON.stringify(value));
+            const resolved = value.de ?? value.en;
+            updates.push(`article_content = $${paramIndex++}`);
+            values.push(resolved ?? null);
             return;
         }
         if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
@@ -569,12 +756,19 @@ export async function updateTask(id, data) {
         return getTaskById(id);
     }
     updates.push('updated_at = CURRENT_TIMESTAMP');
+    // Add id as the last parameter - use the current paramIndex (which is already the next available index)
+    const whereParamIndex = paramIndex;
     values.push(id);
-    const result = await db.query(`UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`, values);
+    const result = await db.query(`UPDATE tasks SET ${updates.join(', ')} WHERE id = $${whereParamIndex} RETURNING *`, values);
     return result.rows[0] || null;
 }
 export async function deleteTask(id) {
     const db = getPool();
+    // Delete dependent records first
+    await db.query('DELETE FROM forest_trees WHERE task_id = $1', [id]);
+    await db.query('DELETE FROM user_tasks WHERE task_id = $1', [id]);
+    await db.query('DELETE FROM gallery_images WHERE task_id = $1', [id]);
+    // Now delete the task
     await db.query('DELETE FROM tasks WHERE id = $1', [id]);
 }
 export async function setTasksActiveState(ids, active) {
@@ -589,6 +783,11 @@ export async function bulkDeleteTasks(ids) {
         return;
     }
     const db = getPool();
+    // Delete dependent records first (in correct order to respect foreign key constraints)
+    await db.query('DELETE FROM forest_trees WHERE task_id = ANY($1::uuid[])', [ids]);
+    await db.query('DELETE FROM user_tasks WHERE task_id = ANY($1::uuid[])', [ids]);
+    await db.query('DELETE FROM gallery_images WHERE task_id = ANY($1::uuid[])', [ids]);
+    // Now delete the tasks
     await db.query('DELETE FROM tasks WHERE id = ANY($1::uuid[])', [ids]);
 }
 export async function completeTask(taskId, userId, data) {
@@ -625,37 +824,93 @@ export async function completeTask(taskId, userId, data) {
     const surveyResponsesPayload = data?.survey_responses
         ? JSON.stringify(data.survey_responses)
         : null;
-    await db.query(`INSERT INTO user_tasks (user_id, task_id, photo_url, quiz_answers, survey_responses, points_earned)
-     VALUES ($1, $2, $3, $4, $5, $6)`, [
+    // For photo tasks, set verification_status to 'pending' and don't award points yet
+    const isPhotoTask = task.type === 'photo' && data?.photo_url;
+    const verificationStatus = isPhotoTask ? 'pending' : null;
+    const pointsToAward = isPhotoTask ? 0 : task.points;
+    console.log('[COMPLETE TASK] Photo task check:', {
+        taskType: task.type,
+        hasPhotoUrl: !!data?.photo_url,
+        photoUrl: data?.photo_url,
+        isPhotoTask,
+        verificationStatus,
+    });
+    const userTaskResult = await db.query(`INSERT INTO user_tasks (user_id, task_id, photo_url, quiz_answers, survey_responses, points_earned, verification_status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, verification_status`, [
         userId,
         taskId,
         data?.photo_url,
         data?.quiz_answers ? JSON.stringify(data.quiz_answers) : null,
         surveyResponsesPayload,
-        task.points,
+        pointsToAward,
+        verificationStatus,
     ]);
-    // Check if user is in a team
-    const userTeam = await getUserActiveTeam(userId);
-    const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
-    // Award points and plant tree for all team members
-    for (const memberId of teamMembers) {
-        await addUserPoints(memberId, task.points);
-        const newTreeId = await plantTree(memberId, taskId);
-        // Distribute task points to growth of a random existing tree (not the newly planted one)
-        await addGrowthPointsToRandomTree(memberId, task.points, newTreeId);
-        // Update contest points for all active contests this member participates in
-        const activeContests = await db.query(`SELECT c.id FROM contests c
-       INNER JOIN contest_participants cp ON cp.contest_id = c.id
-       WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`, [memberId]);
-        // Update points for each active contest
-        for (const contest of activeContests.rows) {
-            await updateContestPoints(memberId, contest.id, task.points);
+    const userTaskId = userTaskResult.rows[0].id;
+    console.log('[COMPLETE TASK] Created user_task:', {
+        id: userTaskId,
+        verification_status: userTaskResult.rows[0].verification_status,
+        photo_url: data?.photo_url ? 'present' : 'missing',
+    });
+    // For photo tasks, notify admins and rezeption
+    if (isPhotoTask) {
+        try {
+            console.log('[PHOTO TASK] Notifying admins/rezeption about new photo task:', { taskId, userTaskId, userId });
+            const { getUsersByRoles, createMessagesForUsers } = await import('./message.service.js');
+            const { broadcastPhotoTaskUpdate } = await import('../ws/task-broadcast.js');
+            const adminsAndRezeption = await getUsersByRoles(['administrator', 'rezeption']);
+            console.log('[PHOTO TASK] Found admins/rezeption:', adminsAndRezeption.length);
+            const adminIds = adminsAndRezeption.map(u => u.id);
+            if (adminIds.length > 0) {
+                const messages = await createMessagesForUsers(adminIds, {
+                    type: 'photo_pending_review',
+                    title: `Neue Foto-Aufgabe zur Prüfung: ${task.title}`,
+                    content: `Ein Gast hat ein Foto für die Aufgabe "${task.title}" hochgeladen und wartet auf Ihre Prüfung.`,
+                    metadata: {
+                        task_id: taskId,
+                        user_task_id: userTaskId,
+                        user_id: userId,
+                    },
+                });
+                console.log('[PHOTO TASK] Created messages:', messages.length);
+            }
+            else {
+                console.log('[PHOTO TASK] No admins/rezeption found to notify');
+            }
+            // Broadcast photo task update to notify admins/rezeption
+            broadcastPhotoTaskUpdate();
+        }
+        catch (error) {
+            console.error('[PHOTO TASK] Failed to notify admins about photo task:', error);
+            // Don't fail the task completion if notification fails
+        }
+    }
+    // Only award points and plant trees if this is NOT a photo task (photo tasks need verification first)
+    if (!isPhotoTask) {
+        // Check if user is in a team
+        const userTeam = await getUserActiveTeam(userId);
+        const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
+        // Award points and plant tree for all team members
+        for (const memberId of teamMembers) {
+            await addUserPoints(memberId, task.points);
+            const newTreeId = await plantTree(memberId, taskId);
+            // Distribute task points to growth of a random existing tree (not the newly planted one)
+            await addGrowthPointsToRandomTree(memberId, task.points, newTreeId);
+            // Update contest points for all active contests this member participates in
+            const activeContests = await db.query(`SELECT c.id FROM contests c
+         INNER JOIN contest_participants cp ON cp.contest_id = c.id
+         WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`, [memberId]);
+            // Update points for each active contest
+            for (const contest of activeContests.rows) {
+                await updateContestPoints(memberId, contest.id, task.points);
+            }
         }
     }
     return {
         success: true,
-        pointsEarned: task.points,
-        message: 'Task completed successfully',
+        pointsEarned: isPhotoTask ? 0 : task.points,
+        message: isPhotoTask ? 'Photo uploaded, waiting for verification' : 'Task completed successfully',
+        requiresVerification: isPhotoTask,
     };
 }
 export async function uploadPhoto(file) {
@@ -685,6 +940,296 @@ export async function uploadThumbnail(file) {
     const cleanBaseUrl = baseUrl.replace(/\/$/, '');
     const thumbnailUrl = `${cleanBaseUrl}/uploads/${file.filename}`;
     return thumbnailUrl;
+}
+/**
+ * Approve a photo task - awards points and adds photo to gallery
+ */
+export async function approvePhotoTask(userTaskId, verifiedByUserId) {
+    const db = getPool();
+    // Get user_task with task details
+    const userTaskResult = await db.query(`SELECT ut.*, t.points, t.type, u.email, u.name as user_name, t.title as task_title
+     FROM user_tasks ut
+     INNER JOIN tasks t ON t.id = ut.task_id
+     INNER JOIN users u ON u.id = ut.user_id
+     WHERE ut.id = $1`, [userTaskId]);
+    if (userTaskResult.rows.length === 0) {
+        throw new Error('User task not found');
+    }
+    const userTask = userTaskResult.rows[0];
+    if (userTask.verification_status !== 'pending') {
+        throw new Error(`Task is not pending verification (current status: ${userTask.verification_status})`);
+    }
+    if (!userTask.photo_url) {
+        throw new Error('No photo URL found for this task');
+    }
+    if (userTask.type !== 'photo') {
+        throw new Error('This is not a photo task');
+    }
+    // Update user_tasks with approved status
+    await db.query(`UPDATE user_tasks 
+     SET verification_status = 'approved', 
+         verified_at = CURRENT_TIMESTAMP,
+         verified_by = $1,
+         points_earned = $2
+     WHERE id = $3`, [verifiedByUserId, userTask.points, userTaskId]);
+    // Add photo to gallery
+    await db.query(`INSERT INTO gallery_images (user_task_id, user_id, task_id, photo_url, uploaded_at, approved_at, approved_by)
+     VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)`, [
+        userTaskId,
+        userTask.user_id,
+        userTask.task_id,
+        userTask.photo_url,
+        userTask.completed_at,
+        verifiedByUserId,
+    ]);
+    // Award points and plant tree for all team members
+    const userTeam = await getUserActiveTeam(userTask.user_id);
+    const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userTask.user_id];
+    for (const memberId of teamMembers) {
+        await addUserPoints(memberId, userTask.points);
+        const newTreeId = await plantTree(memberId, userTask.task_id);
+        // Distribute task points to growth of a random existing tree
+        await addGrowthPointsToRandomTree(memberId, userTask.points, newTreeId);
+        // Update contest points for all active contests
+        const activeContests = await db.query(`SELECT c.id FROM contests c
+       INNER JOIN contest_participants cp ON cp.contest_id = c.id
+       WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`, [memberId]);
+        for (const contest of activeContests.rows) {
+            await updateContestPoints(memberId, contest.id, userTask.points);
+        }
+    }
+    // Send mailbox notification to user
+    try {
+        const { createMessage } = await import('./message.service.js');
+        await createMessage({
+            user_id: userTask.user_id,
+            type: 'photo_approval',
+            title: `Foto-Aufgabe freigegeben: ${userTask.task_title}`,
+            content: `Ihr Foto für die Aufgabe "${userTask.task_title}" wurde freigegeben! Sie haben ${userTask.points} Punkte erhalten.`,
+            metadata: {
+                task_id: userTask.task_id,
+                user_task_id: userTaskId,
+                points_earned: userTask.points,
+            },
+        });
+    }
+    catch (error) {
+        console.error('Failed to create approval message:', error);
+        // Don't fail the approval if message creation fails
+    }
+    // Broadcast task update to notify user's frontend
+    try {
+        const { broadcastTaskUpdate } = await import('../ws/task-broadcast.js');
+        broadcastTaskUpdate();
+    }
+    catch (error) {
+        console.error('Failed to broadcast task update:', error);
+        // Don't fail the approval if broadcast fails
+    }
+    return {
+        success: true,
+        pointsEarned: userTask.points,
+        message: 'Photo task approved and points awarded',
+    };
+}
+/**
+ * Reject a photo task - deletes photo and notifies user via mailbox
+ */
+export async function rejectPhotoTask(userTaskId, verifiedByUserId, rejectionReason) {
+    const db = getPool();
+    // Get user_task with task details
+    const userTaskResult = await db.query(`SELECT ut.*, t.title as task_title, u.email, u.name as user_name, u.id as user_id
+     FROM user_tasks ut
+     INNER JOIN tasks t ON t.id = ut.task_id
+     INNER JOIN users u ON u.id = ut.user_id
+     WHERE ut.id = $1`, [userTaskId]);
+    if (userTaskResult.rows.length === 0) {
+        throw new Error('User task not found');
+    }
+    const userTask = userTaskResult.rows[0];
+    if (userTask.verification_status !== 'pending') {
+        throw new Error(`Task is not pending verification (current status: ${userTask.verification_status})`);
+    }
+    // Delete photo file from volume
+    if (userTask.photo_url) {
+        try {
+            const photoPath = userTask.photo_url.replace(/^.*\/uploads\//, '');
+            const uploadDir = process.env.UPLOAD_DIR || 'uploads';
+            const fullPath = photoPath.startsWith(uploadDir) ? photoPath : `${uploadDir}/${photoPath}`;
+            if (fs.existsSync(fullPath)) {
+                fs.unlinkSync(fullPath);
+            }
+        }
+        catch (error) {
+            console.error('Error deleting photo file:', error);
+            // Continue even if file deletion fails
+        }
+    }
+    // Delete the user_tasks entry so the task appears as "not completed" again
+    // This allows the user to retry the photo task
+    await db.query(`DELETE FROM user_tasks WHERE id = $1`, [userTaskId]);
+    // Send mailbox notification to user
+    try {
+        const { createMessage } = await import('./message.service.js');
+        const systemText = `Ihr Foto für die Aufgabe "${userTask.task_title}" wurde abgelehnt. Bitte versuchen Sie es erneut mit einem neuen Foto.`;
+        // Only include rejection reason in content if it's not provided (fallback)
+        // Otherwise, it will be displayed in the highlighted section from metadata
+        const content = systemText;
+        const metadata = {
+            task_id: userTask.task_id,
+            user_task_id: userTaskId,
+        };
+        if (rejectionReason) {
+            metadata.rejection_reason = rejectionReason;
+        }
+        await createMessage({
+            user_id: userTask.user_id,
+            type: 'photo_rejection',
+            title: `Foto-Aufgabe abgelehnt: ${userTask.task_title}`,
+            content: content,
+            metadata: metadata,
+        });
+    }
+    catch (error) {
+        console.error('Failed to create rejection message:', error);
+        // Don't fail the rejection if message creation fails
+    }
+    // Broadcast task update to notify user's frontend
+    try {
+        const { broadcastTaskUpdate } = await import('../ws/task-broadcast.js');
+        broadcastTaskUpdate();
+    }
+    catch (error) {
+        console.error('Failed to broadcast task update:', error);
+        // Don't fail the rejection if broadcast fails
+    }
+    return {
+        success: true,
+        message: 'Photo task rejected',
+    };
+}
+/**
+ * Get all pending photo tasks for verification
+ */
+export async function getPendingPhotoTasks() {
+    try {
+        const db = getPool();
+        // First, check all user_tasks with photos to debug
+        const debugResult = await db.query(`SELECT 
+       ut.id,
+       ut.verification_status,
+       ut.photo_url IS NOT NULL as has_photo,
+       t.type as task_type
+     FROM user_tasks ut
+     INNER JOIN tasks t ON t.id = ut.task_id
+     WHERE ut.photo_url IS NOT NULL
+     LIMIT 10`);
+        console.log('[GET PENDING PHOTOS] Debug - All user_tasks with photos:', debugResult.rows);
+        // First, check for any pending tasks with photos (regardless of task type)
+        const allPendingWithPhotos = await db.query(`SELECT 
+       ut.id,
+       ut.verification_status,
+       t.type as task_type,
+       t.title
+     FROM user_tasks ut
+     INNER JOIN tasks t ON t.id = ut.task_id
+     WHERE ut.verification_status = 'pending'
+       AND ut.photo_url IS NOT NULL`);
+        console.log('[GET PENDING PHOTOS] All pending tasks with photos (any type):', allPendingWithPhotos.rows.length, allPendingWithPhotos.rows);
+        const result = await db.query(`SELECT 
+       ut.id as user_task_id,
+       ut.user_id,
+       ut.task_id,
+       ut.photo_url,
+       ut.completed_at,
+       ut.verification_status,
+       u.name as user_name,
+       u.email as user_email,
+       t.title as task_title,
+       t.points,
+       t.description as task_description,
+       t.type as task_type
+     FROM user_tasks ut
+     INNER JOIN users u ON u.id = ut.user_id
+     INNER JOIN tasks t ON t.id = ut.task_id
+     WHERE ut.verification_status = 'pending'
+       AND ut.photo_url IS NOT NULL
+     ORDER BY ut.completed_at DESC`);
+        console.log('[GET PENDING PHOTOS] Found', result.rows.length, 'pending photo tasks');
+        if (result.rows.length > 0) {
+            console.log('[GET PENDING PHOTOS] Sample task:', {
+                user_task_id: result.rows[0].user_task_id,
+                verification_status: result.rows[0].verification_status,
+                task_type: result.rows[0].task_type,
+                has_photo_url: !!result.rows[0].photo_url,
+            });
+        }
+        else {
+            // Check if there are any photo tasks at all
+            const allPhotoTasks = await db.query(`SELECT COUNT(*) as count FROM user_tasks ut
+       INNER JOIN tasks t ON t.id = ut.task_id
+       WHERE t.type = 'photo' AND ut.photo_url IS NOT NULL`);
+            console.log('[GET PENDING PHOTOS] Total photo tasks with photos:', allPhotoTasks.rows[0].count);
+            const pendingCount = await db.query(`SELECT COUNT(*) as count FROM user_tasks ut
+       INNER JOIN tasks t ON t.id = ut.task_id
+       WHERE t.type = 'photo' AND ut.photo_url IS NOT NULL AND ut.verification_status = 'pending'`);
+            console.log('[GET PENDING PHOTOS] Photo tasks with pending status:', pendingCount.rows[0].count);
+        }
+        return result.rows;
+    }
+    catch (error) {
+        console.error('[GET PENDING PHOTOS] Error:', error);
+        console.error('[GET PENDING PHOTOS] Error stack:', error.stack);
+        throw error;
+    }
+}
+/**
+ * Get gallery images (approved photos)
+ */
+export async function getGalleryImages(filters) {
+    const db = getPool();
+    let query = `
+    SELECT 
+      gi.id,
+      gi.user_task_id,
+      gi.user_id,
+      gi.task_id,
+      gi.photo_url,
+      gi.uploaded_at,
+      gi.approved_at,
+      gi.approved_by,
+      u.name as user_name,
+      t.title as task_title
+    FROM gallery_images gi
+    INNER JOIN users u ON u.id = gi.user_id
+    INNER JOIN tasks t ON t.id = gi.task_id
+    WHERE 1=1
+  `;
+    const params = [];
+    let paramIndex = 1;
+    if (filters?.userId) {
+        query += ` AND gi.user_id = $${paramIndex}`;
+        params.push(filters.userId);
+        paramIndex++;
+    }
+    if (filters?.taskId) {
+        query += ` AND gi.task_id = $${paramIndex}`;
+        params.push(filters.taskId);
+        paramIndex++;
+    }
+    query += ` ORDER BY gi.approved_at DESC`;
+    if (filters?.limit) {
+        query += ` LIMIT $${paramIndex}`;
+        params.push(filters.limit);
+        paramIndex++;
+    }
+    if (filters?.offset) {
+        query += ` OFFSET $${paramIndex}`;
+        params.push(filters.offset);
+        paramIndex++;
+    }
+    const result = await db.query(query, params);
+    return result.rows;
 }
 /**
  * Validates prerequisite fields for a task

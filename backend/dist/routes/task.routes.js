@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getTasks, getTask, createTask, updateTask, deleteTask, completeTask, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, } from '../controllers/task.controller.js';
+import { getTasks, getTask, createTask, updateTask, deleteTask, completeTask, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, approvePhotoTask, rejectPhotoTask, getPendingPhotoTasks, getGallery, getTaskQrCode, } from '../controllers/task.controller.js';
 const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
 // Ensure upload directory exists
 try {
@@ -87,13 +87,20 @@ const router = Router();
 router.get('/', authenticate, getTasks);
 router.post('/bulk/status', authenticate, requireRole('redaktion', 'administrator'), bulkUpdateTaskStatus);
 router.post('/bulk/delete', authenticate, requireRole('redaktion', 'administrator'), bulkDeleteTasks);
+// Specific routes must come BEFORE the generic /:id route
+router.post('/approve-photo', authenticate, requireRole('administrator', 'rezeption'), approvePhotoTask);
+router.post('/reject-photo', authenticate, requireRole('administrator', 'rezeption'), rejectPhotoTask);
+router.get('/pending-photos', authenticate, requireRole('administrator', 'rezeption'), getPendingPhotoTasks);
+router.get('/gallery', authenticate, getGallery);
+router.post('/upload', authenticate, uploadPhotoMiddleware.single('photo'), uploadPhoto);
+router.post('/upload/video', authenticate, requireRole('redaktion', 'administrator'), uploadVideoMiddleware.single('video'), uploadVideo);
+router.post('/upload/thumbnail', authenticate, requireRole('redaktion', 'administrator'), uploadThumbnailMiddleware.single('thumbnail'), uploadThumbnail);
+// Generic routes must come AFTER specific routes
 router.get('/:id', getTask);
+router.get('/:id/qr-code', authenticate, requireRole('redaktion', 'administrator'), getTaskQrCode);
 router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);
 router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), updateTask);
 router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
 router.post('/:id/complete', authenticate, completeTask);
-router.post('/upload', authenticate, uploadPhotoMiddleware.single('photo'), uploadPhoto);
-router.post('/upload/video', authenticate, requireRole('redaktion', 'administrator'), uploadVideoMiddleware.single('video'), uploadVideo);
-router.post('/upload/thumbnail', authenticate, requireRole('redaktion', 'administrator'), uploadThumbnailMiddleware.single('thumbnail'), uploadThumbnail);
 export default router;
 //# sourceMappingURL=task.routes.js.map

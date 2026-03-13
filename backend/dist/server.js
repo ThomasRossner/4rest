@@ -9,8 +9,10 @@ import { WebSocketServer } from 'ws';
 import { setupRoutes } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { initializeDatabase } from './database/connection.js';
+import { runMigrations } from './database/migrate.js';
 import { startSihotSyncScheduler } from './services/sihot-sync.service.js';
 import { startRecurringRewardsScheduler } from './services/reward-recurrence.service.js';
+import { startContestScheduler } from './services/contest-scheduler.service.js';
 import { registerWebSocketServer } from './ws/socketRegistry.js';
 // Load environment variables BEFORE importing passport config
 // Use explicit path to ensure .env is loaded from backend directory
@@ -21,8 +23,11 @@ console.log(`[SERVER] EMAIL_MOCK_MODE: ${process.env.EMAIL_MOCK_MODE}`);
 console.log(`[SERVER] NODE_ENV: ${process.env.NODE_ENV}`);
 import passport from './config/passport.js';
 const app = express();
-const PORT = process.env.PORT || 5000;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3000';
+// WICHTIG: Port 5000 ist bei Apple belegt (AirPlay Receiver)
+// Backend läuft daher auf Port 5001
+const PORT = process.env.PORT || 5001;
+// Frontend läuft auf Port 3001
+const CORS_ORIGIN = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3001';
 // Middleware
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 // Increase body size limit for large JSON payloads (e.g., tasks with quiz questions)
@@ -106,12 +111,15 @@ async function start() {
     try {
         await initializeDatabase();
         console.log('Database connected');
+        await runMigrations();
         server.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
             console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
             startSihotSyncScheduler();
             // Start recurring rewards scheduler - runs every hour
             startRecurringRewardsScheduler(60 * 60 * 1000);
+            // Start contest scheduler - runs every 15 minutes to check for expired contests
+            startContestScheduler(15 * 60 * 1000);
         });
     }
     catch (error) {

@@ -336,7 +336,7 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
       )}
 
       {isRedeeming && (
-        <div className="qr-scanner-status" style={{ backgroundColor: 'var(--color-primary, #3b82f6)', color: 'white' }}>
+        <div className="qr-scanner-status" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
           <div className="qr-scanner-status-indicator active" />
           <span>{t('rewards.pointsBonus.redeeming') || 'Redeeming...'}</span>
         </div>

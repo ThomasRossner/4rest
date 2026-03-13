@@ -2487,7 +2487,7 @@ const ConfirmDialog = ({
           <p>{description}</p>
         </div>
         <div className="admin-modal-footer">
-          <button type="button" className="admin-action-button secondary" onClick={onCancel}>
+          <button type="button" className="admin-action-button cancel" onClick={onCancel}>
             {t('common.actions.cancel')}
           </button>
           <button
@@ -8150,7 +8150,7 @@ function AdminPage() {
                             : t('admin.locationManage.activate')}
                         </button>
                         <button
-                          className="admin-action-button"
+                          className="admin-action-button danger"
                           type="button"
                           onClick={() => handleLocationDelete(location)}
                           disabled={isDefaultLocation}
@@ -8471,7 +8471,7 @@ function AdminPage() {
                               {task.active ? t('admin.taskManage.deactivate') : t('admin.taskManage.activate')}
                             </button>
                             <button
-                              className="admin-action-button"
+                              className="admin-action-button danger"
                               type="button"
                               onClick={() => handleTaskDelete(task.id)}
                             >
@@ -8883,7 +8883,7 @@ function AdminPage() {
                                {reward.active ? t('admin.rewardManage.deactivate') : t('admin.rewardManage.activate')}
                              </button>
                              <button
-                               className="admin-action-button"
+                               className="admin-action-button danger"
                                type="button"
                                onClick={() => handleRewardDelete(reward.id)}
                              >
@@ -9479,7 +9479,7 @@ function AdminPage() {
                               {team.active ? t('admin.team.manage.deactivate') : t('admin.team.manage.activate')}
                             </button>
                             <button
-                              className="admin-action-button"
+                              className="admin-action-button danger"
                               type="button"
                               onClick={() => handleTeamDelete(team.id)}
                             >

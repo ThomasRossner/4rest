@@ -29,8 +29,8 @@ else
 fi
 
 create_user "test@example.com" "Test User" "guest"
-create_user "employee@example.com" "Test Employee" "employee"
-create_user "stakeholder@example.com" "Test Stakeholder" "stakeholder"
+create_user "rezeption@example.com" "Test Rezeption" "rezeption"
+create_user "redaktion@example.com" "Test Redaktion" "redaktion"
 create_user "admin@example.com" "Admin User" "administrator"
 
 echo "\n==> Marking example accounts as email verified (no verification required)"
@@ -41,8 +41,8 @@ SET email_verified = TRUE,
     email_verification_expires = NULL
 WHERE email IN (
   'test@example.com',
-  'employee@example.com',
-  'stakeholder@example.com',
+  'rezeption@example.com',
+  'redaktion@example.com',
   'admin@example.com'
 );
 EOF
@@ -137,8 +137,9 @@ fi
 echo "\n✅ Seeding complete."
 echo "Users (password for all): Test123!"
 echo " - test@example.com (guest)"
-echo " - employee@example.com (employee)"
-echo " - stakeholder@example.com (stakeholder)"
+echo " - rezeption@example.com (rezeption)"
+echo " - redaktion@example.com (redaktion)"
+echo " - admin@example.com (administrator)"
 echo "Task: 'Bring your reusable bottle' (QR: QR-LOBBY-WATER-001)"
 echo "Reward: 'Free Coffee' (15 pts, code: COFFEE-ON-US)"
 

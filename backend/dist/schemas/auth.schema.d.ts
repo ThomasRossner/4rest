@@ -15,17 +15,20 @@ export declare const registerSchema: z.ZodObject<{
     name: z.ZodString;
     role: z.ZodOptional<z.ZodEnum<["guest", "rezeption", "redaktion", "administrator"]>>;
     userType: z.ZodOptional<z.ZodEnum<["explorer", "guest_in_house", "observer", "advocate"]>>;
+    preferredLanguage: z.ZodOptional<z.ZodEnum<["de", "en"]>>;
 }, "strip", z.ZodTypeAny, {
     role?: "guest" | "rezeption" | "redaktion" | "administrator";
     name?: string;
     email?: string;
     password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
+    preferredLanguage?: "en" | "de";
 }, {
     role?: "guest" | "rezeption" | "redaktion" | "administrator";
     name?: string;
     email?: string;
     password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
+    preferredLanguage?: "en" | "de";
 }>;
 //# sourceMappingURL=auth.schema.d.ts.map

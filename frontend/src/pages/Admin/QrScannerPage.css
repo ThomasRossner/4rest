@@ -90,7 +90,7 @@
 .qr-scanner-frame {
   width: 70%;
   height: 70%;
-  border: 3px solid var(--color-primary, #10b981);
+  border: 3px solid var(--color-primary);
   border-radius: var(--border-radius);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
@@ -122,7 +122,7 @@
 }
 
 .qr-scanner-status-indicator.active {
-  background: var(--color-primary, #10b981);
+  background: var(--color-primary);
   animation: pulse 2s infinite;
 }
 

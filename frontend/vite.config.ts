@@ -19,7 +19,7 @@ export default defineConfig({
         name: '4rest',
         short_name: '4rest',
         description: 'Sustainability gamification platform',
-        theme_color: '#2d5016',
+        theme_color: '#0d9488',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
@@ -86,11 +86,9 @@ export default defineConfig({
     })(),
     hmr: {
       overlay: false, // Disable overlay to prevent EPIPE errors
-      // For local development, use localhost
-      // Only use external domain when VITE_HMR_HOST is explicitly set
+      // Kein fixes port: HMR nutzt denselben Port wie der Dev-Server (sonst Reload-Loop wenn 3001 belegt)
       host: process.env.VITE_HMR_HOST || 'localhost',
-      port: 3001, // Muss mit server.port übereinstimmen
-      protocol: process.env.VITE_HMR_HOST ? 'wss' : 'ws', // Use ws for local, wss for external
+      protocol: process.env.VITE_HMR_HOST ? 'wss' : 'ws',
     },
     watch: {
       // Disable polling on macOS/Linux for better performance

@@ -5,12 +5,12 @@
 }
 
 :root {
-  --color-primary: #2d5016;
-  --color-primary-light: #3f6f20;
-  --color-primary-dark: #1f360f;
-  --color-primary-ghost: rgba(45, 80, 22, 0.1);
-  --color-secondary: #5a8c3a;
-  --color-accent: #7fb347;
+  --color-primary: #0d9488;
+  --color-primary-light: #14b8a6;
+  --color-primary-dark: #0f766e;
+  --color-primary-ghost: rgba(13, 148, 136, 0.1);
+  --color-secondary: #2dd4bf;
+  --color-accent: #5eead4;
   --color-text: #1a1a1a;
   --color-text-light: #666;
   --color-background: #ffffff;
@@ -23,6 +23,7 @@
   --color-success: #4caf50;
   --color-warning: #ff9800;
   --color-error: #f44336;
+  --color-error-dark: #c62828;
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -61,6 +62,24 @@ button {
   border: none;
   border-radius: var(--border-radius);
   transition: all 0.2s ease;
+}
+
+/* Primary buttons: green (default for normal actions) */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* Danger buttons: red (Abbrechen, Löschen, destructive) */
+.btn-danger {
+  background-color: var(--color-error);
+  color: white;
+}
+.btn-danger:hover {
+  background-color: var(--color-error-dark);
 }
 
 input, textarea, select {

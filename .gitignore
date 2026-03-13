@@ -123,6 +123,9 @@ backend/email-output/
 tmp/
 temp/
 
+# Accidental clone / invalid path (blocks git add)
+git@github.com/
+
 # Chat and conversation logs
 chat/
 

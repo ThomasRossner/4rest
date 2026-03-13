@@ -14,8 +14,8 @@ interface BarChartProps {
 
 // Color palette for bars - using a variety of distinct colors
 const BAR_COLORS = [
-  'linear-gradient(135deg, #2d5016 0%, #3f6f20 100%)', // Primary green
-  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Purple
+  'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)', // Primary teal
+  'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)',
   'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Pink-red
   'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', // Blue-cyan
   'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Green-cyan
@@ -28,8 +28,8 @@ const BAR_COLORS = [
 
 // Hover colors (slightly lighter versions)
 const BAR_HOVER_COLORS = [
-  'linear-gradient(135deg, #3f6f20 0%, #5a8c3a 100%)',
-  'linear-gradient(135deg, #764ba2 0%, #8b6bb8 100%)',
+  'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+  'linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%)',
   'linear-gradient(135deg, #f5576c 0%, #f77a8a 100%)',
   'linear-gradient(135deg, #00f2fe 0%, #33f5fe 100%)',
   'linear-gradient(135deg, #38f9d7 0%, #5afbe0 100%)',

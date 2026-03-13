@@ -72,7 +72,7 @@ const badgeStyle: CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
   color: 'white',
-  background: 'var(--color-primary, #0f766e)',
+  background: 'var(--color-primary)',
 };
 
 const descriptionStyle: CSSProperties = {
@@ -95,7 +95,7 @@ const buttonStyle: CSSProperties = {
   fontWeight: 600,
   border: 'none',
   cursor: 'pointer',
-  background: 'var(--color-primary, #0f766e)',
+  background: 'var(--color-primary)',
   color: 'white',
 };
 

@@ -1,9 +1,16 @@
 import { Location } from './location.service.js';
+/**
+ * Generiert oder ruft den QR-Code einer Aufgabe ab
+ */
+export declare function generateOrGetTaskQrCode(taskId: string): Promise<string | null>;
 type TaskRecurrence = 'once' | 'daily' | 'weekly' | 'monthly';
 export interface Task {
     id: string;
     title: string;
     description?: string;
+    title_i18n?: Record<string, string>;
+    description_i18n?: Record<string, string>;
+    article_content_i18n?: Record<string, string>;
     type: string;
     points: number;
     video_url?: string;
@@ -30,8 +37,9 @@ export interface Task {
     difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
     time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
     location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';
-    event_group?: string;
     thumbnail_url?: string;
+    allowed_teams?: string[] | null;
+    allowed_contests?: string[] | null;
 }
 export declare function getAllTasks(filters?: {
     limit?: number;
@@ -40,8 +48,9 @@ export declare function getAllTasks(filters?: {
 }, userId?: string, options?: {
     includeAll?: boolean;
     includeInactive?: boolean;
+    preferredLanguage?: string;
 }): Promise<any[]>;
-export declare function getTaskById(id: string): Promise<Task | null>;
+export declare function getTaskById(id: string, preferredLanguage?: string): Promise<Task | null>;
 /**
  * Calculate task points automatically based on difficulty and time_required weights
  * Formula: (difficulty_weight * time_required_weight) / factor
@@ -57,10 +66,39 @@ export declare function completeTask(taskId: string, userId: string, data?: any)
     success: boolean;
     pointsEarned: number;
     message: string;
+    requiresVerification: any;
 }>;
 export declare function uploadPhoto(file: Express.Multer.File): Promise<string>;
 export declare function uploadVideo(file: Express.Multer.File): Promise<string>;
 export declare function uploadThumbnail(file: Express.Multer.File): Promise<string>;
+/**
+ * Approve a photo task - awards points and adds photo to gallery
+ */
+export declare function approvePhotoTask(userTaskId: string, verifiedByUserId: string): Promise<{
+    success: boolean;
+    pointsEarned: any;
+    message: string;
+}>;
+/**
+ * Reject a photo task - deletes photo and notifies user via mailbox
+ */
+export declare function rejectPhotoTask(userTaskId: string, verifiedByUserId: string, rejectionReason?: string): Promise<{
+    success: boolean;
+    message: string;
+}>;
+/**
+ * Get all pending photo tasks for verification
+ */
+export declare function getPendingPhotoTasks(): Promise<any[]>;
+/**
+ * Get gallery images (approved photos)
+ */
+export declare function getGalleryImages(filters?: {
+    userId?: string;
+    taskId?: string;
+    limit?: number;
+    offset?: number;
+}): Promise<any[]>;
 /**
  * Checks if all prerequisites for a task are met by a user
  * @param taskId Task ID to check prerequisites for

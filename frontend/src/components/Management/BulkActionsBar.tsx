@@ -57,7 +57,7 @@ export function BulkActionsBar({
           {defaultDeactivateLabel}
         </button>
         <button
-          className={`${cssPrefix}-action-button`}
+          className={`${cssPrefix}-action-button danger`}
           onClick={onDelete}
           disabled={!hasSelection}
           type="button"

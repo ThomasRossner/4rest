@@ -73,6 +73,29 @@ class EmailTemplatesService {
             expiresIn,
         });
     }
+    getPhotoRejectionEmail(variables) {
+        const template = this.loadTemplate('photo-rejection-email');
+        const appUrl = variables.appUrl || process.env.APP_URL || process.env.FRONTEND_URL || '';
+        // Build rejection reason section if provided
+        let rejectionReasonSection = '';
+        if (variables.rejectionReason) {
+            rejectionReasonSection = `
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0; border-radius: 4px;">
+          <p style="margin: 0 0 10px; color: #333333; font-size: 16px; line-height: 1.6;">
+            <strong>Begründung:</strong>
+          </p>
+          <p style="margin: 0; color: #333333; font-size: 16px; line-height: 1.6;">
+            ${variables.rejectionReason}
+          </p>
+        </div>
+      `;
+        }
+        return this.replaceVariables(template, {
+            ...variables,
+            appUrl,
+            rejectionReasonSection,
+        });
+    }
 }
 export const emailTemplates = new EmailTemplatesService();
 //# sourceMappingURL=email-templates.service.js.map

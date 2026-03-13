@@ -23,14 +23,14 @@
 }
 
 .language-button:hover {
-  border-color: var(--color-primary, #2563eb);
-  color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .language-button.active {
-  background: var(--color-primary, #2563eb);
+  background: var(--color-primary);
   color: white;
-  border-color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
 }
 
 .language-label {

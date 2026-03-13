@@ -66,7 +66,7 @@
 .reward-redemption-points {
   font-size: 1rem;
   font-weight: 500;
-  color: var(--color-primary, #3b82f6);
+  color: var(--color-primary);
   margin-top: 0.5rem;
 }
 
@@ -113,11 +113,11 @@
 }
 
 .reward-redemption-button-redeem {
-  background: var(--color-primary, #3b82f6);
+  background: var(--color-primary);
   color: white;
 }
 
 .reward-redemption-button-redeem:hover:not(:disabled) {
-  background: var(--color-primary-dark, #2563eb);
+  background: var(--color-primary-dark);
 }
 

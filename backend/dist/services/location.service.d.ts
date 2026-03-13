@@ -11,10 +11,18 @@ export interface Location {
     category_description?: string | null;
     created_at?: string;
     updated_at?: string;
+    name_i18n?: Record<string, string>;
+    description_i18n?: Record<string, string>;
+    address_i18n?: Record<string, string>;
+    category_description_i18n?: Record<string, string>;
 }
 interface LocationInput {
     name: string;
     description?: string | null;
+    name_i18n?: Record<string, string>;
+    description_i18n?: Record<string, string>;
+    address_i18n?: Record<string, string>;
+    category_description_i18n?: Record<string, string>;
     is_online: boolean;
     address?: string | null;
     latitude?: number | null;
@@ -26,6 +34,10 @@ interface LocationInput {
 interface LocationUpdateInput {
     name?: string;
     description?: string | null;
+    name_i18n?: Record<string, string> | null;
+    description_i18n?: Record<string, string> | null;
+    address_i18n?: Record<string, string> | null;
+    category_description_i18n?: Record<string, string> | null;
     is_online?: boolean;
     address?: string | null;
     latitude?: number | null;
@@ -33,8 +45,8 @@ interface LocationUpdateInput {
     category?: string | null;
     category_description?: string | null;
 }
-export declare function getLocations(includeInactive?: boolean): Promise<Location[]>;
-export declare function getLocationById(id: string): Promise<Location | null>;
+export declare function getLocations(includeInactive?: boolean, preferredLanguage?: string): Promise<Location[]>;
+export declare function getLocationById(id: string, preferredLanguage?: string): Promise<Location | null>;
 export declare function createLocation(data: LocationInput & {
     active?: boolean;
 }): Promise<Location>;

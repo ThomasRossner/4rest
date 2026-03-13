@@ -14,7 +14,7 @@
 .rewards-title {
   font-size: 1.67rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -24,7 +24,7 @@
 
 .location-button {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #667eea 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -112,7 +112,7 @@
 }
 
 .rewards-balance {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   padding: var(--spacing-lg);
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
@@ -189,7 +189,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #10b981 100%);
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-light) 50%, var(--color-primary-dark) 100%);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
@@ -221,7 +221,7 @@
 .reward-title {
   font-size: 1.35rem;
   font-weight: 600;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #667eea 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -272,7 +272,7 @@
 .reward-button {
   padding: 12px 24px;
   min-height: 44px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #667eea 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   color: white;
   font-weight: 600;
   border: none;
@@ -376,7 +376,7 @@
 }
 
 .reward-filter-btn.active {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #667eea 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   color: white;
   box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
   border-color: transparent;

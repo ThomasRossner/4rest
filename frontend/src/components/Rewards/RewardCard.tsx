@@ -418,7 +418,7 @@ export function RewardCard({ reward, canAfford, onRedeem }: RewardCardProps) {
                     left: 0,
                     width: '48px',
                     height: '100%',
-                    backgroundColor: '#3b82f6',
+                    backgroundColor: 'var(--color-primary)',
                     borderRadius: '0.375rem',
                     display: 'flex',
                     alignItems: 'center',

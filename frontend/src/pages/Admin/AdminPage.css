@@ -48,14 +48,14 @@
 }
 
 .admin-debug-toggle:hover {
-  border-color: var(--color-primary, #2563eb);
-  color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .admin-debug-toggle.active {
-  background: var(--color-primary, #2563eb);
+  background: var(--color-primary);
   color: white;
-  border-color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary);
 }
 
 .admin-navbar-language {
@@ -85,7 +85,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin: 0 0 var(--spacing-sm);
-  background: linear-gradient(135deg, var(--color-primary) 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -355,7 +355,7 @@
 }
 
 .admin-upload-button:hover {
-  background: var(--color-primary-dark, #1f3a8a);
+  background: var(--color-primary-dark);
 }
 
 .admin-upload-button:active {
@@ -844,6 +844,17 @@
   border-color: var(--color-border);
 }
 
+.admin-action-button.cancel {
+  background: var(--color-error);
+  color: white;
+  border: none;
+}
+
+.admin-action-button.cancel:hover {
+  background: var(--color-error-dark);
+  color: white;
+}
+
 .admin-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1258,8 +1269,8 @@
 }
 
 .admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button:disabled {
-  background: var(--color-error) !important;
-  color: white !important;
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
 }
 
 .admin-table tbody tr:not(:last-child) {
@@ -1349,20 +1360,25 @@
 }
 
 .admin-action-button:disabled {
-  background: var(--color-error) !important;
-  color: white !important;
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
   cursor: not-allowed;
-  opacity: 1;
+  opacity: 0.85;
 }
 
 .admin-action-button.danger {
-  background: var(--color-primary) !important;
+  background: var(--color-error) !important;
   color: white !important;
 }
 
 .admin-action-button.danger:hover {
-  background: var(--color-primary-dark) !important;
+  background: var(--color-error-dark) !important;
   color: white !important;
+}
+
+.admin-action-button.danger:disabled {
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
 }
 
 .admin-status-badge {
@@ -1500,7 +1516,7 @@
 .admin-message-success {
   background-color: #d1fae5;
   color: #065f46;
-  border: 1px solid #10b981;
+  border: 1px solid var(--color-primary);
 }
 
 .admin-message-error {

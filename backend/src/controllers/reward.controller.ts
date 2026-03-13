@@ -27,6 +27,9 @@ export const getRewards: RequestHandler = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const rewards = await getRewardsService(authReq.user.id);
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'beb906'},body:JSON.stringify({sessionId:'beb906',location:'reward.controller.ts:getRewards',message:'GET /rewards response',data:{userId:authReq.user?.id,rewardsCount:Array.isArray(rewards)?rewards.length:0},hypothesisId:'C',timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   res.json(rewards);
 });
 

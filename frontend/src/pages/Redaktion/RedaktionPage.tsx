@@ -524,7 +524,7 @@ function RedaktionPage() {
                             : t('admin.locationManage.activate')}
                         </button>
                         <button
-                          className="redaktion-action-button"
+                          className="redaktion-action-button danger"
                           type="button"
                           onClick={() => handleLocationDelete(location.id)}
                         >
@@ -700,7 +700,7 @@ function RedaktionPage() {
                           {task.active ? t('admin.taskManage.deactivate') : t('admin.taskManage.activate')}
                         </button>
                         <button
-                          className="redaktion-action-button"
+                          className="redaktion-action-button danger"
                           type="button"
                           onClick={() => handleTaskDelete(task.id)}
                         >
@@ -863,7 +863,7 @@ function RedaktionPage() {
                           {reward.active ? t('admin.rewardManage.deactivate') : t('admin.rewardManage.activate')}
                         </button>
                         <button
-                          className="redaktion-action-button"
+                          className="redaktion-action-button danger"
                           type="button"
                           onClick={() => handleRewardDelete(reward.id)}
                         >

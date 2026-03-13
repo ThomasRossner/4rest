@@ -210,6 +210,11 @@ export async function getAllTasks(
   // DISABLED: Only enable if both allowed_teams AND allowed_contests columns exist
   // The buildTeamContestFilterClauses function requires BOTH columns to work correctly
   if (applyAudienceFilters && columnsExist) {
+    console.log('[getAllTasks] Applying team/contest filter', {
+      userId,
+      userTeamIdsCount: userTeamIds.length,
+      userContestIdsCount: userContestIds.length,
+    });
     const hotelId = getConfiguredHotelId();
     const filterClauses = buildTeamContestFilterClauses(
       {

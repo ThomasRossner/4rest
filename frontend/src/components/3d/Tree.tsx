@@ -23,7 +23,7 @@ function FallbackTree({ position, size }: TreeProps) {
       </mesh>
       <mesh castShadow receiveShadow position={[0, 2.5, 0]}>
         <coneGeometry args={[0.8, 1.5, 8]} />
-        <meshStandardMaterial color="#2d5016" />
+        <meshStandardMaterial color="#0d9488" />
       </mesh>
     </group>
   );

@@ -42,6 +42,12 @@ export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
     { includeAll: includeAllValue, includeInactive: includeInactiveFlag, preferredLanguage: preferredLanguage ?? undefined }
   );
 
+  console.log('[GET /tasks]', {
+    userId: authReq.user?.id ?? null,
+    userEmail: authReq.user?.email ?? null,
+    tasksCount: Array.isArray(tasks) ? tasks.length : 0,
+  });
+
   res.json(tasks);
 });
 

@@ -32,7 +32,7 @@ const TaskIcon = L.divIcon({
   html: `<div style="
     width: 30px;
     height: 30px;
-    background: #3b82f6;
+    background: var(--color-primary);
     border: 3px solid white;
     border-radius: 50%;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
@@ -392,7 +392,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
             ${task.description ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 0.9rem;">${escapeHtml(task.description)}</p>` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
               <span style="font-weight: 600; color: #f59e0b;">⭐ ${t('common.points', { count: task.points })}</span>
-              ${onTaskClick ? `<button class="task-popup-button" data-task-id="${task.id}" style="padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">${escapeHtml(t('tasks.visit_location.startTask'))}</button>` : ''}
+              ${onTaskClick ? `<button class="task-popup-button" data-task-id="${task.id}" style="padding: 6px 12px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">${escapeHtml(t('tasks.visit_location.startTask'))}</button>` : ''}
             </div>
           </div>
         `;

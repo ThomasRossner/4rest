@@ -1,4 +1,5 @@
 import { getPool } from '../database/connection.js';
+import { resolveI18n } from '../utils/i18n.js';
 import { getUserById } from './user.service.js';
 import { voucherSystem } from '../integrations/voucher.js';
 import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
@@ -12,24 +13,61 @@ export async function getRewardsService(userId) {
     const userType = user?.user_type ?? null;
     const params = [];
     let paramIndex = { current: 1 };
-    let query = 'SELECT r.*, row_to_json(l.*) AS location FROM rewards r JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE';
+    // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles, allowed_role were removed in migrations 037/040)
+    // Use LEFT JOIN to include rewards even if location doesn't exist or is inactive
+    let query = `SELECT 
+    r.id, r.title, r.description, r.title_i18n, r.description_i18n,
+    r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
+    r.active, r.reward_art, r.kategorie, 
+    r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
+    r.created_at, r.updated_at, 
+    row_to_json(l.*) AS location 
+    FROM rewards r LEFT JOIN locations l ON l.id = r.location_id WHERE r.active = TRUE`;
+    // Check if allowed_teams and allowed_contests columns exist
+    // IMPORTANT: We need BOTH columns to exist, not just one, because buildTeamContestFilterClauses
+    // references both columns in the SQL it generates
+    let columnsExist = false;
+    try {
+        const checkResult = await db.query(`
+      SELECT COUNT(*) as count
+      FROM information_schema.columns 
+      WHERE table_name = 'rewards' 
+      AND column_name IN ('allowed_teams', 'allowed_contests')
+    `);
+        // Both columns must exist (count = 2)
+        columnsExist = checkResult.rows[0]?.count === 2;
+    }
+    catch (error) {
+        // If check fails, assume columns don't exist
+        columnsExist = false;
+    }
     let userTeamIds = [];
     let userContestIds = [];
     let applyFilters = true;
-    if (role === 'administrator') {
-        // Administrators see all rewards
+    // Administrators and redaktion see all rewards (consistent with task.service.ts)
+    if (role === 'administrator' || role === 'redaktion') {
+        // Administrators and redaktion see all rewards
         applyFilters = false;
     }
     else {
-        // Get user's team memberships
-        const teamResult = await db.query('SELECT team_id FROM team_members WHERE user_id = $1', [userId]);
-        userTeamIds = teamResult.rows.map((row) => row.team_id);
-        // Get user's contest participations
-        const contestResult = await db.query('SELECT contest_id FROM contest_participants WHERE user_id = $1', [userId]);
-        userContestIds = contestResult.rows.map((row) => row.contest_id);
+        // Only get team/contest info if columns exist
+        if (columnsExist) {
+            // Get user's team memberships
+            const teamResult = await db.query('SELECT team_id FROM team_members WHERE user_id = $1', [userId]);
+            userTeamIds = teamResult.rows.map((row) => row.team_id);
+            // Get user's contest participations
+            const contestResult = await db.query('SELECT contest_id FROM contest_participants WHERE user_id = $1', [userId]);
+            userContestIds = contestResult.rows.map((row) => row.contest_id);
+        }
+        else {
+            // If columns don't exist, disable filtering
+            applyFilters = false;
+        }
     }
     // Filter by team/contest assignments
-    if (applyFilters) {
+    // Only enable if both allowed_teams AND allowed_contests columns exist
+    // The buildTeamContestFilterClauses function requires BOTH columns to work correctly
+    if (applyFilters && columnsExist) {
         const hotelId = getConfiguredHotelId();
         const filterClauses = buildTeamContestFilterClauses({
             userTeamIds: userTeamIds.length > 0 ? userTeamIds : null,
@@ -47,22 +85,39 @@ export async function getRewardsService(userId) {
             query += ` AND ${rewardClauses.join(' AND ')}`;
         }
     }
-    query += ' ORDER BY r.points_cost ASC';
+    else {
+        // Log why filtering is disabled for debugging
+        if (applyFilters && !columnsExist) {
+            console.log('[REWARD SERVICE] Team/contest filtering disabled: columns do not exist');
+        }
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'beb906' }, body: JSON.stringify({ sessionId: 'beb906', location: 'reward.service.ts:getRewardsService', message: 'reward filter state', data: { columnsExist, applyFilters, userTeamIdsCount: userTeamIds.length, userContestIdsCount: userContestIds.length }, hypothesisId: 'A', timestamp: Date.now() }) }).catch(() => { });
+    // #endregion
+    query += ' ORDER BY r.points_cost ASC LIMIT 500';
     const result = await db.query(query, params);
     const unique = new Map();
     for (const row of result.rows) {
         unique.set(row.id, row);
     }
-    return Array.from(unique.values()).map((row) => ({
-        id: row.id,
-        title: row.title,
-        description: row.description,
-        pointsCost: row.points_cost,
-        rewardType: row.reward_type,
-        icon: getRewardIcon(row.reward_type),
-        thumbnail_url: row.thumbnail_url ?? null,
-        location: row.location,
-    }));
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'beb906' }, body: JSON.stringify({ sessionId: 'beb906', location: 'reward.service.ts:getRewardsService', message: 'reward query result', data: { rowsCount: result.rows.length, uniqueCount: unique.size }, hypothesisId: 'B', timestamp: Date.now() }) }).catch(() => { });
+    // #endregion
+    const lang = user?.preferred_language === 'en' ? 'en' : 'de';
+    return Array.from(unique.values()).map((row) => {
+        const title = resolveI18n(row.title_i18n, lang, row.title);
+        const description = resolveI18n(row.description_i18n, lang, row.description);
+        return {
+            id: row.id,
+            title,
+            description,
+            pointsCost: row.points_cost,
+            rewardType: row.reward_type,
+            icon: getRewardIcon(row.reward_type),
+            thumbnail_url: row.thumbnail_url ?? null,
+            location: row.location,
+        };
+    });
 }
 function getRewardIcon(type) {
     const icons = {
@@ -76,8 +131,14 @@ function getRewardIcon(type) {
 }
 export async function createCustomReward(data) {
     const db = getPool();
-    const title = data.title?.trim();
-    if (!title) {
+    const titleI18n = data.title_i18n && typeof data.title_i18n === 'object'
+        ? data.title_i18n
+        : { de: data.title ?? '', en: data.title ?? '' };
+    const descriptionI18n = data.description_i18n && typeof data.description_i18n === 'object'
+        ? data.description_i18n
+        : { de: data.description ?? '', en: data.description ?? '' };
+    const legacyTitle = data.title?.trim() ?? titleI18n.de ?? titleI18n.en ?? '';
+    if (!legacyTitle) {
         throw new Error('Title is required.');
     }
     const rewardType = validateRewardType(data.rewardType);
@@ -86,6 +147,8 @@ export async function createCustomReward(data) {
     const result = await db.query(`INSERT INTO rewards (
        title,
        description,
+       title_i18n,
+       description_i18n,
        points_cost,
        reward_type,
        voucher_code,
@@ -95,14 +158,16 @@ export async function createCustomReward(data) {
        recurrence,
        reward_art,
        kategorie,
-       event_group,
-       moegliche_punkte,
-       thumbnail_url
+       thumbnail_url,
+       allowed_teams,
+       allowed_contests
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
      RETURNING *`, [
-        title,
+        legacyTitle,
         data.description ?? null,
+        JSON.stringify(titleI18n),
+        JSON.stringify(descriptionI18n),
         pointsCost,
         rewardType,
         data.voucherCode ?? null,
@@ -112,9 +177,9 @@ export async function createCustomReward(data) {
         recurrence,
         data.reward_art ?? null,
         data.kategorie ?? null,
-        data.event_group ?? null,
-        data.moegliche_punkte ?? null,
         data.thumbnail_url ?? null,
+        data.allowed_teams ?? null,
+        data.allowed_contests ?? null,
     ]);
     return result.rows[0];
 }
@@ -133,7 +198,16 @@ export async function updateReward(id, data) {
     const updates = [];
     const values = [];
     let paramIndex = 1;
-    if (data.title !== undefined) {
+    if (data.title_i18n !== undefined && data.title_i18n !== null && typeof data.title_i18n === 'object') {
+        updates.push(`title_i18n = $${paramIndex++}`);
+        values.push(JSON.stringify(data.title_i18n));
+        const resolved = data.title_i18n.de ?? data.title_i18n.en;
+        if (resolved != null) {
+            updates.push(`title = $${paramIndex++}`);
+            values.push(resolved);
+        }
+    }
+    else if (data.title !== undefined) {
         const trimmed = data.title === null ? null : data.title?.toString().trim() ?? null;
         if (trimmed === '') {
             throw new Error('Title cannot be empty.');
@@ -141,7 +215,14 @@ export async function updateReward(id, data) {
         updates.push(`title = $${paramIndex++}`);
         values.push(trimmed);
     }
-    if (data.description !== undefined) {
+    if (data.description_i18n !== undefined && data.description_i18n !== null && typeof data.description_i18n === 'object') {
+        updates.push(`description_i18n = $${paramIndex++}`);
+        values.push(JSON.stringify(data.description_i18n));
+        const resolved = data.description_i18n.de ?? data.description_i18n.en;
+        updates.push(`description = $${paramIndex++}`);
+        values.push(resolved ?? null);
+    }
+    else if (data.description !== undefined) {
         updates.push(`description = $${paramIndex++}`);
         values.push(data.description ?? null);
     }
@@ -198,17 +279,17 @@ export async function updateReward(id, data) {
         updates.push(`kategorie = $${paramIndex++}`);
         values.push(data.kategorie ?? null);
     }
-    if (data.event_group !== undefined) {
-        updates.push(`event_group = $${paramIndex++}`);
-        values.push(data.event_group ?? null);
-    }
-    if (data.moegliche_punkte !== undefined) {
-        updates.push(`moegliche_punkte = $${paramIndex++}`);
-        values.push(data.moegliche_punkte ?? null);
-    }
     if (data.thumbnail_url !== undefined) {
         updates.push(`thumbnail_url = $${paramIndex++}`);
         values.push(data.thumbnail_url ?? null);
+    }
+    if (data.allowed_teams !== undefined) {
+        updates.push(`allowed_teams = $${paramIndex++}`);
+        values.push(data.allowed_teams ?? null);
+    }
+    if (data.allowed_contests !== undefined) {
+        updates.push(`allowed_contests = $${paramIndex++}`);
+        values.push(data.allowed_contests ?? null);
     }
     if (updates.length === 0) {
         const reward = await getRewardById(id);
@@ -251,9 +332,16 @@ export async function listRewardsForAdmin(includeInactive = false) {
     if (!includeInactive) {
         clauses.push('r.active = TRUE');
     }
-    let query = `SELECT r.*, row_to_json(l.*) AS location
-               FROM rewards r
-               JOIN locations l ON l.id = r.location_id`;
+    // Use explicit column list to avoid selecting non-existent columns
+    let query = `SELECT 
+    r.id, r.title, r.description, r.title_i18n, r.description_i18n,
+    r.points_cost, r.reward_type, r.voucher_code, r.external_api_id, 
+    r.active, r.reward_art, r.kategorie, 
+    r.recurrence, r.last_generated_at, r.zielgruppe, r.location_id, r.thumbnail_url, 
+    r.created_at, r.updated_at, 
+    row_to_json(l.*) AS location
+    FROM rewards r
+    JOIN locations l ON l.id = r.location_id`;
     if (clauses.length > 0) {
         query += ` WHERE ${clauses.join(' AND ')}`;
     }
@@ -360,7 +448,7 @@ export async function getRewardInfoFromQrCode(qrToken, employeeUserId) {
         throw new Error('Unauthorized: Only administrators and rezeption can view QR code information');
     }
     // Find redemption by QR token
-    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.title as reward_title, r.description as reward_description, 
             u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
@@ -398,7 +486,7 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
         throw new Error('Unauthorized: Only administrators and rezeption can verify QR codes');
     }
     // Find redemption by QR token
-    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
+    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.title as reward_title, u.points as user_points, u.id as user_id, u.name as user_name
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
      JOIN users u ON rr.user_id = u.id
@@ -413,8 +501,8 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
         await db.query(`UPDATE reward_redemptions SET status = 'expired' WHERE id = $1`, [redemption.id]);
         throw new Error('User no longer has sufficient points for this redemption');
     }
-    // Deduct points cost and add possible points (moegliche_punkte) now that QR code is verified
-    const pointsToAdd = redemption.moegliche_punkte || 0;
+    // Deduct points cost (moegliche_punkte column was removed in migration 039)
+    const pointsToAdd = 0;
     await db.query('UPDATE users SET points = points - $1 + $2 WHERE id = $3', [redemption.points_cost, pointsToAdd, redemption.user_id]);
     // Update redemption status to 'used'
     await db.query(`UPDATE reward_redemptions SET status = 'used' WHERE id = $1`, [redemption.id]);
@@ -457,7 +545,7 @@ export async function redeemRewardQrCodeService(qrToken, employeeUserId) {
         throw new Error('Unauthorized: Only rezeption can redeem reward QR codes');
     }
     // Find redemption by QR token
-    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.moegliche_punkte, r.title as reward_title, r.description as reward_description, 
+    const redemptionResult = await db.query(`SELECT rr.*, r.points_cost, r.title as reward_title, r.description as reward_description, 
             u.points as user_points, u.id as user_id, u.name as user_name, u.email as user_email
      FROM reward_redemptions rr
      JOIN rewards r ON rr.reward_id = r.id
@@ -497,8 +585,8 @@ export async function redeemRewardQrCodeService(qrToken, employeeUserId) {
             throw new Error('User no longer has sufficient points for this redemption');
         }
     }
-    // Deduct points cost and add possible points (moegliche_punkte) now that QR code is redeemed
-    const pointsToAdd = redemption.moegliche_punkte || 0;
+    // Deduct points cost (moegliche_punkte column was removed in migration 039)
+    const pointsToAdd = 0;
     if (useTeamPoints && teamId) {
         // Deduct points from team members (user's points first, then distribute remainder)
         await deductTeamPoints(teamId, redemption.user_id, redemption.points_cost);

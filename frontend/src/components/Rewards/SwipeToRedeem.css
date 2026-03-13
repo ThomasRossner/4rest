@@ -100,7 +100,7 @@
   left: 0;
   width: 60px;
   height: 100%;
-  background-color: var(--color-primary, #3b82f6);
+  background-color: var(--color-primary);
   border-radius: 0.5rem;
   display: flex;
   align-items: center;
@@ -164,8 +164,8 @@
 
 .swipe-to-redeem-cancel {
   padding: 0.75rem 1.5rem;
-  background-color: var(--color-bg-secondary, #f3f4f6);
-  color: var(--color-text, #1f2937);
+  background-color: var(--color-error);
+  color: white;
   border: none;
   border-radius: 0.375rem;
   font-size: 1rem;
@@ -175,7 +175,7 @@
 }
 
 .swipe-to-redeem-cancel:hover {
-  background-color: var(--color-border, #e5e7eb);
+  background-color: var(--color-error-dark);
 }
 
 /* Fallback for devices without touch support */

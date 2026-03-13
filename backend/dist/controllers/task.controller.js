@@ -1,30 +1,31 @@
-import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, } from '../services/task.service.js';
+import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, approvePhotoTask as approvePhotoTaskService, rejectPhotoTask as rejectPhotoTaskService, getPendingPhotoTasks as getPendingPhotoTasksService, getGalleryImages as getGalleryImagesService, generateOrGetTaskQrCode, } from '../services/task.service.js';
+import { getPreferredLanguage } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
+import { broadcastTaskUpdate } from '../ws/task-broadcast.js';
 export const getTasks = asyncHandler(async (req, res) => {
     const { limit, offset, type, includeAll, includeInactive } = req.query;
     const authReq = req;
-    // #region agent log
-    console.log('[DEBUG] task.controller.ts:getTasks - Request', JSON.stringify({ includeAll, includeInactive, userRole: authReq.user?.role, userId: authReq.user?.id }));
-    // #endregion
     const isAdminOrRedaktion = authReq.user?.role === 'administrator' || authReq.user?.role === 'redaktion';
     const includeInactiveFlag = isAdminOrRedaktion && includeInactive === 'true';
     const includeAllValue = isAdminOrRedaktion && includeAll === 'true';
-    // #region agent log
-    console.log('[DEBUG] task.controller.ts:getTasks - Options', JSON.stringify({ isAdminOrRedaktion, includeAllValue, includeInactiveFlag }));
-    // #endregion
+    const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
     const tasks = await getAllTasks({
         limit: limit ? parseInt(limit, 10) : undefined,
         offset: offset ? parseInt(offset, 10) : undefined,
         type: type,
-    }, authReq.user?.id, { includeAll: includeAllValue, includeInactive: includeInactiveFlag });
-    // #region agent log
-    console.log('[DEBUG] task.controller.ts:getTasks - Result', JSON.stringify({ taskCount: Array.isArray(tasks) ? tasks.length : null, isArray: Array.isArray(tasks) }));
-    // #endregion
+    }, authReq.user?.id, { includeAll: includeAllValue, includeInactive: includeInactiveFlag, preferredLanguage: preferredLanguage ?? undefined });
+    console.log('[GET /tasks]', {
+        userId: authReq.user?.id ?? null,
+        userEmail: authReq.user?.email ?? null,
+        tasksCount: Array.isArray(tasks) ? tasks.length : 0,
+    });
     res.json(tasks);
 });
 export const getTask = asyncHandler(async (req, res) => {
-    const task = await getTaskById(req.params.id);
+    const authReq = req;
+    const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
+    const task = await getTaskById(req.params.id, preferredLanguage ?? undefined);
     if (!task) {
         return res.status(404).json({ error: 'Task not found' });
     }
@@ -45,12 +46,13 @@ export const createTask = asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Active flag must be a boolean value' });
     }
     // allowed_roles is deprecated, use allowed_teams and allowed_contests instead
-    if (payload.allowed_teams && !Array.isArray(payload.allowed_teams)) {
-        return res.status(400).json({ error: 'allowed_teams must be an array of UUIDs' });
-    }
-    if (payload.allowed_contests && !Array.isArray(payload.allowed_contests)) {
-        return res.status(400).json({ error: 'allowed_contests must be an array of UUIDs' });
-    }
+    // DISABLED: Migration 051 not run, columns don't exist
+    // if (payload.allowed_teams && !Array.isArray(payload.allowed_teams)) {
+    //   return res.status(400).json({ error: 'allowed_teams must be an array of UUIDs' });
+    // }
+    // if (payload.allowed_contests && !Array.isArray(payload.allowed_contests)) {
+    //   return res.status(400).json({ error: 'allowed_contests must be an array of UUIDs' });
+    // }
     if (payload.allowed_user_types && !Array.isArray(payload.allowed_user_types)) {
         return res.status(400).json({ error: 'allowed_user_types must be an array of strings' });
     }
@@ -77,6 +79,8 @@ export const createTask = asyncHandler(async (req, res) => {
         return res.status(400).json({ error: error.message });
     }
     const task = await createTaskService(payload);
+    // Broadcast update to all clients
+    broadcastTaskUpdate();
     return res.status(201).json(task);
 });
 export const updateTask = asyncHandler(async (req, res) => {
@@ -96,13 +100,18 @@ export const updateTask = asyncHandler(async (req, res) => {
     if (!task) {
         return res.status(404).json({ error: 'Task not found' });
     }
+    // Broadcast update to all clients
+    broadcastTaskUpdate();
     res.json(task);
 });
 export const deleteTask = asyncHandler(async (req, res) => {
     await deleteTaskService(req.params.id);
+    // Broadcast update to all clients
+    broadcastTaskUpdate();
     res.status(204).send();
 });
 export const bulkUpdateTaskStatus = asyncHandler(async (req, res) => {
+    // Broadcast will be called after successful update
     const { ids, active } = req.body ?? {};
     if (!Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({ error: 'Provide an array of task ids.' });
@@ -111,6 +120,8 @@ export const bulkUpdateTaskStatus = asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Active flag must be a boolean value.' });
     }
     await setTasksActiveState(ids, active);
+    // Broadcast update to all clients
+    broadcastTaskUpdate();
     res.status(204).send();
 });
 export const bulkDeleteTasks = asyncHandler(async (req, res) => {
@@ -119,6 +130,8 @@ export const bulkDeleteTasks = asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Provide an array of task ids.' });
     }
     await bulkDeleteTasksService(ids);
+    // Broadcast update to all clients
+    broadcastTaskUpdate();
     res.status(204).send();
 });
 export const completeTask = asyncHandler(async (req, res) => {
@@ -152,5 +165,83 @@ export const uploadThumbnail = asyncHandler(async (req, res) => {
     }
     const thumbnailUrl = await uploadThumbnailService(file);
     res.json({ thumbnail_url: thumbnailUrl });
+});
+export const approvePhotoTask = asyncHandler(async (req, res) => {
+    const authReq = req;
+    if (!authReq.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const { userTaskId } = req.body;
+    if (!userTaskId) {
+        return res.status(400).json({ error: 'userTaskId is required' });
+    }
+    const result = await approvePhotoTaskService(userTaskId, authReq.user.id);
+    res.json(result);
+});
+export const rejectPhotoTask = asyncHandler(async (req, res) => {
+    const authReq = req;
+    if (!authReq.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const { userTaskId, rejectionReason } = req.body;
+    if (!userTaskId) {
+        return res.status(400).json({ error: 'userTaskId is required' });
+    }
+    const result = await rejectPhotoTaskService(userTaskId, authReq.user.id, rejectionReason);
+    res.json({ success: result.success, message: result.message });
+});
+export const getPendingPhotoTasks = asyncHandler(async (req, res) => {
+    try {
+        const tasks = await getPendingPhotoTasksService();
+        console.log('[CONTROLLER] getPendingPhotoTasks - Returning', tasks?.length || 0, 'tasks');
+        if (tasks && tasks.length > 0) {
+            console.log('[CONTROLLER] getPendingPhotoTasks - Sample task:', {
+                user_task_id: tasks[0].user_task_id,
+                task_title: tasks[0].task_title,
+            });
+        }
+        res.json(tasks);
+    }
+    catch (error) {
+        console.error('[CONTROLLER] getPendingPhotoTasks - Error:', error);
+        console.error('[CONTROLLER] getPendingPhotoTasks - Error stack:', error.stack);
+        throw error;
+    }
+});
+export const getGallery = asyncHandler(async (req, res) => {
+    const { userId, taskId, limit, offset } = req.query;
+    const filters = {};
+    if (userId)
+        filters.userId = userId;
+    if (taskId)
+        filters.taskId = taskId;
+    if (limit)
+        filters.limit = parseInt(limit, 10);
+    if (offset)
+        filters.offset = parseInt(offset, 10);
+    const images = await getGalleryImagesService(filters);
+    res.json(images);
+});
+/**
+ * GET /api/tasks/:id/qr-code
+ * Ruft den QR-Code einer Aufgabe ab (nur für Administratoren und Redaktion)
+ * Generiert automatisch einen QR-Code, falls noch keiner existiert
+ */
+export const getTaskQrCode = asyncHandler(async (req, res) => {
+    const authReq = req;
+    if (!authReq.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (authReq.user.role !== 'administrator' && authReq.user.role !== 'redaktion') {
+        return res.status(403).json({ error: 'Forbidden: Administrator or Redaktion access required' });
+    }
+    const { id } = req.params;
+    try {
+        const qrCode = await generateOrGetTaskQrCode(id);
+        res.json({ qrCode });
+    }
+    catch (error) {
+        return res.status(400).json({ error: error.message || 'Failed to get task QR code' });
+    }
 });
 //# sourceMappingURL=task.controller.js.map

@@ -39,6 +39,13 @@ declare class EmailTemplatesService {
         resetUrl: string;
         expiresIn?: string;
     }): string;
+    getPhotoRejectionEmail(variables: {
+        name: string;
+        email: string;
+        taskTitle: string;
+        rejectionReason?: string;
+        appUrl?: string;
+    }): string;
 }
 export declare const emailTemplates: EmailTemplatesService;
 export {};

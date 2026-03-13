@@ -13,6 +13,7 @@ export interface User {
     oauth_email?: string | null;
     sihot_guest_id?: string | null;
     sihot_guest_data?: Record<string, any> | null;
+    preferred_language?: string | null;
     email_verified?: boolean;
     email_verification_token?: string | null;
     email_verification_expires?: Date | null;
@@ -35,6 +36,7 @@ export interface CreateUserData {
     oauth_email?: string | null;
     sihot_guest_id?: string | null;
     sihot_guest_data?: Record<string, any> | null;
+    preferred_language?: string | null;
 }
 export declare function createUser(data: CreateUserData): Promise<User>;
 export declare function getUserByEmail(email: string): Promise<User | null>;
@@ -57,6 +59,7 @@ export declare function getUserProgressService(userId: string): Promise<{
     totalPoints: number;
     co2Saved: number;
 }>;
+export declare function getPreferredLanguage(userId: string): Promise<'de' | 'en' | null>;
 export declare function getMeService(userId: string): Promise<{
     id: any;
     email: any;
@@ -68,6 +71,7 @@ export declare function getMeService(userId: string): Promise<{
     sihotGuestId: any;
     sihotGuest: any;
     sihotReservations: any;
+    preferredLanguage: string;
 }>;
 export declare function getUserProfileService(userId: string): Promise<{
     id: any;
@@ -80,6 +84,7 @@ export declare function getUserProfileService(userId: string): Promise<{
     sihotGuestId: any;
     sihotGuest: any;
     sihotReservations: any;
+    preferredLanguage: string;
 }>;
 export declare function updateUserProfileService(userId: string, data: Partial<User>): Promise<any>;
 export declare function setUserPasswordService(userId: string, password: string): Promise<void>;

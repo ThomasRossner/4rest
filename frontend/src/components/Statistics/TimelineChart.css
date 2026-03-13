@@ -26,11 +26,11 @@
 }
 
 .timeline-legend-points {
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
 }
 
 .timeline-legend-trees {
-  background-color: #10b981;
+  background-color: var(--color-primary);
 }
 
 .timeline-legend-co2 {
@@ -88,11 +88,11 @@
 }
 
 .timeline-bar-points {
-  background-color: #3b82f6;
+  background-color: var(--color-primary);
 }
 
 .timeline-bar-trees {
-  background-color: #10b981;
+  background-color: var(--color-primary);
 }
 
 .timeline-bar-co2 {

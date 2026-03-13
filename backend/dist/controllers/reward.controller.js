@@ -1,12 +1,16 @@
 import { getRewardsService, redeemRewardService, verifyQrCodeService, getRewardInfoFromQrCode, redeemRewardQrCodeService, createCustomReward, listRewardsForAdmin, updateReward as updateRewardService, setRewardsActiveState, bulkDeleteRewards, getRedemptionStatus, uploadThumbnail as uploadThumbnailService, } from '../services/reward.service.js';
 import { generatePointsBonusQr, redeemPointsBonusQr, } from '../services/points-bonus.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { broadcastRewardUpdate } from '../ws/reward-broadcast.js';
 export const getRewards = asyncHandler(async (req, res) => {
     const authReq = req;
     if (!authReq.user) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
     const rewards = await getRewardsService(authReq.user.id);
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'beb906' }, body: JSON.stringify({ sessionId: 'beb906', location: 'reward.controller.ts:getRewards', message: 'GET /rewards response', data: { userId: authReq.user?.id, rewardsCount: Array.isArray(rewards) ? rewards.length : 0 }, hypothesisId: 'C', timestamp: Date.now() }) }).catch(() => { });
+    // #endregion
     res.json(rewards);
 });
 export const createReward = asyncHandler(async (req, res) => {
@@ -35,10 +39,10 @@ export const createReward = asyncHandler(async (req, res) => {
         recurrence: payload.recurrence ?? null,
         reward_art: payload.reward_art ?? payload.rewardArt ?? null,
         kategorie: payload.kategorie ?? payload.category ?? null,
-        event_group: payload.event_group ?? payload.eventGroup ?? null,
-        moegliche_punkte: payload.moegliche_punkte ?? payload.possible_points ?? null,
         thumbnail_url: payload.thumbnail_url ?? payload.thumbnailUrl ?? null,
     });
+    // Broadcast update to all clients
+    broadcastRewardUpdate();
     res.status(201).json(reward);
 });
 export const updateReward = asyncHandler(async (req, res) => {
@@ -69,12 +73,6 @@ export const updateReward = asyncHandler(async (req, res) => {
     if (payload.kategorie !== undefined || payload.category !== undefined) {
         updatePayload.kategorie = payload.kategorie ?? payload.category ?? null;
     }
-    if (payload.event_group !== undefined || payload.eventGroup !== undefined) {
-        updatePayload.event_group = payload.event_group ?? payload.eventGroup ?? null;
-    }
-    if (payload.moegliche_punkte !== undefined || payload.possible_points !== undefined) {
-        updatePayload.moegliche_punkte = payload.moegliche_punkte ?? payload.possible_points ?? null;
-    }
     if (payload.locationId !== undefined || payload.location_id !== undefined) {
         const locationId = payload.locationId ?? payload.location_id;
         if (locationId) {
@@ -99,6 +97,8 @@ export const updateReward = asyncHandler(async (req, res) => {
         updatePayload.thumbnail_url = payload.thumbnail_url ?? payload.thumbnailUrl ?? null;
     }
     const reward = await updateRewardService(req.params.id, updatePayload);
+    // Broadcast update to all clients
+    broadcastRewardUpdate();
     res.json(reward);
 });
 export const redeemReward = asyncHandler(async (req, res) => {
@@ -125,6 +125,8 @@ export const bulkUpdateRewardStatus = asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Active flag must be a boolean value.' });
     }
     await setRewardsActiveState(ids, active);
+    // Broadcast update to all clients
+    broadcastRewardUpdate();
     res.status(204).send();
 });
 export const bulkDeleteRewardsController = asyncHandler(async (req, res) => {
@@ -133,6 +135,8 @@ export const bulkDeleteRewardsController = asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Provide an array of reward ids.' });
     }
     await bulkDeleteRewards(ids);
+    // Broadcast update to all clients
+    broadcastRewardUpdate();
     res.status(204).send();
 });
 export const verifyQrCode = asyncHandler(async (req, res) => {

@@ -52,12 +52,12 @@
 .reward-cost {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-primary, #3b82f6);
+  color: var(--color-primary);
 }
 
 .reward-button {
   padding: 0.5rem 1rem;
-  background-color: var(--color-primary, #3b82f6);
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 0.375rem;
@@ -68,7 +68,7 @@
 }
 
 .reward-button:hover:not(:disabled) {
-  background-color: var(--color-primary-dark, #2563eb);
+  background-color: var(--color-primary-dark);
 }
 
 .reward-button:disabled {

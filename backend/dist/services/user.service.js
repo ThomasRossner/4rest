@@ -19,6 +19,7 @@ export async function createUser(data) {
     try {
         const resolvedRole = ensureRole(data.role);
         const resolvedUserType = ensureUserType(data.user_type);
+        const preferredLang = data.preferred_language === 'en' ? 'en' : 'de';
         const values = [
             data.email || null,
             data.password_hash || null,
@@ -32,17 +33,10 @@ export async function createUser(data) {
             data.oauth_email || null,
             data.sihot_guest_id || null,
             data.sihot_guest_data ? JSON.stringify(data.sihot_guest_data) : null,
+            preferredLang,
         ];
-        console.log('Creating user with values:', {
-            email: values[0],
-            hasPassword: !!values[1],
-            name: values[2],
-            role: values[3],
-            oauth_provider: values[6],
-            oauth_id: values[7],
-        });
-        const result = await db.query(`INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb)
+        const result = await db.query(`INSERT INTO users (email, password_hash, name, role, user_type, points, avatar_url, oauth_provider, oauth_id, oauth_email, sihot_guest_id, sihot_guest_data, preferred_language)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, ($12)::jsonb, $13)
        RETURNING *`, values);
         if (!result.rows[0]) {
             throw new Error('User creation returned no rows');
@@ -150,15 +144,23 @@ export async function getUserProgressService(userId) {
         co2Saved: parseFloat(co2Result.rows[0]?.co2_saved || '0'),
     };
 }
+export async function getPreferredLanguage(userId) {
+    const db = getPool();
+    const result = await db.query('SELECT preferred_language FROM users WHERE id = $1', [userId]);
+    const row = result.rows[0];
+    if (!row)
+        return null;
+    return row.preferred_language === 'en' ? 'en' : 'de';
+}
 export async function getMeService(userId) {
     const db = getPool();
-    const result = await db.query(`SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data
+    const result = await db.query(`SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language
      FROM users WHERE id = $1`, [userId]);
     if (!result.rows[0]) {
         return null;
     }
     const user = result.rows[0];
-    // Return email || oauth_email for OAuth users
+    const lang = user.preferred_language === 'en' ? 'en' : 'de';
     return {
         id: user.id,
         email: user.email || user.oauth_email || null,
@@ -170,17 +172,18 @@ export async function getMeService(userId) {
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
+        preferredLanguage: lang,
     };
 }
 export async function getUserProfileService(userId) {
     const db = getPool();
-    const result = await db.query(`SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data
+    const result = await db.query(`SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language
      FROM users WHERE id = $1`, [userId]);
     if (!result.rows[0]) {
         return null;
     }
     const user = result.rows[0];
-    // Return email || oauth_email for OAuth users
+    const lang = user.preferred_language === 'en' ? 'en' : 'de';
     return {
         id: user.id,
         email: user.email || user.oauth_email || null,
@@ -192,6 +195,7 @@ export async function getUserProfileService(userId) {
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
         sihotReservations: user.sihot_guest_data?.reservations ?? [],
+        preferredLanguage: lang,
     };
 }
 export async function updateUserProfileService(userId, data) {
@@ -215,12 +219,18 @@ export async function updateUserProfileService(userId, data) {
         updates.push(`user_type = $${paramIndex++}`);
         values.push(ensureUserType(data.user_type));
     }
+    const preferredLang = data.preferred_language ?? data.preferredLanguage;
+    if (preferredLang !== undefined) {
+        const lang = preferredLang === 'en' ? 'en' : 'de';
+        updates.push(`preferred_language = $${paramIndex++}`);
+        values.push(lang);
+    }
     if (updates.length === 0) {
         return getUserProfileService(userId);
     }
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(userId);
-    const result = await db.query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, name, role, points, avatar_url`, values);
+    const result = await db.query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, email, name, role, points, avatar_url, preferred_language`, values);
     return result.rows[0];
 }
 export async function setUserPasswordService(userId, password) {

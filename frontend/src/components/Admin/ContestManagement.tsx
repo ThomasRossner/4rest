@@ -524,7 +524,7 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
                 {t('rezeption.contest.manage.deactivate')}
               </button>
               <button
-                className={`${cssPrefix}-action-button`}
+                className={`${cssPrefix}-action-button danger`}
                 onClick={handleContestBulkDelete}
                 disabled={selectedContestIds.length === 0}
                 type="button"
@@ -625,7 +625,7 @@ export function ContestManagement({ cssPrefix = 'rezeption', onBack, enabled = t
                                 : t('rezeption.contest.manage.activate')}
                             </button>
                             <button
-                              className={`${cssPrefix}-action-button`}
+                              className={`${cssPrefix}-action-button danger`}
                               onClick={() => {
                                 setContestConfirmDialog({
                                   visible: true,

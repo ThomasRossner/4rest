@@ -1,15 +1,10 @@
 export function errorHandler(err, req, res, next) {
-    // #region agent log
-    console.error('[ERROR HANDLER]', JSON.stringify({
-        method: req.method,
-        path: req.path,
-        errorName: err.name,
-        errorMessage: err.message,
-        errorStack: err.stack,
-        statusCode: res.statusCode,
-    }));
-    // #endregion
-    console.error('Error:', err);
+    console.error('[ERROR HANDLER] Error:', err);
+    console.error('[ERROR HANDLER] Error name:', err.name);
+    console.error('[ERROR HANDLER] Error message:', err.message);
+    console.error('[ERROR HANDLER] Error stack:', err.stack);
+    console.error('[ERROR HANDLER] Request path:', req.path);
+    console.error('[ERROR HANDLER] Request method:', req.method);
     if (err.name === 'ValidationError') {
         return res.status(400).json({
             error: 'Validation error',
@@ -25,6 +20,7 @@ export function errorHandler(err, req, res, next) {
     res.status(500).json({
         error: 'Internal server error',
         message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
 }
 //# sourceMappingURL=errorHandler.js.map

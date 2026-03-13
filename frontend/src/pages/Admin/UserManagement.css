@@ -64,7 +64,7 @@
 }
 
 .user-management-table-wrapper table tbody tr.selected {
-  background-color: var(--color-primary-light, #dbeafe);
+  background-color: var(--color-primary-light);
 }
 
 .status-active {
@@ -153,7 +153,7 @@
   margin: 0 0 1rem 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-primary, #3b82f6);
+  color: var(--color-primary);
 }
 
 .user-details-field {
@@ -206,7 +206,7 @@
 .user-details-stat span {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--color-primary, #3b82f6);
+  color: var(--color-primary);
 }
 
 .user-details-actions {
@@ -258,13 +258,13 @@
   color: var(--color-text-light, #6b7280);
 }
 
-/* User Management table buttons: green when enabled, red when disabled */
+/* User Management table buttons: green when enabled, gray when disabled */
 .user-management-table-wrapper .admin-action-button {
   background: var(--color-primary) !important;
   color: white !important;
 }
 
 .user-management-table-wrapper .admin-action-button:disabled {
-  background: var(--color-error) !important;
-  color: white !important;
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
 }
