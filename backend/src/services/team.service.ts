@@ -899,7 +899,7 @@ export async function bulkDeleteTeams(teamIds: string[]): Promise<void> {
 /**
  * Aktualisiert Team-Daten
  */
-export async function updateTeam(teamId: string, data: Partial<{ name: string | null; active: boolean }>): Promise<Team> {
+export async function updateTeam(teamId: string, data: Partial<{ name: string | null; name_i18n?: Record<string, string> | null; active: boolean }>): Promise<Team> {
   const db = getPool();
   
   // Prüfe ob Team existiert
@@ -916,8 +916,8 @@ export async function updateTeam(teamId: string, data: Partial<{ name: string | 
   const values: any[] = [];
   let paramIndex = 1;
   
-  if ((data as any).name_i18n !== undefined && (data as any).name_i18n !== null && typeof (data as any).name_i18n === 'object') {
-    const nameI18n = (data as any).name_i18n;
+  if (data.name_i18n !== undefined && data.name_i18n !== null && typeof data.name_i18n === 'object') {
+    const nameI18n = data.name_i18n;
     updates.push(`name_i18n = $${paramIndex++}`);
     values.push(JSON.stringify(nameI18n));
     const resolved = nameI18n.de ?? nameI18n.en;
