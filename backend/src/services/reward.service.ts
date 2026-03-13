@@ -116,13 +116,21 @@ export async function getRewardsService(userId: string) {
     }
   }
 
-  query += ' ORDER BY r.points_cost ASC';
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'beb906'},body:JSON.stringify({sessionId:'beb906',location:'reward.service.ts:getRewardsService',message:'reward filter state',data:{columnsExist,applyFilters,userTeamIdsCount:userTeamIds.length,userContestIdsCount:userContestIds.length},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+
+  query += ' ORDER BY r.points_cost ASC LIMIT 500';
 
   const result = await db.query(query, params);
   const unique = new Map<string, any>();
   for (const row of result.rows) {
     unique.set(row.id, row);
   }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'beb906'},body:JSON.stringify({sessionId:'beb906',location:'reward.service.ts:getRewardsService',message:'reward query result',data:{rowsCount:result.rows.length,uniqueCount:unique.size},hypothesisId:'B',timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 
   const lang = user?.preferred_language === 'en' ? 'en' : 'de';
   return Array.from(unique.values()).map((row) => {

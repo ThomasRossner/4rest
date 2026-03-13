@@ -146,6 +146,8 @@ async function generateRecurringRewardInstance(template: any): Promise<void> {
   // Note: The new reward will have the same properties but be a separate instance
   // Users can redeem this new instance even if they've redeemed the previous one
   
+  // Generated instances must have recurrence = 'once' so they are not picked up
+  // as templates in the next run (which would cause exponential growth).
   await db.query(
     `INSERT INTO rewards (
        title,
@@ -159,7 +161,7 @@ async function generateRecurringRewardInstance(template: any): Promise<void> {
        recurrence,
        last_generated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'once', CURRENT_TIMESTAMP)
      RETURNING id`,
     [
       template.title,
@@ -170,7 +172,6 @@ async function generateRecurringRewardInstance(template: any): Promise<void> {
       template.external_api_id ?? null,
       template.location_id,
       true, // Active
-      template.recurrence, // Keep same recurrence setting
     ]
   );
 }
