@@ -69,12 +69,14 @@ For local development, it's often easier to run the backend and frontend directl
 
 ### Seeded Accounts
 
-`database/seed_all.sh` creates the following logins (password `Test123!`):
+`database/seed_all.sh` legt Demo-Logins an (Passwort `Test123!`), u. a.:
 
-- `test@example.com` (guest)
-- `employee@example.com` (employee)
-- `stakeholder@example.com` (stakeholder)
-- `admin@example.com` (**administrator** — access the `/admin` dashboard to publish tasks/rewards)
+- `demo@example.com` (guest)
+- `rezeption@example.com` (rezeption)
+- `redaktion@example.com` (redaktion)
+- `admin@example.com` (administrator)
+
+**Testumgebung Produktion:** `https://luise.bio` – dieselben Demo-Adressen nach Migration `061_luise_demo_accounts.sql`.
 
 ### Reference Values (enforced in Postgres)
 

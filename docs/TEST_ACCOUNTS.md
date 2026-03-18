@@ -1,6 +1,22 @@
-# Test Accounts for Development
+# Test Accounts
 
-## Quick Start: Create Your First Account
+## Demo auf **luise.bio** (Produktion / Referenz-Test)
+
+| E-Mail | Rolle | Passwort |
+|--------|-------|----------|
+| `admin@example.com` | Administrator | `Test123!` |
+| `rezeption@example.com` | Rezeption | `Test123!` |
+| `redaktion@example.com` | Redaktion | `Test123!` |
+| `demo@example.com` | Gast | `Test123!` |
+
+- **App:** https://luise.bio  
+- **Login:** https://luise.bio/login  
+- Konten werden mit Migration `061_luise_demo_accounts` beim Deployment angelegt bzw. synchronisiert.  
+  Manuell auf dem Server (falls nötig): `psql "$DATABASE_URL" -f database/migrations/061_luise_demo_accounts.sql`
+
+---
+
+## Quick Start: Create Your First Account (lokal)
 
 Since there are no default users in the database, you have two options:
 
@@ -10,12 +26,12 @@ Make sure your backend is running (`cd backend && npm run dev`), then:
 
 ```bash
 # Using curl (or use Postman/Thunder Client)
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com",
+    "email": "demo@example.com",
     "password": "Test123!",
-    "name": "Test User",
+    "name": "Demo Gast",
     "role": "guest"
   }'
 ```
@@ -29,10 +45,10 @@ wsl bash database/create-test-user.sh
 ### Option 2: Register via Frontend
 
 1. Start the frontend: `cd frontend && npm run dev`
-2. Navigate to `http://localhost:3000`
+2. Navigate to `http://localhost:3001`
 3. Click "Register" 
 4. Fill in:
-   - Email: `test@example.com`
+   - Email: `demo@example.com`
    - Password: `Test123!`
    - Name: `Test User`
    - Role: `guest`
@@ -41,11 +57,10 @@ wsl bash database/create-test-user.sh
 
 Create these accounts for testing different user roles:
 
-### Guest User
-- **Email:** `test@example.com`
+### Gast (Demo)
+- **Email:** `demo@example.com`
 - **Password:** `Test123!`
 - **Role:** `guest`
-- **Use for:** Testing guest features, task completion, rewards
 
 ### Employee User
 - **Email:** `employee@example.com`

@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>4rest – Funktionsbeschreibung</title>
+    <style>
+      @page { margin: 18mm 16mm; }
+      :root{
+        --ink:#0f172a;
+        --muted:#475569;
+        --border:#e2e8f0;
+        --surface:#f8fafc;
+        --primary:#0d9488;
+        --primary-dark:#0f766e;
+        --danger:#f44336;
+      }
+      html,body{height:100%}
+      body{
+        font: 12.2pt/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        color:var(--ink);
+        margin:0;
+        background:white;
+      }
+      .page{
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 18mm 16mm;
+      }
+      header{
+        border:1px solid var(--border);
+        border-radius:14px;
+        padding:18px 18px 14px;
+        background: linear-gradient(135deg, rgba(13,148,136,.10), rgba(13,148,136,.02));
+      }
+      .kicker{
+        color:var(--primary-dark);
+        font-weight:700;
+        letter-spacing:.04em;
+        text-transform:uppercase;
+        font-size:10pt;
+      }
+      h1{
+        margin:8px 0 6px;
+        font-size:26pt;
+        line-height:1.15;
+      }
+      .subtitle{
+        margin:0;
+        color:var(--muted);
+        font-size:12pt;
+      }
+      .meta{
+        margin-top:12px;
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        color:var(--muted);
+        font-size:10.5pt;
+      }
+      .pill{
+        border:1px solid var(--border);
+        background:white;
+        padding:5px 10px;
+        border-radius:999px;
+      }
+      h2{
+        margin:22px 0 10px;
+        font-size:15.5pt;
+        padding-bottom:6px;
+        border-bottom:1px solid var(--border);
+      }
+      h3{
+        margin:14px 0 6px;
+        font-size:12.6pt;
+      }
+      p{ margin: 8px 0; }
+      ul{ margin: 6px 0 10px 18px; padding:0; }
+      li{ margin: 4px 0; }
+      .grid{
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:12px;
+      }
+      .grid3{
+        display:grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap:12px;
+      }
+      .card{
+        border:1px solid var(--border);
+        border-radius:14px;
+        padding:12px 14px;
+        background: var(--surface);
+      }
+      .card.white{ background: white; }
+      .toc{
+        margin-top:14px;
+        border:1px solid var(--border);
+        border-radius:14px;
+        background:white;
+        padding:12px 14px;
+      }
+      .toc a{ color: var(--primary-dark); text-decoration:none; }
+      .toc a:hover{ text-decoration: underline; }
+      .toc ul{ margin-left: 16px; }
+      .toc li{ margin: 3px 0; }
+      .kpi{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        margin-top:10px;
+      }
+      .kpi .pill{
+        background: var(--surface);
+      }
+      table{
+        width:100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow:hidden;
+        border-radius: 14px;
+        border:1px solid var(--border);
+        background:white;
+      }
+      th, td{
+        padding:10px 10px;
+        vertical-align: top;
+        border-bottom: 1px solid var(--border);
+        font-size:10.8pt;
+      }
+      th{
+        background: var(--surface);
+        text-align:left;
+        color: var(--ink);
+      }
+      tr:last-child td{ border-bottom:none; }
+      .note{
+        border-left:4px solid var(--border);
+        background: var(--surface);
+        padding:10px 12px;
+        border-radius: 10px;
+        color: var(--muted);
+      }
+      .danger-callout{
+        border-left:4px solid var(--danger);
+        background: rgba(244,67,54,.06);
+        padding:10px 12px;
+        border-radius: 10px;
+      }
+      .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      .tagline{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+        margin-top:8px;
+      }
+      .tag{
+        font-size:10pt;
+        padding:3px 8px;
+        border-radius:999px;
+        border:1px solid var(--border);
+        background:white;
+        color:var(--muted);
+      }
+      .tag.primary{ border-color: rgba(13,148,136,.35); color: var(--primary-dark); }
+      .tag.danger{ border-color: rgba(244,67,54,.35); color: #b91c1c; }
+      code{
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 10.8pt;
+        background: rgba(2,6,23,.04);
+        border: 1px solid rgba(2,6,23,.06);
+        padding: 1px 6px;
+        border-radius: 8px;
+      }
+      .callout{
+        border-left: 4px solid var(--primary);
+        background: rgba(13,148,136,.06);
+        padding:10px 12px;
+        border-radius: 10px;
+        color: var(--ink);
+      }
+      .small{ color:var(--muted); font-size:10.5pt; }
+      .hr{ height:1px; background:var(--border); margin:18px 0; }
+      footer{
+        margin-top: 18px;
+        color: var(--muted);
+        font-size:10pt;
+        display:flex;
+        justify-content: space-between;
+        gap:10px;
+        border-top:1px solid var(--border);
+        padding-top:10px;
+      }
+      @media print{
+        .page{ padding:0; }
+        header{ break-inside: avoid; }
+        .card{ break-inside: avoid; }
+        h2,h3{ break-after: avoid; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="kicker">Funktionsbeschreibung • Exploratives Testdokument</div>
+        <h1>4rest</h1>
+        <p class="subtitle">
+          Gamification-basierte Nachhaltigkeitsplattform für Hotels: Gäste und Mitarbeitende erledigen nachhaltige Aufgaben,
+          sammeln Punkte und „pflanzen“ damit Bäume in einem virtuellen Wald.
+        </p>
+        <div class="meta">
+          <span class="pill">Frontend: React PWA (Vite)</span>
+          <span class="pill">3D Wald: Three.js</span>
+          <span class="pill">Backend: Node.js/Express (TypeScript)</span>
+          <span class="pill">Daten: PostgreSQL + Redis</span>
+        </div>
+        <div class="tagline">
+          <span class="tag primary">Normale Aktionen: Blaugrün</span>
+          <span class="tag danger">Abbrechen/Löschen: Rot</span>
+        </div>
+        <div class="kpi">
+          <span class="pill"><strong>Testobjekt (Produktion):</strong> <code>https://luise.bio</code></span>
+          <span class="pill">API: <code>https://luise.bio/api</code></span>
+          <span class="pill">Lokal (dev): Frontend <code>http://localhost:3001</code> · API <code>http://localhost:5001</code></span>
+        </div>
+      </header>
+
+      <div class="toc" id="toc">
+        <h2 style="margin-top:0">Inhalt</h2>
+        <ul>
+          <li><a href="#ziel">1. Ziel & Testfokus</a></li>
+          <li><a href="#setup">2. Test-Setup (Umgebung, Ports, Accounts, Daten)</a></li>
+          <li><a href="#routing">3. Rollen & Routing (welche Oberfläche sieht wer?)</a></li>
+          <li><a href="#app-core">4. Kernfunktionen (User App): Home, Aufgaben, Wald, Rewards, Profil, Statistiken</a></li>
+          <li><a href="#tasks">5. Aufgaben-Typen (Video/Quiz/Artikel/Survey/QR/Foto/Visit-Location) – Explorationscharter</a></li>
+          <li><a href="#rewards">6. Rewards & Einlösung – Explorationscharter</a></li>
+          <li><a href="#forest">7. Virtueller Wald – Explorationscharter</a></li>
+          <li><a href="#teams-contests">8. Teams & Contests – Explorationscharter</a></li>
+          <li><a href="#admin">9. Admin-/Redaktion-/Rezeption-Oberflächen – Explorationscharter</a></li>
+          <li><a href="#gdpr">10. Datenschutz (GDPR), Mailbox & Systemverhalten</a></li>
+          <li><a href="#oracles">11. Explorative Oracles / Heuristiken</a></li>
+          <li><a href="#bugs">12. Bug-Reporting-Checkliste</a></li>
+        </ul>
+        <p class="small">Dieses Dokument ist absichtlich testorientiert: Es beschreibt Funktionen so, dass man daraus Explorationen/Checks ableiten kann.</p>
+      </div>
+
+      <h2 id="ziel">1. Ziel & Testfokus</h2>
+      <p>
+        4rest ist eine webbasierte Progressive Web App (PWA), die nachhaltige Handlungen in einem Hotelkontext in spielerische
+        Aufgaben übersetzt. Nutzer erhalten Punkte und visualisieren Fortschritt über einen 3D-Wald. Zusätzlich gibt es
+        administrative Oberflächen für Inhalte (Aufgaben, Rewards, Orte) und Betrieb (Moderation/Tools).
+      </p>
+      <div class="callout">
+        <strong>Kern-Loop (User):</strong> Aufgabe auswählen → erledigen (je nach Typ) → Punkte erhalten → Fortschritt/Wald aktualisiert → Rewards einlösen.
+      </div>
+      <div class="danger-callout">
+        <strong>Explorativer Testfokus:</strong> Nicht nur „Happy Paths“, sondern bewusst Variationen: Rollen, Datenzustände (leer/teilvoll),
+        Netzwerk/Offline, Berechtigungen, Fehlerpfade, Race Conditions (Doppelklick/Parallelaktionen), Responsiveness und Usability.
+      </div>
+
+      <h2 id="setup">2. Test-Setup (Umgebung, Ports, Accounts, Daten)</h2>
+      <h3>2.1 Testobjekt <strong>luise.bio</strong></h3>
+      <ul>
+        <li><strong>Web-App</strong>: <code>https://luise.bio</code> (Login unter <code>https://luise.bio/login</code>)</li>
+        <li><strong>REST-API</strong>: <code>https://luise.bio/api</code> (z. B. <code>POST /api/auth/login</code>)</li>
+      </ul>
+      <div class="callout">
+        <strong>Demo-Accounts (Produktion &amp; Referenz)</strong> – Passwort für alle: <code>Test123!</code>
+        <table style="margin-top:10px">
+          <thead>
+            <tr><th>E-Mail</th><th>Rolle</th><th>Oberfläche nach Login</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>admin@example.com</code></td><td>Administrator</td><td>Admin-Dashboard (volle Verwaltung)</td></tr>
+            <tr><td><code>rezeption@example.com</code></td><td>Rezeption</td><td>Rezeption-Oberfläche</td></tr>
+            <tr><td><code>redaktion@example.com</code></td><td>Redaktion</td><td>Redaktions-Oberfläche (Aufgaben/Rewards/Orte)</td></tr>
+            <tr><td><code>demo@example.com</code></td><td>Gast</td><td>Normale App (Home, Tasks, Wald, Rewards, …)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">
+        Die Konten werden per Migration <code>database/migrations/061_luise_demo_accounts.sql</code> angelegt bzw. synchronisiert
+        (Passwort, Rolle, E-Mail verifiziert). Nach Deployment sind alle vier Logins nutzbar.
+      </p>
+
+      <h3>2.2 Lokale Entwicklung (optional)</h3>
+      <ul>
+        <li><strong>Frontend</strong>: <code>http://localhost:3001</code></li>
+        <li><strong>Backend</strong>: <code>http://localhost:5001</code></li>
+        <li>Proxy: <code>/api/*</code> → Backend.</li>
+      </ul>
+      <div class="note">
+        Lokal: Demo-User per <code>database/seed_all.sh</code> (API-Register + DB) oder nach <code>npm run migrate</code> dieselbe Migration 061.
+      </div>
+
+      <h3>2.3 Datenzustände, die man gezielt herstellen sollte</h3>
+      <div class="grid">
+        <div class="card">
+          <h3>Leerer Zustand</h3>
+          <ul>
+            <li>Keine Tasks / keine Rewards</li>
+            <li>Keine Teams / keine Contests</li>
+            <li>Mailbox leer</li>
+          </ul>
+          <p class="small">Oracle: Leere Zustände sollten hilfreich sein (EmptyState, klare CTAs, keine Fehlermeldungen).</p>
+        </div>
+        <div class="card">
+          <h3>Realistischer „voller“ Zustand</h3>
+          <ul>
+            <li>Mind. 2–3 Tasks je Typ</li>
+            <li>Mind. 5–10 Rewards, unterschiedliche Kosten/Typen</li>
+            <li>Teams & Contests aktiv + abgelaufen</li>
+            <li>Mind. 1 Foto-Task in „pending“ (Validierung)</li>
+          </ul>
+          <p class="small">Oracle: Performance, Filter/Sortierung, Pagination/Tabellenlayout.</p>
+        </div>
+      </div>
+
+      <h2 id="routing">3. Rollen & Routing (welche Oberfläche sieht wer?)</h2>
+      <p>
+        Das Frontend routet je nach Rolle auf unterschiedliche „Root“-Oberflächen:
+      </p>
+      <table>
+        <thead>
+          <tr><th style="width:30%">Rolle</th><th>Start-Route</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>administrator</strong></td><td>Root zeigt AdminPage (kein normaler Layout-Router)</td></tr>
+          <tr><td><strong>rezeption</strong></td><td>Root zeigt RezeptionPage</td></tr>
+          <tr><td><strong>redaktion</strong></td><td>Root zeigt RedaktionPage</td></tr>
+          <tr><td><strong>alle anderen</strong></td><td>Layout mit: <code>/</code> (Home), <code>/tasks</code>, <code>/forest</code>, <code>/rewards</code>, <code>/statistics</code>, <code>/profile</code></td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        Für exploratives Testen ist das wichtig: „Admin“ sieht viele User-Flows gar nicht, sondern nur Admin. Daher immer in mehreren Rollen testen.
+      </div>
+
+      <h2 id="app-core">4. Kernfunktionen (User App)</h2>
+      <div class="grid">
+        <div class="card white">
+          <h3>Home (<code>/</code>)</h3>
+          <ul>
+            <li>Übersicht/Einführung, ggf. Kurzstatistiken (Punkte, Bäume, CO₂).</li>
+            <li>Navigation zu Tasks/Wald/Rewards.</li>
+            <li>Sprache (i18n) und Session-Status (eingeloggt).</li>
+          </ul>
+          <p class="small">Exploration: leere Daten vs. Daten vorhanden; mobile Layout; schnelle Navigation; Reload/Back-Button.</p>
+        </div>
+        <div class="card white">
+          <h3>Aufgaben (<code>/tasks</code>)</h3>
+          <ul>
+            <li>Liste + Filter (Typ, Completion-Status, „recent“, online, prerequisites).</li>
+            <li>Task-Detail je Typ (Video/Quiz/QR/Foto/Visit-Location/Survey/Artikel).</li>
+            <li>Verifizierungsstatus (z. B. Foto „pending“).</li>
+          </ul>
+          <p class="small">Exploration: Filterkombinationen, Sortierung (unfertig → pending → fertig), Locks (is_available).</p>
+        </div>
+        <div class="card white">
+          <h3>Wald (<code>/forest</code>)</h3>
+          <ul>
+            <li>3D-Canvas + Stats (Punkte, Bäume, Aufgaben, CO₂).</li>
+            <li>Aktualisierung über WebSocket Events (task/update) + refreshMe.</li>
+            <li>Performance-Settings (dpr, shadows, min performance).</li>
+          </ul>
+          <p class="small">Exploration: Low-End Device, Resize/Rotation, GPU/CPU, Back/Forward, Ladezustände.</p>
+        </div>
+        <div class="card white">
+          <h3>Rewards (<code>/rewards</code>)</h3>
+          <ul>
+            <li>Liste + Filter (Typ, online rewards), Map-Ansicht für redeemable Rewards.</li>
+            <li>Einlösung: Punkte prüfen (User vs Team), Warnung bei Team-Punkten, QR Token/Display.</li>
+            <li>Scanner-Flows: PointsBonusScanner, RewardScanner (je nach Rolle/Featureflag).</li>
+          </ul>
+          <p class="small">Exploration: nicht genug Punkte; Team vs User; Double-click Redeem; Token status pending/used/expired.</p>
+        </div>
+      </div>
+
+      <h2 id="tasks">5. Aufgaben-Typen – Explorationscharter</h2>
+      <p>Die App unterstützt mehrere Aufgabentypen. Für exploratives Testen ist pro Typ ein Set von Charters sinnvoll.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:18%">Typ</th>
+            <th style="width:42%">Was soll funktionieren?</th>
+            <th>Explorationsideen (Fehler/Edge Cases)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>video</strong></td>
+            <td>
+              Video lädt; Abspielen; Folgefragen/Quiz; Bestehenslogik; Task complete; Punkte steigen; UI aktualisiert.
+            </td>
+            <td>
+              Netzwerk langsam; Video URL ungültig; Abbruch mitten im Video; Refresh; Doppelklick auf „Abschließen“;
+              Rücksprung in Liste; Fortschritt nach Reload konsistent.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>quiz</strong></td>
+            <td>Fragen/Antworten; Auswahl; Validierung; Bestehen/Fail; UI Feedback; Task complete.</td>
+            <td>Mehrfachklick; ungültige Antwort-IDs; i18n-Strings fehlen; Zurück-Button; Wiederholbarkeit.</td>
+          </tr>
+          <tr>
+            <td><strong>article_quiz</strong></td>
+            <td>Artikel-Quelle (URL oder Content); Quiz wie oben; Darstellung auf Mobile.</td>
+            <td>Sehr lange Inhalte; externe Links; Mixed Content; Scroll/Position; Rendering/HTML Sanitization.</td>
+          </tr>
+          <tr>
+            <td><strong>survey</strong></td>
+            <td>Single/Multi/Text/Rating; Required Felder; Submit; Speicherung; Task complete.</td>
+            <td>Leere Antworten; Sonderzeichen/Emoji; sehr lange Texte; Mehrfachsubmit; Browser zurück.</td>
+          </tr>
+          <tr>
+            <td><strong>qr</strong></td>
+            <td>QR Code anzeigen; Scan via Kamera; Fallback manuell; Offline: speichern/queue; online sync; complete.</td>
+            <td>Kamera-Rechte verweigert; QR ungültig; mehrfach scan; schneller Wechsel App↔Browser; PWA Offline; iOS Safari Besonderheiten.</td>
+          </tr>
+          <tr>
+            <td><strong>photo</strong></td>
+            <td>Foto aufnehmen/hochladen; Upload; Status „pending“; Admin Validierung; später als completed markieren.</td>
+            <td>Große Dateien; HEIC; Abbruch Upload; doppelt senden; Serverfehler; Validierung ablehnen; UI nach WebSocket Update.</td>
+          </tr>
+          <tr>
+            <td><strong>visit_location</strong></td>
+            <td>Ort anzeigen; ggf. Karte/Distance; Start Task; Completion wenn am Ziel/Regel erfüllt.</td>
+            <td>GPS deaktiviert; falsche Permissions; Mock locations; Edge: knapp außerhalb; Flapping GPS; Offline.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        Oracles: Bei jeder Task-Completion müssen mindestens drei Dinge konsistent sein:
+        (1) Task in Liste als completed/pending markiert, (2) Punkte im Userprofil/Store aktualisiert, (3) Wald/Stats reflektieren Änderung.
+      </div>
+
+      <h2 id="rewards">6. Rewards & Einlösung – Explorationscharter</h2>
+      <div class="grid">
+        <div class="card white">
+          <h3>Einlösung (User-Punkte)</h3>
+          <ul>
+            <li>Reward nur einlösbar, wenn genug Punkte.</li>
+            <li>Nach Einlösung: Punkte sinken, Einlöse-UI zeigt Token/Code.</li>
+            <li>Statuswechsel Token (pending→used/expired) wird angezeigt.</li>
+          </ul>
+          <p class="small">Fehlerpfade: Insufficient points, API Fehler, Timeout, Duplicate request, Reload während Einlösung.</p>
+        </div>
+        <div class="card white">
+          <h3>Einlösung (Team-Punkte)</h3>
+          <ul>
+            <li>Wenn Team aktiv: Team totalPoints kann als Budget genutzt werden.</li>
+            <li>Warnung wenn Team-Punkte genutzt werden und persönliche Punkte nicht reichen.</li>
+            <li>Race: Team totalPoints wird regelmäßig refetched.</li>
+          </ul>
+          <p class="small">Edge: Team verliert Punkte parallel; Einlösung genau auf Grenze; zwei User lösen gleichzeitig ein.</p>
+        </div>
+      </div>
+      <h3>Scanner/QR Flows</h3>
+      <ul>
+        <li><strong>RewardScanner</strong>: Codes scannen und Status aktualisieren (Admin/Staff abhängig von Rollen/Feature).</li>
+        <li><strong>PointsBonusScanner</strong>: zusätzliche Punkte via QR/Flow (Rollenabhängig).</li>
+      </ul>
+
+      <h2 id="forest">7. Virtueller Wald – Explorationscharter</h2>
+      <div class="grid">
+        <div class="card white">
+          <h3>Rendering & Interaktion</h3>
+          <ul>
+            <li>Canvas lädt stabil, keine WebGL Crashes.</li>
+            <li>Performance akzeptabel (FPS/Responsiveness) auf Laptop + Mobile.</li>
+            <li>Resize/Rotation ohne Layout-Breaks.</li>
+          </ul>
+        </div>
+        <div class="card white">
+          <h3>Datenkonsistenz</h3>
+          <ul>
+            <li>Stats (Punkte/Bäume/CO₂) passen zu Tasks.</li>
+            <li>Nach Task completion wird Wald/Stats aktualisiert (Events/Refresh).</li>
+            <li>Team-Punkte (wenn vorhanden) korrekt dargestellt.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2 id="teams-contests">8. Teams & Contests – Explorationscharter</h2>
+      <p>
+        Teams & Contests erhöhen Motivation über Wettbewerb. In der User-App gibt es u. a. Contest-Ranking-Routen und ggf. Join-Flows über QR.
+      </p>
+      <table>
+        <thead><tr><th style="width:30%">Bereich</th><th>Worauf achten?</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Team beitreten/erstellen</strong></td>
+            <td>QR Join funktioniert; Team ist „active“; Team points werden im Rewards/Wald berücksichtigt; UI aktualisiert ohne Refresh.</td>
+          </tr>
+          <tr>
+            <td><strong>Contest beitreten</strong></td>
+            <td>Registrierung; Zeitraum; Start/Ende; Auswertung; Ranking zeigt korrekte Aggregationen.</td>
+          </tr>
+          <tr>
+            <td><strong>Edge Cases</strong></td>
+            <td>Contest abgelaufen; mehrfach beitreten; Team verlassen; Rechte/rollenspezifische Views.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="admin">9. Admin-/Redaktion-/Rezeption-Oberflächen – Explorationscharter</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Administrator</h3>
+          <ul>
+            <li>Modi: Task/Reward/Location create & manage, QR-Scanner, SurveyAnalytics, DebugTools, UserManagement, Team/Contest Management, PhotoValidation, PointsBonus.</li>
+            <li>Bulk-Operationen (activate/deactivate/delete) mit Selection-State.</li>
+            <li>Bestätigungsdialoge: Abbrechen rot, Delete/ConfirmTone danger rot.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Redaktion</h3>
+          <ul>
+            <li>Inhalte verwalten (Edit/Activate/Deactivate) – normale Aktionen in Blaugrün.</li>
+            <li>Nur „Löschen“ rot (danger), disabled grau.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3>Rezeption</h3>
+          <ul>
+            <li>Rezeption-spezifischer Flow (z. B. Teams/Contests/Operations).</li>
+            <li>QR/Points Bonus je nach Konfiguration.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Admin Testcharter (Beispiele)</h3>
+          <ul>
+            <li>„Erstelle Task je Typ → prüfe Listing/Filter → prüfe User-App Sichtbarkeit“</li>
+            <li>„Aktiviere/Deaktiviere Task → User sieht Locks korrekt“</li>
+            <li>„Foto-Validierung: approve/reject → User Task-Status + Punkte“</li>
+            <li>„Bulk delete/activate: Selection, disabled states, confirmations“</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2 id="gdpr">10. Datenschutz (GDPR), Mailbox & Systemverhalten</h2>
+      <div class="grid">
+        <div class="card white">
+          <h3>GDPR / Consent / Data Export</h3>
+          <ul>
+            <li>Consent-UI erreichbar und verständlich.</li>
+            <li>Export liefert vollständige, konsistente Daten (Profil, Tasks, Redemptions).</li>
+            <li>Löschung entfernt/anonymisiert Daten; Login danach erwartbar.</li>
+          </ul>
+        </div>
+        <div class="card white">
+          <h3>Mailbox</h3>
+          <ul>
+            <li>Liste/Detail; „zurück“ Navigation; Löschen rot (danger).</li>
+            <li>Leerer Zustand; Pagination/Scroll, Datum/Format.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note">
+        Systemverhalten: WebSocket Events invalidieren Queries; UI sollte nach Updates konsistent sein (keine „stale“ Punkte).
+      </div>
+
+      <h2 id="oracles">11. Explorative Oracles / Heuristiken</h2>
+      <ul>
+        <li><strong>SADT</strong> (Structure/Activity/Data/Timing): Passt Struktur? Aktivität korrekt? Daten korrekt? Timing/Race ok?</li>
+        <li><strong>CRUD+L</strong>: Create/Read/Update/Delete + List/Filter/Sort konsistent.</li>
+        <li><strong>Rollen</strong>: Gleiche Entity (Task/Reward) in unterschiedlichen Rollen prüfen (Sichtbarkeit/Rechte).</li>
+        <li><strong>State</strong>: Refresh, Back/Forward, Reload, Multi-tab – bleibt Zustand konsistent?</li>
+        <li><strong>Offline</strong>: PWA-Offline (QR/Queue), Reconnect, Cache-Invalidation.</li>
+        <li><strong>Input</strong>: Extremwerte (lange Texte, Sonderzeichen), Invalid, Null, leere Sets.</li>
+        <li><strong>Accessibility</strong>: Fokus, Tastatur, Kontrast, Touch targets.</li>
+        <li><strong>Security</strong>: Unautorisierte Zugriffe (Route direkt), CSRF/CORS, Datenleaks.</li>
+      </ul>
+
+      <h2 id="bugs">12. Bug-Reporting-Checkliste</h2>
+      <table>
+        <thead><tr><th style="width:34%">Feld</th><th>Beispiel</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Rolle / Account</strong></td><td>administrator / admin@example.com</td></tr>
+          <tr><td><strong>Umgebung</strong></td><td>dev lokal / prod / Browser + OS</td></tr>
+          <tr><td><strong>Route / Bereich</strong></td><td>/tasks → QRCodeTask</td></tr>
+          <tr><td><strong>Schritte</strong></td><td>1… 2… 3…</td></tr>
+          <tr><td><strong>Erwartet</strong></td><td>Punkte +20, Task completed, Toast success</td></tr>
+          <tr><td><strong>Ist</strong></td><td>Task bleibt pending, Punkte steigen nicht</td></tr>
+          <tr><td><strong>Reproduzierbarkeit</strong></td><td>immer / sporadisch / nur mit Offline</td></tr>
+          <tr><td><strong>Logs/Screenshots</strong></td><td>Console + Network + Screenshot</td></tr>
+        </tbody>
+      </table>
+
+      <div class="hr"></div>
+      <footer>
+        <div>Dokument: <strong>4rest – Funktionsbeschreibung</strong></div>
+        <div class="small">Erstellt aus Projektartefakten (Repo) – Stand: <span id="date"></span></div>
+      </footer>
+    </div>
+    <script>
+      // Stabiler Zeitstempel für PDF: aktuelle lokale Zeit
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2,'0');
+      const stamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      document.getElementById('date').textContent = stamp;
+    </script>
+  </body>
+</html>

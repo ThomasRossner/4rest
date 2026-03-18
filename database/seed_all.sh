@@ -28,10 +28,10 @@ else
   echo "WARN: Backend not reachable at ${BACKEND_URL}. Make sure 'cd backend && npm run dev' is running."
 fi
 
-create_user "test@example.com" "Test User" "guest"
-create_user "rezeption@example.com" "Test Rezeption" "rezeption"
-create_user "redaktion@example.com" "Test Redaktion" "redaktion"
-create_user "admin@example.com" "Admin User" "administrator"
+create_user "demo@example.com" "Demo Gast" "guest"
+create_user "rezeption@example.com" "Demo Rezeption" "rezeption"
+create_user "redaktion@example.com" "Demo Redaktion" "redaktion"
+create_user "admin@example.com" "Demo Admin" "administrator"
 
 echo "\n==> Marking example accounts as email verified (no verification required)"
 docker exec -i "${PG_CONTAINER}" psql -U "${PG_USER}" -d "${PG_DB}" <<EOF >/dev/null || true
@@ -40,7 +40,7 @@ SET email_verified = TRUE,
     email_verification_token = NULL,
     email_verification_expires = NULL
 WHERE email IN (
-  'test@example.com',
+  'demo@example.com',
   'rezeption@example.com',
   'redaktion@example.com',
   'admin@example.com'

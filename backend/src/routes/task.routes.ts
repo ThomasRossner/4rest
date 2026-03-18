@@ -130,7 +130,8 @@ router.post(
   uploadThumbnail
 );
 // Generic routes must come AFTER specific routes
-router.get('/:id', getTask);
+// IMPORTANT: must be authenticated to resolve preferred language (i18n)
+router.get('/:id', authenticate, getTask);
 router.get('/:id/qr-code', authenticate, requireRole('redaktion', 'administrator'), getTaskQrCode);
 router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);
 router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), updateTask);
