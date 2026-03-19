@@ -27,44 +27,47 @@ SET quiz_questions = (
           SELECT COALESCE(
             jsonb_agg(
               CASE
-                WHEN jsonb_typeof(a) = 'object' THEN
+                WHEN jsonb_typeof(ar.a) = 'object' THEN
                   jsonb_set(
                     jsonb_set(
-                      a,
+                      ar.a,
                       '{id}',
-                      to_jsonb(COALESCE(a->>'id', 'a_' || row_number() OVER ()::text)),
+                      to_jsonb(COALESCE(ar.a->>'id', 'a_' || ar.rn::text)),
                       true
                     ),
                     '{text_i18n}',
                     CASE
-                      WHEN a ? 'text_i18n' AND jsonb_typeof(a->'text_i18n') = 'object'
-                        THEN a->'text_i18n'
-                      WHEN a ? 'option_i18n' AND jsonb_typeof(a->'option_i18n') = 'object'
-                        THEN a->'option_i18n'
+                      WHEN ar.a ? 'text_i18n' AND jsonb_typeof(ar.a->'text_i18n') = 'object'
+                        THEN ar.a->'text_i18n'
+                      WHEN ar.a ? 'option_i18n' AND jsonb_typeof(ar.a->'option_i18n') = 'object'
+                        THEN ar.a->'option_i18n'
                       ELSE jsonb_build_object(
-                        'de', COALESCE(a->>'text', ''),
-                        'en', COALESCE(a->>'text', '')
+                        'de', COALESCE(ar.a->>'text', ''),
+                        'en', COALESCE(ar.a->>'text', '')
                       )
                     END,
                     true
                   )
                 ELSE
                   jsonb_build_object(
-                    'id', 'a_' || row_number() OVER ()::text,
-                    'text', COALESCE(a #>> '{}', ''),
-                    'text_i18n', jsonb_build_object('de', COALESCE(a #>> '{}', ''), 'en', COALESCE(a #>> '{}', ''))
+                    'id', 'a_' || ar.rn::text,
+                    'text', COALESCE(ar.a #>> '{}', ''),
+                    'text_i18n', jsonb_build_object('de', COALESCE(ar.a #>> '{}', ''), 'en', COALESCE(ar.a #>> '{}', ''))
                   )
               END
             ),
             '[]'::jsonb
           )
-          FROM jsonb_array_elements(
+          FROM (
+            SELECT a, row_number() OVER () AS rn
+            FROM jsonb_array_elements(
             CASE
               WHEN q ? 'answers' AND jsonb_typeof(q->'answers') = 'array' THEN q->'answers'
               WHEN q ? 'options' AND jsonb_typeof(q->'options') = 'array' THEN q->'options'
               ELSE '[]'::jsonb
             END
           ) AS a
+          ) ar
         ),
         true
       )
@@ -101,31 +104,34 @@ SET survey_questions = (
             SELECT COALESCE(
               jsonb_agg(
                 CASE
-                  WHEN jsonb_typeof(o) = 'object' THEN
+                  WHEN jsonb_typeof(opt.o) = 'object' THEN
                     jsonb_set(
-                      o,
+                      opt.o,
                       '{option_i18n}',
                       CASE
-                        WHEN o ? 'option_i18n' AND jsonb_typeof(o->'option_i18n') = 'object'
-                          THEN o->'option_i18n'
+                        WHEN opt.o ? 'option_i18n' AND jsonb_typeof(opt.o->'option_i18n') = 'object'
+                          THEN opt.o->'option_i18n'
                         ELSE jsonb_build_object(
-                          'de', COALESCE(o->>'text', o->>'value', ''),
-                          'en', COALESCE(o->>'text', o->>'value', '')
+                          'de', COALESCE(opt.o->>'text', opt.o->>'value', ''),
+                          'en', COALESCE(opt.o->>'text', opt.o->>'value', '')
                         )
                       END,
                       true
                     )
                   ELSE
                     jsonb_build_object(
-                      'id', 'opt_' || row_number() OVER ()::text,
-                      'text', COALESCE(o #>> '{}', ''),
-                      'option_i18n', jsonb_build_object('de', COALESCE(o #>> '{}', ''), 'en', COALESCE(o #>> '{}', ''))
+                      'id', 'opt_' || opt.rn::text,
+                      'text', COALESCE(opt.o #>> '{}', ''),
+                      'option_i18n', jsonb_build_object('de', COALESCE(opt.o #>> '{}', ''), 'en', COALESCE(opt.o #>> '{}', ''))
                     )
                 END
               ),
               '[]'::jsonb
             )
-            FROM jsonb_array_elements(s->'options') AS o
+            FROM (
+              SELECT o, row_number() OVER () AS rn
+              FROM jsonb_array_elements(s->'options') AS o
+            ) opt
           )
           ELSE s->'options'
         END,
