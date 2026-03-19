@@ -3,9 +3,13 @@
  * Live-DB: Für alle *_i18n-Felder, in denen EN fehlt oder EN === DE (nicht leer),
  * EN per automatischer Übersetzung (Google Translate client=gtx) setzen.
  *
+ * Betrifft: tasks (title, description, article_content, quiz_questions, survey_questions),
+ * rewards, locations, contests, teams.
+ *
  * Nutzung:
  *   node scripts/i18n-translate-prod-en.mjs              # nur SQL nach stdout
  *   node scripts/i18n-translate-prod-en.mjs --apply    # SQL auf Produktion ausführen
+ *   node scripts/i18n-translate-prod-en.mjs --cache=./cache.json  # Übersetzungen cachen
  *
  * Env: PROD_SSH_HOST (default root@87.106.86.203), optional PROD_SSH_USER, PROD_SSH
  */
@@ -45,7 +49,7 @@ function fetchPayload() {
       '-o',
       'StrictHostKeyChecking=no',
       SSH,
-      `CID=$(cd /root/roots-of-impact && docker compose -f docker-compose.homeserver.yml ps -q postgres 2>/dev/null | head -1) && docker exec -i "$CID" psql -U roots_user -d roots_of_impact -t -A`,
+      `DEPLOY_DIR=$( [ -d /root/4rest ] && echo /root/4rest || [ -d /root/roots-of-impact ] && echo /root/roots-of-impact || echo /root/4rest ); cd "$DEPLOY_DIR" && CID=$(docker compose -f docker-compose.homeserver.yml ps -q postgres 2>/dev/null | head -1) && docker exec -i "$CID" psql -U roots_user -d roots_of_impact -t -A`,
     ],
     { input: sql, encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 }
   );
@@ -114,6 +118,56 @@ function sqlToJsonbText(expr) {
   return `to_jsonb(${expr}::text)`;
 }
 
+/** Übersetzt i18n-Objekt: setzt en aus deToEn falls needsEn. */
+function translateI18n(i18n, deToEn) {
+  if (!i18n || typeof i18n !== 'object') return i18n;
+  const de = String(i18n.de ?? '').trim();
+  const en = i18n.en;
+  if (!needsEn(de, en)) return i18n;
+  const enNew = deToEn.get(de);
+  if (enNew == null) return i18n;
+  return { ...i18n, en: enNew };
+}
+
+/** Quiz-Array mit übersetzten prompt_i18n und text_i18n/option_i18n. */
+function translateQuizQuestions(quiz, deToEn) {
+  if (!Array.isArray(quiz)) return quiz;
+  return quiz.map((q) => {
+    if (!q || typeof q !== 'object') return q;
+    const promptI18n = translateI18n(q.prompt_i18n, deToEn);
+    const arr = q.answers ?? q.options ?? [];
+    const translated = arr.map((a, idx) => {
+      if (typeof a === 'string') {
+        const textI18n = translateI18n({ de: a, en: a }, deToEn);
+        return { id: `a_${idx + 1}`, text: a, text_i18n: textI18n, option_i18n: textI18n };
+      }
+      if (!a || typeof a !== 'object') return a;
+      const i18n = a.text_i18n ?? a.option_i18n ?? (a.text && { de: a.text, en: a.text }) ?? (a.value && { de: a.value, en: a.value });
+      const textI18n = translateI18n(i18n, deToEn);
+      return { ...a, text_i18n: textI18n, option_i18n: textI18n };
+    });
+    const out = { ...q, prompt_i18n: promptI18n };
+    if (q.answers) out.answers = translated;
+    else if (q.options) out.options = translated;
+    return out;
+  });
+}
+
+/** Survey-Array mit übersetzten question_i18n und option_i18n. */
+function translateSurveyQuestions(survey, deToEn) {
+  if (!Array.isArray(survey)) return survey;
+  return survey.map((s) => {
+    if (!s || typeof s !== 'object') return s;
+    const questionI18n = translateI18n(s.question_i18n, deToEn);
+    const options = (s.options ?? []).map((o) => {
+      if (!o || typeof o !== 'object') return o;
+      const optionI18n = translateI18n(o.option_i18n, deToEn);
+      return { ...o, option_i18n: optionI18n };
+    });
+    return { ...s, question_i18n: questionI18n, options };
+  });
+}
+
 function collectWorkloads(payload) {
   /** @type {Map<string, { table: string, id: string, sets: string[] }>} */
   const byRow = new Map();
@@ -134,6 +188,36 @@ function collectWorkloads(payload) {
     add('tasks', row.id, 'title_i18n', row.title_i18n);
     add('tasks', row.id, 'description_i18n', row.description_i18n);
     add('tasks', row.id, 'article_content_i18n', row.article_content_i18n);
+        // Quiz: prompt_i18n, answers[].text_i18n / option_i18n / text (Legacy)
+        const quiz = row.quiz_questions;
+        if (Array.isArray(quiz)) {
+          for (const q of quiz) {
+            if (q && typeof q === 'object') {
+              add('tasks', row.id, null, q.prompt_i18n);
+              const answers = q.answers ?? q.options ?? [];
+              for (const a of answers) {
+                if (typeof a === 'string') {
+                  add('tasks', row.id, null, { de: a, en: a });
+                } else if (a && typeof a === 'object') {
+                  const i18n = a.text_i18n ?? a.option_i18n ?? (a.text && { de: a.text, en: a.text }) ?? (a.value && { de: a.value, en: a.value });
+                  if (i18n) add('tasks', row.id, null, i18n);
+                }
+              }
+            }
+          }
+        }
+    // Survey: question_i18n, options[].option_i18n
+    const survey = row.survey_questions;
+    if (Array.isArray(survey)) {
+      for (const s of survey) {
+        if (s && typeof s === 'object') {
+          add('tasks', row.id, null, s.question_i18n);
+          for (const o of s.options ?? []) {
+            if (o && typeof o === 'object') add('tasks', row.id, null, o.option_i18n);
+          }
+        }
+      }
+    }
   }
   for (const row of payload.rewards || []) {
     add('rewards', row.id, 'title_i18n', row.title_i18n);
@@ -179,6 +263,19 @@ function buildUpdates(payload, deToEn) {
     for (const f of ['title_i18n', 'description_i18n', 'article_content_i18n']) {
       const s = rowUpdates('tasks', row.id, f, row[f]);
       if (s) parts.push(s);
+    }
+    // Quiz/Survey: vollständiges JSON ersetzen mit übersetzten Werten
+    const quiz = row.quiz_questions;
+    if (Array.isArray(quiz) && quiz.length > 0) {
+      const translated = translateQuizQuestions(quiz, deToEn);
+      const jsonStr = JSON.stringify(translated).replace(/'/g, "''");
+      parts.push(`quiz_questions = '${jsonStr}'::jsonb`);
+    }
+    const survey = row.survey_questions;
+    if (Array.isArray(survey) && survey.length > 0) {
+      const translated = translateSurveyQuestions(survey, deToEn);
+      const jsonStr = JSON.stringify(translated).replace(/'/g, "''");
+      parts.push(`survey_questions = '${jsonStr}'::jsonb`);
     }
     if (parts.length) patch.set(k, { table: 'tasks', id: row.id, parts });
   }
@@ -265,7 +362,7 @@ async function main() {
         '-o',
         'StrictHostKeyChecking=no',
         SSH,
-        `CID=$(cd /root/roots-of-impact && docker compose -f docker-compose.homeserver.yml ps -q postgres 2>/dev/null | head -1) && docker exec -i "$CID" psql -U roots_user -d roots_of_impact -v ON_ERROR_STOP=1`,
+        `DEPLOY_DIR=$( [ -d /root/4rest ] && echo /root/4rest || [ -d /root/roots-of-impact ] && echo /root/roots-of-impact || echo /root/4rest ); cd "$DEPLOY_DIR" && CID=$(docker compose -f docker-compose.homeserver.yml ps -q postgres 2>/dev/null | head -1) && docker exec -i "$CID" psql -U roots_user -d roots_of_impact -v ON_ERROR_STOP=1`,
       ],
       { input: sql, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }
     );

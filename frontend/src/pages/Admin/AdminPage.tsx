@@ -197,11 +197,13 @@ type LocationFormState = {
 type QuizAnswerDraft = {
   id: string;
   text: string;
+  text_i18n?: Record<'de' | 'en', string>;
 };
 
 type QuizQuestionDraft = {
   id: string;
   prompt: string;
+  prompt_i18n?: Record<'de' | 'en', string>;
   answers: QuizAnswerDraft[];
   correctAnswerId: string | null;
   order: number;
@@ -210,8 +212,10 @@ type QuizQuestionDraft = {
 type SurveyQuestionDraft = {
   id: string;
   question: string;
+  question_i18n?: Record<'de' | 'en', string>;
   type: 'single_choice' | 'multiple_choice' | 'text' | 'rating';
   options?: string[];
+  options_i18n?: Record<'de' | 'en', string>[];
   required: boolean;
   minRating?: number;
   maxRating?: number;
@@ -1278,6 +1282,7 @@ const generateId = () => Math.random().toString(36).slice(2, 10);
 const createEmptyAnswer = (): QuizAnswerDraft => ({
   id: generateId(),
   text: '',
+  text_i18n: { de: '', en: '' },
 });
 
 const createEmptyQuestion = (order = 1): QuizQuestionDraft => {
@@ -1286,6 +1291,7 @@ const createEmptyQuestion = (order = 1): QuizQuestionDraft => {
   return {
     id: generateId(),
     prompt: '',
+    prompt_i18n: { de: '', en: '' },
     answers: [first, second],
     correctAnswerId: first.id,
     order,
@@ -1302,8 +1308,10 @@ const createEmptySurveyQuestion = (order = 1): SurveyQuestionDraft => {
   return {
     id: generateId(),
     question: '',
+    question_i18n: { de: '', en: '' },
     type: 'single_choice',
     options: ['', ''],
+    options_i18n: [{ de: '', en: '' }, { de: '', en: '' }],
     required: true,
     order,
   };
@@ -1410,11 +1418,12 @@ const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
   const questions = payload.map((item) => {
       const raw = item as any;
       const prompt =
-        typeof raw?.question === 'string'
+        (raw?.prompt_i18n?.de as string | undefined) ??
+        (typeof raw?.question === 'string'
           ? raw.question
           : typeof raw?.prompt === 'string'
-          ? raw.prompt
-          : '';
+            ? raw.prompt
+            : '');
 
       const rawAnswers: unknown[] = Array.isArray(raw?.options)
         ? raw.options
@@ -1425,10 +1434,17 @@ const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
       const answers = rawAnswers
         .map((entry) => {
           if (typeof entry === 'string') {
-            return { id: generateId(), text: entry };
+            return { id: generateId(), text: entry, text_i18n: { de: entry, en: entry } };
           }
-          if (entry && typeof entry === 'object' && typeof (entry as any).text === 'string') {
-            return { id: generateId(), text: (entry as any).text };
+          if (entry && typeof entry === 'object') {
+            const text =
+              (entry as any).text_i18n?.de ??
+              (typeof (entry as any).text === 'string' ? (entry as any).text : '');
+            return {
+              id: (entry as any).id ?? generateId(),
+              text,
+              text_i18n: (entry as any).text_i18n ?? { de: text, en: text },
+            };
           }
           return null;
         })
@@ -1467,6 +1483,7 @@ const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
       return {
         id: generateId(),
         prompt,
+        prompt_i18n: raw?.prompt_i18n ?? { de: prompt, en: prompt },
         answers,
         correctAnswerId: resolvedCorrectId,
         order: 0,
@@ -1482,9 +1499,21 @@ const normalizeSurveyQuestions = (payload: unknown): SurveyQuestionDraft[] => {
   if (Array.isArray(payload)) {
     return payload.map((q, index) => ({
       id: q.id || generateId(),
-      question: q.question || '',
+      question: q?.question_i18n?.de || q.question || '',
+      question_i18n: q?.question_i18n || { de: q.question || '', en: q.question || '' },
       type: q.type || 'single_choice',
-      options: q.options || (q.type === 'single_choice' || q.type === 'multiple_choice' ? ['', ''] : undefined),
+      options: Array.isArray(q.options)
+        ? q.options.map((option: any) => {
+            if (typeof option === 'string') return option;
+            return option?.option_i18n?.de || option?.text || '';
+          })
+        : (q.type === 'single_choice' || q.type === 'multiple_choice' ? ['', ''] : undefined),
+      options_i18n: Array.isArray(q.options)
+        ? q.options.map((option: any) => {
+            if (typeof option === 'string') return { de: option, en: option };
+            return option?.option_i18n || { de: option?.text || '', en: option?.text || '' };
+          })
+        : undefined,
       required: q.required !== undefined ? q.required : true,
       minRating: q.minRating || 1,
       maxRating: q.maxRating || 5,
@@ -1500,9 +1529,11 @@ const buildSurveyPayload = (questions: SurveyQuestionDraft[]) => {
   }
 
   return questions.map((question) => {
+    const questionI18n = question.question_i18n ?? { de: question.question, en: question.question };
     const q = {
       id: question.id,
-      question: question.question.trim(),
+      question: (questionI18n.de ?? question.question).trim(),
+      question_i18n: questionI18n,
       type: question.type,
       required: question.required,
     };
@@ -1515,7 +1546,15 @@ const buildSurveyPayload = (questions: SurveyQuestionDraft[]) => {
       if (validOptions.length < 2) {
         throw new Error(`Question "${question.question || 'Untitled'}" must have at least 2 non-empty options.`);
       }
-      return { ...q, options: validOptions };
+      const optionI18n = (question.options_i18n ?? []).slice(0, validOptions.length);
+      return {
+        ...q,
+        options: validOptions.map((label, idx) => ({
+          id: `${question.id}_opt_${idx + 1}`,
+          option_i18n: optionI18n[idx] ?? { de: label, en: label },
+          text: label,
+        })),
+      };
     }
 
     if (question.type === 'rating') {
@@ -1537,6 +1576,7 @@ const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
 
   return questions.map((question) => {
     const prompt = question.prompt.trim();
+    const promptI18n = question.prompt_i18n ?? { de: prompt, en: prompt };
     const questionNumber = question.order;
     if (!prompt) {
       throw new Error(`Question ${questionNumber} is missing a prompt.`);
@@ -1546,15 +1586,19 @@ const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
       throw new Error(`Question ${questionNumber} must have at least two possible answers.`);
     }
 
-    const options = question.answers.map((answer) => {
+    const options = question.answers.map((answer, idx) => {
       const text = answer.text.trim();
       if (!text) {
         throw new Error(`Question ${questionNumber} has an answer without text.`);
       }
-      return text;
+      return {
+        id: answer.id || `a_${idx + 1}`,
+        text,
+        text_i18n: answer.text_i18n ?? { de: text, en: text },
+      };
     });
 
-    const uniqueOptions = new Set(options);
+    const uniqueOptions = new Set(options.map((o) => o.text));
     if (uniqueOptions.size !== options.length) {
       throw new Error(`Question ${questionNumber} has duplicate answers.`);
     }
@@ -1573,8 +1617,71 @@ const buildQuizPayload = (questions: QuizQuestionDraft[]) => {
 
     return {
       question: prompt,
-      options,
+      prompt,
+      prompt_i18n: promptI18n,
+      options: options.map((o) => o.text),
+      answers: options,
+      correctAnswerId: correctAnswer.id,
+      correct_answer_id: correctAnswer.id,
       correctAnswer: correctAnswerText,
+      correct_answer: correctAnswerText,
+    };
+  });
+};
+
+const switchQuizQuestionLanguage = (
+  questions: QuizQuestionDraft[],
+  from: 'de' | 'en',
+  to: 'de' | 'en'
+): QuizQuestionDraft[] => {
+  return questions.map((question) => {
+    const promptI18n = {
+      ...(question.prompt_i18n ?? { de: question.prompt, en: question.prompt }),
+      [from]: question.prompt,
+    };
+    const answers = question.answers.map((answer) => {
+      const textI18n = {
+        ...(answer.text_i18n ?? { de: answer.text, en: answer.text }),
+        [from]: answer.text,
+      };
+      return {
+        ...answer,
+        text_i18n: textI18n,
+        text: textI18n[to] ?? textI18n[from] ?? answer.text,
+      };
+    });
+    return {
+      ...question,
+      prompt_i18n: promptI18n,
+      prompt: promptI18n[to] ?? promptI18n[from] ?? question.prompt,
+      answers,
+    };
+  });
+};
+
+const switchSurveyQuestionLanguage = (
+  questions: SurveyQuestionDraft[],
+  from: 'de' | 'en',
+  to: 'de' | 'en'
+): SurveyQuestionDraft[] => {
+  return questions.map((question) => {
+    const questionI18n = {
+      ...(question.question_i18n ?? { de: question.question, en: question.question }),
+      [from]: question.question,
+    };
+    const optionsI18n = (question.options_i18n ?? question.options?.map((opt) => ({ de: opt, en: opt })) ?? []).map(
+      (entry, idx) => ({
+        ...entry,
+        [from]: question.options?.[idx] ?? entry[from] ?? '',
+      })
+    );
+    const options = question.options?.map((opt, idx) => optionsI18n[idx]?.[to] ?? optionsI18n[idx]?.[from] ?? opt);
+    return {
+      ...question,
+      question_i18n: questionI18n,
+      question: questionI18n[to] ?? questionI18n[from] ?? question.question,
+      options_i18n: optionsI18n,
+      options,
     };
   });
 };
@@ -1954,9 +2061,10 @@ const moveItem = <T,>(items: T[], index: number, offset: number): T[] => {
 type QuizBuilderProps = {
   questions: QuizQuestionDraft[];
   onChange: (questions: QuizQuestionDraft[]) => void;
+  contentLanguage: 'de' | 'en';
 };
 
-const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
+const QuizBuilder = ({ questions, onChange, contentLanguage }: QuizBuilderProps) => {
   const { t } = useTranslation();
 
   const updateQuestions = (
@@ -1969,7 +2077,16 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
   const handlePromptChange = (questionId: string, value: string) => {
     updateQuestions((current) =>
       current.map((question) =>
-        question.id === questionId ? { ...question, prompt: value } : question
+        question.id === questionId
+          ? {
+              ...question,
+              prompt: value,
+              prompt_i18n: {
+                ...(question.prompt_i18n ?? { de: question.prompt, en: question.prompt }),
+                [contentLanguage]: value,
+              },
+            }
+          : question
       )
     );
   };
@@ -2002,7 +2119,13 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
         return {
           ...question,
           answers: question.answers.map((answer) =>
-            answer.id === answerId ? { ...answer, text: value } : answer
+            answer.id === answerId
+              ? {
+                  ...answer,
+                  text: value,
+                  text_i18n: { ...(answer.text_i18n ?? { de: answer.text, en: answer.text }), [contentLanguage]: value },
+                }
+              : answer
           ),
         };
       })
@@ -2192,9 +2315,10 @@ const QuizBuilder = ({ questions, onChange }: QuizBuilderProps) => {
 type SurveyBuilderProps = {
   questions: SurveyQuestionDraft[];
   onChange: (questions: SurveyQuestionDraft[]) => void;
+  contentLanguage: 'de' | 'en';
 };
 
-const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
+const SurveyBuilder = ({ questions, onChange, contentLanguage }: SurveyBuilderProps) => {
   const { t } = useTranslation();
 
   const updateQuestions = (
@@ -2207,7 +2331,20 @@ const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
   const handleQuestionChange = (questionId: string, field: keyof SurveyQuestionDraft, value: any) => {
     updateQuestions((current) =>
       current.map((question) =>
-        question.id === questionId ? { ...question, [field]: value } : question
+        question.id === questionId
+          ? {
+              ...question,
+              [field]: value,
+              ...(field === 'question'
+                ? {
+                    question_i18n: {
+                      ...(question.question_i18n ?? { de: question.question, en: question.question }),
+                      [contentLanguage]: value,
+                    },
+                  }
+                : {}),
+            }
+          : question
       )
     );
   };
@@ -2239,7 +2376,12 @@ const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
         if (question.id !== questionId || !question.options) return question;
         const newOptions = [...question.options];
         newOptions[optionIndex] = value;
-        return { ...question, options: newOptions };
+        const optionI18n = [...(question.options_i18n ?? question.options.map((opt) => ({ de: opt, en: opt })))];
+        optionI18n[optionIndex] = {
+          ...(optionI18n[optionIndex] ?? { de: value, en: value }),
+          [contentLanguage]: value,
+        };
+        return { ...question, options: newOptions, options_i18n: optionI18n };
       })
     );
   };
@@ -2251,6 +2393,7 @@ const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
         return {
           ...question,
           options: [...(question.options || []), ''],
+          options_i18n: [...(question.options_i18n ?? []), { de: '', en: '' }],
         };
       })
     );
@@ -2262,7 +2405,8 @@ const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
         if (question.id !== questionId || !question.options) return question;
         if (question.options.length <= 2) return question;
         const newOptions = question.options.filter((_, idx) => idx !== optionIndex);
-        return { ...question, options: newOptions };
+        const newI18n = (question.options_i18n ?? []).filter((_, idx) => idx !== optionIndex);
+        return { ...question, options: newOptions, options_i18n: newI18n };
       })
     );
   };
@@ -2271,7 +2415,9 @@ const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
     updateQuestions((current) =>
       current.map((question) => {
         if (question.id !== questionId || !question.options) return question;
-        return { ...question, options: moveItem(question.options, optionIndex, offset) };
+        const movedOptions = moveItem(question.options, optionIndex, offset);
+        const movedI18n = question.options_i18n ? moveItem(question.options_i18n, optionIndex, offset) : undefined;
+        return { ...question, options: movedOptions, options_i18n: movedI18n };
       })
     );
   };
@@ -2347,12 +2493,17 @@ const SurveyBuilder = ({ questions, onChange }: SurveyBuilderProps) => {
                     updates.options = question.options && question.options.length >= 2 
                       ? question.options 
                       : ['', ''];
+                    updates.options_i18n = question.options_i18n && question.options_i18n.length >= 2
+                      ? question.options_i18n
+                      : [{ de: '', en: '' }, { de: '', en: '' }];
                   } else if (newType === 'rating') {
                     updates.minRating = 1;
                     updates.maxRating = 5;
                     updates.options = undefined;
+                    updates.options_i18n = undefined;
                   } else {
                     updates.options = undefined;
+                    updates.options_i18n = undefined;
                   }
                   updateQuestions((current) =>
                     current.map((q) =>
@@ -2546,6 +2697,7 @@ function AdminPage() {
     description_i18n: { de: string; en: string };
     article_content_i18n: { de: string; en: string };
   }>(() => ({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } }));
+  const previousContentLanguageRef = useRef<'de' | 'en'>('de');
   const [taskMessage, setTaskMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
     null
   );
@@ -3494,7 +3646,7 @@ function AdminPage() {
         (template.type === 'video' || template.type === 'quiz' || template.type === 'article_quiz')
           ? normalizeQuizQuestions(template.quiz_questions ?? [])
           : [],
-      surveyQuestions: template.type === 'survey' ? ((template as any).survey_questions ?? []) : [],
+      surveyQuestions: template.type === 'survey' ? normalizeSurveyQuestions((template as any).survey_questions ?? []) : [],
       surveyType: template.type === 'survey' ? ((template as any).survey_type ?? 'mixed') : 'mixed',
       qr_code: template.qr_code ?? '',
       photo_required: template.type === 'photo',
@@ -3523,6 +3675,17 @@ function AdminPage() {
   }, [taskSource, selectedExistingTaskId, existingTemplates, isEditingTask]);
 
   useEffect(() => {
+    const previousLanguage = previousContentLanguageRef.current;
+    if (previousLanguage === contentLanguage) return;
+    previousContentLanguageRef.current = contentLanguage;
+    setTaskForm((prev) => ({
+      ...prev,
+      quizQuestions: switchQuizQuestionLanguage(prev.quizQuestions, previousLanguage, contentLanguage),
+      surveyQuestions: switchSurveyQuestionLanguage(prev.surveyQuestions, previousLanguage, contentLanguage),
+    }));
+  }, [contentLanguage]);
+
+  useEffect(() => {
     if (!isEditingTask || !editingTaskId) return;
     const task = existingTemplates.find((t) => t.id === editingTaskId);
     if (!task) return;
@@ -3540,7 +3703,7 @@ function AdminPage() {
         (task.type === 'video' || task.type === 'quiz' || task.type === 'article_quiz')
           ? normalizeQuizQuestions(task.quiz_questions ?? [])
           : [],
-      surveyQuestions: task.type === 'survey' ? ((task as any).survey_questions ?? []) : [],
+      surveyQuestions: task.type === 'survey' ? normalizeSurveyQuestions((task as any).survey_questions ?? []) : [],
       surveyType: task.type === 'survey' ? ((task as any).survey_type ?? 'mixed') : 'mixed',
       qr_code: task.qr_code ?? '',
       photo_required: task.type === 'photo',
@@ -4552,7 +4715,7 @@ function AdminPage() {
       article_url: (task as any).article_url ?? '',
       article_content: articleContentI18n.de ?? (task as any).article_content ?? '',
       articleSource: (task as any).article_url ? 'url' : 'content',
-      surveyQuestions: (task as any).survey_questions ?? [],
+      surveyQuestions: normalizeSurveyQuestions((task as any).survey_questions ?? []),
       surveyType: (task as any).survey_type ?? 'mixed',
       qr_code: task.qr_code ?? '',
       photo_required: task.type === 'photo',
@@ -6893,6 +7056,7 @@ function AdminPage() {
                     <FieldLabel label={t('admin.task.survey.title')} required />
                     <SurveyBuilder
                       questions={taskForm.surveyQuestions}
+                      contentLanguage={contentLanguage}
                       onChange={(questions) =>
                         setTaskForm((prev) => ({
                           ...prev,
@@ -6907,6 +7071,7 @@ function AdminPage() {
                       <FieldLabel label={t('admin.task.quiz.title')} required />
                       <QuizBuilder
                         questions={taskForm.quizQuestions}
+                        contentLanguage={contentLanguage}
                         onChange={(questions) =>
                           setTaskForm((prev) => ({
                             ...prev,
@@ -7733,10 +7898,10 @@ function AdminPage() {
                           setLocationContentLanguage('de');
                           setLocationForm((prev) => ({
                             ...prev,
-                            name: nextI18n.name_i18n.de,
-                            description: nextI18n.description_i18n.de,
-                            address: nextI18n.address_i18n.de,
-                            categoryDescription: nextI18n.category_description_i18n.de,
+                            name: nextI18n.name_i18n.de ?? '',
+                            description: nextI18n.description_i18n.de ?? '',
+                            address: nextI18n.address_i18n.de ?? '',
+                            categoryDescription: nextI18n.category_description_i18n.de ?? '',
                           }));
                         }
                       }}
@@ -7758,10 +7923,10 @@ function AdminPage() {
                           setLocationContentLanguage('en');
                           setLocationForm((prev) => ({
                             ...prev,
-                            name: nextI18n.name_i18n.en,
-                            description: nextI18n.description_i18n.en,
-                            address: nextI18n.address_i18n.en,
-                            categoryDescription: nextI18n.category_description_i18n.en,
+                            name: nextI18n.name_i18n.en ?? '',
+                            description: nextI18n.description_i18n.en ?? '',
+                            address: nextI18n.address_i18n.en ?? '',
+                            categoryDescription: nextI18n.category_description_i18n.en ?? '',
                           }));
                         }
                       }}

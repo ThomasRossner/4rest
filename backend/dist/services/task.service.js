@@ -209,7 +209,14 @@ function resolveTaskI18n(task, lang) {
     const title = resolveI18n(task.title_i18n, lang, task.title);
     const description = resolveI18n(task.description_i18n, lang, task.description);
     const article_content = resolveI18n(task.article_content_i18n, lang, task.article_content);
-    const out = { ...task, title, description, article_content };
+    const out = {
+        ...task,
+        title,
+        description,
+        article_content,
+        quiz_questions: resolveQuizQuestionsI18n(task.quiz_questions, lang),
+        survey_questions: resolveSurveyQuestionsI18n(task.survey_questions, lang),
+    };
     if (out.location && typeof out.location === 'object') {
         out.location = {
             ...out.location,
@@ -220,6 +227,116 @@ function resolveTaskI18n(task, lang) {
         };
     }
     return out;
+}
+function parseJsonPayload(payload) {
+    if (payload == null)
+        return payload;
+    if (typeof payload === 'string') {
+        try {
+            return JSON.parse(payload);
+        }
+        catch {
+            return null;
+        }
+    }
+    return payload;
+}
+export function isQuizAnswerCorrect(params) {
+    const { questionAnswers, expectedAnswerId, expectedAnswerText, selectedAnswerId, selectedAnswerText, } = params;
+    if (expectedAnswerId && selectedAnswerId && expectedAnswerId === selectedAnswerId) {
+        return true;
+    }
+    if (expectedAnswerId && selectedAnswerText) {
+        const resolved = questionAnswers.find((opt) => {
+            if (typeof opt === 'string')
+                return false;
+            if (!opt || typeof opt !== 'object')
+                return false;
+            const id = opt.id ?? null;
+            const text = opt.text ?? null;
+            const textEn = opt.text_i18n?.en ?? null;
+            const textDe = opt.text_i18n?.de ?? null;
+            return (id === expectedAnswerId &&
+                [text, textEn, textDe].some((candidate) => candidate === selectedAnswerText));
+        });
+        if (resolved)
+            return true;
+    }
+    return Boolean(expectedAnswerText && selectedAnswerText && expectedAnswerText === selectedAnswerText);
+}
+function resolveNestedI18n(value, lang, fallback) {
+    if (value && typeof value === 'object') {
+        return resolveI18n(value, lang, fallback);
+    }
+    if (typeof value === 'string') {
+        return value;
+    }
+    return fallback ?? '';
+}
+export function resolveQuizQuestionsI18n(payload, lang) {
+    const parsed = parseJsonPayload(payload);
+    if (!Array.isArray(parsed))
+        return [];
+    return parsed.map((question) => {
+        const answersRaw = Array.isArray(question?.answers)
+            ? question.answers
+            : Array.isArray(question?.options)
+                ? question.options
+                : [];
+        const answers = answersRaw.map((answer, idx) => {
+            if (typeof answer === 'string') {
+                return { id: `a_${idx + 1}`, text: answer };
+            }
+            const text = resolveNestedI18n(answer?.text_i18n ?? answer?.option_i18n, lang, answer?.text);
+            return {
+                ...answer,
+                id: answer?.id ?? `a_${idx + 1}`,
+                text,
+            };
+        });
+        const questionText = resolveNestedI18n(question?.prompt_i18n, lang, question?.question ?? question?.prompt);
+        const correctAnswerId = question?.correctAnswerId ??
+            question?.correct_answer_id ??
+            null;
+        const correctAnswer = typeof question?.correctAnswer === 'string'
+            ? question.correctAnswer
+            : typeof question?.correct_answer === 'string'
+                ? question.correct_answer
+                : null;
+        return {
+            ...question,
+            question: questionText,
+            prompt: questionText,
+            options: answers.map((a) => a.text),
+            answers,
+            correctAnswerId,
+            correct_answer_id: correctAnswerId,
+            correctAnswer,
+            correct_answer: correctAnswer,
+        };
+    });
+}
+export function resolveSurveyQuestionsI18n(payload, lang) {
+    const parsed = parseJsonPayload(payload);
+    if (!Array.isArray(parsed))
+        return [];
+    return parsed.map((question) => {
+        const questionText = resolveNestedI18n(question?.question_i18n, lang, question?.question);
+        const optionsRaw = Array.isArray(question?.options) ? question.options : undefined;
+        const options = optionsRaw?.map((option) => {
+            if (typeof option === 'string')
+                return option;
+            if (option && typeof option === 'object') {
+                return resolveNestedI18n(option.option_i18n, lang, option.text ?? option.value);
+            }
+            return '';
+        }).filter(Boolean);
+        return {
+            ...question,
+            question: questionText,
+            options,
+        };
+    });
 }
 export async function getTaskById(id, preferredLanguage) {
     const db = getPool();
@@ -804,13 +921,36 @@ export async function completeTask(taskId, userId, data) {
     }
     // Validate quiz answers if provided
     if (data?.quiz_answers && task.quiz_questions) {
-        const questions = typeof task.quiz_questions === 'string'
-            ? JSON.parse(task.quiz_questions)
-            : task.quiz_questions;
+        const questions = parseJsonPayload(task.quiz_questions);
+        if (!Array.isArray(questions) || questions.length === 0) {
+            throw new Error('Task quiz questions are invalid');
+        }
         let correctAnswers = 0;
         data.quiz_answers.forEach((answer) => {
             const question = questions[answer.questionIndex];
-            if (question && question.correctAnswer === answer.answer) {
+            if (!question) {
+                return;
+            }
+            const questionAnswers = Array.isArray(question.answers)
+                ? question.answers
+                : Array.isArray(question.options)
+                    ? question.options
+                    : [];
+            const selectedAnswerId = answer.answerId ?? answer.answer_id ?? answer.optionId ?? null;
+            const selectedAnswerText = answer.answer ?? answer.option ?? null;
+            const expectedAnswerId = question.correctAnswerId ??
+                question.correct_answer_id ??
+                null;
+            const expectedAnswerText = question.correctAnswer ??
+                question.correct_answer ??
+                null;
+            if (isQuizAnswerCorrect({
+                questionAnswers,
+                expectedAnswerId,
+                expectedAnswerText,
+                selectedAnswerId,
+                selectedAnswerText,
+            })) {
                 correctAnswers++;
             }
         });

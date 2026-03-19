@@ -50,6 +50,15 @@ export declare function getAllTasks(filters?: {
     includeInactive?: boolean;
     preferredLanguage?: string;
 }): Promise<any[]>;
+export declare function isQuizAnswerCorrect(params: {
+    questionAnswers: any[];
+    expectedAnswerId: string | null;
+    expectedAnswerText: string | null;
+    selectedAnswerId: string | null;
+    selectedAnswerText: string | null;
+}): boolean;
+export declare function resolveQuizQuestionsI18n(payload: any, lang: 'de' | 'en'): any[];
+export declare function resolveSurveyQuestionsI18n(payload: any, lang: 'de' | 'en'): any[];
 export declare function getTaskById(id: string, preferredLanguage?: string): Promise<Task | null>;
 /**
  * Calculate task points automatically based on difficulty and time_required weights

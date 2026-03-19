@@ -87,6 +87,7 @@ export async function runMigrations(): Promise<void> {
       '059_contests_i18n',
       '060_teams_i18n',
       '061_luise_demo_accounts',
+      '062_tasks_quiz_survey_i18n',
     ];
     
     // Read all migration files

@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import { TREES_PER_TASK } from '../../constants/toast';
+import { normalizeQuizQuestionsForDisplay } from '../../utils/taskQuestionI18n';
 import './TaskComponents.css';
 
 interface ArticleQuizTaskProps {
@@ -14,7 +15,7 @@ interface ArticleQuizTaskProps {
 
 export function ArticleQuizTask({ taskId, onComplete }: ArticleQuizTaskProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showQuiz, setShowQuiz] = useState(false);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
@@ -65,20 +66,23 @@ export function ArticleQuizTask({ taskId, onComplete }: ArticleQuizTaskProps) {
   if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
   if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
-  const questions = task.quiz_questions || [];
+  const questions = normalizeQuizQuestionsForDisplay(task.quiz_questions || []);
   const currentQuestion = questions[currentQuestionIndex];
-  const allAnswered = questions.every((_: any, index: number) => answers[index]);
+  const allAnswered = questions.every((question) => answers[question.id]);
 
-  const handleAnswer = (questionIndex: number, answer: string) => {
-    setAnswers((prev) => ({ ...prev, [questionIndex]: answer }));
+  const handleAnswer = (questionId: string, optionId: string) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
   };
 
   const handleSubmit = () => {
     if (allAnswered) {
       completeMutation.mutate({
         quiz_answers: Object.entries(answers).map(([index, answer]) => ({
-          questionIndex: parseInt(index),
-          answer,
+          questionIndex: questions.findIndex((q) => q.id === index),
+          answerId: answer,
+          answer:
+            questions.find((q) => q.id === index)?.options.find((opt) => opt.id === answer)?.label ??
+            answer,
         })),
       });
     }
@@ -188,15 +192,15 @@ export function ArticleQuizTask({ taskId, onComplete }: ArticleQuizTaskProps) {
           <div className="question-card">
             <p className="question-text">{currentQuestion.question}</p>
             <div className="answer-options">
-              {currentQuestion.options.map((option: string, optionIndex: number) => (
+              {currentQuestion.options.map((option, optionIndex: number) => (
                 <button
-                  key={optionIndex}
+                  key={option.id}
                   className={`answer-button ${
-                    answers[currentQuestionIndex] === option ? 'selected' : ''
+                    answers[currentQuestion.id] === option.id ? 'selected' : ''
                   }`}
-                  onClick={() => handleAnswer(currentQuestionIndex, option)}
+                  onClick={() => handleAnswer(currentQuestion.id, option.id)}
                 >
-                  {option}
+                  {option.label}
                 </button>
               ))}
             </div>
@@ -215,7 +219,7 @@ export function ArticleQuizTask({ taskId, onComplete }: ArticleQuizTaskProps) {
               onClick={() =>
                 setCurrentQuestionIndex((i) => Math.min(questions.length - 1, i + 1))
               }
-              disabled={!answers[currentQuestionIndex]}
+              disabled={!answers[currentQuestion.id]}
             >
               {t('tasksComponents.article_quiz.next')}
             </button>

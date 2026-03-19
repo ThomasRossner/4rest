@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import { TREES_PER_TASK } from '../../constants/toast';
+import { normalizeSurveyQuestionsForDisplay } from '../../utils/taskQuestionI18n';
 import './TaskComponents.css';
 
 interface SurveyTaskProps {
@@ -18,7 +19,7 @@ interface SurveyQuestion {
   id: string;
   question: string;
   type: SurveyQuestionType;
-  options?: string[];
+  options?: { id: string; label: string }[];
   required?: boolean;
   minRating?: number;
   maxRating?: number;
@@ -75,7 +76,7 @@ export function SurveyTask({ taskId, onComplete }: SurveyTaskProps) {
   if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
   if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
-  const questions: SurveyQuestion[] = task.survey_questions || [];
+  const questions: SurveyQuestion[] = normalizeSurveyQuestionsForDisplay(task.survey_questions || []);
   
   if (questions.length === 0) {
     return (
@@ -182,7 +183,7 @@ export function SurveyTask({ taskId, onComplete }: SurveyTaskProps) {
                 {question.type === 'single_choice' && question.options && (
                   <div className="answer-options">
                     {question.options.map((option, optionIndex) => {
-                      const isChecked = answers[question.id] === option;
+                      const isChecked = answers[question.id] === option.id;
                       return (
                         <label
                           key={optionIndex}
@@ -191,11 +192,11 @@ export function SurveyTask({ taskId, onComplete }: SurveyTaskProps) {
                           <input
                             type="radio"
                             name={question.id}
-                            value={option}
+                            value={option.id}
                             checked={isChecked}
                             onChange={(e) => handleAnswer(question.id, e.target.value)}
                           />
-                          <span>{option}</span>
+                          <span>{option.label}</span>
                         </label>
                       );
                     })}
@@ -206,7 +207,7 @@ export function SurveyTask({ taskId, onComplete }: SurveyTaskProps) {
                   <div className="answer-options">
                     {question.options.map((option, optionIndex) => {
                       const selected = Array.isArray(answers[question.id])
-                        ? answers[question.id].includes(option)
+                        ? answers[question.id].includes(option.id)
                         : false;
                       return (
                         <label
@@ -217,10 +218,10 @@ export function SurveyTask({ taskId, onComplete }: SurveyTaskProps) {
                             type="checkbox"
                             checked={selected}
                             onChange={(e) =>
-                              handleMultipleChoice(question.id, option, e.target.checked)
+                              handleMultipleChoice(question.id, option.id, e.target.checked)
                             }
                           />
-                          <span>{option}</span>
+                          <span>{option.label}</span>
                         </label>
                       );
                     })}
