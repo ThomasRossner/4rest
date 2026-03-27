@@ -122,7 +122,13 @@ export async function createContest(
   if (participantIds && Array.isArray(participantIds) && participantIds.length > 0) {
     participantIds.forEach((id: string) => allParticipantIds.add(id));
   }
-  
+
+  // Gast als Ersteller immer als Teilnehmer führen (sonst kein Eintrag unter „Meine Contests“ / kein QR-Zugriff,
+  // wenn nur andere Gäste vorgewählt wurden)
+  if (creator.role === 'guest') {
+    allParticipantIds.add(creatorId);
+  }
+
   // Prüfe ob alle Teilnehmer Mitarbeiter oder Administratoren sind
   // Wenn ja, füge den Ersteller auch hinzu (interner Contest)
   // Wenn nein, füge den Ersteller NICHT hinzu (Contest für Gäste)
@@ -1039,6 +1045,18 @@ export async function generateContestQrCode(contestId: string): Promise<string> 
   );
   
   return qrToken;
+}
+
+/**
+ * Prüft, ob der Nutzer den Contest erstellt hat (auch ohne Teilnehmer-Eintrag).
+ */
+export async function isContestCreator(contestId: string, userId: string): Promise<boolean> {
+  const db = getPool();
+  const result = await db.query(
+    `SELECT 1 FROM contests WHERE id = $1 AND created_by = $2 AND active = TRUE`,
+    [contestId, userId]
+  );
+  return result.rows.length > 0;
 }
 
 /**

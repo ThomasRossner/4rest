@@ -10,6 +10,7 @@ import { ContestCreator } from '../../components/Contests/ContestCreator';
 import { ContestJoiner } from '../../components/Contests/ContestJoiner';
 import { TeamQrCodeCarousel } from '../../components/Teams/TeamQrCodeCarousel';
 import { ContestQrCodeCarousel } from '../../components/Contests/ContestQrCodeCarousel';
+import { getUserInitials } from '../../utils/userInitials';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -88,7 +89,9 @@ function ProfilePage() {
       <div className="profile-card">
         <div className="profile-header">
           <div className="profile-avatar">
-            {user?.name?.[0]?.toUpperCase() || 'U'}
+            <span className="profile-avatar-initials">
+              {getUserInitials(user?.name || 'User')}
+            </span>
           </div>
           <div className="profile-info">
             <h2>{user?.name || 'User'}</h2>

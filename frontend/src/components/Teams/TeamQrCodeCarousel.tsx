@@ -22,27 +22,35 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
   const showToast = useToastStore((s) => s.showToast);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retryNonce, setRetryNonce] = useState(0);
   const [isDissolving, setIsDissolving] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const loadQrCode = async () => {
+      setLoading(true);
       try {
         const data = await api.getTeamQrCode(teamId);
-        setQrToken(data.qrToken);
-      } catch (error: any) {
-        showToast({
-          type: 'error',
-          title: t('teams.qrCode.error') || 'Error',
-          message: error?.response?.data?.error || error?.message || t('teams.qrCode.errorMessage') || 'Failed to load QR code',
-        });
+        if (!cancelled) {
+          setQrToken(data?.qrToken ?? null);
+        }
+      } catch {
+        if (!cancelled) {
+          setQrToken(null);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     loadQrCode();
-  }, [teamId, showToast, t]);
+    return () => {
+      cancelled = true;
+    };
+  }, [teamId, retryNonce]);
 
   const handleDissolve = async () => {
     if (!confirm(t('teams.dissolve.confirm') || 'Are you sure you want to dissolve this team? Points will be distributed equally among members.')) {
@@ -52,8 +60,7 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
     setIsDissolving(true);
     try {
       await api.dissolveTeam(teamId);
-      
-      // Invalidate all relevant queries to immediately update UI
+
       if (userId) {
         await Promise.all([
           queryClient.invalidateQueries(['userActiveTeam', userId]),
@@ -61,19 +68,16 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
           queryClient.invalidateQueries(['userProgress', userId]),
         ]);
       }
-      
-      // Also invalidate queries without userId (for components that don't use userId in key)
+
       queryClient.invalidateQueries(['userActiveTeam']);
       queryClient.invalidateQueries(['userTeams']);
-      
-      // Refetch user data to update points
+
       try {
         await api.refreshMe();
       } catch (userError) {
-        // Silently fail - user data will be updated on next navigation
         console.debug('Failed to refresh user data:', userError);
       }
-      
+
       showToast({
         type: 'success',
         title: t('teams.dissolve.success') || 'Team dissolved',
@@ -99,8 +103,7 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
     setIsLeaving(true);
     try {
       await api.leaveTeam(teamId);
-      
-      // Invalidate all relevant queries to immediately update UI
+
       if (userId) {
         await Promise.all([
           queryClient.invalidateQueries(['userActiveTeam', userId]),
@@ -108,19 +111,16 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
           queryClient.invalidateQueries(['userProgress', userId]),
         ]);
       }
-      
-      // Also invalidate queries without userId (for components that don't use userId in key)
+
       queryClient.invalidateQueries(['userActiveTeam']);
       queryClient.invalidateQueries(['userTeams']);
-      
-      // Refetch user data to update points
+
       try {
         await api.refreshMe();
       } catch (userError) {
-        // Silently fail - user data will be updated on next navigation
         console.debug('Failed to refresh user data:', userError);
       }
-      
+
       showToast({
         type: 'success',
         title: t('teams.leave.success') || 'Left team',
@@ -138,12 +138,45 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
     }
   };
 
+  const membershipActions = isCreator ? (
+    <button
+      type="button"
+      className="team-dissolve-button"
+      onClick={handleDissolve}
+      disabled={isDissolving}
+    >
+      {isDissolving ? (t('teams.dissolve.dissolving') || 'Dissolving...') : (t('teams.dissolve.button') || 'Dissolve Team')}
+    </button>
+  ) : (
+    <button
+      type="button"
+      className="team-leave-button"
+      onClick={handleLeave}
+      disabled={isLeaving}
+    >
+      {isLeaving ? (t('teams.leave.leaving') || 'Leaving...') : (t('teams.leave.button') || 'Leave Team')}
+    </button>
+  );
+
   if (loading) {
     return <div className="team-qr-loading">{t('teams.qrCode.loading') || 'Loading...'}</div>;
   }
 
   if (!qrToken) {
-    return <div className="team-qr-error">{t('teams.qrCode.error') || 'Failed to load QR code'}</div>;
+    return (
+      <div className="team-qr-carousel team-qr-carousel--error-state">
+        <h4>{teamName || t('teams.qrCode.title') || 'Team QR Code'}</h4>
+        <p className="team-qr-error-message">{t('teams.qrCode.error') || 'Failed to load QR code'}</p>
+        <button
+          type="button"
+          className="team-qr-retry-button"
+          onClick={() => setRetryNonce((n) => n + 1)}
+        >
+          {t('teams.qrCode.retry') || 'Try again'}
+        </button>
+        {membershipActions}
+      </div>
+    );
   }
 
   return (
@@ -153,26 +186,7 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
         <QRCodeSVG value={qrToken} size={200} level="M" />
       </div>
       <p className="team-qr-description">{t('teams.qrCode.description') || 'Share this QR code to let others join your team'}</p>
-      {isCreator ? (
-        <button
-          type="button"
-          className="team-dissolve-button"
-          onClick={handleDissolve}
-          disabled={isDissolving}
-        >
-          {isDissolving ? (t('teams.dissolve.dissolving') || 'Dissolving...') : (t('teams.dissolve.button') || 'Dissolve Team')}
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="team-leave-button"
-          onClick={handleLeave}
-          disabled={isLeaving}
-        >
-          {isLeaving ? (t('teams.leave.leaving') || 'Leaving...') : (t('teams.leave.button') || 'Leave Team')}
-        </button>
-      )}
+      {membershipActions}
     </div>
   );
 }
-

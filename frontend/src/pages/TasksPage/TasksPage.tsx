@@ -215,15 +215,17 @@ function TasksPage() {
   if (showLocationMap) {
     return (
       <div className="tasks-page">
-        <div className="tasks-header">
-          <h1 className="tasks-title">{t('tasks.title')}</h1>
+        <div className="tasks-map-header">
           <button
-            className="location-button"
+            type="button"
+            className="tasks-map-back"
             onClick={() => setShowLocationMap(false)}
-            title={t('tasks.prerequisites.clearFilter') }
+            title={t('common.actions.back')}
           >
-            {t('tasks.prerequisites.clearFilter') }
+            ← {t('common.actions.back')}
           </button>
+          <h1 className="tasks-title">{t('tasks.title')}</h1>
+          <span className="tasks-map-header-spacer" aria-hidden="true" />
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
           <UserLocationMap

@@ -42,7 +42,8 @@ router.delete('/:id', authenticate, requireRole('administrator', 'rezeption'), d
 router.get('/:id', authenticate, getContestDetailsController);
 router.get('/:id/ranking', authenticate, getContestRankingController);
 router.post('/:id/leave', authenticate, leaveContestController);
-router.get('/:id/qr-code', authenticate, requireRole('administrator', 'rezeption'), getContestQrCodeController);
+// Teilnehmer prüft getContestQrCodeController (Gäste dürfen den Join-QR ihres Contests laden)
+router.get('/:id/qr-code', authenticate, getContestQrCodeController);
 
 // Admin routes for specific contests
 router.put('/:id', authenticate, requireRole('administrator', 'rezeption'), updateContestController);

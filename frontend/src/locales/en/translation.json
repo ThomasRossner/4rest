@@ -237,6 +237,30 @@
     "toast": {
       "completedTitle": "Task completed",
       "completedMessage": "You planted a new tree and earned {{points}} points!"
+    },
+    "visit_location": {
+      "targetLocationNotSet": "Task target location is not set",
+      "geolocationNotSupported": "Geolocation is not supported by your browser",
+      "positionError": "Error retrieving position: {{message}}",
+      "locationError": "Location error: {{message}}",
+      "locationTrackingError": "Location tracking error: {{message}}",
+      "targetLocation": "Target Location",
+      "yourLocation": "Your Location",
+      "noTargetLocation": "This task does not have a target location configured.",
+      "atLocation": "✓ You are at the location!",
+      "distance": "Distance: {{distance}}m",
+      "startTracking": "Start Location Tracking",
+      "stopTracking": "Stop Tracking",
+      "yourLocationLabel": "Your location: {{lat}}, {{lng}}",
+      "locationReached": "Location reached! Task completed successfully.",
+      "mapInitError": "Error initializing map: {{message}}",
+      "mapUnknownError": "Unknown error",
+      "yourCurrentPosition": "Your current position",
+      "startTask": "Start task",
+      "locatingPosition": "Getting position…",
+      "loadingMap": "Loading map…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} tasks at this location"
     }
   },
   "rewards": {
@@ -244,6 +268,17 @@
     "locationButton": "Here",
     "showLocation": "Show location",
     "locationMapTitle": "Your Location",
+    "map": {
+      "yourCurrentPosition": "Your current position",
+      "geolocationNotSupported": "Geolocation is not supported by your browser",
+      "positionError": "Error retrieving position: {{message}}",
+      "mapInitError": "Error initializing map: {{message}}",
+      "mapUnknownError": "Unknown error",
+      "locatingPosition": "Getting position…",
+      "loadingMap": "Loading map…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} rewards at this location"
+    },
     "backToList": "Back to list",
     "onlineButton": "Online",
     "showOnline": "Show online rewards",
@@ -316,6 +351,9 @@
       "cameraNotSupported": "Camera access is not supported in this browser. Please use a modern browser with camera support.",
       "cameraRequiresHttps": "Camera access requires HTTPS when accessing from another device. Please use HTTPS or access from localhost.",
       "cameraHint": "Please allow camera access to scan QR codes",
+      "cameraPermissionDenied": "Camera access was denied. Please allow camera access in your browser settings.",
+      "cameraNotFound": "No camera found. Please ensure a camera is connected.",
+      "cameraInUse": "The camera is already in use by another application. Please close other applications using the camera.",
       "toast": {
         "title": "Points Bonus Received!",
         "message": "You received {{points}} bonus points! New balance: {{balance}} points",
@@ -1734,7 +1772,8 @@
         "description": "Share this QR code to let others join your team",
         "loading": "Loading QR code...",
         "error": "Failed to load QR code",
-        "errorMessage": "Failed to load QR code"
+        "errorMessage": "Failed to load QR code",
+        "retry": "Try again"
       },
       "dissolve": {
         "button": "Dissolve Team",
@@ -1806,7 +1845,8 @@
         "description": "Share this QR code to let others join your contest",
         "loading": "Loading QR code...",
         "error": "Failed to load QR code",
-        "errorMessage": "Failed to load QR code"
+        "errorMessage": "Failed to load QR code",
+        "retry": "Try again"
       },
       "dissolve": {
         "button": "Dissolve Contest",
@@ -2007,7 +2047,8 @@
       "description": "Share this QR code to let others join your team",
       "loading": "Loading QR code...",
       "error": "Failed to load QR code",
-      "errorMessage": "Failed to load QR code"
+      "errorMessage": "Failed to load QR code",
+      "retry": "Try again"
     },
     "dissolve": {
       "button": "Dissolve Team",
@@ -2035,6 +2076,7 @@
       "contestNamePlaceholder": "Enter contest name (optional)",
       "nameHint": "If no name is provided, your name will be used as the contest name.",
       "formTitle": "Contest Details",
+      "startDate": "Start Date",
       "endDate": "End Date",
       "rewardsTitle": "Rewards (Optional)",
       "rewardFirst": "Points for 1st Place",
@@ -2076,7 +2118,8 @@
       "duration": "Duration",
       "loading": "Loading QR code...",
       "error": "Failed to load QR code",
-      "errorMessage": "Failed to load QR code"
+      "errorMessage": "Failed to load QR code",
+      "retry": "Try again"
     },
     "dissolve": {
       "button": "Dissolve Contest",

@@ -17,27 +17,26 @@ type ContestQrCodeCarouselProps = {
   rewardsAwarded?: boolean;
 };
 
-export function ContestQrCodeCarousel({ 
-  contestId, 
-  contestName, 
-  onDissolve, 
-  onLeave, 
+export function ContestQrCodeCarousel({
+  contestId,
+  contestName,
+  onDissolve,
+  onLeave,
   isCreator,
   startDate,
   endDate,
-  rewardsAwarded
+  rewardsAwarded,
 }: ContestQrCodeCarouselProps) {
   const { t, i18n } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retryNonce, setRetryNonce] = useState(0);
   const [isDissolving, setIsDissolving] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
-  // Check if contest is expired
   const isExpired = endDate ? new Date(endDate) <= new Date() : false;
 
-  // Get contest ranking if expired
   const { data: ranking } = useQuery(
     ['contestRanking', contestId],
     () => api.getContestRanking(contestId),
@@ -45,29 +44,35 @@ export function ContestQrCodeCarousel({
   );
 
   useEffect(() => {
-    // Only load QR code if contest is not expired
     if (isExpired) {
       setLoading(false);
       return;
     }
 
+    let cancelled = false;
     const loadQrCode = async () => {
+      setLoading(true);
       try {
         const data = await api.getContestQrCode(contestId);
-        setQrToken(data.qrToken);
-      } catch (error: any) {
-        showToast({
-          type: 'error',
-          title: t('contests.qrCode.error'),
-          message: error?.response?.data?.error || error?.message || t('contests.qrCode.errorMessage'),
-        });
+        if (!cancelled) {
+          setQrToken(data?.qrToken ?? null);
+        }
+      } catch {
+        if (!cancelled) {
+          setQrToken(null);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     loadQrCode();
-  }, [contestId, isExpired, showToast, t]);
+    return () => {
+      cancelled = true;
+    };
+  }, [contestId, isExpired, retryNonce]);
 
   const handleDissolve = async () => {
     if (!confirm(t('contests.dissolve.confirm'))) {
@@ -119,11 +124,30 @@ export function ContestQrCodeCarousel({
     }
   };
 
+  const membershipActions = isCreator ? (
+    <button
+      type="button"
+      className="contest-dissolve-button"
+      onClick={handleDissolve}
+      disabled={isDissolving}
+    >
+      {isDissolving ? t('contests.dissolve.dissolving') : t('contests.dissolve.button')}
+    </button>
+  ) : (
+    <button
+      type="button"
+      className="contest-leave-button"
+      onClick={handleLeave}
+      disabled={isLeaving}
+    >
+      {isLeaving ? t('contests.leave.leaving') : t('contests.leave.button')}
+    </button>
+  );
+
   if (loading) {
     return <div className="contest-qr-loading">{t('contests.qrCode.loading')}</div>;
   }
 
-  // Show ranking if contest is expired
   if (isExpired) {
     return (
       <div className="contest-qr-carousel">
@@ -136,7 +160,9 @@ export function ContestQrCodeCarousel({
                 <div key={entry.user_id} className="contest-ranking-item">
                   <div className="contest-ranking-rank">#{entry.rank}</div>
                   <div className="contest-ranking-name">{entry.user_name}</div>
-                  <div className="contest-ranking-points">{entry.points} {t('rankings.points')}</div>
+                  <div className="contest-ranking-points">
+                    {entry.points} {t('rankings.points')}
+                  </div>
                 </div>
               ))}
             </div>
@@ -154,7 +180,7 @@ export function ContestQrCodeCarousel({
             onClick={handleDissolve}
             disabled={isDissolving}
           >
-            {isDissolving ? (t('contests.dissolve.dissolving')) : (t('contests.dissolve.button'))}
+            {isDissolving ? t('contests.dissolve.dissolving') : t('contests.dissolve.button')}
           </button>
         )}
       </div>
@@ -162,7 +188,20 @@ export function ContestQrCodeCarousel({
   }
 
   if (!qrToken) {
-    return <div className="contest-qr-error">{t('contests.qrCode.error')}</div>;
+    return (
+      <div className="contest-qr-carousel contest-qr-carousel--error-state">
+        <h4>{contestName || t('contests.qrCode.title')}</h4>
+        <p className="contest-qr-error-message">{t('contests.qrCode.error')}</p>
+        <button
+          type="button"
+          className="contest-qr-retry-button"
+          onClick={() => setRetryNonce((n) => n + 1)}
+        >
+          {t('contests.qrCode.retry') || 'Try again'}
+        </button>
+        {membershipActions}
+      </div>
+    );
   }
 
   return (
@@ -173,29 +212,13 @@ export function ContestQrCodeCarousel({
       </div>
       {startDate && endDate && (
         <div className="contest-qr-duration">
-          {t('contests.qrCode.duration')}: {new Date(startDate).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-GB')} - {new Date(endDate).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-GB')}
+          {t('contests.qrCode.duration')}:{' '}
+          {new Date(startDate).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-GB')} -{' '}
+          {new Date(endDate).toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-GB')}
         </div>
       )}
       <p className="contest-qr-description">{t('contests.qrCode.description')}</p>
-      {isCreator ? (
-        <button
-          type="button"
-          className="contest-dissolve-button"
-          onClick={handleDissolve}
-          disabled={isDissolving}
-        >
-          {isDissolving ? (t('contests.dissolve.dissolving')) : (t('contests.dissolve.button'))}
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="contest-leave-button"
-          onClick={handleLeave}
-          disabled={isLeaving}
-        >
-          {isLeaving ? (t('contests.leave.leaving')) : (t('contests.leave.button'))}
-        </button>
-      )}
+      {membershipActions}
     </div>
   );
 }

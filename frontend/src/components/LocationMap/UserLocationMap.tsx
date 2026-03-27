@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -106,14 +106,29 @@ interface Reward {
 
 interface UserLocationMapProps {
   height?: string;
+  /** Aufgaben-Karte vs. Belohnungsmarkt – steuert i18n-Keys (tasks.visit_location vs. rewards.map). */
+  variant?: 'tasks' | 'rewards';
   tasks?: Task[];
   rewards?: Reward[];
   onTaskClick?: (taskId: string) => void;
   onRewardClick?: (rewardId: string) => void;
 }
 
-export function UserLocationMap({ height = '500px', tasks = [], rewards = [], onTaskClick, onRewardClick }: UserLocationMapProps) {
+export function UserLocationMap({
+  height = '500px',
+  variant = 'tasks',
+  tasks = [],
+  rewards = [],
+  onTaskClick,
+  onRewardClick,
+}: UserLocationMapProps) {
   const { t, i18n } = useTranslation();
+
+  const mapText = useCallback(
+    (key: string, options?: Record<string, unknown>) =>
+      variant === 'rewards' ? t(`rewards.map.${key}`, options) : t(`tasks.visit_location.${key}`, options),
+    [t, variant]
+  );
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -127,7 +142,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
   // Get user's current location
   useEffect(() => {
     if (!navigator.geolocation) {
-      setLocationError(t('tasks.visit_location.geolocationNotSupported'));
+      setLocationError(mapText('geolocationNotSupported'));
       setIsLoading(false);
       return;
     }
@@ -141,7 +156,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         setIsLoading(false);
       },
       (error) => {
-        setLocationError(t('tasks.visit_location.positionError', { message: error.message }));
+        setLocationError(mapText('positionError', { message: error.message }));
         setIsLoading(false);
       },
       {
@@ -150,7 +165,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         maximumAge: 0,
       }
     );
-  }, []);
+  }, [mapText]);
 
   // Initialize map - don't wait for user location
   useEffect(() => {
@@ -181,7 +196,11 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         setIsMapReady(true);
       } catch (error) {
         console.error('Error initializing map:', error);
-        setLocationError(t('tasks.visit_location.mapInitError', { message: error instanceof Error ? error.message : t('tasks.visit_location.mapUnknownError') }));
+        setLocationError(
+          mapText('mapInitError', {
+            message: error instanceof Error ? error.message : mapText('mapUnknownError'),
+          })
+        );
         setIsLoading(false);
       }
     });
@@ -201,7 +220,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         markerRef.current = null;
       }
     };
-  }, []);
+  }, [mapText]);
 
   // Update map center when user location becomes available (but don't wait for it)
   useEffect(() => {
@@ -216,7 +235,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
     // Add marker for user location
     const marker = L.marker([userLocation.lat, userLocation.lng]).addTo(mapInstanceRef.current);
     markerRef.current = marker;
-    marker.bindPopup(t('tasks.visit_location.yourCurrentPosition'));
+    marker.bindPopup(mapText('yourCurrentPosition'));
 
     // If there are task or reward markers, fit bounds to include user location
     // Otherwise, center on user location
@@ -233,7 +252,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       mapInstanceRef.current.setView([userLocation.lat, userLocation.lng], 15);
       marker.openPopup(); // Open popup when centering on user location
     }
-  }, [userLocation, isMapReady]);
+  }, [userLocation, isMapReady, mapText]);
 
 
   // Add task and reward markers to map
@@ -370,7 +389,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       
       // If multiple tasks, show count in header
       const headerText = tasksAtLocation.length > 1 
-        ? `${tasksAtLocation.length} Aufgaben an diesem Ort`
+        ? t('tasks.visit_location.multipleAtLocation', { count: tasksAtLocation.length })
         : escapeHtml(tasksAtLocation[0].title);
       
       let popupHTML = `
@@ -511,7 +530,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
         
         // If multiple rewards, show count in header
         const headerText = rewardsAtLocation.length > 1 
-          ? `${rewardsAtLocation.length} Belohnungen an diesem Ort`
+          ? t('rewards.map.multipleAtLocation', { count: rewardsAtLocation.length })
           : escapeHtml(rewardsAtLocation[0].title);
         
         let popupHTML = `
@@ -533,7 +552,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
               ${reward.description ? `<p style="margin: 0 0 8px 0; color: #666; font-size: 0.9rem;">${escapeHtml(reward.description)}</p>` : ''}
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                 <span style="font-weight: 600; color: #f59e0b;">💰 ${t('common.points', { count: reward.pointsCost })}</span>
-                ${onRewardClick ? `<button class="reward-popup-button" data-reward-id="${reward.id}" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">${escapeHtml(t('tasks.visit_location.details'))}</button>` : ''}
+                ${onRewardClick ? `<button class="reward-popup-button" data-reward-id="${reward.id}" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">${escapeHtml(mapText('details'))}</button>` : ''}
               </div>
             </div>
           `;
@@ -581,13 +600,13 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       // If no tasks/rewards and no user location, keep default view (Berlin)
       // Map is already initialized with default center
     }
-  }, [tasks, rewards, isMapReady, userLocation, onTaskClick, onRewardClick, i18n.language]);
+  }, [tasks, rewards, isMapReady, userLocation, onTaskClick, onRewardClick, i18n.language, t, mapText]);
 
   return (
     <div style={{ width: '100%', minHeight: height }}>
       {isLoading && !isMapReady && (
         <div style={{ padding: '1rem', textAlign: 'center' }}>
-          {t('tasks.visit_location.locatingPosition')}
+          {mapText('locatingPosition')}
         </div>
       )}
       {locationError && (
@@ -597,7 +616,7 @@ export function UserLocationMap({ height = '500px', tasks = [], rewards = [], on
       )}
       {!isMapReady && !isLoading && !locationError && (
         <div style={{ padding: '1rem', textAlign: 'center' }}>
-          {t('tasks.visit_location.loadingMap')}
+          {mapText('loadingMap')}
         </div>
       )}
       <div

@@ -30,7 +30,7 @@
 }
 
 .timeline-legend-trees {
-  background-color: var(--color-primary);
+  background-color: var(--color-success);
 }
 
 .timeline-legend-co2 {
@@ -92,7 +92,7 @@
 }
 
 .timeline-bar-trees {
-  background-color: var(--color-primary);
+  background-color: var(--color-success);
 }
 
 .timeline-bar-co2 {

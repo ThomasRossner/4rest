@@ -46,7 +46,8 @@ router.get('/:id/ranking', authenticate, getTeamRankingController);
 router.post('/:id/contribute', authenticate, contributePointsController);
 router.post('/:id/redeem', authenticate, redeemRewardController);
 router.post('/:id/leave', authenticate, leaveTeamController);
-router.get('/:id/qr-code', authenticate, requireRole('administrator', 'rezeption'), getTeamQrCodeController);
+// Mitgliedschaft prüft getTeamQrCodeController (Gäste dürfen den Join-QR ihres Teams laden)
+router.get('/:id/qr-code', authenticate, getTeamQrCodeController);
 
 // Admin routes for specific teams
 router.put('/:id', authenticate, requireRole('administrator', 'rezeption'), updateTeamController);

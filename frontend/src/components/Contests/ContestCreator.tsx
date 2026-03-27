@@ -6,6 +6,10 @@ import { useToastStore } from '../../stores/toastStore';
 import { useAuthStore } from '../../stores/authStore';
 import './ContestCreator.css';
 
+function integerDigitsOnly(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
 type ContestCreatorProps = {
   onSuccess?: (contestId: string) => void;
   onClose?: () => void;
@@ -252,10 +256,11 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
             <label>
               {t('contests.create.rewardFirst')}
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 value={rewardFirst}
-                onChange={(e) => setRewardFirst(e.target.value)}
-                min="0"
+                onChange={(e) => setRewardFirst(integerDigitsOnly(e.target.value))}
                 placeholder="0"
               />
             </label>
@@ -264,10 +269,11 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
             <label>
               {t('contests.create.rewardSecond')}
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 value={rewardSecond}
-                onChange={(e) => setRewardSecond(e.target.value)}
-                min="0"
+                onChange={(e) => setRewardSecond(integerDigitsOnly(e.target.value))}
                 placeholder="0"
               />
             </label>
@@ -276,10 +282,11 @@ export function ContestCreator({ onSuccess, onClose, onlyEmployeeParticipants = 
             <label>
               {t('contests.create.rewardThird')}
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 value={rewardThird}
-                onChange={(e) => setRewardThird(e.target.value)}
-                min="0"
+                onChange={(e) => setRewardThird(integerDigitsOnly(e.target.value))}
                 placeholder="0"
               />
             </label>

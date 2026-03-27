@@ -237,6 +237,30 @@
     "toast": {
       "completedTitle": "Aufgabe abgeschlossen",
       "completedMessage": "Du hast einen neuen Baum gepflanzt und {{points}} Punkte gesammelt!"
+    },
+    "visit_location": {
+      "targetLocationNotSet": "Zielstandort der Aufgabe ist nicht festgelegt",
+      "geolocationNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
+      "positionError": "Fehler beim Abrufen der Position: {{message}}",
+      "locationError": "Standortfehler: {{message}}",
+      "locationTrackingError": "Standortverfolgungsfehler: {{message}}",
+      "targetLocation": "Zielstandort",
+      "yourLocation": "Ihr Standort",
+      "noTargetLocation": "Diese Aufgabe hat keinen konfigurierten Zielstandort.",
+      "atLocation": "✓ Sie sind am Standort!",
+      "distance": "Entfernung: {{distance}}m",
+      "startTracking": "Standortverfolgung starten",
+      "stopTracking": "Verfolgung beenden",
+      "yourLocationLabel": "Ihr Standort: {{lat}}, {{lng}}",
+      "locationReached": "Standort erreicht! Aufgabe erfolgreich abgeschlossen.",
+      "mapInitError": "Fehler beim Initialisieren der Karte: {{message}}",
+      "mapUnknownError": "Unbekannter Fehler",
+      "yourCurrentPosition": "Ihre aktuelle Position",
+      "startTask": "Aufgabe starten",
+      "locatingPosition": "Position wird ermittelt…",
+      "loadingMap": "Karte wird geladen…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} Aufgaben an diesem Ort"
     }
   },
   "rewards": {
@@ -244,6 +268,17 @@
     "locationButton": "Hier",
     "showLocation": "Position anzeigen",
     "locationMapTitle": "Ihre Position",
+    "map": {
+      "yourCurrentPosition": "Ihre aktuelle Position",
+      "geolocationNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
+      "positionError": "Fehler beim Abrufen der Position: {{message}}",
+      "mapInitError": "Fehler beim Initialisieren der Karte: {{message}}",
+      "mapUnknownError": "Unbekannter Fehler",
+      "locatingPosition": "Position wird ermittelt…",
+      "loadingMap": "Karte wird geladen…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} Belohnungen an diesem Ort"
+    },
     "backToList": "Zurück zur Liste",
     "onlineButton": "Online",
     "showOnline": "Online-Belohnungen anzeigen",
@@ -316,6 +351,9 @@
       "cameraNotSupported": "Kamera-Zugriff wird in diesem Browser nicht unterstützt. Bitte verwenden Sie einen modernen Browser mit Kamera-Unterstützung.",
       "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.",
       "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff zum Scannen von QR-Codes",
+      "cameraPermissionDenied": "Kamera-Zugriff wurde verweigert. Bitte erlauben Sie den Kamera-Zugriff in den Einstellungen Ihres Browsers.",
+      "cameraNotFound": "Keine Kamera gefunden. Bitte stellen Sie sicher, dass eine Kamera angeschlossen ist.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet. Bitte schließen Sie andere Programme, die die Kamera nutzen.",
       "toast": {
         "title": "Punkte-Bonus erhalten!",
         "message": "Du hast {{points}} Bonus-Punkte erhalten! Neuer Kontostand: {{balance}} Punkte",
@@ -1724,7 +1762,8 @@
         "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Team beitreten können",
         "loading": "QR-Code wird geladen...",
         "error": "QR-Code konnte nicht geladen werden",
-        "errorMessage": "QR-Code konnte nicht geladen werden"
+        "errorMessage": "QR-Code konnte nicht geladen werden",
+        "retry": "Erneut laden"
       },
       "dissolve": {
         "button": "Team auflösen",
@@ -1805,7 +1844,8 @@
         "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Contest beitreten können",
         "loading": "QR-Code wird geladen...",
         "error": "QR-Code konnte nicht geladen werden",
-        "errorMessage": "QR-Code konnte nicht geladen werden"
+        "errorMessage": "QR-Code konnte nicht geladen werden",
+        "retry": "Erneut laden"
       },
       "dissolve": {
         "button": "Contest auflösen",
@@ -2000,7 +2040,8 @@
       "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Team beitreten können",
       "loading": "QR-Code wird geladen...",
       "error": "QR-Code konnte nicht geladen werden",
-      "errorMessage": "QR-Code konnte nicht geladen werden"
+      "errorMessage": "QR-Code konnte nicht geladen werden",
+      "retry": "Erneut laden"
     },
     "dissolve": {
       "button": "Team auflösen",
@@ -2028,6 +2069,7 @@
       "contestNamePlaceholder": "Contest-Name eingeben (optional)",
       "nameHint": "Wenn kein Name angegeben wird, wird Ihr Name als Contest-Name verwendet.",
       "formTitle": "Contest-Details",
+      "startDate": "Startdatum",
       "endDate": "Enddatum",
       "rewardsTitle": "Belohnungen (Optional)",
       "rewardFirst": "Punkte für 1. Platz",
@@ -2040,6 +2082,8 @@
       "error": "Contest konnte nicht erstellt werden",
       "errorTitle": "Fehler",
       "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+      "invalidDateTime": "Ungültiges Datum oder Uhrzeit",
+      "startAfterEnd": "Start muss vor dem Ende liegen",
       "invalidEndDate": "Enddatum muss in der Zukunft liegen"
     },
     "join": {
@@ -2060,7 +2104,8 @@
       "duration": "Laufzeit",
       "loading": "QR-Code wird geladen...",
       "error": "QR-Code konnte nicht geladen werden",
-      "errorMessage": "QR-Code konnte nicht geladen werden"
+      "errorMessage": "QR-Code konnte nicht geladen werden",
+      "retry": "Erneut laden"
     },
     "dissolve": {
       "button": "Contest auflösen",

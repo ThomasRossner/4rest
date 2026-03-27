@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../../services/api';
@@ -59,6 +59,10 @@ function PointsBonusPage() {
     setPointsAmount('');
   };
 
+  const handlePointsAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setPointsAmount(e.target.value.replace(/\D/g, ''));
+  };
+
   return (
     <div className="points-bonus-page">
       <h1 className="points-bonus-title">
@@ -75,13 +79,15 @@ function PointsBonusPage() {
               {getTranslation('employee.pointsBonus.pointsAmount', 'Punkte-Anzahl')} *
             </span>
             <input
-              type="number"
-              min="1"
-              step="1"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
               value={pointsAmount}
-              onChange={(e) => setPointsAmount(e.target.value)}
+              onChange={handlePointsAmountChange}
               placeholder={getTranslation('employee.pointsBonus.pointsPlaceholder', 'Punkte-Anzahl eingeben')}
               disabled={isGenerating}
+              aria-label={getTranslation('employee.pointsBonus.pointsAmount', 'Punkte-Anzahl')}
             />
           </label>
           <button

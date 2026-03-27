@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { PointsBonusScanner } from '../Rewards/PointsBonusScanner';
 import { Mailbox } from '../Mailbox/Mailbox';
+import { getUserInitials } from '../../utils/userInitials';
 import './Navigation.css';
 
 function Navigation() {
@@ -54,15 +55,6 @@ function Navigation() {
 
   // Get the first active contest for the button
   const activeContest = activeContests.length > 0 ? activeContests[0] : null;
-
-  // Generate user initials
-  const getUserInitials = (name: string): string => {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
 
   // Handle click outside and update menu position
   useEffect(() => {

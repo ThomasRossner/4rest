@@ -12,6 +12,7 @@ import {
   dissolveContest,
   leaveContest,
   getContestQrCode,
+  isContestCreator,
   getAllContests,
   updateContest,
   enableContestRegistration,
@@ -234,10 +235,13 @@ export const getContestQrCodeController: RequestHandler = asyncHandler(async (re
   
   // Administratoren und Rezeption haben immer Zugriff
   if (authReq.user.role !== 'administrator' && authReq.user.role !== 'rezeption') {
-    // Prüfe ob Benutzer Teilnehmer ist
     const contestDetails = await getContestDetails(id, authReq.user.id);
     if (!contestDetails) {
-      return res.status(404).json({ error: 'Contest not found or access denied' });
+      // Ersteller ohne Teilnehmer-Eintrag (z. B. nur Gäste vorgewählt) darf Join-QR trotzdem laden
+      const asCreator = await isContestCreator(id, authReq.user.id);
+      if (!asCreator) {
+        return res.status(404).json({ error: 'Contest not found or access denied' });
+      }
     }
   }
   

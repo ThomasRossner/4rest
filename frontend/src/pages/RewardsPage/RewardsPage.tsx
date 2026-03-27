@@ -164,18 +164,21 @@ function RewardsPage() {
   if (showLocationMap) {
     return (
       <div className="rewards-page">
-        <div className="rewards-header">
-          <h1 className="rewards-title">{t('rewards.title')}</h1>
+        <div className="rewards-map-header">
           <button
-            className="location-button"
+            type="button"
+            className="rewards-map-back"
             onClick={() => setShowLocationMap(false)}
-            title={t('rewards.prerequisites.clearFilter')}
+            title={t('common.actions.back')}
           >
-            {t('rewards.prerequisites.clearFilter')}
+            ← {t('common.actions.back')}
           </button>
+          <h1 className="rewards-title">{t('rewards.title')}</h1>
+          <span className="rewards-map-header-spacer" aria-hidden="true" />
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
           <UserLocationMap
+            variant="rewards"
             height="calc(100vh - 200px)"
             rewards={redeemableRewards}
             onRewardClick={(rewardId) => {

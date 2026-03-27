@@ -159,12 +159,18 @@
   transform: scale(1.05);
 }
 
+/* Wie .navigation-bottom .navigation-item: Icon oben, Beschriftung darunter */
 .navigation-logo-bottom {
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: var(--spacing-xs);
-  font-size: 0.9rem;
-  font-weight: bold;
+  gap: 4px;
+  flex: 1;
+  min-height: 60px;
+  min-width: 0;
+  font-size: inherit;
+  font-weight: 600;
   color: white;
   text-decoration: none;
   padding: var(--spacing-xs);
@@ -174,23 +180,61 @@
   overflow: visible;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid transparent;
-  flex-shrink: 0;
-  white-space: nowrap;
-  min-width: fit-content;
-  margin-right: var(--spacing-sm);
+  margin-right: 0;
+}
+
+.navigation-logo-bottom .navigation-logo-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  line-height: 1;
+}
+
+.navigation-bottom .navigation-logo-bottom .navigation-logo-text {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  opacity: 0.9;
+  margin-top: 2px;
+  white-space: normal;
+  text-overflow: clip;
+  overflow: visible;
+  max-width: none;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .navigation-logo-bottom:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  transform: none;
+  box-shadow: none;
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.navigation-logo-bottom:hover .navigation-logo-icon {
+  transform: scale(1.05);
+}
+
+.navigation-logo-bottom:active {
+  transform: scale(0.95);
 }
 
 .navigation-logo-bottom.active {
   background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.navigation-logo-bottom.active .navigation-logo-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.4));
+}
+
+.navigation-logo-bottom.active .navigation-logo-text {
+  opacity: 1;
+  font-weight: 700;
 }
 
 .navigation-container {
@@ -888,13 +932,17 @@
   }
   
   .navigation-logo-bottom {
-    font-size: 0.7rem;
-    padding: 4px 6px;
-    margin-right: var(--spacing-xs);
+    min-height: 56px;
+    padding: 4px;
   }
-  
+
+  .navigation-bottom .navigation-logo-bottom .navigation-logo-text {
+    font-size: 0.6rem;
+    line-height: 1.1;
+  }
+
   .navigation-logo-bottom .navigation-logo-icon {
-    font-size: 0.9rem;
+    font-size: 1.3rem;
   }
 
   .navigation-bottom .navigation-item {
