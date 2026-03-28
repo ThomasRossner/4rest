@@ -20,7 +20,8 @@ import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
 import { QRCodeIcon } from '../../components/Icons/QRCodeIcon';
-import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
+import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
+import { CategoryHubIcon } from '../../components/Tasks/CategoryHubIcon';
 import './TasksPage.css';
 
 // Map task types to icons and translation keys
@@ -46,7 +47,6 @@ function TasksPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed' | 'completed' | 'validating'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
-  const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineTasks, setShowOnlineTasks] = useState(false);
   const [prerequisiteTaskIdsFilter, setPrerequisiteTaskIdsFilter] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
@@ -215,8 +215,14 @@ function TasksPage() {
 
   const wrapTaskShell = (node: React.ReactNode) => (
     <div className="tasks-task-shell">
-      <button type="button" className="tasks-back-from-task" onClick={() => setSelectedTask(null)}>
-        ← {t('tasks.backToList')}
+      <button
+        type="button"
+        className="tasks-back-from-task"
+        onClick={() => setSelectedTask(null)}
+        title={t('tasks.backToList')}
+        aria-label={t('tasks.backToList')}
+      >
+        <BackArrowIcon className="tasks-back-from-task-icon" />
       </button>
       {node}
     </div>
@@ -272,7 +278,7 @@ function TasksPage() {
     );
   }
 
-  if (!categoryKeyParam && !selectedTask && !showLocationMap) {
+  if (!categoryKeyParam && !selectedTask) {
     return (
       <div className="tasks-page tasks-page--hub">
         <h1 className="tasks-title">{t('tasks.categories.hubTitle')}</h1>
@@ -282,65 +288,19 @@ function TasksPage() {
             const count = categoryCounts[key] || 0;
             if (count === 0) return null;
             return (
-              <Link key={key} to={`/tasks/c/${key}`} className="tasks-category-tile">
+              <Link
+                key={key}
+                to={`/tasks/c/${key}`}
+                className={`tasks-category-tile tasks-category-tile--${key}`}
+              >
+                <span className="tasks-category-tile-icon" aria-hidden>
+                  <CategoryHubIcon categoryKey={key} className="tasks-category-tile-icon-svg" />
+                </span>
                 <span className="tasks-category-tile-title">{t(`tasks.categories.${key}`)}</span>
                 <span className="tasks-category-tile-count">{t('tasks.categories.taskCount', { count })}</span>
               </Link>
             );
           })}
-        </div>
-        <div className="tasks-hub-actions">
-          <button
-            type="button"
-            className="location-button"
-            onClick={() => {
-              setShowLocationMap(true);
-              setShowOnlineTasks(false);
-            }}
-          >
-            {t('tasks.locationButton')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show map view if button was clicked
-  if (showLocationMap) {
-    return (
-      <div className="tasks-page">
-        <div className="tasks-map-header">
-          <button
-            type="button"
-            className="tasks-map-back"
-            onClick={() => setShowLocationMap(false)}
-            title={t('common.actions.back')}
-          >
-            ← {t('common.actions.back')}
-          </button>
-          <h1 className="tasks-title">
-            {categoryKeyParam ? t(`tasks.categories.${categoryKeyParam}`) : t('tasks.title')}
-          </h1>
-          <span className="tasks-map-header-spacer" aria-hidden="true" />
-        </div>
-        <div style={{ marginTop: 'var(--spacing-md)' }}>
-          <UserLocationMap
-            height="calc(100vh - 200px)"
-            tasks={filteredTasks.filter((task: any) => {
-              // Only show available, non-completed tasks with physical locations
-              if (task.completed) return false;
-              if (task.is_available === false) return false;
-              if (!task.location) return false;
-              // Check if location is physical (not online)
-              const location = typeof task.location === 'string' ? JSON.parse(task.location) : task.location;
-              const isOnline = location.is_online === true || location.is_online === 'true' || String(location.is_online).toLowerCase() === 'true';
-              return !isOnline && location.latitude && location.longitude;
-            })}
-            onTaskClick={(taskId) => {
-              setShowLocationMap(false);
-              setSelectedTask(taskId);
-            }}
-          />
         </div>
       </div>
     );
@@ -353,18 +313,22 @@ function TasksPage() {
   return (
       <div className="tasks-page">
         <div className="tasks-header tasks-header--category">
-          <button
-            type="button"
-            className="tasks-map-back"
-            onClick={() => navigate('/tasks')}
-            title={t('tasks.categories.backToCategories')}
-          >
-            ← {t('tasks.categories.backToCategories')}
-          </button>
-          <h1 className="tasks-title">{t(`tasks.categories.${categoryKeyParam}`)}</h1>
-          <div className="tasks-header-actions">
+          <div className="tasks-header-category-top">
+            <button
+              type="button"
+              className="tasks-icon-back"
+              onClick={() => navigate('/tasks')}
+              title={t('tasks.categories.backToCategories')}
+              aria-label={t('tasks.categories.backToCategories')}
+            >
+              <BackArrowIcon className="tasks-icon-back-svg" />
+            </button>
+            <h1 className="tasks-title tasks-header-category-title">{t(`tasks.categories.${categoryKeyParam}`)}</h1>
+          </div>
+          <div className="tasks-header-category-actions">
             {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
               <button
+                type="button"
                 className="location-button"
                 onClick={() => setPrerequisiteTaskIdsFilter(null)}
               >
@@ -372,37 +336,21 @@ function TasksPage() {
               </button>
             ) : showOnlineTasks ? (
               <button
+                type="button"
                 className="location-button"
-                onClick={() => {
-                  setShowLocationMap(false);
-                  setShowOnlineTasks(false);
-                }}
+                onClick={() => setShowOnlineTasks(false)}
               >
                 {t('tasks.prerequisites.clearFilter') }
               </button>
             ) : (
-              <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                <button
-                  className="location-button"
-                  onClick={() => {
-                    setShowLocationMap(true);
-                    setShowOnlineTasks(false);
-                  }}
-                  title={t('tasks.showLocation')}
-                >
-                  {t('tasks.locationButton')}
-                </button>
-                <button
-                  className="location-button"
-                  onClick={() => {
-                    setShowLocationMap(false);
-                    setShowOnlineTasks(true);
-                  }}
-                  title={t('tasks.showOnline')}
-                >
-                  {t('tasks.onlineButton')}
-                </button>
-              </div>
+              <button
+                type="button"
+                className="location-button"
+                onClick={() => setShowOnlineTasks(true)}
+                title={t('tasks.showOnline')}
+              >
+                {t('tasks.onlineButton')}
+              </button>
             )}
           </div>
         </div>

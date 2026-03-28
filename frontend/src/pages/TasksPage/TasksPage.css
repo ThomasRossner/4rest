@@ -15,26 +15,71 @@
 }
 
 .tasks-header--category {
-  display: grid;
-  grid-template-columns: minmax(0, auto) 1fr minmax(0, auto);
-  align-items: center;
-  gap: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  padding: 0 var(--spacing-sm);
 }
 
-.tasks-header--category .tasks-title {
+.tasks-header-category-top {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  width: 100%;
+}
+
+.tasks-header-category-title {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   text-align: center;
+  font-size: clamp(1.05rem, 4.2vw, 1.5rem);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
-.tasks-header-actions {
+.tasks-header-category-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.tasks-icon-back {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.tasks-icon-back:hover {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.tasks-icon-back:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.tasks-icon-back-svg {
+  width: 22px;
+  height: 22px;
 }
 
 .tasks-page--hub {
@@ -60,10 +105,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
-  min-height: 112px;
-  padding: var(--spacing-md);
+  min-height: 148px;
+  padding: var(--spacing-md) var(--spacing-sm);
   border-radius: 20px;
   background: white;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -77,6 +122,43 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+.tasks-category-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--spacing-sm);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--tile-accent, var(--color-primary)) 14%, transparent);
+}
+
+.tasks-category-tile-icon-svg {
+  width: 48px;
+  height: 48px;
+  color: var(--tile-accent, var(--color-primary));
+}
+
+.tasks-category-tile--kommunikation {
+  --tile-accent: #6366f1;
+}
+
+.tasks-category-tile--mensch {
+  --tile-accent: #db2777;
+}
+
+.tasks-category-tile--natur {
+  --tile-accent: #16a34a;
+}
+
+.tasks-category-tile--ressourcen {
+  --tile-accent: #0284c7;
+}
+
+.tasks-category-tile--sonstige {
+  --tile-accent: #64748b;
+}
+
 .tasks-category-tile-title {
   font-weight: 700;
   font-size: 0.95rem;
@@ -88,12 +170,6 @@
   color: var(--color-text-light, #6b7280);
 }
 
-.tasks-hub-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: var(--spacing-md);
-}
-
 .tasks-task-shell {
   width: 100%;
   max-width: 100%;
@@ -103,23 +179,36 @@
 
 .tasks-back-from-task {
   margin-bottom: var(--spacing-md);
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: var(--spacing-sm) 0;
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .tasks-back-from-task:hover {
-  text-decoration: underline;
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
-.tasks-grid--compact {
+.tasks-back-from-task:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.tasks-back-from-task-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Zwei Spalten in der Kategorie-Ansicht: höhere Spezifität als .tasks-grid (minmax 320px), sonst überschreibt die Basis-Regel diese Werte. */
+.tasks-grid.tasks-grid--compact {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-md);
 }
