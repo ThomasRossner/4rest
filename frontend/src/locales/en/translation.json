@@ -318,7 +318,10 @@
     "card": {
       "cost": "{{count}} points",
       "redeem": "Redeem",
-      "insufficient": "Insufficient"
+      "insufficient": "Insufficient",
+      "redeemPersonal": "{{count}} points (personal balance)",
+      "redeemTeam": "{{count}} points (team balance)",
+      "redeeming": "Redeeming…"
     },
     "messages": {
       "redeemSuccess": "Reward redeemed successfully",

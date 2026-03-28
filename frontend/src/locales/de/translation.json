@@ -318,7 +318,10 @@
     "card": {
       "cost": "{{count}} Punkte",
       "redeem": "Einlösen",
-      "insufficient": "Zu wenig Punkte"
+      "insufficient": "Zu wenig Punkte",
+      "redeemPersonal": "{{count}} Punkte (eigenes Guthaben)",
+      "redeemTeam": "{{count}} Punkte (Team-Guthaben)",
+      "redeeming": "Wird eingelöst…"
     },
     "messages": {
       "redeemSuccess": "Belohnung erfolgreich eingelöst",

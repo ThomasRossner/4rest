@@ -1,5 +1,8 @@
 .forest-page {
-  padding: var(--spacing-lg) 0;
+  padding: var(--spacing-md) 0 var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .forest-title {
@@ -37,8 +40,71 @@
   font-size: 1.1rem;
 }
 
+/* Impact-Kacheln: eine Zeile unter dem Wald, ohne Startseiten-„Home“-Breitenlimit */
+.forest-impact-stats {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--spacing-xs);
+  width: 100%;
+  max-width: 100%;
+  margin-top: var(--spacing-md);
+  box-sizing: border-box;
+  padding: 0 var(--spacing-xs);
+}
+
+.forest-stat {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+}
+
+.forest-stat-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.forest-stat-value {
+  font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.15;
+  text-align: center;
+  word-break: break-word;
+}
+
+.forest-stat-label {
+  font-size: clamp(0.6rem, 2.2vw, 0.7rem);
+  margin-top: 2px;
+  font-weight: 500;
+  color: var(--color-text-light);
+  text-align: center;
+  line-height: 1.2;
+  hyphens: auto;
+}
+
 @media (max-width: 768px) {
   .forest-container {
     height: 400px;
+  }
+
+  .forest-impact-stats {
+    gap: 6px;
+    padding: 0;
+  }
+
+  .forest-stat {
+    padding: 6px 4px;
   }
 }

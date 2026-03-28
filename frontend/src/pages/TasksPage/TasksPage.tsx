@@ -344,7 +344,7 @@ function TasksPage() {
       <div className="tasks-page tasks-page--category">
         <div className="tasks-category-sticky">
         <div className="tasks-header tasks-header--category">
-          <div className="tasks-header-category-top">
+          <div className="tasks-header-category-row">
             <button
               type="button"
               className="tasks-icon-back"
@@ -354,7 +354,6 @@ function TasksPage() {
             >
               <BackArrowIcon className="tasks-icon-back-svg" />
             </button>
-          </div>
           <div className="tasks-header-category-actions">
             {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
               <div className="tasks-header-category-actions-row">
@@ -412,6 +411,7 @@ function TasksPage() {
                 </button>
               </div>
             )}
+          </div>
           </div>
         </div>
       

@@ -43,7 +43,7 @@ function HomePage() {
   }
 
   return (
-    <div className="home-page">
+    <div className="home-page home-page--no-scroll">
       <div className="home-hero">
         <p className="home-subtitle">{t('home.subtitle')}</p>
       </div>

@@ -286,11 +286,10 @@ function RewardsPage() {
             <RewardCard
               key={reward.id}
               reward={reward}
+              userPoints={user?.points ?? 0}
+              teamTotalPoints={activeTeam != null ? activeTeam.totalPoints ?? 0 : null}
               canAfford={!!user && (user.points >= reward.pointsCost || (activeTeam && (activeTeam.totalPoints || 0) >= reward.pointsCost))}
-              onRedeem={(id, cost) => {
-                const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
-                return handleRedeemClick(id, cost, useTeamPoints);
-              }}
+              onRedeem={(id, cost, useTeamPoints) => handleRedeemClick(id, cost, useTeamPoints)}
             />
           ))}
         </div>

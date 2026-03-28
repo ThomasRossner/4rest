@@ -22,7 +22,7 @@ function ForestPage() {
     { enabled: !!userId, refetchInterval: 5000 }
   );
 
-  const { data: progress, isLoading: progressLoading } = useQuery(
+  const { data: progress } = useQuery(
     ['userProgress', userId],
     () => api.getUserProgress(userId as string),
     { enabled: !!userId }
@@ -51,55 +51,6 @@ function ForestPage() {
 
   return (
     <div className="forest-page">
-      {user && progress && (
-        <section className="home-section" style={{ marginBottom: '2rem' }}>
-          <div className="home-section-header">
-            <h2 className="home-section-title">{t('home.impactTitle')}</h2>
-          </div>
-          <div className="home-stats">
-            <div className="home-stat">
-              <div className="home-stat-icon">⭐</div>
-              <span className="home-stat-value">
-                {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null ? (
-                  <>
-                    {activeTeam.totalPoints} / {userPoints}
-                  </>
-                ) : (
-                  userPoints
-                )}
-              </span>
-              <span className="home-stat-label">
-                {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null
-                  ? t('home.stats.teamPoints')
-                  : t('home.stats.totalPoints')
-                }
-              </span>
-            </div>
-            {((progress?.treesPlanted ?? 0) > 0) && (
-              <div className="home-stat">
-                <div className="home-stat-icon">🌲</div>
-                <span className="home-stat-value">{progress.treesPlanted}</span>
-                <span className="home-stat-label">{t('home.stats.treesPlanted')}</span>
-              </div>
-            )}
-            {((progress?.tasksCompleted ?? 0) > 0) && (
-              <div className="home-stat">
-                <div className="home-stat-icon">✅</div>
-                <span className="home-stat-value">{progress.tasksCompleted}</span>
-                <span className="home-stat-label">{t('home.stats.tasksCompleted')}</span>
-              </div>
-            )}
-            {progress?.co2Saved !== undefined && progress?.co2Saved !== null && Number(progress.co2Saved) > 0 && (
-              <div className="home-stat">
-                <div className="home-stat-icon">🌍</div>
-                <span className="home-stat-value">{Number(progress.co2Saved).toFixed(1)} kg</span>
-                <span className="home-stat-label">{t('home.stats.co2Saved')}</span>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-      
       <div className="forest-container">
         <Suspense fallback={<div className="forest-loading">{t('forest.loading')}</div>}>
           <Canvas
@@ -141,6 +92,50 @@ function ForestPage() {
           </Canvas>
         </Suspense>
       </div>
+
+      {user && progress && (
+        <div className="forest-impact-stats" aria-label={t('home.impactTitle')}>
+          <div className="forest-stat">
+            <div className="forest-stat-icon">⭐</div>
+            <span className="forest-stat-value">
+              {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null ? (
+                <>
+                  {activeTeam.totalPoints} / {userPoints}
+                </>
+              ) : (
+                userPoints
+              )}
+            </span>
+            <span className="forest-stat-label">
+              {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null
+                ? t('home.stats.teamPoints')
+                : t('home.stats.totalPoints')
+              }
+            </span>
+          </div>
+          {((progress?.treesPlanted ?? 0) > 0) && (
+            <div className="forest-stat">
+              <div className="forest-stat-icon">🌲</div>
+              <span className="forest-stat-value">{progress.treesPlanted}</span>
+              <span className="forest-stat-label">{t('home.stats.treesPlanted')}</span>
+            </div>
+          )}
+          {((progress?.tasksCompleted ?? 0) > 0) && (
+            <div className="forest-stat">
+              <div className="forest-stat-icon">✅</div>
+              <span className="forest-stat-value">{progress.tasksCompleted}</span>
+              <span className="forest-stat-label">{t('home.stats.tasksCompleted')}</span>
+            </div>
+          )}
+          {progress?.co2Saved !== undefined && progress?.co2Saved !== null && Number(progress.co2Saved) > 0 && (
+            <div className="forest-stat">
+              <div className="forest-stat-icon">🌍</div>
+              <span className="forest-stat-value">{Number(progress.co2Saved).toFixed(1)} kg</span>
+              <span className="forest-stat-label">{t('home.stats.co2Saved')}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
