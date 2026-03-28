@@ -56,8 +56,15 @@ export function RewardCard({
   const cost = reward.pointsCost;
   const canRedeemPersonal = userPoints >= cost;
   const canRedeemTeam = teamTotalPoints !== null && teamTotalPoints >= cost;
+  const hasActiveTeam = teamTotalPoints !== null;
   const showRedeemButtons =
     !redemption && canAfford && (canRedeemPersonal || canRedeemTeam);
+
+  const personalButtonLabel = isRedeeming
+    ? t('rewards.card.redeeming')
+    : hasActiveTeam
+      ? t('rewards.card.redeemPersonal', { count: cost })
+      : t('rewards.card.redeemPointsShort', { count: cost });
 
   const badgeColor =
     reward.rewardType === 'discount'
@@ -300,13 +307,8 @@ export function RewardCard({
               </span>
             </div>
           )}
-          <div
-            className={`reward-footer ${showRedeemButtons ? 'reward-footer--buttons' : ''}`}
-          >
-            {!showRedeemButtons && (
-              <span className="reward-cost">{t('rewards.card.cost', { count: cost })}</span>
-            )}
-            {showRedeemButtons ? (
+          {showRedeemButtons ? (
+            <div className={`reward-footer reward-footer--buttons`}>
               <div className="reward-redeem-buttons">
                 {canRedeemPersonal && (
                   <button
@@ -315,7 +317,7 @@ export function RewardCard({
                     disabled={isRedeeming}
                     onClick={() => handleRedeem(false)}
                   >
-                    {isRedeeming ? t('rewards.card.redeeming') : t('rewards.card.redeemPersonal', { count: cost })}
+                    {personalButtonLabel}
                   </button>
                 )}
                 {canRedeemTeam && (
@@ -329,17 +331,14 @@ export function RewardCard({
                   </button>
                 )}
               </div>
-            ) : (
-              <button
-                className="reward-button"
-                type="button"
-                disabled={!canAfford}
-                style={{ opacity: canAfford ? 1 : 0.5 }}
-              >
-                {canAfford ? t('rewards.card.redeem') : t('rewards.card.insufficient')}
-              </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            !redemption && (
+              <div className="reward-footer">
+                <span className="reward-cost">{t('rewards.card.cost', { count: cost })}</span>
+              </div>
+            )
+          )}
         </>
       )}
     </div>

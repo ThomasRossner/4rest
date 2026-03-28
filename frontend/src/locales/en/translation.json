@@ -320,6 +320,7 @@
       "redeem": "Redeem",
       "insufficient": "Insufficient",
       "redeemPersonal": "{{count}} points (personal balance)",
+      "redeemPointsShort": "{{count}} points",
       "redeemTeam": "{{count}} points (team balance)",
       "redeeming": "Redeeming…"
     },

@@ -46,9 +46,11 @@ Die frühere Annahme „Summe der vier Kategorien = Gesamtpunktzahl“ entfällt
 
 ---
 
-## Paket E – Aufgaben-UI (Tickets „next“, Release R1)
+## Paket E – Aufgaben-UI (Status: umgesetzt, Release R1)
 
-Die **gleichen vier Aufgaben-Kategorien**, die für **Kategoriepunkte** und den **Wald** gelten, sollen in der App **für Nutzer sichtbar und wählbar** sein. Dafür sind drei Tickets **priorisiert** (`**Status:** next`) und **fester Bestandteil dieses Plans**:
+Die **gleichen vier Aufgaben-Kategorien**, die für **Kategoriepunkte** und den **Wald** gelten, sollen in der App **für Nutzer sichtbar und wählbar** sein. Die drei zugehörigen Tickets **020, 021, 022** sind **umgesetzt**; die Prioritätsmarkierung `next` liegt auf [TICKET-009](../tickets/TICKET-009-multiple-choice-falschantwort-sperre.md) (nächste priorisierte R1-Aufgabe im Backlog).
+
+Historisch waren diese drei Tickets **fester Bestandteil dieses Plans**:
 
 | Ticket | Kurzinhalt | Rolle im Gesamtplan |
 |--------|------------|---------------------|

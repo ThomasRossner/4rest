@@ -320,6 +320,7 @@
       "redeem": "Einlösen",
       "insufficient": "Zu wenig Punkte",
       "redeemPersonal": "{{count}} Punkte (eigenes Guthaben)",
+      "redeemPointsShort": "{{count}} Punkte",
       "redeemTeam": "{{count}} Punkte (Team-Guthaben)",
       "redeeming": "Wird eingelöst…"
     },

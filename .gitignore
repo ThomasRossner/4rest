@@ -90,6 +90,9 @@ out
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Cursor (lokale Regeln/Logs; nicht ins Repo)
+.cursor/
+
 # IDEs
 .idea/
 .vscode/
