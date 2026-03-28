@@ -20,7 +20,7 @@ fi
 
 # Now connect and deploy
 echo "Connecting to IONOS server..."
-ssh -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" << 'REMOTE_SCRIPT'
+ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=120 "${SSH_USER}@${SSH_HOST}" << 'REMOTE_SCRIPT'
 # Find the deployment directory
 if [ -d "/root/4rest" ]; then
     DEPLOY_DIR="/root/4rest"
