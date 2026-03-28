@@ -18,6 +18,10 @@ Wenn der Benutzer im Agenten "Feature-Entwicklung" das Wort "release" schreibt, 
 - Das Release-Script ist bereits so konfiguriert, dass es beide Schritte automatisch durchführt
 - Bei Fehlern soll der Prozess mit einer Fehlermeldung abbrechen
 
+## Tickets (docs/tickets)
+
+- Jede Datei `docs/tickets/TICKET-*.md` hat `**Status:**` (offen | in_arbeit | teilweise | umgesetzt | nicht_relevant | next). Nach Umsetzungsarbeit den Status dort anpassen. Details: `.cursor/rules/ticket-status.mdc`.
+
 ## Allgemeine Regeln
 
 - Sprich immer deutsch mit dem Benutzer

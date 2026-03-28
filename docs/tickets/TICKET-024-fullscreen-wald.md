@@ -2,6 +2,8 @@
 
 **Typ:** Requirement
 
+**Status:** offen
+
 **Beschreibung:**
 Fullscreen-Modus für den Wald wäre spannend.
 

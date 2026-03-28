@@ -268,7 +268,7 @@ if [ "$SKIP_MIGRATIONS" = false ]; then
             "021_visit_location_task" "022_article_quiz_task" "023_survey_task" "024_reward_location_categories"
             "025_points_bonus_qr_tokens" "026_task_prerequisites" "027_task_metadata" "028_populate_task_metadata"
             "029_reward_metadata" "030_populate_reward_metadata" "031_task_zielgruppe" "033_parameter_tables"
-            "034_add_parameter_weight" "035_points_calculation_factor" "036_reward_cost_calculation_factor"
+            "034_add_parameter_weight" "034_users_active" "035_points_calculation_factor" "036_reward_cost_calculation_factor"
             "037_reward_model_simplification" "038_task_model_simplification" "039_remove_reward_kosten_moegliche_punkte"
             "040_reward_zielgruppe" "041_restore_moegliche_punkte" "042_zielgruppe_multiselect"
             "043_teams_contests" "043_add_front_office_to_zielgruppe" "044_replace_mitarbeitende_with_front_office"
@@ -277,6 +277,9 @@ if [ "$SKIP_MIGRATIONS" = false ]; then
             "047_task_reward_thumbnails" "048_fix_user_role_enum" "049_team_contest_registration_qr_codes"
             "050_replace_front_office_with_rezeption_redaktion" "051_replace_allowed_roles_with_teams_contests"
             "052_photo_task_verification" "053_mailbox_messages"
+            "054_remove_event_group" "055_users_preferred_language" "056_tasks_i18n" "057_rewards_i18n"
+            "058_locations_i18n" "059_contests_i18n" "060_teams_i18n" "061_luise_demo_accounts"
+            "062_tasks_quiz_survey_i18n" "063_forest_category_points"
         )
         
         PENDING_MIGRATIONS=()

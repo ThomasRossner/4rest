@@ -45,6 +45,8 @@
     "profile": "Profile",
     "logout": "Logout",
     "points": "{{count}} Points",
+    "forestPoints": "Forest (total): {{count}} — Communication {{k}}, People {{m}}, Nature {{n}}, Resources {{r}}",
+    "forestPointsShort": "Forest {{count}}",
     "pointsBonus": "Points Bonus",
     "scanBonusQr": "Scan Bonus QR Code",
     "contests": "Contests"
@@ -180,6 +182,17 @@
     "showOnline": "Show online tasks",
     "locationMapTitle": "Your Location",
     "backToList": "Back to list",
+    "categories": {
+      "hubTitle": "Choose a topic",
+      "hubSubtitle": "Tap a category to open its tasks.",
+      "backToCategories": "Back to categories",
+      "kommunikation": "Communication & networks",
+      "mensch": "People & social environment",
+      "natur": "Nature & environmental protection",
+      "ressourcen": "Resource & material use",
+      "sonstige": "Other tasks",
+      "taskCount": "{{count}} tasks"
+    },
     "filters": {
       "type": {
         "label": "Type",
@@ -2003,6 +2016,8 @@
     "pointsBonus": {
       "title": "Generate Points Bonus QR Code",
       "description": "Enter the number of points to award and generate a QR code that guests can scan to receive the bonus points.",
+      "forestCategory": "Forest category (bonus also counts here)",
+      "forestCategoryHint": "Points increase total score and the selected forest category.",
       "pointsAmount": "Points Amount",
       "pointsPlaceholder": "Enter points amount",
       "generate": "Generate QR Code",
@@ -2172,9 +2187,17 @@
       "points": "Points",
       "trees": "Trees",
       "co2": "CO₂ (kg)",
+      "forestDay": "Forest (per day)",
+      "forest": {
+        "kommunikation": "Communication",
+        "mensch": "People",
+        "natur": "Nature",
+        "ressourcen": "Resources"
+      },
       "maxPoints": "Max. Points",
       "maxTrees": "Max. Trees",
-      "maxCo2": "Max. CO₂"
+      "maxCo2": "Max. CO₂",
+      "maxForestDay": "Max. forest points (day)"
     }
   },
   "rezeption": {

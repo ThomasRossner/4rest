@@ -2,6 +2,8 @@
 
 **Typ:** Idee
 
+**Status:** offen
+
 **Beschreibung:**
 Licht und Blur könnten die Grafik nochmal unheimlich aufwerten.
 

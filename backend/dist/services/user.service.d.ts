@@ -67,6 +67,12 @@ export declare function getMeService(userId: string): Promise<{
     role: any;
     userType: any;
     points: any;
+    forestPoints: {
+        kommunikation: number;
+        mensch: number;
+        natur: number;
+        ressourcen: number;
+    };
     avatar: any;
     sihotGuestId: any;
     sihotGuest: any;
@@ -147,6 +153,12 @@ export declare function getUserTimelineService(userId: string, days?: number): P
     points: number;
     trees: number;
     co2: number;
+    forestDay?: {
+        kommunikation: number;
+        mensch: number;
+        natur: number;
+        ressourcen: number;
+    };
 }>>;
 export declare function getUserStatisticsService(userId: string): Promise<any>;
 //# sourceMappingURL=user.service.d.ts.map

@@ -2,6 +2,8 @@
 
 **Typ:** Requirement
 
+**Status:** offen
+
 **Beschreibung:**
 Kennzahlen sollen unter dem Wald angezeigt werden statt darüber – unter dem Forest-Reiter die Reihenfolge: Wald > Charakter > Kennzahlen.
 

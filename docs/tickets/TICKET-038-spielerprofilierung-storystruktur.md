@@ -2,6 +2,8 @@
 
 **Typ:** Requirement
 
+**Status:** offen
+
 **Beschreibung:**
 Kapitel 3 der Spezifikation umsetzen:
 

@@ -15,6 +15,13 @@ function Navigation() {
   const navigate = useNavigate();
   const userName = useAuthStore((s) => s.user?.name || 'User');
   const points = useAuthStore((s) => s.user?.points || 0);
+  const forestPoints = useAuthStore((s) => s.user?.forestPoints);
+  const forestSum = forestPoints
+    ? forestPoints.kommunikation +
+      forestPoints.mensch +
+      forestPoints.natur +
+      forestPoints.ressourcen
+    : 0;
   const userRole = useAuthStore((s) => s.user?.role);
   const userId = useAuthStore((s) => s.user?.id);
   const logout = useAuthStore((s) => s.logout);
@@ -184,13 +191,30 @@ function Navigation() {
               <div className="navigation-user-avatar">
                 <span className="navigation-user-initials">{getUserInitials(userName)}</span>
               </div>
-              <span className="navigation-user-points">
-                {activeTeam?.totalPoints !== undefined ? (
-                  <>
-                    {t('navigation.points', { count: activeTeam.totalPoints })} / {t('navigation.points', { count: points })}
-                  </>
-                ) : (
-                  t('navigation.points', { count: points })
+              <span className="navigation-user-points-wrap">
+                <span className="navigation-user-points">
+                  {activeTeam?.totalPoints !== undefined ? (
+                    <>
+                      {t('navigation.points', { count: activeTeam.totalPoints })} /{' '}
+                      {t('navigation.points', { count: points })}
+                    </>
+                  ) : (
+                    t('navigation.points', { count: points })
+                  )}
+                </span>
+                {forestSum > 0 && forestPoints && (
+                  <span
+                    className="navigation-user-forest"
+                    title={t('navigation.forestPoints', {
+                      count: forestSum,
+                      k: forestPoints.kommunikation,
+                      m: forestPoints.mensch,
+                      n: forestPoints.natur,
+                      r: forestPoints.ressourcen,
+                    })}
+                  >
+                    {t('navigation.forestPointsShort', { count: forestSum })}
+                  </span>
                 )}
               </span>
             </button>
@@ -232,18 +256,22 @@ function Navigation() {
             <span className="navigation-logo-icon">🌳</span>
             <span className="navigation-logo-text">{t('navigation.home')}</span>
           </Link>
-          {bottomNavItems.map((item) => (
+          {bottomNavItems.map((item) => {
+            const isTasks = item.path === '/tasks';
+            const isActive = isTasks
+              ? location.pathname === '/tasks' || location.pathname.startsWith('/tasks/c/')
+              : location.pathname === item.path;
+            return (
             <Link
               key={item.path}
               to={item.path}
-              className={`navigation-item ${
-                location.pathname === item.path ? 'active' : ''
-              }`}
+              className={`navigation-item ${isActive ? 'active' : ''}`}
             >
               <span className="navigation-item-icon">{item.icon}</span>
               <span className="navigation-item-label">{item.label}</span>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </nav>
       {showPointsBonusScanner && createPortal(

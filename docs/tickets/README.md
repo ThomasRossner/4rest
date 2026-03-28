@@ -47,6 +47,8 @@ Tickets aus Kundenmail und Word-Spezifikation (Spielerprofilierung). Release-Zuo
 
 **Typen:** Bug | Requirement | Idee
 
+**Umsetzungs-Status:** In jeder Ticket-Datei steht unter `**Typ:**` das Feld `**Status:**` mit einem der Werte `offen`, `in_arbeit`, `teilweise`, `umgesetzt`, `nicht_relevant`, `next` (priorisiert). Konvention und Pflege: [.cursor/rules/ticket-status.mdc](../../.cursor/rules/ticket-status.mdc).
+
 **Releases:** R1 = Bugfix & Quick Wins, R2 = Aufgaben & Nutzererlebnis, R3 = Wald, R4 = Spielerprofilierung, R5 = Gamification, R6 = Design & Nomenklatur. Details: [RELEASE_PLAN.md](../RELEASE_PLAN.md).
 
 **Quellen:** Tickets 001–034: Kundenmail. Tickets 035–040: Word-Spezifikation „Roots of Impact – Spielerprofilierung“. Volltext der Spezifikation: [docs/specs/Spielerprofilierung-Vollversion.md](../specs/Spielerprofilierung-Vollversion.md).

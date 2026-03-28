@@ -3,6 +3,8 @@ import { resolveI18n, normalizeContentLang } from '../utils/i18n.js';
 import { getTaskParameters } from './parameter.service.js';
 import { getPointsCalculationFactor } from './system-config.service.js';
 import { addUserPoints, plantTree, addGrowthPointsToRandomTree } from './gamification.service.js';
+import { taskCategoryLabelToForestKey } from '../constants/forestCategories.js';
+import { addForestCategoryPoints } from './forest-category-points.service.js';
 import { buildTeamContestFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 import { validateRecurrence, validateUrl, validateGpsCoordinates, validateQrCode } from '../utils/validation.js';
 import { updateContestPoints } from './contest.service.js';
@@ -975,8 +977,9 @@ export async function completeTask(taskId, userId, data) {
         isPhotoTask,
         verificationStatus,
     });
-    const userTaskResult = await db.query(`INSERT INTO user_tasks (user_id, task_id, photo_url, quiz_answers, survey_responses, points_earned, verification_status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    const taskForestKey = taskCategoryLabelToForestKey(task.category);
+    const userTaskResult = await db.query(`INSERT INTO user_tasks (user_id, task_id, photo_url, quiz_answers, survey_responses, points_earned, verification_status, task_category)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id, verification_status`, [
         userId,
         taskId,
@@ -985,6 +988,7 @@ export async function completeTask(taskId, userId, data) {
         surveyResponsesPayload,
         pointsToAward,
         verificationStatus,
+        taskForestKey,
     ]);
     const userTaskId = userTaskResult.rows[0].id;
     console.log('[COMPLETE TASK] Created user_task:', {
@@ -1033,6 +1037,7 @@ export async function completeTask(taskId, userId, data) {
         // Award points and plant tree for all team members
         for (const memberId of teamMembers) {
             await addUserPoints(memberId, task.points);
+            await addForestCategoryPoints(memberId, task.points, taskForestKey);
             const newTreeId = await plantTree(memberId, taskId);
             // Distribute task points to growth of a random existing tree (not the newly planted one)
             await addGrowthPointsToRandomTree(memberId, task.points, newTreeId);
@@ -1087,7 +1092,7 @@ export async function uploadThumbnail(file) {
 export async function approvePhotoTask(userTaskId, verifiedByUserId) {
     const db = getPool();
     // Get user_task with task details
-    const userTaskResult = await db.query(`SELECT ut.*, t.points, t.type, u.email, u.name as user_name, t.title as task_title
+    const userTaskResult = await db.query(`SELECT ut.*, t.points, t.type, t.category as task_category_label, u.email, u.name as user_name, t.title as task_title
      FROM user_tasks ut
      INNER JOIN tasks t ON t.id = ut.task_id
      INNER JOIN users u ON u.id = ut.user_id
@@ -1105,13 +1110,16 @@ export async function approvePhotoTask(userTaskId, verifiedByUserId) {
     if (userTask.type !== 'photo') {
         throw new Error('This is not a photo task');
     }
+    const approvedForestKey = taskCategoryLabelToForestKey(userTask.task_category_label) ??
+        taskCategoryLabelToForestKey(userTask.task_category);
     // Update user_tasks with approved status
     await db.query(`UPDATE user_tasks 
      SET verification_status = 'approved', 
          verified_at = CURRENT_TIMESTAMP,
          verified_by = $1,
-         points_earned = $2
-     WHERE id = $3`, [verifiedByUserId, userTask.points, userTaskId]);
+         points_earned = $2,
+         task_category = COALESCE(task_category, $4)
+     WHERE id = $3`, [verifiedByUserId, userTask.points, userTaskId, approvedForestKey]);
     // Add photo to gallery
     await db.query(`INSERT INTO gallery_images (user_task_id, user_id, task_id, photo_url, uploaded_at, approved_at, approved_by)
      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)`, [
@@ -1127,6 +1135,7 @@ export async function approvePhotoTask(userTaskId, verifiedByUserId) {
     const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userTask.user_id];
     for (const memberId of teamMembers) {
         await addUserPoints(memberId, userTask.points);
+        await addForestCategoryPoints(memberId, userTask.points, approvedForestKey);
         const newTreeId = await plantTree(memberId, userTask.task_id);
         // Distribute task points to growth of a random existing tree
         await addGrowthPointsToRandomTree(memberId, userTask.points, newTreeId);

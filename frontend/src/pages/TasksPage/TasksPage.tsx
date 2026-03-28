@@ -1,7 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../../services/api';
+import {
+  FOREST_CATEGORY_KEYS,
+  OTHER_FOREST_CATEGORY_KEY,
+  forestKeyFromTaskCategory,
+  isForestCategoryRouteKey,
+} from '../../constants/forestCategories';
 import { VideoTask } from '../../components/Tasks/VideoTask';
 import { QRCodeTask } from '../../components/Tasks/QRCodeTask';
 import { PhotoTask } from '../../components/Tasks/PhotoTask';
@@ -30,7 +37,11 @@ const getTaskTypeIcon = (type: string) => {
   }
 };
 
+const CATEGORY_ORDER = [...FOREST_CATEGORY_KEYS, OTHER_FOREST_CATEGORY_KEY];
+
 function TasksPage() {
+  const { categoryKey: categoryKeyParam } = useParams<{ categoryKey: string }>();
+  const navigate = useNavigate();
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed' | 'completed' | 'validating'>('all');
@@ -40,6 +51,12 @@ function TasksPage() {
   const [prerequisiteTaskIdsFilter, setPrerequisiteTaskIdsFilter] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
+
+  useEffect(() => {
+    if (categoryKeyParam && !isForestCategoryRouteKey(categoryKeyParam)) {
+      navigate('/tasks', { replace: true });
+    }
+  }, [categoryKeyParam, navigate]);
 
   // Listen for WebSocket task updates
   React.useEffect(() => {
@@ -61,6 +78,16 @@ function TasksPage() {
   });
   const { t } = useTranslation();
 
+  const categoryCounts = useMemo(() => {
+    const m: Partial<Record<string, number>> = {};
+    if (!tasks) return m;
+    for (const task of tasks) {
+      const k = forestKeyFromTaskCategory((task as { category?: string }).category);
+      m[k] = (m[k] || 0) + 1;
+    }
+    return m as Record<string, number>;
+  }, [tasks]);
+
   // Extract unique task types from loaded tasks as fallback
   const taskTypesFromTasks = useMemo(() => {
     if (!tasks || tasks.length === 0) return [];
@@ -73,6 +100,13 @@ function TasksPage() {
     if (!tasks) return [];
 
     let filtered = [...tasks];
+
+    if (categoryKeyParam) {
+      filtered = filtered.filter(
+        (task: { category?: string }) =>
+          forestKeyFromTaskCategory(task.category) === categoryKeyParam
+      );
+    }
 
     // Filter by prerequisite task IDs (Type 2 prerequisites)
     if (prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0) {
@@ -142,7 +176,15 @@ function TasksPage() {
     });
 
     return filtered;
-  }, [tasks, typeFilter, completionFilter, timeFilter, showOnlineTasks, prerequisiteTaskIdsFilter]);
+  }, [
+    tasks,
+    categoryKeyParam,
+    typeFilter,
+    completionFilter,
+    timeFilter,
+    showOnlineTasks,
+    prerequisiteTaskIdsFilter,
+  ]);
 
   const handleTaskClick = (task: any) => {
     if (task.completed && task.verification_status !== 'pending') return;
@@ -153,7 +195,12 @@ function TasksPage() {
 
   const handleTaskComplete = async () => {
     setSelectedTask(null);
-    try { await refetch(); } catch (_) {}
+    try {
+      await refetch();
+    } catch (_) {}
+    try {
+      await api.refreshMe();
+    } catch (_) {}
   };
 
   // Conditional returns after all hooks
@@ -166,36 +213,41 @@ function TasksPage() {
     );
   }
 
+  const wrapTaskShell = (node: React.ReactNode) => (
+    <div className="tasks-task-shell">
+      <button type="button" className="tasks-back-from-task" onClick={() => setSelectedTask(null)}>
+        ← {t('tasks.backToList')}
+      </button>
+      {node}
+    </div>
+  );
+
   if (selectedTask) {
     const task = tasks?.find((t: any) => t.id === selectedTask);
     if (!task) return <div>{t('tasks.notFound')}</div>;
 
     if (task.type === 'video') {
-      return <VideoTask taskId={task.id} onComplete={handleTaskComplete} />;
+      return wrapTaskShell(<VideoTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'quiz') {
-      return <QuizTask taskId={task.id} onComplete={handleTaskComplete} />;
+      return wrapTaskShell(<QuizTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'article_quiz') {
-      return <ArticleQuizTask taskId={task.id} onComplete={handleTaskComplete} />;
+      return wrapTaskShell(<ArticleQuizTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'survey') {
-      return <SurveyTask taskId={task.id} onComplete={handleTaskComplete} />;
+      return wrapTaskShell(<SurveyTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'qr') {
-      return (
-        <QRCodeTask
-          taskId={task.id}
-          qrCode={task.qr_code}
-          onComplete={handleTaskComplete}
-        />
+      return wrapTaskShell(
+        <QRCodeTask taskId={task.id} qrCode={task.qr_code} onComplete={handleTaskComplete} />
       );
     }
     if (task.type === 'photo') {
-      return <PhotoTask taskId={task.id} onComplete={handleTaskComplete} />;
+      return wrapTaskShell(<PhotoTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'visit_location') {
-      return <VisitLocationTask taskId={task.id} onComplete={handleTaskComplete} />;
+      return wrapTaskShell(<VisitLocationTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
   }
 
@@ -207,6 +259,48 @@ function TasksPage() {
           title={t('tasks.empty.all.title')}
           description={t('tasks.empty.all.description')}
         />
+      </div>
+    );
+  }
+
+  if (categoryKeyParam && !isForestCategoryRouteKey(categoryKeyParam)) {
+    return (
+      <div className="tasks-page">
+        <h1 className="tasks-title">{t('tasks.title')}</h1>
+        <LoadingSkeleton lines={4} />
+      </div>
+    );
+  }
+
+  if (!categoryKeyParam && !selectedTask && !showLocationMap) {
+    return (
+      <div className="tasks-page tasks-page--hub">
+        <h1 className="tasks-title">{t('tasks.categories.hubTitle')}</h1>
+        <p className="tasks-hub-subtitle">{t('tasks.categories.hubSubtitle')}</p>
+        <div className="tasks-category-grid">
+          {CATEGORY_ORDER.map((key) => {
+            const count = categoryCounts[key] || 0;
+            if (count === 0) return null;
+            return (
+              <Link key={key} to={`/tasks/c/${key}`} className="tasks-category-tile">
+                <span className="tasks-category-tile-title">{t(`tasks.categories.${key}`)}</span>
+                <span className="tasks-category-tile-count">{t('tasks.categories.taskCount', { count })}</span>
+              </Link>
+            );
+          })}
+        </div>
+        <div className="tasks-hub-actions">
+          <button
+            type="button"
+            className="location-button"
+            onClick={() => {
+              setShowLocationMap(true);
+              setShowOnlineTasks(false);
+            }}
+          >
+            {t('tasks.locationButton')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -224,7 +318,9 @@ function TasksPage() {
           >
             ← {t('common.actions.back')}
           </button>
-          <h1 className="tasks-title">{t('tasks.title')}</h1>
+          <h1 className="tasks-title">
+            {categoryKeyParam ? t(`tasks.categories.${categoryKeyParam}`) : t('tasks.title')}
+          </h1>
           <span className="tasks-map-header-spacer" aria-hidden="true" />
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
@@ -250,51 +346,65 @@ function TasksPage() {
     );
   }
 
+  if (!categoryKeyParam) {
+    return null;
+  }
+
   return (
       <div className="tasks-page">
-        <div className="tasks-header">
-          <h1 className="tasks-title">{t('tasks.title')}</h1>
-          {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
-            <button
-              className="location-button"
-              onClick={() => setPrerequisiteTaskIdsFilter(null)}
-            >
-              {t('tasks.prerequisites.clearFilter') }
-            </button>
-          ) : showOnlineTasks ? (
-            <button
-              className="location-button"
-              onClick={() => {
-                setShowLocationMap(false);
-                setShowOnlineTasks(false);
-              }}
-            >
-              {t('tasks.prerequisites.clearFilter') }
-            </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+        <div className="tasks-header tasks-header--category">
+          <button
+            type="button"
+            className="tasks-map-back"
+            onClick={() => navigate('/tasks')}
+            title={t('tasks.categories.backToCategories')}
+          >
+            ← {t('tasks.categories.backToCategories')}
+          </button>
+          <h1 className="tasks-title">{t(`tasks.categories.${categoryKeyParam}`)}</h1>
+          <div className="tasks-header-actions">
+            {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
               <button
                 className="location-button"
-                onClick={() => {
-                  setShowLocationMap(true);
-                  setShowOnlineTasks(false);
-                }}
-                title={t('tasks.showLocation')}
+                onClick={() => setPrerequisiteTaskIdsFilter(null)}
               >
-                {t('tasks.locationButton')}
+                {t('tasks.prerequisites.clearFilter') }
               </button>
+            ) : showOnlineTasks ? (
               <button
                 className="location-button"
                 onClick={() => {
                   setShowLocationMap(false);
-                  setShowOnlineTasks(true);
+                  setShowOnlineTasks(false);
                 }}
-                title={t('tasks.showOnline')}
               >
-                {t('tasks.onlineButton')}
+                {t('tasks.prerequisites.clearFilter') }
               </button>
-            </div>
-          )}
+            ) : (
+              <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                <button
+                  className="location-button"
+                  onClick={() => {
+                    setShowLocationMap(true);
+                    setShowOnlineTasks(false);
+                  }}
+                  title={t('tasks.showLocation')}
+                >
+                  {t('tasks.locationButton')}
+                </button>
+                <button
+                  className="location-button"
+                  onClick={() => {
+                    setShowLocationMap(false);
+                    setShowOnlineTasks(true);
+                  }}
+                  title={t('tasks.showOnline')}
+                >
+                  {t('tasks.onlineButton')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       
       <div className="tasks-filters-row">
@@ -353,7 +463,7 @@ function TasksPage() {
           description={t('tasks.empty.filtered.description')}
         />
       ) : (
-        <div className="tasks-grid">
+        <div className="tasks-grid tasks-grid--compact">
           {filteredTasks.map((task: any) => {
             const isLocked = task.is_available === false;
             const isCompleted = !!task.completed && task.verification_status !== 'pending';
@@ -436,3 +546,4 @@ function TasksPage() {
 }
 
 export default TasksPage;
+

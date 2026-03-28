@@ -2,6 +2,8 @@
 
 **Typ:** Requirement
 
+**Status:** umgesetzt
+
 **Beschreibung:**
 E-Mail-Versand für Admins/Verwalter bei neuen Foto-Verifizierungen einrichten.
 

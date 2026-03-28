@@ -196,6 +196,13 @@ export interface User {
   name: string;
   role: UserRole;
   points: number;
+  /** Kumulierte Wald-Kategoriepunkte (getrennt von users.points) */
+  forestPoints?: {
+    kommunikation: number;
+    mensch: number;
+    natur: number;
+    ressourcen: number;
+  };
   userType: UserType;
   avatar?: string;
   emailVerified?: boolean;
@@ -246,6 +253,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
         });
         startSihotSocket();
+        void api.refreshMe();
       },
       register: async (
         email: string,
@@ -273,6 +281,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
         });
         startSihotSocket();
+        void api.refreshMe();
       },
       logout: () => {
         stopSihotSocket();

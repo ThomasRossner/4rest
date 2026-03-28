@@ -15,7 +15,7 @@ export interface PointsBonusQrToken {
  * @param pointsAmount - Amount of points to award
  * @returns QR token data
  */
-export declare function generatePointsBonusQr(employeeUserId: string, pointsAmount: number): Promise<PointsBonusQrToken>;
+export declare function generatePointsBonusQr(employeeUserId: string, pointsAmount: number, forestCategory: string): Promise<PointsBonusQrToken>;
 /**
  * Redeem a points bonus QR code token
  * @param qrToken - QR token to redeem

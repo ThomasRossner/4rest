@@ -196,16 +196,20 @@ export const generatePointsBonusQrCode: RequestHandler = asyncHandler(async (req
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { pointsAmount } = req.body;
+  const { pointsAmount, forestCategory } = req.body;
   if (!Number.isInteger(pointsAmount) || pointsAmount <= 0) {
     return res.status(400).json({ error: 'pointsAmount must be a positive integer' });
   }
+  if (!forestCategory || typeof forestCategory !== 'string') {
+    return res.status(400).json({ error: 'forestCategory is required (kommunikation|mensch|natur|ressourcen)' });
+  }
 
-  const qrToken = await generatePointsBonusQr(authReq.user.id, pointsAmount);
+  const qrToken = await generatePointsBonusQr(authReq.user.id, pointsAmount, forestCategory);
   res.json({
     qrToken: qrToken.qr_token,
     expiresAt: qrToken.expires_at.toISOString(),
     pointsAmount: qrToken.points_amount,
+    forestCategory: forestCategory,
   });
 });
 

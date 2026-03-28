@@ -1,12 +1,14 @@
 import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
+import { isForestCategoryKey } from '../constants/forestCategories.js';
+import { addForestCategoryPoints } from './forest-category-points.service.js';
 /**
  * Generate a QR code token for points bonus
  * @param employeeUserId - ID of the employee/administrator generating the QR code
  * @param pointsAmount - Amount of points to award
  * @returns QR token data
  */
-export async function generatePointsBonusQr(employeeUserId, pointsAmount) {
+export async function generatePointsBonusQr(employeeUserId, pointsAmount, forestCategory) {
     const db = getPool();
     // Verify user exists and has permission (employee or administrator role)
     const user = await getUserById(employeeUserId);
@@ -19,15 +21,18 @@ export async function generatePointsBonusQr(employeeUserId, pointsAmount) {
     if (!Number.isInteger(pointsAmount) || pointsAmount <= 0) {
         throw new Error('Points amount must be a positive integer');
     }
+    if (!forestCategory || !isForestCategoryKey(forestCategory)) {
+        throw new Error('forestCategory must be one of: kommunikation, mensch, natur, ressourcen');
+    }
     // Generate unique QR token
     const crypto = await import('node:crypto');
     const qrToken = crypto.randomBytes(32).toString('hex');
     // Set expiration to 24 hours from now
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
-    const result = await db.query(`INSERT INTO points_bonus_qr_tokens (qr_token, points_amount, generated_by, expires_at)
-     VALUES ($1, $2, $3, $4)
-     RETURNING *`, [qrToken, pointsAmount, employeeUserId, expiresAt]);
+    const result = await db.query(`INSERT INTO points_bonus_qr_tokens (qr_token, points_amount, generated_by, expires_at, forest_category)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`, [qrToken, pointsAmount, employeeUserId, expiresAt, forestCategory]);
     if (!result.rows || result.rows.length === 0) {
         throw new Error('Failed to create points bonus QR token');
     }
@@ -76,8 +81,11 @@ export async function redeemPointsBonusQr(qrToken, userId) {
         await db.query(`UPDATE points_bonus_qr_tokens SET status = 'expired' WHERE id = $1`, [token.id]);
         throw new Error('QR code has expired');
     }
-    // Award points
+    // Award points (Gesamt + Wald-Kategorie)
     await db.query('UPDATE users SET points = points + $1 WHERE id = $2', [token.points_amount, userId]);
+    if (token.forest_category && isForestCategoryKey(token.forest_category)) {
+        await addForestCategoryPoints(userId, token.points_amount, token.forest_category);
+    }
     // Mark token as redeemed
     await db.query(`UPDATE points_bonus_qr_tokens
      SET status = 'redeemed', redeemed_by = $1, redeemed_at = CURRENT_TIMESTAMP

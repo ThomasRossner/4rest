@@ -3,11 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../../services/api';
 import { pushToast } from '../../components/Toaster/Toaster';
+import {
+  FOREST_CATEGORY_KEYS,
+  type ForestCategoryKey,
+  FOREST_CATEGORY_LABEL_DE,
+} from '../../constants/forestCategories';
 import './PointsBonusPage.css';
 
 function PointsBonusPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [pointsAmount, setPointsAmount] = useState<string>('');
+  const [forestCategory, setForestCategory] = useState<ForestCategoryKey>('natur');
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -30,7 +36,7 @@ function PointsBonusPage() {
 
     setIsGenerating(true);
     try {
-      const result = await api.generatePointsBonusQr(amount);
+      const result = await api.generatePointsBonusQr(amount, forestCategory);
       console.log('QR code generation result:', result);
       if (!result || !result.qrToken) {
         throw new Error('Invalid response from server: missing qrToken');
@@ -57,6 +63,7 @@ function PointsBonusPage() {
     setQrToken(null);
     setExpiresAt(null);
     setPointsAmount('');
+    setForestCategory('natur');
   };
 
   const handlePointsAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +96,30 @@ function PointsBonusPage() {
               disabled={isGenerating}
               aria-label={getTranslation('employee.pointsBonus.pointsAmount', 'Punkte-Anzahl')}
             />
+          </label>
+          <label className="points-bonus-field">
+            <span className="points-bonus-label">
+              {getTranslation('employee.pointsBonus.forestCategory', 'Wald-Kategorie')} *
+            </span>
+            <select
+              className="points-bonus-select"
+              value={forestCategory}
+              onChange={(e) => setForestCategory(e.target.value as ForestCategoryKey)}
+              disabled={isGenerating}
+              aria-label={getTranslation('employee.pointsBonus.forestCategory', 'Wald-Kategorie')}
+            >
+              {FOREST_CATEGORY_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {FOREST_CATEGORY_LABEL_DE[key]}
+                </option>
+              ))}
+            </select>
+            <span className="points-bonus-hint">
+              {getTranslation(
+                'employee.pointsBonus.forestCategoryHint',
+                'Die Punkte erhöhen die Gesamtpunkte und die gewählte Wald-Kategorie.'
+              )}
+            </span>
           </label>
           <button
             className="points-bonus-button"

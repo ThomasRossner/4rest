@@ -359,8 +359,14 @@ export const api = {
     return response.data;
   },
 
-  async generatePointsBonusQr(pointsAmount: number) {
-    const response = await apiClient.post('/rewards/points-bonus/generate', { pointsAmount });
+  async generatePointsBonusQr(
+    pointsAmount: number,
+    forestCategory: 'kommunikation' | 'mensch' | 'natur' | 'ressourcen'
+  ) {
+    const response = await apiClient.post('/rewards/points-bonus/generate', {
+      pointsAmount,
+      forestCategory,
+    });
     return response.data;
   },
 
@@ -370,14 +376,14 @@ export const api = {
       // Update user points from response
       if (response.data?.newPointsBalance !== undefined) {
         try {
+          await this.refreshMe();
+        } catch (error) {
           const store = useAuthStore.getState();
           const currentUser = store.user;
           if (currentUser) {
             store.setUser({ ...currentUser, points: response.data.newPointsBalance });
           }
-        } catch (error) {
-          // Silently fail if store update fails - points are already updated on server
-          console.warn('[API] Failed to update user points in store (non-critical):', error);
+          console.warn('[API] refreshMe after bonus redeem failed; points only updated:', error);
         }
       }
       return response.data;

@@ -24,7 +24,11 @@ export const getTasks = asyncHandler(async (req, res) => {
 });
 export const getTask = asyncHandler(async (req, res) => {
     const authReq = req;
-    const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
+    // Admin/Redaktion: volle *_i18n für Editoren; Anzeigesprache steuern die Umschalt-Buttons
+    const isAdminOrRedaktion = authReq.user?.role === 'administrator' || authReq.user?.role === 'redaktion';
+    const preferredLanguage = isAdminOrRedaktion
+        ? undefined
+        : (authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined);
     const task = await getTaskById(req.params.id, preferredLanguage ?? undefined);
     if (!task) {
         return res.status(404).json({ error: 'Task not found' });

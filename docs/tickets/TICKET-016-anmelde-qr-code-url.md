@@ -2,6 +2,8 @@
 
 **Typ:** Bug
 
+**Status:** offen
+
 **Beschreibung:**
 Der Anmelde-QR-Code (für Contests z.B.) funktioniert nicht, da er nur einen Code und keine URL beinhaltet.
 

@@ -154,7 +154,8 @@ export async function getPreferredLanguage(userId) {
 }
 export async function getMeService(userId) {
     const db = getPool();
-    const result = await db.query(`SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language
+    const result = await db.query(`SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language,
+            forest_points_kommunikation, forest_points_mensch, forest_points_natur, forest_points_ressourcen
      FROM users WHERE id = $1`, [userId]);
     if (!result.rows[0]) {
         return null;
@@ -168,6 +169,12 @@ export async function getMeService(userId) {
         role: user.role,
         userType: user.user_type,
         points: user.points || 0,
+        forestPoints: {
+            kommunikation: parseInt(String(user.forest_points_kommunikation ?? 0), 10) || 0,
+            mensch: parseInt(String(user.forest_points_mensch ?? 0), 10) || 0,
+            natur: parseInt(String(user.forest_points_natur ?? 0), 10) || 0,
+            ressourcen: parseInt(String(user.forest_points_ressourcen ?? 0), 10) || 0,
+        },
         avatar: user.avatar_url || null,
         sihotGuestId: user.sihot_guest_id || null,
         sihotGuest: user.sihot_guest_data?.guest ?? null,
@@ -543,6 +550,40 @@ export async function getUserTimelineService(userId, days = 30) {
      WHERE ut.user_id = $1 AND ut.completed_at >= $2
      GROUP BY DATE(ut.completed_at)
      ORDER BY DATE(ut.completed_at) ASC`, [userId, startDate]);
+    const forestByDayResult = await db.query(`SELECT 
+       DATE(ut.completed_at) as date,
+       ut.task_category,
+       COALESCE(SUM(ut.points_earned), 0)::int as pts
+     FROM user_tasks ut
+     WHERE ut.user_id = $1 AND ut.completed_at >= $2 AND ut.task_category IS NOT NULL
+     GROUP BY DATE(ut.completed_at), ut.task_category
+     ORDER BY DATE(ut.completed_at) ASC`, [userId, startDate]);
+    const toDateKey = (d) => {
+        if (!d)
+            return '';
+        if (d instanceof Date)
+            return d.toISOString().slice(0, 10);
+        const s = String(d);
+        return s.length >= 10 ? s.slice(0, 10) : s;
+    };
+    const forestDayMap = new Map();
+    for (const row of forestByDayResult.rows) {
+        const d = toDateKey(row.date);
+        const cat = row.task_category;
+        const pts = parseInt(String(row.pts ?? 0), 10) || 0;
+        if (!forestDayMap.has(d)) {
+            forestDayMap.set(d, { kommunikation: 0, mensch: 0, natur: 0, ressourcen: 0 });
+        }
+        const bucket = forestDayMap.get(d);
+        if (cat === 'kommunikation')
+            bucket.kommunikation += pts;
+        else if (cat === 'mensch')
+            bucket.mensch += pts;
+        else if (cat === 'natur')
+            bucket.natur += pts;
+        else if (cat === 'ressourcen')
+            bucket.ressourcen += pts;
+    }
     // Hole alle gepflanzten Bäume mit Datum
     const treesResult = await db.query(`SELECT 
        DATE(ft.planted_at) as date,
@@ -562,13 +603,17 @@ export async function getUserTimelineService(userId, days = 30) {
      ORDER BY DATE(ut.completed_at) ASC`, [userId, startDate]);
     // Erstelle ein Set aller Daten
     const allDates = new Set();
-    tasksResult.rows.forEach((row) => allDates.add(row.date));
-    treesResult.rows.forEach((row) => allDates.add(row.date));
-    co2Result.rows.forEach((row) => allDates.add(row.date));
+    tasksResult.rows.forEach((row) => allDates.add(toDateKey(row.date)));
+    treesResult.rows.forEach((row) => allDates.add(toDateKey(row.date)));
+    co2Result.rows.forEach((row) => allDates.add(toDateKey(row.date)));
+    forestDayMap.forEach((_v, k) => allDates.add(k));
     // Erstelle Map für schnellen Zugriff
-    const tasksMap = new Map(tasksResult.rows.map((row) => [row.date, { points: parseInt(row.points || 0, 10), tasks: parseInt(row.task_count || 0, 10) }]));
-    const treesMap = new Map(treesResult.rows.map((row) => [row.date, parseInt(row.tree_count || 0, 10)]));
-    const co2Map = new Map(co2Result.rows.map((row) => [row.date, parseFloat(row.co2 || 0)]));
+    const tasksMap = new Map(tasksResult.rows.map((row) => [
+        toDateKey(row.date),
+        { points: parseInt(row.points || 0, 10), tasks: parseInt(row.task_count || 0, 10) },
+    ]));
+    const treesMap = new Map(treesResult.rows.map((row) => [toDateKey(row.date), parseInt(row.tree_count || 0, 10)]));
+    const co2Map = new Map(co2Result.rows.map((row) => [toDateKey(row.date), parseFloat(row.co2 || 0)]));
     // Erstelle Timeline mit kumulativen Werten
     const sortedDates = Array.from(allDates).sort();
     let cumulativePoints = 0;
@@ -581,11 +626,13 @@ export async function getUserTimelineService(userId, days = 30) {
         cumulativePoints += dayPoints;
         cumulativeTrees += dayTrees;
         cumulativeCo2 += dayCo2;
+        const forestDay = forestDayMap.get(date);
         return {
             date,
             points: cumulativePoints,
             trees: cumulativeTrees,
             co2: cumulativeCo2,
+            ...(forestDay ? { forestDay } : {}),
         };
     });
     return timeline;

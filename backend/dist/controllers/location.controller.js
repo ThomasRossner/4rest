@@ -4,7 +4,11 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 export const listLocations = asyncHandler(async (req, res) => {
     const includeInactive = req.query.includeInactive === 'true';
     const authReq = req;
-    const preferredLanguage = authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined;
+    // Admin/Redaktion brauchen die vollen *_i18n-Objekte für die Bearbeitung beider Sprachen
+    const isAdminOrRedaktion = authReq.user?.role === 'administrator' || authReq.user?.role === 'redaktion';
+    const preferredLanguage = isAdminOrRedaktion
+        ? undefined
+        : (authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined);
     const locations = await getLocations(includeInactive, preferredLanguage ?? undefined);
     res.json(locations);
 });

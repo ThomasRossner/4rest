@@ -1,5 +1,7 @@
 import { getPool } from '../database/connection.js';
 import { getUserById } from './user.service.js';
+import { isForestCategoryKey } from '../constants/forestCategories.js';
+import { addForestCategoryPoints } from './forest-category-points.service.js';
 
 export interface PointsBonusQrToken {
   id: string;
@@ -21,7 +23,8 @@ export interface PointsBonusQrToken {
  */
 export async function generatePointsBonusQr(
   employeeUserId: string,
-  pointsAmount: number
+  pointsAmount: number,
+  forestCategory: string
 ): Promise<PointsBonusQrToken> {
   const db = getPool();
 
@@ -37,6 +40,9 @@ export async function generatePointsBonusQr(
   if (!Number.isInteger(pointsAmount) || pointsAmount <= 0) {
     throw new Error('Points amount must be a positive integer');
   }
+  if (!forestCategory || !isForestCategoryKey(forestCategory)) {
+    throw new Error('forestCategory must be one of: kommunikation, mensch, natur, ressourcen');
+  }
 
   // Generate unique QR token
   const crypto = await import('node:crypto');
@@ -47,10 +53,10 @@ export async function generatePointsBonusQr(
   expiresAt.setHours(expiresAt.getHours() + 24);
 
   const result = await db.query(
-    `INSERT INTO points_bonus_qr_tokens (qr_token, points_amount, generated_by, expires_at)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO points_bonus_qr_tokens (qr_token, points_amount, generated_by, expires_at, forest_category)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [qrToken, pointsAmount, employeeUserId, expiresAt]
+    [qrToken, pointsAmount, employeeUserId, expiresAt, forestCategory]
   );
 
   if (!result.rows || result.rows.length === 0) {
@@ -119,11 +125,14 @@ export async function redeemPointsBonusQr(
     throw new Error('QR code has expired');
   }
 
-  // Award points
+  // Award points (Gesamt + Wald-Kategorie)
   await db.query(
     'UPDATE users SET points = points + $1 WHERE id = $2',
     [token.points_amount, userId]
   );
+  if (token.forest_category && isForestCategoryKey(token.forest_category)) {
+    await addForestCategoryPoints(userId, token.points_amount, token.forest_category);
+  }
 
   // Mark token as redeemed
   await db.query(

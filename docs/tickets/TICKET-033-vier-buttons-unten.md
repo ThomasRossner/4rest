@@ -2,6 +2,8 @@
 
 **Typ:** Requirement
 
+**Status:** offen
+
 **Beschreibung:**
 Die vier Buttons unten sollte man noch einmal überdenken.
 

@@ -99,6 +99,68 @@
   background-color: #f59e0b;
 }
 
+.timeline-bar-forest-stack {
+  flex: 1;
+  min-height: 4px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  border-radius: 4px 4px 0 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.timeline-bar-forest-stack:hover {
+  opacity: 0.9;
+}
+
+.timeline-bar-forest-empty {
+  background: color-mix(in srgb, var(--color-border, #e5e7eb) 80%, transparent);
+}
+
+.timeline-forest-seg {
+  min-height: 2px;
+  width: 100%;
+}
+
+.timeline-forest-kommunikation {
+  background-color: #6366f1;
+}
+
+.timeline-forest-mensch {
+  background-color: #db2777;
+}
+
+.timeline-forest-natur {
+  background-color: #16a34a;
+}
+
+.timeline-forest-ressourcen {
+  background-color: #0284c7;
+}
+
+.timeline-legend-forest-sub {
+  font-size: 0.8rem;
+  opacity: 0.95;
+}
+
+.timeline-legend-forest-kommunikation {
+  background-color: #6366f1;
+}
+
+.timeline-legend-forest-mensch {
+  background-color: #db2777;
+}
+
+.timeline-legend-forest-natur {
+  background-color: #16a34a;
+}
+
+.timeline-legend-forest-ressourcen {
+  background-color: #0284c7;
+}
+
 .timeline-chart-values {
   display: flex;
   justify-content: space-around;

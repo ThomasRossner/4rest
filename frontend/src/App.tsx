@@ -67,6 +67,7 @@ function ProtectedApp() {
         <Route index element={<HomePage />} />
         <Route path="dashboard" element={<Navigate to="/" replace />} />
         <Route path="tasks" element={<TasksPage />} />
+        <Route path="tasks/c/:categoryKey" element={<TasksPage />} />
         <Route path="forest" element={<ForestPage />} />
         <Route path="rewards" element={<RewardsPage />} />
         <Route path="statistics" element={<StatisticsPage />} />
