@@ -22,6 +22,7 @@ import { FilterDropdown } from '../../components/Filters/FilterDropdown';
 import { QRCodeIcon } from '../../components/Icons/QRCodeIcon';
 import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
 import { CategoryHubIcon } from '../../components/Tasks/CategoryHubIcon';
+import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import './TasksPage.css';
 
 // Map task types to icons and translation keys
@@ -48,6 +49,7 @@ function TasksPage() {
   const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed' | 'completed' | 'validating'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
   const [showOnlineTasks, setShowOnlineTasks] = useState(false);
+  const [showLocationMap, setShowLocationMap] = useState(false);
   const [prerequisiteTaskIdsFilter, setPrerequisiteTaskIdsFilter] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
   const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
@@ -57,6 +59,10 @@ function TasksPage() {
       navigate('/tasks', { replace: true });
     }
   }, [categoryKeyParam, navigate]);
+
+  useEffect(() => {
+    setShowLocationMap(false);
+  }, [categoryKeyParam]);
 
   // Listen for WebSocket task updates
   React.useEffect(() => {
@@ -310,8 +316,40 @@ function TasksPage() {
     return null;
   }
 
+  if (showLocationMap) {
+    return (
+      <div className="tasks-page tasks-page--map">
+        <div className="tasks-map-header">
+          <button
+            type="button"
+            className="tasks-map-back"
+            onClick={() => setShowLocationMap(false)}
+            title={t('tasks.backToList')}
+            aria-label={t('tasks.backToList')}
+          >
+            <BackArrowIcon className="tasks-icon-back-svg" />
+          </button>
+          <h1 className="tasks-title">{t(`tasks.categories.${categoryKeyParam}`)}</h1>
+          <span className="tasks-map-header-spacer" aria-hidden="true" />
+        </div>
+        <div className="tasks-map-body">
+          <UserLocationMap
+            variant="tasks"
+            height="calc(100dvh - 200px)"
+            tasks={filteredTasks as any[]}
+            onTaskClick={(taskId) => {
+              setShowLocationMap(false);
+              setSelectedTask(taskId);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-      <div className="tasks-page">
+      <div className="tasks-page tasks-page--category">
+        <div className="tasks-category-sticky">
         <div className="tasks-header tasks-header--category">
           <div className="tasks-header-category-top">
             <button
@@ -327,30 +365,60 @@ function TasksPage() {
           </div>
           <div className="tasks-header-category-actions">
             {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
-              <button
-                type="button"
-                className="location-button"
-                onClick={() => setPrerequisiteTaskIdsFilter(null)}
-              >
-                {t('tasks.prerequisites.clearFilter') }
-              </button>
+              <div className="tasks-header-category-actions-row">
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => setPrerequisiteTaskIdsFilter(null)}
+                >
+                  {t('tasks.prerequisites.clearFilter')}
+                </button>
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => setShowLocationMap(true)}
+                  title={t('tasks.showLocation')}
+                >
+                  {t('tasks.locationButton')}
+                </button>
+              </div>
             ) : showOnlineTasks ? (
-              <button
-                type="button"
-                className="location-button"
-                onClick={() => setShowOnlineTasks(false)}
-              >
-                {t('tasks.prerequisites.clearFilter') }
-              </button>
+              <div className="tasks-header-category-actions-row">
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => setShowOnlineTasks(false)}
+                >
+                  {t('tasks.prerequisites.clearFilter')}
+                </button>
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => setShowLocationMap(true)}
+                  title={t('tasks.showLocation')}
+                >
+                  {t('tasks.locationButton')}
+                </button>
+              </div>
             ) : (
-              <button
-                type="button"
-                className="location-button"
-                onClick={() => setShowOnlineTasks(true)}
-                title={t('tasks.showOnline')}
-              >
-                {t('tasks.onlineButton')}
-              </button>
+              <div className="tasks-header-category-actions-row">
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => setShowLocationMap(true)}
+                  title={t('tasks.showLocation')}
+                >
+                  {t('tasks.locationButton')}
+                </button>
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => setShowOnlineTasks(true)}
+                  title={t('tasks.showOnline')}
+                >
+                  {t('tasks.onlineButton')}
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -404,7 +472,9 @@ function TasksPage() {
           ]}
         />
       </div>
+        </div>
 
+      <div className="tasks-category-scroll">
       {filteredTasks.length === 0 ? (
         <EmptyState
           title={t('tasks.empty.filtered.title')}
@@ -489,6 +559,7 @@ function TasksPage() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }
