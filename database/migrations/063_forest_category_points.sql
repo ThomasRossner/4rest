@@ -10,7 +10,7 @@ ALTER TABLE user_tasks
 
 -- Backfill from tasks.category (normalized keys set in app; here best-effort from tasks)
 UPDATE user_tasks ut
-SET task_category = CASE TRIM(t.category)
+SET task_category = CASE TRIM(t.category::text)
   WHEN 'Kommunikation & Netzwerke' THEN 'kommunikation'
   WHEN 'Mensch & soziales Umfeld' THEN 'mensch'
   WHEN 'Natur & Umweltschutz' THEN 'natur'
