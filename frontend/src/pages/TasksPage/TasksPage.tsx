@@ -213,7 +213,6 @@ function TasksPage() {
   if (isLoading) {
     return (
       <div className="tasks-page">
-        <h1 className="tasks-title">{t('tasks.title')}</h1>
         <LoadingSkeleton lines={6} />
       </div>
     );
@@ -266,7 +265,6 @@ function TasksPage() {
   if (!tasks || tasks.length === 0) {
     return (
       <div className="tasks-page">
-        <h1 className="tasks-title">{t('tasks.title')}</h1>
         <EmptyState
           title={t('tasks.empty.all.title')}
           description={t('tasks.empty.all.description')}
@@ -278,7 +276,6 @@ function TasksPage() {
   if (categoryKeyParam && !isForestCategoryRouteKey(categoryKeyParam)) {
     return (
       <div className="tasks-page">
-        <h1 className="tasks-title">{t('tasks.title')}</h1>
         <LoadingSkeleton lines={4} />
       </div>
     );
@@ -287,8 +284,6 @@ function TasksPage() {
   if (!categoryKeyParam && !selectedTask) {
     return (
       <div className="tasks-page tasks-page--hub">
-        <h1 className="tasks-title">{t('tasks.categories.hubTitle')}</h1>
-        <p className="tasks-hub-subtitle">{t('tasks.categories.hubSubtitle')}</p>
         <div className="tasks-category-grid">
           {CATEGORY_ORDER.map((key) => {
             const count = categoryCounts[key] || 0;
@@ -329,8 +324,6 @@ function TasksPage() {
           >
             <BackArrowIcon className="tasks-icon-back-svg" />
           </button>
-          <h1 className="tasks-title">{t(`tasks.categories.${categoryKeyParam}`)}</h1>
-          <span className="tasks-map-header-spacer" aria-hidden="true" />
         </div>
         <div className="tasks-map-body">
           <UserLocationMap
@@ -361,7 +354,6 @@ function TasksPage() {
             >
               <BackArrowIcon className="tasks-icon-back-svg" />
             </button>
-            <h1 className="tasks-title tasks-header-category-title">{t(`tasks.categories.${categoryKeyParam}`)}</h1>
           </div>
           <div className="tasks-header-category-actions">
             {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (

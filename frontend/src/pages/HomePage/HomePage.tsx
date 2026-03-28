@@ -37,9 +37,6 @@ function HomePage() {
   if (!user) {
     return (
       <div className="home-page">
-        <div className="home-hero">
-          <h1 className="home-title">{t('home.title')}</h1>
-        </div>
         <LoadingSkeleton lines={8} />
       </div>
     );
@@ -48,7 +45,6 @@ function HomePage() {
   return (
     <div className="home-page">
       <div className="home-hero">
-        <h1 className="home-title">{t('home.title')}</h1>
         <p className="home-subtitle">{t('home.subtitle')}</p>
       </div>
       

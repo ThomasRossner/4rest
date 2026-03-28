@@ -31,6 +31,6 @@ else
   docker start roots-postgres roots-redis 2>/dev/null || true
 fi
 
-echo "[dev-up] Done. PostgreSQL (5432) und Redis (6379) laufen."
+echo "[dev-up] Done. PostgreSQL und Redis laufen (Ports siehe docker-compose.dev.yml)."
 
 

@@ -28,7 +28,6 @@ function StatisticsPage() {
   if (isLoading) {
     return (
       <div className="statistics-page">
-        <h1 className="statistics-title">{t('statistics.title')}</h1>
         <LoadingSkeleton lines={10} />
       </div>
     );
@@ -37,7 +36,6 @@ function StatisticsPage() {
   if (!stats) {
     return (
       <div className="statistics-page">
-        <h1 className="statistics-title">{t('statistics.title')}</h1>
         <EmptyState
           title={t('statistics.emptyTitle')}
           description={t('statistics.emptyDescription')}
@@ -48,8 +46,6 @@ function StatisticsPage() {
 
   return (
     <div className="statistics-page">
-      <h1 className="statistics-title">{t('statistics.title')}</h1>
-      
       <div className="statistics-grid">
         <div className="statistics-card">
           <div className="statistics-icon">🌍</div>
@@ -245,8 +241,6 @@ function RankingsPage() {
 
   return (
     <div className="rankings-page">
-      <h1 className="rankings-title">{t('rankings.title')}</h1>
-
       {/* Active Contests */}
       {activeContestsWithRankings.length > 0 && (
         <section className="rankings-section">

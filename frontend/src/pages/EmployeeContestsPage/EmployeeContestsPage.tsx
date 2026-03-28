@@ -24,7 +24,6 @@ function EmployeeContestsPage() {
   if (isLoading) {
     return (
       <div className="employee-contests-page">
-        <h1 className="employee-contests-title">{t('employee.contests.title')}</h1>
         <LoadingSkeleton lines={10} />
       </div>
     );
@@ -32,7 +31,6 @@ function EmployeeContestsPage() {
 
   return (
     <div className="employee-contests-page">
-      <h1 className="employee-contests-title">{t('employee.contests.title')}</h1>
       <p className="employee-contests-subtitle">{t('employee.contests.subtitle')}</p>
 
       <div className="employee-contests-actions">

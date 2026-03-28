@@ -85,7 +85,6 @@ function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <h1 className="profile-title">{t('profile.title')}</h1>
       <div className="profile-card">
         <div className="profile-header">
           <div className="profile-avatar">

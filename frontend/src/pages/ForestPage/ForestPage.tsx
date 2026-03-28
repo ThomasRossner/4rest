@@ -51,8 +51,6 @@ function ForestPage() {
 
   return (
     <div className="forest-page">
-      <h1 className="forest-title">{t('forest.title')}</h1>
-      
       {user && progress && (
         <section className="home-section" style={{ marginBottom: '2rem' }}>
           <div className="home-section-header">

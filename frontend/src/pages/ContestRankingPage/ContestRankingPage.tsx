@@ -30,9 +30,6 @@ function ContestRankingPage() {
   if (isLoading) {
     return (
       <div className="contest-ranking-page">
-        <div className="contest-ranking-header">
-          <h1 className="contest-ranking-title">{t('contests.ranking.title')}</h1>
-        </div>
         <LoadingSkeleton lines={10} />
       </div>
     );
@@ -48,7 +45,6 @@ function ContestRankingPage() {
           >
             ← {t('common.actions.back')}
           </button>
-          <h1 className="contest-ranking-title">{t('contests.ranking.title')}</h1>
         </div>
         <EmptyState
           title={t('contests.ranking.notFound')}
@@ -77,7 +73,7 @@ function ContestRankingPage() {
         >
           ← {t('common.actions.back')}
         </button>
-        <h1 className="contest-ranking-title">{contest.name || t('contests.ranking.unnamed')}</h1>
+        <h2 className="contest-ranking-title">{contest.name || t('contests.ranking.unnamed')}</h2>
       </div>
 
       <div className="contest-ranking-info">

@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useMatch } from 'react-router-dom';
+import { isForestCategoryRouteKey } from '../../constants/forestCategories';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
@@ -62,6 +63,44 @@ function Navigation() {
 
   // Get the first active contest for the button
   const activeContest = activeContests.length > 0 ? activeContests[0] : null;
+
+  const taskCategoryMatch = useMatch({ path: '/tasks/c/:categoryKey', end: true });
+  const categoryKey = taskCategoryMatch?.params.categoryKey;
+
+  const pageTitle = useMemo(() => {
+    const path = location.pathname;
+    if (path === '/' || path === '') {
+      return t('home.title');
+    }
+    if (path.startsWith('/tasks/c/') && categoryKey && isForestCategoryRouteKey(categoryKey)) {
+      return t(`tasks.categories.${categoryKey}`);
+    }
+    if (path.startsWith('/tasks')) {
+      return t('tasks.title');
+    }
+    if (path === '/forest') {
+      return t('forest.title');
+    }
+    if (path === '/rewards') {
+      return t('rewards.title');
+    }
+    if (path === '/statistics') {
+      return userRole === 'guest' ? t('rankings.title') : t('statistics.title');
+    }
+    if (path === '/profile') {
+      return t('profile.title');
+    }
+    if (path === '/points-bonus') {
+      return t('navigation.pointsBonus');
+    }
+    if (path === '/employee-contests') {
+      return t('navigation.contests');
+    }
+    if (path.startsWith('/contests/')) {
+      return t('contests.ranking.title');
+    }
+    return '';
+  }, [location.pathname, categoryKey, t, userRole]);
 
   // Handle click outside and update menu position
   useEffect(() => {
@@ -176,6 +215,14 @@ function Navigation() {
               </div>
             )}
           </div>
+          {pageTitle ? (
+            <h1 className="navigation-page-title">
+              <span className="navigation-page-title-text">{pageTitle}</span>
+            </h1>
+          ) : (
+            <div className="navigation-page-title navigation-page-title--empty" aria-hidden="true" />
+          )}
+          <div className="navigation-right">
           <div className="navigation-extra">
             {/* Empty for non-admin users, can be used for future items */}
           </div>
@@ -245,16 +292,17 @@ function Navigation() {
               document.body
             )}
           </div>
+          </div>
         </div>
       </nav>
       <nav className="navigation navigation-bottom">
         <div className="navigation-items">
           <Link
             to="/"
-            className={`navigation-logo-bottom ${location.pathname === '/' ? 'active' : ''}`}
+            className={`navigation-item ${location.pathname === '/' ? 'active' : ''}`}
           >
-            <span className="navigation-logo-icon">🌳</span>
-            <span className="navigation-logo-text">{t('navigation.home')}</span>
+            <span className="navigation-item-icon">🌳</span>
+            <span className="navigation-item-label">{t('navigation.home')}</span>
           </Link>
           {bottomNavItems.map((item) => {
             const isTasks = item.path === '/tasks';

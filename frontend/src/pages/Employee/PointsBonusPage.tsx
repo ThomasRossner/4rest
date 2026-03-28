@@ -72,9 +72,6 @@ function PointsBonusPage() {
 
   return (
     <div className="points-bonus-page">
-      <h1 className="points-bonus-title">
-        {getTranslation('employee.pointsBonus.title', 'Punkte-Bonus QR-Code generieren')}
-      </h1>
       <p className="points-bonus-description">
         {getTranslation('employee.pointsBonus.description', 'Geben Sie die Anzahl der zu vergebenden Punkte ein und generieren Sie einen QR-Code, den Gäste scannen können, um die Bonus-Punkte zu erhalten.')}
       </p>

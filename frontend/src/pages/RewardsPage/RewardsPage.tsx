@@ -173,8 +173,6 @@ function RewardsPage() {
           >
             ← {t('common.actions.back')}
           </button>
-          <h1 className="rewards-title">{t('rewards.title')}</h1>
-          <span className="rewards-map-header-spacer" aria-hidden="true" />
         </div>
         <div style={{ marginTop: 'var(--spacing-md)' }}>
           <UserLocationMap
@@ -200,121 +198,104 @@ function RewardsPage() {
   }
 
   return (
-    <div className="rewards-page">
+    <div className="rewards-page rewards-page--list">
+      <div className="rewards-sticky">
       <div className="rewards-header">
-        <h1 className="rewards-title">{t('rewards.title')}</h1>
         {showOnlineRewards ? (
-          <button
-            className="location-button"
-            onClick={() => {
-              setShowLocationMap(false);
-              setShowOnlineRewards(false);
-            }}
-          >
-            {t('rewards.prerequisites.clearFilter')}
-          </button>
-        ) : (
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-            <button
-              className="location-button"
-              onClick={() => {
-                setShowLocationMap(true);
-                setShowOnlineRewards(false);
-              }}
-              title={t('rewards.showLocation')}
-            >
-              {t('rewards.locationButton')}
-            </button>
             <button
               className="location-button"
               onClick={() => {
                 setShowLocationMap(false);
-                setShowOnlineRewards(true);
+                setShowOnlineRewards(false);
               }}
-              title={t('rewards.showOnline')}
             >
-              {t('rewards.onlineButton')}
+              {t('rewards.prerequisites.clearFilter')}
             </button>
-          </div>
+          ) : (
+            <div className="rewards-header-location-buttons">
+              <button
+                className="location-button"
+                onClick={() => {
+                  setShowLocationMap(true);
+                  setShowOnlineRewards(false);
+                }}
+                title={t('rewards.showLocation')}
+              >
+                {t('rewards.locationButton')}
+              </button>
+              <button
+                className="location-button"
+                onClick={() => {
+                  setShowLocationMap(false);
+                  setShowOnlineRewards(true);
+                }}
+                title={t('rewards.showOnline')}
+              >
+                {t('rewards.onlineButton')}
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="rewards-balance">
+          <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
+          <span className="rewards-balance-value">
+            {activeTeam?.totalPoints !== undefined ? (
+              <>
+                {activeTeam.totalPoints} / {points}
+              </>
+            ) : (
+              points
+            )}
+          </span>
+        </div>
+        {user && user.role === 'rezeption' && (
+          <button type="button" className="rewards-scan-button" onClick={() => setShowRewardScanner(true)}>
+            {t('rewards.scanner.button')}
+          </button>
+        )}
+        {user && user.role === 'guest' && (
+          <button type="button" className="rewards-scan-button" onClick={() => setShowPointsBonusScanner(true)}>
+            {t('rewards.scanPointsBonus')}
+          </button>
         )}
       </div>
-      <div className="rewards-balance">
-        <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
-        <span className="rewards-balance-value">
-          {activeTeam?.totalPoints !== undefined ? (
-            <>
-              {activeTeam.totalPoints} / {points}
-            </>
-          ) : (
-            points
-          )}
-        </span>
-      </div>
-      {/* Show reward scanner button for rezeption */}
-      {user && user.role === 'rezeption' && (
-        <button
-          className="rewards-scan-button"
-          onClick={() => setShowRewardScanner(true)}
-          style={{
-            width: '100%',
-            marginTop: '1rem',
-            padding: '1rem 1.5rem',
-            backgroundColor: 'var(--color-primary)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.375rem',
-            fontSize: '1.125rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          }}
-        >
-          {t('rewards.scanner.button')}
-        </button>
-      )}
-      {/* Only show scanner button for guests */}
-      {user && user.role === 'guest' && (
-        <button
-          className="rewards-scan-button"
-          onClick={() => setShowPointsBonusScanner(true)}
-          style={{
-            width: '100%',
-            marginTop: '1rem',
-            padding: '1rem 1.5rem',
-            backgroundColor: 'var(--color-primary)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.375rem',
-            fontSize: '1.125rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          }}
-        >
-          {t('rewards.scanPointsBonus')}
-        </button>
-      )}
-      {uiPolish && (
-        <div className="rewards-filter-container">
-          {(['all', 'discount', 'benefit', 'team_event'] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setTypeFilter(filter)}
-              className={`reward-filter-btn ${typeFilter === filter ? 'active' : ''}`}
-              aria-pressed={typeFilter === filter}
-            >
-              {t(`rewards.filters.${filter}`)}
-            </button>
+
+      <div className="rewards-scroll">
+        {uiPolish && (
+          <div className="rewards-filter-container">
+            {(['all', 'discount', 'benefit', 'team_event'] as const).map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setTypeFilter(filter)}
+                className={`reward-filter-btn ${typeFilter === filter ? 'active' : ''}`}
+                aria-pressed={typeFilter === filter}
+              >
+                {t(`rewards.filters.${filter}`)}
+              </button>
+            ))}
+          </div>
+        )}
+        {isLoading && <LoadingSkeleton lines={6} />}
+        {!isLoading && !isError && filteredRewards.length === 0 && (
+          <EmptyState title={t('rewards.empty.title')} description={t('rewards.empty.description')} />
+        )}
+
+        <div className="rewards-grid">
+          {!isLoading && !isError && filteredRewards.map((reward: any) => (
+            <RewardCard
+              key={reward.id}
+              reward={reward}
+              canAfford={!!user && (user.points >= reward.pointsCost || (activeTeam && (activeTeam.totalPoints || 0) >= reward.pointsCost))}
+              onRedeem={(id, cost) => {
+                const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
+                return handleRedeemClick(id, cost, useTeamPoints);
+              }}
+            />
           ))}
         </div>
-      )}
+      </div>
 
-      {isLoading && <LoadingSkeleton lines={6} />}
-      {!isLoading && !isError && filteredRewards.length === 0 && (
-        <EmptyState title={t('rewards.empty.title')} description={t('rewards.empty.description')} />
-      )}
-
-      {/* Keep QrCodeDisplay for backward compatibility if needed */}
       {activeRedemption && (
         <QrCodeDisplay
           qrToken={activeRedemption.qrToken}
@@ -328,8 +309,7 @@ function RewardsPage() {
       {showPointsBonusScanner && (
         <PointsBonusScanner
           onClose={() => setShowPointsBonusScanner(false)}
-          onSuccess={(pointsAwarded, newBalance) => {
-            // Points are already updated via API call
+          onSuccess={() => {
             setShowPointsBonusScanner(false);
           }}
         />
@@ -343,21 +323,6 @@ function RewardsPage() {
           }}
         />
       )}
-
-      <div className="rewards-grid">
-        {!isLoading && !isError && filteredRewards.map((reward: any) => (
-          <RewardCard
-            key={reward.id}
-            reward={reward}
-            canAfford={!!user && (user.points >= reward.pointsCost || (activeTeam && (activeTeam.totalPoints || 0) >= reward.pointsCost))}
-            onRedeem={(id, cost) => {
-              // Always use team points if user is in a team
-              const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
-              return handleRedeemClick(id, cost, useTeamPoints);
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
