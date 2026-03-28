@@ -145,6 +145,49 @@
   max-width: 500px;
 }
 
+/* Vollbild-Wrapper (Navigation + Belohnungsseite) */
+.points-bonus-scanner-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 999998;
+  background-color: var(--color-background, #f9fafb);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Punktebonus-Scanner: wenig Abstand oben/unten, Kamerafeld nutzt Resthöhe */
+.points-bonus-scanner.qr-scanner-page {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: max(0.25rem, env(safe-area-inset-top, 0px)) var(--spacing-sm)
+    max(0.5rem, env(safe-area-inset-bottom, 0px));
+  gap: var(--spacing-xs);
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.points-bonus-scanner .qr-scanner-header {
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 500px;
+  padding: 0;
+}
+
+.points-bonus-scanner .qr-scanner-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: min(500px, 100%);
+  max-height: min(100vw, calc(100dvh - 5.5rem));
+  aspect-ratio: 1;
+  height: auto;
+}
+
 .qr-scanner-error-hint {
   margin-top: var(--spacing-sm);
   font-size: 0.9rem;

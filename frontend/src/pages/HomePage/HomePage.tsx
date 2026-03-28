@@ -34,6 +34,20 @@ function HomePage() {
     }
   }, [user]);
 
+  // Verhindert Seiten-Scroll auf der Titelseite (iOS/Chrome; ergänzt layout--home)
+  useEffect(() => {
+    if (!user) return;
+    const html = document.documentElement;
+    const prevHtml = html.style.overflow;
+    const prevBody = document.body.style.overflow;
+    html.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+    };
+  }, [user]);
+
   if (!user) {
     return (
       <div className="home-page">

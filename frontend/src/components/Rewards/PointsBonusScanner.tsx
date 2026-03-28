@@ -266,12 +266,9 @@ export function PointsBonusScanner({ onClose, onSuccess }: PointsBonusScannerPro
   };
 
   return (
-    <div className="qr-scanner-page">
+    <div className="qr-scanner-page points-bonus-scanner">
+      <h1 className="sr-only">{t('rewards.pointsBonus.scanTitle')}</h1>
       <div className="qr-scanner-header">
-        <div className="qr-scanner-header-content">
-          <h1 className="qr-scanner-title">{t('rewards.pointsBonus.scanTitle') || 'Scan Points Bonus QR Code'}</h1>
-          <p className="qr-scanner-subtitle">{t('rewards.pointsBonus.scanSubtitle') || 'Scan a QR code to receive bonus points'}</p>
-        </div>
         {onClose && (
           <button
             type="button"

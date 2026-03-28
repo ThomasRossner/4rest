@@ -89,10 +89,12 @@ export function ContestQrCodeCarousel({
       });
       onDissolve?.();
     } catch (error: any) {
+      const apiMsg =
+        error?.response?.data?.message || error?.response?.data?.error || error?.message;
       showToast({
         type: 'error',
         title: t('contests.dissolve.error'),
-        message: error?.response?.data?.error || error?.message || t('contests.dissolve.errorMessage'),
+        message: apiMsg || t('contests.dissolve.errorMessage'),
       });
     } finally {
       setIsDissolving(false);

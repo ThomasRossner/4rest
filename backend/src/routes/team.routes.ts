@@ -39,7 +39,8 @@ router.post('/bulk/delete', authenticate, requireRole('administrator'), bulkDele
 
 // Dynamic routes - must come after specific routes
 // DELETE route must come BEFORE GET /:id to avoid route conflicts
-router.delete('/:id', authenticate, requireRole('administrator', 'rezeption'), dissolveTeamController);
+// Ersteller (z. B. Gäste) dürfen auflösen; Berechtigung prüft dissolveTeam() im Controller/Service
+router.delete('/:id', authenticate, dissolveTeamController);
 router.get('/:id', authenticate, getTeamDetailsController);
 router.get('/:id/total-points', authenticate, getTeamTotalPointsController);
 router.get('/:id/ranking', authenticate, getTeamRankingController);

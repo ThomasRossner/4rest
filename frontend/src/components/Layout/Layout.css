@@ -4,6 +4,23 @@
   min-height: 100vh;
 }
 
+/* Startseite: kein Seiten-Scroll — fester Viewport, Inhalt nur im Flex-Bereich */
+.layout.layout--home {
+  min-height: unset;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.layout-main.layout-main--home {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .layout-main {
   flex: 1;
   padding: var(--spacing-md);
@@ -11,6 +28,7 @@
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
   overflow-x: hidden;
   box-sizing: border-box;
 }

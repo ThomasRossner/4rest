@@ -1,5 +1,10 @@
 .rewards-page {
   padding: var(--spacing-lg) 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Liste: Kopf, Punkte-Banner, QR-Button fix; Belohnungen darunter in 2 Spalten scrollen */
@@ -8,7 +13,8 @@
   flex-direction: column;
   min-height: 0;
   max-height: calc(100dvh - 7rem);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: hidden;
   padding-top: var(--spacing-sm);
   padding-left: var(--spacing-xs);
   padding-right: var(--spacing-xs);
@@ -23,6 +29,8 @@
 
 .rewards-sticky {
   flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
   background: var(--color-background, #fff);
   padding-bottom: var(--spacing-sm);
   z-index: 20;
@@ -31,6 +39,9 @@
 .rewards-scroll {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--spacing-lg);
@@ -316,9 +327,13 @@
 
 .rewards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* min(100%, 280px): verhindert horizontales Scrollen bei schmalen Viewports */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: var(--spacing-lg);
   margin-top: var(--spacing-md);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .reward-card {
@@ -334,6 +349,9 @@
   position: relative;
   overflow: hidden;
   border: 2px solid transparent;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .reward-card::before {

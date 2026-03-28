@@ -85,10 +85,12 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
       });
       onDissolve?.();
     } catch (error: any) {
+      const apiMsg =
+        error?.response?.data?.message || error?.response?.data?.error || error?.message;
       showToast({
         type: 'error',
         title: t('teams.dissolve.error') || 'Error',
-        message: error?.response?.data?.error || error?.message || t('teams.dissolve.errorMessage') || 'Failed to dissolve team',
+        message: apiMsg || t('teams.dissolve.errorMessage') || 'Failed to dissolve team',
       });
     } finally {
       setIsDissolving(false);

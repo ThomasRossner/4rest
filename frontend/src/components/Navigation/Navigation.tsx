@@ -323,7 +323,7 @@ function Navigation() {
         </div>
       </nav>
       {showPointsBonusScanner && createPortal(
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999998, backgroundColor: 'var(--color-background, #f9fafb)' }}>
+        <div className="points-bonus-scanner-portal">
           <PointsBonusScanner
             onClose={() => setShowPointsBonusScanner(false)}
             onSuccess={(pointsAwarded, newBalance) => {

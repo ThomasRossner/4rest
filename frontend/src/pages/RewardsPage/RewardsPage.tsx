@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
@@ -305,14 +306,18 @@ function RewardsPage() {
         />
       )}
 
-      {showPointsBonusScanner && (
-        <PointsBonusScanner
-          onClose={() => setShowPointsBonusScanner(false)}
-          onSuccess={() => {
-            setShowPointsBonusScanner(false);
-          }}
-        />
-      )}
+      {showPointsBonusScanner &&
+        createPortal(
+          <div className="points-bonus-scanner-portal">
+            <PointsBonusScanner
+              onClose={() => setShowPointsBonusScanner(false)}
+              onSuccess={() => {
+                setShowPointsBonusScanner(false);
+              }}
+            />
+          </div>,
+          document.body
+        )}
 
       {showRewardScanner && (
         <RewardScanner

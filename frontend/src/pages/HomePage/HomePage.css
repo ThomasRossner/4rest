@@ -2,29 +2,16 @@
   padding: var(--spacing-lg) 0;
 }
 
-/* Entspricht Layout: .layout-main — eine Viewporthöhe ohne Seiten-Scroll */
+/* Füllt .layout-main--home; kein Seiten-Scroll (Höhe kommt vom Layout) */
 .home-page.home-page--no-scroll {
-  --home-main-pad-top: calc(var(--spacing-md) + 80px);
-  --home-main-pad-bottom: var(--spacing-md);
-  height: calc(
-    100dvh - var(--home-main-pad-top) - var(--home-main-pad-bottom)
-  );
-  max-height: calc(
-    100dvh - var(--home-main-pad-top) - var(--home-main-pad-bottom)
-  );
+  flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   padding: var(--spacing-sm) 0;
   box-sizing: border-box;
-}
-
-@media (max-width: 1024px) {
-  .home-page.home-page--no-scroll {
-    --home-main-pad-top: calc(var(--spacing-xs) + 70px);
-    --home-main-pad-bottom: calc(var(--spacing-xs) + 80px + env(safe-area-inset-bottom, 0px));
-  }
 }
 
 .home-page--no-scroll .home-hero {
