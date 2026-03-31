@@ -19,13 +19,16 @@ EOF
 fi
 
 # Now connect and deploy
-echo "Connecting to IONOS server..."
+# DEPLOY_NO_CACHE=1 ./scripts/deploy-ionos.sh  →  docker compose build --no-cache (alles neu, langsam)
+DEPLOY_NO_CACHE="${DEPLOY_NO_CACHE:-0}"
+echo "Connecting to IONOS server... (DEPLOY_NO_CACHE=${DEPLOY_NO_CACHE})"
 # Häufige Keepalives + hohes CountMax: lange Remote-Skripte (Migrationen, Docker-Build) ohne „Broken pipe“
 ssh -o StrictHostKeyChecking=no \
   -o TCPKeepAlive=yes \
   -o ServerAliveInterval=10 \
   -o ServerAliveCountMax=999 \
-  "${SSH_USER}@${SSH_HOST}" << 'REMOTE_SCRIPT'
+  "${SSH_USER}@${SSH_HOST}" \
+  env DEPLOY_NO_CACHE="$DEPLOY_NO_CACHE" bash -s << 'REMOTE_SCRIPT'
 # Find the deployment directory
 if [ -d "/root/4rest" ]; then
     DEPLOY_DIR="/root/4rest"
@@ -274,8 +277,21 @@ if [ "$SKIP_MIGRATIONS" = false ]; then
 fi
 
 echo ""
-echo "==> Building Docker images..."
-$COMPOSE_CMD -f docker-compose.homeserver.yml build --no-cache
+# BuildKit „tty“-Fortschritt liefert über SSH oft kaum Output → wirkt wie Hängen.
+# plain: jede Zeile sofort; nacheinander: weniger RAM/Swap als parallel backend+frontend.
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+export BUILDKIT_PROGRESS=plain
+NO_CACHE_FLAG=""
+if [ "${DEPLOY_NO_CACHE:-0}" = "1" ]; then
+    NO_CACHE_FLAG="--no-cache"
+    echo "==> Building Docker images (full rebuild, --no-cache; kann viele Minuten dauern)..."
+else
+    echo "==> Building Docker images (layer cache; DEPLOY_NO_CACHE=1 für alles neu)..."
+fi
+echo "  → Zuerst Backend, dann Frontend (seriell, --progress=plain)."
+$COMPOSE_CMD --progress=plain -f docker-compose.homeserver.yml build $NO_CACHE_FLAG backend
+$COMPOSE_CMD --progress=plain -f docker-compose.homeserver.yml build $NO_CACHE_FLAG frontend
 
 echo ""
 echo "==> Stopping old containers..."

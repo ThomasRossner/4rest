@@ -14,6 +14,8 @@ RUN if [ -f package-lock.json ]; then npm ci --no-workspaces; else npm install -
 # Copy source code
 COPY frontend/ .
 
+# Vite: genug Heap für große Bundles (auf kleinen VPS sonst OOM/Swap → „hängt“)
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 # Build application
 RUN npm run build
 
