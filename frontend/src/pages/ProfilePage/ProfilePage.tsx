@@ -11,6 +11,9 @@ import { ContestJoiner } from '../../components/Contests/ContestJoiner';
 import { TeamQrCodeCarousel } from '../../components/Teams/TeamQrCodeCarousel';
 import { ContestQrCodeCarousel } from '../../components/Contests/ContestQrCodeCarousel';
 import { getUserInitials } from '../../utils/userInitials';
+import PlayerProfileOnboarding from '../../components/PlayerProfile/PlayerProfileOnboarding';
+import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
+import { getForestDisplayName, getPlayerCharacterEmoji } from '../../constants/playerCharacter';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -70,6 +73,8 @@ function ProfilePage() {
   const [showTeamJoiner, setShowTeamJoiner] = useState(false);
   const [showContestCreator, setShowContestCreator] = useState(false);
   const [showContestJoiner, setShowContestJoiner] = useState(false);
+  const [showPlayerTypeModal, setShowPlayerTypeModal] = useState(false);
+  const [showPlayerRetake, setShowPlayerRetake] = useState(false);
 
   const sihotGuest = user?.sihotGuest;
   const sihotReservations = user?.sihotReservations ?? [];
@@ -125,6 +130,57 @@ function ProfilePage() {
             <span className="profile-stat-label">{t('profile.stats.trees')}</span>
           </div>
         </div>
+
+        {user?.role === 'guest' && user.playerProfile && (
+          <>
+            <div className="profile-player-section">
+              <h3 className="profile-player-section__title">{t('playerProfile.profileSection.title')}</h3>
+              <div className="profile-player-section__row">
+                <span className="profile-player-section__emoji" aria-hidden>
+                  {getPlayerCharacterEmoji(user.playerProfile)}
+                </span>
+                <div className="profile-player-section__meta">
+                  <p className="profile-player-section__name">
+                    {getForestDisplayName(user.name, user.playerProfile)}
+                  </p>
+                  <div className="profile-player-section__actions">
+                    <button
+                      type="button"
+                      className="profile-player-section__btn"
+                      onClick={() => setShowPlayerTypeModal(true)}
+                    >
+                      {t('playerProfile.moreAbout.shortCta')}
+                    </button>
+                    <button
+                      type="button"
+                      className="profile-player-section__btn profile-player-section__btn--secondary"
+                      onClick={() => setShowPlayerRetake(true)}
+                    >
+                      {t('playerProfile.profileSection.retake')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {showPlayerTypeModal && user.playerProfile && (
+              <PlayerProfileTypeModal
+                profile={user.playerProfile}
+                onClose={() => setShowPlayerTypeModal(false)}
+              />
+            )}
+            {showPlayerRetake && (
+              <PlayerProfileOnboarding
+                variant="inline"
+                initialProfile={user.playerProfile}
+                onDone={() => {
+                  setShowPlayerRetake(false);
+                  void api.refreshMe();
+                }}
+              />
+            )}
+          </>
+        )}
+
         <div className="profile-language">
           <span className="profile-language-label">{t('profile.language.label')}</span>
           <div className="profile-language-buttons">

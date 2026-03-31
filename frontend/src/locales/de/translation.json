@@ -34,6 +34,69 @@
     "noData": "Keine Daten verfügbar",
     "all": "Alle"
   },
+  "playerProfile": {
+    "intro": {
+      "title": "Schön, dass du hier bist!",
+      "body": "In dieser Welt steckt mehr, als man auf den ersten Blick sieht. Antworte auf ein paar kurze Fragen – und wir verraten dir, welches Wesen tief in dir schlummert.",
+      "start": "Los geht’s",
+      "skipLater": "Später entscheiden"
+    },
+    "skipHint": "Du kannst deinen Charakter jederzeit unter „Profil“ oder durch Klick auf deine Figur im Wald finden.",
+    "progress": "Frage {{current}} von {{total}}",
+    "continue": "Weiter",
+    "finish": "Abschließen",
+    "scaleAria": "Antwort auf einer Skala von 0 bis 4",
+    "name": {
+      "title": "Wie dürfen wir dich nennen?",
+      "hint": "Optional – du kannst das Feld leer lassen.",
+      "label": "Anzeigename",
+      "placeholder": "z. B. Vorname oder Spitzname"
+    },
+    "error": {
+      "generic": "Die Eingabe konnte nicht gespeichert werden.",
+      "loadProfile": "Profil konnte nicht geladen werden."
+    },
+    "dyads": {
+      "1": {
+        "scenario": "Stell dir deine nächsten Wochen vor: Was gibt dir mehr Halt – klare Ziele und Meilensteine oder der offene Weg und die Momente unterwegs?",
+        "poleLow": "Eher zielorientiert",
+        "poleHigh": "Eher erlebnisorientiert"
+      },
+      "2": {
+        "scenario": "Wenn du einen freien Tag planst: Suchst du lieber feste Struktur und feste Zeiten – oder viel Freiraum für Spontanes?",
+        "poleLow": "Eher Struktur",
+        "poleHigh": "Eher Freiheit"
+      },
+      "3": {
+        "scenario": "In einer Gruppe: Übernimmst du gern die Richtung – oder fließt du lieber mit und stärkst das Miteinander?",
+        "poleLow": "Eher Führung / Kontrolle",
+        "poleHigh": "Eher Annehmen / Mitgehen"
+      },
+      "4": {
+        "scenario": "Bei Entscheidungen: Was wiegt für dich schwerer – dein eigenes Wohlbefinden oder das Wohl für alle Beteiligten?",
+        "poleLow": "Eher Eigeninteresse",
+        "poleHigh": "Eher Gemeinwohl"
+      }
+    },
+    "inline": {
+      "cancel": "Abbrechen"
+    },
+    "moreAbout": {
+      "title": "Mehr zu meinem Typ",
+      "shortCta": "Mehr zu meinem Typ",
+      "dyadHeading": "Dyade {{n}}",
+      "noScales": "Keine Auswertungsdaten vorhanden.",
+      "skippedBody": "Du hast die Fragen zunächst übersprungen. Dein Symbol ist die Schnecke (Undecided). Unter „Fragen erneut beantworten“ kannst du die Umfrage nachholen."
+    },
+    "forest": {
+      "figureAria": "Charakter und Anzeigename – Tippen für Details",
+      "undecidedHint": "Bitte schließe die Kurzumfrage ab (erscheint nach der Anmeldung)."
+    },
+    "profileSection": {
+      "title": "Dein Charakter",
+      "retake": "Fragen erneut beantworten"
+    }
+  },
   "navigation": {
     "home": "Roots",
     "tasks": "Aufgaben",

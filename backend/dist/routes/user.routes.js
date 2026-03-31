@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getMe, getUserProgress, getUserProfile, updateUserProfile, listUsers, getUserDetails, updateUserRole, updateUserPoints, toggleUserActive, resetUserPassword, setUserPassword, deleteUser, getUserStatistics, getUserTimeline, createUserByAdmin, } from '../controllers/user.controller.js';
+import { getMe, updateMyPlayerProfile, getUserProgress, getUserProfile, updateUserProfile, listUsers, getUserDetails, updateUserRole, updateUserPoints, toggleUserActive, resetUserPassword, setUserPassword, deleteUser, getUserStatistics, getUserTimeline, createUserByAdmin, } from '../controllers/user.controller.js';
 const router = Router();
 // Public routes (authenticated users)
 router.get('/me', authenticate, getMe);
+router.patch('/me/player-profile', authenticate, updateMyPlayerProfile);
 router.get('/:id/progress', authenticate, getUserProgress);
 router.get('/:id/timeline', authenticate, getUserTimeline);
 router.get('/:id/profile', authenticate, getUserProfile);

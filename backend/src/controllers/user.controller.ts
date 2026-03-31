@@ -5,6 +5,7 @@ import {
   getUserProfileService,
   updateUserProfileService,
   getMeService,
+  updatePlayerProfileForMeService,
   listUsersService,
   getUserDetailsService,
   updateUserRoleService,
@@ -31,6 +32,24 @@ export const getMe: RequestHandler = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
   res.json({ user });
+});
+
+/** PATCH /users/me/player-profile – Spielerprofilierung (Dyaden, Skip, Anzeigename) */
+export const updateMyPlayerProfile: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const user = await updatePlayerProfileForMeService(authReq.user.id, req.body ?? {});
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Bad request';
+    res.status(400).json({ error: message });
+  }
 });
 
 export const getUserProgress: RequestHandler = asyncHandler(async (req, res) => {

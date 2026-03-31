@@ -1262,9 +1262,43 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserWithPlayerProfile'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /users/me/player-profile:
+    patch:
+      tags:
+        - Users
+      summary: Spielerprofilierung aktualisieren
+      description: |
+        Dyaden-Skalen (0–4), Skip (Undecided) oder optionaler Anzeigename.
+        Bei `status: completed` sind vier Werte in `dyadScales` erforderlich.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlayerProfileRequest'
+      responses:
+        '200':
+          description: Aktualisierter Nutzer (wie GET /users/me)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserWithPlayerProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /users/{id}/progress:
     get:
@@ -1902,6 +1936,68 @@ components:
         - email
         - name
         - role
+
+    PlayerProfile:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, skipped, completed]
+        dyadScales:
+          type: array
+          nullable: true
+          minItems: 4
+          maxItems: 4
+          items:
+            type: integer
+            minimum: 0
+            maximum: 4
+        dominantDyad:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 4
+        profileDisplayName:
+          type: string
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - status
+        - dyadScales
+        - dominantDyad
+        - profileDisplayName
+        - completedAt
+
+    UserWithPlayerProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            playerProfile:
+              $ref: '#/components/schemas/PlayerProfile'
+
+    UpdatePlayerProfileRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [skipped, completed]
+        dyadScales:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: integer
+            minimum: 0
+            maximum: 4
+          description: Nur bei status completed erforderlich (Dyade 1–4)
+        profileDisplayName:
+          type: string
+          nullable: true
+          maxLength: 128
 
     LoginResponse:
       type: object

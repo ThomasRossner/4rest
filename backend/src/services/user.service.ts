@@ -235,11 +235,83 @@ export async function getPreferredLanguage(userId: string): Promise<'de' | 'en' 
   return row.preferred_language === 'en' ? 'en' : 'de';
 }
 
+export type PlayerProfileStatus = 'pending' | 'skipped' | 'completed';
+
+/** Höchster Skalenwert gewinnt; bei Gleichstand niedrigere Dyaden-Nummer (1 vor 2). */
+export function computeDominantDyad(
+  s1: number,
+  s2: number,
+  s3: number,
+  s4: number
+): 1 | 2 | 3 | 4 {
+  const scales = [s1, s2, s3, s4];
+  let maxVal = -1;
+  let idx = 0;
+  for (let i = 0; i < 4; i++) {
+    const v = scales[i]!;
+    if (v > maxVal) {
+      maxVal = v;
+      idx = i;
+    }
+  }
+  return (idx + 1) as 1 | 2 | 3 | 4;
+}
+
+function mapPlayerProfileFromRow(user: Record<string, unknown>) {
+  const st = user.player_profile_status as string | undefined;
+  const status: PlayerProfileStatus =
+    st === 'skipped' || st === 'completed' || st === 'pending' ? st : 'pending';
+  const d1 = user.dyad_scale_1;
+  const d2 = user.dyad_scale_2;
+  const d3 = user.dyad_scale_3;
+  const d4 = user.dyad_scale_4;
+  const allSet =
+    d1 !== null &&
+    d1 !== undefined &&
+    d2 !== null &&
+    d2 !== undefined &&
+    d3 !== null &&
+    d3 !== undefined &&
+    d4 !== null &&
+    d4 !== undefined;
+  const dyadScales: [number, number, number, number] | null = allSet
+    ? [
+        Number(d1),
+        Number(d2),
+        Number(d3),
+        Number(d4),
+      ]
+    : null;
+  const dom = user.dominant_dyad;
+  const domN = dom === null || dom === undefined ? NaN : Number(dom);
+  const dominantDyad =
+    !Number.isNaN(domN) && domN >= 1 && domN <= 4 ? (domN as 1 | 2 | 3 | 4) : null;
+  const completedAt = user.player_profile_completed_at;
+  const completedIso =
+    completedAt instanceof Date
+      ? completedAt.toISOString()
+      : typeof completedAt === 'string'
+        ? completedAt
+        : null;
+  return {
+    playerProfile: {
+      status,
+      dyadScales,
+      dominantDyad,
+      profileDisplayName:
+        typeof user.profile_display_name === 'string' ? user.profile_display_name : null,
+      completedAt: completedIso,
+    },
+  };
+}
+
 export async function getMeService(userId: string) {
   const db = getPool();
   const result = await db.query(
     `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language,
-            forest_points_kommunikation, forest_points_mensch, forest_points_natur, forest_points_ressourcen
+            forest_points_kommunikation, forest_points_mensch, forest_points_natur, forest_points_ressourcen,
+            player_profile_status, dyad_scale_1, dyad_scale_2, dyad_scale_3, dyad_scale_4,
+            dominant_dyad, profile_display_name, player_profile_completed_at
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -266,7 +338,114 @@ export async function getMeService(userId: string) {
     sihotGuest: user.sihot_guest_data?.guest ?? null,
     sihotReservations: user.sihot_guest_data?.reservations ?? [],
     preferredLanguage: lang,
+    ...mapPlayerProfileFromRow(user as Record<string, unknown>),
   };
+}
+
+export interface UpdateMyPlayerProfileBody {
+  status?: 'skipped' | 'completed';
+  /** Vier Werte 0–4 in Reihenfolge Dyade 1–4; bei status completed erforderlich */
+  dyadScales?: number[];
+  /** Optionaler Anzeigename (Wald/Profil); leer wird als null gespeichert */
+  profileDisplayName?: string | null;
+}
+
+export async function updatePlayerProfileForMeService(userId: string, body: UpdateMyPlayerProfileBody) {
+  const db = getPool();
+  const hasStatus = body.status !== undefined;
+  const hasScales = body.dyadScales !== undefined;
+  const hasName = body.profileDisplayName !== undefined;
+
+  if (!hasStatus && !hasScales && !hasName) {
+    throw new Error('No player profile fields to update');
+  }
+
+  if (hasStatus && body.status === 'skipped') {
+    await db.query(
+      `UPDATE users SET
+        player_profile_status = 'skipped',
+        dyad_scale_1 = NULL,
+        dyad_scale_2 = NULL,
+        dyad_scale_3 = NULL,
+        dyad_scale_4 = NULL,
+        dominant_dyad = NULL,
+        player_profile_completed_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1`,
+      [userId]
+    );
+    if (hasName) {
+      const raw = body.profileDisplayName;
+      const trimmed =
+        typeof raw === 'string' ? raw.trim().slice(0, 128) : '';
+      await db.query(
+        `UPDATE users SET profile_display_name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+        [trimmed === '' ? null : trimmed, userId]
+      );
+    }
+    return getMeService(userId);
+  }
+
+  if (hasStatus && body.status === 'completed') {
+    const scales = body.dyadScales;
+    if (!Array.isArray(scales) || scales.length !== 4) {
+      throw new Error('dyadScales must be an array of four numbers (0–4)');
+    }
+    const nums = scales.map((n) => Number(n));
+    for (let i = 0; i < 4; i++) {
+      const n = nums[i];
+      if (!Number.isInteger(n) || n < 0 || n > 4) {
+        throw new Error(`dyadScales[${i}] must be an integer from 0 to 4`);
+      }
+    }
+    const dominant = computeDominantDyad(nums[0]!, nums[1]!, nums[2]!, nums[3]!);
+    let displayName: string | null = null;
+    if (hasName) {
+      const raw = body.profileDisplayName;
+      if (typeof raw === 'string') {
+        const t = raw.trim().slice(0, 128);
+        displayName = t === '' ? null : t;
+      } else if (raw === null) {
+        displayName = null;
+      }
+    } else {
+      const cur = await db.query(
+        'SELECT profile_display_name FROM users WHERE id = $1',
+        [userId]
+      );
+      displayName = (cur.rows[0]?.profile_display_name as string | null) ?? null;
+    }
+
+    await db.query(
+      `UPDATE users SET
+        player_profile_status = 'completed',
+        dyad_scale_1 = $1,
+        dyad_scale_2 = $2,
+        dyad_scale_3 = $3,
+        dyad_scale_4 = $4,
+        dominant_dyad = $5,
+        profile_display_name = $6,
+        player_profile_completed_at = COALESCE(player_profile_completed_at, CURRENT_TIMESTAMP),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $7`,
+      [nums[0], nums[1], nums[2], nums[3], dominant, displayName, userId]
+    );
+    return getMeService(userId);
+  }
+
+  if (!hasStatus && hasName && !hasScales) {
+    const raw = body.profileDisplayName;
+    const trimmed =
+      typeof raw === 'string' ? raw.trim().slice(0, 128) : '';
+    const value = raw === null ? null : trimmed === '' ? null : trimmed;
+    await db.query(
+      `UPDATE users SET profile_display_name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [value, userId]
+    );
+    return getMeService(userId);
+  }
+
+  throw new Error('Invalid player profile update: use status skipped/completed, or profileDisplayName alone');
 }
 
 export async function getUserProfileService(userId: string) {

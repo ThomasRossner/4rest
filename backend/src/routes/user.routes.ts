@@ -3,6 +3,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
 import {
   getMe,
+  updateMyPlayerProfile,
   getUserProgress,
   getUserProfile,
   updateUserProfile,
@@ -23,6 +24,7 @@ const router = Router();
 
 // Public routes (authenticated users)
 router.get('/me', authenticate, getMe);
+router.patch('/me/player-profile', authenticate, updateMyPlayerProfile);
 router.get('/:id/progress', authenticate, getUserProgress);
 router.get('/:id/timeline', authenticate, getUserTimeline);
 router.get('/:id/profile', authenticate, getUserProfile);

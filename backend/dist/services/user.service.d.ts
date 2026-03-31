@@ -60,7 +60,50 @@ export declare function getUserProgressService(userId: string): Promise<{
     co2Saved: number;
 }>;
 export declare function getPreferredLanguage(userId: string): Promise<'de' | 'en' | null>;
+export type PlayerProfileStatus = 'pending' | 'skipped' | 'completed';
+/** Höchster Skalenwert gewinnt; bei Gleichstand niedrigere Dyaden-Nummer (1 vor 2). */
+export declare function computeDominantDyad(s1: number, s2: number, s3: number, s4: number): 1 | 2 | 3 | 4;
 export declare function getMeService(userId: string): Promise<{
+    playerProfile: {
+        status: PlayerProfileStatus;
+        dyadScales: [number, number, number, number];
+        dominantDyad: 1 | 4 | 2 | 3;
+        profileDisplayName: string;
+        completedAt: string;
+    };
+    id: any;
+    email: any;
+    name: any;
+    role: any;
+    userType: any;
+    points: any;
+    forestPoints: {
+        kommunikation: number;
+        mensch: number;
+        natur: number;
+        ressourcen: number;
+    };
+    avatar: any;
+    sihotGuestId: any;
+    sihotGuest: any;
+    sihotReservations: any;
+    preferredLanguage: string;
+}>;
+export interface UpdateMyPlayerProfileBody {
+    status?: 'skipped' | 'completed';
+    /** Vier Werte 0–4 in Reihenfolge Dyade 1–4; bei status completed erforderlich */
+    dyadScales?: number[];
+    /** Optionaler Anzeigename (Wald/Profil); leer wird als null gespeichert */
+    profileDisplayName?: string | null;
+}
+export declare function updatePlayerProfileForMeService(userId: string, body: UpdateMyPlayerProfileBody): Promise<{
+    playerProfile: {
+        status: PlayerProfileStatus;
+        dyadScales: [number, number, number, number];
+        dominantDyad: 1 | 4 | 2 | 3;
+        profileDisplayName: string;
+        completedAt: string;
+    };
     id: any;
     email: any;
     name: any;

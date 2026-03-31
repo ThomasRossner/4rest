@@ -1,4 +1,5 @@
 import { getPool } from '../database/connection.js';
+import { taskCategoryLabelToForestKey } from '../constants/forestCategories.js';
 import {
   FOREST_AREA_SPACING,
   FOREST_MAX_TREES_PER_BLOCK,
@@ -18,14 +19,17 @@ export async function getForestService(userId: string) {
     `SELECT 
        ft.id,
        ft.tree_type,
+       ft.task_id,
        ft.position_x,
        ft.position_y,
        ft.position_z,
        ft.planted_at,
        ft.growth_points,
        ft.stage,
-       ft.size
+       ft.size,
+       t.category AS task_category_label
      FROM forest_trees ft
+     LEFT JOIN tasks t ON ft.task_id = t.id
      WHERE ft.user_id = $1
      ORDER BY ft.planted_at DESC`,
     [userId]
@@ -74,6 +78,7 @@ export async function getForestService(userId: string) {
       growthPoints: row.growth_points || 1,
       stage: row.stage || 'sapling',
       size: parseFloat(row.size || 0.035),
+      forestCategory: taskCategoryLabelToForestKey(row.task_category_label),
     });
   }
 
@@ -235,7 +240,8 @@ export async function getUserForestService(userId: string) {
        ft.growth_points,
        ft.stage,
        ft.size,
-       t.title as task_title
+       t.title as task_title,
+       t.category AS task_category_label
      FROM forest_trees ft
      LEFT JOIN tasks t ON ft.task_id = t.id
      WHERE ft.user_id = $1
@@ -253,6 +259,7 @@ export async function getUserForestService(userId: string) {
       stage: row.stage || 'sapling',
       size: parseFloat(row.size || 0.035),
       taskTitle: row.task_title,
+      forestCategory: taskCategoryLabelToForestKey(row.task_category_label),
     })),
     totalTrees: result.rows.length,
   };

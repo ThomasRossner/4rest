@@ -1,5 +1,7 @@
 import { RequestHandler } from 'express';
 export declare const getMe: RequestHandler;
+/** PATCH /users/me/player-profile – Spielerprofilierung (Dyaden, Skip, Anzeigename) */
+export declare const updateMyPlayerProfile: RequestHandler;
 export declare const getUserProgress: RequestHandler;
 export declare const getUserProfile: RequestHandler;
 export declare const updateUserProfile: RequestHandler;

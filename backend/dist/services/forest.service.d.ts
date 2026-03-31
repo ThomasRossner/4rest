@@ -21,6 +21,7 @@ export declare function getUserForestService(userId: string): Promise<{
         stage: any;
         size: number;
         taskTitle: any;
+        forestCategory: "kommunikation" | "mensch" | "natur" | "ressourcen";
     }[];
     totalTrees: number;
 }>;

@@ -54,6 +54,15 @@ export const api = {
     return res.data;
   },
 
+  async updateMyPlayerProfile(data: {
+    status?: 'skipped' | 'completed';
+    dyadScales?: number[];
+    profileDisplayName?: string | null;
+  }) {
+    const res = await apiClient.patch('/users/me/player-profile', data);
+    return res.data;
+  },
+
   async getMe() {
     try {
       // Prefer /users/me if available

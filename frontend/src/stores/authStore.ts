@@ -190,6 +190,16 @@ export interface SihotReservationSummary {
   balance: number;
 }
 
+export type PlayerProfileStatus = 'pending' | 'skipped' | 'completed';
+
+export interface PlayerProfilePayload {
+  status: PlayerProfileStatus;
+  dyadScales: [number, number, number, number] | null;
+  dominantDyad: 1 | 2 | 3 | 4 | null;
+  profileDisplayName: string | null;
+  completedAt: string | null;
+}
+
 export interface User {
   id: string;
   email: string | null;
@@ -210,6 +220,8 @@ export interface User {
   sihotGuestId?: string | null;
   sihotGuest?: SihotGuestProfile | null;
   sihotReservations?: SihotReservationSummary[];
+  /** Spielerprofilierung (Dyaden, Skip, Anzeigename) – aus GET /users/me */
+  playerProfile?: PlayerProfilePayload;
 }
 
 interface AuthState {

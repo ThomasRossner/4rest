@@ -85,6 +85,7 @@ export async function runMigrations() {
             '061_luise_demo_accounts',
             '062_tasks_quiz_survey_i18n',
             '063_forest_category_points',
+            '064_player_profile',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({

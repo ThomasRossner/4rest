@@ -1,4 +1,5 @@
 import { getPool } from '../database/connection.js';
+import { taskCategoryLabelToForestKey } from '../constants/forestCategories.js';
 import { FOREST_AREA_SPACING, } from './forestLayout.js';
 /**
  * Get forest data for a specific user
@@ -10,14 +11,17 @@ export async function getForestService(userId) {
     const result = await db.query(`SELECT 
        ft.id,
        ft.tree_type,
+       ft.task_id,
        ft.position_x,
        ft.position_y,
        ft.position_z,
        ft.planted_at,
        ft.growth_points,
        ft.stage,
-       ft.size
+       ft.size,
+       t.category AS task_category_label
      FROM forest_trees ft
+     LEFT JOIN tasks t ON ft.task_id = t.id
      WHERE ft.user_id = $1
      ORDER BY ft.planted_at DESC`, [userId]);
     // Get user index to calculate primary origin
@@ -55,6 +59,7 @@ export async function getForestService(userId) {
             growthPoints: row.growth_points || 1,
             stage: row.stage || 'sapling',
             size: parseFloat(row.size || 0.035),
+            forestCategory: taskCategoryLabelToForestKey(row.task_category_label),
         });
     }
     // First, collect all blocks that actually contain trees and store tree block info
@@ -192,7 +197,8 @@ export async function getUserForestService(userId) {
        ft.growth_points,
        ft.stage,
        ft.size,
-       t.title as task_title
+       t.title as task_title,
+       t.category AS task_category_label
      FROM forest_trees ft
      LEFT JOIN tasks t ON ft.task_id = t.id
      WHERE ft.user_id = $1
@@ -207,6 +213,7 @@ export async function getUserForestService(userId) {
             stage: row.stage || 'sapling',
             size: parseFloat(row.size || 0.035),
             taskTitle: row.task_title,
+            forestCategory: taskCategoryLabelToForestKey(row.task_category_label),
         })),
         totalTrees: result.rows.length,
     };

@@ -171,17 +171,10 @@ function LoginPage() {
         }
         try {
           await register(email, password, name, 'guest', 'explorer', teamRegistrationToken || undefined, contestRegistrationToken || undefined, (i18n.language === 'en' ? 'en' : 'de'));
-          setSuccess(t('login.messages.accountCreated'));
-          setMode('login');
-          setEmail('');
-          setPassword('');
-          setName('');
+          await api.refreshMe();
           setTeamRegistrationToken(null);
           setContestRegistrationToken(null);
-          // Clear tokens from URL
-          if (teamRegistrationToken || contestRegistrationToken) {
-            navigate('/login', { replace: true });
-          }
+          navigate('/dashboard', { replace: true });
         } catch (registerError: any) {
           // Handle validation errors from backend
           if (registerError?.response?.data?.details) {

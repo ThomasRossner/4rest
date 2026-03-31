@@ -34,6 +34,69 @@
     "noData": "No data available",
     "all": "All"
   },
+  "playerProfile": {
+    "intro": {
+      "title": "Glad you’re here!",
+      "body": "There’s more to this world than meets the eye. Answer a few short questions—and we’ll hint at what creature lives inside you.",
+      "start": "Let’s go",
+      "skipLater": "Decide later"
+    },
+    "skipHint": "You can find your character anytime under “Profile” or by tapping your figure in the forest.",
+    "progress": "Question {{current}} of {{total}}",
+    "continue": "Continue",
+    "finish": "Done",
+    "scaleAria": "Answer on a scale from 0 to 4",
+    "name": {
+      "title": "What should we call you?",
+      "hint": "Optional—you can leave this field empty.",
+      "label": "Display name",
+      "placeholder": "e.g. first name or nickname"
+    },
+    "error": {
+      "generic": "Your answers could not be saved.",
+      "loadProfile": "Could not load profile."
+    },
+    "dyads": {
+      "1": {
+        "scenario": "Picture the next few weeks: What steadies you more—clear goals and milestones, or the open path and moments along the way?",
+        "poleLow": "More goal-oriented",
+        "poleHigh": "More experience-oriented"
+      },
+      "2": {
+        "scenario": "When you plan a day off: Do you prefer structure and fixed times—or lots of room for spontaneity?",
+        "poleLow": "More structure",
+        "poleHigh": "More freedom"
+      },
+      "3": {
+        "scenario": "In a group: Do you like to steer—or go with the flow and strengthen togetherness?",
+        "poleLow": "More steering / control",
+        "poleHigh": "More acceptance / going along"
+      },
+      "4": {
+        "scenario": "In decisions: What weighs more for you—your own wellbeing or the good of everyone involved?",
+        "poleLow": "More self-focused",
+        "poleHigh": "More common good"
+      }
+    },
+    "inline": {
+      "cancel": "Cancel"
+    },
+    "moreAbout": {
+      "title": "More about my type",
+      "shortCta": "More about my type",
+      "dyadHeading": "Dyad {{n}}",
+      "noScales": "No evaluation data available.",
+      "skippedBody": "You skipped the questions for now. Your symbol is the snail (Undecided). You can answer the survey anytime under “Answer questions again”."
+    },
+    "forest": {
+      "figureAria": "Character and display name – tap for details",
+      "undecidedHint": "Please complete the short survey (shown after sign-in)."
+    },
+    "profileSection": {
+      "title": "Your character",
+      "retake": "Answer questions again"
+    }
+  },
   "navigation": {
     "home": "Roots",
     "tasks": "Tasks",

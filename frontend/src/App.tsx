@@ -2,22 +2,13 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import i18n from './i18n';
-import Layout from './components/Layout/Layout';
 import { ToastContainer } from './components/Feedback/ToastContainer';
-import HomePage from './pages/HomePage/HomePage';
-import TasksPage from './pages/TasksPage/TasksPage';
-import ForestPage from './pages/ForestPage/ForestPage';
-import RewardsPage from './pages/RewardsPage/RewardsPage';
-import StatisticsPage from './pages/StatisticsPage/StatisticsPage';
 import AdminPage from './pages/Admin/AdminPage';
 import LoginPage from './pages/LoginPage/LoginPage';
-import ProfilePage from './pages/ProfilePage/ProfilePage';
 import AuthCallbackPage from './pages/AuthCallbackPage/AuthCallbackPage';
-import PointsBonusPage from './pages/Employee/PointsBonusPage';
-import ContestRankingPage from './pages/ContestRankingPage/ContestRankingPage';
-import EmployeeContestsPage from './pages/EmployeeContestsPage/EmployeeContestsPage';
 import RezeptionPage from './pages/Rezeption/RezeptionPage';
 import RedaktionPage from './pages/Redaktion/RedaktionPage';
+import GuestAppWithProfileGate from './components/PlayerProfile/GuestAppWithProfileGate';
 
 function ProtectedApp() {
   const { isAuthenticated, user, token } = useAuthStore();
@@ -61,28 +52,7 @@ function ProtectedApp() {
     );
   }
 
-  return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<HomePage />} />
-        <Route path="dashboard" element={<Navigate to="/" replace />} />
-        <Route path="tasks" element={<TasksPage />} />
-        <Route path="tasks/c/:categoryKey" element={<TasksPage />} />
-        <Route path="forest" element={<ForestPage />} />
-        <Route path="rewards" element={<RewardsPage />} />
-        <Route path="statistics" element={<StatisticsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="contests/:contestId" element={<ContestRankingPage />} />
-        {(user.role === 'rezeption' || user.role === 'administrator') && (
-          <>
-            <Route path="points-bonus" element={<PointsBonusPage />} />
-            <Route path="employee-contests" element={<EmployeeContestsPage />} />
-          </>
-        )}
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+  return <GuestAppWithProfileGate user={user} />;
 }
 
 function App() {

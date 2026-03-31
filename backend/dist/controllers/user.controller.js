@@ -1,4 +1,4 @@
-import { getUserProgressService, getUserProfileService, updateUserProfileService, getMeService, listUsersService, getUserDetailsService, updateUserRoleService, updateUserPointsService, toggleUserActiveService, resetUserPasswordService, setUserPasswordService, deleteUserService, getUserStatisticsService, getUserTimelineService, createUserByAdminService, } from '../services/user.service.js';
+import { getUserProgressService, getUserProfileService, updateUserProfileService, getMeService, updatePlayerProfileForMeService, listUsersService, getUserDetailsService, updateUserRoleService, updateUserPointsService, toggleUserActiveService, resetUserPasswordService, setUserPasswordService, deleteUserService, getUserStatisticsService, getUserTimelineService, createUserByAdminService, } from '../services/user.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendAdminCreatedUserEmail } from '../services/auth-email.service.js';
 import { USER_ROLES } from '../constants/enums.js';
@@ -12,6 +12,24 @@ export const getMe = asyncHandler(async (req, res) => {
         return res.status(404).json({ error: 'User not found' });
     }
     res.json({ user });
+});
+/** PATCH /users/me/player-profile – Spielerprofilierung (Dyaden, Skip, Anzeigename) */
+export const updateMyPlayerProfile = asyncHandler(async (req, res) => {
+    const authReq = req;
+    if (!authReq.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        const user = await updatePlayerProfileForMeService(authReq.user.id, req.body ?? {});
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ user });
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : 'Bad request';
+        res.status(400).json({ error: message });
+    }
 });
 export const getUserProgress = asyncHandler(async (req, res) => {
     const authReq = req;
