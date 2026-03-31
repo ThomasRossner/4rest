@@ -148,6 +148,9 @@ if [ -d "$BACKUP_DIR" ] && [ "$CONTAINERS_RUNNING" = true ]; then
     fi
 fi
 
+# Vor/Nach Vergleich für migrate (ohne langsame Namens-Schleife)
+BEFORE_MIGRATE_COUNT=""
+
 # Check if migrations are needed (quick check)
 PENDING_MIGRATIONS_COUNT=0
 POSTGRES_CONTAINER=""
@@ -255,66 +258,18 @@ if [ "$SKIP_BACKUP" = false ]; then
     echo "  Backup location: $CURRENT_BACKUP_DIR"
 fi
 
-# Detailed migration check (only if not already skipped)
+# Migrationen: keine Schleife über 60+ Namen (war langsam, oft hinter SSH-Buffering/Timeouts,
+# und die Namensliste driftete von migrate.ts ab). Kurzstatus + Ausführung nur noch via npm run migrate.
 if [ "$SKIP_MIGRATIONS" = false ]; then
     echo ""
-    echo "==> Checking pending migrations..."
+    echo "==> Migration status (summary)..."
     if [ "$CONTAINERS_RUNNING" = true ] && [ -n "$POSTGRES_CONTAINER" ]; then
-        # Get list of executed migrations from database
-        EXECUTED_MIGRATIONS=$(docker exec "$POSTGRES_CONTAINER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT migration_name FROM schema_migrations ORDER BY migration_name;" 2>/dev/null | tr -d ' ' | grep -v '^$' || echo "")
-        
-        # Define all migrations (from migrate.ts)
-        ALL_MIGRATIONS=(
-            "001_initial_schema" "002_gdpr_consent" "003_oauth_support" "004_sihot_integration"
-            "005_user_default_role" "006_user_type" "007_tasks_rewards_audience" "008_task_reward_templates"
-            "009_drop_task_templates" "010_enum_user_fields" "011_drop_reward_templates" "012_email_verification_password_reset"
-            "013_passwordless_login" "014_allow_passwordless_accounts" "015_locations" "016_locations_active"
-            "017_reward_qr_tokens" "018_tree_growth_stages" "019_reward_recurrence" "020_task_recurrence"
-            "021_visit_location_task" "022_article_quiz_task" "023_survey_task" "024_reward_location_categories"
-            "025_points_bonus_qr_tokens" "026_task_prerequisites" "027_task_metadata" "028_populate_task_metadata"
-            "029_reward_metadata" "030_populate_reward_metadata" "031_task_zielgruppe" "033_parameter_tables"
-            "034_add_parameter_weight" "034_users_active" "035_points_calculation_factor" "036_reward_cost_calculation_factor"
-            "037_reward_model_simplification" "038_task_model_simplification" "039_remove_reward_kosten_moegliche_punkte"
-            "040_reward_zielgruppe" "041_restore_moegliche_punkte" "042_zielgruppe_multiselect"
-            "043_teams_contests" "043_add_front_office_to_zielgruppe" "044_replace_mitarbeitende_with_front_office"
-            "044_reward_redemption_metadata" "045_contest_start_date" "045_remove_stakeholder_from_zielgruppe"
-            "046_contest_rewards_awarded" "046_remove_duplicate_zielgruppe" "047_add_unique_constraint_qr_code"
-            "047_task_reward_thumbnails" "048_fix_user_role_enum" "049_team_contest_registration_qr_codes"
-            "050_replace_front_office_with_rezeption_redaktion" "051_replace_allowed_roles_with_teams_contests"
-            "052_photo_task_verification" "053_mailbox_messages"
-            "054_remove_event_group" "055_users_preferred_language" "056_tasks_i18n" "057_rewards_i18n"
-            "058_locations_i18n" "059_contests_i18n" "060_teams_i18n" "061_luise_demo_accounts"
-            "062_tasks_quiz_survey_i18n" "063_forest_category_points"
-        )
-        
-        PENDING_MIGRATIONS=()
-        for migration in "${ALL_MIGRATIONS[@]}"; do
-            # Check if migration file exists
-            if [ ! -f "database/migrations/${migration}.sql" ]; then
-                echo "  ⚠ WARNING: Migration file ${migration}.sql not found!"
-                continue
-            fi
-            
-            # Check if migration was executed
-            if echo "$EXECUTED_MIGRATIONS" | grep -q "^${migration}$"; then
-                echo "  ✓ Migration ${migration} already executed"
-            else
-                echo "  ⏳ Migration ${migration} is pending"
-                PENDING_MIGRATIONS+=("$migration")
-            fi
-        done
-        
-        if [ ${#PENDING_MIGRATIONS[@]} -eq 0 ]; then
-            echo "  ✓ All migrations are up to date"
-        else
-            echo "  → Found ${#PENDING_MIGRATIONS[@]} pending migration(s)"
-            if [ "$SKIP_BACKUP" = false ]; then
-                echo "$(IFS=','; echo "${PENDING_MIGRATIONS[*]}")" > "$CURRENT_BACKUP_DIR/pending_migrations.txt"
-            fi
-        fi
+        BEFORE_MIGRATE_COUNT=$(docker exec "$POSTGRES_CONTAINER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c "SELECT COUNT(*)::text FROM schema_migrations;" 2>/dev/null | tr -d '\r\n' || echo "0")
+        echo "  → Rows in schema_migrations (before deploy migrate): ${BEFORE_MIGRATE_COUNT:-0}"
+        echo "  → Pending work is applied by backend migrate.ts after containers start (single source of truth)."
     else
         echo "  ⚠ WARNING: Cannot check migrations - containers not running or database not accessible"
-        echo "  → Will run all migrations after deployment"
+        echo "  → Will run migrations after deployment"
     fi
 fi
 
@@ -342,12 +297,15 @@ if [ "$SKIP_MIGRATIONS" = false ]; then
     BACKEND_CONTAINER=$($COMPOSE_CMD -f docker-compose.homeserver.yml ps -q backend 2>/dev/null || echo "")
     if [ -n "$BACKEND_CONTAINER" ]; then
         echo "Waiting for backend to be ready..."
-        for i in {1..30}; do
+        for i in $(seq 1 30); do
             if $COMPOSE_CMD -f docker-compose.homeserver.yml exec -T backend curl -f http://localhost:5000/health >/dev/null 2>&1; then
                 echo "Backend is ready"
                 break
             fi
-            if [ $i -eq 30 ]; then
+            if [ $((i % 5)) -eq 0 ]; then
+                echo "  ... still waiting for backend ($i/30)"
+            fi
+            if [ "$i" -eq 30 ]; then
                 echo "WARNING: Backend health check failed, but continuing..."
             fi
             sleep 2
@@ -369,24 +327,14 @@ if [ "$SKIP_MIGRATIONS" = false ]; then
         }
         echo "✓ Database migrations completed"
         
-        # Verify migrations (re-get container after restart)
         POSTGRES_CONTAINER_AFTER=$($COMPOSE_CMD -f docker-compose.homeserver.yml ps -q postgres 2>/dev/null || echo "")
-        if [ "$SKIP_BACKUP" = false ] && [ -f "$CURRENT_BACKUP_DIR/pending_migrations.txt" ] && [ -n "$POSTGRES_CONTAINER_AFTER" ]; then
-            echo "  → Verifying pending migrations were executed..."
-            NEW_EXECUTED_MIGRATIONS=$(docker exec "$POSTGRES_CONTAINER_AFTER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT migration_name FROM schema_migrations ORDER BY migration_name;" 2>/dev/null | tr -d ' ' | grep -v '^$' || echo "")
-            PENDING_LIST=$(cat "$CURRENT_BACKUP_DIR/pending_migrations.txt" | tr ',' '\n')
-            PENDING_COUNT=$(echo "$PENDING_LIST" | wc -l | tr -d ' ')
-            VERIFIED_COUNT=0
-            for migration in $PENDING_LIST; do
-                if echo "$NEW_EXECUTED_MIGRATIONS" | grep -q "^${migration}$"; then
-                    VERIFIED_COUNT=$((VERIFIED_COUNT + 1))
-                fi
-            done
-            
-            if [ "$VERIFIED_COUNT" -eq "$PENDING_COUNT" ]; then
-                echo "  ✓ All pending migrations verified"
-            else
-                echo "  ⚠ WARNING: Not all pending migrations were executed ($VERIFIED_COUNT/$PENDING_COUNT)"
+        if [ -n "$POSTGRES_CONTAINER_AFTER" ]; then
+            AFTER_MIGRATE_COUNT=$(docker exec "$POSTGRES_CONTAINER_AFTER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -A -c "SELECT COUNT(*)::text FROM schema_migrations;" 2>/dev/null | tr -d '\r\n' || echo "0")
+            echo "  → Rows in schema_migrations (after migrate): ${AFTER_MIGRATE_COUNT:-0}"
+            if [ -n "${BEFORE_MIGRATE_COUNT}" ] && [ "${AFTER_MIGRATE_COUNT:-0}" -gt "${BEFORE_MIGRATE_COUNT}" ] 2>/dev/null; then
+                echo "  ✓ Migration count increased as expected"
+            elif [ -n "${BEFORE_MIGRATE_COUNT}" ] && [ "${AFTER_MIGRATE_COUNT:-0}" -ge "${BEFORE_MIGRATE_COUNT}" ] 2>/dev/null; then
+                echo "  ✓ Migration count unchanged or already up to date"
             fi
         fi
     else
@@ -403,6 +351,7 @@ $COMPOSE_CMD -f docker-compose.homeserver.yml ps
 
 echo ""
 echo "==> Health checks..."
+BACKEND_CONTAINER=$($COMPOSE_CMD -f docker-compose.homeserver.yml ps -q backend 2>/dev/null || echo "")
 # Check backend health
 if [ -n "$BACKEND_CONTAINER" ]; then
     if $COMPOSE_CMD -f docker-compose.homeserver.yml exec -T backend curl -f http://localhost:5000/health >/dev/null 2>&1; then
