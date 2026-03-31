@@ -20,7 +20,12 @@ fi
 
 # Now connect and deploy
 echo "Connecting to IONOS server..."
-ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=120 "${SSH_USER}@${SSH_HOST}" << 'REMOTE_SCRIPT'
+# Häufige Keepalives + hohes CountMax: lange Remote-Skripte (Migrationen, Docker-Build) ohne „Broken pipe“
+ssh -o StrictHostKeyChecking=no \
+  -o TCPKeepAlive=yes \
+  -o ServerAliveInterval=10 \
+  -o ServerAliveCountMax=999 \
+  "${SSH_USER}@${SSH_HOST}" << 'REMOTE_SCRIPT'
 # Find the deployment directory
 if [ -d "/root/4rest" ]; then
     DEPLOY_DIR="/root/4rest"
