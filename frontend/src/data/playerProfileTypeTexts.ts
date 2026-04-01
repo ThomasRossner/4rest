@@ -67,10 +67,11 @@ const EN: Record<DyadId, TypeTextRow[]> = {
 
 export function getPlayerProfileTypeText(
   lang: string,
-  dyad: 1 | 2 | 3 | 4,
+  dyad: number,
   scale: ScaleId
 ): TypeTextRow {
-  const key = ('d' + dyad) as DyadId;
+  const d = Math.min(4, Math.max(1, dyad)) as 1 | 2 | 3 | 4;
+  const key = ('d' + d) as DyadId;
   const table = lang.startsWith('en') ? EN : DE;
   return table[key][scale];
 }

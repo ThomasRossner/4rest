@@ -57,10 +57,28 @@ export const api = {
   async updateMyPlayerProfile(data: {
     status?: 'skipped' | 'completed';
     dyadScales?: number[];
+    dyadAnswers?: number[];
     profileDisplayName?: string | null;
   }) {
     const res = await apiClient.patch('/users/me/player-profile', data);
     return res.data;
+  },
+
+  async getOnboardingConfig() {
+    const res = await apiClient.get('/onboarding/config');
+    return res.data;
+  },
+
+  async putAdminOnboardingConfig(body: unknown) {
+    const res = await apiClient.put('/admin/onboarding/config', body);
+    return res.data;
+  },
+
+  async uploadOnboardingBackground(file: File) {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await apiClient.post('/admin/onboarding/upload-background', fd);
+    return res.data as { url: string };
   },
 
   async getMe() {

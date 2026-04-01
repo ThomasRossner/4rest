@@ -17,6 +17,7 @@ import userQrRoutes from './user-qr.routes.js';
 import teamRoutes from './team.routes.js';
 import contestRoutes from './contest.routes.js';
 import messageRoutes from './message.routes.js';
+import { onboardingPublicRouter, onboardingAdminRouter } from './onboarding.routes.js';
 export function setupRoutes() {
     const router = Router();
     router.use('/auth', authRoutes);
@@ -33,6 +34,8 @@ export function setupRoutes() {
     router.use('/admin/debug', debugRoutes);
     router.use('/admin/parameters', parameterRoutes);
     router.use('/admin/system-config', systemConfigRoutes);
+    router.use('/onboarding', onboardingPublicRouter);
+    router.use('/admin/onboarding', onboardingAdminRouter);
     router.use('/user/qr-code', userQrRoutes);
     router.use('/teams', teamRoutes);
     router.use('/contests', contestRoutes);

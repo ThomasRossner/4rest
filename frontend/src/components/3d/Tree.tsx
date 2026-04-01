@@ -2,27 +2,14 @@ import { useGLTF } from '@react-three/drei';
 import { useEffect, useMemo, Suspense } from 'react';
 import * as THREE from 'three';
 import React from 'react';
-import type { ForestCategoryKey } from '../../constants/forestCategories';
-import {
-  TreeComponent,
-  ControllableTree,
-  computeModularTreeGrowth2a,
-  type ForestPointsRecord,
-} from './tree-system';
-
-const USE_MODULAR_TREE = import.meta.env.VITE_USE_MODULAR_TREE !== 'false';
-const MODULAR_MAX_TREE_GROW_STEPS = 30;
+import { TreeComponent } from './tree-system';
 
 interface TreeProps {
   position: [number, number, number];
   size?: number; // Size from database - used for fallback only
   scale?: number; // Legacy support - will use size if not provided
   growthPoints?: number; // Growth points from database (1-100+) - enables animated growth
-  maxVisibleLeaves?: number; // Limit leaves for performance (legacy twigLeafTree only)
-  /** Wald-Kategorie der Pflanz-Aufgabe (API getForest) */
-  forestCategory?: ForestCategoryKey | null;
-  /** users.forestPoints — für Wachstums-Kombination 2a */
-  forestPoints?: ForestPointsRecord | null;
+  maxVisibleLeaves?: number; // Limit leaves for performance
 }
 
 // Simple geometric tree fallback
@@ -79,37 +66,9 @@ function StaticTreeModel({ position, size, scale }: TreeProps) {
   );
 }
 
-// Animated tree: modulares GLB-System (Standard) oder Legacy twigLeafTree
-function AnimatedTreeModel({
-  position,
-  growthPoints,
-  size,
-  maxVisibleLeaves,
-  forestCategory,
-  forestPoints,
-}: TreeProps) {
-  const modularGrowth = useMemo(
-    () =>
-      computeModularTreeGrowth2a(
-        growthPoints ?? 1,
-        forestCategory ?? null,
-        forestPoints ?? null
-      ),
-    [growthPoints, forestCategory, forestPoints]
-  );
-
+// Animated tree component using tree-system
+function AnimatedTreeModel({ position, growthPoints, size, maxVisibleLeaves }: TreeProps) {
   try {
-    if (USE_MODULAR_TREE) {
-      return (
-        <ControllableTree
-          position={position}
-          growth={modularGrowth}
-          maxTreeGrowSteps={MODULAR_MAX_TREE_GROW_STEPS}
-          maxTrunkGrowth={1}
-          maxTwigGrowth={1}
-        />
-      );
-    }
     return (
       <TreeComponent
         position={position}
@@ -123,20 +82,13 @@ function AnimatedTreeModel({
     );
   } catch (error) {
     console.error('AnimatedTreeModel error:', error);
+    // This will be caught by ErrorBoundary
     throw error;
   }
 }
 
 // Memoize Tree component to prevent unnecessary re-renders
-export const Tree = React.memo(function Tree({
-  position,
-  size,
-  scale,
-  growthPoints,
-  maxVisibleLeaves,
-  forestCategory,
-  forestPoints,
-}: TreeProps) {
+export const Tree = React.memo(function Tree({ position, size, scale, growthPoints, maxVisibleLeaves }: TreeProps) {
   const treeSize = size ?? scale ?? 0.035;
   
   // Use animated tree if growthPoints is provided and > 0, otherwise use static tree
@@ -155,8 +107,6 @@ export const Tree = React.memo(function Tree({
             growthPoints={Math.max(1, growthPoints || 1)} // Ensure at least 1 growth point
             size={treeSize}
             maxVisibleLeaves={maxVisibleLeaves}
-            forestCategory={forestCategory}
-            forestPoints={forestPoints}
           />
         ) : (
           <StaticTreeModel 
@@ -169,25 +119,14 @@ export const Tree = React.memo(function Tree({
     </ErrorBoundary>
   );
 }, (prevProps, nextProps) => {
-  const fpEq = (a: ForestPointsRecord | null | undefined, b: ForestPointsRecord | null | undefined) => {
-    if (a === b) return true;
-    if (!a || !b) return false;
-    return (
-      a.kommunikation === b.kommunikation &&
-      a.mensch === b.mensch &&
-      a.natur === b.natur &&
-      a.ressourcen === b.ressourcen
-    );
-  };
+  // Custom comparison function for memoization
   return (
     prevProps.position[0] === nextProps.position[0] &&
     prevProps.position[1] === nextProps.position[1] &&
     prevProps.position[2] === nextProps.position[2] &&
     prevProps.growthPoints === nextProps.growthPoints &&
     prevProps.size === nextProps.size &&
-    prevProps.maxVisibleLeaves === nextProps.maxVisibleLeaves &&
-    prevProps.forestCategory === nextProps.forestCategory &&
-    fpEq(prevProps.forestPoints, nextProps.forestPoints)
+    prevProps.maxVisibleLeaves === nextProps.maxVisibleLeaves
   );
 });
 

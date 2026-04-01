@@ -2,7 +2,7 @@ import { Suspense, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { useAuthStore } from '../../stores/authStore';
-import { SceneController } from '../../components/3d/tree-system';
+import SceneController from '../../components/3d/tree-system/SceneController.jsx';
 import './ForestLabPage.css';
 
 const TREE_GROW_STEPS = 30;

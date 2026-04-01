@@ -194,8 +194,11 @@ export type PlayerProfileStatus = 'pending' | 'skipped' | 'completed';
 
 export interface PlayerProfilePayload {
   status: PlayerProfileStatus;
-  dyadScales: [number, number, number, number] | null;
-  dominantDyad: 1 | 2 | 3 | 4 | null;
+  /** Aggregierte Skalenwerte pro Dyade (0–4) */
+  dyadScales: number[] | null;
+  /** Rohantworten pro Frage (optional, für erneutes Bearbeiten) */
+  dyadAnswers?: number[] | null;
+  dominantDyad: number | null;
   profileDisplayName: string | null;
   completedAt: string | null;
 }

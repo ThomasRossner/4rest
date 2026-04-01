@@ -121,6 +121,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false, // Allow self-signed certificates
         ws: true
+      },
+      // Statische Uploads (Aufgaben-Medien, Onboarding-Hintergründe) liegen auf dem Backend
+      '/uploads': {
+        target: process.env.VITE_API_TARGET || 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false
       }
     },
     // Allow serving certificate file for installation on mobile devices

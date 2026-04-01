@@ -1,6 +1,11 @@
 import { getPool } from '../database/connection.js';
 import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums.js';
 import bcrypt from 'bcryptjs';
+import {
+  aggregateDyadAnswers,
+  computeDominantDyadFromScales,
+  getOnboardingConfig,
+} from './onboarding-config.service.js';
 
 export interface User {
   id: string;
@@ -237,35 +242,44 @@ export async function getPreferredLanguage(userId: string): Promise<'de' | 'en' 
 
 export type PlayerProfileStatus = 'pending' | 'skipped' | 'completed';
 
-/** Höchster Skalenwert gewinnt; bei Gleichstand niedrigere Dyaden-Nummer (1 vor 2). */
+/** @deprecated Nutze computeDominantDyadFromScales aus onboarding-config.service */
 export function computeDominantDyad(
   s1: number,
   s2: number,
   s3: number,
   s4: number
 ): 1 | 2 | 3 | 4 {
-  const scales = [s1, s2, s3, s4];
-  let maxVal = -1;
-  let idx = 0;
-  for (let i = 0; i < 4; i++) {
-    const v = scales[i]!;
-    if (v > maxVal) {
-      maxVal = v;
-      idx = i;
+  return computeDominantDyadFromScales([s1, s2, s3, s4]) as 1 | 2 | 3 | 4;
+}
+
+function parseJsonNumberArray(raw: unknown): number[] | null {
+  if (raw == null) return null;
+  let arr: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      arr = JSON.parse(raw);
+    } catch {
+      return null;
     }
   }
-  return (idx + 1) as 1 | 2 | 3 | 4;
+  if (!Array.isArray(arr)) return null;
+  const nums = arr.map((x) => Number(x));
+  if (nums.every((n) => Number.isInteger(n) && n >= 0 && n <= 4)) {
+    return nums;
+  }
+  return null;
 }
 
 function mapPlayerProfileFromRow(user: Record<string, unknown>) {
   const st = user.player_profile_status as string | undefined;
   const status: PlayerProfileStatus =
     st === 'skipped' || st === 'completed' || st === 'pending' ? st : 'pending';
+  const dsv = parseJsonNumberArray(user.dyad_scale_values);
   const d1 = user.dyad_scale_1;
   const d2 = user.dyad_scale_2;
   const d3 = user.dyad_scale_3;
   const d4 = user.dyad_scale_4;
-  const allSet =
+  const allLegacy =
     d1 !== null &&
     d1 !== undefined &&
     d2 !== null &&
@@ -274,18 +288,20 @@ function mapPlayerProfileFromRow(user: Record<string, unknown>) {
     d3 !== undefined &&
     d4 !== null &&
     d4 !== undefined;
-  const dyadScales: [number, number, number, number] | null = allSet
-    ? [
-        Number(d1),
-        Number(d2),
-        Number(d3),
-        Number(d4),
-      ]
-    : null;
+  const legacyTuple: number[] = allLegacy
+    ? [Number(d1), Number(d2), Number(d3), Number(d4)]
+    : [];
+  const dyadScales: number[] | null =
+    dsv && dsv.length > 0
+      ? dsv
+      : allLegacy
+        ? legacyTuple
+        : null;
+  const dyadAnswers = parseJsonNumberArray(user.player_profile_answers);
   const dom = user.dominant_dyad;
   const domN = dom === null || dom === undefined ? NaN : Number(dom);
   const dominantDyad =
-    !Number.isNaN(domN) && domN >= 1 && domN <= 4 ? (domN as 1 | 2 | 3 | 4) : null;
+    !Number.isNaN(domN) && domN >= 1 && domN <= 64 ? domN : null;
   const completedAt = user.player_profile_completed_at;
   const completedIso =
     completedAt instanceof Date
@@ -297,6 +313,7 @@ function mapPlayerProfileFromRow(user: Record<string, unknown>) {
     playerProfile: {
       status,
       dyadScales,
+      dyadAnswers,
       dominantDyad,
       profileDisplayName:
         typeof user.profile_display_name === 'string' ? user.profile_display_name : null,
@@ -311,6 +328,7 @@ export async function getMeService(userId: string) {
     `SELECT id, email, oauth_email, name, role, user_type, points, avatar_url, sihot_guest_id, sihot_guest_data, preferred_language,
             forest_points_kommunikation, forest_points_mensch, forest_points_natur, forest_points_ressourcen,
             player_profile_status, dyad_scale_1, dyad_scale_2, dyad_scale_3, dyad_scale_4,
+            dyad_scale_values, player_profile_answers,
             dominant_dyad, profile_display_name, player_profile_completed_at
      FROM users WHERE id = $1`,
     [userId]
@@ -344,7 +362,9 @@ export async function getMeService(userId: string) {
 
 export interface UpdateMyPlayerProfileBody {
   status?: 'skipped' | 'completed';
-  /** Vier Werte 0–4 in Reihenfolge Dyade 1–4; bei status completed erforderlich */
+  /** Rohantworten 0–4, Länge = Dyaden × Fragen pro Dyade (empfohlen) */
+  dyadAnswers?: number[];
+  /** Aggregierte Werte pro Dyade (Legacy / einfache Clients) */
   dyadScales?: number[];
   /** Optionaler Anzeigename (Wald/Profil); leer wird als null gespeichert */
   profileDisplayName?: string | null;
@@ -353,10 +373,11 @@ export interface UpdateMyPlayerProfileBody {
 export async function updatePlayerProfileForMeService(userId: string, body: UpdateMyPlayerProfileBody) {
   const db = getPool();
   const hasStatus = body.status !== undefined;
+  const hasAnswers = body.dyadAnswers !== undefined;
   const hasScales = body.dyadScales !== undefined;
   const hasName = body.profileDisplayName !== undefined;
 
-  if (!hasStatus && !hasScales && !hasName) {
+  if (!hasStatus && !hasScales && !hasAnswers && !hasName) {
     throw new Error('No player profile fields to update');
   }
 
@@ -368,6 +389,8 @@ export async function updatePlayerProfileForMeService(userId: string, body: Upda
         dyad_scale_2 = NULL,
         dyad_scale_3 = NULL,
         dyad_scale_4 = NULL,
+        dyad_scale_values = NULL,
+        player_profile_answers = NULL,
         dominant_dyad = NULL,
         player_profile_completed_at = NULL,
         updated_at = CURRENT_TIMESTAMP
@@ -387,18 +410,46 @@ export async function updatePlayerProfileForMeService(userId: string, body: Upda
   }
 
   if (hasStatus && body.status === 'completed') {
-    const scales = body.dyadScales;
-    if (!Array.isArray(scales) || scales.length !== 4) {
-      throw new Error('dyadScales must be an array of four numbers (0–4)');
-    }
-    const nums = scales.map((n) => Number(n));
-    for (let i = 0; i < 4; i++) {
-      const n = nums[i];
-      if (!Number.isInteger(n) || n < 0 || n > 4) {
-        throw new Error(`dyadScales[${i}] must be an integer from 0 to 4`);
+    const config = await getOnboardingConfig();
+    const expectedRaw = config.dyadCount * config.questionsPerDyad;
+    let aggregated: number[];
+    let rawStored: number[];
+
+    if (hasAnswers && Array.isArray(body.dyadAnswers)) {
+      rawStored = body.dyadAnswers.map((n) => Number(n));
+      if (rawStored.length !== expectedRaw) {
+        throw new Error(
+          `dyadAnswers must have length ${expectedRaw} (dyadCount × questionsPerDyad)`
+        );
       }
+      for (let i = 0; i < rawStored.length; i++) {
+        const n = rawStored[i];
+        if (!Number.isInteger(n) || n < 0 || n > 4) {
+          throw new Error(`dyadAnswers[${i}] must be an integer from 0 to 4`);
+        }
+      }
+      aggregated = aggregateDyadAnswers(rawStored, config.dyadCount, config.questionsPerDyad);
+    } else if (hasScales && Array.isArray(body.dyadScales)) {
+      const scales = body.dyadScales.map((n) => Number(n));
+      if (scales.length !== config.dyadCount) {
+        throw new Error(`dyadScales must have length ${config.dyadCount}`);
+      }
+      if (config.questionsPerDyad > 1) {
+        throw new Error('dyadAnswers required when questionsPerDyad > 1');
+      }
+      for (let i = 0; i < scales.length; i++) {
+        const n = scales[i];
+        if (!Number.isInteger(n) || n < 0 || n > 4) {
+          throw new Error(`dyadScales[${i}] must be an integer from 0 to 4`);
+        }
+      }
+      aggregated = scales;
+      rawStored = [...scales];
+    } else {
+      throw new Error('completed status requires dyadAnswers or dyadScales');
     }
-    const dominant = computeDominantDyad(nums[0]!, nums[1]!, nums[2]!, nums[3]!);
+
+    const dominant = computeDominantDyadFromScales(aggregated);
     let displayName: string | null = null;
     if (hasName) {
       const raw = body.profileDisplayName;
@@ -416,6 +467,11 @@ export async function updatePlayerProfileForMeService(userId: string, body: Upda
       displayName = (cur.rows[0]?.profile_display_name as string | null) ?? null;
     }
 
+    const s1 = aggregated[0] ?? null;
+    const s2 = aggregated[1] ?? null;
+    const s3 = aggregated[2] ?? null;
+    const s4 = aggregated[3] ?? null;
+
     await db.query(
       `UPDATE users SET
         player_profile_status = 'completed',
@@ -423,17 +479,29 @@ export async function updatePlayerProfileForMeService(userId: string, body: Upda
         dyad_scale_2 = $2,
         dyad_scale_3 = $3,
         dyad_scale_4 = $4,
-        dominant_dyad = $5,
-        profile_display_name = $6,
+        dyad_scale_values = $5::jsonb,
+        player_profile_answers = $6::jsonb,
+        dominant_dyad = $7,
+        profile_display_name = $8,
         player_profile_completed_at = COALESCE(player_profile_completed_at, CURRENT_TIMESTAMP),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $7`,
-      [nums[0], nums[1], nums[2], nums[3], dominant, displayName, userId]
+      WHERE id = $9`,
+      [
+        s1,
+        s2,
+        s3,
+        s4,
+        JSON.stringify(aggregated),
+        JSON.stringify(rawStored),
+        dominant,
+        displayName,
+        userId,
+      ]
     );
     return getMeService(userId);
   }
 
-  if (!hasStatus && hasName && !hasScales) {
+  if (!hasStatus && hasName && !hasScales && !hasAnswers) {
     const raw = body.profileDisplayName;
     const trimmed =
       typeof raw === 'string' ? raw.trim().slice(0, 128) : '';

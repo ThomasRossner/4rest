@@ -21,6 +21,36 @@
   flex-direction: column;
 }
 
+/* Wald: volle Fläche zwischen fester Titelzeile und unterer Button-Leiste */
+.layout.layout--forest {
+  min-height: unset;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.layout-main.layout-main--forest {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  max-width: 100%;
+  width: 100%;
+  padding-top: calc(72px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+@media (min-width: 1025px) {
+  .layout-main.layout-main--forest {
+    padding-top: calc(80px + env(safe-area-inset-top, 0px));
+  }
+}
+
 .layout-main {
   flex: 1;
   padding: var(--spacing-md);

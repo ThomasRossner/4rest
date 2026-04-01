@@ -1,30 +1,32 @@
 .player-profile-onboarding {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-md, 1rem);
-  background: linear-gradient(145deg, #0f766e 0%, #14b8a6 45%, #0d9488 100%);
+  position: relative;
+  padding: 0;
   box-sizing: border-box;
+  background: #0f172a;
 }
 
 .player-profile-onboarding--inline {
   position: fixed;
   inset: 0;
   z-index: 10040;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .player-profile-onboarding__topbar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 2;
-  width: 100%;
-  max-width: 520px;
+  right: 0;
+  z-index: 10050;
   display: flex;
   justify-content: flex-end;
-  padding: 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  pointer-events: none;
+}
+
+.player-profile-onboarding__topbar button {
+  pointer-events: auto;
 }
 
 .player-profile-onboarding__cancel {
@@ -204,4 +206,185 @@
   background: linear-gradient(145deg, #0f766e 0%, #14b8a6 100%);
   color: #fff;
   font-size: 1rem;
+}
+
+.player-profile-onboarding__boot-error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: #fecaca;
+  text-align: center;
+}
+
+/* Vollbild-Schritte mit optionalem Hintergrundbild */
+.ppo-fullscreen {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ppo-fullscreen__bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-color: #0f172a;
+}
+
+.ppo-fullscreen__bg--gradient {
+  background-image: linear-gradient(145deg, #0f766e 0%, #14b8a6 45%, #0d9488 100%);
+}
+
+.ppo-fullscreen__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.ppo-fullscreen__scrim--light {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.ppo-fullscreen__inner {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 0;
+  padding: clamp(1rem, 4vw, 2rem);
+  padding-top: clamp(2.5rem, 8vw, 3.5rem);
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+
+.ppo-fullscreen__panel {
+  width: 100%;
+  max-width: 520px;
+  /* stärker transparent (~65 % „Durchsicht“), Frostglas für Lesbarkeit */
+  background: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 16px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.ppo-fullscreen__panel--intro {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+/* Fließtext & Überschriften: dunkler + leichter heller Schatten gegen buntes Foto */
+.ppo-fullscreen__panel .player-profile-onboarding__title {
+  color: #020617;
+  text-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.95),
+    0 0 24px rgba(255, 255, 255, 0.65);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__text {
+  color: #0f172a;
+  font-weight: 500;
+  line-height: 1.6;
+  text-shadow:
+    0 1px 3px rgba(255, 255, 255, 0.92),
+    0 0 18px rgba(255, 255, 255, 0.55);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__step-label {
+  color: #334155;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__label {
+  color: #0f172a;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__scale-labels {
+  color: #1e293b;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.88);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__btn--ghost {
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__error {
+  color: #991b1b;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__input {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.ppo-fullscreen .player-profile-onboarding__text--on-dark {
+  color: #0f172a;
+}
+
+.player-profile-onboarding__title--on-dark {
+  color: #020617;
+}
+
+.player-profile-onboarding__scale-labels--on-dark {
+  color: #1e293b;
+}
+
+.player-profile-onboarding__btn--primary-on-dark {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+.player-profile-onboarding__btn--ghost-on-dark {
+  background: rgba(241, 245, 249, 0.95);
+  color: #334155;
+}
+
+.player-profile-onboarding__scale-btn--on-dark {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+
+.player-profile-onboarding__scale-btn--on-dark.player-profile-onboarding__scale-btn--active {
+  border-color: #0d9488;
+  background: #ecfdf5;
+  color: #0f766e;
+}
+
+.player-profile-onboarding__label--on-dark {
+  color: #334155;
+}
+
+.player-profile-onboarding__input--on-dark {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+
+.player-profile-onboarding__error--on-dark {
+  color: #fecaca;
+}
+
+/* Frage mit Foto-Hintergrund: etwas stärkerer Blur bei hoher Bilddetail-Dichte */
+.ppo-fullscreen:has(.ppo-fullscreen__bg:not(.ppo-fullscreen__bg--gradient)) .ppo-fullscreen__panel {
+  background: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
 }

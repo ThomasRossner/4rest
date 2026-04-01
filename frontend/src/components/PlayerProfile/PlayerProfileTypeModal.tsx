@@ -62,7 +62,7 @@ export default function PlayerProfileTypeModal({ profile, onClose }: Props) {
   }
 
   const scales = profile.dyadScales;
-  if (!scales || scales.length !== 4) {
+  if (!scales || scales.length < 1) {
     return (
       <div className="pp-type-modal" role="dialog" aria-modal="true" aria-labelledby="pp-type-title">
         <div className="pp-type-modal__backdrop" onClick={onClose} aria-hidden />
@@ -97,8 +97,8 @@ export default function PlayerProfileTypeModal({ profile, onClose }: Props) {
           </button>
         </div>
         <div className="pp-type-modal__scroll">
-          {([1, 2, 3, 4] as const).map((dyad) => {
-            const raw = scales[dyad - 1] ?? 0;
+          {scales.map((raw, idx) => {
+            const dyad = idx + 1;
             const scale = Math.min(4, Math.max(0, raw)) as 0 | 1 | 2 | 3 | 4;
             const row = getPlayerProfileTypeText(lang, dyad, scale);
             return (

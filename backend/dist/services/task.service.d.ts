@@ -77,6 +77,8 @@ export declare function completeTask(taskId: string, userId: string, data?: any)
     message: string;
     requiresVerification: any;
 }>;
+/** Öffentliche URL für eine Datei im gemeinsamen Upload-Verzeichnis (gleiche Logik wie Aufgaben-Fotos/Videos). */
+export declare function publicUploadFileUrl(filename: string): string;
 export declare function uploadPhoto(file: Express.Multer.File): Promise<string>;
 export declare function uploadVideo(file: Express.Multer.File): Promise<string>;
 export declare function uploadThumbnail(file: Express.Multer.File): Promise<string>;

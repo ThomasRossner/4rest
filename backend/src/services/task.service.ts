@@ -1308,35 +1308,24 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
   };
 }
 
-export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
-  // In production, this would upload to cloud storage (S3, Azure Blob, etc.)
-  // For now, return a local file path
-  // BASE_URL should be set in production (e.g., https://luise.bio)
-  // localhost is only used as fallback for local development with virtual hosts
-  const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-  // Remove trailing slash if present
+/** Öffentliche URL für eine Datei im gemeinsamen Upload-Verzeichnis (gleiche Logik wie Aufgaben-Fotos/Videos). */
+export function publicUploadFileUrl(filename: string): string {
+  const baseUrl =
+    process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
   const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-  return `${cleanBaseUrl}/uploads/${file.filename}`;
+  return `${cleanBaseUrl}/uploads/${filename}`;
+}
+
+export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
+  return publicUploadFileUrl(file.filename);
 }
 
 export async function uploadVideo(file: Express.Multer.File): Promise<string> {
-  // BASE_URL should be set in production (e.g., https://luise.bio)
-  // localhost is only used as fallback for local development with virtual hosts
-  const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-  // Remove trailing slash if present
-  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-  const videoUrl = `${cleanBaseUrl}/uploads/${file.filename}`;
-  return videoUrl;
+  return publicUploadFileUrl(file.filename);
 }
 
 export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
-  // BASE_URL should be set in production (e.g., https://luise.bio)
-  // localhost is only used as fallback for local development with virtual hosts
-  const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
-  // Remove trailing slash if present
-  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
-  const thumbnailUrl = `${cleanBaseUrl}/uploads/${file.filename}`;
-  return thumbnailUrl;
+  return publicUploadFileUrl(file.filename);
 }
 
 /**

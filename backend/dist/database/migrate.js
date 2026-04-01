@@ -86,6 +86,7 @@ export async function runMigrations() {
             '062_tasks_quiz_survey_i18n',
             '063_forest_category_points',
             '064_player_profile',
+            '065_onboarding_config',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({

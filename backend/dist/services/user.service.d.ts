@@ -61,13 +61,14 @@ export declare function getUserProgressService(userId: string): Promise<{
 }>;
 export declare function getPreferredLanguage(userId: string): Promise<'de' | 'en' | null>;
 export type PlayerProfileStatus = 'pending' | 'skipped' | 'completed';
-/** Höchster Skalenwert gewinnt; bei Gleichstand niedrigere Dyaden-Nummer (1 vor 2). */
+/** @deprecated Nutze computeDominantDyadFromScales aus onboarding-config.service */
 export declare function computeDominantDyad(s1: number, s2: number, s3: number, s4: number): 1 | 2 | 3 | 4;
 export declare function getMeService(userId: string): Promise<{
     playerProfile: {
         status: PlayerProfileStatus;
-        dyadScales: [number, number, number, number];
-        dominantDyad: 1 | 4 | 2 | 3;
+        dyadScales: number[];
+        dyadAnswers: number[];
+        dominantDyad: number;
         profileDisplayName: string;
         completedAt: string;
     };
@@ -91,7 +92,9 @@ export declare function getMeService(userId: string): Promise<{
 }>;
 export interface UpdateMyPlayerProfileBody {
     status?: 'skipped' | 'completed';
-    /** Vier Werte 0–4 in Reihenfolge Dyade 1–4; bei status completed erforderlich */
+    /** Rohantworten 0–4, Länge = Dyaden × Fragen pro Dyade (empfohlen) */
+    dyadAnswers?: number[];
+    /** Aggregierte Werte pro Dyade (Legacy / einfache Clients) */
     dyadScales?: number[];
     /** Optionaler Anzeigename (Wald/Profil); leer wird als null gespeichert */
     profileDisplayName?: string | null;
@@ -99,8 +102,9 @@ export interface UpdateMyPlayerProfileBody {
 export declare function updatePlayerProfileForMeService(userId: string, body: UpdateMyPlayerProfileBody): Promise<{
     playerProfile: {
         status: PlayerProfileStatus;
-        dyadScales: [number, number, number, number];
-        dominantDyad: 1 | 4 | 2 | 3;
+        dyadScales: number[];
+        dyadAnswers: number[];
+        dominantDyad: number;
         profileDisplayName: string;
         completedAt: string;
     };

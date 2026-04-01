@@ -1,23 +1,28 @@
 import type { PlayerProfilePayload } from '../stores/authStore';
 
-/** Dominante Dyade → Emoji (Platzhalter bis Grafiken aus TICKET-006) */
-const DOMINANT_EMOJI: Record<1 | 2 | 3 | 4, string> = {
+/** Dominante Dyade → Emoji (Platzhalter bis Grafiken aus TICKET-006); Dyaden >4 nutzen Fallback */
+const DOMINANT_EMOJI: Record<number, string> = {
   1: '🦌',
   2: '🦉',
   3: '🐺',
   4: '🐝',
+  5: '🦋',
+  6: '🦊',
+  7: '🐻',
+  8: '🦔',
 };
 
 export function getPlayerCharacterEmoji(profile: PlayerProfilePayload | undefined): string {
   if (!profile) return '❓';
   if (profile.status === 'pending') return '❓';
   if (profile.status === 'skipped' || profile.dominantDyad == null) return '🐌';
-  return DOMINANT_EMOJI[profile.dominantDyad] ?? '🐾';
+  const d = profile.dominantDyad;
+  return DOMINANT_EMOJI[d] ?? '🐾';
 }
 
 export function getDominantDyadNumber(
   profile: PlayerProfilePayload | undefined
-): 1 | 2 | 3 | 4 | null {
+): number | null {
   if (!profile || profile.status !== 'completed') return null;
   return profile.dominantDyad;
 }

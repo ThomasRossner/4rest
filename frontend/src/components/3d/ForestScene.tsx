@@ -59,7 +59,6 @@ function ForestScene() {
   // Extract areas and flatTrees before using them in useEffect
   const areas = forest?.areas || [];
   const flatTrees = forest?.trees || [];
-  const forestPointsForTrees = currentUser?.forestPoints ?? null;
   
   // Memoize tree world positions to avoid recalculating on every render
   const treeWorldPositionsRef = useRef<Map<string, THREE.Vector3>>(new Map());
@@ -226,8 +225,6 @@ function ForestScene() {
                   size={t.size}
                   growthPoints={t.growthPoints}
                   maxVisibleLeaves={maxLeaves}
-                  forestCategory={t.forestCategory ?? null}
-                  forestPoints={forestPointsForTrees}
                 />
               );
             })}
@@ -284,8 +281,6 @@ function ForestScene() {
             size={t.size}
             growthPoints={t.growthPoints}
             maxVisibleLeaves={maxLeaves}
-            forestCategory={t.forestCategory ?? null}
-            forestPoints={forestPointsForTrees}
           />
         );
       })}

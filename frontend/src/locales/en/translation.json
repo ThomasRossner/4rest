@@ -43,6 +43,7 @@
     },
     "skipHint": "You can find your character anytime under “Profile” or by tapping your figure in the forest.",
     "progress": "Question {{current}} of {{total}}",
+    "progressDyad": "Question {{current}} of {{total}} · Dyad {{dyad}}, part {{qInDyad}}",
     "continue": "Continue",
     "finish": "Done",
     "scaleAria": "Answer on a scale from 0 to 4",
@@ -555,6 +556,10 @@
       "forestDebugStats": {
         "title": "Forest Debug Stats",
         "description": "View per-user tree and completed-task counts for debugging."
+      },
+      "onboardingManage": {
+        "title": "Manage onboarding",
+        "description": "Edit dyads, questions per dyad, copy, and background images for player profiling."
       },
       "surveyAnalytics": {
         "title": "Survey Analytics",
@@ -1347,6 +1352,36 @@
         },
         "closeResults": "Close Results"
       }
+    },
+    "onboarding": {
+      "title": "Manage onboarding",
+      "subtitle": "Structure, copy, and background images for guest player profiling.",
+      "structureTitle": "Structure",
+      "structureHint": "Adjust dyads and questions per dyad, then “Apply structure”. Fill all questions and save.",
+      "dyadCount": "Number of dyads",
+      "questionsPerDyad": "Questions per dyad",
+      "applyStructure": "Apply structure",
+      "introTitle": "Intro (start screen)",
+      "introTitleDe": "Title (DE)",
+      "introTitleEn": "Title (EN)",
+      "introBodyDe": "Body (DE)",
+      "introBodyEn": "Body (EN)",
+      "stepsTitle": "Questions (order: dyad 1 Q1, dyad 1 Q2, …)",
+      "stepsHint": "Per question: scenario, pole labels, and optional background (JPEG/PNG/WebP/GIF).",
+      "stepHeading": "Question {{index}} · Dyad {{dyad}}, part {{q}}",
+      "backgroundImage": "Background image",
+      "scenarioDe": "Scenario (DE)",
+      "scenarioEn": "Scenario (EN)",
+      "poleLowDe": "Low / left pole (DE)",
+      "poleLowEn": "Low / left pole (EN)",
+      "poleHighDe": "High / right pole (DE)",
+      "poleHighEn": "High / right pole (EN)",
+      "save": "Save",
+      "saving": "Saving…",
+      "loadError": "Could not load configuration.",
+      "saveError": "Save failed.",
+      "uploadError": "Upload failed.",
+      "invalidStructure": "Invalid structure (max 32 dyads, 16 questions per dyad, 512 questions total)."
     },
     "surveyAnalytics": {
       "title": "Survey Analytics",

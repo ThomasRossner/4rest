@@ -8,6 +8,7 @@ import HomePage from '../../pages/HomePage/HomePage';
 import TasksPage from '../../pages/TasksPage/TasksPage';
 import ForestPage from '../../pages/ForestPage/ForestPage';
 import ForestLabPage from '../../pages/ForestLabPage/ForestLabPage';
+import TreeSystemAppDemoPage from '../../pages/TreeSystemAppDemoPage/TreeSystemAppDemoPage';
 import RewardsPage from '../../pages/RewardsPage/RewardsPage';
 import StatisticsPage from '../../pages/StatisticsPage/StatisticsPage';
 import ProfilePage from '../../pages/ProfilePage/ProfilePage';
@@ -88,6 +89,7 @@ export default function GuestAppWithProfileGate({ user }: Props) {
         <Route path="tasks/c/:categoryKey" element={<TasksPage />} />
         <Route path="forest" element={<ForestPage />} />
         <Route path="forest-lab" element={<ForestLabPage />} />
+        <Route path="tree-system-app" element={<TreeSystemAppDemoPage />} />
         <Route path="rewards" element={<RewardsPage />} />
         <Route path="statistics" element={<StatisticsPage />} />
         <Route path="profile" element={<ProfilePage />} />

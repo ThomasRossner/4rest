@@ -43,6 +43,7 @@
     },
     "skipHint": "Du kannst deinen Charakter jederzeit unter „Profil“ oder durch Klick auf deine Figur im Wald finden.",
     "progress": "Frage {{current}} von {{total}}",
+    "progressDyad": "Frage {{current}} von {{total}} · Dyade {{dyad}}, Teil {{qInDyad}}",
     "continue": "Weiter",
     "finish": "Abschließen",
     "scaleAria": "Antwort auf einer Skala von 0 bis 4",
@@ -547,6 +548,10 @@
       "forestDebugStats": {
         "title": "Wald-Debug-Statistiken",
         "description": "Zeigen Sie pro Benutzer Baum- und abgeschlossene Aufgabenanzahlen zur Fehlerbehebung an."
+      },
+      "onboardingManage": {
+        "title": "Onboarding verwalten",
+        "description": "Dyaden, Fragen pro Dyade, Texte und Hintergrundbilder für die Spielerprofilierung bearbeiten."
       },
       "surveyAnalytics": {
         "title": "Umfrage-Analysen",
@@ -1347,6 +1352,36 @@
         },
         "closeResults": "Ergebnisse schließen"
       }
+    },
+    "onboarding": {
+      "title": "Onboarding verwalten",
+      "subtitle": "Struktur, Texte und Hintergrundbilder für die Spielerprofilierung (Gäste).",
+      "structureTitle": "Struktur",
+      "structureHint": "Dyaden und Fragen pro Dyade anpassen, dann „Struktur anwenden“. Anschließend alle Fragen ausfüllen und speichern.",
+      "dyadCount": "Anzahl Dyaden",
+      "questionsPerDyad": "Fragen pro Dyade",
+      "applyStructure": "Struktur anwenden",
+      "introTitle": "Intro (Startbildschirm)",
+      "introTitleDe": "Titel (DE)",
+      "introTitleEn": "Titel (EN)",
+      "introBodyDe": "Text (DE)",
+      "introBodyEn": "Text (EN)",
+      "stepsTitle": "Fragen (Reihenfolge: Dyade 1 Frage 1, Dyade 1 Frage 2, …)",
+      "stepsHint": "Pro Frage Szenario, Polbeschriftungen und optional ein Hintergrundbild (JPEG/PNG/WebP/GIF).",
+      "stepHeading": "Frage {{index}} · Dyade {{dyad}}, Teil {{q}}",
+      "backgroundImage": "Hintergrundbild",
+      "scenarioDe": "Szenario (DE)",
+      "scenarioEn": "Szenario (EN)",
+      "poleLowDe": "Pol links / niedrig (DE)",
+      "poleLowEn": "Pol links / niedrig (EN)",
+      "poleHighDe": "Pol rechts / hoch (DE)",
+      "poleHighEn": "Pol rechts / hoch (EN)",
+      "save": "Speichern",
+      "saving": "Speichern…",
+      "loadError": "Konfiguration konnte nicht geladen werden.",
+      "saveError": "Speichern fehlgeschlagen.",
+      "uploadError": "Upload fehlgeschlagen.",
+      "invalidStructure": "Ungültige Struktur (max. 32 Dyaden, 16 Fragen pro Dyade und höchstens 512 Fragen insgesamt)."
     },
     "surveyAnalytics": {
       "title": "Umfrage-Analysen",
