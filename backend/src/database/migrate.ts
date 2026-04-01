@@ -91,6 +91,7 @@ export async function runMigrations(): Promise<void> {
       '063_forest_category_points',
       '064_player_profile',
       '065_onboarding_config',
+      '066_backfill_forest_points_from_user_tasks',
     ];
     
     // Read all migration files

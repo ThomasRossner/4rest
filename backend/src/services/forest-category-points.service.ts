@@ -16,7 +16,9 @@ export async function addForestCategoryPoints(
   amount: number,
   categoryKey: ForestCategoryKey | null
 ): Promise<void> {
-  if (!categoryKey || amount <= 0 || !Number.isFinite(amount)) {
+  // pg liefert DECIMAL u. a. als string — Number.isFinite('10') ist false, sonst schluckt die Funktion still.
+  const n = Math.floor(Number(amount));
+  if (!categoryKey || !Number.isFinite(n) || n <= 0) {
     return;
   }
 
@@ -26,7 +28,7 @@ export async function addForestCategoryPoints(
   const db = getPool();
   await db.query(
     `UPDATE users SET ${col} = ${col} + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
-    [Math.floor(amount), userId]
+    [n, userId]
   );
 }
 
