@@ -2285,6 +2285,7 @@
     },
     "timeline": {
       "title": "My Progress",
+      "subtitle": "Cumulative points by category from registration through today (one bar per calendar day).",
       "noData": "No data available",
       "points": "Points",
       "trees": "Trees",
@@ -2294,8 +2295,11 @@
         "kommunikation": "Communication",
         "mensch": "People",
         "natur": "Nature",
-        "ressourcen": "Resources"
+        "ressourcen": "Resources",
+        "sonstige": "Other"
       },
+      "totalCumulative": "Total points (current)",
+      "scaleToProfile": "100% bar height = {{max}} points (profile: {{profile}})",
       "maxPoints": "Max. Points",
       "maxTrees": "Max. Trees",
       "maxCo2": "Max. CO₂",

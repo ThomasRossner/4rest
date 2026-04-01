@@ -146,6 +146,7 @@ function StatisticsPage() {
 // Rankings page for guests
 function RankingsPage() {
   const userId = useAuthStore((s) => s.user?.id);
+  const profilePoints = useAuthStore((s) => s.user?.points ?? 0);
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
   const [expandedContests, setExpandedContests] = useState<Set<string>>(new Set());
@@ -225,7 +226,7 @@ function RankingsPage() {
   // Get timeline data
   const { data: timeline } = useQuery(
     ['userTimeline', userId],
-    () => api.getUserTimeline(userId!, 30),
+    () => api.getUserTimeline(userId!),
     { enabled: !!userId }
   );
 
@@ -358,7 +359,7 @@ function RankingsPage() {
         <section className="rankings-section">
           <h2 className="rankings-section-title">{t('rankings.timeline.title')}</h2>
           <div className="rankings-timeline-card">
-            <TimelineChart data={timeline} />
+            <TimelineChart data={timeline} profileTotalPoints={profilePoints} />
           </div>
         </section>
       )}

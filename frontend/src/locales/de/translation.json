@@ -2269,6 +2269,7 @@
     },
     "timeline": {
       "title": "Mein Fortschritt",
+      "subtitle": "Kumulierte Punkte nach Kategorie von der Registrierung bis heute (je Kalendertag ein Balken).",
       "noData": "Keine Daten verfügbar",
       "points": "Punkte",
       "trees": "Bäume",
@@ -2278,8 +2279,11 @@
         "kommunikation": "Kommunikation",
         "mensch": "Mensch",
         "natur": "Natur",
-        "ressourcen": "Ressourcen"
+        "ressourcen": "Ressourcen",
+        "sonstige": "Sonstige"
       },
+      "totalCumulative": "Punkte gesamt (aktuell)",
+      "scaleToProfile": "100 % Balkenhöhe = {{max}} Punkte (Profil: {{profile}})",
       "maxPoints": "Max. Punkte",
       "maxTrees": "Max. Bäume",
       "maxCo2": "Max. CO₂",

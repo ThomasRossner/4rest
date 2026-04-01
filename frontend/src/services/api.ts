@@ -310,8 +310,8 @@ export const api = {
     return response.data;
   },
 
-  async getUserTimeline(userId: string, days: number = 30) {
-    const response = await apiClient.get(`/users/${userId}/timeline`, { params: { days } });
+  async getUserTimeline(userId: string) {
+    const response = await apiClient.get(`/users/${userId}/timeline`);
     return response.data;
   },
 
