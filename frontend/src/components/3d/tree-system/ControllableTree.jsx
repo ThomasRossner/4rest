@@ -175,7 +175,13 @@ export default function ControllableTree({position, rotation, trunkQuaternion, g
         <meshStandardMaterial color="red" />
       </mesh> */}
       <group position={position} rotation={rotation} castShadow receiveShadow>
-        <mesh geometry={trunkMesh.geometry} material={trunkMesh.material} scale={trunkGrowth} castShadow receiveShadow />
+        <mesh
+          geometry={trunkMesh.geometry}
+          material={trunkMesh.material}
+          scale={Math.max(0.06, trunkGrowth)}
+          castShadow
+          receiveShadow
+        />
         
         <instancedMesh 
           ref={twigRef} 

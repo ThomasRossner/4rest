@@ -36,16 +36,28 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
     return treeAnchors.length
   }, [treeAnchors]);
 
-  const newTreeSteps = useMemo(() => ((maxPoints - treeGrowSteps) / maxTrees), [maxPoints, maxTrees, treeGrowSteps]);
-  // const newTreePercentage = useMemo(() => (newTreeSteps / maxPoints), [newTreeSteps, maxPoints]);
-  const treeCount = useMemo(() => Math.floor(Math.min(globalPoints, maxPoints - treeGrowSteps) / (maxPoints - treeGrowSteps) * maxTrees), [globalPoints, maxPoints, treeGrowSteps, maxTrees]);
+  const pointSpan = useMemo(
+    () => Math.max(1e-9, maxPoints - treeGrowSteps),
+    [maxPoints, treeGrowSteps]
+  );
+  const newTreeSteps = useMemo(() => pointSpan / Math.max(maxTrees, 1), [pointSpan, maxTrees]);
+  // Ohne Wald-Punkte war treeCount=0 → keine Bäume, nur Boden. Mindestens ein Baum, sobald Anker existieren.
+  const treeCount = useMemo(() => {
+    if (maxTrees === 0) return 0;
+    const raw = Math.floor(
+      (Math.min(globalPoints, pointSpan) / pointSpan) * maxTrees
+    );
+    return Math.min(maxTrees, Math.max(1, raw));
+  }, [globalPoints, pointSpan, maxTrees]);
   
   // Liste der Bäume mit treeAnchorIndex und growth
   const trees = useMemo(() => {         // growth ist sprunghaft (je nach rundung). TODO: growth so anpassen, dass es linear mit den Punkten wächst, z.B. durch Berechnung des Wachstums basierend auf den Punkten und den Schritten zum Wachstum eines Baumes.
     // Berechne für jeden Baum den growth Parameter
     return treeAnchors.slice(0, treeCount).map((anchor, index) => {
-      const growth = Math.min((globalPoints - (index + 1) * newTreeSteps) / treeGrowSteps, 1);
-      console.log("Tree", index, "growth:", growth);
+      const growth = Math.max(
+        0,
+        Math.min((globalPoints - (index + 1) * newTreeSteps) / treeGrowSteps, 1)
+      );
       return {
         treeAnchorIndex: index,
         growth,
@@ -111,9 +123,8 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
       {/* <primitive object={ground.scene} position={[0, 0, 0]}  castShadow receiveShadow /> */}
 
       {trees.slice(0, treeCount).map((tree, i) => (
-        <>
-          <ControllableTree 
-            key={tree.anchor.position} 
+        <ControllableTree
+            key={`tree-${i}-${tree.anchor.uuid ?? tree.anchor.id ?? i}`}
             position={tree.anchor.position} 
             rotation={tree.anchor.rotation}
             trunkQuaternion={tree.anchor.quaternion}
@@ -123,8 +134,6 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
             maxTwigGrowth={1} 
             num={i} 
           />
-        {/* wird jedes Mal neu gerendert, auch, wenn Baum fertig gewachsen ist */}
-      </>
       ))}
     </>
   );
