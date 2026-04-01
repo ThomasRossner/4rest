@@ -5,8 +5,9 @@ import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
 import './LoginPage.css';
+import { resolveApiBaseUrl } from '../../utils/resolveApiBaseUrl';
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
+const apiBaseUrl = resolveApiBaseUrl();
 
 function LoginPage() {
   const navigate = useNavigate();

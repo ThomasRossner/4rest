@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
 import { USER_ROLES, USER_TYPES, UserRole, UserType } from '../constants/enums';
+import { resolveApiBaseUrl } from '../utils/resolveApiBaseUrl';
 
 export type { UserRole, UserType } from '../constants/enums';
 
@@ -15,32 +16,20 @@ function deriveWebSocketUrl(): string {
     return explicit;
   }
 
-  const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
-  if (apiUrl) {
+  const apiUrl = resolveApiBaseUrl();
+  if (/^https?:\/\//i.test(apiUrl)) {
     try {
-      const url = new URL(apiUrl, window.location.origin);
+      const url = new URL(apiUrl);
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
       url.pathname = '/ws';
       url.search = '';
       return url.toString();
     } catch (error) {
-      console.warn('[SIHOT] Failed to derive WebSocket URL from VITE_API_URL:', error);
+      console.warn('[SIHOT] Failed to derive WebSocket URL from API base URL:', error);
     }
   }
 
-  // Fallback: try to derive from VITE_API_URL or use environment variable
-  const fallbackApiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_WS_URL;
-  if (fallbackApiUrl) {
-    try {
-      const url = new URL(fallbackApiUrl);
-      url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-      url.pathname = '/ws';
-      return url.toString();
-    } catch {
-      // fallback
-    }
-  }
-  // Last resort: use window location
+  // Relatives /api (Vite-Proxy): WebSocket direkt auf Backend-Port
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.hostname;
   const port = import.meta.env.VITE_BACKEND_PORT || '5001';

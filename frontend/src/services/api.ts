@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { UserRole, UserType } from '../constants/enums';
+import { resolveApiBaseUrl } from '../utils/resolveApiBaseUrl';
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
+const apiBaseUrl = resolveApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL: apiBaseUrl,
