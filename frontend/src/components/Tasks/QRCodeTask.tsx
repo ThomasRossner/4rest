@@ -12,9 +12,10 @@ interface QRCodeTaskProps {
   taskId: string;
   qrCode: string;
   onComplete?: () => void;
+  variant?: 'default' | 'public';
 }
 
-export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
+export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: QRCodeTaskProps) {
   const [scannedCode, setScannedCode] = useState('');
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -22,24 +23,33 @@ export function QRCodeTask({ taskId, qrCode, onComplete }: QRCodeTaskProps) {
   const rafRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
+  const publicLang = i18n.language?.startsWith('en') ? 'en' : 'de';
 
   const { data: task, isLoading } = useQuery(
-    ['task', taskId],
-    () => api.getTask(taskId),
+    variant === 'public' ? ['publicTask', taskId, publicLang] : ['task', taskId],
+    () =>
+      variant === 'public' ? api.getPublicTask(taskId, publicLang) : api.getTask(taskId),
     { enabled: !!taskId }
   );
 
   const completeMutation = useMutation(
-    () => api.completeTask(taskId, {}),
+    () => (variant === 'public' ? api.completePublicTask(taskId, {}) : api.completeTask(taskId, {})),
     {
       onSuccess: async () => {
-        // Invalidate task and progress queries
+        if (variant === 'public') {
+          showToast({
+            type: 'success',
+            title: t('publicTask.toast.title'),
+            message: t('publicTask.toast.body', { points: task?.points ?? 0 }),
+          });
+          onComplete?.();
+          return;
+        }
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
-        
-        // Invalidate team-related queries to update team points and forest
+
         if (userId) {
           await Promise.all([
             queryClient.invalidateQueries(['userActiveTeam', userId]),

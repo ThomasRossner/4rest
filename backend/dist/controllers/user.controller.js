@@ -151,7 +151,7 @@ export const getUserStatistics = asyncHandler(async (req, res) => {
 });
 /**
  * GET /api/users/:id/timeline
- * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
+ * Kumulierter Punkteverlauf nach Kategorie von Registrierung bis heute (ein Eintrag pro Kalendertag).
  */
 export const getUserTimeline = asyncHandler(async (req, res) => {
     const authReq = req;
@@ -162,8 +162,7 @@ export const getUserTimeline = asyncHandler(async (req, res) => {
     if (authReq.user.id !== req.params.id) {
         return res.status(403).json({ error: 'Forbidden: You can only view your own timeline' });
     }
-    const days = req.query.days ? parseInt(req.query.days, 10) : 30;
-    const timeline = await getUserTimelineService(req.params.id, days);
+    const timeline = await getUserTimelineService(req.params.id);
     res.json(timeline);
 });
 export const createUserByAdmin = asyncHandler(async (req, res) => {

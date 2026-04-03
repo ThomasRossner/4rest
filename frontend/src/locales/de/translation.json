@@ -149,6 +149,7 @@
       "loginCode": "000000"
     },
     "passwordlessHint": "Gib den 6-stelligen Code aus deiner E-Mail ein",
+    "guestTasksButton": "Aufgaben als Gast lösen",
     "actions": {
       "signIn": "Anmelden",
       "register": "Konto erstellen",
@@ -158,6 +159,7 @@
       "submitCode": "Anmelden"
     },
     "divider": "oder",
+    "privacyCheckbox": "Ich akzeptiere die <1>Datenschutzhinweise</1> und die Datenverarbeitung für die Nutzung der App.",
     "links": {
       "noAccount": "Noch kein Konto?",
       "alreadyHaveAccount": "Du hast bereits ein Konto?",
@@ -166,7 +168,8 @@
       "requestNewCode": "Neuen Code anfordern",
       "backToPassword": "Zurück zum Passwort-Login",
       "rememberPassword": "Passwort wieder eingefallen?",
-      "backToLogin": "Zurück zur Anmeldung"
+      "backToLogin": "Zurück zur Anmeldung",
+      "backToRegistration": "Zurück zur Registrierung"
     },
     "messages": {
       "verificationSuccess": "E-Mail erfolgreich verifiziert! Du kannst dich jetzt anmelden.",
@@ -185,6 +188,7 @@
       "emailVerificationRequired": "E-Mail-Bestätigung erforderlich. Prüfe dein Postfach ({{email}}).",
       "validationError": "Validierungsfehler",
       "registrationFailed": "Registrierung fehlgeschlagen",
+      "privacyRequired": "Bitte akzeptiere die Datenschutzhinweise, um fortzufahren.",
       "passwordSetupRequired": "Dieses Konto verwendet Passwort-lose Anmeldung. Ein Link zum Setzen eines Passworts wurde an {{email}} gesendet.",
       "requestFailed": "Aktion fehlgeschlagen. Bitte versuche es erneut.",
       "oauthFailed": "Social Login fehlgeschlagen. Bitte erneut versuchen.",
@@ -201,6 +205,20 @@
       "apple": "Mit Apple fortfahren",
       "github": "Mit GitHub fortfahren"
     }
+  },
+  "privacyNotice": {
+    "title": "Datenschutzhinweise",
+    "intro": "Mit diesen Hinweisen informieren wir dich über die Verarbeitung personenbezogener Daten bei der Nutzung der App 4rest im Rahmen der EU-Datenschutz-Grundverordnung (DSGVO).",
+    "purposesTitle": "Zwecke der Verarbeitung",
+    "purposesBody": "Wir verarbeiten deine Daten, um dir ein Nutzerkonto bereitzustellen, die App-Funktionen (z. B. Spielmechanik, Punkte, Aufgaben) zu ermöglichen und dich bei Bedarf per E-Mail zu kontaktieren (z. B. Verifizierung, Passwort-Reset).",
+    "dataTitle": "Datenkategorien",
+    "dataBody": "Zu den verarbeiteten Daten gehören insbesondere: E-Mail-Adresse, Passwort (als sicherer Hash gespeichert), von dir angegebener Name oder Anzeigename sowie Nutzungs- und Punktestanddaten, die in der App anfallen.",
+    "legalTitle": "Rechtsgrundlagen",
+    "legalBody": "Die Verarbeitung erfolgt zur Durchführung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO) und – soweit erforderlich – zur Wahrung berechtigter Interessen (Art. 6 Abs. 1 lit. f DSGVO), z. B. zur Absicherung des Betriebs. Sofern du Einwilligungen erteilst, ist Art. 6 Abs. 1 lit. a DSGVO maßgeblich.",
+    "rightsTitle": "Deine Rechte",
+    "rightsBody": "Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch gegen bestimmte Verarbeitungen. Außerdem hast du das Recht, eine Beschwerde bei einer Datenschutzaufsichtsbehörde einzureichen. Einwilligungen kannst du mit Wirkung für die Zukunft widerrufen.",
+    "contactTitle": "Kontakt",
+    "contactBody": "Für Fragen zum Datenschutz oder zur Ausübung deiner Rechte nutze bitte die Kontaktmöglichkeiten, die im Impressum oder in der App angegeben sind (z. B. Support-E-Mail-Adresse)."
   },
   "home": {
     "title": "Willkommen bei 4rest",
@@ -945,7 +963,9 @@
         "taskContestsHint": "Wenn Wettbewerbe ausgewählt werden, ist diese Aufgabe nur für Teilnehmer dieser Wettbewerbe sichtbar. Keine Auswahl = für alle sichtbar.",
         "thumbnailOptional": "Thumbnail (optional)",
         "thumbnailPreview": "Thumbnail-Vorschau",
-        "geocode": "Geocode"
+        "geocode": "Geocode",
+        "allowPublicCompletion": "Ohne Login abschließbar",
+        "allowPublicCompletionHint": "Deep-Link: /public/task/:taskId — Foto-Aufgaben brauchen für den Upload ein Konto."
       },
       "articleSource": {
         "url": "Externe Artikel-URL verwenden",
@@ -2004,7 +2024,8 @@
     "preferences": "Einwilligungen",
     "dataProcessing": {
       "label": "Datenverarbeitung (erforderlich)",
-      "description": "Erlaubt die Verarbeitung für Kernfunktionen"
+      "description": "Erlaubt die Verarbeitung für Kernfunktionen",
+      "lockedHint": "Für die Nutzung der App erforderlich; kann hier nicht abgewählt werden."
     },
     "analytics": {
       "label": "Analyse",
@@ -2025,6 +2046,29 @@
       "deleteConfirm": "Möchtest du wirklich alle Daten löschen? Dies kann nicht rückgängig gemacht werden.",
       "deleteSuccess": "Deine Daten wurden gelöscht. Du wirst abgemeldet.",
       "deleteError": "Daten konnten nicht gelöscht werden"
+    }
+  },
+  "publicGuest": {
+    "title": "Aufgaben ohne Anmeldung",
+    "empty": "Derzeit ist keine Aufgabe für Gäste ohne Anmeldung freigeschaltet.",
+    "loadError": "Die Aufgabenliste konnte nicht geladen werden. Bitte später erneut versuchen.",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "publicTask": {
+    "toast": {
+      "title": "Aufgabe erledigt",
+      "body": "Super! Du hast dir {{points}} Punkte gesichert. Registriere dich oder melde dich an, damit wir sie deinem Konto gutschreiben."
+    },
+    "notFound": "Diese Aufgabe ist nicht öffentlich verfügbar oder existiert nicht.",
+    "invalidLink": "Ungültiger Link.",
+    "goToLogin": "Zur Anmeldung",
+    "unsupportedType": "Dieser Aufgabentyp ist hier noch nicht eingebunden.",
+    "photoRequiresLogin": "Foto-Aufgaben kannst du ohne Anmeldung nicht abschließen (Upload erfordert ein Konto). Bitte melde dich in der App an.",
+    "cta": {
+      "title": "Punkte sichern",
+      "body": "Lege jetzt ein Konto an oder melde dich an – deine ausstehenden Punkte werden dann übernommen.",
+      "register": "Registrieren",
+      "login": "Anmelden"
     }
   },
   "tasksComponents": {
@@ -2067,7 +2111,16 @@
       "next": "Weiter",
       "complete": "Aufgabe abschließen",
       "submitting": "Wird übermittelt...",
-      "noQuestions": "Diese Quiz-Aufgabe hat keine konfigurierten Fragen."
+      "noQuestions": "Diese Quiz-Aufgabe hat keine konfigurierten Fragen.",
+      "checkAnswer": "Antwort prüfen",
+      "checking": "Wird geprüft…",
+      "correctTitle": "Richtig",
+      "correctBody": "Die Antwort ist korrekt.",
+      "wrongTitle": "Falsch oder gesperrt",
+      "wrongBody": "Die Antwort war leider falsch. Probiere es in {{minutes}} Minute(n) noch einmal.",
+      "lockedBody": "Diese Frage ist noch gesperrt. Bitte in {{minutes}} Minute(n) erneut versuchen.",
+      "lockCountdown": "Noch ca. {{minutes}} Minute(n), bis du die nächste Antwort versuchen kannst.",
+      "errorTitle": "Quiz"
     },
     "visit_location": {
       "targetLocationNotSet": "Zielstandort der Aufgabe ist nicht festgelegt",
@@ -2105,6 +2158,16 @@
       "submitting": "Wird übermittelt...",
       "noArticle": "Diese Artikel-Quiz-Aufgabe hat keinen konfigurierten Artikel.",
       "noQuestions": "Diese Artikel-Quiz-Aufgabe hat keine konfigurierten Fragen."
+    },
+    "survey": {
+      "title": "Umfrage",
+      "instruction": "Bitte beantworten Sie alle erforderlichen Fragen.",
+      "required": "Pflicht",
+      "textPlaceholder": "Ihre Antwort …",
+      "submit": "Umfrage absenden",
+      "submitting": "Wird gesendet …",
+      "noQuestions": "Diese Umfrage hat keine konfigurierten Fragen.",
+      "requiredQuestions": "Bitte beantworten Sie alle Pflichtfragen vor dem Absenden."
     }
   },
   "employee": {
@@ -2513,7 +2576,9 @@
       "online": "Online"
     },
     "taskManage": {
-      "subtitle": "Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren"
+      "subtitle": "Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren",
+      "publicColumn": "Öffentlich",
+      "publicHint": "Ohne Login abschließbar (Einstellung im Admin)"
     },
     "rewardManage": {
       "subtitle": "Belohnungen durchsuchen, bearbeiten und verwalten"

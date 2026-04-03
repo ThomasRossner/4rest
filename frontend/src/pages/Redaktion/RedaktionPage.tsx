@@ -638,6 +638,16 @@ function RedaktionPage() {
                   render: (task) => task.points,
                 },
                 {
+                  key: 'publicAccess',
+                  label: t('redaktion.taskManage.publicColumn'),
+                  render: (task: any) =>
+                    task.allow_public_completion ? (
+                      <span title={t('redaktion.taskManage.publicHint')}>🌐</span>
+                    ) : (
+                      '—'
+                    ),
+                },
+                {
                   key: 'status',
                   label: t('admin.taskManage.table.status'),
                   render: (task) => (

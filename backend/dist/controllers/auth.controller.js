@@ -7,8 +7,39 @@ import { sihot } from '../integrations/sihot.js';
 import { USER_ROLES, USER_TYPES } from '../constants/enums.js';
 import { getPool } from '../database/connection.js';
 import { sendWelcomeEmail, sendPasswordResetEmail, sendEmailVerificationEmail, verifyEmailToken, verifyPasswordResetToken, clearPasswordResetToken, generateLoginCode, verifyLoginCode, sendLoginCodeEmail, sendPasswordSetupEmail, } from '../services/auth-email.service.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import { signUserToken } from '../utils/jwt.js';
 import { createOAuthCallback, getFrontendUrl } from '../utils/oauth.js';
+import { updateConsent } from '../middleware/gdpr.js';
+import { mergeGuestTaskCompletions } from '../services/task.service.js';
+import { getGuestSessionIdFromRequest } from '../utils/guestSession.js';
+async function tryMergeGuestSession(req, userId) {
+    const sid = getGuestSessionIdFromRequest(req);
+    if (!sid)
+        return;
+    try {
+        const r = await mergeGuestTaskCompletions(userId, sid);
+        if (r.merged > 0 || r.alreadyHad > 0) {
+            console.log(`[GUEST] Merged public tasks for user ${userId}:`, r);
+        }
+    }
+    catch (e) {
+        console.error('[GUEST] merge failed', e);
+    }
+}
+/** POST /api/auth/merge-guest-session — explizit nach OAuth/Token-Login (Cookie + JWT). */
+export const mergeGuestSession = asyncHandler(async (req, res) => {
+    const authReq = req;
+    if (!authReq.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const sid = getGuestSessionIdFromRequest(req);
+    if (!sid) {
+        return res.json({ merged: 0, alreadyHad: 0 });
+    }
+    const r = await mergeGuestTaskCompletions(authReq.user.id, sid);
+    res.json(r);
+});
 function normalizeRole(role) {
     if (typeof role === 'string' && USER_ROLES.includes(role)) {
         return role;
@@ -69,20 +100,22 @@ export async function login(req, res) {
         }
         const userEmail = user.email || user.oauth_email || '';
         const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
-        const preferredLanguage = user.preferred_language === 'en' ? 'en' : 'de';
+        await tryMergeGuestSession(req, user.id);
+        const userAfterMerge = (await getUserById(user.id)) ?? user;
+        const preferredLanguage = userAfterMerge.preferred_language === 'en' ? 'en' : 'de';
         res.json({
             token,
             user: {
-                id: user.id,
+                id: userAfterMerge.id,
                 email: userEmail,
-                name: user.name,
-                role: user.role,
-                points: user.points || 0,
-                userType: user.user_type,
+                name: userAfterMerge.name,
+                role: userAfterMerge.role,
+                points: userAfterMerge.points || 0,
+                userType: userAfterMerge.user_type,
                 emailVerified: isEmailVerified,
-                sihotGuestId: user.sihot_guest_id || null,
-                sihotGuest: user.sihot_guest_data?.guest ?? null,
-                sihotReservations: user.sihot_guest_data?.reservations ?? [],
+                sihotGuestId: userAfterMerge.sihot_guest_id || null,
+                sihotGuest: userAfterMerge.sihot_guest_data?.guest ?? null,
+                sihotReservations: userAfterMerge.sihot_guest_data?.reservations ?? [],
                 preferredLanguage,
             },
         });
@@ -110,7 +143,13 @@ export async function login(req, res) {
 }
 export async function register(req, res) {
     try {
-        const { email, password, name, role = 'guest', userType = 'explorer', teamRegistrationToken, contestRegistrationToken, preferredLanguage: preferredLang } = req.body;
+        const { email, password, name, role = 'guest', userType = 'explorer', teamRegistrationToken, contestRegistrationToken, preferredLanguage: preferredLang, acceptPrivacy, } = req.body;
+        if (acceptPrivacy !== true) {
+            return res.status(400).json({
+                error: 'Privacy policy must be accepted.',
+                code: 'PRIVACY_REQUIRED',
+            });
+        }
         const existingUser = await getUserByEmail(email);
         if (existingUser) {
             // Check if user is soft-deleted
@@ -161,6 +200,11 @@ export async function register(req, res) {
                     return res.status(500).json({ error: 'Failed to reactivate user' });
                 }
                 const user = updateResult.rows[0];
+                await updateConsent(user.id, {
+                    dataProcessing: true,
+                    analytics: false,
+                    marketing: false,
+                });
                 // Send verification email for reactivated user (non-blocking)
                 // Don't block registration if email fails
                 sendEmailVerificationEmail(user.id, user.email || '', user.name).catch((error) => {
@@ -192,6 +236,7 @@ export async function register(req, res) {
                         }
                     }
                 }
+                await tryMergeGuestSession(req, user.id);
                 return res.status(200).json({
                     message: 'User reactivated successfully. Please verify your email.',
                     user: {
@@ -240,6 +285,11 @@ export async function register(req, res) {
             sihot_guest_data: sihotGuestPayload,
             preferred_language: preferredLang === 'en' ? 'en' : 'de',
         });
+        await updateConsent(user.id, {
+            dataProcessing: true,
+            analytics: false,
+            marketing: false,
+        });
         // Automatisch Team oder Contest beitreten (falls Token vorhanden)
         let joinedTeam = null;
         let joinedContest = null;
@@ -264,25 +314,27 @@ export async function register(req, res) {
         }
         const emailAddress = user.email ?? '';
         const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
+        await tryMergeGuestSession(req, user.id);
+        const userAfterMerge = (await getUserById(user.id)) ?? user;
         // Send email verification email (non-blocking)
         // Welcome email will be sent after successful email verification
         sendEmailVerificationEmail(user.id, emailAddress, user.name).catch((error) => {
             console.error('Failed to send verification email:', error);
         });
-        const preferredLanguage = user.preferred_language === 'en' ? 'en' : 'de';
+        const preferredLanguage = userAfterMerge.preferred_language === 'en' ? 'en' : 'de';
         res.status(201).json({
             token,
             user: {
-                id: user.id,
+                id: userAfterMerge.id,
                 email: emailAddress,
-                name: user.name,
-                role: user.role,
-                points: 0,
-                userType: user.user_type,
-                emailVerified: user.email_verified === true,
-                sihotGuestId: user.sihot_guest_id || null,
-                sihotGuest: user.sihot_guest_data?.guest ?? null,
-                sihotReservations: user.sihot_guest_data?.reservations ?? [],
+                name: userAfterMerge.name,
+                role: userAfterMerge.role,
+                points: userAfterMerge.points || 0,
+                userType: userAfterMerge.user_type,
+                emailVerified: userAfterMerge.email_verified === true,
+                sihotGuestId: userAfterMerge.sihot_guest_id || null,
+                sihotGuest: userAfterMerge.sihot_guest_data?.guest ?? null,
+                sihotReservations: userAfterMerge.sihot_guest_data?.reservations ?? [],
                 preferredLanguage,
             },
             joinedTeam: joinedTeam ? { id: joinedTeam.id, name: joinedTeam.name } : null,
@@ -599,20 +651,22 @@ export async function loginWithCode(req, res) {
         }
         const userEmail = user.email || user.oauth_email || '';
         const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
-        const preferredLanguage = user.preferred_language === 'en' ? 'en' : 'de';
+        await tryMergeGuestSession(req, user.id);
+        const userAfterMerge = (await getUserById(user.id)) ?? user;
+        const preferredLanguage = userAfterMerge.preferred_language === 'en' ? 'en' : 'de';
         res.json({
             token,
             user: {
-                id: user.id,
+                id: userAfterMerge.id,
                 email: userEmail,
-                name: user.name,
-                role: user.role,
-                points: user.points || 0,
-                userType: user.user_type,
-                emailVerified: user.email_verified === true,
-                sihotGuestId: user.sihot_guest_id || null,
-                sihotGuest: user.sihot_guest_data?.guest ?? null,
-                sihotReservations: user.sihot_guest_data?.reservations ?? [],
+                name: userAfterMerge.name,
+                role: userAfterMerge.role,
+                points: userAfterMerge.points || 0,
+                userType: userAfterMerge.user_type,
+                emailVerified: userAfterMerge.email_verified === true,
+                sihotGuestId: userAfterMerge.sihot_guest_id || null,
+                sihotGuest: userAfterMerge.sihot_guest_data?.guest ?? null,
+                sihotReservations: userAfterMerge.sihot_guest_data?.reservations ?? [],
                 preferredLanguage,
             },
         });

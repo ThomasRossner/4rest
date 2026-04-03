@@ -37,6 +37,7 @@ const TargetIcon = L.icon({
 interface VisitLocationTaskProps {
   taskId: string;
   onComplete?: () => void;
+  variant?: 'default' | 'public';
 }
 
 // Calculate distance between two coordinates in meters (Haversine formula)
@@ -58,7 +59,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 // Proximity threshold in meters (50 meters)
 const PROXIMITY_THRESHOLD = 50;
 
-export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps) {
+export function VisitLocationTask({ taskId, onComplete, variant = 'default' }: VisitLocationTaskProps) {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [isTracking, setIsTracking] = useState(false);
@@ -70,24 +71,33 @@ export function VisitLocationTask({ taskId, onComplete }: VisitLocationTaskProps
   const watchIdRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
+  const publicLang = i18n.language?.startsWith('en') ? 'en' : 'de';
 
   const { data: task, isLoading } = useQuery(
-    ['task', taskId],
-    () => api.getTask(taskId),
+    variant === 'public' ? ['publicTask', taskId, publicLang] : ['task', taskId],
+    () =>
+      variant === 'public' ? api.getPublicTask(taskId, publicLang) : api.getTask(taskId),
     { enabled: !!taskId }
   );
 
   const completeMutation = useMutation(
-    () => api.completeTask(taskId, {}),
+    () => (variant === 'public' ? api.completePublicTask(taskId, {}) : api.completeTask(taskId, {})),
     {
       onSuccess: async () => {
-        // Invalidate task and progress queries
+        if (variant === 'public') {
+          showToast({
+            type: 'success',
+            title: t('publicTask.toast.title'),
+            message: t('publicTask.toast.body', { points: task?.points ?? 0 }),
+          });
+          onComplete?.();
+          return;
+        }
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
-        
-        // Invalidate team-related queries to update team points and forest
+
         if (userId) {
           await Promise.all([
             queryClient.invalidateQueries(['userActiveTeam', userId]),

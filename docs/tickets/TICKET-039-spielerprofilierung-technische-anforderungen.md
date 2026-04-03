@@ -2,7 +2,7 @@
 
 **Typ:** Requirement
 
-**Status:** offen
+**Status:** teilweise
 
 **Beschreibung:**
 Kapitel 4 der Spezifikation (Technische Anforderungen an Cursor) umsetzen:

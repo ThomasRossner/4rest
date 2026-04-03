@@ -7,6 +7,7 @@ const apiBaseUrl = resolveApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL: apiBaseUrl,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +36,8 @@ export const api = {
     userType: UserType = 'explorer',
     teamRegistrationToken?: string,
     contestRegistrationToken?: string,
-    preferredLanguage?: 'de' | 'en'
+    preferredLanguage?: 'de' | 'en',
+    acceptPrivacy?: boolean
   ) {
     const res = await apiClient.post('/auth/register', {
       email,
@@ -46,6 +48,7 @@ export const api = {
       teamRegistrationToken,
       contestRegistrationToken,
       preferredLanguage,
+      acceptPrivacy: acceptPrivacy === true,
     });
     return res.data;
   },
@@ -111,6 +114,22 @@ export const api = {
   },
 
   // GDPR
+  async getConsent(): Promise<{
+    analytics: boolean;
+    marketing: boolean;
+    dataProcessing: boolean;
+  }> {
+    const res = await apiClient.get<{ consent: { analytics: boolean; marketing: boolean; dataProcessing: boolean } }>(
+      '/gdpr/consent'
+    );
+    return res.data.consent;
+  },
+
+  async updateConsent(consent: { analytics: boolean; marketing: boolean; dataProcessing: boolean }) {
+    const res = await apiClient.post('/gdpr/consent', consent);
+    return res.data;
+  },
+
   async deleteMyAccount(userId: string) {
     const res = await apiClient.delete(`/gdpr/delete/${userId}`);
     return res.data;
@@ -240,6 +259,40 @@ export const api = {
     return response.data;
   },
 
+  /** Alle Aufgaben mit „ohne Login“ (allow_public_completion), für Gast-Startseite. */
+  async listPublicGuestTasks(lang?: 'de' | 'en') {
+    const response = await apiClient.get('/tasks/public', {
+      params: lang ? { lang } : undefined,
+    });
+    return response.data as {
+      id: string;
+      title: string;
+      description: string | null;
+      type: string;
+      points: number;
+      thumbnail_url: string | null;
+    }[];
+  },
+
+  /** Öffentliche Aufgabe (Cookie Gast-Session); Task mit allow_public_completion. */
+  async getPublicTask(id: string, lang?: 'de' | 'en') {
+    const response = await apiClient.get(`/tasks/public/${id}`, {
+      params: lang ? { lang } : undefined,
+    });
+    return response.data;
+  },
+
+  async completePublicTask(taskId: string, data?: Record<string, unknown>) {
+    const response = await apiClient.post(`/tasks/public/${taskId}/complete`, data);
+    return response.data as { success: boolean };
+  },
+
+  /** Nach OAuth: ausstehende Gast-Aufgaben mit Account verbinden (Cookie + JWT). */
+  async mergeGuestSession() {
+    const response = await apiClient.post('/auth/merge-guest-session', {});
+    return response.data as { merged: number; alreadyHad: number };
+  },
+
   async getTaskQrCode(taskId: string) {
     const response = await apiClient.get(`/tasks/${taskId}/qr-code`);
     return response.data;
@@ -258,6 +311,14 @@ export const api = {
   async bulkDeleteTasks(ids: string[]) {
     const response = await apiClient.post('/tasks/bulk/delete', { ids });
     return response.data;
+  },
+
+  async submitQuizAnswer(taskId: string, questionIndex: number, answerId: string) {
+    const response = await apiClient.post(`/tasks/${taskId}/quiz/answer`, {
+      questionIndex,
+      answerId,
+    });
+    return response.data as { status: 'correct' | 'wrong' | 'locked'; lockedUntil?: string };
   },
 
   async completeTask(taskId: string, data?: any) {

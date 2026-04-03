@@ -87,6 +87,9 @@ export async function runMigrations() {
             '063_forest_category_points',
             '064_player_profile',
             '065_onboarding_config',
+            '066_backfill_forest_points_from_user_tasks',
+            '067_quiz_question_locks',
+            '068_guest_public_tasks',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({

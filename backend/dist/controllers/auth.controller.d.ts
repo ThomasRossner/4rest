@@ -1,4 +1,6 @@
-import { Request, Response } from 'express';
+import { Request, Response, RequestHandler } from 'express';
+/** POST /api/auth/merge-guest-session — explizit nach OAuth/Token-Login (Cookie + JWT). */
+export declare const mergeGuestSession: RequestHandler;
 export declare function login(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 export declare function register(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 export declare function refreshToken(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;

@@ -9,6 +9,9 @@ import AuthCallbackPage from './pages/AuthCallbackPage/AuthCallbackPage';
 import RezeptionPage from './pages/Rezeption/RezeptionPage';
 import RedaktionPage from './pages/Redaktion/RedaktionPage';
 import GuestAppWithProfileGate from './components/PlayerProfile/GuestAppWithProfileGate';
+import PrivacyPage from './pages/PrivacyPage/PrivacyPage';
+import PublicTaskPage from './pages/PublicTaskPage/PublicTaskPage';
+import PublicGuestLandingPage from './pages/PublicGuestLandingPage/PublicGuestLandingPage';
 
 function ProtectedApp() {
   const { isAuthenticated, user, token } = useAuthStore();
@@ -76,10 +79,13 @@ function App() {
       <ToastContainer />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/reset-password" element={<LoginPage />} />
         <Route path="/setup-password" element={<LoginPage />} />
         <Route path="/verify-email" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/public/guest" element={<PublicGuestLandingPage />} />
+        <Route path="/public/task/:taskId" element={<PublicTaskPage />} />
         <Route path="/*" element={<ProtectedApp />} />
       </Routes>
     </Router>

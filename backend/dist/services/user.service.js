@@ -732,27 +732,41 @@ export async function createUserByAdminService(email, role, name) {
         throw error;
     }
 }
-export async function getUserTimelineService(userId, days = 30) {
+function emptyForestBucket() {
+    return { kommunikation: 0, mensch: 0, natur: 0, ressourcen: 0, sonstige: 0 };
+}
+function addForestBucket(a, b) {
+    return {
+        kommunikation: a.kommunikation + b.kommunikation,
+        mensch: a.mensch + b.mensch,
+        natur: a.natur + b.natur,
+        ressourcen: a.ressourcen + b.ressourcen,
+        sonstige: a.sonstige + b.sonstige,
+    };
+}
+/** Kalendertage von start bis end (inkl.), als YYYY-MM-DD (UTC-Mittag vermeidet DST-Sprünge). */
+function enumerateDateKeysInclusive(startStr, endStr) {
+    const out = [];
+    const cur = new Date(`${startStr}T12:00:00.000Z`);
+    const end = new Date(`${endStr}T12:00:00.000Z`);
+    if (Number.isNaN(cur.getTime()) || Number.isNaN(end.getTime()) || cur > end) {
+        return out;
+    }
+    for (;;) {
+        out.push(cur.toISOString().slice(0, 10));
+        if (cur.getTime() >= end.getTime())
+            break;
+        cur.setUTCDate(cur.getUTCDate() + 1);
+    }
+    return out;
+}
+/**
+ * Täglicher Verlauf: ein Eintrag pro Kalendertag von Registrierung bis heute.
+ * Punkte sind kumulativ (Summe aller bis einschließlich dieses Tages erhaltenen Punkte),
+ * aufgeteilt nach Aufgaben-Kategorie (Wald-Kategorien + Sonstige).
+ */
+export async function getUserTimelineService(userId, _days) {
     const db = getPool();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    // Hole alle abgeschlossenen Aufgaben mit Datum und Punkten
-    const tasksResult = await db.query(`SELECT 
-       DATE(ut.completed_at) as date,
-       SUM(ut.points_earned) as points,
-       COUNT(DISTINCT ut.id) as task_count
-     FROM user_tasks ut
-     WHERE ut.user_id = $1 AND ut.completed_at >= $2
-     GROUP BY DATE(ut.completed_at)
-     ORDER BY DATE(ut.completed_at) ASC`, [userId, startDate]);
-    const forestByDayResult = await db.query(`SELECT 
-       DATE(ut.completed_at) as date,
-       ut.task_category,
-       COALESCE(SUM(ut.points_earned), 0)::int as pts
-     FROM user_tasks ut
-     WHERE ut.user_id = $1 AND ut.completed_at >= $2 AND ut.task_category IS NOT NULL
-     GROUP BY DATE(ut.completed_at), ut.task_category
-     ORDER BY DATE(ut.completed_at) ASC`, [userId, startDate]);
     const toDateKey = (d) => {
         if (!d)
             return '';
@@ -761,15 +775,44 @@ export async function getUserTimelineService(userId, days = 30) {
         const s = String(d);
         return s.length >= 10 ? s.slice(0, 10) : s;
     };
-    const forestDayMap = new Map();
-    for (const row of forestByDayResult.rows) {
-        const d = toDateKey(row.date);
-        const cat = row.task_category;
+    const userRow = await db.query(`SELECT DATE(created_at) AS d FROM users WHERE id = $1`, [userId]);
+    const regDateStr = toDateKey(userRow.rows[0]?.d);
+    if (!regDateStr) {
+        return [];
+    }
+    const todayRow = await db.query(`SELECT CURRENT_DATE::text AS d`);
+    const todayStr = String(todayRow.rows[0]?.d ?? '').slice(0, 10);
+    const endStr = todayStr || new Date().toISOString().slice(0, 10);
+    const dateKeys = enumerateDateKeysInclusive(regDateStr, endStr);
+    if (dateKeys.length === 0) {
+        return [];
+    }
+    const incrementsResult = await db.query(`SELECT
+       DATE(ut.completed_at) AS d,
+       CASE
+         WHEN ut.task_category IN ('kommunikation', 'mensch', 'natur', 'ressourcen')
+           THEN ut.task_category::text
+         ELSE 'sonstige'
+       END AS cat,
+       COALESCE(SUM(ut.points_earned), 0)::int AS pts
+     FROM user_tasks ut
+     WHERE ut.user_id = $1
+       AND ut.completed_at IS NOT NULL
+       AND DATE(ut.completed_at) >= $2::date
+       AND DATE(ut.completed_at) <= $3::date
+     GROUP BY DATE(ut.completed_at), cat
+     ORDER BY DATE(ut.completed_at) ASC`, [userId, regDateStr, endStr]);
+    const dayIncrementMap = new Map();
+    for (const row of incrementsResult.rows) {
+        const d = toDateKey(row.d);
+        if (!d)
+            continue;
+        const cat = String(row.cat ?? 'sonstige');
         const pts = parseInt(String(row.pts ?? 0), 10) || 0;
-        if (!forestDayMap.has(d)) {
-            forestDayMap.set(d, { kommunikation: 0, mensch: 0, natur: 0, ressourcen: 0 });
+        if (!dayIncrementMap.has(d)) {
+            dayIncrementMap.set(d, emptyForestBucket());
         }
-        const bucket = forestDayMap.get(d);
+        const bucket = dayIncrementMap.get(d);
         if (cat === 'kommunikation')
             bucket.kommunikation += pts;
         else if (cat === 'mensch')
@@ -778,56 +821,22 @@ export async function getUserTimelineService(userId, days = 30) {
             bucket.natur += pts;
         else if (cat === 'ressourcen')
             bucket.ressourcen += pts;
+        else
+            bucket.sonstige += pts;
     }
-    // Hole alle gepflanzten Bäume mit Datum
-    const treesResult = await db.query(`SELECT 
-       DATE(ft.planted_at) as date,
-       COUNT(*) as tree_count
-     FROM forest_trees ft
-     WHERE ft.user_id = $1 AND ft.planted_at >= $2
-     GROUP BY DATE(ft.planted_at)
-     ORDER BY DATE(ft.planted_at) ASC`, [userId, startDate]);
-    // Hole CO2-Einsparungen aus abgeschlossenen Aufgaben
-    const co2Result = await db.query(`SELECT 
-       DATE(ut.completed_at) as date,
-       SUM(t.co2_savings_kg) as co2
-     FROM user_tasks ut
-     INNER JOIN tasks t ON t.id = ut.task_id
-     WHERE ut.user_id = $1 AND ut.completed_at >= $2 AND t.co2_savings_kg > 0
-     GROUP BY DATE(ut.completed_at)
-     ORDER BY DATE(ut.completed_at) ASC`, [userId, startDate]);
-    // Erstelle ein Set aller Daten
-    const allDates = new Set();
-    tasksResult.rows.forEach((row) => allDates.add(toDateKey(row.date)));
-    treesResult.rows.forEach((row) => allDates.add(toDateKey(row.date)));
-    co2Result.rows.forEach((row) => allDates.add(toDateKey(row.date)));
-    forestDayMap.forEach((_v, k) => allDates.add(k));
-    // Erstelle Map für schnellen Zugriff
-    const tasksMap = new Map(tasksResult.rows.map((row) => [
-        toDateKey(row.date),
-        { points: parseInt(row.points || 0, 10), tasks: parseInt(row.task_count || 0, 10) },
-    ]));
-    const treesMap = new Map(treesResult.rows.map((row) => [toDateKey(row.date), parseInt(row.tree_count || 0, 10)]));
-    const co2Map = new Map(co2Result.rows.map((row) => [toDateKey(row.date), parseFloat(row.co2 || 0)]));
-    // Erstelle Timeline mit kumulativen Werten
-    const sortedDates = Array.from(allDates).sort();
-    let cumulativePoints = 0;
-    let cumulativeTrees = 0;
-    let cumulativeCo2 = 0;
-    const timeline = sortedDates.map((date) => {
-        const dayPoints = tasksMap.get(date)?.points || 0;
-        const dayTrees = treesMap.get(date) || 0;
-        const dayCo2 = co2Map.get(date) || 0;
-        cumulativePoints += dayPoints;
-        cumulativeTrees += dayTrees;
-        cumulativeCo2 += dayCo2;
-        const forestDay = forestDayMap.get(date);
+    let cumulative = emptyForestBucket();
+    const timeline = dateKeys.map((date) => {
+        const inc = dayIncrementMap.get(date) ?? emptyForestBucket();
+        cumulative = addForestBucket(cumulative, inc);
+        const totalCumulative = cumulative.kommunikation +
+            cumulative.mensch +
+            cumulative.natur +
+            cumulative.ressourcen +
+            cumulative.sonstige;
         return {
             date,
-            points: cumulativePoints,
-            trees: cumulativeTrees,
-            co2: cumulativeCo2,
-            ...(forestDay ? { forestDay } : {}),
+            cumulativeByCategory: { ...cumulative },
+            totalCumulative,
         };
     });
     return timeline;

@@ -1,0 +1,7 @@
+/* Link nutzt dieselbe Klasse wie der Start-Button auf der Aufgaben-Liste */
+a.task-button {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}

@@ -195,17 +195,21 @@ export declare function deleteUserService(userId: string, adminUserId: string, h
  * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
  */
 export declare function createUserByAdminService(email: string, role: UserRole, name?: string): Promise<User>;
-export declare function getUserTimelineService(userId: string, days?: number): Promise<Array<{
+/**
+ * Täglicher Verlauf: ein Eintrag pro Kalendertag von Registrierung bis heute.
+ * Punkte sind kumulativ (Summe aller bis einschließlich dieses Tages erhaltenen Punkte),
+ * aufgeteilt nach Aufgaben-Kategorie (Wald-Kategorien + Sonstige).
+ */
+export declare function getUserTimelineService(userId: string, _days?: number): Promise<Array<{
     date: string;
-    points: number;
-    trees: number;
-    co2: number;
-    forestDay?: {
+    cumulativeByCategory: {
         kommunikation: number;
         mensch: number;
         natur: number;
         ressourcen: number;
+        sonstige: number;
     };
+    totalCumulative: number;
 }>>;
 export declare function getUserStatisticsService(userId: string): Promise<any>;
 //# sourceMappingURL=user.service.d.ts.map

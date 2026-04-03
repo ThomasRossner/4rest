@@ -26,10 +26,32 @@ const app = express();
 // WICHTIG: Port 5000 ist bei Apple belegt (AirPlay Receiver)
 // Backend läuft daher auf Port 5001
 const PORT = process.env.PORT || 5001;
-// Frontend läuft auf Port 3001
-const CORS_ORIGIN = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:3001';
+/** Typische lokale Vite-URLs; in .env steht oft nur :3000, dann schlägt Login von :3001 fehl (CORS). */
+const LOCAL_DEV_ORIGINS = [
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:3000',
+];
+function getCorsOrigin() {
+    const raw = process.env.CORS_ORIGIN || process.env.FRONTEND_URL;
+    const fromEnv = raw
+        ? raw.split(',').map((s) => s.trim()).filter(Boolean)
+        : [];
+    if (process.env.NODE_ENV === 'production') {
+        if (fromEnv.length === 0)
+            return 'http://localhost:3001';
+        return fromEnv.length === 1 ? fromEnv[0] : fromEnv;
+    }
+    // Development: Env-Origins + lokale Vite-Ports (auch wenn nur CORS_ORIGIN=:3000 gesetzt)
+    return Array.from(new Set([...fromEnv, ...LOCAL_DEV_ORIGINS]));
+}
 // Middleware
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+const corsOriginResolved = getCorsOrigin();
+if (process.env.NODE_ENV !== 'production') {
+    console.log('[SERVER] CORS allowed origins:', corsOriginResolved);
+}
+app.use(cors({ origin: corsOriginResolved, credentials: true }));
 // Increase body size limit for large JSON payloads (e.g., tasks with quiz questions)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));

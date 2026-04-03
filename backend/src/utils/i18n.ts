@@ -12,8 +12,13 @@ export function resolveI18n(
   if (!i18n || typeof i18n !== 'object') return fallback ?? '';
   const primary = lang === 'en' ? 'en' : 'de';
   const secondary = lang === 'en' ? 'de' : 'en';
-  const value = i18n[primary] ?? i18n[secondary];
-  if (value != null && typeof value === 'string') return value;
+  const pick = (key: string): string | undefined => {
+    const v = i18n[key];
+    if (v != null && typeof v === 'string' && v.trim() !== '') return v;
+    return undefined;
+  };
+  const value = pick(primary) ?? pick(secondary);
+  if (value != null) return value;
   return fallback ?? '';
 }
 

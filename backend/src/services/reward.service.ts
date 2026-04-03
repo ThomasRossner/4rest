@@ -300,8 +300,10 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
     updates.push(`description_i18n = $${paramIndex++}`);
     values.push(JSON.stringify(data.description_i18n));
     const resolved = data.description_i18n.de ?? data.description_i18n.en;
-    updates.push(`description = $${paramIndex++}`);
-    values.push(resolved ?? null);
+    if (resolved != null) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(resolved);
+    }
   } else if (data.description !== undefined) {
     updates.push(`description = $${paramIndex++}`);
     values.push(data.description ?? null);

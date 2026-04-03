@@ -11,32 +11,46 @@ import './TaskComponents.css';
 interface ArticleQuizTaskProps {
   taskId: string;
   onComplete?: () => void;
+  /** Ohne Login: Daten von /tasks/public/… */
+  variant?: 'default' | 'public';
 }
 
-export function ArticleQuizTask({ taskId, onComplete }: ArticleQuizTaskProps) {
+export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: ArticleQuizTaskProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showQuiz, setShowQuiz] = useState(false);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
+  const publicLang = i18n.language?.startsWith('en') ? 'en' : 'de';
 
   const { data: task, isLoading } = useQuery(
-    ['task', taskId],
-    () => api.getTask(taskId),
+    variant === 'public' ? ['publicTask', taskId, publicLang] : ['task', taskId],
+    () =>
+      variant === 'public'
+        ? api.getPublicTask(taskId, publicLang)
+        : api.getTask(taskId),
     { enabled: !!taskId }
   );
 
   const completeMutation = useMutation(
-    (data: { quiz_answers: any }) => api.completeTask(taskId, data),
+    (data: { quiz_answers: unknown }) =>
+      variant === 'public' ? api.completePublicTask(taskId, data) : api.completeTask(taskId, data),
     {
       onSuccess: async () => {
-        // Invalidate task and progress queries
+        if (variant === 'public') {
+          showToast({
+            type: 'success',
+            title: t('publicTask.toast.title'),
+            message: t('publicTask.toast.body', { points: task?.points ?? 0 }),
+          });
+          onComplete?.();
+          return;
+        }
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
-        
-        // Invalidate team-related queries to update team points and forest
+
         if (userId) {
           await Promise.all([
             queryClient.invalidateQueries(['userActiveTeam', userId]),
@@ -45,14 +59,13 @@ export function ArticleQuizTask({ taskId, onComplete }: ArticleQuizTaskProps) {
         }
         queryClient.invalidateQueries(['userActiveTeam']);
         queryClient.invalidateQueries(['userTeams']);
-        
-        // Refresh user data to update points
+
         try {
           await api.refreshMe();
         } catch (userError) {
           console.debug('Failed to refresh user data:', userError);
         }
-        
+
         showToast({
           type: 'success',
           title: t('tasks.toast.completedTitle'),

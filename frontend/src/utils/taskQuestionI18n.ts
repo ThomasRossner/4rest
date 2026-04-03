@@ -46,7 +46,10 @@ export function normalizeQuizQuestionsForDisplay(payload: any): NormalizedQuizQu
   const lang = getCurrentLang();
   if (!Array.isArray(payload)) return [];
   return payload.map((question: any, qIndex: number) => {
-    const answers = Array.isArray(question?.answers)
+    // Leeres answers[] nicht bevorzugen — sonst fehlen Labels bei Daten mit nur options[]
+    const hasAnswers =
+      Array.isArray(question?.answers) && (question.answers as unknown[]).length > 0;
+    const answers = hasAnswers
       ? question.answers
       : Array.isArray(question?.options)
         ? question.options

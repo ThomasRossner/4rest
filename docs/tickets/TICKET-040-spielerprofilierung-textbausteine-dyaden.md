@@ -2,7 +2,7 @@
 
 **Typ:** Requirement
 
-**Status:** offen
+**Status:** teilweise
 
 **Beschreibung:**
 Kapitel 5 der Spezifikation umsetzen: Alle **Textbausteine** für die vier Dyaden und je fünf Skalenwerte (0–4) bereitstellen und unter „Mehr zu meinem Typ“ anzeigen.

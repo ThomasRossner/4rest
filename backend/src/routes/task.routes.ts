@@ -7,10 +7,14 @@ import { requireRole } from '../middleware/requireRole.js';
 import {
   getTasks,
   getTask,
+  listPublicGuestTasks,
+  getPublicTask,
+  completePublicTask,
   createTask,
   updateTask,
   deleteTask,
   completeTask,
+  submitQuizAnswer,
   uploadPhoto,
   uploadVideo,
   uploadThumbnail,
@@ -22,6 +26,7 @@ import {
   getGallery,
   getTaskQrCode,
 } from '../controllers/task.controller.js';
+import { publicTaskRateLimit } from '../middleware/publicTaskRateLimit.js';
 
 const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
 // Ensure upload directory exists
@@ -106,6 +111,10 @@ const uploadThumbnailMiddleware = multer({
 
 const router = Router();
 
+router.get('/public', publicTaskRateLimit, listPublicGuestTasks);
+router.get('/public/:id', publicTaskRateLimit, getPublicTask);
+router.post('/public/:id/complete', publicTaskRateLimit, completePublicTask);
+
 router.get('/', authenticate, getTasks);
 router.post('/bulk/status', authenticate, requireRole('redaktion', 'administrator'), bulkUpdateTaskStatus);
 router.post('/bulk/delete', authenticate, requireRole('redaktion', 'administrator'), bulkDeleteTasks);
@@ -136,6 +145,7 @@ router.get('/:id/qr-code', authenticate, requireRole('redaktion', 'administrator
 router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);
 router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), updateTask);
 router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
+router.post('/:id/quiz/answer', authenticate, submitQuizAnswer);
 router.post('/:id/complete', authenticate, completeTask);
 
 export default router;

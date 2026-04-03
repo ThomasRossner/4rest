@@ -1,3 +1,26 @@
+.login-field--privacy {
+  margin-top: var(--spacing-sm);
+}
+
+.login-privacy-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.login-privacy-label input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.login-inline-link {
+  color: var(--color-primary, #0d9488);
+  text-decoration: underline;
+}
+
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -19,11 +42,12 @@
 
 .login-header {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-xl);
-  flex-wrap: nowrap !important;
+  flex-wrap: nowrap;
   min-width: 0;
   width: 100%;
   position: relative;
@@ -73,28 +97,48 @@
   letter-spacing: normal;
 }
 
+.login-header-eu {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+}
+
+/* 30 % kleiner als zuvor (max 200px → 140px) */
+.login-header-eu .eu-funding-logo,
+.login-header-eu .eu-logo-svg {
+  max-width: 140px;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .login-language-switcher {
-  align-self: flex-start;
+  align-self: center;
   flex-shrink: 0;
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: static;
 }
 
 @media (max-width: 480px) {
   .login-header {
     flex-direction: row;
-    text-align: left;
-    flex-wrap: nowrap !important;
-    align-items: flex-start;
+    align-items: center;
+    gap: var(--spacing-xs);
   }
 
   .login-header-info {
     text-align: left;
     white-space: normal !important;
-    width: auto !important;
-    max-width: calc(100% - 120px);
-    padding-right: var(--spacing-md);
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    padding-right: 0;
+  }
+
+  .login-header-eu .eu-funding-logo,
+  .login-header-eu .eu-logo-svg {
+    max-width: 112px;
   }
 
   .login-logo-row {
@@ -116,12 +160,6 @@
   .login-container {
     max-width: 100% !important;
     min-width: 320px !important;
-  }
-
-  .login-language-switcher {
-    position: absolute;
-    top: 0;
-    right: 0;
   }
 }
 
@@ -172,6 +210,27 @@
   cursor: not-allowed;
 }
 
+.login-button--secondary {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
+  padding: var(--spacing-md);
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: var(--spacing-sm);
+  background: white;
+  color: var(--color-primary, #0d9488);
+  border: 2px solid var(--color-primary, #0d9488);
+  border-radius: var(--border-radius);
+  transition: background-color 0.15s ease;
+}
+
+.login-button--secondary:hover {
+  background: rgba(13, 148, 136, 0.08);
+}
+
 .login-error {
   padding: var(--spacing-sm);
   background-color: #ffebee;
@@ -206,23 +265,12 @@
   flex-wrap: wrap;
 }
 
-.login-eu-logo {
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .eu-funding-logo {
-  max-width: 200px;
   height: auto;
   display: block;
 }
 
 .eu-logo-svg {
-  max-width: 200px;
   height: auto;
   display: block;
 }

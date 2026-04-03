@@ -163,6 +163,8 @@ type TaskFormState = {
   thumbnailUrl?: string | null;
   allowed_teams?: string[];
   allowed_contests?: string[];
+  /** Öffentlich ohne Login (Deep-Link /public/task/:id). */
+  allow_public_completion?: boolean;
 };
 
 type RewardFormState = {
@@ -1372,6 +1374,7 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   location_tool: undefined,
   allowed_teams: [],
   allowed_contests: [],
+  allow_public_completion: false,
   thumbnailFile: null,
   thumbnailUrl: null,
 });
@@ -1496,31 +1499,86 @@ const normalizeQuizQuestions = (payload: unknown): QuizQuestionDraft[] => {
   return reindexQuestions(normalized);
 };
 
+/** Wählt die anzuzeigende Sprachvariante; leere Strings zählen als „fehlt“ (?? reicht nicht). */
+const coalesceI18nString = (
+  primary: string | undefined,
+  secondary: string | undefined,
+  legacy: string
+): string => {
+  if (primary != null && String(primary).trim() !== '') return String(primary);
+  if (secondary != null && String(secondary).trim() !== '') return String(secondary);
+  return legacy;
+};
+
 const normalizeSurveyQuestions = (payload: unknown): SurveyQuestionDraft[] => {
   if (!payload) return [];
+  if (typeof payload === 'string') {
+    try {
+      return normalizeSurveyQuestions(JSON.parse(payload));
+    } catch {
+      return [createEmptySurveyQuestion()];
+    }
+  }
   if (Array.isArray(payload)) {
-    return payload.map((q, index) => ({
-      id: q.id || generateId(),
-      question: q?.question_i18n?.de || q.question || '',
-      question_i18n: q?.question_i18n || { de: q.question || '', en: q.question || '' },
-      type: q.type || 'single_choice',
-      options: Array.isArray(q.options)
-        ? q.options.map((option: any) => {
-            if (typeof option === 'string') return option;
-            return option?.option_i18n?.de || option?.text || '';
-          })
-        : (q.type === 'single_choice' || q.type === 'multiple_choice' ? ['', ''] : undefined),
-      options_i18n: Array.isArray(q.options)
-        ? q.options.map((option: any) => {
-            if (typeof option === 'string') return { de: option, en: option };
-            return option?.option_i18n || { de: option?.text || '', en: option?.text || '' };
-          })
-        : undefined,
-      required: q.required !== undefined ? q.required : true,
-      minRating: q.minRating || 1,
-      maxRating: q.maxRating || 5,
-      order: q.order || index + 1,
-    }));
+    return payload
+      .filter(
+        (q) => q != null && typeof q === 'object' && !Array.isArray(q),
+      )
+      .map((q, index) => {
+      const raw = q as {
+        question?: string | { de?: string; en?: string };
+        prompt?: string;
+        question_i18n?: { de?: string; en?: string };
+        prompt_i18n?: { de?: string; en?: string };
+      };
+      let legacy = '';
+      if (typeof raw.question === 'string') {
+        legacy = raw.question;
+      } else if (raw.question && typeof raw.question === 'object') {
+        legacy = coalesceI18nString(raw.question.de, raw.question.en, '');
+      }
+      if (!legacy.trim() && typeof raw.prompt === 'string') {
+        legacy = raw.prompt;
+      }
+      const qi =
+        (raw.question_i18n as { de?: string; en?: string } | undefined) ??
+        (raw.prompt_i18n as { de?: string; en?: string } | undefined);
+      const deRaw = qi?.de;
+      const enRaw = qi?.en;
+      const questionText = coalesceI18nString(deRaw, enRaw, legacy);
+      const questionI18nMerged = {
+        de: coalesceI18nString(deRaw, enRaw, legacy),
+        en: coalesceI18nString(enRaw, deRaw, legacy),
+      };
+      const hasOptions = Array.isArray(q.options) && q.options.length > 0;
+      const inferredType: SurveyQuestionDraft['type'] =
+        (q.type as SurveyQuestionDraft['type'] | undefined) ||
+        (hasOptions ? 'single_choice' : 'text');
+      return {
+        id: q.id || generateId(),
+        question: questionText,
+        question_i18n: questionI18nMerged,
+        type: inferredType,
+        options: Array.isArray(q.options)
+          ? q.options.map((option: any) => {
+              if (typeof option === 'string') return option;
+              return option?.option_i18n?.de || option?.text || '';
+            })
+          : inferredType === 'single_choice' || inferredType === 'multiple_choice'
+            ? ['', '']
+            : undefined,
+        options_i18n: Array.isArray(q.options)
+          ? q.options.map((option: any) => {
+              if (typeof option === 'string') return { de: option, en: option };
+              return option?.option_i18n || { de: option?.text || '', en: option?.text || '' };
+            })
+          : undefined,
+        required: q.required !== undefined ? q.required : true,
+        minRating: q.minRating || 1,
+        maxRating: q.maxRating || 5,
+        order: q.order || index + 1,
+      };
+    });
   }
   return [createEmptySurveyQuestion()];
 };
@@ -1531,10 +1589,19 @@ const buildSurveyPayload = (questions: SurveyQuestionDraft[]) => {
   }
 
   return questions.map((question) => {
-    const questionI18n = question.question_i18n ?? { de: question.question, en: question.question };
+    const qi = question.question_i18n ?? { de: question.question, en: question.question };
+    // Leeres de/en darf nicht „gewinnen“ (?? ignoriert nur null/undefined, nicht „“).
+    const deText = coalesceI18nString(qi.de, qi.en, question.question).trim();
+    const enText = coalesceI18nString(qi.en, qi.de, question.question).trim();
+    if (!deText) {
+      throw new Error(
+        `Umfragefrage ${question.order ?? '?'}: Fragetext fehlt (oder nur Leerstrings in DE/EN).`
+      );
+    }
+    const questionI18n = { ...qi, de: deText, en: enText || deText };
     const q = {
       id: question.id,
-      question: (questionI18n.de ?? question.question).trim(),
+      question: deText,
       question_i18n: questionI18n,
       type: question.type,
       required: question.required,
@@ -1542,11 +1609,11 @@ const buildSurveyPayload = (questions: SurveyQuestionDraft[]) => {
 
     if (question.type === 'single_choice' || question.type === 'multiple_choice') {
       if (!question.options || question.options.length < 2) {
-        throw new Error(`Question "${question.question || 'Untitled'}" must have at least 2 options.`);
+        throw new Error(`Question "${deText}" must have at least 2 options.`);
       }
       const validOptions = question.options.filter(opt => opt.trim() !== '');
       if (validOptions.length < 2) {
-        throw new Error(`Question "${question.question || 'Untitled'}" must have at least 2 non-empty options.`);
+        throw new Error(`Question "${deText}" must have at least 2 non-empty options.`);
       }
       const optionI18n = (question.options_i18n ?? []).slice(0, validOptions.length);
       return {
@@ -1649,13 +1716,13 @@ const switchQuizQuestionLanguage = (
       return {
         ...answer,
         text_i18n: textI18n,
-        text: textI18n[to] ?? textI18n[from] ?? answer.text,
+        text: coalesceI18nString(textI18n[to], textI18n[from], answer.text),
       };
     });
     return {
       ...question,
       prompt_i18n: promptI18n,
-      prompt: promptI18n[to] ?? promptI18n[from] ?? question.prompt,
+      prompt: coalesceI18nString(promptI18n[to], promptI18n[from], question.prompt),
       answers,
     };
   });
@@ -1677,11 +1744,15 @@ const switchSurveyQuestionLanguage = (
         [from]: question.options?.[idx] ?? entry[from] ?? '',
       })
     );
-    const options = question.options?.map((opt, idx) => optionsI18n[idx]?.[to] ?? optionsI18n[idx]?.[from] ?? opt);
+    const options = question.options?.map((opt, idx) => {
+      const row = optionsI18n[idx];
+      if (!row) return opt;
+      return coalesceI18nString(row[to], row[from], opt);
+    });
     return {
       ...question,
       question_i18n: questionI18n,
-      question: questionI18n[to] ?? questionI18n[from] ?? question.question,
+      question: coalesceI18nString(questionI18n[to], questionI18n[from], question.question),
       options_i18n: optionsI18n,
       options,
     };
@@ -1826,14 +1897,11 @@ const validateTaskFormState = ({
     // Type 1 prerequisite is set - no additional validation needed (existence will be checked on backend)
   }
   
-  if (taskForm.prerequisite_task_ids) {
-    const taskIdsArray = Array.isArray(taskForm.prerequisite_task_ids) 
-      ? taskForm.prerequisite_task_ids 
-      : [];
-    
-    if (taskIdsArray.length === 0) {
-      return { isValid: false, message: t('admin.task.prerequisites.validation.idsEmpty') };
-    }
+  const prereqIdsRaw = taskForm.prerequisite_task_ids;
+  const prereqIdsArray = Array.isArray(prereqIdsRaw) ? prereqIdsRaw : [];
+  // Leeres Array wie „keine Voraussetzungen“ (API kann [] liefern); nur nicht-leere Arrays prüfen.
+  if (prereqIdsArray.length > 0) {
+    const taskIdsArray = prereqIdsArray;
     
     if (taskForm.prerequisite_task_count !== undefined && taskForm.prerequisite_task_count !== null) {
       if (!Number.isInteger(taskForm.prerequisite_task_count) || taskForm.prerequisite_task_count < 1) {
@@ -1944,6 +2012,7 @@ const MultiSelectDropdown = ({
   placeholder = 'All values allowed',
   buttonLabel,
 }: MultiSelectDropdownProps) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -2478,7 +2547,11 @@ const SurveyBuilder = ({ questions, onChange, contentLanguage }: SurveyBuilderPr
               <span>{t('admin.task.survey.questionText')}</span>
               <input
                 type="text"
-                value={question.question}
+                value={coalesceI18nString(
+                  question.question_i18n?.[contentLanguage],
+                  question.question_i18n?.[contentLanguage === 'de' ? 'en' : 'de'],
+                  question.question
+                )}
                 onChange={(e) => handleQuestionChange(question.id, 'question', e.target.value)}
                 placeholder={t('admin.task.survey.questionPlaceholder')}
               />
@@ -3655,6 +3728,7 @@ function AdminPage() {
       co2_savings_kg: template.co2_savings_kg ?? 0,
       locationId: template.location_id ?? template.location?.id ?? '',
       active: template.active ?? true,
+      allow_public_completion: Boolean((template as any).allow_public_completion),
       recurrence: ((template as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
       article_url: (template as any).article_url ?? '',
       article_content: (template as any).article_content ?? '',
@@ -3687,6 +3761,8 @@ function AdminPage() {
     }));
   }, [contentLanguage]);
 
+  // Nur beim Start/Wechsel der Bearbeitung synchronisieren — nicht bei jedem adminTasks-Refetch,
+  // sonst werden lokale Änderungen (z. B. „öffentlich ohne Login“) überschrieben und Speichern scheitert.
   useEffect(() => {
     if (!isEditingTask || !editingTaskId) return;
     const task = existingTemplates.find((t) => t.id === editingTaskId);
@@ -3712,6 +3788,7 @@ function AdminPage() {
       co2_savings_kg: task.co2_savings_kg ?? 0,
       locationId: task.location_id ?? task.location?.id ?? '',
       active: task.active ?? true,
+      allow_public_completion: Boolean((task as any).allow_public_completion),
       recurrence: (task.recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
       article_url: (task as any).article_url ?? '',
       article_content: (task as any).article_content ?? '',
@@ -3733,7 +3810,8 @@ function AdminPage() {
       thumbnailFile: prev.thumbnailFile, // Behalte bestehende Datei
       thumbnailUrl: task.thumbnail_url ?? prev.thumbnailUrl ?? null, // Verwende task.thumbnail_url wenn vorhanden, sonst behalte bestehenden Wert
     }));
-  }, [isEditingTask, editingTaskId, existingTemplates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- existingTemplates absichtlich ausgeschlossen (siehe Kommentar oben)
+  }, [isEditingTask, editingTaskId]);
 
   useEffect(() => {
     if (isEditingReward) {
@@ -3982,6 +4060,7 @@ function AdminPage() {
         // Add team/contest assignments
         payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
         payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
+        payload.allow_public_completion = Boolean(taskForm.allow_public_completion);
         console.log('[DEBUG] Update Task - Full payload:', JSON.stringify(payload, null, 2));
         
         // Add thumbnail_url (null if no thumbnail, to allow deletion)
@@ -4078,6 +4157,7 @@ function AdminPage() {
         // Add team/contest assignments
         payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
         payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
+        payload.allow_public_completion = Boolean(taskForm.allow_public_completion);
         
         // Add thumbnail_url
         payload.thumbnail_url = thumbnailUrl;
@@ -4170,6 +4250,7 @@ function AdminPage() {
       // Add team/contest assignments
       payload.allowed_teams = (taskForm.allowed_teams && taskForm.allowed_teams.length > 0) ? taskForm.allowed_teams : null;
       payload.allowed_contests = (taskForm.allowed_contests && taskForm.allowed_contests.length > 0) ? taskForm.allowed_contests : null;
+      payload.allow_public_completion = Boolean(taskForm.allow_public_completion);
       console.log('[DEBUG] Create Task - Full payload:', JSON.stringify(payload, null, 2));
       
       // Add thumbnail_url
@@ -4727,6 +4808,7 @@ function AdminPage() {
       target_address: '',
       locationId: task.location_id ?? task.location?.id ?? '',
       active: task.active ?? true,
+      allow_public_completion: Boolean((task as any).allow_public_completion),
       recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
       prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
       prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
@@ -6712,6 +6794,29 @@ function AdminPage() {
                           {taskForm.active ? t('admin.task.fields.active') : t('admin.task.fields.inactive')}
                         </label>
                       </div>
+                    </div>
+                    <div className="admin-field admin-field-span-2">
+                      <div className="admin-toggle">
+                        <input
+                          id="task-allow-public-toggle"
+                          type="checkbox"
+                          className="admin-checkbox"
+                          style={COMPACT_TOGGLE_STYLE}
+                          checked={Boolean(taskForm.allow_public_completion)}
+                          onChange={(event) =>
+                            setTaskForm((prev) => ({
+                              ...prev,
+                              allow_public_completion: event.target.checked,
+                            }))
+                          }
+                        />
+                        <label htmlFor="task-allow-public-toggle">
+                          {t('admin.task.fields.allowPublicCompletion')}
+                        </label>
+                      </div>
+                      <p className="admin-field-note" style={{ fontSize: '0.85rem', marginTop: '0.25rem', color: '#666' }}>
+                        {t('admin.task.fields.allowPublicCompletionHint')}
+                      </p>
                     </div>
                     <label className="admin-field">
                       <FieldLabel label={t('admin.task.fields.co2Savings')} />
@@ -9619,7 +9724,7 @@ function AdminPage() {
                               style={COMPACT_TOGGLE_STYLE}
                               checked={isSelected}
                               onChange={(event) =>
-                                teamSelection.toggle(team.id, event.target.checked)
+                                toggleTeamSelection(team.id, event.target.checked)
                               }
                               aria-label={`Select team ${team.name}`}
                             />

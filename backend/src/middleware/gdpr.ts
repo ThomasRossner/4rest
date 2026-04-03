@@ -73,13 +73,37 @@ export interface ConsentPreferences {
   dataProcessing: boolean;
 }
 
+export async function getUserConsent(userId: string): Promise<ConsentPreferences | null> {
+  const db = getPool();
+  const result = await db.query(
+    `SELECT consent_data FROM user_consent WHERE user_id = $1`,
+    [userId]
+  );
+  if (!result.rows[0]) return null;
+  const raw = result.rows[0].consent_data;
+  if (raw == null) return null;
+  const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  if (typeof data !== 'object' || data === null) return null;
+  return {
+    analytics: !!data.analytics,
+    marketing: !!data.marketing,
+    // Kern-Einwilligung: immer aktiv, nicht widerrufbar über diese API (Nutzung der App)
+    dataProcessing: true,
+  };
+}
+
 export async function updateConsent(userId: string, consent: ConsentPreferences) {
   const db = getPool();
+  const normalized: ConsentPreferences = {
+    analytics: !!consent.analytics,
+    marketing: !!consent.marketing,
+    dataProcessing: true,
+  };
   await db.query(
     `INSERT INTO user_consent (user_id, consent_data, updated_at)
      VALUES ($1, $2, CURRENT_TIMESTAMP)
      ON CONFLICT (user_id) 
      DO UPDATE SET consent_data = $2, updated_at = CURRENT_TIMESTAMP`,
-    [userId, JSON.stringify(consent)]
+    [userId, JSON.stringify(normalized)]
   );
 }

@@ -17,6 +17,7 @@ import {
   resendVerificationEmail,
   requestLoginCode,
   loginWithCode,
+  mergeGuestSession,
 } from '../controllers/auth.controller.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import { loginSchema, registerSchema } from '../schemas/auth.schema.js';
@@ -39,6 +40,7 @@ router.post('/resend-verification', authenticate, resendVerificationEmail);
 // Passwordless login routes
 router.post('/request-login-code', requestLoginCode);
 router.post('/login-with-code', loginWithCode);
+router.post('/merge-guest-session', authenticate, mergeGuestSession);
 
 // OAuth routes
 router.get('/github', githubAuth);

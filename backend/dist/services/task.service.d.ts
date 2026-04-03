@@ -40,6 +40,7 @@ export interface Task {
     thumbnail_url?: string;
     allowed_teams?: string[] | null;
     allowed_contests?: string[] | null;
+    allow_public_completion?: boolean;
 }
 export declare function getAllTasks(filters?: {
     limit?: number;
@@ -71,11 +72,29 @@ export declare function updateTask(id: string, data: Partial<Task>): Promise<Tas
 export declare function deleteTask(id: string): Promise<void>;
 export declare function setTasksActiveState(ids: string[], active: boolean): Promise<void>;
 export declare function bulkDeleteTasks(ids: string[]): Promise<void>;
+/**
+ * TICKET-009: Einzelantwort prüfen; bei falscher Antwort Sperre für QUIZ_WRONG_ANSWER_LOCK_MINUTES.
+ */
+export declare function submitQuizAnswer(taskId: string, userId: string, questionIndex: number, answerId: string): Promise<{
+    status: 'correct' | 'wrong' | 'locked';
+    lockedUntil?: string;
+}>;
 export declare function completeTask(taskId: string, userId: string, data?: any): Promise<{
     success: boolean;
     pointsEarned: number;
     message: string;
     requiresVerification: any;
+}>;
+/** Öffentliche Task-Detailansicht (ohne Login); nur wenn Flag gesetzt. */
+export declare function getPublicTaskForGuest(taskId: string, preferredLanguage?: string): Promise<Task | null>;
+/** Speichert Abschluss für Gast-Session; Punkte folgen nach merge mit User-Account. */
+export declare function completePublicGuestTask(taskId: string, guestSessionId: string, data: any): Promise<{
+    success: true;
+}>;
+/** Überträgt ausstehende Gast-Abschlüsse auf einen eingeloggten Nutzer (nach Login/Registrierung). */
+export declare function mergeGuestTaskCompletions(userId: string, guestSessionId: string | null | undefined): Promise<{
+    merged: number;
+    alreadyHad: number;
 }>;
 /** Öffentliche URL für eine Datei im gemeinsamen Upload-Verzeichnis (gleiche Logik wie Aufgaben-Fotos/Videos). */
 export declare function publicUploadFileUrl(filename: string): string;

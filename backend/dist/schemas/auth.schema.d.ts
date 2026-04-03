@@ -20,15 +20,15 @@ export declare const registerSchema: z.ZodObject<{
     role?: "guest" | "rezeption" | "redaktion" | "administrator";
     name?: string;
     email?: string;
-    password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
+    password?: string;
     preferredLanguage?: "en" | "de";
 }, {
     role?: "guest" | "rezeption" | "redaktion" | "administrator";
     name?: string;
     email?: string;
-    password?: string;
     userType?: "explorer" | "guest_in_house" | "observer" | "advocate";
+    password?: string;
     preferredLanguage?: "en" | "de";
 }>;
 //# sourceMappingURL=auth.schema.d.ts.map

@@ -179,6 +179,37 @@ class EmailService {
             .replace(/\n\s*\n/g, '\n')
             .trim();
     }
+    /**
+     * TICKET-010: E-Mail an Admins/Rezeption bei neuer Foto-Aufgabe zur Prüfung.
+     * Fehler pro Adresse werden geloggt, werfen aber nicht (Aufrufer soll nicht abbrechen).
+     */
+    async sendPhotoVerificationRequestEmails(params) {
+        const unique = [...new Set(params.recipients.map((e) => e.trim()).filter((e) => e.includes('@')))];
+        if (unique.length === 0) {
+            console.log('[EMAIL] Photo verification: no recipient addresses');
+            return;
+        }
+        const base = process.env.APP_URL || process.env.FRONTEND_URL || '';
+        const adminBase = base ? `${base.replace(/\/$/, '')}/admin` : '';
+        const linkHtml = adminBase
+            ? `<p><a href="${adminBase}">${adminBase}</a> — dort unter Foto-Verifizierung prüfen.</p>`
+            : '<p>Bitte in der Admin-Oberfläche die ausstehenden Foto-Aufgaben prüfen.</p>';
+        const subject = `Neue Foto-Aufgabe zur Prüfung: ${params.taskTitle}`;
+        const html = `
+      <p>Hallo,</p>
+      <p><strong>${params.guestName}</strong> hat ein Foto für die Aufgabe „${params.taskTitle}“ hochgeladen (Vorgang <code>${params.userTaskId}</code>).</p>
+      ${linkHtml}
+      <p>Mit freundlichen Grüßen<br/>${process.env.EMAIL_FROM_NAME || 'Luise'}</p>
+    `;
+        for (const to of unique) {
+            try {
+                await this.sendEmail({ to, subject, html });
+            }
+            catch (err) {
+                console.error(`[EMAIL] Photo verification failed for ${to}:`, err?.message || err);
+            }
+        }
+    }
 }
 export const emailService = new EmailService();
 //# sourceMappingURL=email.service.js.map

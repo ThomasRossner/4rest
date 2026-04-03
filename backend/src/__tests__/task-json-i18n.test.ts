@@ -46,6 +46,15 @@ describe('task json i18n helpers', () => {
     expect(resolved[0].options).toEqual(['Good', 'Bad']);
   });
 
+  it('ignores JSON-null entries in survey_questions arrays', () => {
+    const resolved = resolveSurveyQuestionsI18n(
+      [null, null, { question: 'Nur diese', type: 'text' }],
+      'de'
+    );
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].question).toBe('Nur diese');
+  });
+
   it('accepts answer id and localized answer text for quiz validation', () => {
     const answers = [
       { id: 'a1', text: 'Yes', text_i18n: { de: 'Ja', en: 'Yes' } },

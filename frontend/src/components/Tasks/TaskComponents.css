@@ -57,6 +57,12 @@
   margin-bottom: var(--spacing-md);
 }
 
+.quiz-lock-hint {
+  font-size: 0.9rem;
+  color: var(--color-warning, #b45309);
+  margin-bottom: var(--spacing-md);
+}
+
 .question-card {
   background: var(--color-surface);
   padding: var(--spacing-lg);
@@ -96,6 +102,11 @@
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: white;
+}
+
+.answer-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .quiz-navigation {

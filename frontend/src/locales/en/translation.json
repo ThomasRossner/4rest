@@ -149,6 +149,7 @@
       "loginCode": "000000"
     },
     "passwordlessHint": "Enter the 6-digit code sent to your email",
+    "guestTasksButton": "Try tasks as a guest",
     "actions": {
       "signIn": "Sign in",
       "register": "Create account",
@@ -158,6 +159,7 @@
       "submitCode": "Sign in"
     },
     "divider": "or",
+    "privacyCheckbox": "I accept the <1>privacy notice</1> and the processing of my data for using the app.",
     "links": {
       "noAccount": "Don't have an account?",
       "alreadyHaveAccount": "Already have an account?",
@@ -166,7 +168,8 @@
       "requestNewCode": "Request a new code",
       "backToPassword": "Back to password login",
       "rememberPassword": "Remember your password?",
-      "backToLogin": "Back to sign in"
+      "backToLogin": "Back to sign in",
+      "backToRegistration": "Back to registration"
     },
     "messages": {
       "verificationSuccess": "Email verified successfully! You can now sign in.",
@@ -186,6 +189,7 @@
       "passwordSetupRequired": "This account uses passwordless login. A password setup link has been sent to {{email}}.",
       "validationError": "Validation error",
       "registrationFailed": "Registration failed",
+      "privacyRequired": "Please accept the privacy notice to continue.",
       "requestFailed": "Operation failed. Please try again.",
       "oauthFailed": "Social authentication failed. Please try again.",
       "oauthTokenFailed": "Authentication succeeded but token generation failed. Please try again.",
@@ -201,6 +205,20 @@
       "apple": "Continue with Apple",
       "github": "Continue with GitHub"
     }
+  },
+  "privacyNotice": {
+    "title": "Privacy notice",
+    "intro": "This notice explains how we process personal data when you use the 4rest app, in line with the EU General Data Protection Regulation (GDPR).",
+    "purposesTitle": "Purposes of processing",
+    "purposesBody": "We process your data to provide your user account, enable app features (e.g. gameplay, points, tasks), and contact you by email when needed (e.g. verification, password reset).",
+    "dataTitle": "Categories of data",
+    "dataBody": "This includes in particular: email address, password (stored as a secure hash), the name you provide, and usage and points data generated in the app.",
+    "legalTitle": "Legal bases",
+    "legalBody": "Processing is based on performing the contract for using the app (Art. 6(1)(b) GDPR) and, where applicable, legitimate interests (Art. 6(1)(f) GDPR), e.g. operating the service securely. Where you give consent, Art. 6(1)(a) GDPR applies.",
+    "rightsTitle": "Your rights",
+    "rightsBody": "You have the right to access, rectification, erasure, restriction of processing, data portability, and to object to certain processing. You may also lodge a complaint with a supervisory authority. You may withdraw consent at any time with effect for the future.",
+    "contactTitle": "Contact",
+    "contactBody": "For privacy questions or to exercise your rights, please use the contact details given in the imprint or in the app (e.g. support email)."
   },
   "home": {
     "title": "Welcome to 4rest",
@@ -945,7 +963,9 @@
         "taskContestsHint": "If contests are selected, this task is only visible to participants of those contests. No selection = visible to all.",
         "thumbnailOptional": "Thumbnail (optional)",
         "thumbnailPreview": "Thumbnail preview",
-        "geocode": "Geocode"
+        "geocode": "Geocode",
+        "allowPublicCompletion": "Completable without login",
+        "allowPublicCompletionHint": "Deep link: /public/task/:taskId — photo tasks need an account for upload."
       },
       "articleSource": {
         "url": "Use external article URL",
@@ -2001,7 +2021,8 @@
     "preferences": "Consent preferences",
     "dataProcessing": {
       "label": "Data processing (required)",
-      "description": "Allow processing of your data for core functionality"
+      "description": "Allow processing of your data for core functionality",
+      "lockedHint": "Required to use the app; cannot be turned off here."
     },
     "analytics": {
       "label": "Analytics",
@@ -2022,6 +2043,29 @@
       "deleteConfirm": "Are you sure you want to delete all your data? This cannot be undone.",
       "deleteSuccess": "Your data has been deleted. You will be logged out.",
       "deleteError": "Failed to delete data"
+    }
+  },
+  "publicGuest": {
+    "title": "Tasks without signing in",
+    "empty": "No tasks are available for guests without signing in at the moment.",
+    "loadError": "Could not load the task list. Please try again later.",
+    "backToLogin": "Back to sign in"
+  },
+  "publicTask": {
+    "toast": {
+      "title": "Task completed",
+      "body": "Nice work! You earned {{points}} points. Sign up or log in so we can credit them to your account."
+    },
+    "notFound": "This task is not publicly available or does not exist.",
+    "invalidLink": "Invalid link.",
+    "goToLogin": "Go to login",
+    "unsupportedType": "This task type is not wired up on this page yet.",
+    "photoRequiresLogin": "Photo tasks cannot be completed here without signing in (upload requires an account). Please use the app while logged in.",
+    "cta": {
+      "title": "Save your points",
+      "body": "Create an account or log in now—your pending points will be merged.",
+      "register": "Register",
+      "login": "Log in"
     }
   },
   "tasksComponents": {
@@ -2064,7 +2108,16 @@
       "next": "Next",
       "complete": "Complete task",
       "submitting": "Submitting...",
-      "noQuestions": "This quiz task has no questions configured."
+      "noQuestions": "This quiz task has no questions configured.",
+      "checkAnswer": "Check answer",
+      "checking": "Checking…",
+      "correctTitle": "Correct",
+      "correctBody": "That is the right answer.",
+      "wrongTitle": "Wrong or locked",
+      "wrongBody": "That was not correct. Try again in {{minutes}} minute(s).",
+      "lockedBody": "This question is still locked. Try again in {{minutes}} minute(s).",
+      "lockCountdown": "About {{minutes}} minute(s) until you can try again.",
+      "errorTitle": "Quiz"
     },
     "article_quiz": {
       "readArticle": "Read the Article",
@@ -2533,7 +2586,9 @@
       "online": "Online"
     },
     "taskManage": {
-      "subtitle": "Browse, edit, activate or deactivate tasks"
+      "subtitle": "Browse, edit, activate or deactivate tasks",
+      "publicColumn": "Public",
+      "publicHint": "Completable without login (configured in Admin)"
     },
     "rewardManage": {
       "subtitle": "Browse, edit and manage rewards"

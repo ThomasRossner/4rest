@@ -2,7 +2,7 @@
 
 **Typ:** Requirement
 
-**Status:** offen
+**Status:** umgesetzt
 
 **Beschreibung:**
 Privacy & Data Management ist zwar unter Profil vorhanden, muss aber nirgends bei der Anmeldung akzeptiert werden. Die Akzeptanz soll in den Anmeldeprozess integriert werden.

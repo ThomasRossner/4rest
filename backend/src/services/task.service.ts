@@ -13,6 +13,7 @@ import { updateContestPoints } from './contest.service.js';
 import { getUserActiveTeam, getTeamMembers } from './team.service.js';
 import fs from 'fs';
 import { generateQrToken } from './user-qr.service.js';
+import { emailService } from './email.service.js';
 
 /**
  * Generiert oder ruft den QR-Code einer Aufgabe ab
@@ -106,6 +107,7 @@ export interface Task {
   thumbnail_url?: string;
   allowed_teams?: string[] | null;
   allowed_contests?: string[] | null;
+  allow_public_completion?: boolean;
 }
 
 export async function getAllTasks(
@@ -186,7 +188,7 @@ export async function getAllTasks(
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
     t.category, t.difficulty, t.time_required, t.location_tool, t.thumbnail_url, 
-    t.zielgruppe, t.created_at, t.updated_at`;
+    t.allow_public_completion, t.zielgruppe, t.created_at, t.updated_at`;
   
   // Add allowed_teams and allowed_contests if columns exist
   if (columnsExist) {
@@ -393,7 +395,10 @@ export function resolveQuizQuestionsI18n(payload: any, lang: 'de' | 'en'): any[]
   if (!Array.isArray(parsed)) return [];
 
   return parsed.map((question: any) => {
-    const answersRaw = Array.isArray(question?.answers)
+    // Leeres answers[] nicht verwenden — sonst werden legacy options[] ignoriert
+    const hasAnswers =
+      Array.isArray(question?.answers) && (question.answers as unknown[]).length > 0;
+    const answersRaw = hasAnswers
       ? question.answers
       : Array.isArray(question?.options)
         ? question.options
@@ -450,7 +455,12 @@ export function resolveSurveyQuestionsI18n(payload: any, lang: 'de' | 'en'): any
   const parsed = parseJsonPayload(payload);
   if (!Array.isArray(parsed)) return [];
 
-  return parsed.map((question: any) => {
+  return parsed
+    .filter(
+      (question: any) =>
+        question != null && typeof question === 'object' && !Array.isArray(question),
+    )
+    .map((question: any) => {
     const questionText = resolveNestedI18n(
       question?.question_i18n,
       lang,
@@ -503,7 +513,7 @@ export async function getTaskById(id: string, preferredLanguage?: string): Promi
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
     t.category, t.difficulty, t.time_required, t.location_tool, t.thumbnail_url, 
-    t.zielgruppe, t.created_at, t.updated_at`;
+    t.allow_public_completion, t.zielgruppe, t.created_at, t.updated_at`;
 
   // Add allowed_teams and allowed_contests if columns exist
   if (columnsExist) {
@@ -740,9 +750,10 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        location_tool,
        thumbnail_url,
        allowed_teams,
-       allowed_contests
+       allowed_contests,
+       allow_public_completion
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
      RETURNING *`,
     [
       legacyTitle,
@@ -777,6 +788,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.thumbnail_url ?? null,
       data.allowed_teams ?? null,
       data.allowed_contests ?? null,
+      Boolean((data as any).allow_public_completion),
     ]
   );
   return result.rows[0];
@@ -894,7 +906,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     'title_i18n', 'description_i18n', 'article_content_i18n',
     'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
     'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-    'thumbnail_url', 'allowed_teams', 'allowed_contests'
+    'thumbnail_url', 'allowed_teams', 'allowed_contests', 'allow_public_completion',
   ]);
 
   // If type is being changed, reset type-specific fields of the old type
@@ -1010,17 +1022,22 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     if (key === 'description_i18n' && typeof value === 'object') {
       updates.push(`description_i18n = $${paramIndex++}`);
       values.push(JSON.stringify(value));
+      // Wie title_i18n: leeres {} darf die Legacy-Spalte description nicht auf NULL setzen (sonst 500 / Trigger)
       const resolved = (value as Record<string, string>).de ?? (value as Record<string, string>).en;
-      updates.push(`description = $${paramIndex++}`);
-      values.push(resolved ?? null);
+      if (resolved != null) {
+        updates.push(`description = $${paramIndex++}`);
+        values.push(resolved);
+      }
       return;
     }
     if (key === 'article_content_i18n' && typeof value === 'object') {
       updates.push(`article_content_i18n = $${paramIndex++}`);
       values.push(JSON.stringify(value));
       const resolved = (value as Record<string, string>).de ?? (value as Record<string, string>).en;
-      updates.push(`article_content = $${paramIndex++}`);
-      values.push(resolved ?? null);
+      if (resolved != null) {
+        updates.push(`article_content = $${paramIndex++}`);
+        values.push(resolved);
+      }
       return;
     }
     if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
@@ -1123,6 +1140,150 @@ export async function bulkDeleteTasks(ids: string[]): Promise<void> {
   await db.query('DELETE FROM tasks WHERE id = ANY($1::uuid[])', [ids]);
 }
 
+const QUIZ_LOCK_MINUTES = () =>
+  Math.max(1, parseInt(process.env.QUIZ_WRONG_ANSWER_LOCK_MINUTES || '5', 10) || 5);
+
+/**
+ * TICKET-009: Einzelantwort prüfen; bei falscher Antwort Sperre für QUIZ_WRONG_ANSWER_LOCK_MINUTES.
+ */
+export async function submitQuizAnswer(
+  taskId: string,
+  userId: string,
+  questionIndex: number,
+  answerId: string
+): Promise<{
+  status: 'correct' | 'wrong' | 'locked';
+  lockedUntil?: string;
+}> {
+  const db = getPool();
+
+  const done = await db.query(
+    'SELECT 1 FROM user_tasks WHERE user_id = $1 AND task_id = $2 LIMIT 1',
+    [userId, taskId]
+  );
+  if (done.rows.length > 0) {
+    throw new Error('Task already completed');
+  }
+
+  const tr = await db.query<{ quiz_questions: unknown; type: string }>(
+    'SELECT quiz_questions, type FROM tasks WHERE id = $1',
+    [taskId]
+  );
+  if (tr.rows.length === 0) {
+    throw new Error('Task not found');
+  }
+  const row = tr.rows[0];
+  if (row.type !== 'quiz') {
+    throw new Error('Quiz answer check is only available for quiz tasks');
+  }
+
+  const questions = parseJsonPayload(row.quiz_questions);
+  if (!Array.isArray(questions) || questions.length === 0) {
+    throw new Error('Task quiz questions are invalid');
+  }
+  if (questionIndex < 0 || questionIndex >= questions.length) {
+    throw new Error('Invalid question index');
+  }
+
+  const lockRes = await db.query<{ locked_until: Date }>(
+    `SELECT locked_until FROM quiz_question_locks
+     WHERE user_id = $1 AND task_id = $2 AND question_index = $3`,
+    [userId, taskId, questionIndex]
+  );
+  if (lockRes.rows[0]) {
+    const until = new Date(lockRes.rows[0].locked_until);
+    if (until.getTime() > Date.now()) {
+      return { status: 'locked', lockedUntil: until.toISOString() };
+    }
+  }
+
+  const question = questions[questionIndex];
+  const questionAnswers = Array.isArray(question.answers)
+    ? question.answers
+    : Array.isArray(question.options)
+      ? question.options
+      : [];
+  const expectedAnswerId =
+    question.correctAnswerId ?? question.correct_answer_id ?? null;
+  const expectedAnswerText =
+    question.correctAnswer ?? question.correct_answer ?? null;
+
+  const correct = isQuizAnswerCorrect({
+    questionAnswers,
+    expectedAnswerId,
+    expectedAnswerText,
+    selectedAnswerId: answerId,
+    selectedAnswerText: null,
+  });
+
+  if (correct) {
+    await db.query(
+      `DELETE FROM quiz_question_locks WHERE user_id = $1 AND task_id = $2 AND question_index = $3`,
+      [userId, taskId, questionIndex]
+    );
+    return { status: 'correct' };
+  }
+
+  const minutes = QUIZ_LOCK_MINUTES();
+  const lockedUntil = new Date(Date.now() + minutes * 60 * 1000);
+  await db.query(
+    `INSERT INTO quiz_question_locks (user_id, task_id, question_index, locked_until)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (user_id, task_id, question_index)
+     DO UPDATE SET locked_until = EXCLUDED.locked_until`,
+    [userId, taskId, questionIndex, lockedUntil.toISOString()]
+  );
+
+  return { status: 'wrong', lockedUntil: lockedUntil.toISOString() };
+}
+
+/** Gemeinsame Quiz-Validierung wie bei completeTask (article_quiz / quiz / Video-Quiz). */
+function assertQuizAnswersMeetThreshold(task: Task, data: any): void {
+  if (!data?.quiz_answers || !task.quiz_questions) {
+    return;
+  }
+  const questions = parseJsonPayload(task.quiz_questions);
+
+  if (!Array.isArray(questions) || questions.length === 0) {
+    throw new Error('Task quiz questions are invalid');
+  }
+
+  let correctAnswers = 0;
+  data.quiz_answers.forEach((answer: any) => {
+    const question = questions[answer.questionIndex];
+    if (!question) {
+      return;
+    }
+    const questionAnswers = Array.isArray(question.answers)
+      ? question.answers
+      : Array.isArray(question.options)
+        ? question.options
+        : [];
+    const selectedAnswerId = answer.answerId ?? answer.answer_id ?? answer.optionId ?? null;
+    const selectedAnswerText = answer.answer ?? answer.option ?? null;
+    const expectedAnswerId = question.correctAnswerId ?? question.correct_answer_id ?? null;
+    const expectedAnswerText = question.correctAnswer ?? question.correct_answer ?? null;
+
+    if (
+      isQuizAnswerCorrect({
+        questionAnswers,
+        expectedAnswerId,
+        expectedAnswerText,
+        selectedAnswerId,
+        selectedAnswerText,
+      })
+    ) {
+      correctAnswers++;
+    }
+  });
+
+  const requiredCorrect =
+    task.type === 'quiz' ? questions.length : Math.ceil(questions.length * 0.7);
+  if (correctAnswers < requiredCorrect) {
+    throw new Error(`Need at least ${requiredCorrect} correct answers to complete this task`);
+  }
+}
+
 export async function completeTask(taskId: string, userId: string, data?: any) {
   const db = getPool();
 
@@ -1142,56 +1303,7 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
     throw new Error('Task not found');
   }
 
-  // Validate quiz answers if provided
-  if (data?.quiz_answers && task.quiz_questions) {
-    const questions = parseJsonPayload(task.quiz_questions);
-    
-    if (!Array.isArray(questions) || questions.length === 0) {
-      throw new Error('Task quiz questions are invalid');
-    }
-
-    let correctAnswers = 0;
-    data.quiz_answers.forEach((answer: any) => {
-      const question = questions[answer.questionIndex];
-      if (!question) {
-        return;
-      }
-      const questionAnswers = Array.isArray(question.answers)
-        ? question.answers
-        : Array.isArray(question.options)
-          ? question.options
-          : [];
-      const selectedAnswerId =
-        answer.answerId ?? answer.answer_id ?? answer.optionId ?? null;
-      const selectedAnswerText = answer.answer ?? answer.option ?? null;
-      const expectedAnswerId =
-        question.correctAnswerId ??
-        question.correct_answer_id ??
-        null;
-      const expectedAnswerText =
-        question.correctAnswer ??
-        question.correct_answer ??
-        null;
-
-      if (
-        isQuizAnswerCorrect({
-          questionAnswers,
-          expectedAnswerId,
-          expectedAnswerText,
-          selectedAnswerId,
-          selectedAnswerText,
-        })
-      ) {
-        correctAnswers++;
-      }
-    });
-
-    // Require at least 70% correct answers
-    const requiredCorrect = Math.ceil(questions.length * 0.7);
-    if (correctAnswers < requiredCorrect) {
-      throw new Error(`Need at least ${requiredCorrect} correct answers to complete this task`);
-    }
-  }
+  assertQuizAnswersMeetThreshold(task, data);
 
   // Insert completion record
   const surveyResponsesPayload = data?.survey_responses
@@ -1261,6 +1373,28 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
       } else {
         console.log('[PHOTO TASK] No admins/rezeption found to notify');
       }
+
+      const emailRecipients = new Set<string>();
+      for (const u of adminsAndRezeption) {
+        if (u.email && String(u.email).includes('@')) {
+          emailRecipients.add(String(u.email).trim());
+        }
+      }
+      const extraNotify = process.env.PHOTO_VERIFICATION_NOTIFY_EMAILS;
+      if (extraNotify) {
+        for (const part of extraNotify.split(',')) {
+          const e = part.trim();
+          if (e.includes('@')) emailRecipients.add(e);
+        }
+      }
+      const guestRow = await db.query<{ name: string }>(`SELECT name FROM users WHERE id = $1`, [userId]);
+      const guestName = guestRow.rows[0]?.name?.trim() || 'Gast';
+      await emailService.sendPhotoVerificationRequestEmails({
+        recipients: [...emailRecipients],
+        taskTitle: task.title,
+        guestName,
+        userTaskId: String(userTaskId),
+      });
       
       // Broadcast photo task update to notify admins/rezeption
       broadcastPhotoTaskUpdate();
@@ -1300,12 +1434,183 @@ export async function completeTask(taskId: string, userId: string, data?: any) {
     }
   }
 
+  if (task.type === 'quiz') {
+    await db.query(`DELETE FROM quiz_question_locks WHERE user_id = $1 AND task_id = $2`, [userId, taskId]);
+  }
+
   return {
     success: true,
     pointsEarned: isPhotoTask ? 0 : task.points,
     message: isPhotoTask ? 'Photo uploaded, waiting for verification' : 'Task completed successfully',
     requiresVerification: isPhotoTask,
   };
+}
+
+/** Öffentliche Task-Detailansicht (ohne Login); nur wenn Flag gesetzt. */
+export async function getPublicTaskForGuest(
+  taskId: string,
+  preferredLanguage?: string
+): Promise<Task | null> {
+  const task = await getTaskById(taskId, preferredLanguage);
+  if (!task) return null;
+  if (!task.active) return null;
+  if (!(task as Task & { allow_public_completion?: boolean }).allow_public_completion) return null;
+  return task;
+}
+
+/** Liste aller aktiven Aufgaben mit „ohne Login“ (für Gast-Startseite). */
+export type PublicGuestTaskListItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  points: number;
+  thumbnail_url: string | null;
+};
+
+export async function listPublicGuestTasks(lang: 'de' | 'en'): Promise<PublicGuestTaskListItem[]> {
+  const db = getPool();
+  const result = await db.query(
+    `SELECT t.id, t.title, t.title_i18n, t.description, t.description_i18n, t.type, t.points, t.thumbnail_url
+     FROM tasks t
+     INNER JOIN locations l ON l.id = t.location_id
+     WHERE t.allow_public_completion = TRUE AND t.active = TRUE
+     ORDER BY t.title ASC`
+  );
+  return result.rows.map((row: any) => {
+    const title = resolveI18n(row.title_i18n, lang, row.title);
+    const descriptionRaw = resolveI18n(row.description_i18n, lang, row.description);
+    return {
+      id: row.id,
+      title,
+      description: descriptionRaw && String(descriptionRaw).trim() !== '' ? descriptionRaw : null,
+      type: row.type,
+      points: row.points ?? 0,
+      thumbnail_url: row.thumbnail_url ?? null,
+    };
+  });
+}
+
+/** Validiert Request-Body für Gast-Abschluss (analog zu completeTask). */
+function assertPublicGuestCompletionPayload(task: Task, data: any): void {
+  const t = task.type;
+  if (t === 'survey') {
+    if (!data?.survey_responses || typeof data.survey_responses !== 'object') {
+      throw new Error('Survey responses required');
+    }
+    return;
+  }
+  if (t === 'photo') {
+    if (!data?.photo_url || typeof data.photo_url !== 'string') {
+      throw new Error('Photo URL required');
+    }
+    return;
+  }
+  if (t === 'quiz' || t === 'video' || t === 'article_quiz') {
+    const qs = parseJsonPayload(task.quiz_questions);
+    const hasQuiz = Array.isArray(qs) && qs.length > 0;
+    if (hasQuiz) {
+      if (!data?.quiz_answers) {
+        throw new Error('Quiz answers required');
+      }
+      assertQuizAnswersMeetThreshold(task, data);
+    }
+    return;
+  }
+  // qr, visit_location: kein zusätzlicher Body nötig
+}
+
+function buildGuestCompletionPayload(task: Task, data: any): Record<string, unknown> {
+  const t = task.type;
+  if (t === 'survey') {
+    return { survey_responses: data.survey_responses };
+  }
+  if (t === 'photo') {
+    return { photo_url: data.photo_url };
+  }
+  if (t === 'quiz' || t === 'video' || t === 'article_quiz') {
+    const qs = parseJsonPayload(task.quiz_questions);
+    const hasQuiz = Array.isArray(qs) && qs.length > 0;
+    if (hasQuiz && data?.quiz_answers) {
+      return { quiz_answers: data.quiz_answers };
+    }
+    return {};
+  }
+  return data && typeof data === 'object' ? { ...data } : {};
+}
+
+/** Speichert Abschluss für Gast-Session; Punkte folgen nach merge mit User-Account. */
+export async function completePublicGuestTask(
+  taskId: string,
+  guestSessionId: string,
+  data: any
+): Promise<{ success: true }> {
+  const db = getPool();
+  const task = await getTaskById(taskId);
+  if (!task || !task.active) {
+    throw new Error('Task not available for public completion');
+  }
+  if (!(task as Task & { allow_public_completion?: boolean }).allow_public_completion) {
+    throw new Error('Task not available for public completion');
+  }
+
+  const dup = await db.query(
+    `SELECT id FROM guest_task_completions WHERE guest_session_id = $1 AND task_id = $2`,
+    [guestSessionId, taskId]
+  );
+  if (dup.rows.length > 0) {
+    throw new Error('Task already completed in this session');
+  }
+
+  assertPublicGuestCompletionPayload(task, data);
+  const completionData = buildGuestCompletionPayload(task, data);
+
+  await db.query(
+    `INSERT INTO guest_task_completions (guest_session_id, task_id, completion_data)
+     VALUES ($1, $2, $3::jsonb)`,
+    [guestSessionId, taskId, JSON.stringify(completionData)]
+  );
+  return { success: true };
+}
+
+/** Überträgt ausstehende Gast-Abschlüsse auf einen eingeloggten Nutzer (nach Login/Registrierung). */
+export async function mergeGuestTaskCompletions(
+  userId: string,
+  guestSessionId: string | null | undefined
+): Promise<{ merged: number; alreadyHad: number }> {
+  if (!guestSessionId) return { merged: 0, alreadyHad: 0 };
+  const db = getPool();
+  const pending = await db.query(
+    `SELECT id, task_id, completion_data FROM guest_task_completions
+     WHERE guest_session_id = $1 AND merged_at IS NULL`,
+    [guestSessionId]
+  );
+  let merged = 0;
+  let alreadyHad = 0;
+  for (const row of pending.rows) {
+    const raw = row.completion_data;
+    const completionData = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    try {
+      await completeTask(row.task_id, userId, completionData);
+      await db.query(
+        `UPDATE guest_task_completions SET merged_user_id = $1, merged_at = CURRENT_TIMESTAMP WHERE id = $2`,
+        [userId, row.id]
+      );
+      merged++;
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.includes('already completed')) {
+        await db.query(
+          `UPDATE guest_task_completions SET merged_user_id = $1, merged_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [userId, row.id]
+        );
+        alreadyHad++;
+      } else {
+        console.error(`[GUEST MERGE] task ${row.task_id}:`, msg);
+      }
+    }
+  }
+  return { merged, alreadyHad };
 }
 
 /** Öffentliche URL für eine Datei im gemeinsamen Upload-Verzeichnis (gleiche Logik wie Aufgaben-Fotos/Videos). */
@@ -1700,10 +2005,16 @@ async function validatePrerequisites(data: Partial<Task>, taskId: string | null)
   const db = getPool();
   const prerequisiteTaskId = (data as any).prerequisite_task_id;
   const prerequisiteTaskCount = (data as any).prerequisite_task_count;
-  const prerequisiteTaskIds = (data as any).prerequisite_task_ids;
-  
-  // If no prerequisites are set, validation passes
+  const rawPrereqIds = (data as any).prerequisite_task_ids;
+  // Leeres Array = „keine Voraussetzungen“ (wie undefined); [] ist in JS truthy und würde sonst fälschlich Fehler werfen → 500
+  const prerequisiteTaskIds =
+    Array.isArray(rawPrereqIds) && rawPrereqIds.length === 0 ? undefined : rawPrereqIds;
+
+  // Keine Voraussetzungen (weder Einzel-ID noch ID-Liste)
   if (!prerequisiteTaskId && !prerequisiteTaskIds) {
+    if (prerequisiteTaskCount !== undefined && prerequisiteTaskCount !== null) {
+      throw new Error('prerequisite_task_count requires prerequisite_task_ids to be set');
+    }
     return;
   }
   

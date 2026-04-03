@@ -24,7 +24,9 @@ function AuthCallbackPage() {
       // Set token and fetch user data
       setToken(token);
       // Refresh user data from server
-      api.refreshMe()
+      api
+        .refreshMe()
+        .then(() => api.mergeGuestSession().catch(() => undefined))
         .then(() => {
           navigate('/', { replace: true });
         })

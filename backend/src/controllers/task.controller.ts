@@ -8,6 +8,7 @@ import {
   updateTask as updateTaskService,
   deleteTask as deleteTaskService,
   completeTask as completeTaskService,
+  submitQuizAnswer as submitQuizAnswerService,
   uploadPhoto as uploadPhotoService,
   uploadVideo as uploadVideoService,
   uploadThumbnail as uploadThumbnailService,
@@ -18,11 +19,62 @@ import {
   getPendingPhotoTasks as getPendingPhotoTasksService,
   getGalleryImages as getGalleryImagesService,
   generateOrGetTaskQrCode,
+  getPublicTaskForGuest,
+  completePublicGuestTask,
+  listPublicGuestTasks as listPublicGuestTasksService,
 } from '../services/task.service.js';
 import { getPreferredLanguage } from '../services/user.service.js';
+import { ensureGuestSession } from '../utils/guestSession.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateRoleArray, validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
 import { broadcastTaskUpdate } from '../ws/task-broadcast.js';
+
+/** GET /api/tasks/public — Aufgaben mit „ohne Login“, ohne JWT (Cookie Gast-Session). */
+export const listPublicGuestTasks: RequestHandler = asyncHandler(async (req, res) => {
+  ensureGuestSession(req, res);
+  const langParam = req.query.lang;
+  const lang = langParam === 'en' ? 'en' : 'de';
+  const tasks = await listPublicGuestTasksService(lang);
+  res.json(tasks);
+});
+
+/** GET /api/tasks/public/:id — ohne JWT (Cookie Gast-Session). */
+export const getPublicTask: RequestHandler = asyncHandler(async (req, res) => {
+  ensureGuestSession(req, res);
+  const langParam = req.query.lang;
+  const preferredLanguage =
+    langParam === 'en' ? 'en' : langParam === 'de' ? 'de' : undefined;
+  const task = await getPublicTaskForGuest(req.params.id, preferredLanguage);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  res.json(task);
+});
+
+/** POST /api/tasks/public/:id/complete */
+export const completePublicTask: RequestHandler = asyncHandler(async (req, res) => {
+  const sessionId = ensureGuestSession(req, res);
+  try {
+    const result = await completePublicGuestTask(req.params.id, sessionId, req.body);
+    res.json(result);
+  } catch (e: any) {
+    const msg = String(e?.message || '');
+    if (msg.includes('not available') || msg.includes('not supported')) {
+      return res.status(404).json({ error: msg });
+    }
+    if (msg.includes('already completed')) {
+      return res.status(409).json({ error: msg });
+    }
+    if (
+      msg.includes('required') ||
+      msg.includes('Need at least') ||
+      msg.includes('invalid')
+    ) {
+      return res.status(400).json({ error: msg });
+    }
+    throw e;
+  }
+});
 
 export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
   const { limit, offset, type, includeAll, includeInactive } = req.query;
@@ -183,6 +235,39 @@ export const bulkDeleteTasks: RequestHandler = asyncHandler(async (req, res) => 
   // Broadcast update to all clients
   broadcastTaskUpdate();
   res.status(204).send();
+});
+
+export const submitQuizAnswer: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { questionIndex, answerId } = req.body ?? {};
+  if (
+    typeof questionIndex !== 'number' ||
+    questionIndex < 0 ||
+    typeof answerId !== 'string' ||
+    !answerId.trim()
+  ) {
+    return res.status(400).json({ error: 'questionIndex (non-negative number) and answerId (string) are required' });
+  }
+  try {
+    const result = await submitQuizAnswerService(req.params.id, authReq.user.id, questionIndex, answerId);
+    res.json(result);
+  } catch (e: any) {
+    const msg = e?.message || 'Error';
+    if (String(msg).includes('already completed')) {
+      return res.status(409).json({ error: msg });
+    }
+    if (
+      String(msg).includes('Not a quiz') ||
+      String(msg).includes('Invalid question') ||
+      String(msg).includes('invalid')
+    ) {
+      return res.status(400).json({ error: msg });
+    }
+    throw e;
+  }
 });
 
 export const completeTask: RequestHandler = asyncHandler(async (req, res) => {

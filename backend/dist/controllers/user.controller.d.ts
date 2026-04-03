@@ -16,7 +16,7 @@ export declare const deleteUser: RequestHandler;
 export declare const getUserStatistics: RequestHandler;
 /**
  * GET /api/users/:id/timeline
- * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
+ * Kumulierter Punkteverlauf nach Kategorie von Registrierung bis heute (ein Eintrag pro Kalendertag).
  */
 export declare const getUserTimeline: RequestHandler;
 export declare const createUserByAdmin: RequestHandler;

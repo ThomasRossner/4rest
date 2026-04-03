@@ -6,5 +6,6 @@ export interface ConsentPreferences {
     marketing: boolean;
     dataProcessing: boolean;
 }
+export declare function getUserConsent(userId: string): Promise<ConsentPreferences | null>;
 export declare function updateConsent(userId: string, consent: ConsentPreferences): Promise<void>;
 //# sourceMappingURL=gdpr.d.ts.map

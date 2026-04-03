@@ -15,35 +15,39 @@ export function ConsentManager() {
   const [consent, setConsent] = useState<ConsentPreferences>({
     analytics: false,
     marketing: false,
-    dataProcessing: false,
+    dataProcessing: true,
   });
   const [saved, setSaved] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
-    // Load existing consent preferences
-    // This would fetch from API
+    let cancelled = false;
+    (async () => {
+      try {
+        const c = await api.getConsent();
+        if (cancelled || !c) return;
+        setConsent({ ...c, dataProcessing: true });
+      } catch {
+        /* unauthenticated or network */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleConsentChange = (key: keyof ConsentPreferences, value: boolean) => {
+    if (key === 'dataProcessing') return;
     setConsent((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   };
 
   const handleSave = async () => {
     try {
-      const token = useAuthStore.getState().token;
-      await fetch('/api/gdpr/consent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(consent),
-      });
+      await api.updateConsent({ ...consent, dataProcessing: true });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
+    } catch {
       alert(t('consent.alerts.saveError'));
     }
   };
@@ -96,13 +100,18 @@ export function ConsentManager() {
           <label>
             <input
               type="checkbox"
-              checked={consent.dataProcessing}
-              onChange={(e) => handleConsentChange('dataProcessing', e.target.checked)}
+              checked
+              disabled
+              title={t('consent.dataProcessing.lockedHint')}
+              aria-label={`${t('consent.dataProcessing.label')}. ${t('consent.dataProcessing.lockedHint')}`}
             />
             <span>{t('consent.dataProcessing.label')}</span>
           </label>
           <p className="consent-description">
             {t('consent.dataProcessing.description')}
+          </p>
+          <p className="consent-description" style={{ fontSize: '0.9em', opacity: 0.9 }}>
+            {t('consent.dataProcessing.lockedHint')}
           </p>
         </div>
 
