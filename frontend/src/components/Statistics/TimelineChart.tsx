@@ -39,8 +39,14 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
     const lastTotal = data[data.length - 1]?.totalCumulative ?? 0;
     const maxFromSeries = Math.max(...data.map((d) => d.totalCumulative), 1);
     const profile = profileTotalPoints != null ? Math.max(0, profileTotalPoints) : null;
+    // Nur skalieren, wenn der Verlauf aus user_tasks Punkte > 0 hat. Sonst würde ein hoher
+    // users.points (Bonus, manuell, …) die Balken auf 0 % drücken („leeres“ Diagramm).
     const scaleMax =
-      profile != null ? Math.max(profile, lastTotal, 1) : maxFromSeries;
+      lastTotal === 0
+        ? Math.max(maxFromSeries, 1)
+        : profile != null
+          ? Math.max(profile, lastTotal, 1)
+          : Math.max(lastTotal, maxFromSeries, 1);
 
     const hasSonstige = data.some((d) => categoryValue(d.cumulativeByCategory, 'sonstige') > 0);
 
@@ -50,6 +56,11 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
     return {
       scaleMax,
       profileForScale: profile,
+      /** Profil-Skalierung nur relevant, wenn der Aufgaben-Verlauf > 0 ist */
+      showProfileScaleHint: profile != null && lastTotal > 0,
+      /** Profil-Punkte ohne Eintrag im Verlauf (user_tasks) */
+      profilePointsWithoutTimeline:
+        profile != null && profile > 0 && lastTotal === 0,
       hasSonstige,
       labelStep,
       dense,
@@ -71,6 +82,11 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
   return (
     <div className="timeline-chart">
       <p className="timeline-chart-subtitle">{t('rankings.timeline.subtitle')}</p>
+      {chartData.profilePointsWithoutTimeline && (
+        <p className="timeline-chart-mismatch-hint" role="status">
+          {t('rankings.timeline.profilePointsWithoutTimelineHint')}
+        </p>
+      )}
       <div className="timeline-chart-legend">
         {STACK_KEYS.filter((key) => key !== 'sonstige' || chartData.hasSonstige).map((key) => (
           <div key={key} className="timeline-legend-item timeline-legend-forest-sub">
@@ -129,7 +145,7 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
               {t('rankings.timeline.totalCumulative')}: {last.totalCumulative}
             </span>
           </div>
-          {chartData.profileForScale != null && (
+          {chartData.showProfileScaleHint && chartData.profileForScale != null && (
             <div className="timeline-value-row timeline-value-row--muted">
               <span>
                 {t('rankings.timeline.scaleToProfile', {
