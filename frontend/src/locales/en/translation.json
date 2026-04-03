@@ -7,6 +7,7 @@
   },
   "common": {
     "appName": "4rest",
+    "appNameRest": "rest",
     "loading": "Loading...",
     "points": "{{count}} Points",
     "pointsShort": "{{count}} pts",

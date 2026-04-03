@@ -370,8 +370,20 @@ function LoginPage() {
         <div className="login-header">
           <div className="login-header-info">
             <div className="login-logo-row">
-              <img src="/app-icon-128.png" alt="4rest" className="login-logo" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
-              <h1>{t('common.appName', { defaultValue: '4rest' })}</h1>
+              <h1
+                className="login-brand-title"
+                aria-label={t('common.appName', { defaultValue: '4rest' })}
+              >
+                <img
+                  src="/app-icon-128.png"
+                  alt=""
+                  className="login-logo"
+                  aria-hidden
+                />
+                <span className="login-brand-title__rest">
+                  {t('common.appNameRest', { defaultValue: 'rest' })}
+                </span>
+              </h1>
             </div>
           </div>
           <div className="login-header-eu">

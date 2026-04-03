@@ -38,14 +38,18 @@
   width: 100%;
   max-width: 600px;
   min-width: 500px;
+  container-type: inline-size;
+  container-name: login-card;
 }
 
 .login-header {
+  /* Skaliert mit Kartenbreite; EU-Banner nutzt dieselbe Referenz */
+  --login-brand-icon-size: 80px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-md);
+  gap: 0.375rem;
   margin-bottom: var(--spacing-xl);
   flex-wrap: nowrap;
   min-width: 0;
@@ -53,63 +57,102 @@
   position: relative;
 }
 
+@container login-card (max-width: 400px) {
+  .login-header {
+    --login-brand-icon-size: 58px;
+  }
+}
+
+@container login-card (min-width: 520px) {
+  .login-header {
+    --login-brand-icon-size: 96px;
+  }
+}
+
+@container login-card (min-width: 560px) {
+  .login-header {
+    --login-brand-icon-size: 112px;
+  }
+}
+
+@container login-card (min-width: 590px) {
+  .login-header {
+    --login-brand-icon-size: 128px;
+  }
+}
+
+/* Fallback ohne Container Queries (mittlere Größe, passt zur Kartenbreite) */
+@supports not (container-type: inline-size) {
+  .login-header {
+    --login-brand-icon-size: 96px;
+  }
+
+  @media (min-width: 640px) {
+    .login-header {
+      --login-brand-icon-size: 112px;
+    }
+  }
+}
+
 .login-header-info {
   text-align: left;
-  white-space: nowrap !important;
-  overflow: visible !important;
-  min-width: fit-content !important;
-  flex-shrink: 0 !important;
   flex: 1 1 auto;
-  max-width: none !important;
-  width: auto !important;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .login-logo-row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
   min-width: 0;
   flex: 1 1 auto;
 }
 
+/* Logo („4“) + Schriftzug „rest“ = „4rest“ */
+.login-brand-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.12em;
+  margin: 0;
+  padding: 0;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  line-height: 1;
+  min-width: 0;
+}
+
 .login-logo {
-  width: 64px;
-  height: 64px;
+  width: var(--login-brand-icon-size);
+  height: var(--login-brand-icon-size);
+  max-width: 100%;
   display: block;
   object-fit: contain;
   flex-shrink: 0;
 }
 
-.login-header h1 {
-  font-size: 1.75rem;
+.login-brand-title__rest {
+  font-size: calc(var(--login-brand-icon-size) * 0.42);
+  font-weight: 700;
   color: var(--color-primary);
-  margin: 0;
-  white-space: nowrap !important;
-  overflow: visible !important;
-  word-break: keep-all !important;
-  line-height: 1.2;
-  display: inline-block !important;
-  width: auto !important;
-  max-width: none !important;
-  min-width: fit-content;
-  word-spacing: normal !important;
-  letter-spacing: normal;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
 .login-header-eu {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   display: flex;
   justify-content: center;
   align-items: center;
   min-width: 0;
+  max-width: var(--login-brand-icon-size);
 }
 
-/* 30 % kleiner als zuvor (max 200px → 140px) */
 .login-header-eu .eu-funding-logo,
 .login-header-eu .eu-logo-svg {
-  max-width: 140px;
-  width: 100%;
+  max-width: 100%;
+  width: auto;
   height: auto;
   display: block;
 }
@@ -124,39 +167,25 @@
   .login-header {
     flex-direction: row;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: 0.25rem;
   }
 
   .login-header-info {
     text-align: left;
-    white-space: normal !important;
     flex: 1 1 0;
     min-width: 0;
-    max-width: none;
+    max-width: 100%;
     padding-right: 0;
-  }
-
-  .login-header-eu .eu-funding-logo,
-  .login-header-eu .eu-logo-svg {
-    max-width: 112px;
   }
 
   .login-logo-row {
     justify-content: flex-start;
-    gap: var(--spacing-sm);
   }
 
-  .login-logo {
-    width: 48px;
-    height: 48px;
+  .login-brand-title {
+    min-width: 0;
   }
-  
-  .login-header h1 {
-    white-space: normal !important;
-    font-size: 1.25rem !important;
-    word-break: break-word;
-  }
-  
+
   .login-container {
     max-width: 100% !important;
     min-width: 320px !important;
