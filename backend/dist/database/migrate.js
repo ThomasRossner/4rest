@@ -91,6 +91,7 @@ export async function runMigrations() {
             '067_quiz_question_locks',
             '068_guest_public_tasks',
             '069_repair_survey_questions_nulls',
+            '070_backfill_forest_points_from_user_tasks_v2',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({

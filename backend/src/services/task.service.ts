@@ -1021,7 +1021,36 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       return;
     }
 
-    if (key === 'title_i18n' && typeof value === 'object') {
+    // Admin sendet oft title + title_i18n; title_i18n setzt bereits die Spalte "title" → sonst Postgres 42601
+    if (key === 'title') {
+      const ti = data.title_i18n;
+      if (ti != null && typeof ti === 'object') {
+        const r = (ti as Record<string, string>).de ?? (ti as Record<string, string>).en;
+        if (r != null) {
+          return;
+        }
+      }
+    }
+    if (key === 'description') {
+      const di = data.description_i18n;
+      if (di != null && typeof di === 'object') {
+        const r = (di as Record<string, string>).de ?? (di as Record<string, string>).en;
+        if (r != null) {
+          return;
+        }
+      }
+    }
+    if (key === 'article_content') {
+      const ai = data.article_content_i18n;
+      if (ai != null && typeof ai === 'object') {
+        const r = (ai as Record<string, string>).de ?? (ai as Record<string, string>).en;
+        if (r != null) {
+          return;
+        }
+      }
+    }
+
+    if (key === 'title_i18n' && value !== null && typeof value === 'object') {
       updates.push(`title_i18n = $${paramIndex++}`);
       values.push(JSON.stringify(value));
       const resolved = (value as Record<string, string>).de ?? (value as Record<string, string>).en;
@@ -1031,7 +1060,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       }
       return;
     }
-    if (key === 'description_i18n' && typeof value === 'object') {
+    if (key === 'description_i18n' && value !== null && typeof value === 'object') {
       updates.push(`description_i18n = $${paramIndex++}`);
       values.push(JSON.stringify(value));
       // Wie title_i18n: leeres {} darf die Legacy-Spalte description nicht auf NULL setzen (sonst 500 / Trigger)
@@ -1042,7 +1071,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       }
       return;
     }
-    if (key === 'article_content_i18n' && typeof value === 'object') {
+    if (key === 'article_content_i18n' && value !== null && typeof value === 'object') {
       updates.push(`article_content_i18n = $${paramIndex++}`);
       values.push(JSON.stringify(value));
       const resolved = (value as Record<string, string>).de ?? (value as Record<string, string>).en;

@@ -814,7 +814,35 @@ export async function updateTask(id, data) {
         if (key === 'location_id' && (value === '' || value === null)) {
             return;
         }
-        if (key === 'title_i18n' && typeof value === 'object') {
+        // Admin sendet oft title + title_i18n; title_i18n setzt bereits die Spalte "title" → sonst Postgres 42601
+        if (key === 'title') {
+            const ti = data.title_i18n;
+            if (ti != null && typeof ti === 'object') {
+                const r = ti.de ?? ti.en;
+                if (r != null) {
+                    return;
+                }
+            }
+        }
+        if (key === 'description') {
+            const di = data.description_i18n;
+            if (di != null && typeof di === 'object') {
+                const r = di.de ?? di.en;
+                if (r != null) {
+                    return;
+                }
+            }
+        }
+        if (key === 'article_content') {
+            const ai = data.article_content_i18n;
+            if (ai != null && typeof ai === 'object') {
+                const r = ai.de ?? ai.en;
+                if (r != null) {
+                    return;
+                }
+            }
+        }
+        if (key === 'title_i18n' && value !== null && typeof value === 'object') {
             updates.push(`title_i18n = $${paramIndex++}`);
             values.push(JSON.stringify(value));
             const resolved = value.de ?? value.en;
@@ -824,7 +852,7 @@ export async function updateTask(id, data) {
             }
             return;
         }
-        if (key === 'description_i18n' && typeof value === 'object') {
+        if (key === 'description_i18n' && value !== null && typeof value === 'object') {
             updates.push(`description_i18n = $${paramIndex++}`);
             values.push(JSON.stringify(value));
             // Wie title_i18n: leeres {} darf die Legacy-Spalte description nicht auf NULL setzen (sonst 500 / Trigger)
@@ -835,7 +863,7 @@ export async function updateTask(id, data) {
             }
             return;
         }
-        if (key === 'article_content_i18n' && typeof value === 'object') {
+        if (key === 'article_content_i18n' && value !== null && typeof value === 'object') {
             updates.push(`article_content_i18n = $${paramIndex++}`);
             values.push(JSON.stringify(value));
             const resolved = value.de ?? value.en;
