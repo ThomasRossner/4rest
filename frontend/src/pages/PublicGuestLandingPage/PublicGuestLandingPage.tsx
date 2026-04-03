@@ -22,7 +22,7 @@ export default function PublicGuestLandingPage() {
   );
 
   return (
-    <div className="tasks-page tasks-page--category">
+    <div className="tasks-page tasks-page--category tasks-page--public-guest">
       <div className="tasks-category-sticky">
         <div className="tasks-header tasks-header--category">
           <div className="tasks-header-category-row">
