@@ -12,6 +12,12 @@ import { getUserActiveTeam, getTeamMembers } from './team.service.js';
 import fs from 'fs';
 import { generateQrToken } from './user-qr.service.js';
 import { emailService } from './email.service.js';
+/** Für errorHandler: name === 'ValidationError' → HTTP 400 mit message */
+function clientValidationError(message) {
+    const err = new Error(message);
+    err.name = 'ValidationError';
+    return err;
+}
 /**
  * Generiert oder ruft den QR-Code einer Aufgabe ab
  */
@@ -325,7 +331,9 @@ export function resolveSurveyQuestionsI18n(payload, lang) {
     const parsed = parseJsonPayload(payload);
     if (!Array.isArray(parsed))
         return [];
-    return parsed.map((question) => {
+    return parsed
+        .filter((question) => question != null && typeof question === 'object' && !Array.isArray(question))
+        .map((question) => {
         const questionText = resolveNestedI18n(question?.question_i18n, lang, question?.question);
         const optionsRaw = Array.isArray(question?.options) ? question.options : undefined;
         const options = optionsRaw?.map((option) => {
@@ -802,6 +810,10 @@ export async function updateTask(id, data) {
         if (value === undefined || key === 'id' || key === 'thumbnail_url' || key === 'allowed_teams' || key === 'allowed_contests' || !validColumns.has(key)) {
             return;
         }
+        // location_id NOT NULL + UUID: leerer String / null → Postgres 22P02 (z. B. Admin sendet "" wenn Ort nicht in Liste)
+        if (key === 'location_id' && (value === '' || value === null)) {
+            return;
+        }
         if (key === 'title_i18n' && typeof value === 'object') {
             updates.push(`title_i18n = $${paramIndex++}`);
             values.push(JSON.stringify(value));
@@ -815,20 +827,28 @@ export async function updateTask(id, data) {
         if (key === 'description_i18n' && typeof value === 'object') {
             updates.push(`description_i18n = $${paramIndex++}`);
             values.push(JSON.stringify(value));
+            // Wie title_i18n: leeres {} darf die Legacy-Spalte description nicht auf NULL setzen (sonst 500 / Trigger)
             const resolved = value.de ?? value.en;
-            updates.push(`description = $${paramIndex++}`);
-            values.push(resolved ?? null);
+            if (resolved != null) {
+                updates.push(`description = $${paramIndex++}`);
+                values.push(resolved);
+            }
             return;
         }
         if (key === 'article_content_i18n' && typeof value === 'object') {
             updates.push(`article_content_i18n = $${paramIndex++}`);
             values.push(JSON.stringify(value));
             const resolved = value.de ?? value.en;
-            updates.push(`article_content = $${paramIndex++}`);
-            values.push(resolved ?? null);
+            if (resolved != null) {
+                updates.push(`article_content = $${paramIndex++}`);
+                values.push(resolved);
+            }
             return;
         }
-        if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
+        // typeof null === 'object' — sonst JSON.stringify(null) und kaputte JSONB-Werte
+        if ((key === 'quiz_questions' || key === 'survey_questions') &&
+            value !== null &&
+            typeof value === 'object') {
             updates.push(`${key} = $${paramIndex++}`);
             values.push(JSON.stringify(value));
         }
@@ -883,8 +903,26 @@ export async function updateTask(id, data) {
     // Add id as the last parameter - use the current paramIndex (which is already the next available index)
     const whereParamIndex = paramIndex;
     values.push(id);
-    const result = await db.query(`UPDATE tasks SET ${updates.join(', ')} WHERE id = $${whereParamIndex} RETURNING *`, values);
-    return result.rows[0] || null;
+    try {
+        const result = await db.query(`UPDATE tasks SET ${updates.join(', ')} WHERE id = $${whereParamIndex} RETURNING *`, values);
+        return result.rows[0] || null;
+    }
+    catch (err) {
+        const pg = err;
+        if (pg?.code === '42703') {
+            console.error('[TaskService] updateTask: column missing (migration?):', pg.message, pg.detail);
+            throw clientValidationError('Datenbankschema passt nicht (Spalte fehlt). Bitte Migrationen ausführen (z. B. allow_public_completion).');
+        }
+        if (pg?.code === '22P02') {
+            console.error('[TaskService] updateTask: invalid input (UUID/JSON):', pg.message, pg.detail);
+            throw clientValidationError('Ungültige Eingabe beim Speichern der Aufgabe (z. B. Ort-ID oder JSON).');
+        }
+        if (pg?.code === '23502') {
+            console.error('[TaskService] updateTask: NOT NULL violation:', pg.message, pg.detail);
+            throw clientValidationError('Pflichtfeld fehlt (Datenbank).');
+        }
+        throw err;
+    }
 }
 export async function deleteTask(id) {
     const db = getPool();
@@ -1157,6 +1195,26 @@ export async function getPublicTaskForGuest(taskId, preferredLanguage) {
     if (!task.allow_public_completion)
         return null;
     return task;
+}
+export async function listPublicGuestTasks(lang) {
+    const db = getPool();
+    const result = await db.query(`SELECT t.id, t.title, t.title_i18n, t.description, t.description_i18n, t.type, t.points, t.thumbnail_url
+     FROM tasks t
+     INNER JOIN locations l ON l.id = t.location_id
+     WHERE t.allow_public_completion = TRUE AND t.active = TRUE
+     ORDER BY t.title ASC`);
+    return result.rows.map((row) => {
+        const title = resolveI18n(row.title_i18n, lang, row.title);
+        const descriptionRaw = resolveI18n(row.description_i18n, lang, row.description);
+        return {
+            id: row.id,
+            title,
+            description: descriptionRaw && String(descriptionRaw).trim() !== '' ? descriptionRaw : null,
+            type: row.type,
+            points: row.points ?? 0,
+            thumbnail_url: row.thumbnail_url ?? null,
+        };
+    });
 }
 /** Validiert Request-Body für Gast-Abschluss (analog zu completeTask). */
 function assertPublicGuestCompletionPayload(task, data) {
@@ -1572,9 +1630,22 @@ async function validatePrerequisites(data, taskId) {
     const db = getPool();
     const prerequisiteTaskId = data.prerequisite_task_id;
     const prerequisiteTaskCount = data.prerequisite_task_count;
-    const prerequisiteTaskIds = data.prerequisite_task_ids;
-    // If no prerequisites are set, validation passes
+    let rawPrereqIds = data.prerequisite_task_ids;
+    if (typeof rawPrereqIds === 'string') {
+        try {
+            rawPrereqIds = JSON.parse(rawPrereqIds);
+        }
+        catch {
+            throw clientValidationError('prerequisite_task_ids must be a valid JSON array');
+        }
+    }
+    // Leeres Array = „keine Voraussetzungen“ (wie undefined); [] ist in JS truthy und würde sonst fälschlich Fehler werfen → 500
+    const prerequisiteTaskIds = Array.isArray(rawPrereqIds) && rawPrereqIds.length === 0 ? undefined : rawPrereqIds;
+    // Keine Voraussetzungen (weder Einzel-ID noch ID-Liste)
     if (!prerequisiteTaskId && !prerequisiteTaskIds) {
+        if (prerequisiteTaskCount !== undefined && prerequisiteTaskCount !== null) {
+            throw new Error('prerequisite_task_count requires prerequisite_task_ids to be set');
+        }
         return;
     }
     // Validate Type 1: prerequisite_task_id

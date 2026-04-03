@@ -192,6 +192,10 @@ export const updateTask: RequestHandler = asyncHandler(async (req, res) => {
     }
     req.body.location_id = location.id;
   }
+  // Leerer String / null würde Postgres (UUID NOT NULL) mit 22P02/23502 brechen — Feld weglassen = Stand in DB behalten
+  if (req.body.location_id === '' || req.body.location_id === null) {
+    delete req.body.location_id;
+  }
 
   const task = await updateTaskService(req.params.id, req.body);
   if (!task) {

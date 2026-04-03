@@ -1,9 +1,17 @@
-import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, submitQuizAnswer as submitQuizAnswerService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, approvePhotoTask as approvePhotoTaskService, rejectPhotoTask as rejectPhotoTaskService, getPendingPhotoTasks as getPendingPhotoTasksService, getGalleryImages as getGalleryImagesService, generateOrGetTaskQrCode, getPublicTaskForGuest, completePublicGuestTask, } from '../services/task.service.js';
+import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, submitQuizAnswer as submitQuizAnswerService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, approvePhotoTask as approvePhotoTaskService, rejectPhotoTask as rejectPhotoTaskService, getPendingPhotoTasks as getPendingPhotoTasksService, getGalleryImages as getGalleryImagesService, generateOrGetTaskQrCode, getPublicTaskForGuest, completePublicGuestTask, listPublicGuestTasks as listPublicGuestTasksService, } from '../services/task.service.js';
 import { getPreferredLanguage } from '../services/user.service.js';
 import { ensureGuestSession } from '../utils/guestSession.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validateUserTypeArray, validateHotelIdArray } from '../utils/validation.js';
 import { broadcastTaskUpdate } from '../ws/task-broadcast.js';
+/** GET /api/tasks/public — Aufgaben mit „ohne Login“, ohne JWT (Cookie Gast-Session). */
+export const listPublicGuestTasks = asyncHandler(async (req, res) => {
+    ensureGuestSession(req, res);
+    const langParam = req.query.lang;
+    const lang = langParam === 'en' ? 'en' : 'de';
+    const tasks = await listPublicGuestTasksService(lang);
+    res.json(tasks);
+});
 /** GET /api/tasks/public/:id — ohne JWT (Cookie Gast-Session). */
 export const getPublicTask = asyncHandler(async (req, res) => {
     ensureGuestSession(req, res);
@@ -134,6 +142,10 @@ export const updateTask = asyncHandler(async (req, res) => {
             return res.status(400).json({ error: 'Invalid locationId.' });
         }
         req.body.location_id = location.id;
+    }
+    // Leerer String / null würde Postgres (UUID NOT NULL) mit 22P02/23502 brechen — Feld weglassen = Stand in DB behalten
+    if (req.body.location_id === '' || req.body.location_id === null) {
+        delete req.body.location_id;
     }
     const task = await updateTaskService(req.params.id, req.body);
     if (!task) {

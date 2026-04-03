@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getTasks, getTask, getPublicTask, completePublicTask, createTask, updateTask, deleteTask, completeTask, submitQuizAnswer, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, approvePhotoTask, rejectPhotoTask, getPendingPhotoTasks, getGallery, getTaskQrCode, } from '../controllers/task.controller.js';
+import { getTasks, getTask, listPublicGuestTasks, getPublicTask, completePublicTask, createTask, updateTask, deleteTask, completeTask, submitQuizAnswer, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, approvePhotoTask, rejectPhotoTask, getPendingPhotoTasks, getGallery, getTaskQrCode, } from '../controllers/task.controller.js';
 import { publicTaskRateLimit } from '../middleware/publicTaskRateLimit.js';
 const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
 // Ensure upload directory exists
@@ -85,6 +85,7 @@ const uploadThumbnailMiddleware = multer({
     },
 });
 const router = Router();
+router.get('/public', publicTaskRateLimit, listPublicGuestTasks);
 router.get('/public/:id', publicTaskRateLimit, getPublicTask);
 router.post('/public/:id/complete', publicTaskRateLimit, completePublicTask);
 router.get('/', authenticate, getTasks);

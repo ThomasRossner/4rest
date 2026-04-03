@@ -87,6 +87,16 @@ export declare function completeTask(taskId: string, userId: string, data?: any)
 }>;
 /** Öffentliche Task-Detailansicht (ohne Login); nur wenn Flag gesetzt. */
 export declare function getPublicTaskForGuest(taskId: string, preferredLanguage?: string): Promise<Task | null>;
+/** Liste aller aktiven Aufgaben mit „ohne Login“ (für Gast-Startseite). */
+export type PublicGuestTaskListItem = {
+    id: string;
+    title: string;
+    description: string | null;
+    type: string;
+    points: number;
+    thumbnail_url: string | null;
+};
+export declare function listPublicGuestTasks(lang: 'de' | 'en'): Promise<PublicGuestTaskListItem[]>;
 /** Speichert Abschluss für Gast-Session; Punkte folgen nach merge mit User-Account. */
 export declare function completePublicGuestTask(taskId: string, guestSessionId: string, data: any): Promise<{
     success: true;

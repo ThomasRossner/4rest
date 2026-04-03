@@ -1,4 +1,6 @@
 import { RequestHandler } from 'express';
+/** GET /api/tasks/public — Aufgaben mit „ohne Login“, ohne JWT (Cookie Gast-Session). */
+export declare const listPublicGuestTasks: RequestHandler;
 /** GET /api/tasks/public/:id — ohne JWT (Cookie Gast-Session). */
 export declare const getPublicTask: RequestHandler;
 /** POST /api/tasks/public/:id/complete */

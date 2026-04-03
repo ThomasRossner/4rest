@@ -15,6 +15,13 @@ import fs from 'fs';
 import { generateQrToken } from './user-qr.service.js';
 import { emailService } from './email.service.js';
 
+/** Für errorHandler: name === 'ValidationError' → HTTP 400 mit message */
+function clientValidationError(message: string): Error {
+  const err = new Error(message);
+  err.name = 'ValidationError';
+  return err;
+}
+
 /**
  * Generiert oder ruft den QR-Code einer Aufgabe ab
  */
@@ -1009,6 +1016,11 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       return;
     }
 
+    // location_id NOT NULL + UUID: leerer String / null → Postgres 22P02 (z. B. Admin sendet "" wenn Ort nicht in Liste)
+    if (key === 'location_id' && (value === '' || value === null)) {
+      return;
+    }
+
     if (key === 'title_i18n' && typeof value === 'object') {
       updates.push(`title_i18n = $${paramIndex++}`);
       values.push(JSON.stringify(value));
@@ -1040,7 +1052,12 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
       }
       return;
     }
-    if ((key === 'quiz_questions' || key === 'survey_questions') && typeof value === 'object') {
+    // typeof null === 'object' — sonst JSON.stringify(null) und kaputte JSONB-Werte
+    if (
+      (key === 'quiz_questions' || key === 'survey_questions') &&
+      value !== null &&
+      typeof value === 'object'
+    ) {
       updates.push(`${key} = $${paramIndex++}`);
       values.push(JSON.stringify(value));
     } else if (key === 'recurrence') {
@@ -1098,12 +1115,30 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
   const whereParamIndex = paramIndex;
   values.push(id);
 
-  const result = await db.query(
-    `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${whereParamIndex} RETURNING *`,
-    values
-  );
-
-  return result.rows[0] || null;
+  try {
+    const result = await db.query(
+      `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${whereParamIndex} RETURNING *`,
+      values
+    );
+    return result.rows[0] || null;
+  } catch (err: unknown) {
+    const pg = err as { code?: string; message?: string; detail?: string };
+    if (pg?.code === '42703') {
+      console.error('[TaskService] updateTask: column missing (migration?):', pg.message, pg.detail);
+      throw clientValidationError(
+        'Datenbankschema passt nicht (Spalte fehlt). Bitte Migrationen ausführen (z. B. allow_public_completion).'
+      );
+    }
+    if (pg?.code === '22P02') {
+      console.error('[TaskService] updateTask: invalid input (UUID/JSON):', pg.message, pg.detail);
+      throw clientValidationError('Ungültige Eingabe beim Speichern der Aufgabe (z. B. Ort-ID oder JSON).');
+    }
+    if (pg?.code === '23502') {
+      console.error('[TaskService] updateTask: NOT NULL violation:', pg.message, pg.detail);
+      throw clientValidationError('Pflichtfeld fehlt (Datenbank).');
+    }
+    throw err;
+  }
 }
 
 export async function deleteTask(id: string): Promise<void> {
@@ -2005,7 +2040,14 @@ async function validatePrerequisites(data: Partial<Task>, taskId: string | null)
   const db = getPool();
   const prerequisiteTaskId = (data as any).prerequisite_task_id;
   const prerequisiteTaskCount = (data as any).prerequisite_task_count;
-  const rawPrereqIds = (data as any).prerequisite_task_ids;
+  let rawPrereqIds = (data as any).prerequisite_task_ids;
+  if (typeof rawPrereqIds === 'string') {
+    try {
+      rawPrereqIds = JSON.parse(rawPrereqIds);
+    } catch {
+      throw clientValidationError('prerequisite_task_ids must be a valid JSON array');
+    }
+  }
   // Leeres Array = „keine Voraussetzungen“ (wie undefined); [] ist in JS truthy und würde sonst fälschlich Fehler werfen → 500
   const prerequisiteTaskIds =
     Array.isArray(rawPrereqIds) && rawPrereqIds.length === 0 ? undefined : rawPrereqIds;
