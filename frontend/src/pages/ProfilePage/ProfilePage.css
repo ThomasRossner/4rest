@@ -81,39 +81,51 @@
 }
 
 .profile-player-section__title {
-  margin: 0 0 var(--spacing-md);
+  margin: 0;
   font-size: 1.05rem;
   color: var(--color-text);
 }
 
-.profile-player-section__row {
+.profile-player-section__title-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.profile-player-section__character {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .profile-player-section__emoji {
-  font-size: 2.5rem;
+  font-size: 1.4rem;
   line-height: 1;
 }
 
-.profile-player-section__meta {
-  flex: 1;
-  min-width: 0;
+.profile-player-section__content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
 }
 
 .profile-player-section__name {
-  margin: 0 0 var(--spacing-sm);
+  margin: 0;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   color: var(--color-text);
   word-break: break-word;
 }
 
 .profile-player-section__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-end;
   gap: var(--spacing-sm);
+  margin-left: auto;
 }
 
 .profile-player-section__btn {
@@ -125,15 +137,6 @@
   cursor: pointer;
   background: linear-gradient(135deg, #0d9488, #14b8a6);
   color: #fff;
-}
-
-.profile-player-section__btn--secondary {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.profile-player-section__btn--secondary:hover {
-  background: #e2e8f0;
 }
 
 .profile-language {
@@ -169,6 +172,10 @@
 }
 .profile-language-switcher {
   margin-left: auto;
+}
+
+.profile-language--inline {
+  margin-bottom: 0;
 }
 
 .profile-avatar {
@@ -399,5 +406,55 @@
   .profile-card,
   .profile-sihot-card {
     padding: var(--spacing-lg);
+  }
+
+  .profile-header {
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .profile-info h2 {
+    font-size: 1.25rem;
+  }
+
+  .profile-language {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+
+  .profile-language-buttons {
+    width: 100%;
+  }
+
+  .profile-language-btn {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  .profile-player-section__title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .profile-player-section__character {
+    align-self: flex-end;
+  }
+
+  .profile-player-section__content {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .profile-player-section__actions {
+    width: 100%;
+    align-items: stretch;
+    margin-left: 0;
+  }
+
+  .profile-player-section__btn {
+    width: 100%;
+    text-align: center;
   }
 }

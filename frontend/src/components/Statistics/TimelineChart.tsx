@@ -31,13 +31,21 @@ function categoryValue(
 }
 
 export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
+  const sortedData = useMemo(
+    () =>
+      [...data].sort(
+        (a, b) => new Date(`${a.date}T00:00:00`).getTime() - new Date(`${b.date}T00:00:00`).getTime()
+      ),
+    [data]
+  );
 
   const chartData = useMemo(() => {
-    if (!data || data.length === 0) return null;
+    if (!sortedData || sortedData.length === 0) return null;
 
-    const lastTotal = data[data.length - 1]?.totalCumulative ?? 0;
-    const maxFromSeries = Math.max(...data.map((d) => d.totalCumulative), 1);
+    const lastTotal = sortedData[sortedData.length - 1]?.totalCumulative ?? 0;
+    const maxFromSeries = Math.max(...sortedData.map((d) => d.totalCumulative), 1);
     const profile = profileTotalPoints != null ? Math.max(0, profileTotalPoints) : null;
     // Nur skalieren, wenn der Verlauf aus user_tasks Punkte > 0 hat. Sonst würde ein hoher
     // users.points (Bonus, manuell, …) die Balken auf 0 % drücken („leeres“ Diagramm).
@@ -48,10 +56,10 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
           ? Math.max(profile, lastTotal, 1)
           : Math.max(lastTotal, maxFromSeries, 1);
 
-    const hasSonstige = data.some((d) => categoryValue(d.cumulativeByCategory, 'sonstige') > 0);
+    const hasSonstige = sortedData.some((d) => categoryValue(d.cumulativeByCategory, 'sonstige') > 0);
 
-    const labelStep = Math.max(1, Math.ceil(data.length / 14));
-    const dense = data.length > 72;
+    const labelStep = Math.max(1, Math.ceil(sortedData.length / 14));
+    const dense = sortedData.length > 72;
 
     return {
       scaleMax,
@@ -64,20 +72,25 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
       hasSonstige,
       labelStep,
       dense,
-      normalized: data.map((d) => d.totalCumulative / scaleMax),
+      normalized: sortedData.map((d) => d.totalCumulative / scaleMax),
     };
-  }, [data, profileTotalPoints]);
+  }, [sortedData, profileTotalPoints]);
 
-  if (!chartData || data.length === 0) {
+  if (!chartData || sortedData.length === 0) {
     return <div className="timeline-chart-empty">{t('rankings.timeline.noData')}</div>;
   }
 
   const formatDate = (dateStr: string) => {
     const date = new Date(`${dateStr}T12:00:00`);
-    return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+    return date.toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit' });
   };
 
-  const last = data[data.length - 1];
+  const formatMonth = (dateStr: string) => {
+    const date = new Date(`${dateStr}T12:00:00`);
+    return date.toLocaleDateString(dateLocale, { month: '2-digit', year: '2-digit' });
+  };
+
+  const last = sortedData[sortedData.length - 1];
 
   return (
     <div className="timeline-chart">
@@ -96,18 +109,36 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
         ))}
       </div>
       <div className="timeline-chart-container">
+        <div className="timeline-chart-axis-label timeline-chart-axis-label--y">
+          {t('rankings.timeline.yAxisLabel')}
+        </div>
         <div
           className={`timeline-chart-bars${chartData.dense ? ' timeline-chart-bars--dense' : ''}`}
         >
-          {data.map((point, index) => {
+          {sortedData.map((point, index) => {
             const total = point.totalCumulative;
             const barHeightPct = chartData.normalized[index] * 100;
-            const showLabel = index === 0 || index === data.length - 1 || index % chartData.labelStep === 0;
+            const isFirst = index === 0;
+            const isLast = index === sortedData.length - 1;
+            const date = new Date(`${point.date}T12:00:00`);
+            const isMonthStart = date.getDate() === 1;
+            const veryLongRange = sortedData.length > 90;
+            const longRange = sortedData.length > 45;
+            const showLabel = veryLongRange
+              ? isFirst || isLast || isMonthStart
+              : longRange
+                ? isFirst || isLast || isMonthStart || index % (chartData.labelStep * 2) === 0
+                : isFirst || isLast || index % chartData.labelStep === 0;
+            const labelText = veryLongRange
+              ? formatMonth(point.date)
+              : longRange && isMonthStart
+                ? formatMonth(point.date)
+                : formatDate(point.date);
 
             return (
               <div key={point.date} className="timeline-bar-group">
                 <div className="timeline-bar-label">
-                  {showLabel ? formatDate(point.date) : '\u00a0'}
+                  {showLabel ? labelText : '\u00a0'}
                 </div>
                 <div className="timeline-bar-column">
                   <div
@@ -155,6 +186,9 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
               </span>
             </div>
           )}
+        </div>
+        <div className="timeline-chart-axis-label timeline-chart-axis-label--x">
+          {t('rankings.timeline.xAxisLabel')}
         </div>
       </div>
     </div>

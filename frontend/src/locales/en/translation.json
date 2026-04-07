@@ -2355,6 +2355,8 @@
       "totalCumulative": "Total points (current)",
       "profilePointsWithoutTimelineHint": "This chart only includes points from completed tasks. Other points (e.g. on-site bonus) are not in this timeline — the bars can look empty even when your balance or forest categories show values.",
       "scaleToProfile": "100% bar height = {{max}} points (profile: {{profile}})",
+      "xAxisLabel": "Timeline (oldest day left, newest day right)",
+      "yAxisLabel": "Cumulative points",
       "maxPoints": "Max. Points",
       "maxTrees": "Max. Trees",
       "maxCo2": "Max. CO₂",

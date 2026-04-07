@@ -2349,6 +2349,8 @@
       "totalCumulative": "Punkte gesamt (aktuell)",
       "profilePointsWithoutTimelineHint": "Dieses Diagramm zeigt nur Punkte aus abgeschlossenen Aufgaben. Andere Punkte (z. B. Bonus vor Ort) stehen nicht in diesem Verlauf — deshalb kann die Anzeige leer wirken, obwohl dein Punktestand oder Wald-Kategorien im Profil gesetzt sind.",
       "scaleToProfile": "100 % Balkenhöhe = {{max}} Punkte (Profil: {{profile}})",
+      "xAxisLabel": "Zeitleiste (aeltester Tag links, neuester Tag rechts)",
+      "yAxisLabel": "Kumulierte Punkte",
       "maxPoints": "Max. Punkte",
       "maxTrees": "Max. Bäume",
       "maxCo2": "Max. CO₂",

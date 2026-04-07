@@ -13,7 +13,7 @@ import { ContestQrCodeCarousel } from '../../components/Contests/ContestQrCodeCa
 import { getUserInitials } from '../../utils/userInitials';
 import PlayerProfileOnboarding from '../../components/PlayerProfile/PlayerProfileOnboarding';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
-import { getForestDisplayName, getPlayerCharacterEmoji } from '../../constants/playerCharacter';
+import { getPlayerCharacterEmoji } from '../../constants/playerCharacter';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -100,9 +100,65 @@ function ProfilePage() {
           <div className="profile-info">
             <h2>{user?.name || 'User'}</h2>
             <p>{user?.email || t('profile.noEmail')}</p>
-            <span className="profile-role">
-              {user?.role ? t('profile.role', { role: user.role }) : t('profile.role', { role: 'guest' })}
-            </span>
+            <div className="profile-language profile-language--inline">
+              <span className="profile-language-label">{t('profile.language.label')}</span>
+              <div className="profile-language-buttons">
+                <button
+                  type="button"
+                  className={`profile-language-btn ${(user?.preferredLanguage || i18n.language || 'de').startsWith('de') ? 'active' : ''}`}
+                  onClick={async () => {
+                    if (!userId || (user?.preferredLanguage || 'de') === 'de') return;
+                    setLanguageSaving(true);
+                    try {
+                      await api.updateUserProfile(userId, { preferredLanguage: 'de' });
+                      i18n.changeLanguage('de');
+                      await api.refreshMe();
+                      // Content (tasks, rewards, teams, contests) is resolved by backend from preferred_language – refetch so UI shows new language
+                      await Promise.all([
+                        queryClient.invalidateQueries('tasks'),
+                        queryClient.invalidateQueries('rewards'),
+                        queryClient.invalidateQueries(['task']),
+                        queryClient.invalidateQueries(['userActiveTeam', userId]),
+                        queryClient.invalidateQueries(['userTeams', userId]),
+                        queryClient.invalidateQueries(['userContests']),
+                      ]);
+                    } finally {
+                      setLanguageSaving(false);
+                    }
+                  }}
+                  disabled={languageSaving}
+                >
+                  {t('language.de')}
+                </button>
+                <button
+                  type="button"
+                  className={`profile-language-btn ${(user?.preferredLanguage || i18n.language || 'de') === 'en' ? 'active' : ''}`}
+                  onClick={async () => {
+                    if (!userId || user?.preferredLanguage === 'en') return;
+                    setLanguageSaving(true);
+                    try {
+                      await api.updateUserProfile(userId, { preferredLanguage: 'en' });
+                      i18n.changeLanguage('en');
+                      await api.refreshMe();
+                      // Content (tasks, rewards, teams, contests) is resolved by backend from preferred_language – refetch so UI shows new language
+                      await Promise.all([
+                        queryClient.invalidateQueries('tasks'),
+                        queryClient.invalidateQueries('rewards'),
+                        queryClient.invalidateQueries(['task']),
+                        queryClient.invalidateQueries(['userActiveTeam', userId]),
+                        queryClient.invalidateQueries(['userTeams', userId]),
+                        queryClient.invalidateQueries(['userContests']),
+                      ]);
+                    } finally {
+                      setLanguageSaving(false);
+                    }
+                  }}
+                  disabled={languageSaving}
+                >
+                  {t('language.en')}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
           <div className="profile-stats">
@@ -134,31 +190,38 @@ function ProfilePage() {
         {user?.role === 'guest' && user.playerProfile && (
           <>
             <div className="profile-player-section">
-              <h3 className="profile-player-section__title">{t('playerProfile.profileSection.title')}</h3>
-              <div className="profile-player-section__row">
-                <span className="profile-player-section__emoji" aria-hidden>
-                  {getPlayerCharacterEmoji(user.playerProfile)}
+              <div className="profile-player-section__title-row">
+                <h3 className="profile-player-section__title">{t('playerProfile.profileSection.title')}</h3>
+                <div className="profile-player-section__character" aria-label={t('playerProfile.profileSection.title')}>
+                  <span className="profile-player-section__emoji" aria-hidden>
+                    {getPlayerCharacterEmoji(user.playerProfile)}
+                  </span>
+                  {user.playerProfile?.profileDisplayName?.trim() && (
+                    <span className="profile-player-section__name">
+                      {user.playerProfile.profileDisplayName.trim()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="profile-player-section__content">
+                <span className="profile-role">
+                  {user?.role ? t('profile.role', { role: user.role }) : t('profile.role', { role: 'guest' })}
                 </span>
-                <div className="profile-player-section__meta">
-                  <p className="profile-player-section__name">
-                    {getForestDisplayName(user.name, user.playerProfile)}
-                  </p>
-                  <div className="profile-player-section__actions">
-                    <button
-                      type="button"
-                      className="profile-player-section__btn"
-                      onClick={() => setShowPlayerTypeModal(true)}
-                    >
-                      {t('playerProfile.moreAbout.shortCta')}
-                    </button>
-                    <button
-                      type="button"
-                      className="profile-player-section__btn profile-player-section__btn--secondary"
-                      onClick={() => setShowPlayerRetake(true)}
-                    >
-                      {t('playerProfile.profileSection.retake')}
-                    </button>
-                  </div>
+                <div className="profile-player-section__actions">
+                  <button
+                    type="button"
+                    className="profile-player-section__btn"
+                    onClick={() => setShowPlayerTypeModal(true)}
+                  >
+                    {t('playerProfile.moreAbout.shortCta')}
+                  </button>
+                  <button
+                    type="button"
+                    className="profile-player-section__btn"
+                    onClick={() => setShowPlayerRetake(true)}
+                  >
+                    {t('playerProfile.profileSection.retake')}
+                  </button>
                 </div>
               </div>
             </div>
@@ -181,65 +244,6 @@ function ProfilePage() {
           </>
         )}
 
-        <div className="profile-language">
-          <span className="profile-language-label">{t('profile.language.label')}</span>
-          <div className="profile-language-buttons">
-            <button
-              type="button"
-              className={`profile-language-btn ${(user?.preferredLanguage || i18n.language || 'de').startsWith('de') ? 'active' : ''}`}
-              onClick={async () => {
-                if (!userId || (user?.preferredLanguage || 'de') === 'de') return;
-                setLanguageSaving(true);
-                try {
-                  await api.updateUserProfile(userId, { preferredLanguage: 'de' });
-                  i18n.changeLanguage('de');
-                  await api.refreshMe();
-                  // Content (tasks, rewards, teams, contests) is resolved by backend from preferred_language – refetch so UI shows new language
-                  await Promise.all([
-                    queryClient.invalidateQueries('tasks'),
-                    queryClient.invalidateQueries('rewards'),
-                    queryClient.invalidateQueries(['task']),
-                    queryClient.invalidateQueries(['userActiveTeam', userId]),
-                    queryClient.invalidateQueries(['userTeams', userId]),
-                    queryClient.invalidateQueries(['userContests']),
-                  ]);
-                } finally {
-                  setLanguageSaving(false);
-                }
-              }}
-              disabled={languageSaving}
-            >
-              {t('language.de')}
-            </button>
-            <button
-              type="button"
-              className={`profile-language-btn ${(user?.preferredLanguage || i18n.language || 'de') === 'en' ? 'active' : ''}`}
-              onClick={async () => {
-                if (!userId || user?.preferredLanguage === 'en') return;
-                setLanguageSaving(true);
-                try {
-                  await api.updateUserProfile(userId, { preferredLanguage: 'en' });
-                  i18n.changeLanguage('en');
-                  await api.refreshMe();
-                  // Content (tasks, rewards, teams, contests) is resolved by backend from preferred_language – refetch so UI shows new language
-                  await Promise.all([
-                    queryClient.invalidateQueries('tasks'),
-                    queryClient.invalidateQueries('rewards'),
-                    queryClient.invalidateQueries(['task']),
-                    queryClient.invalidateQueries(['userActiveTeam', userId]),
-                    queryClient.invalidateQueries(['userTeams', userId]),
-                    queryClient.invalidateQueries(['userContests']),
-                  ]);
-                } finally {
-                  setLanguageSaving(false);
-                }
-              }}
-              disabled={languageSaving}
-            >
-              {t('language.en')}
-            </button>
-          </div>
-        </div>
         <div className="profile-actions">
           <button
             onClick={() => setShowConsent(!showConsent)}
