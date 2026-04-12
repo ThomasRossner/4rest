@@ -460,60 +460,17 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
   if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
   return (
-    <div className="task-container">
-      <div className="task-header">
-        <h2>{task.title}</h2>
+    <div className="task-container task-container--qr-execution">
+      <header className="qr-exec-header">
+        <h2 className="qr-exec-title">{task.title}</h2>
         <span className="task-points">
           {t('tasksComponents.points', { points: task.points })}
         </span>
-      </div>
-      {task.description && (
-        <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-text-light)' }}>
-          {task.description}
-        </p>
-      )}
+      </header>
 
-      <div className="qr-container">
-        <div className="qr-scanner-area">
-          {/* Manual input field - always shown */}
-          <div className="qr-manual" style={{ width: '100%', maxWidth: '400px', marginBottom: hasCamera ? 'var(--spacing-lg)' : '0' }}>
-            {cameraError && !hasCamera && (
-              <div style={{ 
-                padding: 'var(--spacing-md)', 
-                background: '#fee2e2', 
-                color: '#991b1b', 
-                borderRadius: 'var(--border-radius)',
-                marginBottom: 'var(--spacing-md)'
-              }}>
-                <strong>{t('tasksComponents.qr.cameraErrorTitle')}</strong>
-                <p style={{ margin: 'var(--spacing-xs) 0 0 0' }}>{cameraError}</p>
-              </div>
-            )}
-            <p>{t('tasksComponents.qr.manualPrompt')}</p>
-            <input
-              type="text"
-              value={scannedCode}
-              onChange={(e) => setScannedCode(e.target.value)}
-              placeholder={t('tasksComponents.qr.manualPlaceholder')}
-              className="qr-input"
-            />
-            <button
-              onClick={() => {
-                if (scannedCode === qrCode) {
-                  completeMutation.mutate();
-                } else {
-                  alert(t('tasksComponents.qr.invalid'));
-                }
-              }}
-              disabled={!scannedCode || completeMutation.isLoading}
-              className="verify-button"
-            >
-              {t('tasksComponents.qr.verify')}
-            </button>
-          </div>
-
-          {/* Camera preview - always show scanner area, even if camera not ready yet */}
-          <div className="qr-scanner">
+      <div className="qr-exec-body">
+        {/* Kamera zuerst: passt mit Titel + Eingabe auf eine Bildschirmseite */}
+        <div className="qr-scanner qr-scanner--execution">
             {/* Camera preview - always render video element */}
             <video
               ref={videoRef}
@@ -587,19 +544,27 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
             />
             {/* Loading indicator or error message */}
             {(!hasCamera || !isVideoReady) && (
-              <div style={{ 
-                position: 'absolute', 
-                top: '50%', 
-                left: '50%', 
-                transform: 'translate(-50%, -50%)',
-                color: 'white',
-                textAlign: 'center',
-                zIndex: 2,
-                padding: 'var(--spacing-md)',
-                background: 'rgba(0,0,0,0.7)',
-                borderRadius: 'var(--border-radius)'
-              }}>
-                {cameraError ? (
+              <div
+                className="qr-exec-video-overlay"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  color: 'white',
+                  textAlign: 'center',
+                  zIndex: 2,
+                  padding: 'var(--spacing-md)',
+                  background: 'rgba(0,0,0,0.72)',
+                  borderRadius: 'var(--border-radius)',
+                  maxWidth: '90%',
+                }}
+              >
+                {cameraError && !hasCamera ? (
+                  <span style={{ fontSize: '2rem' }} title={cameraError} aria-hidden>
+                    ⚠️
+                  </span>
+                ) : cameraError && hasCamera ? (
                   <>
                     <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>⚠️</div>
                     <div style={{ fontSize: '0.9rem' }}>{cameraError}</div>
@@ -633,16 +598,59 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
                 {t('tasksComponents.qr.completing')}
               </div>
             )}
-          </div>
         </div>
 
-        {completeMutation.isSuccess && (
-          <div className="task-success">
-            <span className="success-icon">✅</span>
-            <p>{t('tasksComponents.qr.success')}</p>
-          </div>
-        )}
+        <div className="qr-exec-input-panel">
+          {cameraError && !hasCamera && (
+            <div className="qr-exec-camera-error" role="alert">
+              <strong>{t('tasksComponents.qr.cameraErrorTitle')}</strong>
+              <p>{cameraError}</p>
+            </div>
+          )}
+          <p className="qr-exec-prompt">{t('tasksComponents.qr.manualPrompt')}</p>
+          <input
+            type="text"
+            value={scannedCode}
+            onChange={(e) => setScannedCode(e.target.value)}
+            placeholder={t('tasksComponents.qr.manualPlaceholder')}
+            className="qr-input qr-input--execution"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            enterKeyHint="done"
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' || !scannedCode || completeMutation.isLoading) return;
+              e.preventDefault();
+              if (scannedCode === qrCode) {
+                completeMutation.mutate();
+              } else {
+                alert(t('tasksComponents.qr.invalid'));
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (scannedCode === qrCode) {
+                completeMutation.mutate();
+              } else {
+                alert(t('tasksComponents.qr.invalid'));
+              }
+            }}
+            disabled={!scannedCode || completeMutation.isLoading}
+            className="verify-button verify-button--execution"
+          >
+            {t('tasksComponents.qr.verify')}
+          </button>
+        </div>
       </div>
+
+      {completeMutation.isSuccess && (
+        <div className="task-success task-success--qr-execution">
+          <span className="success-icon">✅</span>
+          <p>{t('tasksComponents.qr.success')}</p>
+        </div>
+      )}
     </div>
   );
 }
