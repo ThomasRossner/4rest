@@ -2072,6 +2072,7 @@
     "backToLogin": "Zurück zur Anmeldung"
   },
   "publicTask": {
+    "backToOverview": "Zurück zur Übersicht",
     "toast": {
       "title": "Aufgabe erledigt",
       "body": "Super! Du hast dir {{points}} Punkte gesichert. Registriere dich oder melde dich an, damit wir sie deinem Konto gutschreiben."

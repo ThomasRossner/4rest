@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { api } from '../../services/api';
@@ -13,6 +13,12 @@ type TaskDetailViewProps = {
   onBack: () => void;
   /** Startet die bestehende Aufgaben-UI (Video, Quiz, Ort, …). */
   onStartExecution: () => void;
+  /** Öffentliche Aufgabe: GET /tasks/public/:id (ohne JWT). */
+  dataSource?: 'authenticated' | 'public';
+  /** Nur bei dataSource public — Sprache für API (i18n-Default wenn fehlt). */
+  publicLang?: 'de' | 'en';
+  /** Ersetzt den Standard-Footer (Hinweise + Start), z. B. Foto ohne Login. */
+  footerReplacement?: ReactNode;
 };
 
 function formatCompletedAt(iso: unknown, localeHint: string): string {
@@ -23,18 +29,45 @@ function formatCompletedAt(iso: unknown, localeHint: string): string {
   return d.toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
 }
 
-export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: TaskDetailViewProps) {
+export function TaskDetailView({
+  taskId,
+  listTask,
+  onBack,
+  onStartExecution,
+  dataSource = 'authenticated',
+  publicLang,
+  footerReplacement,
+}: TaskDetailViewProps) {
   const { t, i18n } = useTranslation();
-  const { data: fetchedTask, isLoading, isError, error, refetch } = useQuery(
+  const lang = publicLang ?? (i18n.language?.startsWith('en') ? 'en' : 'de');
+
+  const authQuery = useQuery(
     ['task', taskId],
     () => api.getTask(taskId),
     {
-      enabled: !!taskId,
+      enabled: !!taskId && dataSource === 'authenticated',
       retry: 1,
     }
   );
 
+  const publicQuery = useQuery(
+    ['publicTask', taskId, lang],
+    () => api.getPublicTask(taskId, lang),
+    {
+      enabled: !!taskId && dataSource === 'public',
+      retry: 1,
+    }
+  );
+
+  const { data: fetchedTask, isLoading, isError, error, refetch } =
+    dataSource === 'public' ? publicQuery : authQuery;
+
   const task = (fetchedTask as Record<string, unknown> | undefined) ?? listTask ?? undefined;
+
+  const backNavTitle =
+    dataSource === 'public' ? t('publicTask.backToOverview') : t('tasks.backToList');
+  const backButtonLabel =
+    dataSource === 'public' ? t('publicTask.backToOverview') : t('tasks.categories.backToCategories');
 
   if (isLoading && !listTask) {
     return (
@@ -53,7 +86,7 @@ export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: T
             : t('tasksComponents.notFound')}
         </p>
         <button type="button" className="task-detail-back" onClick={onBack}>
-          {t('tasks.categories.backToCategories')}
+          {backButtonLabel}
         </button>
         {isError ? (
           <button type="button" className="task-detail-retry" onClick={() => refetch()}>
@@ -97,8 +130,8 @@ export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: T
           type="button"
           className="task-detail-back"
           onClick={onBack}
-          title={t('tasks.backToList')}
-          aria-label={t('tasks.backToList')}
+          title={backNavTitle}
+          aria-label={backNavTitle}
         >
           <BackArrowIcon className="task-detail-back-icon" />
         </button>
@@ -130,37 +163,41 @@ export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: T
         )}
       </div>
 
-      <div className="task-detail-view-footer">
-        {isLocked && !isCompleted && (
-          <p className="task-detail-footer-hint">{t('tasks.prerequisites.unlockMessage')}</p>
-        )}
-        {isValidating && (
-          <p className="task-detail-footer-hint">{t('tasks.badges.validating')}</p>
-        )}
-        {isCompleted && (
-          <div className="task-detail-completed-meta">
-            {completedAtLabel ? (
-              <p className="task-detail-completed-date">{t('tasks.detail.completedAt', { date: completedAtLabel })}</p>
-            ) : (
-              <p className="task-detail-footer-hint">{t('tasks.badges.completed')}</p>
-            )}
-          </div>
-        )}
-        {!isCompleted && (
-          <button
-            type="button"
-            className="task-detail-start"
-            onClick={onStartExecution}
-            disabled={isValidating || isLocked}
-          >
-            {isValidating
-              ? t('tasks.buttons.validating')
-              : isLocked
-                ? t('tasks.buttons.locked')
-                : t('tasks.buttons.start')}
-          </button>
-        )}
-      </div>
+      {footerReplacement != null ? (
+        <div className="task-detail-view-footer">{footerReplacement}</div>
+      ) : (
+        <div className="task-detail-view-footer">
+          {isLocked && !isCompleted && (
+            <p className="task-detail-footer-hint">{t('tasks.prerequisites.unlockMessage')}</p>
+          )}
+          {isValidating && (
+            <p className="task-detail-footer-hint">{t('tasks.badges.validating')}</p>
+          )}
+          {isCompleted && (
+            <div className="task-detail-completed-meta">
+              {completedAtLabel ? (
+                <p className="task-detail-completed-date">{t('tasks.detail.completedAt', { date: completedAtLabel })}</p>
+              ) : (
+                <p className="task-detail-footer-hint">{t('tasks.badges.completed')}</p>
+              )}
+            </div>
+          )}
+          {!isCompleted && (
+            <button
+              type="button"
+              className="task-detail-start"
+              onClick={onStartExecution}
+              disabled={isValidating || isLocked}
+            >
+              {isValidating
+                ? t('tasks.buttons.validating')
+                : isLocked
+                  ? t('tasks.buttons.locked')
+                  : t('tasks.buttons.start')}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

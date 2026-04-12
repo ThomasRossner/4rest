@@ -2069,6 +2069,7 @@
     "backToLogin": "Back to sign in"
   },
   "publicTask": {
+    "backToOverview": "Back to overview",
     "toast": {
       "title": "Task completed",
       "body": "Nice work! You earned {{points}} points. Sign up or log in so we can credit them to your account."

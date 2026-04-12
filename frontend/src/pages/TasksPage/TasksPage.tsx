@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -24,6 +24,8 @@ import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
 import { CategoryHubIcon } from '../../components/Tasks/CategoryHubIcon';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import { TaskDetailView } from '../../components/Tasks/TaskDetailView';
+import { useCategoryTaskGridRowHeight } from '../../hooks/useCategoryTaskGridRowHeight';
+import { descriptionPreviewPlain } from '../../utils/taskDescriptionPreview';
 import './TasksPage.css';
 
 /** Nur diese Typen erscheinen im Filter (keine kaputten/DB-Testwerte im Dropdown). */
@@ -56,42 +58,6 @@ const getTaskTypeIcon = (type: string) => {
 };
 
 const CATEGORY_ORDER = [...FOREST_CATEGORY_KEYS, OTHER_FOREST_CATEGORY_KEY];
-
-/** Zeichenobergrenze (ein … am Ende); passt typisch in ~3–4 Zeilen, max-height fängt Randfälle ab */
-const TASK_TILE_PREVIEW_MAX_CHARS = 160;
-
-function htmlDescriptionToPlain(text: string): string {
-  if (typeof document !== 'undefined') {
-    const div = document.createElement('div');
-    div.innerHTML = text;
-    const plain = (div.textContent || div.innerText || '')
-      .replace(/\u00a0/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    return plain;
-  }
-  return text
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/** Kürzt am Wortende; genau ein Unicode-Ellipsis am Schluss (nicht Zeilen-Clamping mitten im Satz). */
-function truncatePreviewAtWordEnd(plain: string, maxLen: number): string {
-  if (plain.length <= maxLen) return plain;
-  const slice = plain.slice(0, maxLen);
-  const lastSpace = slice.lastIndexOf(' ');
-  const atWord =
-    lastSpace > maxLen * 0.55 ? slice.slice(0, lastSpace).trimEnd() : slice.trimEnd();
-  return `${atWord}\u2026`;
-}
-
-/** Kurztext für Kacheln: HTML → Klartext, dann eine saubere Endkürzung */
-function descriptionPreviewPlain(text: string | null | undefined): string {
-  if (!text || typeof text !== 'string') return '';
-  const plain = htmlDescriptionToPlain(text);
-  return truncatePreviewAtWordEnd(plain, TASK_TILE_PREVIEW_MAX_CHARS);
-}
 
 function TasksPage() {
   const { categoryKey: categoryKeyParam } = useParams<{ categoryKey: string }>();
@@ -263,47 +229,7 @@ function TasksPage() {
     prerequisiteTaskIdsFilter,
   ]);
 
-  useLayoutEffect(() => {
-    const el = categoryScrollRef.current;
-    if (!el) return;
-
-    const readGapPx = () => {
-      const grid = el.querySelector<HTMLElement>('.tasks-category-matrix');
-      if (grid) {
-        const g = getComputedStyle(grid).gap;
-        const parsed = parseFloat(g);
-        if (Number.isFinite(parsed) && parsed > 0) return parsed;
-      }
-      const raw = getComputedStyle(document.documentElement).getPropertyValue('--spacing-md').trim();
-      const fallback = parseFloat(raw);
-      return Number.isFinite(fallback) && fallback > 0 ? fallback : 16;
-    };
-
-    const apply = () => {
-      const run = () => {
-        const h = el.clientHeight;
-        if (h <= 0) return;
-        const gap = readGapPx();
-        /* Exakt 2 Reihen im sichtbaren Scrollbereich (eine Zeilenlücke) */
-        const row = Math.max(88, (h - gap) / 2);
-        el.style.setProperty('--task-grid-row-height', `${Math.floor(row)}px`);
-      };
-      requestAnimationFrame(() => requestAnimationFrame(run));
-    };
-
-    apply();
-    const ro = new ResizeObserver(() => apply());
-    ro.observe(el);
-    window.addEventListener('orientationchange', apply);
-    window.addEventListener('resize', apply);
-    const t = window.setTimeout(apply, 150);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('orientationchange', apply);
-      window.removeEventListener('resize', apply);
-      window.clearTimeout(t);
-    };
-  }, [categoryKeyParam, filteredTasks.length]);
+  useCategoryTaskGridRowHeight(categoryScrollRef, [categoryKeyParam, filteredTasks.length]);
 
   const openTaskDetail = (task: { id: string }) => {
     setDetailTaskId(task.id);

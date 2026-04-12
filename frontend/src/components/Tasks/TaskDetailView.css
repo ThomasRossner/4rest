@@ -179,3 +179,11 @@
   outline: 3px solid rgba(102, 126, 234, 0.45);
   outline-offset: 2px;
 }
+
+a.task-detail-start {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  line-height: 1.3;
+}
