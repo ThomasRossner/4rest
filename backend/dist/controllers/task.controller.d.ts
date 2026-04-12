@@ -12,6 +12,7 @@ export declare const updateTask: RequestHandler;
 export declare const deleteTask: RequestHandler;
 export declare const bulkUpdateTaskStatus: RequestHandler;
 export declare const bulkDeleteTasks: RequestHandler;
+export declare const getQuizQuestionLocks: RequestHandler;
 export declare const submitQuizAnswer: RequestHandler;
 export declare const completeTask: RequestHandler;
 export declare const uploadPhoto: RequestHandler;

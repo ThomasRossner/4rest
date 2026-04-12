@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getTasks, getTask, listPublicGuestTasks, getPublicTask, completePublicTask, createTask, updateTask, deleteTask, completeTask, submitQuizAnswer, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, approvePhotoTask, rejectPhotoTask, getPendingPhotoTasks, getGallery, getTaskQrCode, } from '../controllers/task.controller.js';
+import { getTasks, getTask, listPublicGuestTasks, getPublicTask, completePublicTask, createTask, updateTask, deleteTask, completeTask, submitQuizAnswer, getQuizQuestionLocks, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, approvePhotoTask, rejectPhotoTask, getPendingPhotoTasks, getGallery, getTaskQrCode, } from '../controllers/task.controller.js';
 import { publicTaskRateLimit } from '../middleware/publicTaskRateLimit.js';
 const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
 // Ensure upload directory exists
@@ -101,6 +101,7 @@ router.post('/upload/video', authenticate, requireRole('redaktion', 'administrat
 router.post('/upload/thumbnail', authenticate, requireRole('redaktion', 'administrator'), uploadThumbnailMiddleware.single('thumbnail'), uploadThumbnail);
 // Generic routes must come AFTER specific routes
 // IMPORTANT: must be authenticated to resolve preferred language (i18n)
+router.get('/:id/quiz/locks', authenticate, getQuizQuestionLocks);
 router.get('/:id', authenticate, getTask);
 router.get('/:id/qr-code', authenticate, requireRole('redaktion', 'administrator'), getTaskQrCode);
 router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);

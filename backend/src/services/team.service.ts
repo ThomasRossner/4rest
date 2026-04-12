@@ -3,6 +3,12 @@ import { resolveI18n, normalizeContentLang } from '../utils/i18n.js';
 import { getUserById } from './user.service.js';
 import { generateQrToken } from './user-qr.service.js';
 import { getOrCreateUserQrCode } from './user-qr.service.js';
+import {
+  hasPendingRewardRedemption,
+  hasUsedRewardRedemption,
+  isUserInRecurrenceCooldown,
+  recurrenceToCooldownDays,
+} from './reward-user-cooldown.service.js';
 
 function resolveTeamName(team: any, lang: 'de' | 'en'): any {
   if (!team) return team;
@@ -392,7 +398,7 @@ export async function redeemRewardFromTeam(teamId: string, rewardId: string, use
   
   // Hole Belohnungs-Informationen
   const rewardResult = await db.query(
-    'SELECT points_cost FROM rewards WHERE id = $1 AND active = TRUE',
+    'SELECT points_cost, recurrence FROM rewards WHERE id = $1 AND active = TRUE',
     [rewardId]
   );
   
@@ -401,6 +407,24 @@ export async function redeemRewardFromTeam(teamId: string, rewardId: string, use
   }
   
   const pointsCost = rewardResult.rows[0].points_cost;
+  const recurrence = rewardResult.rows[0].recurrence as string | null;
+
+  if (await hasPendingRewardRedemption(userId, rewardId)) {
+    throw new Error(
+      'Es läuft bereits eine Einlösung für diese Belohnung. Bitte zuerst an der Rezeption abschließen.'
+    );
+  }
+  if (recurrence === 'once') {
+    if (await hasUsedRewardRedemption(userId, rewardId)) {
+      throw new Error('Diese Belohnung kann nur einmal eingelöst werden.');
+    }
+  } else if (recurrenceToCooldownDays(recurrence)) {
+    if (await isUserInRecurrenceCooldown(userId, rewardId, recurrence)) {
+      throw new Error(
+        'Diese Belohnung steht für dich erst nach Ablauf der Wiederholungszeit wieder zur Verfügung.'
+      );
+    }
+  }
   
   // Hole Team-Punktepool
   const teamResult = await db.query(
@@ -430,8 +454,8 @@ export async function redeemRewardFromTeam(teamId: string, rewardId: string, use
     
     // Erstelle Redemption (ohne Punkte vom Benutzer zu deduzieren, da Team-Punkte verwendet werden)
     const redemptionResult = await db.query(
-      `INSERT INTO reward_redemptions (user_id, reward_id, status)
-       VALUES ($1, $2, 'used')
+      `INSERT INTO reward_redemptions (user_id, reward_id, status, verified_at)
+       VALUES ($1, $2, 'used', CURRENT_TIMESTAMP)
        RETURNING *`,
       [userId, rewardId]
     );

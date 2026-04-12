@@ -92,6 +92,8 @@ export async function runMigrations() {
             '068_guest_public_tasks',
             '069_repair_survey_questions_nulls',
             '070_backfill_forest_points_from_user_tasks_v2',
+            '071_reward_recurrence_template_link',
+            '072_reward_redemptions_verified_at',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({

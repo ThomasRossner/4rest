@@ -1,4 +1,4 @@
-import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, submitQuizAnswer as submitQuizAnswerService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, approvePhotoTask as approvePhotoTaskService, rejectPhotoTask as rejectPhotoTaskService, getPendingPhotoTasks as getPendingPhotoTasksService, getGalleryImages as getGalleryImagesService, generateOrGetTaskQrCode, getPublicTaskForGuest, completePublicGuestTask, listPublicGuestTasks as listPublicGuestTasksService, } from '../services/task.service.js';
+import { getAllTasks, getTaskById, createTask as createTaskService, updateTask as updateTaskService, deleteTask as deleteTaskService, completeTask as completeTaskService, submitQuizAnswer as submitQuizAnswerService, getActiveQuizQuestionLocks as getActiveQuizQuestionLocksService, uploadPhoto as uploadPhotoService, uploadVideo as uploadVideoService, uploadThumbnail as uploadThumbnailService, setTasksActiveState, bulkDeleteTasks as bulkDeleteTasksService, approvePhotoTask as approvePhotoTaskService, rejectPhotoTask as rejectPhotoTaskService, getPendingPhotoTasks as getPendingPhotoTasksService, getGalleryImages as getGalleryImagesService, generateOrGetTaskQrCode, getPublicTaskForGuest, completePublicGuestTask, listPublicGuestTasks as listPublicGuestTasksService, } from '../services/task.service.js';
 import { getPreferredLanguage } from '../services/user.service.js';
 import { ensureGuestSession } from '../utils/guestSession.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -184,6 +184,23 @@ export const bulkDeleteTasks = asyncHandler(async (req, res) => {
     // Broadcast update to all clients
     broadcastTaskUpdate();
     res.status(204).send();
+});
+export const getQuizQuestionLocks = asyncHandler(async (req, res) => {
+    const authReq = req;
+    if (!authReq.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        const locks = await getActiveQuizQuestionLocksService(req.params.id, authReq.user.id);
+        res.json({ locks });
+    }
+    catch (e) {
+        const msg = e?.message || 'Error';
+        if (String(msg).includes('not found')) {
+            return res.status(404).json({ error: msg });
+        }
+        throw e;
+    }
 });
 export const submitQuizAnswer = asyncHandler(async (req, res) => {
     const authReq = req;

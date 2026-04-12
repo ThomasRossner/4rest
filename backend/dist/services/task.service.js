@@ -1040,6 +1040,26 @@ export async function submitQuizAnswer(taskId, userId, questionIndex, answerId) 
      DO UPDATE SET locked_until = EXCLUDED.locked_until`, [userId, taskId, questionIndex, lockedUntil.toISOString()]);
     return { status: 'wrong', lockedUntil: lockedUntil.toISOString() };
 }
+/**
+ * Aktive Quiz-Sperren für eine Aufgabe (locked_until > jetzt).
+ * Damit bleibt die Sperre nach erneutem Öffnen der Aufgabe erhalten.
+ */
+export async function getActiveQuizQuestionLocks(taskId, userId) {
+    const db = getPool();
+    const tr = await db.query('SELECT type FROM tasks WHERE id = $1', [taskId]);
+    if (tr.rows.length === 0) {
+        throw new Error('Task not found');
+    }
+    if (tr.rows[0].type !== 'quiz') {
+        return [];
+    }
+    const res = await db.query(`SELECT question_index, locked_until FROM quiz_question_locks
+     WHERE user_id = $1 AND task_id = $2 AND locked_until > NOW()`, [userId, taskId]);
+    return res.rows.map((r) => ({
+        questionIndex: r.question_index,
+        lockedUntil: new Date(r.locked_until).toISOString(),
+    }));
+}
 /** Gemeinsame Quiz-Validierung wie bei completeTask (article_quiz / quiz / Video-Quiz). */
 function assertQuizAnswersMeetThreshold(task, data) {
     if (!data?.quiz_answers || !task.quiz_questions) {

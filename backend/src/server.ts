@@ -11,7 +11,6 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { initializeDatabase } from './database/connection.js';
 import { runMigrations } from './database/migrate.js';
 import { startSihotSyncScheduler } from './services/sihot-sync.service.js';
-import { startRecurringRewardsScheduler } from './services/reward-recurrence.service.js';
 import { startContestScheduler } from './services/contest-scheduler.service.js';
 import { registerWebSocketServer } from './ws/socketRegistry.js';
 
@@ -161,8 +160,6 @@ async function start() {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       startSihotSyncScheduler();
-      // Start recurring rewards scheduler - runs every hour
-      startRecurringRewardsScheduler(60 * 60 * 1000);
       // Start contest scheduler - runs every 15 minutes to check for expired contests
       startContestScheduler(15 * 60 * 1000);
     });

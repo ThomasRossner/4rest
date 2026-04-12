@@ -1,11 +1,7 @@
 /**
- * Process recurring rewards - generates new reward instances based on recurrence settings
- * This should be called periodically (e.g., via scheduled task)
- *
- * Logic:
- * - Daily: Check if last_generated_at was yesterday or earlier, and all previous redemptions are finished
- * - Weekly: Check if last_generated_at was 7+ days ago, and all previous redemptions are finished
- * - Monthly: Check if last_generated_at was 30+ days ago, and all previous redemptions are finished
+ * Früher: periodischer Job, der neue `rewards`-Zeilen erzeugte (führte zu Duplikaten).
+ * Wiederholung läuft jetzt pro Nutzer über `reward-user-cooldown.service.ts`
+ * (Sperrfrist ab verified_at in reward_redemptions).
  */
 export declare function processRecurringRewards(): Promise<{
     processed: number;
@@ -13,9 +9,6 @@ export declare function processRecurringRewards(): Promise<{
     skipped: number;
     errors: string[];
 }>;
-/**
- * Start a scheduler that processes recurring rewards periodically
- * Call this once when the server starts
- */
-export declare function startRecurringRewardsScheduler(intervalMs?: number): () => void;
+/** @deprecated Nicht mehr verwenden – kein Zeilen-Generator mehr. */
+export declare function startRecurringRewardsScheduler(_intervalMs?: number): () => void;
 //# sourceMappingURL=reward-recurrence.service.d.ts.map

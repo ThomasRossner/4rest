@@ -79,6 +79,14 @@ export declare function submitQuizAnswer(taskId: string, userId: string, questio
     status: 'correct' | 'wrong' | 'locked';
     lockedUntil?: string;
 }>;
+/**
+ * Aktive Quiz-Sperren für eine Aufgabe (locked_until > jetzt).
+ * Damit bleibt die Sperre nach erneutem Öffnen der Aufgabe erhalten.
+ */
+export declare function getActiveQuizQuestionLocks(taskId: string, userId: string): Promise<Array<{
+    questionIndex: number;
+    lockedUntil: string;
+}>>;
 export declare function completeTask(taskId: string, userId: string, data?: any): Promise<{
     success: boolean;
     pointsEarned: number;

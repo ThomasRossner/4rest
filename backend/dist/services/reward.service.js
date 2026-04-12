@@ -6,6 +6,7 @@ import { broadcastRedemptionUpdate } from '../ws/reward-broadcast.js';
 import { validateRewardType, validateRecurrence, normalizePointsCost, } from '../utils/validation.js';
 import { buildTeamContestFilterClauses, getConfiguredHotelId } from '../utils/queryBuilder.js';
 import { getUserActiveTeam, getTeamTotalPoints, deductTeamPoints } from './team.service.js';
+import { recurrenceToCooldownDays, hasPendingRewardRedemption, hasUsedRewardRedemption, isUserInRecurrenceCooldown, } from './reward-user-cooldown.service.js';
 export async function getRewardsService(userId) {
     const db = getPool();
     const user = await getUserById(userId);
@@ -40,6 +41,15 @@ export async function getRewardsService(userId) {
     catch (error) {
         // If check fails, assume columns don't exist
         columnsExist = false;
+    }
+    let hasGeneratedFromColumn = false;
+    try {
+        const gf = await db.query(`SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'rewards' AND column_name = 'generated_from_reward_id'`);
+        hasGeneratedFromColumn = gf.rows.length > 0;
+    }
+    catch {
+        hasGeneratedFromColumn = false;
     }
     let userTeamIds = [];
     let userContestIds = [];
@@ -91,6 +101,9 @@ export async function getRewardsService(userId) {
             console.log('[REWARD SERVICE] Team/contest filtering disabled: columns do not exist');
         }
     }
+    if (hasGeneratedFromColumn) {
+        query += ` AND r.generated_from_reward_id IS NULL`;
+    }
     // #region agent log
     fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'beb906' }, body: JSON.stringify({ sessionId: 'beb906', location: 'reward.service.ts:getRewardsService', message: 'reward filter state', data: { columnsExist, applyFilters, userTeamIdsCount: userTeamIds.length, userContestIdsCount: userContestIds.length }, hypothesisId: 'A', timestamp: Date.now() }) }).catch(() => { });
     // #endregion
@@ -103,8 +116,27 @@ export async function getRewardsService(userId) {
     // #region agent log
     fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'beb906' }, body: JSON.stringify({ sessionId: 'beb906', location: 'reward.service.ts:getRewardsService', message: 'reward query result', data: { rowsCount: result.rows.length, uniqueCount: unique.size }, hypothesisId: 'B', timestamp: Date.now() }) }).catch(() => { });
     // #endregion
+    let rows = Array.from(unique.values());
+    const hideRecurrenceForPlayer = role !== 'administrator' && role !== 'redaktion';
+    if (hideRecurrenceForPlayer) {
+        const kept = [];
+        for (const row of rows) {
+            if (await hasPendingRewardRedemption(userId, row.id))
+                continue;
+            if (row.recurrence === 'once') {
+                if (await hasUsedRewardRedemption(userId, row.id))
+                    continue;
+            }
+            else if (recurrenceToCooldownDays(row.recurrence)) {
+                if (await isUserInRecurrenceCooldown(userId, row.id, row.recurrence))
+                    continue;
+            }
+            kept.push(row);
+        }
+        rows = kept;
+    }
     const lang = user?.preferred_language === 'en' ? 'en' : 'de';
-    return Array.from(unique.values()).map((row) => {
+    return rows.map((row) => {
         const title = resolveI18n(row.title_i18n, lang, row.title);
         const description = resolveI18n(row.description_i18n, lang, row.description);
         return {
@@ -363,6 +395,19 @@ export async function redeemRewardService(rewardId, userId, useTeamPoints = fals
     if (!reward) {
         throw new Error('Reward not found');
     }
+    if (await hasPendingRewardRedemption(userId, rewardId)) {
+        throw new Error('Es läuft bereits eine Einlösung für diese Belohnung. Bitte zuerst an der Rezeption abschließen.');
+    }
+    if (reward.recurrence === 'once') {
+        if (await hasUsedRewardRedemption(userId, rewardId)) {
+            throw new Error('Diese Belohnung kann nur einmal eingelöst werden.');
+        }
+    }
+    else if (recurrenceToCooldownDays(reward.recurrence)) {
+        if (await isUserInRecurrenceCooldown(userId, rewardId, reward.recurrence)) {
+            throw new Error('Diese Belohnung steht für dich erst nach Ablauf der Wiederholungszeit wieder zur Verfügung.');
+        }
+    }
     // Check if user is in a team
     const userTeam = await getUserActiveTeam(userId);
     const teamTotalPoints = userTeam ? await getTeamTotalPoints(userTeam.id) : 0;
@@ -506,8 +551,8 @@ export async function verifyQrCodeService(qrToken, adminUserId) {
     // Deduct points cost (moegliche_punkte column was removed in migration 039)
     const pointsToAdd = 0;
     await db.query('UPDATE users SET points = points - $1 + $2 WHERE id = $3', [redemption.points_cost, pointsToAdd, redemption.user_id]);
-    // Update redemption status to 'used'
-    await db.query(`UPDATE reward_redemptions SET status = 'used' WHERE id = $1`, [redemption.id]);
+    // Update redemption status to 'used' (verified_at = tatsächliche Einlösung an der Rezeption)
+    await db.query(`UPDATE reward_redemptions SET status = 'used', verified_at = CURRENT_TIMESTAMP WHERE id = $1`, [redemption.id]);
     // Get updated user points
     const updatedUserResult = await db.query('SELECT points FROM users WHERE id = $1', [redemption.user_id]);
     const updatedPoints = updatedUserResult.rows[0]?.points || 0;
@@ -602,7 +647,7 @@ export async function redeemRewardQrCodeService(qrToken, employeeUserId) {
         await db.query('UPDATE users SET points = points - $1 + $2 WHERE id = $3', [redemption.points_cost, pointsToAdd, redemption.user_id]);
     }
     // Update redemption status to 'used'
-    await db.query(`UPDATE reward_redemptions SET status = 'used' WHERE id = $1`, [redemption.id]);
+    await db.query(`UPDATE reward_redemptions SET status = 'used', verified_at = CURRENT_TIMESTAMP WHERE id = $1`, [redemption.id]);
     // Get updated user points
     const updatedUserResult = await db.query('SELECT points FROM users WHERE id = $1', [redemption.user_id]);
     const updatedPoints = updatedUserResult.rows[0]?.points || 0;
