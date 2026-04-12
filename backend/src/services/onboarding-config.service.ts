@@ -13,13 +13,27 @@ export interface OnboardingStepConfig {
   backgroundImageUrl: string | null;
 }
 
+export interface OnboardingIntroSlideConfig {
+  titleDe: string;
+  titleEn: string;
+  bodyDe: string;
+  bodyEn: string;
+  /** Volle URL wie bei Aufgaben-Medien (z. B. https://…/uploads/onboarding-bg-….jpg) oder null */
+  backgroundImageUrl: string | null;
+}
+
 export interface OnboardingConfig {
   version: 1;
   dyadCount: number;
   questionsPerDyad: number;
+  introSlides: OnboardingIntroSlideConfig[];
+  /** @deprecated legacy fallback for old clients/configs */
   introTitleDe: string;
+  /** @deprecated legacy fallback for old clients/configs */
   introTitleEn: string;
+  /** @deprecated legacy fallback for old clients/configs */
   introBodyDe: string;
+  /** @deprecated legacy fallback for old clients/configs */
   introBodyEn: string;
   steps: OnboardingStepConfig[];
 }
@@ -28,6 +42,17 @@ export const DEFAULT_ONBOARDING_CONFIG: OnboardingConfig = {
   version: 1,
   dyadCount: 4,
   questionsPerDyad: 1,
+  introSlides: [
+    {
+      titleDe: 'Schön, dass du hier bist!',
+      titleEn: 'Welcome!',
+      bodyDe:
+        'In dieser Welt steckt mehr, als man auf den ersten Blick sieht. Antworte auf ein paar kurze Fragen – und wir verraten dir, welches Wesen tief in dir schlummert.',
+      bodyEn:
+        'There is more to this world than meets the eye. Answer a few short questions and we will tell you which creature slumbers within you.',
+      backgroundImageUrl: null,
+    },
+  ],
   introTitleDe: 'Schön, dass du hier bist!',
   introTitleEn: 'Welcome!',
   introBodyDe:
@@ -138,14 +163,50 @@ export function validateOnboardingConfig(raw: unknown): OnboardingConfig {
     });
   }
 
+  const introSlidesRaw = o.introSlides;
+  const introSlides: OnboardingIntroSlideConfig[] = [];
+  if (Array.isArray(introSlidesRaw) && introSlidesRaw.length > 0) {
+    for (let i = 0; i < introSlidesRaw.length; i++) {
+      const s = introSlidesRaw[i];
+      if (!s || typeof s !== 'object') {
+        throw new Error(`introSlides[${i}] invalid`);
+      }
+      const r = s as Record<string, unknown>;
+      const bg = r.backgroundImageUrl;
+      const backgroundImageUrl =
+        bg === null || bg === undefined
+          ? null
+          : bg === ''
+            ? null
+            : String(bg).slice(0, 2000);
+      introSlides.push({
+        titleDe: String(r.titleDe ?? '').slice(0, 2000),
+        titleEn: String(r.titleEn ?? '').slice(0, 2000),
+        bodyDe: String(r.bodyDe ?? '').slice(0, 8000),
+        bodyEn: String(r.bodyEn ?? '').slice(0, 8000),
+        backgroundImageUrl,
+      });
+    }
+  } else {
+    // Backward compatibility: create one intro slide from legacy fields.
+    introSlides.push({
+      titleDe: String(o.introTitleDe ?? DEFAULT_ONBOARDING_CONFIG.introTitleDe).slice(0, 2000),
+      titleEn: String(o.introTitleEn ?? DEFAULT_ONBOARDING_CONFIG.introTitleEn).slice(0, 2000),
+      bodyDe: String(o.introBodyDe ?? DEFAULT_ONBOARDING_CONFIG.introBodyDe).slice(0, 8000),
+      bodyEn: String(o.introBodyEn ?? DEFAULT_ONBOARDING_CONFIG.introBodyEn).slice(0, 8000),
+      backgroundImageUrl: null,
+    });
+  }
+
   return {
     version: 1,
     dyadCount,
     questionsPerDyad,
-    introTitleDe: String(o.introTitleDe ?? DEFAULT_ONBOARDING_CONFIG.introTitleDe).slice(0, 2000),
-    introTitleEn: String(o.introTitleEn ?? DEFAULT_ONBOARDING_CONFIG.introTitleEn).slice(0, 2000),
-    introBodyDe: String(o.introBodyDe ?? DEFAULT_ONBOARDING_CONFIG.introBodyDe).slice(0, 8000),
-    introBodyEn: String(o.introBodyEn ?? DEFAULT_ONBOARDING_CONFIG.introBodyEn).slice(0, 8000),
+    introSlides,
+    introTitleDe: introSlides[0]?.titleDe ?? DEFAULT_ONBOARDING_CONFIG.introTitleDe,
+    introTitleEn: introSlides[0]?.titleEn ?? DEFAULT_ONBOARDING_CONFIG.introTitleEn,
+    introBodyDe: introSlides[0]?.bodyDe ?? DEFAULT_ONBOARDING_CONFIG.introBodyDe,
+    introBodyEn: introSlides[0]?.bodyEn ?? DEFAULT_ONBOARDING_CONFIG.introBodyEn,
     steps: normalized,
   };
 }

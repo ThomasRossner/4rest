@@ -48,7 +48,8 @@ export async function processRecurringRewards(): Promise<{
           continue;
         }
 
-        // Check if there are any pending/unfinished redemptions for this reward template
+        // Check if there are any pending/unfinished redemptions for this reward template family
+        // (template itself + previously generated instances).
         const hasPendingRedemptions = await hasUnfinishedRedemptions(reward.id);
 
         if (hasPendingRedemptions) {
@@ -119,17 +120,22 @@ async function shouldGenerateRecurringReward(
 }
 
 /**
- * Check if there are any unfinished redemptions for a reward
- * A redemption is considered unfinished if status is 'pending'
+ * Check if there are any unfinished redemptions for a reward template family:
+ * - the template itself (id = templateRewardId)
+ * - all generated instances (generated_from_reward_id = templateRewardId)
+ *
+ * A redemption is considered unfinished if status != 'finished'.
  */
-async function hasUnfinishedRedemptions(rewardId: string): Promise<boolean> {
+async function hasUnfinishedRedemptions(templateRewardId: string): Promise<boolean> {
   const db = getPool();
   const result = await db.query(
     `SELECT COUNT(*) as count
      FROM reward_redemptions
-     WHERE reward_id = $1
+     WHERE reward_id IN (
+       SELECT id FROM rewards WHERE id = $1 OR generated_from_reward_id = $1
+     )
      AND status != 'finished'`,
-    [rewardId]
+    [templateRewardId]
   );
 
   return parseInt(result.rows[0]?.count || '0') > 0;
@@ -152,46 +158,65 @@ async function generateRecurringRewardInstance(template: { id: string }): Promis
   const cols = new Set(colRes.rows.map((r) => r.column_name));
   const hasTeams = cols.has('allowed_teams') && cols.has('allowed_contests');
 
-  // Generated instances must have recurrence = 'once' so they are not picked up
-  // as templates in the next run (which would cause exponential growth).
-  if (hasTeams) {
+  await db.query('BEGIN');
+  try {
+    // Ensure only one active generated instance per template at a time.
     await db.query(
-      `INSERT INTO rewards (
-         title, description, title_i18n, description_i18n,
-         points_cost, reward_type, voucher_code, external_api_id,
-         location_id, active, recurrence, last_generated_at,
-         reward_art, kategorie, thumbnail_url, zielgruppe,
-         allowed_teams, allowed_contests
-       )
-       SELECT
-         title, description,
-         COALESCE(title_i18n, '{}'::jsonb),
-         COALESCE(description_i18n, '{}'::jsonb),
-         points_cost, reward_type, voucher_code, external_api_id,
-         location_id, TRUE, 'once', CURRENT_TIMESTAMP,
-         reward_art, kategorie, thumbnail_url, zielgruppe,
-         allowed_teams, allowed_contests
-       FROM rewards WHERE id = $1`,
+      `UPDATE rewards
+       SET active = FALSE, updated_at = CURRENT_TIMESTAMP
+       WHERE generated_from_reward_id = $1
+         AND active = TRUE`,
       [template.id]
     );
-  } else {
-    await db.query(
-      `INSERT INTO rewards (
-         title, description, title_i18n, description_i18n,
-         points_cost, reward_type, voucher_code, external_api_id,
-         location_id, active, recurrence, last_generated_at,
-         reward_art, kategorie, thumbnail_url, zielgruppe
-       )
-       SELECT
-         title, description,
-         COALESCE(title_i18n, '{}'::jsonb),
-         COALESCE(description_i18n, '{}'::jsonb),
-         points_cost, reward_type, voucher_code, external_api_id,
-         location_id, TRUE, 'once', CURRENT_TIMESTAMP,
-         reward_art, kategorie, thumbnail_url, zielgruppe
-       FROM rewards WHERE id = $1`,
-      [template.id]
-    );
+
+    // Generated instances must have recurrence = 'once' so they are not picked up
+    // as templates in the next run (which would cause exponential growth).
+    if (hasTeams) {
+      await db.query(
+        `INSERT INTO rewards (
+           title, description, title_i18n, description_i18n,
+           points_cost, reward_type, voucher_code, external_api_id,
+           location_id, active, recurrence, last_generated_at,
+           reward_art, kategorie, thumbnail_url, zielgruppe,
+           allowed_teams, allowed_contests, generated_from_reward_id
+         )
+         SELECT
+           title, description,
+           COALESCE(title_i18n, '{}'::jsonb),
+           COALESCE(description_i18n, '{}'::jsonb),
+           points_cost, reward_type, voucher_code, external_api_id,
+           location_id, TRUE, 'once', CURRENT_TIMESTAMP,
+           reward_art, kategorie, thumbnail_url, zielgruppe,
+           allowed_teams, allowed_contests, id
+         FROM rewards WHERE id = $1`,
+        [template.id]
+      );
+    } else {
+      await db.query(
+        `INSERT INTO rewards (
+           title, description, title_i18n, description_i18n,
+           points_cost, reward_type, voucher_code, external_api_id,
+           location_id, active, recurrence, last_generated_at,
+           reward_art, kategorie, thumbnail_url, zielgruppe,
+           generated_from_reward_id
+         )
+         SELECT
+           title, description,
+           COALESCE(title_i18n, '{}'::jsonb),
+           COALESCE(description_i18n, '{}'::jsonb),
+           points_cost, reward_type, voucher_code, external_api_id,
+           location_id, TRUE, 'once', CURRENT_TIMESTAMP,
+           reward_art, kategorie, thumbnail_url, zielgruppe,
+           id
+         FROM rewards WHERE id = $1`,
+        [template.id]
+      );
+    }
+
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
   }
 }
 

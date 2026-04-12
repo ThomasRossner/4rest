@@ -313,6 +313,13 @@ export const api = {
     return response.data;
   },
 
+  async getQuizQuestionLocks(taskId: string) {
+    const response = await apiClient.get(`/tasks/${taskId}/quiz/locks`);
+    return response.data as {
+      locks: Array<{ questionIndex: number; lockedUntil: string }>;
+    };
+  },
+
   async submitQuizAnswer(taskId: string, questionIndex: number, answerId: string) {
     const response = await apiClient.post(`/tasks/${taskId}/quiz/answer`, {
       questionIndex,

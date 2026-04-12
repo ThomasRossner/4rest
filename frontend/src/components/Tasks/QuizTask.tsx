@@ -19,7 +19,8 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [verified, setVerified] = useState<Record<number, boolean>>({});
-  const [lockUntil, setLockUntil] = useState<string | null>(null);
+  /** Pro Fragenindex: ISO-Zeitpunkt bis wann gesperrt (kommt von API + lokale Updates). */
+  const [lockedUntilByQuestion, setLockedUntilByQuestion] = useState<Record<number, string>>({});
   const [tick, setTick] = useState(0);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
@@ -33,6 +34,25 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
       variant === 'public' ? api.getPublicTask(taskId, publicLang) : api.getTask(taskId),
     { enabled: !!taskId }
   );
+
+  const { data: quizLockPayload } = useQuery(
+    ['quizLocks', taskId],
+    () => api.getQuizQuestionLocks(taskId),
+    { enabled: variant === 'default' && !!taskId }
+  );
+
+  useEffect(() => {
+    setLockedUntilByQuestion({});
+  }, [taskId]);
+
+  useEffect(() => {
+    if (variant !== 'default' || !quizLockPayload?.locks) return;
+    const next: Record<number, string> = {};
+    for (const row of quizLockPayload.locks) {
+      next[row.questionIndex] = row.lockedUntil;
+    }
+    setLockedUntilByQuestion(next);
+  }, [quizLockPayload, variant]);
 
   const completeMutation = useMutation(
     (data: { quiz_answers: unknown }) =>
@@ -83,11 +103,18 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
       onSuccess: (data, variables) => {
         if (data.status === 'correct') {
           setVerified((v) => ({ ...v, [variables.questionIndex]: true }));
-          setLockUntil(null);
+          setLockedUntilByQuestion((prev) => {
+            const n = { ...prev };
+            delete n[variables.questionIndex];
+            return n;
+          });
           return;
         }
         if (data.lockedUntil) {
-          setLockUntil(data.lockedUntil);
+          setLockedUntilByQuestion((prev) => ({
+            ...prev,
+            [variables.questionIndex]: data.lockedUntil!,
+          }));
         }
         const until = data.lockedUntil ? new Date(data.lockedUntil) : null;
         const minutes = until
@@ -115,18 +142,13 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
     }
   );
 
+  const lockUntil = lockedUntilByQuestion[currentQuestionIndex];
+
   useEffect(() => {
-    if (!lockUntil) return;
+    if (!lockUntil || new Date(lockUntil).getTime() <= Date.now()) return;
     const id = window.setInterval(() => setTick((x) => x + 1), 1000);
     return () => window.clearInterval(id);
   }, [lockUntil]);
-
-  useEffect(() => {
-    if (!lockUntil) return;
-    if (new Date(lockUntil).getTime() <= Date.now()) {
-      setLockUntil(null);
-    }
-  }, [tick, lockUntil]);
 
   const minutesLeft = useMemo(() => {
     if (!lockUntil) return 0;

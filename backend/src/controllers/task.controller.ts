@@ -9,6 +9,7 @@ import {
   deleteTask as deleteTaskService,
   completeTask as completeTaskService,
   submitQuizAnswer as submitQuizAnswerService,
+  getActiveQuizQuestionLocks as getActiveQuizQuestionLocksService,
   uploadPhoto as uploadPhotoService,
   uploadVideo as uploadVideoService,
   uploadThumbnail as uploadThumbnailService,
@@ -239,6 +240,23 @@ export const bulkDeleteTasks: RequestHandler = asyncHandler(async (req, res) => 
   // Broadcast update to all clients
   broadcastTaskUpdate();
   res.status(204).send();
+});
+
+export const getQuizQuestionLocks: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const locks = await getActiveQuizQuestionLocksService(req.params.id, authReq.user.id);
+    res.json({ locks });
+  } catch (e: any) {
+    const msg = e?.message || 'Error';
+    if (String(msg).includes('not found')) {
+      return res.status(404).json({ error: msg });
+    }
+    throw e;
+  }
 });
 
 export const submitQuizAnswer: RequestHandler = asyncHandler(async (req, res) => {

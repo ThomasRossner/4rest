@@ -8,13 +8,26 @@ export interface OnboardingStepConfig {
   backgroundImageUrl: string | null;
 }
 
+export interface OnboardingIntroSlideConfig {
+  titleDe: string;
+  titleEn: string;
+  bodyDe: string;
+  bodyEn: string;
+  backgroundImageUrl: string | null;
+}
+
 export interface OnboardingConfig {
   version: 1;
   dyadCount: number;
   questionsPerDyad: number;
+  introSlides: OnboardingIntroSlideConfig[];
+  /** @deprecated legacy fallback */
   introTitleDe: string;
+  /** @deprecated legacy fallback */
   introTitleEn: string;
+  /** @deprecated legacy fallback */
   introBodyDe: string;
+  /** @deprecated legacy fallback */
   introBodyEn: string;
   steps: OnboardingStepConfig[];
 }

@@ -15,6 +15,7 @@ import {
   deleteTask,
   completeTask,
   submitQuizAnswer,
+  getQuizQuestionLocks,
   uploadPhoto,
   uploadVideo,
   uploadThumbnail,
@@ -140,6 +141,7 @@ router.post(
 );
 // Generic routes must come AFTER specific routes
 // IMPORTANT: must be authenticated to resolve preferred language (i18n)
+router.get('/:id/quiz/locks', authenticate, getQuizQuestionLocks);
 router.get('/:id', authenticate, getTask);
 router.get('/:id/qr-code', authenticate, requireRole('redaktion', 'administrator'), getTaskQrCode);
 router.post('/', authenticate, requireRole('redaktion', 'administrator'), createTask);

@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useAuthStore } from '../../stores/authStore';
 import type { PlayerProfilePayload, User } from '../../stores/authStore';
-import type { OnboardingConfig, OnboardingStepConfig } from '../../types/onboarding';
+import type {
+  OnboardingConfig,
+  OnboardingIntroSlideConfig,
+  OnboardingStepConfig,
+} from '../../types/onboarding';
 import { resolveOnboardingBackgroundUrl } from '../../utils/onboardingBackgroundUrl';
 import './PlayerProfileOnboarding.css';
 
@@ -89,7 +93,24 @@ export default function PlayerProfileOnboarding({
   }, [t]);
 
   const totalQuestions = config ? config.dyadCount * config.questionsPerDyad : 0;
-  const nameStepIndex = totalQuestions + 1;
+  const introSlides = useMemo<OnboardingIntroSlideConfig[]>(() => {
+    if (!config) return [];
+    if (Array.isArray(config.introSlides) && config.introSlides.length > 0) {
+      return config.introSlides;
+    }
+    return [
+      {
+        titleDe: config.introTitleDe,
+        titleEn: config.introTitleEn,
+        bodyDe: config.introBodyDe,
+        bodyEn: config.introBodyEn,
+        backgroundImageUrl: null,
+      },
+    ];
+  }, [config]);
+  const introCount = Math.max(1, introSlides.length);
+  const firstQuestionStep = introCount;
+  const nameStepIndex = introCount + totalQuestions;
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
@@ -102,7 +123,9 @@ export default function PlayerProfileOnboarding({
     const n = config.dyadCount * config.questionsPerDyad;
     setAnswers(buildInitialAnswers(variant, initialProfile, config));
     setDisplayName(initialNameFor(variant, initialProfile));
-    setStep(initialStepFor(variant, initialProfile, n));
+    const initial = initialStepFor(variant, initialProfile, n);
+    // Intro now supports multiple slides. Start questions after last intro slide.
+    setStep(initial === 0 ? 0 : introCount);
   }, [config, variant, initialProfile]);
 
   const applyUser = (payload: { user?: User }) => {
@@ -139,9 +162,6 @@ export default function PlayerProfileOnboarding({
     },
     [lang]
   );
-
-  const introTitle = config ? (lang === 'en' ? config.introTitleEn : config.introTitleDe) : '';
-  const introBody = config ? (lang === 'en' ? config.introBodyEn : config.introBodyDe) : '';
 
   const handleSkipIntro = async () => {
     setError(null);
@@ -326,34 +346,60 @@ export default function PlayerProfileOnboarding({
         </div>
       )}
 
-      {step === 0 && (
+      {step >= 0 && step < introCount && (
         <div className="ppo-fullscreen">
-          <div className="ppo-fullscreen__bg ppo-fullscreen__bg--gradient" aria-hidden />
-          <div className="ppo-fullscreen__scrim ppo-fullscreen__scrim--light" />
-          <div className="ppo-fullscreen__inner">
-            <div className="ppo-fullscreen__panel ppo-fullscreen__panel--intro">
-              <h1 className="player-profile-onboarding__title">{introTitle}</h1>
-              <p className="player-profile-onboarding__text">{introBody}</p>
-              <div className="player-profile-onboarding__actions">
-                <button
-                  type="button"
-                  className="player-profile-onboarding__btn player-profile-onboarding__btn--primary"
-                  disabled={loading}
-                  onClick={() => setStep(1)}
-                >
-                  {t('playerProfile.intro.start')}
-                </button>
-                <button
-                  type="button"
-                  className="player-profile-onboarding__btn player-profile-onboarding__btn--ghost"
-                  disabled={loading}
-                  onClick={() => setStep(-1)}
-                >
-                  {t('playerProfile.intro.skipLater')}
-                </button>
-              </div>
-            </div>
-          </div>
+          {(() => {
+            const slide = introSlides[step] ?? introSlides[0]!;
+            const bgUrl = resolveOnboardingBackgroundUrl(slide.backgroundImageUrl);
+            const title = lang === 'en' ? (slide.titleEn || slide.titleDe) : slide.titleDe;
+            const body = lang === 'en' ? (slide.bodyEn || slide.bodyDe) : slide.bodyDe;
+            return (
+              <>
+                <div
+                  className={`ppo-fullscreen__bg${bgUrl ? '' : ' ppo-fullscreen__bg--gradient'}`}
+                  style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : undefined}
+                  aria-hidden
+                />
+                <div className={`ppo-fullscreen__scrim${bgUrl ? '' : ' ppo-fullscreen__scrim--light'}`} />
+                <div className="ppo-fullscreen__inner">
+                  <div className="ppo-fullscreen__panel ppo-fullscreen__panel--intro">
+                    <h1 className="player-profile-onboarding__title">{title}</h1>
+                    <p className="player-profile-onboarding__text">{body}</p>
+                    <div className="player-profile-onboarding__actions">
+                      {step > 0 && (
+                        <button
+                          type="button"
+                          className="player-profile-onboarding__btn player-profile-onboarding__btn--ghost"
+                          disabled={loading}
+                          onClick={goBack}
+                        >
+                          {t('common.actions.back')}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="player-profile-onboarding__btn player-profile-onboarding__btn--primary"
+                        disabled={loading}
+                        onClick={() => setStep((s) => s + 1)}
+                      >
+                        {step === introCount - 1 ? t('playerProfile.intro.start') : t('playerProfile.continue')}
+                      </button>
+                      {step === introCount - 1 && (
+                        <button
+                          type="button"
+                          className="player-profile-onboarding__btn player-profile-onboarding__btn--ghost"
+                          disabled={loading}
+                          onClick={() => setStep(-1)}
+                        >
+                          {t('playerProfile.intro.skipLater')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -384,7 +430,7 @@ export default function PlayerProfileOnboarding({
                   disabled={loading}
                   onClick={() => {
                     setError(null);
-                    setStep(0);
+                    setStep(introCount - 1);
                   }}
                 >
                   {t('common.actions.back')}
@@ -395,7 +441,9 @@ export default function PlayerProfileOnboarding({
         </div>
       )}
 
-      {step >= 1 && step <= totalQuestions && renderQuestionFullscreen(step - 1)}
+      {step >= firstQuestionStep &&
+        step < firstQuestionStep + totalQuestions &&
+        renderQuestionFullscreen(step - firstQuestionStep)}
 
       {step === nameStepIndex && (
         <div className="ppo-fullscreen">
@@ -430,7 +478,7 @@ export default function PlayerProfileOnboarding({
                   type="button"
                   className="player-profile-onboarding__btn player-profile-onboarding__btn--ghost"
                   disabled={loading}
-                  onClick={() => setStep(totalQuestions)}
+                  onClick={() => setStep(firstQuestionStep + totalQuestions - 1)}
                 >
                   {t('common.actions.back')}
                 </button>
