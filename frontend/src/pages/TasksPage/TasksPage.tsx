@@ -57,13 +57,40 @@ const getTaskTypeIcon = (type: string) => {
 
 const CATEGORY_ORDER = [...FOREST_CATEGORY_KEYS, OTHER_FOREST_CATEGORY_KEY];
 
-/** Kurztext für Kacheln: HTML entfernen, für CSS line-clamp nur bereinigen */
-function descriptionPreviewPlain(text: string | null | undefined): string {
-  if (!text || typeof text !== 'string') return '';
+/** Zeichenobergrenze (ein … am Ende); passt typisch in ~3–4 Zeilen, max-height fängt Randfälle ab */
+const TASK_TILE_PREVIEW_MAX_CHARS = 160;
+
+function htmlDescriptionToPlain(text: string): string {
+  if (typeof document !== 'undefined') {
+    const div = document.createElement('div');
+    div.innerHTML = text;
+    const plain = (div.textContent || div.innerText || '')
+      .replace(/\u00a0/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return plain;
+  }
   return text
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/** Kürzt am Wortende; genau ein Unicode-Ellipsis am Schluss (nicht Zeilen-Clamping mitten im Satz). */
+function truncatePreviewAtWordEnd(plain: string, maxLen: number): string {
+  if (plain.length <= maxLen) return plain;
+  const slice = plain.slice(0, maxLen);
+  const lastSpace = slice.lastIndexOf(' ');
+  const atWord =
+    lastSpace > maxLen * 0.55 ? slice.slice(0, lastSpace).trimEnd() : slice.trimEnd();
+  return `${atWord}\u2026`;
+}
+
+/** Kurztext für Kacheln: HTML → Klartext, dann eine saubere Endkürzung */
+function descriptionPreviewPlain(text: string | null | undefined): string {
+  if (!text || typeof text !== 'string') return '';
+  const plain = htmlDescriptionToPlain(text);
+  return truncatePreviewAtWordEnd(plain, TASK_TILE_PREVIEW_MAX_CHARS);
 }
 
 function TasksPage() {

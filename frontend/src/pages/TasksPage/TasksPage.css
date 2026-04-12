@@ -513,15 +513,17 @@
 
 .task-tile-preview {
   margin: 0;
-  flex: 1 1 auto;
+  /* flex-grow: 0 — sonst füllt die Vorschau den Streifen und der Text bricht ungünstig um. */
+  flex: 0 1 auto;
   min-height: 0;
+  align-self: stretch;
   font-size: 0.76rem;
   line-height: 1.35;
   color: var(--color-text-light, #4b5563);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  display: block;
   overflow: hidden;
+  /* Sicherheitsventil, falls extrem schmal: Inhalt ist bereits per JS gekürzt + … */
+  max-height: calc(1.35em * 4);
   word-break: break-word;
   hyphens: auto;
 }
