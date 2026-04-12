@@ -15,8 +15,16 @@ type TaskDetailViewProps = {
   onStartExecution: () => void;
 };
 
+function formatCompletedAt(iso: unknown, localeHint: string): string {
+  if (iso == null || iso === '') return '';
+  const d = new Date(String(iso));
+  if (Number.isNaN(d.getTime())) return '';
+  const locale = localeHint.startsWith('de') ? 'de-DE' : 'en-US';
+  return d.toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
+}
+
 export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: TaskDetailViewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: fetchedTask, isLoading, isError, error, refetch } = useQuery(
     ['task', taskId],
     () => api.getTask(taskId),
@@ -61,7 +69,8 @@ export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: T
   const isCompleted = !!row.completed && row.verification_status !== 'pending';
   const isValidating = row.verification_status === 'pending';
   const isLocked = row.is_available === false;
-  const canStart = !isCompleted && !isValidating && !isLocked;
+
+  const completedAtLabel = formatCompletedAt(row.completed_at, i18n.language || 'de');
 
   const taskForMapPreview = useMemo(() => {
     if (row.type !== 'visit_location') return null;
@@ -122,29 +131,35 @@ export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: T
       </div>
 
       <div className="task-detail-view-footer">
-        {isLocked && (
+        {isLocked && !isCompleted && (
           <p className="task-detail-footer-hint">{t('tasks.prerequisites.unlockMessage')}</p>
         )}
         {isValidating && (
           <p className="task-detail-footer-hint">{t('tasks.badges.validating')}</p>
         )}
         {isCompleted && (
-          <p className="task-detail-footer-hint">{t('tasks.badges.completed')}</p>
+          <div className="task-detail-completed-meta">
+            {completedAtLabel ? (
+              <p className="task-detail-completed-date">{t('tasks.detail.completedAt', { date: completedAtLabel })}</p>
+            ) : (
+              <p className="task-detail-footer-hint">{t('tasks.badges.completed')}</p>
+            )}
+          </div>
         )}
-        <button
-          type="button"
-          className="task-detail-start"
-          onClick={onStartExecution}
-          disabled={!canStart}
-        >
-          {isCompleted
-            ? t('tasks.buttons.completed')
-            : isValidating
+        {!isCompleted && (
+          <button
+            type="button"
+            className="task-detail-start"
+            onClick={onStartExecution}
+            disabled={isValidating || isLocked}
+          >
+            {isValidating
               ? t('tasks.buttons.validating')
               : isLocked
                 ? t('tasks.buttons.locked')
                 : t('tasks.buttons.start')}
-        </button>
+          </button>
+        )}
       </div>
     </div>
   );

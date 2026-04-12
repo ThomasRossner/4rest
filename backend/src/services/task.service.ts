@@ -491,7 +491,11 @@ export function resolveSurveyQuestionsI18n(payload: any, lang: 'de' | 'en'): any
   });
 }
 
-export async function getTaskById(id: string, preferredLanguage?: string): Promise<Task | null> {
+export async function getTaskById(
+  id: string,
+  preferredLanguage?: string,
+  userId?: string | null
+): Promise<Task | null> {
   const db = getPool();
   
   // Check if allowed_teams and allowed_contests columns exist
@@ -527,14 +531,27 @@ export async function getTaskById(id: string, preferredLanguage?: string): Promi
     select += `, t.allowed_teams, t.allowed_contests`;
   }
 
+  /** Fortschritt des eingeloggten Nutzers (Detailansicht: Abschlussdatum, Status) */
+  if (userId) {
+    select += `,
+    ut.verification_status AS verification_status,
+    ut.completed_at AS completed_at,
+    (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed`;
+  }
+
   select += `, row_to_json(l.*) AS location`;
+
+  const userJoin = userId
+    ? `LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $2`
+    : '';
 
   const result = await db.query(
     `SELECT ${select}
      FROM tasks t
      JOIN locations l ON l.id = t.location_id
+     ${userJoin}
      WHERE t.id = $1`,
-    [id]
+    userId ? [id, userId] : [id]
   );
 
   const row = result.rows[0] || null;

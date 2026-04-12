@@ -351,7 +351,7 @@ export function resolveSurveyQuestionsI18n(payload, lang) {
         };
     });
 }
-export async function getTaskById(id, preferredLanguage) {
+export async function getTaskById(id, preferredLanguage, userId) {
     const db = getPool();
     // Check if allowed_teams and allowed_contests columns exist
     // IMPORTANT: We need BOTH columns to exist, not just one, because buildTeamContestFilterClauses
@@ -384,11 +384,22 @@ export async function getTaskById(id, preferredLanguage) {
     if (columnsExist) {
         select += `, t.allowed_teams, t.allowed_contests`;
     }
+    /** Fortschritt des eingeloggten Nutzers (Detailansicht: Abschlussdatum, Status) */
+    if (userId) {
+        select += `,
+    ut.verification_status AS verification_status,
+    ut.completed_at AS completed_at,
+    (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed`;
+    }
     select += `, row_to_json(l.*) AS location`;
+    const userJoin = userId
+        ? `LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $2`
+        : '';
     const result = await db.query(`SELECT ${select}
      FROM tasks t
      JOIN locations l ON l.id = t.location_id
-     WHERE t.id = $1`, [id]);
+     ${userJoin}
+     WHERE t.id = $1`, userId ? [id, userId] : [id]);
     const row = result.rows[0] || null;
     if (row && preferredLanguage) {
         return resolveTaskI18n(row, normalizeContentLang(preferredLanguage));

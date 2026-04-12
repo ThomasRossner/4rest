@@ -140,6 +140,20 @@
   text-align: center;
 }
 
+.task-detail-completed-meta {
+  width: 100%;
+  margin-bottom: var(--spacing-sm);
+}
+
+.task-detail-completed-date {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text, #111827);
+  text-align: center;
+  line-height: 1.4;
+}
+
 .task-detail-start {
   width: 100%;
   padding: 14px 24px;

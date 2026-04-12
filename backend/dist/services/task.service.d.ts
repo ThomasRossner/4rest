@@ -60,7 +60,7 @@ export declare function isQuizAnswerCorrect(params: {
 }): boolean;
 export declare function resolveQuizQuestionsI18n(payload: any, lang: 'de' | 'en'): any[];
 export declare function resolveSurveyQuestionsI18n(payload: any, lang: 'de' | 'en'): any[];
-export declare function getTaskById(id: string, preferredLanguage?: string): Promise<Task | null>;
+export declare function getTaskById(id: string, preferredLanguage?: string, userId?: string | null): Promise<Task | null>;
 /**
  * Calculate task points automatically based on difficulty and time_required weights
  * Formula: (difficulty_weight * time_required_weight) / factor

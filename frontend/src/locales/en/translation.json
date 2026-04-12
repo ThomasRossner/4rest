@@ -323,7 +323,11 @@
     },
     "detail": {
       "noDescription": "No further description.",
-      "locationSection": "Location on the map"
+      "locationSection": "Location on the map",
+      "completedAt": "Completed on {{date}}"
+    },
+    "tile": {
+      "noPreview": "No short description"
     },
     "status": {
       "available": "Available task"

@@ -323,7 +323,11 @@
     },
     "detail": {
       "noDescription": "Keine weitere Beschreibung.",
-      "locationSection": "Ort auf der Karte"
+      "locationSection": "Ort auf der Karte",
+      "completedAt": "Abgeschlossen am {{date}}"
+    },
+    "tile": {
+      "noPreview": "Kein Kurztext"
     },
     "status": {
       "available": "Verfügbare Aufgabe"

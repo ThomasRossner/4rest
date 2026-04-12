@@ -72,7 +72,7 @@ export const getTask = asyncHandler(async (req, res) => {
     const preferredLanguage = isAdminOrRedaktion
         ? undefined
         : (authReq.user?.id ? await getPreferredLanguage(authReq.user.id) : undefined);
-    const task = await getTaskById(req.params.id, preferredLanguage ?? undefined);
+    const task = await getTaskById(req.params.id, preferredLanguage ?? undefined, authReq.user?.id ?? null);
     if (!task) {
         return res.status(404).json({ error: 'Task not found' });
     }

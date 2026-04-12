@@ -104,18 +104,12 @@ export async function getRewardsService(userId) {
     if (hasGeneratedFromColumn) {
         query += ` AND r.generated_from_reward_id IS NULL`;
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'beb906' }, body: JSON.stringify({ sessionId: 'beb906', location: 'reward.service.ts:getRewardsService', message: 'reward filter state', data: { columnsExist, applyFilters, userTeamIdsCount: userTeamIds.length, userContestIdsCount: userContestIds.length }, hypothesisId: 'A', timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
     query += ' ORDER BY r.points_cost ASC LIMIT 500';
     const result = await db.query(query, params);
     const unique = new Map();
     for (const row of result.rows) {
         unique.set(row.id, row);
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/d41173a8-0831-4555-b22f-6a118ef2641c', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'beb906' }, body: JSON.stringify({ sessionId: 'beb906', location: 'reward.service.ts:getRewardsService', message: 'reward query result', data: { rowsCount: result.rows.length, uniqueCount: unique.size }, hypothesisId: 'B', timestamp: Date.now() }) }).catch(() => { });
-    // #endregion
     let rows = Array.from(unique.values());
     const hideRecurrenceForPlayer = role !== 'administrator' && role !== 'redaktion';
     if (hideRecurrenceForPlayer) {
@@ -394,6 +388,13 @@ export async function redeemRewardService(rewardId, userId, useTeamPoints = fals
     const reward = rewardResult.rows[0];
     if (!reward) {
         throw new Error('Reward not found');
+    }
+    if (!reward.active) {
+        throw new Error('Reward not found');
+    }
+    const generatedFrom = reward.generated_from_reward_id;
+    if (generatedFrom != null && String(generatedFrom).length > 0) {
+        throw new Error('Belohnung ist nicht mehr gültig. Bitte die aktuelle Belohnung in der Liste wählen.');
     }
     if (await hasPendingRewardRedemption(userId, rewardId)) {
         throw new Error('Es läuft bereits eine Einlösung für diese Belohnung. Bitte zuerst an der Rezeption abschließen.');

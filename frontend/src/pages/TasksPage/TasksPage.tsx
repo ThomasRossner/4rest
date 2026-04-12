@@ -57,6 +57,15 @@ const getTaskTypeIcon = (type: string) => {
 
 const CATEGORY_ORDER = [...FOREST_CATEGORY_KEYS, OTHER_FOREST_CATEGORY_KEY];
 
+/** Kurztext für Kacheln: HTML entfernen, für CSS line-clamp nur bereinigen */
+function descriptionPreviewPlain(text: string | null | undefined): string {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function TasksPage() {
   const { categoryKey: categoryKeyParam } = useParams<{ categoryKey: string }>();
   const navigate = useNavigate();
@@ -230,17 +239,43 @@ function TasksPage() {
   useLayoutEffect(() => {
     const el = categoryScrollRef.current;
     if (!el) return;
-    const gap = 16;
-    const apply = () => {
-      const h = el.clientHeight;
-      if (h <= 0) return;
-      const row = Math.max(72, (h - 2 * gap) / 3);
-      el.style.setProperty('--task-grid-row-height', `${Math.floor(row)}px`);
+
+    const readGapPx = () => {
+      const grid = el.querySelector<HTMLElement>('.tasks-category-matrix');
+      if (grid) {
+        const g = getComputedStyle(grid).gap;
+        const parsed = parseFloat(g);
+        if (Number.isFinite(parsed) && parsed > 0) return parsed;
+      }
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--spacing-md').trim();
+      const fallback = parseFloat(raw);
+      return Number.isFinite(fallback) && fallback > 0 ? fallback : 16;
     };
+
+    const apply = () => {
+      const run = () => {
+        const h = el.clientHeight;
+        if (h <= 0) return;
+        const gap = readGapPx();
+        /* Exakt 2 Reihen im sichtbaren Scrollbereich (eine Zeilenlücke) */
+        const row = Math.max(88, (h - gap) / 2);
+        el.style.setProperty('--task-grid-row-height', `${Math.floor(row)}px`);
+      };
+      requestAnimationFrame(() => requestAnimationFrame(run));
+    };
+
     apply();
-    const ro = new ResizeObserver(apply);
+    const ro = new ResizeObserver(() => apply());
     ro.observe(el);
-    return () => ro.disconnect();
+    window.addEventListener('orientationchange', apply);
+    window.addEventListener('resize', apply);
+    const t = window.setTimeout(apply, 150);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', apply);
+      window.removeEventListener('resize', apply);
+      window.clearTimeout(t);
+    };
   }, [categoryKeyParam, filteredTasks.length]);
 
   const openTaskDetail = (task: { id: string }) => {
@@ -539,11 +574,12 @@ function TasksPage() {
           description={t('tasks.empty.filtered.description')}
         />
       ) : (
-        <div className="tasks-grid tasks-grid--compact">
+        <div className="tasks-category-matrix">
           {filteredTasks.map((task: any) => {
             const isLocked = task.is_available === false;
             const isCompleted = !!task.completed && task.verification_status !== 'pending';
             const isValidating = task.verification_status === 'pending';
+            const previewText = descriptionPreviewPlain(task.description);
             return (
             <div
               key={task.id}
@@ -558,54 +594,63 @@ function TasksPage() {
                 }
               }}
             >
-            <div className="task-header">
-              <span className="task-icon">
+            <div className="task-tile-zone task-tile-zone--top">
+              <span className="task-icon task-icon--tile">
                 {task.thumbnail_url ? (
-                  <img src={task.thumbnail_url} alt="" className="task-icon-image" />
+                  <img src={task.thumbnail_url} alt="" className="task-icon-image task-icon-image--tile" />
                 ) : (
-                  task.type === 'video' ? '🎥' : 
-                  task.type === 'quiz' ? '❓' : 
+                  task.type === 'video' ? '🎥' :
+                  task.type === 'quiz' ? '❓' :
                   task.type === 'article_quiz' ? '📄' :
                   task.type === 'survey' ? '📋' :
-                  task.type === 'qr' ? <QRCodeIcon size={48} /> : 
+                  task.type === 'qr' ? <QRCodeIcon size={34} /> :
                   task.type === 'visit_location' ? '📍' : '📷'
                 )}
               </span>
-              <span className="task-points">{t('tasksComponents.points', { points: task.points })}</span>
-              {isCompleted && (
-                <span className="task-completed-badge" title={t('tasks.badges.completed')}>
-                  ✓
-                </span>
-              )}
-              {isValidating && (
-                <span className="task-validating-badge" title={t('tasks.badges.validating')}>
-                  ⏳
-                </span>
-              )}
-              {isLocked && (
-                <span className="task-locked-badge" title={t('tasks.badges.locked')}>
-                  🔒
-                </span>
+              <div className="task-tile-top-right">
+                <span className="task-points task-points--tile">{t('tasksComponents.points', { points: task.points })}</span>
+                <div className="task-tile-status-icons">
+                  {isCompleted && (
+                    <span className="task-completed-badge task-completed-badge--tile" title={t('tasks.badges.completed')}>
+                      ✓
+                    </span>
+                  )}
+                  {isValidating && (
+                    <span className="task-validating-badge task-validating-badge--tile" title={t('tasks.badges.validating')}>
+                      ⏳
+                    </span>
+                  )}
+                  {isLocked && (
+                    <span className="task-locked-badge task-locked-badge--tile" title={t('tasks.badges.locked')}>
+                      🔒
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="task-tile-zone task-tile-zone--middle">
+              <h3 className="task-title task-title--tile-middle">{task.title}</h3>
+            </div>
+            <div className="task-tile-zone task-tile-zone--bottom">
+              {isLocked ? (
+                <p className="task-tile-locked-hint">{t('tasks.prerequisites.unlockMessage')}</p>
+              ) : null}
+              <p className={`task-tile-preview ${!previewText ? 'task-tile-preview--empty' : ''}`}>
+                {previewText || t('tasks.tile.noPreview')}
+              </p>
+              {task.prerequisite_task_ids && Array.isArray(task.prerequisite_task_ids) && task.prerequisite_task_ids.length > 0 && (
+                <button
+                  type="button"
+                  className="task-prerequisite-button task-prerequisite-button--tile"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPrerequisiteTaskIdsFilter(task.prerequisite_task_ids);
+                  }}
+                >
+                  {t('tasks.prerequisites.showPrerequisites')}
+                </button>
               )}
             </div>
-            <h3 className="task-title task-title--list-clamp">{task.title}</h3>
-            {isLocked && (
-              <p className="task-locked-message">
-                {t('tasks.prerequisites.unlockMessage')}
-              </p>
-            )}
-            {task.prerequisite_task_ids && Array.isArray(task.prerequisite_task_ids) && task.prerequisite_task_ids.length > 0 && (
-              <button
-                type="button"
-                className="task-prerequisite-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPrerequisiteTaskIdsFilter(task.prerequisite_task_ids);
-                }}
-              >
-                {t('tasks.prerequisites.showPrerequisites')}
-              </button>
-            )}
           </div>
           );
           })}
