@@ -136,3 +136,8 @@ chat/
 node_modules/.vite/
 frontend/node_modules/.vite/
 frontend/.vite/
+
+# Playwright (lokal / CI-Artefakte)
+test-results/
+playwright-report/
+frontend/test-results/

@@ -321,6 +321,10 @@
       "locked": "Gesperrt",
       "validating": "Warte auf Validierung"
     },
+    "detail": {
+      "noDescription": "Keine weitere Beschreibung.",
+      "locationSection": "Ort auf der Karte"
+    },
     "status": {
       "available": "Verfügbare Aufgabe"
     },

@@ -18,7 +18,11 @@
     "test": "npm run test:frontend && npm run test:backend",
     "test:frontend": "cd frontend && npm run test",
     "test:backend": "cd backend && npm run test",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:luise": "playwright test --config=playwright.luise.config.ts",
+    "test:e2e:luise:full": "E2E_LUISE_FULL=1 playwright test --config=playwright.luise.config.ts",
+    "test:e2e:luise:ui": "playwright test --config=playwright.luise.config.ts --ui",
+    "verify:luise": "node scripts/verify-jason-ticket-findings.mjs"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",

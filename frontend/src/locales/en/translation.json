@@ -321,6 +321,10 @@
       "locked": "Locked",
       "validating": "Validating"
     },
+    "detail": {
+      "noDescription": "No further description.",
+      "locationSection": "Location on the map"
+    },
     "status": {
       "available": "Available task"
     },

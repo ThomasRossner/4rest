@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -23,6 +23,7 @@ import { QRCodeIcon } from '../../components/Icons/QRCodeIcon';
 import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
 import { CategoryHubIcon } from '../../components/Tasks/CategoryHubIcon';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
+import { TaskDetailView } from '../../components/Tasks/TaskDetailView';
 import './TasksPage.css';
 
 /** Nur diese Typen erscheinen im Filter (keine kaputten/DB-Testwerte im Dropdown). */
@@ -60,6 +61,9 @@ function TasksPage() {
   const { categoryKey: categoryKeyParam } = useParams<{ categoryKey: string }>();
   const navigate = useNavigate();
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  /** Zwischenliste und Ausführung: Detail mit vollem Text + Karte */
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'not_completed' | 'completed' | 'validating'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | 'recent'>('all');
@@ -77,6 +81,10 @@ function TasksPage() {
 
   useEffect(() => {
     setShowLocationMap(false);
+  }, [categoryKeyParam]);
+
+  useEffect(() => {
+    setDetailTaskId(null);
   }, [categoryKeyParam]);
 
   // Listen for WebSocket task updates
@@ -219,11 +227,24 @@ function TasksPage() {
     prerequisiteTaskIdsFilter,
   ]);
 
-  const handleTaskClick = (task: any) => {
-    if (task.completed && task.verification_status !== 'pending') return;
-    if (task.verification_status === 'pending') return;
-    if (task.is_available === false) return; // Don't allow clicking locked tasks
-    setSelectedTask(task.id);
+  useLayoutEffect(() => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+    const gap = 16;
+    const apply = () => {
+      const h = el.clientHeight;
+      if (h <= 0) return;
+      const row = Math.max(72, (h - 2 * gap) / 3);
+      el.style.setProperty('--task-grid-row-height', `${Math.floor(row)}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [categoryKeyParam, filteredTasks.length]);
+
+  const openTaskDetail = (task: { id: string }) => {
+    setDetailTaskId(task.id);
   };
 
   const handleTaskComplete = async () => {
@@ -259,6 +280,21 @@ function TasksPage() {
       {node}
     </div>
   );
+
+  if (detailTaskId) {
+    return (
+      <div className="tasks-page tasks-page--detail">
+        <TaskDetailView
+          taskId={detailTaskId}
+          onBack={() => setDetailTaskId(null)}
+          onStartExecution={() => {
+            setSelectedTask(detailTaskId);
+            setDetailTaskId(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   if (selectedTask) {
     const task = tasks?.find((t: any) => t.id === selectedTask);
@@ -359,7 +395,7 @@ function TasksPage() {
             tasks={filteredTasks as any[]}
             onTaskClick={(taskId) => {
               setShowLocationMap(false);
-              setSelectedTask(taskId);
+              setDetailTaskId(taskId);
             }}
           />
         </div>
@@ -495,7 +531,7 @@ function TasksPage() {
       </div>
         </div>
 
-      <div className="tasks-category-scroll">
+      <div className="tasks-category-scroll" ref={categoryScrollRef}>
       {filteredTasks.length === 0 ? (
         <EmptyState
           title={t('tasks.empty.filtered.title')}
@@ -508,11 +544,23 @@ function TasksPage() {
             const isCompleted = !!task.completed && task.verification_status !== 'pending';
             const isValidating = task.verification_status === 'pending';
             return (
-            <div key={task.id} className={`task-card ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''}`}>
+            <div
+              key={task.id}
+              role="button"
+              tabIndex={0}
+              className={`task-card task-card--list-tile ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''}`}
+              onClick={() => openTaskDetail(task)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openTaskDetail(task);
+                }
+              }}
+            >
             <div className="task-header">
               <span className="task-icon">
                 {task.thumbnail_url ? (
-                  <img src={task.thumbnail_url} alt={task.title} className="task-icon-image" />
+                  <img src={task.thumbnail_url} alt="" className="task-icon-image" />
                 ) : (
                   task.type === 'video' ? '🎥' : 
                   task.type === 'quiz' ? '❓' : 
@@ -539,42 +587,24 @@ function TasksPage() {
                 </span>
               )}
             </div>
-            <h3 className="task-title">{task.title}</h3>
-            <p className="task-description">{task.description}</p>
+            <h3 className="task-title task-title--list-clamp">{task.title}</h3>
             {isLocked && (
-              <p className="task-locked-message" style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+              <p className="task-locked-message">
                 {t('tasks.prerequisites.unlockMessage')}
               </p>
             )}
-            {/* Show prerequisite tasks button for Type 2 prerequisites */}
             {task.prerequisite_task_ids && Array.isArray(task.prerequisite_task_ids) && task.prerequisite_task_ids.length > 0 && (
               <button
+                type="button"
                 className="task-prerequisite-button"
-                onClick={() => setPrerequisiteTaskIdsFilter(task.prerequisite_task_ids)}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 1rem',
-                  marginBottom: '0.5rem',
-                  backgroundColor: 'var(--color-surface, #f3f4f6)',
-                  color: 'var(--color-primary)',
-                  border: '1px solid var(--color-primary)',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPrerequisiteTaskIdsFilter(task.prerequisite_task_ids);
                 }}
               >
                 {t('tasks.prerequisites.showPrerequisites')}
               </button>
             )}
-            <button
-              className="task-button"
-              onClick={() => handleTaskClick(task)}
-              disabled={isCompleted || isValidating || isLocked}
-            >
-              {isCompleted ? t('tasks.buttons.completed') : isValidating ? t('tasks.buttons.validating') : isLocked ? t('tasks.buttons.locked') : t('tasks.buttons.start')}
-            </button>
           </div>
           );
           })}

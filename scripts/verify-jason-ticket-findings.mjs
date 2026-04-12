@@ -46,9 +46,10 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
 
   // --- 042, 041 (login), 048 (ohne Session) ---
+  // Smartphone-typische Größe (wie interner Browser schmal / Mobile)
   const context = await browser.newContext({
     locale: 'de-DE',
-    ...devices['Desktop Chrome'],
+    ...devices['Pixel 5'],
   });
   const page = await context.newPage();
 
@@ -86,12 +87,23 @@ async function main() {
     await page.fill('input[id="password"]', 'WrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForTimeout(2500);
-    const err = (await page.locator('.login-error').first().textContent().catch(() => '')) || '';
-    const t = err.trim();
-    if (/invalid\s*credentials/i.test(t)) {
-      record('048', true, `UI: "${t.slice(0, 80)}"`);
+    const fieldErr =
+      (await page.locator('.login-field-error').first().textContent().catch(() => '')) || '';
+    const bannerErr =
+      (await page.locator('.login-error').first().textContent().catch(() => '')) || '';
+    const t = (fieldErr || bannerErr).trim();
+    // Bug „verifiziert“ = altes Verhalten (nur engl. Banner); Fix = Feldhinweis oder DE
+    const oldBad =
+      /invalid\s*credentials/i.test(bannerErr) && !fieldErr.trim();
+    const fixed =
+      fieldErr.trim().length > 0 ||
+      (/konto|e-mail|passwort|nicht\s+korrekt|ungültig/i.test(t) && !/invalid\s*credentials/i.test(t));
+    if (oldBad) {
+      record('048', true, `Altes Verhalten: Banner "${bannerErr.slice(0, 80)}"`);
+    } else if (fixed) {
+      record('048', false, `Erwarteter Fix: "${t.slice(0, 120)}"`);
     } else {
-      record('048', false, t ? `Andere Meldung: "${t.slice(0, 80)}"` : 'keine .login-error');
+      record('048', false, t ? `Andere Meldung: "${t.slice(0, 80)}"` : 'keine Fehlermeldung sichtbar');
     }
   } catch (e) {
     record('048', false, `Fehler: ${e.message}`);
@@ -254,7 +266,7 @@ async function main() {
 
   await context.close();
 
-  // Mobile 045
+  // 045: Nav-Overflow (eigener Mobile-Kontext, falls obiger Login-Pfad 045 übersprungen hätte)
   const mctx = await browser.newContext({ locale: 'de-DE', ...devices['Pixel 5'] });
   const mpage = await mctx.newPage();
   if (await loginGuest(mpage)) {

@@ -112,6 +112,8 @@ interface UserLocationMapProps {
   rewards?: Reward[];
   onTaskClick?: (taskId: string) => void;
   onRewardClick?: (rewardId: string) => void;
+  /** In der Aufgaben-Detailansicht: Marker auch bei erledigt/gesperrt anzeigen. */
+  previewMode?: boolean;
 }
 
 export function UserLocationMap({
@@ -121,6 +123,7 @@ export function UserLocationMap({
   rewards = [],
   onTaskClick,
   onRewardClick,
+  previewMode = false,
 }: UserLocationMapProps) {
   const { t, i18n } = useTranslation();
 
@@ -279,16 +282,18 @@ export function UserLocationMap({
 
     // Filter tasks: only available, non-completed tasks with physical locations
     const physicalTasks = tasks.filter((task) => {
-      // Skip completed tasks
-      if (task.completed) {
-        console.debug('Task completed:', task.id, task.title);
-        return false;
-      }
-      
-      // Skip locked/unavailable tasks
-      if ((task as any).is_available === false) {
-        console.debug('Task not available:', task.id, task.title);
-        return false;
+      if (!previewMode) {
+        // Skip completed tasks
+        if (task.completed) {
+          console.debug('Task completed:', task.id, task.title);
+          return false;
+        }
+
+        // Skip locked/unavailable tasks
+        if ((task as any).is_available === false) {
+          console.debug('Task not available:', task.id, task.title);
+          return false;
+        }
       }
       
       // Check if location exists
@@ -600,7 +605,7 @@ export function UserLocationMap({
       // If no tasks/rewards and no user location, keep default view (Berlin)
       // Map is already initialized with default center
     }
-  }, [tasks, rewards, isMapReady, userLocation, onTaskClick, onRewardClick, i18n.language, t, mapText]);
+  }, [tasks, rewards, isMapReady, userLocation, onTaskClick, onRewardClick, i18n.language, t, mapText, previewMode]);
 
   return (
     <div style={{ width: '100%', minHeight: height }}>
