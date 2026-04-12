@@ -1,3 +1,15 @@
+/* Abstand unter fester Top-Nav (Titel ggf. 2 Zeilen) — für Aufgaben u. a. */
+:root {
+  --app-nav-top-offset: 104px;
+  --app-nav-bottom-offset: 88px;
+}
+
+@media (min-width: 1025px) {
+  :root {
+    --app-nav-top-offset: 92px;
+  }
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -54,7 +66,7 @@
 .layout-main {
   flex: 1;
   padding: var(--spacing-md);
-  padding-top: calc(var(--spacing-md) + 80px); /* Add space for fixed top nav */
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-md) + var(--app-nav-top-offset));
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -66,7 +78,7 @@
 @media (max-width: 1024px) {
   .layout-main {
     padding: var(--spacing-xs);
-    padding-top: calc(var(--spacing-xs) + 70px); /* Space for top nav */
-    padding-bottom: calc(var(--spacing-xs) + 80px); /* Space for bottom nav */
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-xs) + var(--app-nav-top-offset));
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-xs) + var(--app-nav-bottom-offset));
   }
 }

@@ -10,43 +10,45 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* Platz unter oberer Nav + unterer Leiste (Layout padding) */
-  height: calc(100dvh - 70px - 88px - var(--spacing-xs));
-  max-height: calc(100dvh - 70px - 88px - var(--spacing-xs));
-  overflow: hidden;
   padding-top: 0;
+  padding-bottom: 0;
+  /* Synchron zu Layout.css: fester Abstand unter Top-Nav / über Bottom-Nav */
+  height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
+      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
+  );
+  max-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
+      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
+  );
+  overflow: hidden;
   padding-left: var(--spacing-xs);
   padding-right: var(--spacing-xs);
   box-sizing: border-box;
-}
-
-@media (min-width: 1025px) {
-  .tasks-page.tasks-page--category {
-    height: calc(100dvh - 80px - 2rem);
-    max-height: calc(100dvh - 80px - 2rem);
-  }
 }
 
 .tasks-page.tasks-page--detail {
-  min-height: 0;
-  max-height: calc(100dvh - 70px - 88px - var(--spacing-xs));
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
   padding-left: var(--spacing-xs);
   padding-right: var(--spacing-xs);
   box-sizing: border-box;
+  max-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
+      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
+  );
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tasks-page.tasks-page--detail .task-detail-view {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-@media (min-width: 1025px) {
-  .tasks-page.tasks-page--detail {
-    max-height: calc(100dvh - 80px - 2rem);
-  }
+  flex: 0 1 auto;
+  width: 100%;
+  max-height: none;
 }
 
 .tasks-category-sticky {
@@ -197,21 +199,20 @@
   align-items: stretch;
   padding: 0 var(--spacing-md);
   box-sizing: border-box;
-  height: calc(100dvh - 70px - 88px - var(--spacing-xs));
-  max-height: calc(100dvh - 70px - 88px - var(--spacing-xs));
+  height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
+      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
+  );
+  max-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
+      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
+  );
   min-height: 0;
   overflow: hidden;
   overflow-x: hidden;
   overflow-y: hidden;
   width: 100%;
   max-width: 100%;
-}
-
-@media (min-width: 1025px) {
-  .tasks-page.tasks-page--hub {
-    height: calc(100dvh - 80px - 2rem);
-    max-height: calc(100dvh - 80px - 2rem);
-  }
 }
 
 .tasks-page.tasks-page--hub .tasks-category-grid {

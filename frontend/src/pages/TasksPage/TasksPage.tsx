@@ -286,6 +286,7 @@ function TasksPage() {
       <div className="tasks-page tasks-page--detail">
         <TaskDetailView
           taskId={detailTaskId}
+          listTask={tasks?.find((x: any) => x.id === detailTaskId) as Record<string, unknown> | undefined}
           onBack={() => setDetailTaskId(null)}
           onStartExecution={() => {
             setSelectedTask(detailTaskId);

@@ -8,18 +8,27 @@ import './TaskDetailView.css';
 
 type TaskDetailViewProps = {
   taskId: string;
+  /** Daten aus der Liste (Fallback, falls GET /tasks/:id langsam fehlschlägt). */
+  listTask?: Record<string, unknown> | null;
   onBack: () => void;
   /** Startet die bestehende Aufgaben-UI (Video, Quiz, Ort, …). */
   onStartExecution: () => void;
 };
 
-export function TaskDetailView({ taskId, onBack, onStartExecution }: TaskDetailViewProps) {
+export function TaskDetailView({ taskId, listTask, onBack, onStartExecution }: TaskDetailViewProps) {
   const { t } = useTranslation();
-  const { data: task, isLoading } = useQuery(['task', taskId], () => api.getTask(taskId), {
-    enabled: !!taskId,
-  });
+  const { data: fetchedTask, isLoading, isError, error, refetch } = useQuery(
+    ['task', taskId],
+    () => api.getTask(taskId),
+    {
+      enabled: !!taskId,
+      retry: 1,
+    }
+  );
 
-  if (isLoading) {
+  const task = (fetchedTask as Record<string, unknown> | undefined) ?? listTask ?? undefined;
+
+  if (isLoading && !listTask) {
     return (
       <div className="task-detail-view task-detail-view--loading">
         <p>{t('tasksComponents.loading')}</p>
@@ -30,35 +39,45 @@ export function TaskDetailView({ taskId, onBack, onStartExecution }: TaskDetailV
   if (!task) {
     return (
       <div className="task-detail-view">
-        <p>{t('tasksComponents.notFound')}</p>
+        <p className="task-detail-error">
+          {isError && error
+            ? (error as { message?: string }).message || String(error)
+            : t('tasksComponents.notFound')}
+        </p>
         <button type="button" className="task-detail-back" onClick={onBack}>
           {t('tasks.categories.backToCategories')}
         </button>
+        {isError ? (
+          <button type="button" className="task-detail-retry" onClick={() => refetch()}>
+            {t('common.actions.refresh')}
+          </button>
+        ) : null}
       </div>
     );
   }
 
-  const isCompleted = !!task.completed && task.verification_status !== 'pending';
-  const isValidating = task.verification_status === 'pending';
-  const isLocked = task.is_available === false;
+  const row = task as Record<string, unknown>;
+
+  const isCompleted = !!row.completed && row.verification_status !== 'pending';
+  const isValidating = row.verification_status === 'pending';
+  const isLocked = row.is_available === false;
   const canStart = !isCompleted && !isValidating && !isLocked;
 
   const taskForMapPreview = useMemo(() => {
-    if (task.type !== 'visit_location') return null;
-    const t = task as Record<string, unknown>;
-    if (t.location) return task as any;
-    const lat = t.target_latitude;
-    const lng = t.target_longitude;
+    if (row.type !== 'visit_location') return null;
+    if (row.location) return row as any;
+    const lat = row.target_latitude;
+    const lng = row.target_longitude;
     if (lat == null || lng == null) return null;
     return {
-      ...task,
+      ...row,
       location: {
         latitude: Number(lat),
         longitude: Number(lng),
         is_online: false,
       },
     };
-  }, [task]);
+  }, [row]);
 
   const showMapPreview = Boolean(taskForMapPreview);
 
@@ -75,16 +94,16 @@ export function TaskDetailView({ taskId, onBack, onStartExecution }: TaskDetailV
           <BackArrowIcon className="task-detail-back-icon" />
         </button>
         <div className="task-detail-view-heading">
-          <h1 className="task-detail-title">{task.title}</h1>
+          <h1 className="task-detail-title">{String(row.title ?? '')}</h1>
           <span className="task-detail-points">
-            {t('tasksComponents.points', { points: task.points })}
+            {t('tasksComponents.points', { points: Number(row.points ?? 0) })}
           </span>
         </div>
       </div>
 
       <div className="task-detail-view-body">
-        {task.description ? (
-          <div className="task-detail-description">{task.description}</div>
+        {row.description ? (
+          <div className="task-detail-description">{String(row.description)}</div>
         ) : (
           <p className="task-detail-description task-detail-description--empty">{t('tasks.detail.noDescription')}</p>
         )}
