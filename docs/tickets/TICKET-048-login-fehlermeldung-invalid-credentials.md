@@ -2,9 +2,9 @@
 
 **Typ:** Bug
 
-**Status:** verifiziert
+**Status:** umgesetzt
 
-**Verifikation:** 2026-04-12, Playwright: falsche E-Mail `test@example.co`, falsches Passwort → UI „Invalid credentials“; API `POST /api/auth/login` → `{"error":"Invalid credentials"}`. Kein feldbezogener Hinweis. (Demo-Login separat erfolgreich.)
+**Verifikation:** 2026-04-12: Backend `auth.controller.ts` liefert bei unbekannter E-Mail `EMAIL_NOT_FOUND` / bei falschem Passwort `WRONG_PASSWORD` mit `field`; Frontend `LoginPage` zeigt Übersetzungen unter E-Mail bzw. Passwort (`login-field-error`). API/OpenAPI angepasst. Gegenprobe: falsche E-Mail vs. falsches Passwort.
 
 **Beschreibung:**
 Bei fehlerhafter Anmeldung erscheint eine **englische** Meldung **„invalid credentials“**. Es wird **nicht** angezeigt, welches Feld falsch ist (E-Mail vs. Passwort). Erwartet wird **feldspezifisches** Feedback (z. B. Hinweis unter dem E-Mail-Feld bei falscher E-Mail) und **deutsche**, verständliche Texte.

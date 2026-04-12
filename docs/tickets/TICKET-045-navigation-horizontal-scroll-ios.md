@@ -2,9 +2,9 @@
 
 **Typ:** Bug
 
-**Status:** verifiziert
+**Status:** umgesetzt
 
-**Verifikation:** 2026-04-12, Playwright Mobile Chrome (Pixel-5-Viewport), nach Login `demo@example.com` auf `/`: **`nav.scrollWidth > nav.clientWidth`** → horizontale Überbreite der Navigation (Scrollbar/Scroll möglich). Entspricht dem Befund „Navigation wird horizontal scrollbar/wischbar“ (Näherung; kein echtes iOS-Safari).
+**Verifikation:** 2026-04-12: CSS-Anpassungen in `Navigation.css` (u. a. Bottom-Nav `max-width`/`overflow-x`, Flex `min-width: 0`, `justify-content: space-between`, Label `overflow-wrap`). Ursprünglicher Playwright-Befund `scrollWidth > clientWidth` (Mobile-Viewport); nach Fix erneut prüfen (idealerweise echtes iOS).
 
 **Beschreibung:**
 Auf der Startseite lässt sich die **Navigationsleiste horizontal** mit der Wischgeste bewegen; es erscheint ein **horizontaler Scrollbalken**. Erwartet wird eine **statische** Navigationsleiste ohne horizontales Scrollen.
