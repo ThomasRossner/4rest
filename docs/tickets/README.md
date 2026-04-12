@@ -44,6 +44,42 @@ Tickets aus Kundenmail und Word-Spezifikation (Spielerprofilierung). Release-Zuo
 | 038 | Requirement | Spielerprofilierung – Storystruktur | R4 | [TICKET-038-spielerprofilierung-storystruktur.md](TICKET-038-spielerprofilierung-storystruktur.md) |
 | 039 | Requirement | Spielerprofilierung – Technische Anforderungen | R4 | [TICKET-039-spielerprofilierung-technische-anforderungen.md](TICKET-039-spielerprofilierung-technische-anforderungen.md) |
 | 040 | Requirement | Spielerprofilierung – Textbausteine (4 Dyaden × 5 Skalen) | R4 | [TICKET-040-spielerprofilierung-textbausteine-dyaden.md](TICKET-040-spielerprofilierung-textbausteine-dyaden.md) |
+| 041 | Bug | Web: doppelte horizontale Scrollbalken nach Login | — | [TICKET-041-web-horizontale-scrollbalken.md](TICKET-041-web-horizontale-scrollbalken.md) |
+| 042 | Bug | HTML-`lang` passt nicht zur angezeigten Sprache | — | [TICKET-042-html-lang-attribut-falsch.md](TICKET-042-html-lang-attribut-falsch.md) |
+| 043 | Bug | Fokuskontrast Navigation zu gering (WCAG) | — | [TICKET-043-fokus-kontrast-navigation-web.md](TICKET-043-fokus-kontrast-navigation-web.md) |
+| 044 | Bug | iOS: Kontrast/Grün in Nav bei „Roots“ nach Zurück | — | [TICKET-044-roots-nav-kontrast-ios.md](TICKET-044-roots-nav-kontrast-ios.md) |
+| 045 | Bug | iOS: Navigation horizontal scrollbar/wischbar | — | [TICKET-045-navigation-horizontal-scroll-ios.md](TICKET-045-navigation-horizontal-scroll-ios.md) |
+| 046 | Bug | Quiz: kein klares Feedback bei falscher Antwort | — | [TICKET-046-quiz-falschantwort-feedback-ios.md](TICKET-046-quiz-falschantwort-feedback-ios.md) |
+| 047 | Bug | Aufgaben: Dropdowns überlagert/abgeschnitten | — | [TICKET-047-aufgaben-dropdown-overlay-responsive.md](TICKET-047-aufgaben-dropdown-overlay-responsive.md) |
+| 048 | Bug | Login: „invalid credentials“ ohne Feld-Feedback | — | [TICKET-048-login-fehlermeldung-invalid-credentials.md](TICKET-048-login-fehlermeldung-invalid-credentials.md) |
+| 049 | Bug | iOS: Responsive Teams/Wettbewerbe/Belohnungen | — | [TICKET-049-responsive-layout-teams-contests-rewards.md](TICKET-049-responsive-layout-teams-contests-rewards.md) |
+| 050 | Bug | Reload springt zur Startseite statt Unterseite | — | [TICKET-050-reload-verliert-unterseite.md](TICKET-050-reload-verliert-unterseite.md) |
+| 051 | Bug | Belohnungen einlösen: doppelte Inhalte | — | [TICKET-051-belohnungen-einloesen-doppelte-inhalte.md](TICKET-051-belohnungen-einloesen-doppelte-inhalte.md) |
+| 052 | Bug | Kamera-Fehlermeldung teils Englisch | — | [TICKET-052-kamera-fehlermeldung-teils-englisch.md](TICKET-052-kamera-fehlermeldung-teils-englisch.md) |
+| 053 | Bug | Wettbewerbe: API „Forbidden“ statt deutscher Hinweis | — | [TICKET-053-wettbewerbe-api-forbidden-deutsch.md](TICKET-053-wettbewerbe-api-forbidden-deutsch.md) |
+| 054 | Bug | Wettbewerb löschen: Dialog zeigt i18n-Key statt Name | — | [TICKET-054-wettbewerb-loeschen-dialog-i18n-key.md](TICKET-054-wettbewerb-loeschen-dialog-i18n-key.md) |
+| 055 | Bug | Dekorative Icons mit Alt-Text (Screenreader) | — | [TICKET-055-dekorative-icons-screenreader.md](TICKET-055-dekorative-icons-screenreader.md) |
+| 056 | Bug | Wettbewerb bearbeiten: Testbefund unklar (Finding 14) | — | [TICKET-056-wettbewerb-bearbeiten-testbericht-unklar.md](TICKET-056-wettbewerb-bearbeiten-testbericht-unklar.md) |
+| 057 | Bug | PDF QA: DE „Strafen“ statt Belohnungen (Rewards) | — | [TICKET-057-rewards-de-strafen-falsche-uebersetzung.md](TICKET-057-rewards-de-strafen-falsche-uebersetzung.md) |
+| 058 | Bug | PDF QA: Aufgaben-Typ-Filter mit kryptischen Einträgen | — | [TICKET-058-aufgaben-typ-dropdown-kryptische-eintraege.md](TICKET-058-aufgaben-typ-dropdown-kryptische-eintraege.md) |
+| 059 | Req. | PDF QA: Aufgaben Kurz-/Langtext CMS + Kartenlayout | — | [TICKET-059-aufgaben-kurz-langtext-cms-karten.md](TICKET-059-aufgaben-kurz-langtext-cms-karten.md) |
+| 060 | Bug | PDF QA: 3D-Wald-Hintergrund zu dunkel | — | [TICKET-060-wald-3d-hintergrund-zu-dunkel.md](TICKET-060-wald-3d-hintergrund-zu-dunkel.md) |
+| 061 | Bug | PDF QA: Waldscreen-Kacheln / Navigation inkonsistent | — | [TICKET-061-waldscreen-kacheln-navigation-inkonsistent.md](TICKET-061-waldscreen-kacheln-navigation-inkonsistent.md) |
+| 062 | Bug | PDF QA: Waldscreen Lesbarkeit (Glas-UI) | — | [TICKET-062-waldscreen-lesbarkeit-glass-ui.md](TICKET-062-waldscreen-lesbarkeit-glass-ui.md) |
+| 063 | Bug | PDF QA: Baum-Rendering vs. Kennzahl | — | [TICKET-063-wald-baeume-rendering-vs-kennzahl.md](TICKET-063-wald-baeume-rendering-vs-kennzahl.md) |
+| 064 | Bug | PDF QA: Nav „Roots/Wurzeln“ leer oder entfernen | — | [TICKET-064-navigation-roots-wurzeln-leer-oder-entfernen.md](TICKET-064-navigation-roots-wurzeln-leer-oder-entfernen.md) |
+| 065 | Bug | PDF QA: Contest verlassen zeigt i18n-Key | — | [TICKET-065-contest-verlassen-button-i18n-key.md](TICKET-065-contest-verlassen-button-i18n-key.md) |
+| 066 | Bug | PDF QA: Reward-Titel abgeschnitten | — | [TICKET-066-belohnungen-reward-titel-abgeschnitten.md](TICKET-066-belohnungen-reward-titel-abgeschnitten.md) |
+| 067 | Req. | PDF QA: Rewards Kurz-/Langbeschreibung CMS | — | [TICKET-067-rewards-kurz-langbeschreibung-cms.md](TICKET-067-rewards-kurz-langbeschreibung-cms.md) |
+| 068 | Bug | PDF QA: QR-Bonus-Button falsch im Belohnungsmarkt | — | [TICKET-068-belohnungen-qr-bonus-button-falsche-position.md](TICKET-068-belohnungen-qr-bonus-button-falsche-position.md) |
+| 069 | Bug | PDF QA: Filter Hier/Online unter Punkten | — | [TICKET-069-belohnungen-filter-hier-online-position.md](TICKET-069-belohnungen-filter-hier-online-position.md) |
+| 070 | Bug | PDF QA: Aktivierungsmail Outlook/Exchange | — | [TICKET-070-registrierung-aktivierungsmail-outlook-exchange.md](TICKET-070-registrierung-aktivierungsmail-outlook-exchange.md) |
+| 071 | Bug | PDF QA: Swipe-to-Redeem / QR-Zustände | — | [TICKET-071-belohnungen-swipe-to-redeem-qr-zustand.md](TICKET-071-belohnungen-swipe-to-redeem-qr-zustand.md) |
+| 072 | Bug | PDF QA: Belohnungsmarkt mobil zweispaltig | — | [TICKET-072-belohnungen-markt-mobile-zweispaltig.md](TICKET-072-belohnungen-markt-mobile-zweispaltig.md) |
+| 073 | Bug | PDF QA: Reward-Status-Text abgeschnitten | — | [TICKET-073-belohnungen-status-text-abgeschnitten.md](TICKET-073-belohnungen-status-text-abgeschnitten.md) |
+| 074 | Bug | PDF QA: Aufgaben-Punkte nach Update verändert | — | [TICKET-074-aufgaben-punktewerte-update-unerwartet.md](TICKET-074-aufgaben-punktewerte-update-unerwartet.md) |
+| 075 | Req. | PDF QA: Aufgaben-Start Intro + Liste unter Kategorien | — | [TICKET-075-aufgaben-startseite-intro-text-und-liste.md](TICKET-075-aufgaben-startseite-intro-text-und-liste.md) |
+| 076 | Req. | PDF QA: Globaler Karten-Button Aufgaben-Start | — | [TICKET-076-aufgaben-globaler-karten-button.md](TICKET-076-aufgaben-globaler-karten-button.md) |
 
 **Typen:** Bug | Requirement | Idee
 
@@ -51,4 +87,4 @@ Tickets aus Kundenmail und Word-Spezifikation (Spielerprofilierung). Release-Zuo
 
 **Releases:** R1 = Bugfix & Quick Wins, R2 = Aufgaben & Nutzererlebnis, R3 = Wald, R4 = Spielerprofilierung, R5 = Gamification, R6 = Design & Nomenklatur. Details: [RELEASE_PLAN.md](../RELEASE_PLAN.md).
 
-**Quellen:** Tickets 001–034: Kundenmail. Tickets 035–040: Word-Spezifikation „Roots of Impact – Spielerprofilierung“. Volltext der Spezifikation: [docs/specs/Spielerprofilierung-Vollversion.md](../specs/Spielerprofilierung-Vollversion.md).
+**Quellen:** Tickets 001–034: Kundenmail. Tickets 035–040: Word-Spezifikation „Roots of Impact – Spielerprofilierung“. Volltext der Spezifikation: [docs/specs/Spielerprofilierung-Vollversion.md](../specs/Spielerprofilierung-Vollversion.md). Tickets 041–056: Jason, explorativer Testbericht 18.03.2026 (`findings_Jason_4Rest.docx`). Tickets 057–076: PDF „Bug-tracker Vorlage Für App Qa Und Cursor Umsetzung“ (Bugs 002–021, Stand Einpflege 2026-04-12).

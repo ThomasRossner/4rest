@@ -105,6 +105,13 @@
   gap: var(--spacing-md);
 }
 
+/* Mobil: eine Spalte (lesbarere Karten / QR / Status) */
+@media (max-width: 640px) {
+  .rewards-page--list .rewards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .rewards-page--list .reward-card {
   padding: var(--spacing-md);
 }

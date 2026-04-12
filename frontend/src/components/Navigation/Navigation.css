@@ -68,6 +68,9 @@
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
   border-top: 2px solid rgba(255, 255, 255, 0.2);
   max-height: 80px;
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .navigation-bottom::before {
@@ -84,23 +87,28 @@
 
 .navigation-bottom .navigation-items {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: var(--spacing-xs) var(--spacing-sm);
   gap: var(--spacing-xs);
   position: relative;
   z-index: 1;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .navigation-bottom .navigation-item {
-  flex: 1;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 4px;
   padding: var(--spacing-xs);
   border-radius: 12px;
   background: transparent;
   border: none;
+  min-width: 0;
   min-height: 60px;
   justify-content: center;
   align-items: center;
@@ -125,10 +133,11 @@
   white-space: normal;
   text-overflow: clip;
   overflow: visible;
-  max-width: none;
+  max-width: 100%;
   line-height: 1.2;
   text-align: center;
   word-break: break-word;
+  overflow-wrap: anywhere;
   hyphens: auto;
 }
 
@@ -162,6 +171,19 @@
 
 .navigation-bottom .navigation-item:hover .navigation-item-icon {
   transform: scale(1.05);
+}
+
+/* Tastaturfokus sichtbar (Ticket 043) */
+.navigation a:focus-visible,
+.navigation button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.navigation-bottom a:focus-visible,
+.navigation-bottom button:focus-visible {
+  outline-offset: 2px;
 }
 
 .navigation-container {
@@ -781,6 +803,9 @@
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
     border-top: 2px solid rgba(255, 255, 255, 0.2);
     max-height: 80px;
+    max-width: 100%;
+    overflow-x: clip;
+    box-sizing: border-box;
     margin-top: 0;
   }
 
@@ -798,23 +823,28 @@
 
   .navigation-bottom .navigation-items {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: var(--spacing-xs) var(--spacing-sm);
     gap: var(--spacing-xs);
     position: relative;
     z-index: 1;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .navigation-bottom .navigation-item {
-    flex: 1;
+    flex: 1 1 0;
     flex-direction: column;
     gap: 4px;
     padding: var(--spacing-xs);
     border-radius: 12px;
     background: transparent;
     border: none;
+    min-width: 0;
     min-height: 60px;
     justify-content: center;
     align-items: center;
@@ -839,10 +869,11 @@
     white-space: normal;
     text-overflow: clip;
     overflow: visible;
-    max-width: none;
+    max-width: 100%;
     line-height: 1.2;
     text-align: center;
     word-break: break-word;
+    overflow-wrap: anywhere;
     hyphens: auto;
   }
 
@@ -940,7 +971,8 @@
   .navigation-bottom .navigation-items {
     padding: var(--spacing-xs) 4px;
     gap: 2px;
-    justify-content: flex-start;
+    justify-content: space-between;
+    min-width: 0;
   }
 
   .navigation-bottom .navigation-item {

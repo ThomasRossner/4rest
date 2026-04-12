@@ -32,10 +32,13 @@ test.describe('Login', () => {
     await loginPage.fillPassword('wrongpassword');
     await loginPage.clickSubmit();
 
-    // Should show error message
+    // Should show error message (global banner or field-level DE/EN)
     const error = await loginPage.getError();
     expect(error).toBeTruthy();
-    expect(error?.toLowerCase()).toContain('invalid').or.toContain('error').or.toContain('failed');
+    const lower = error!.toLowerCase();
+    expect(
+      /invalid|error|failed|konto|passwort|account|password|incorrect|nicht korrekt|ungültig/.test(lower)
+    ).toBe(true);
   });
 
   test('should show error with empty email', async ({ page }) => {

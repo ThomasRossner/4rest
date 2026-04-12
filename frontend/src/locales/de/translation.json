@@ -197,6 +197,10 @@
       "oauthNotConfigured": "Social Login ist nicht konfiguriert. Bitte E-Mail/Passwort nutzen.",
       "defaultError": "Während der Anmeldung ist ein Fehler aufgetreten.",
       "loginFailed": "Ungültige E-Mail oder ungültiges Passwort",
+      "fieldErrors": {
+        "emailNotFound": "Es gibt kein Konto mit dieser E-Mail-Adresse.",
+        "wrongPassword": "Das Passwort ist nicht korrekt."
+      },
       "resetLinkSent": "Falls ein Konto existiert, wurde ein Reset-Link gesendet.",
       "authenticating": "Anmeldung läuft…"
     },
@@ -2301,10 +2305,33 @@
       "error": "Contest konnte nicht aufgelöst werden",
       "errorMessage": "Contest konnte nicht aufgelöst werden"
     },
+    "leave": {
+      "button": "Contest verlassen",
+      "leaving": "Verlassen...",
+      "confirm": "Möchten Sie wirklich aus diesem Contest austreten?",
+      "success": "Contest verlassen",
+      "successMessage": "Sie haben den Contest verlassen",
+      "error": "Austritt fehlgeschlagen",
+      "errorMessage": "Austritt aus dem Contest konnte nicht durchgeführt werden"
+    },
     "ranking": {
       "title": "Finale Rangliste",
       "empty": "Keine Teilnehmer",
-      "rewardsAwarded": "Belohnungen wurden vergeben"
+      "rewardsAwarded": "Belohnungen wurden vergeben",
+      "timeRemaining": "Verbleibende Zeit",
+      "days": "Tage",
+      "hours": "Stunden",
+      "minutes": "Minuten",
+      "ended": "Contest ist beendet",
+      "rank": "Rang",
+      "name": "Name",
+      "points": "Punkte",
+      "you": "Du",
+      "notFound": "Contest nicht gefunden",
+      "notFoundDescription": "Der gesuchte Contest existiert nicht oder wurde gelöscht.",
+      "noParticipants": "Noch keine Teilnehmer",
+      "noParticipantsDescription": "Sei der Erste, der diesem Contest beitritt!",
+      "unnamed": "Unbenannter Contest"
     }
   },
   "employee": {

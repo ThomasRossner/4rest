@@ -197,6 +197,10 @@
       "oauthNotConfigured": "Social login is not configured. Please use email/password login.",
       "defaultError": "An error occurred during authentication.",
       "loginFailed": "Invalid email or password",
+      "fieldErrors": {
+        "emailNotFound": "There is no account for this email address.",
+        "wrongPassword": "The password is incorrect."
+      },
       "resetLinkSent": "If an account exists with this email, a password reset link has been sent.",
       "authenticating": "Authenticating…"
     },
@@ -2313,6 +2317,25 @@
       "successMessage": "You have left the contest",
       "error": "Failed to leave contest",
       "errorMessage": "Failed to leave contest"
+    },
+    "ranking": {
+      "title": "Contest Ranking",
+      "empty": "No participants",
+      "rewardsAwarded": "Rewards have been awarded",
+      "timeRemaining": "Time remaining",
+      "days": "days",
+      "hours": "hours",
+      "minutes": "minutes",
+      "ended": "Contest has ended",
+      "rank": "Rank",
+      "name": "Name",
+      "points": "Points",
+      "you": "You",
+      "notFound": "Contest not found",
+      "notFoundDescription": "The contest you are looking for does not exist or has been deleted.",
+      "noParticipants": "No participants yet",
+      "noParticipantsDescription": "Be the first to join this contest!",
+      "unnamed": "Unnamed Contest"
     }
   },
   "employee": {

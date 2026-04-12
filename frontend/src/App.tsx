@@ -13,6 +13,22 @@ import PrivacyPage from './pages/PrivacyPage/PrivacyPage';
 import PublicTaskPage from './pages/PublicTaskPage/PublicTaskPage';
 import PublicGuestLandingPage from './pages/PublicGuestLandingPage/PublicGuestLandingPage';
 
+/** Synchronisiert `<html lang>` mit i18n (Ticket 042: Sprache vs. Dokument). */
+function DocumentLangSync() {
+  useEffect(() => {
+    const apply = () => {
+      const primary = (i18n.language || 'de').split('-')[0];
+      document.documentElement.lang = primary === 'en' ? 'en' : 'de';
+    };
+    apply();
+    i18n.on('languageChanged', apply);
+    return () => {
+      i18n.off('languageChanged', apply);
+    };
+  }, []);
+  return null;
+}
+
 function ProtectedApp() {
   const { isAuthenticated, user, token } = useAuthStore();
 
@@ -76,6 +92,7 @@ function App() {
         v7_relativeSplatPath: true,
       }}
     >
+      <DocumentLangSync />
       <ToastContainer />
       <Routes>
         <Route path="/login" element={<LoginPage />} />

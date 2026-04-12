@@ -80,7 +80,11 @@ export async function login(req: Request, res: Response) {
 
     const user = await getUserByEmail(email);
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({
+        error: 'Es gibt kein Konto mit dieser E-Mail-Adresse.',
+        code: 'EMAIL_NOT_FOUND',
+        field: 'email',
+      });
     }
 
     // Check if user has no password (passwordless account)
@@ -109,7 +113,11 @@ export async function login(req: Request, res: Response) {
 
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({
+        error: 'Das Passwort ist nicht korrekt.',
+        code: 'WRONG_PASSWORD',
+        field: 'password',
+      });
     }
 
     // Check if email verification is required

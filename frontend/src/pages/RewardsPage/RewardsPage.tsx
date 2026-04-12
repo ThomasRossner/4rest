@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
@@ -8,7 +7,6 @@ import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
 import { RewardCard } from '../../components/Rewards/RewardCard';
 import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
-import { PointsBonusScanner } from '../../components/Rewards/PointsBonusScanner';
 import { RewardScanner } from '../../components/Rewards/RewardScanner';
 import { pushToast } from '../../components/Toaster/Toaster';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
@@ -50,7 +48,6 @@ function RewardsPage() {
     redemptionId: string;
     rewardTitle: string;
   } | null>(null);
-  const [showPointsBonusScanner, setShowPointsBonusScanner] = useState(false);
   const [showRewardScanner, setShowRewardScanner] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineRewards, setShowOnlineRewards] = useState(false);
@@ -201,8 +198,20 @@ function RewardsPage() {
   return (
     <div className="rewards-page rewards-page--list">
       <div className="rewards-sticky">
-      <div className="rewards-header">
-        {showOnlineRewards ? (
+        <div className="rewards-balance">
+          <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
+          <span className="rewards-balance-value">
+            {activeTeam?.totalPoints !== undefined ? (
+              <>
+                {activeTeam.totalPoints} / {points}
+              </>
+            ) : (
+              points
+            )}
+          </span>
+        </div>
+        <div className="rewards-header">
+          {showOnlineRewards ? (
             <button
               className="location-button"
               onClick={() => {
@@ -237,26 +246,9 @@ function RewardsPage() {
             </div>
           )}
         </div>
-        <div className="rewards-balance">
-          <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
-          <span className="rewards-balance-value">
-            {activeTeam?.totalPoints !== undefined ? (
-              <>
-                {activeTeam.totalPoints} / {points}
-              </>
-            ) : (
-              points
-            )}
-          </span>
-        </div>
         {user && user.role === 'rezeption' && (
           <button type="button" className="rewards-scan-button" onClick={() => setShowRewardScanner(true)}>
             {t('rewards.scanner.button')}
-          </button>
-        )}
-        {user && user.role === 'guest' && (
-          <button type="button" className="rewards-scan-button" onClick={() => setShowPointsBonusScanner(true)}>
-            {t('rewards.scanPointsBonus')}
           </button>
         )}
       </div>
@@ -305,19 +297,6 @@ function RewardsPage() {
           onClose={() => setActiveRedemption(null)}
         />
       )}
-
-      {showPointsBonusScanner &&
-        createPortal(
-          <div className="points-bonus-scanner-portal">
-            <PointsBonusScanner
-              onClose={() => setShowPointsBonusScanner(false)}
-              onSuccess={() => {
-                setShowPointsBonusScanner(false);
-              }}
-            />
-          </div>,
-          document.body
-        )}
 
       {showRewardScanner && (
         <RewardScanner

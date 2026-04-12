@@ -29,6 +29,9 @@ function LoginPage() {
     return 'login';
   });
   const [error, setError] = useState('');
+  /** Feldbezogene Login-Fehler (Ticket 048: E-Mail vs. Passwort). */
+  const [fieldErrorEmail, setFieldErrorEmail] = useState('');
+  const [fieldErrorPassword, setFieldErrorPassword] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetToken, setResetToken] = useState<string | null>(null);
@@ -191,6 +194,8 @@ function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrorEmail('');
+    setFieldErrorPassword('');
     setSuccess('');
     setLoading(true);
 
@@ -200,8 +205,15 @@ function LoginPage() {
           await login(email, password);
           navigate('/dashboard');
         } catch (loginError: any) {
+          const code = loginError?.response?.data?.code as string | undefined;
           const serverMsg = loginError?.response?.data?.error || loginError?.response?.data?.message;
-          setError(serverMsg || loginError?.message || t('login.messages.loginFailed'));
+          if (code === 'EMAIL_NOT_FOUND') {
+            setFieldErrorEmail(t('login.messages.fieldErrors.emailNotFound'));
+          } else if (code === 'WRONG_PASSWORD') {
+            setFieldErrorPassword(t('login.messages.fieldErrors.wrongPassword'));
+          } else {
+            setError(serverMsg || loginError?.message || t('login.messages.loginFailed'));
+          }
           setLoading(false);
           return;
         }
@@ -468,6 +480,7 @@ function LoginPage() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  if (mode === 'login') setFieldErrorEmail('');
                   if (mode === 'passwordless-login') {
                     setCodeSent(false);
                     setLoginCode('');
@@ -476,7 +489,14 @@ function LoginPage() {
                 required
                 disabled={codeSent && mode === 'passwordless-login'}
                 placeholder={t('login.placeholders.email')}
+                aria-invalid={mode === 'login' && !!fieldErrorEmail}
+                aria-describedby={mode === 'login' && fieldErrorEmail ? 'login-email-error' : undefined}
               />
+              {mode === 'login' && fieldErrorEmail ? (
+                <div id="login-email-error" className="login-field-error" role="alert">
+                  {fieldErrorEmail}
+                </div>
+              ) : null}
             </div>
           )}
           
@@ -487,10 +507,20 @@ function LoginPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (mode === 'login') setFieldErrorPassword('');
+                }}
                 required
                 placeholder={t('login.placeholders.password')}
+                aria-invalid={mode === 'login' && !!fieldErrorPassword}
+                aria-describedby={mode === 'login' && fieldErrorPassword ? 'login-password-error' : undefined}
               />
+              {mode === 'login' && fieldErrorPassword ? (
+                <div id="login-password-error" className="login-field-error" role="alert">
+                  {fieldErrorPassword}
+                </div>
+              ) : null}
             </div>
           )}
 

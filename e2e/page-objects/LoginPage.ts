@@ -69,6 +69,10 @@ export class LoginPage {
   }
 
   async getError(): Promise<string | null> {
+    const fieldError = this.page.locator('.login-field-error').first();
+    if (await fieldError.isVisible().catch(() => false)) {
+      return (await fieldError.textContent())?.trim() ?? null;
+    }
     const errorElement = this.page.locator('.login-error');
     if (await errorElement.isVisible()) {
       return await errorElement.textContent();

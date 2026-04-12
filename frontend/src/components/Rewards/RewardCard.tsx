@@ -266,10 +266,8 @@ export function RewardCard({
               '🎁'
             )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 className="reward-title" style={{ marginRight: 8 }}>
-              {reward.title}
-            </h3>
+          <div className="reward-title-row">
+            <h3 className="reward-title">{reward.title}</h3>
             {reward.rewardType && (
               <span
                 className="reward-type-badge"

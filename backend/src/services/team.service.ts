@@ -396,14 +396,19 @@ export async function redeemRewardFromTeam(teamId: string, rewardId: string, use
     throw new Error('User is not a member of this team');
   }
   
-  // Hole Belohnungs-Informationen
+  // Hole Belohnungs-Informationen (nur Vorlagen-Zeilen, keine deaktivierten generierten Instanzen)
   const rewardResult = await db.query(
-    'SELECT points_cost, recurrence FROM rewards WHERE id = $1 AND active = TRUE',
+    'SELECT points_cost, recurrence, generated_from_reward_id FROM rewards WHERE id = $1 AND active = TRUE',
     [rewardId]
   );
   
   if (rewardResult.rows.length === 0) {
     throw new Error('Reward not found or inactive');
+  }
+
+  const genFrom = rewardResult.rows[0].generated_from_reward_id as string | null | undefined;
+  if (genFrom != null && String(genFrom).length > 0) {
+    throw new Error('Belohnung ist nicht mehr gültig. Bitte die aktuelle Belohnung in der Liste wählen.');
   }
   
   const pointsCost = rewardResult.rows[0].points_cost;

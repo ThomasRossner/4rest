@@ -25,6 +25,21 @@ import { CategoryHubIcon } from '../../components/Tasks/CategoryHubIcon';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import './TasksPage.css';
 
+/** Nur diese Typen erscheinen im Filter (keine kaputten/DB-Testwerte im Dropdown). */
+const KNOWN_TASK_TYPES_FOR_FILTER = new Set([
+  'video',
+  'quiz',
+  'article_quiz',
+  'survey',
+  'qr',
+  'photo',
+  'visit_location',
+]);
+
+function isKnownTaskTypeForFilter(value: string): boolean {
+  return KNOWN_TASK_TYPES_FOR_FILTER.has(value);
+}
+
 // Map task types to icons and translation keys
 const getTaskTypeIcon = (type: string) => {
   switch (type) {
@@ -97,9 +112,21 @@ function TasksPage() {
   // Extract unique task types from loaded tasks as fallback
   const taskTypesFromTasks = useMemo(() => {
     if (!tasks || tasks.length === 0) return [];
-    const uniqueTypes = new Set(tasks.map((task: any) => task.type).filter(Boolean));
+    const uniqueTypes = new Set(
+      tasks
+        .map((task: any) => task.type)
+        .filter(Boolean)
+        .filter((t: string) => isKnownTaskTypeForFilter(t))
+    );
     return Array.from(uniqueTypes);
   }, [tasks]);
+
+  // Ungültigen Filter (z. B. nach Datenbereinigung) zurücksetzen
+  React.useEffect(() => {
+    if (typeFilter !== 'all' && !isKnownTaskTypeForFilter(typeFilter)) {
+      setTypeFilter('all');
+    }
+  }, [typeFilter, tasks]);
 
   // All hooks must be called before any conditional returns
   const filteredTasks = useMemo(() => {
@@ -422,11 +449,13 @@ function TasksPage() {
           options={[
             { value: 'all', label: t('tasks.filters.type.all') },
             ...(taskTypeParameters && Array.isArray(taskTypeParameters) && taskTypeParameters.length > 0
-              ? taskTypeParameters.map((param: any) => ({
-                  value: param.value,
-                  label: t(`tasks.filters.type.${param.value}`, { defaultValue: param.value }),
-                  icon: getTaskTypeIcon(param.value),
-                }))
+              ? taskTypeParameters
+                  .filter((param: any) => param?.value && isKnownTaskTypeForFilter(String(param.value)))
+                  .map((param: any) => ({
+                    value: param.value,
+                    label: t(`tasks.filters.type.${param.value}`, { defaultValue: param.value }),
+                    icon: getTaskTypeIcon(param.value),
+                  }))
               : taskTypesFromTasks.length > 0
               ? taskTypesFromTasks.map((type: string) => ({
                   value: type,
