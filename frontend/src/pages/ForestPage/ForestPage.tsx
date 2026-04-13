@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
-import ForestScene from '../../components/3d/ForestScene';
+import ForestPrototypeScene, {
+  FOREST_PROTOTYPE_TREE_GROW_STEPS,
+} from '../../components/3d/ForestPrototypeScene';
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
 import './ForestPage.css';
@@ -27,6 +29,36 @@ function ForestPage() {
     return isLikelyAndroid && (lowMem || lowCpu);
   }, [isLikelyAndroid]);
 
+  const sumForestPoints = useMemo(() => {
+    const fp = user?.forestPoints;
+    if (!fp) return 0;
+    return fp.kommunikation + fp.mensch + fp.natur + fp.ressourcen;
+  }, [user?.forestPoints]);
+  const dyad1Scale = useMemo(() => {
+    const scale = user?.playerProfile?.dyadScales?.[0];
+    const numeric = Number(scale);
+    if (!Number.isFinite(numeric)) return 2; // neutral fallback
+    return Math.max(0, Math.min(4, numeric));
+  }, [user?.playerProfile?.dyadScales]);
+  const dyad2Scale = useMemo(() => {
+    const scale = user?.playerProfile?.dyadScales?.[1];
+    const numeric = Number(scale);
+    if (!Number.isFinite(numeric)) return 2; // neutral fallback
+    return Math.max(0, Math.min(4, numeric));
+  }, [user?.playerProfile?.dyadScales]);
+
+  const forestGlobalPoints = Math.round(Math.max(0, sumForestPoints));
+  const forestMaxPoints = useMemo(
+    () =>
+      Math.max(
+        100,
+        forestGlobalPoints + 50,
+        FOREST_PROTOTYPE_TREE_GROW_STEPS + 1,
+        userPoints ?? 0
+      ),
+    [forestGlobalPoints, userPoints]
+  );
+
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
     () => api.getUserActiveTeam(),
@@ -38,6 +70,21 @@ function ForestPage() {
     () => api.getUserProgress(userId as string),
     { enabled: !!userId }
   );
+
+  const { data: forestData } = useQuery(
+    ['forest', userId],
+    () => api.getForest(),
+    { enabled: !!userId }
+  );
+
+  const plantedAtList = useMemo(() => {
+    const trees = Array.isArray(forestData?.trees) ? forestData.trees : [];
+    return trees
+      .map((tree: any) => tree?.plantedAt)
+      .filter((value: any) => typeof value === 'string' || value instanceof Date)
+      .map((value: any) => new Date(value).toISOString())
+      .sort((a: string, b: string) => new Date(a).getTime() - new Date(b).getTime());
+  }, [forestData?.trees]);
 
   useEffect(() => {
     const handleUpdate = (event: CustomEvent) => {
@@ -95,7 +142,16 @@ function ForestPage() {
               camera={{ position: [0, 12, 22], fov: 50 }}
               style={{ width: '100%', height: '100%', background: 'linear-gradient(180deg, #dff3ff 0%, #eaf8ff 45%, #f4fbff 100%)' }}
             >
-              <ForestScene plantedTrees={progress?.treesPlanted} />
+              <ForestPrototypeScene
+                globalPoints={Math.min(forestGlobalPoints, forestMaxPoints)}
+                maxPoints={forestMaxPoints}
+                treeGrowSteps={FOREST_PROTOTYPE_TREE_GROW_STEPS}
+                plantedTrees={progress?.treesPlanted ?? 0}
+                plantedAtList={plantedAtList}
+                dyad1Scale={dyad1Scale}
+                dyad2Scale={dyad2Scale}
+                lowPerformanceMode={lowPerfForestMode}
+              />
             </Canvas>
           </Suspense>
         </div>

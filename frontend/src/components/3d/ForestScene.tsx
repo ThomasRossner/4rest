@@ -7,11 +7,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-interface ForestSceneProps {
-  plantedTrees?: number;
-}
-
-function ForestScene({ plantedTrees }: ForestSceneProps) {
+function ForestScene() {
   const { data: forest, refetch: refetchForest } = useQuery('forest', () => api.getForest());
   const currentUser = useAuthStore((s) => s.user);
   const controlsRef = useRef<any>(null);
@@ -60,42 +56,9 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
     };
   }, []);
   
-  const normalizedPlantedTrees = Number.isFinite(plantedTrees as number)
-    ? Math.max(0, Math.floor(Number(plantedTrees)))
-    : null;
-
-  const { areas, flatTrees } = useMemo(() => {
-    const sourceAreas = forest?.areas || [];
-    const sourceFlatTrees = forest?.trees || [];
-
-    if (normalizedPlantedTrees === null) {
-      return { areas: sourceAreas, flatTrees: sourceFlatTrees };
-    }
-
-    const selectedTreeIds = new Set(
-      [...sourceFlatTrees]
-        .sort(
-          (a: any, b: any) =>
-            new Date(a.plantedAt || 0).getTime() - new Date(b.plantedAt || 0).getTime()
-        )
-        .slice(0, normalizedPlantedTrees)
-        .map((tree: any) => tree.id)
-    );
-
-    const limitedAreas = sourceAreas
-      .map((area: any) => {
-        const selected = (area.trees || []).filter((tree: any) => selectedTreeIds.has(tree.id));
-        return {
-          ...area,
-          trees: selected,
-        };
-      })
-      .filter((area: any) => (area.trees?.length || 0) > 0);
-
-    const limitedFlatTrees = sourceFlatTrees.filter((tree: any) => selectedTreeIds.has(tree.id));
-
-    return { areas: limitedAreas, flatTrees: limitedFlatTrees };
-  }, [forest?.areas, forest?.trees, normalizedPlantedTrees]);
+  // Extract areas and flatTrees before using them in useEffect
+  const areas = forest?.areas || [];
+  const flatTrees = forest?.trees || [];
   
   // Memoize tree world positions to avoid recalculating on every render
   const treeWorldPositionsRef = useRef<Map<string, THREE.Vector3>>(new Map());
@@ -195,16 +158,6 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
 
   return (
     <>
-      <ambientLight intensity={0.7} />
-      <hemisphereLight intensity={0.45} groundColor="#4a5d46" />
-      <directionalLight
-        position={[25, 35, 18]}
-        intensity={0.9}
-        castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-      />
-
       {/* Background ground (covers multiple areas) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[200, 200]} />

@@ -3,7 +3,23 @@ import { Sphere, useGLTF } from "@react-three/drei"
 import * as THREE from "three"
 
 // 
-export default function ControllableTree({position, rotation, trunkQuaternion, growth: trunkGrowth, maxTreeGrowSteps=10, maxTrunkGrowth=0.9, maxTwigGrowth=0.9, num }) {
+export default function ControllableTree({
+  position,
+  rotation,
+  trunkQuaternion,
+  growth: trunkGrowth,
+  sizeFactor = 1,
+  trunkHeightFactor = 1,
+  branchCountFactor = 1,
+  maxTreeGrowSteps=10,
+  maxTrunkGrowth=0.9,
+  maxTwigGrowth=0.9,
+  num
+}) {
+  const trunkAnchorScale = useMemo(
+    () => new THREE.Vector3(trunkGrowth, trunkGrowth * trunkHeightFactor, trunkGrowth),
+    [trunkGrowth, trunkHeightFactor]
+  );
 
 
     // console.log("Controller globalPoints:", globalPoints);
@@ -56,10 +72,15 @@ export default function ControllableTree({position, rotation, trunkQuaternion, g
   }, [maxTreeGrowSteps, maxTwigGrowSteps, maxTwigs]);
 
   const twigCount = useMemo(() => {
-    let count = Math.floor(Math.min(trunkGrowth*maxTreeGrowSteps, (maxTreeGrowSteps - maxTwigGrowSteps)) / (maxTreeGrowSteps - maxTwigGrowSteps) * maxTwigs);
+    const baseCount = Math.floor(
+      Math.min(trunkGrowth * maxTreeGrowSteps, (maxTreeGrowSteps - maxTwigGrowSteps)) /
+      (maxTreeGrowSteps - maxTwigGrowSteps) * maxTwigs
+    );
+    let count = Math.floor(baseCount * branchCountFactor);
+    count = Math.min(maxTwigs, count);
     // console.log(num, "twigCount:", count);
     return count;
-  }, [trunkGrowth, maxTwigGrowSteps, maxTreeGrowSteps, maxTwigs]);
+  }, [trunkGrowth, maxTwigGrowSteps, maxTreeGrowSteps, maxTwigs, branchCountFactor]);
 
 // leaf stuff
   const leafAnchors = useMemo(() => {
@@ -129,7 +150,7 @@ export default function ControllableTree({position, rotation, trunkQuaternion, g
       twigScaleMatrix.makeScale(twigGrowth, twigGrowth, twigGrowth)
 
       twigAnchorMatrix.compose(
-        twigAnchor.position.clone().multiplyScalar(trunkGrowth),
+        twigAnchor.position.clone().multiply(trunkAnchorScale),
         twigAnchor.quaternion,
         new THREE.Vector3(1,1,1)
       )
@@ -166,7 +187,7 @@ export default function ControllableTree({position, rotation, trunkQuaternion, g
     })
     leafRef.current.instanceMatrix.needsUpdate = true
     console.log("instanceMatrix", leafRef.current.instanceMatrix);
-  }, [trunkGrowth, twigRef, twigAnchors, twigCount, maxTwigs, newTwigSteps, maxTwigGrowSteps, leafRef, leafAnchors, maxLeaves, newLeafSteps, maxLeafGrowSteps, trunkQuaternion])
+  }, [trunkGrowth, trunkAnchorScale, twigRef, twigAnchors, twigCount, maxTwigs, newTwigSteps, maxTwigGrowSteps, leafRef, leafAnchors, maxLeaves, newLeafSteps, maxLeafGrowSteps, trunkQuaternion])
 
   return (
     <>
@@ -174,11 +195,15 @@ export default function ControllableTree({position, rotation, trunkQuaternion, g
         <Sphere args={[1, 16, 16]} />
         <meshStandardMaterial color="red" />
       </mesh> */}
-      <group position={position} rotation={rotation} castShadow receiveShadow>
+      <group position={position} rotation={rotation} scale={[sizeFactor, sizeFactor, sizeFactor]} castShadow receiveShadow>
         <mesh
           geometry={trunkMesh.geometry}
           material={trunkMesh.material}
-          scale={Math.max(0.06, trunkGrowth)}
+          scale={[
+            Math.max(0.06, trunkGrowth),
+            Math.max(0.06, trunkGrowth) * trunkHeightFactor,
+            Math.max(0.06, trunkGrowth),
+          ]}
           castShadow
           receiveShadow
         />
