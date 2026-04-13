@@ -190,8 +190,8 @@ export const api = {
     }
   },
 
-  async deleteUser(userId: string, hardDelete: boolean = false) {
-    const res = await apiClient.delete(`/users/${userId}${hardDelete ? '?hard=true' : ''}`);
+  async deleteUser(userId: string) {
+    const res = await apiClient.delete(`/users/${userId}`);
     return res.data;
   },
 

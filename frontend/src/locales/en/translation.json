@@ -1592,8 +1592,8 @@
         "deactivate": "Deactivate",
         "resetPassword": "Reset Password",
         "setPassword": "Set Password",
-        "deleteUser": "Delete User (Soft Delete)",
-        "hardDeleteUser": "Delete User (Hard Delete)"
+        "deleteUser": "Delete User",
+        "hardDeleteUser": "Delete User Permanently"
       },
       "messages": {
         "roleUpdated": "Role successfully updated",
@@ -1619,7 +1619,7 @@
         "confirmPasswordPlaceholder": "Re-enter password",
         "submit": "Set Password"
       },
-      "confirmSoftDelete": "Are you sure you want to delete this user? (Soft Delete - can be restored)",
+      "confirmSoftDelete": "Are you sure you want to delete this user?",
       "confirmHardDelete": "Are you sure you want to permanently delete this user? This action cannot be undone!",
       "pagination": {
         "previous": "Previous",

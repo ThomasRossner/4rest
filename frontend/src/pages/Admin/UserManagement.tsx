@@ -175,7 +175,7 @@ export function UserManagement() {
   );
 
   const deleteUserMutation = useMutation(
-    ({ userId, hardDelete }: { userId: string; hardDelete: boolean }) => api.deleteUser(userId, hardDelete),
+    ({ userId }: { userId: string }) => api.deleteUser(userId),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['users']);
@@ -225,7 +225,7 @@ export function UserManagement() {
       await Promise.all(promises);
     },
     bulkDelete: async (ids) => {
-      const promises = ids.map((userId) => api.deleteUser(userId, false));
+      const promises = ids.map((userId) => api.deleteUser(userId));
       await Promise.all(promises);
     },
     refetch: async () => {
@@ -309,12 +309,10 @@ export function UserManagement() {
     setPasswordMutation.mutate({ userId: selectedUserId, password: newPassword });
   };
 
-  const handleDeleteUser = (userId: string, hardDelete: boolean = false) => {
-    const message = hardDelete
-      ? t('admin.users.confirmHardDelete')
-      : t('admin.users.confirmSoftDelete');
+  const handleDeleteUser = (userId: string) => {
+    const message = t('admin.users.confirmHardDelete');
     if (confirm(message)) {
-      deleteUserMutation.mutate({ userId, hardDelete });
+      deleteUserMutation.mutate({ userId });
     }
   };
 
@@ -446,7 +444,7 @@ export function UserManagement() {
                         <button
                           className="admin-action-button"
                           type="button"
-                          onClick={() => handleDeleteUser(user.id, false)}
+                          onClick={() => handleDeleteUser(user.id)}
                           disabled={user.id === currentUser?.id}
                         >
                           {t('common.actions.delete')}
@@ -659,18 +657,10 @@ export function UserManagement() {
                     <>
                       <button
                         className="admin-action-button"
-                        onClick={() => handleDeleteUser(selectedUserId, false)}
+                        onClick={() => handleDeleteUser(selectedUserId)}
                         disabled={deleteUserMutation.isLoading}
                       >
                         {t('admin.users.actions.deleteUser')}
-                      </button>
-                      <button
-                        className="admin-action-button"
-                        onClick={() => handleDeleteUser(selectedUserId, true)}
-                        disabled={deleteUserMutation.isLoading}
-                        style={{ marginLeft: '0.5rem' }}
-                      >
-                        {t('admin.users.actions.hardDeleteUser')}
                       </button>
                     </>
                   )}
