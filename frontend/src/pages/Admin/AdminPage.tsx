@@ -3983,8 +3983,16 @@ function AdminPage() {
               if (!uploadedUrl || typeof uploadedUrl !== 'string') {
                 throw new Error('Video upload failed.');
               }
+              const uploadedSubtitles = uploadResponse?.video_subtitles_i18n;
               videoUrl = uploadedUrl;
-              setTaskForm((prev) => ({ ...prev, video_url: uploadedUrl }));
+              setTaskForm((prev) => ({
+                ...prev,
+                video_url: uploadedUrl,
+                video_subtitles_de:
+                  typeof uploadedSubtitles?.de === 'string' ? uploadedSubtitles.de : prev.video_subtitles_de,
+                video_subtitles_en:
+                  typeof uploadedSubtitles?.en === 'string' ? uploadedSubtitles.en : prev.video_subtitles_en,
+              }));
             } catch (error: any) {
               throw error;
             } finally {

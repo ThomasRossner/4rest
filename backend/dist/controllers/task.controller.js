@@ -252,8 +252,11 @@ export const uploadVideo = asyncHandler(async (req, res) => {
     if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
-    const videoUrl = await uploadVideoService(file);
-    res.json({ video_url: videoUrl });
+    const result = await uploadVideoService(file);
+    res.json({
+        video_url: result.videoUrl,
+        video_subtitles_i18n: result.videoSubtitlesI18n,
+    });
 });
 export const uploadThumbnail = asyncHandler(async (req, res) => {
     const file = req.file;

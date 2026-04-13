@@ -121,7 +121,10 @@ export declare function mergeGuestTaskCompletions(userId: string, guestSessionId
 /** Öffentliche URL für eine Datei im gemeinsamen Upload-Verzeichnis (gleiche Logik wie Aufgaben-Fotos/Videos). */
 export declare function publicUploadFileUrl(filename: string): string;
 export declare function uploadPhoto(file: Express.Multer.File): Promise<string>;
-export declare function uploadVideo(file: Express.Multer.File): Promise<string>;
+export declare function uploadVideo(file: Express.Multer.File): Promise<{
+    videoUrl: string;
+    videoSubtitlesI18n: Record<string, string> | null;
+}>;
 export declare function uploadThumbnail(file: Express.Multer.File): Promise<string>;
 /**
  * Approve a photo task - awards points and adds photo to gallery

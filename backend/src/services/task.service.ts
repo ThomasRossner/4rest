@@ -14,6 +14,7 @@ import { getUserActiveTeam, getTeamMembers } from './team.service.js';
 import fs from 'fs';
 import { generateQrToken } from './user-qr.service.js';
 import { emailService } from './email.service.js';
+import { generateAndStoreVideoSubtitles } from './video-subtitle.service.js';
 
 /** Für errorHandler: name === 'ValidationError' → HTTP 400 mit message */
 function clientValidationError(message: string): Error {
@@ -1782,8 +1783,20 @@ export async function uploadPhoto(file: Express.Multer.File): Promise<string> {
   return publicUploadFileUrl(file.filename);
 }
 
-export async function uploadVideo(file: Express.Multer.File): Promise<string> {
-  return publicUploadFileUrl(file.filename);
+export async function uploadVideo(
+  file: Express.Multer.File
+): Promise<{ videoUrl: string; videoSubtitlesI18n: Record<string, string> | null }> {
+  const videoUrl = publicUploadFileUrl(file.filename);
+  try {
+    const subtitles = await generateAndStoreVideoSubtitles({
+      videoFilePath: file.path,
+      videoFilename: file.filename,
+    });
+    return { videoUrl, videoSubtitlesI18n: subtitles };
+  } catch (error) {
+    console.error('[VIDEO SUBTITLES] Auto-generation failed for upload:', file.filename, error);
+    return { videoUrl, videoSubtitlesI18n: null };
+  }
 }
 
 export async function uploadThumbnail(file: Express.Multer.File): Promise<string> {
