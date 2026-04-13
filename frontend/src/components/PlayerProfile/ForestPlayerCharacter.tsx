@@ -29,6 +29,7 @@ export default function ForestPlayerCharacter({ user, onOpenMore, variant = 'def
   const display = getForestDisplayName(user.name, profile);
   const showCta =
     variant !== 'overlay' && (profile?.status === 'completed' || profile?.status === 'skipped');
+  const showHint = profile?.status === 'pending';
   const rootClass =
     variant === 'overlay' ? 'forest-player-character forest-player-character--overlay' : 'forest-player-character';
 
@@ -53,9 +54,9 @@ export default function ForestPlayerCharacter({ user, onOpenMore, variant = 'def
         <button type="button" className="forest-player-character__more" onClick={onOpenMore}>
           {t('playerProfile.moreAbout.shortCta')}
         </button>
-      ) : (
+      ) : showHint ? (
         <p className="forest-player-character__hint">{t('playerProfile.forest.undecidedHint')}</p>
-      )}
+      ) : null}
     </div>
   );
 }
