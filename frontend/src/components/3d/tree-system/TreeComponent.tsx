@@ -22,6 +22,7 @@ export interface AnimatedTreeProps {
   growthPoints?: number; // From database - maps to animation state
   maxVisibleLeaves?: number; // Limit leaves for performance (default: all)
   disableLeafShadows?: boolean; // Disable shadows on leaves for performance
+  baseScale?: number; // Base tree size from DB
   [key: string]: any;
 }
 
@@ -40,6 +41,7 @@ const TreeComponent = React.forwardRef<TreeComponentRef, AnimatedTreeProps>((pro
     growthPoints,
     maxVisibleLeaves,
     disableLeafShadows = true, // Default to true for performance
+    baseScale = 1,
     ...otherProps
   } = props;
 
@@ -132,7 +134,7 @@ const TreeComponent = React.forwardRef<TreeComponentRef, AnimatedTreeProps>((pro
   }
 
   return (
-    <group position={position} {...otherProps}>
+    <group position={position} scale={[baseScale, baseScale, baseScale]} {...otherProps}>
       <primitive 
         key={trunk.name}
         object={trunk}

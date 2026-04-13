@@ -95,7 +95,7 @@ function ForestPage() {
               camera={{ position: [0, 12, 22], fov: 50 }}
               style={{ width: '100%', height: '100%', background: 'linear-gradient(180deg, #dff3ff 0%, #eaf8ff 45%, #f4fbff 100%)' }}
             >
-              <ForestScene />
+              <ForestScene plantedTrees={progress?.treesPlanted} />
             </Canvas>
           </Suspense>
         </div>

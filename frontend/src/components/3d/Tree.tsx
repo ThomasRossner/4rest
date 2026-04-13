@@ -73,6 +73,7 @@ function AnimatedTreeModel({ position, growthPoints, size, maxVisibleLeaves }: T
       <TreeComponent
         position={position}
         growthPoints={growthPoints}
+        baseScale={size ?? 1}
         modelPath="/models/twigLeafTree.glb"
         maxVisibleLeaves={maxVisibleLeaves}
         disableLeafShadows={true}

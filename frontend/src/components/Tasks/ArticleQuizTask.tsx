@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
@@ -18,6 +18,9 @@ interface ArticleQuizTaskProps {
 export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: ArticleQuizTaskProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [verified, setVerified] = useState<Record<number, boolean>>({});
+  const [lockedUntilByQuestion, setLockedUntilByQuestion] = useState<Record<number, string>>({});
+  const [tick, setTick] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
@@ -33,6 +36,25 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
         : api.getTask(taskId),
     { enabled: !!taskId }
   );
+
+  const { data: quizLockPayload } = useQuery(
+    ['quizLocks', taskId],
+    () => api.getQuizQuestionLocks(taskId),
+    { enabled: variant === 'default' && !!taskId }
+  );
+
+  useEffect(() => {
+    setLockedUntilByQuestion({});
+  }, [taskId]);
+
+  useEffect(() => {
+    if (variant !== 'default' || !quizLockPayload?.locks) return;
+    const next: Record<number, string> = {};
+    for (const row of quizLockPayload.locks) {
+      next[row.questionIndex] = row.lockedUntil;
+    }
+    setLockedUntilByQuestion(next);
+  }, [quizLockPayload, variant]);
 
   const completeMutation = useMutation(
     (data: { quiz_answers: unknown }) =>
@@ -76,15 +98,90 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
     }
   );
 
+  const checkMutation = useMutation(
+    (params: { questionIndex: number; answerId: string }) =>
+      api.submitQuizAnswer(taskId, params.questionIndex, params.answerId),
+    {
+      onSuccess: (data, variables) => {
+        if (data.status === 'correct') {
+          setVerified((v) => ({ ...v, [variables.questionIndex]: true }));
+          setLockedUntilByQuestion((prev) => {
+            const n = { ...prev };
+            delete n[variables.questionIndex];
+            return n;
+          });
+          return;
+        }
+        if (data.lockedUntil) {
+          setLockedUntilByQuestion((prev) => ({
+            ...prev,
+            [variables.questionIndex]: data.lockedUntil!,
+          }));
+        }
+        const until = data.lockedUntil ? new Date(data.lockedUntil) : null;
+        const minutes = until
+          ? Math.max(1, Math.ceil((until.getTime() - Date.now()) / 60000))
+          : 1;
+        if (data.status === 'locked' || data.status === 'wrong') {
+          showToast({
+            type: 'error',
+            title: t('tasksComponents.quiz.wrongTitle'),
+            message:
+              data.status === 'locked'
+                ? t('tasksComponents.quiz.lockedBody', { minutes })
+                : t('tasksComponents.quiz.wrongBody', { minutes }),
+          });
+        }
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.error || err?.message || '';
+        showToast({
+          type: 'error',
+          title: t('tasksComponents.quiz.errorTitle'),
+          message: String(msg),
+        });
+      },
+    }
+  );
+
   if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
   if (!task) return <div>{t('tasksComponents.notFound')}</div>;
 
   const questions = normalizeQuizQuestionsForDisplay(task.quiz_questions || []);
   const currentQuestion = questions[currentQuestionIndex];
+  const selectedId = currentQuestion ? answers[currentQuestion.id] : undefined;
+  const isCurrentVerified = verified[currentQuestionIndex] === true;
+  const allVerified = questions.every((_, i) => verified[i]);
   const allAnswered = questions.every((question) => answers[question.id]);
+  const lockUntil = lockedUntilByQuestion[currentQuestionIndex];
+
+  useEffect(() => {
+    if (!lockUntil || new Date(lockUntil).getTime() <= Date.now()) return;
+    const id = window.setInterval(() => setTick((x) => x + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [lockUntil]);
+
+  const minutesLeft = useMemo(() => {
+    if (!lockUntil) return 0;
+    const ms = new Date(lockUntil).getTime() - Date.now();
+    return Math.max(0, Math.ceil(ms / 60000));
+  }, [lockUntil, tick]);
 
   const handleAnswer = (questionId: string, optionId: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+    const idx = questions.findIndex((q) => q.id === questionId);
+    if (idx >= 0) {
+      setVerified((prev) => {
+        const next = { ...prev };
+        delete next[idx];
+        return next;
+      });
+    }
+  };
+
+  const handleCheckAnswer = () => {
+    if (!currentQuestion || !selectedId) return;
+    checkMutation.mutate({ questionIndex: currentQuestionIndex, answerId: selectedId });
   };
 
   const handleSubmit = () => {
@@ -183,6 +280,9 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
     );
   }
 
+  const lockActive =
+    lockUntil && new Date(lockUntil).getTime() > Date.now() && !isCurrentVerified;
+
   return (
     <div className="task-container">
       <div className="task-header">
@@ -201,6 +301,12 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
           })}
         </div>
 
+        {lockActive && (
+          <p className="quiz-lock-hint" role="status">
+            {t('tasksComponents.quiz.lockCountdown', { minutes: minutesLeft })}
+          </p>
+        )}
+
         {currentQuestion && (
           <div className="question-card">
             <p className="question-text">{currentQuestion.question}</p>
@@ -212,6 +318,7 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
                     answers[currentQuestion.id] === option.id ? 'selected' : ''
                   }`}
                   onClick={() => handleAnswer(currentQuestion.id, option.id)}
+                  disabled={isCurrentVerified || !!lockActive}
                 >
                   {option.label}
                 </button>
@@ -227,19 +334,33 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
           >
             {t('tasksComponents.article_quiz.previous')}
           </button>
-          {currentQuestionIndex < questions.length - 1 ? (
+
+          {!isCurrentVerified && (
+            <button
+              onClick={handleCheckAnswer}
+              disabled={!selectedId || !!lockActive || checkMutation.isLoading}
+              className="submit-button"
+            >
+              {checkMutation.isLoading
+                ? t('tasksComponents.quiz.checking')
+                : t('tasksComponents.quiz.checkAnswer')}
+            </button>
+          )}
+
+          {isCurrentVerified && currentQuestionIndex < questions.length - 1 && (
             <button
               onClick={() =>
                 setCurrentQuestionIndex((i) => Math.min(questions.length - 1, i + 1))
               }
-              disabled={!answers[currentQuestion.id]}
             >
               {t('tasksComponents.article_quiz.next')}
             </button>
-          ) : (
+          )}
+
+          {isCurrentVerified && currentQuestionIndex === questions.length - 1 && (
             <button
               onClick={handleSubmit}
-              disabled={!allAnswered || completeMutation.isLoading}
+              disabled={!allVerified || !allAnswered || completeMutation.isLoading}
               className="submit-button"
             >
               {completeMutation.isLoading

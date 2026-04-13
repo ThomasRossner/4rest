@@ -59,6 +59,13 @@ const getTaskTypeIcon = (type: string) => {
 
 const CATEGORY_ORDER = [...FOREST_CATEGORY_KEYS, OTHER_FOREST_CATEGORY_KEY];
 
+function formatLockRemainingMinutes(lockedUntilIso: string): number {
+  const untilTs = new Date(lockedUntilIso).getTime();
+  if (!Number.isFinite(untilTs)) return 0;
+  const remainingMs = Math.max(0, untilTs - Date.now());
+  return Math.max(0, Math.ceil(remainingMs / 60000));
+}
+
 function TasksPage() {
   const { categoryKey: categoryKeyParam } = useParams<{ categoryKey: string }>();
   const navigate = useNavigate();
@@ -539,13 +546,22 @@ function TasksPage() {
             const isLocked = task.is_available === false;
             const isCompleted = !!task.completed && task.verification_status !== 'pending';
             const isValidating = task.verification_status === 'pending';
+            const quizLockedUntil =
+              typeof task.quiz_locked_until === 'string' ? task.quiz_locked_until : null;
+            const isQuizLockedByWrongAnswer =
+              !!quizLockedUntil &&
+              !isCompleted &&
+              new Date(quizLockedUntil).getTime() > Date.now();
+            const quizLockRemainingMinutes = isQuizLockedByWrongAnswer
+              ? formatLockRemainingMinutes(quizLockedUntil)
+              : 0;
             const previewText = descriptionPreviewPlain(task.teaser ?? task.description, 60);
             return (
             <div
               key={task.id}
               role="button"
               tabIndex={0}
-              className={`task-card task-card--list-tile ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''}`}
+              className={`task-card task-card--list-tile ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''} ${isQuizLockedByWrongAnswer ? 'task-card-quiz-locked' : ''}`}
               onClick={() => openTaskDetail(task)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -585,6 +601,11 @@ function TasksPage() {
                       🔒
                     </span>
                   )}
+                  {isQuizLockedByWrongAnswer && (
+                    <span className="task-locked-badge task-locked-badge--tile" title={t('tasks.detail.quizLockedHint')}>
+                      ⏱
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -592,6 +613,11 @@ function TasksPage() {
               <h3 className="task-title task-title--tile-middle">{task.title}</h3>
             </div>
             <div className="task-tile-zone task-tile-zone--bottom">
+              {isQuizLockedByWrongAnswer && (
+                <p className="task-tile-locked-hint">
+                  {t('tasks.detail.quizLockedRemaining', { minutes: quizLockRemainingMinutes })}
+                </p>
+              )}
               {isLocked ? (
                 <p className="task-tile-locked-hint">{t('tasks.prerequisites.unlockMessage')}</p>
               ) : null}

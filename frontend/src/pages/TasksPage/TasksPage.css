@@ -890,6 +890,24 @@
   border-radius: inherit;
 }
 
+.task-card-quiz-locked {
+  border: 2px solid #f97316;
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  position: relative;
+}
+
+.task-card-quiz-locked::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(251, 146, 60, 0.1) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
 .task-card-completed {
   opacity: 0.75;
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);

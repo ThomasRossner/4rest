@@ -209,8 +209,15 @@ export async function getAllTasks(
   if (userId) {
     // Add verification_status and completed status
     // A task is only completed if it has a user_task entry AND verification_status is not 'pending'
-    select += `, ut.verification_status, (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed`;
+    select += `, ut.verification_status, (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed, ql.max_locked_until AS quiz_locked_until`;
     from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex.current++}`;
+    params.push(userId);
+    from += ` LEFT JOIN (
+      SELECT task_id, MAX(locked_until) AS max_locked_until
+      FROM quiz_question_locks
+      WHERE user_id = $${paramIndex.current++} AND locked_until > NOW()
+      GROUP BY task_id
+    ) ql ON ql.task_id = t.id`;
     params.push(userId);
   }
 
@@ -1285,8 +1292,10 @@ export async function submitQuizAnswer(
     throw new Error('Task not found');
   }
   const row = tr.rows[0];
-  if (row.type !== 'quiz') {
-    throw new Error('Quiz answer check is only available for quiz tasks');
+  const supportsQuizLock =
+    row.type === 'quiz' || row.type === 'video' || row.type === 'article_quiz';
+  if (!supportsQuizLock) {
+    throw new Error('Quiz answer check is only available for quiz-capable tasks');
   }
 
   const questions = parseJsonPayload(row.quiz_questions);
@@ -1362,7 +1371,8 @@ export async function getActiveQuizQuestionLocks(
   if (tr.rows.length === 0) {
     throw new Error('Task not found');
   }
-  if (tr.rows[0].type !== 'quiz') {
+  const type = tr.rows[0].type;
+  if (type !== 'quiz' && type !== 'video' && type !== 'article_quiz') {
     return [];
   }
   const res = await db.query<{ question_index: number; locked_until: Date }>(

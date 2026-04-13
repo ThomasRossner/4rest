@@ -71,7 +71,7 @@ export function TaskDetailView({
 
   const task = (fetchedTask as Record<string, unknown> | undefined) ?? listTask ?? undefined;
   const taskType = String((task as Record<string, unknown> | undefined)?.type ?? '');
-  const isQuizLikeTask = taskType === 'quiz' || taskType === 'article_quiz';
+  const isQuizLikeTask = taskType === 'quiz' || taskType === 'article_quiz' || taskType === 'video';
 
   const quizLocksQuery = useQuery(
     ['quizLocks', taskId, 'detail'],
