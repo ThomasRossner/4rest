@@ -454,6 +454,7 @@
     "qr": {
       "title": "QR Code for {{title}}",
       "instruction": "Show this QR code to an administrator for verification",
+      "codeLabel": "Redemption code",
       "status": "Status: {{status}}",
       "statuses": {
         "pending": "Pending verification",

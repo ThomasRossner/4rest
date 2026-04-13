@@ -5,11 +5,22 @@ import './SwipeToRedeem.css';
 type SwipeToRedeemProps = {
   rewardTitle: string;
   pointsCost: number;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onConfirm: () => void | Promise<void>;
+  onCancel?: () => void;
+  inline?: boolean;
+  compact?: boolean;
+  label?: string;
 };
 
-export function SwipeToRedeem({ rewardTitle, pointsCost, onConfirm, onCancel }: SwipeToRedeemProps) {
+export function SwipeToRedeem({
+  rewardTitle,
+  pointsCost,
+  onConfirm,
+  onCancel,
+  inline = false,
+  compact = false,
+  label,
+}: SwipeToRedeemProps) {
   const { t } = useTranslation();
   const [swipeProgress, setSwipeProgress] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -48,7 +59,10 @@ export function SwipeToRedeem({ rewardTitle, pointsCost, onConfirm, onCancel }: 
     if (progress >= SWIPE_THRESHOLD) {
       setIsConfirmed(true);
       setIsSwiping(false);
-      onConfirm();
+      Promise.resolve(onConfirm()).catch(() => {
+        setIsConfirmed(false);
+        setSwipeProgress(0);
+      });
     }
   };
 
@@ -113,69 +127,88 @@ export function SwipeToRedeem({ rewardTitle, pointsCost, onConfirm, onCancel }: 
 
   const progressPercentage = Math.min(swipeProgress * 100, 100);
 
-  return (
-    <div className="swipe-to-redeem-overlay" onClick={onCancel}>
-      <div className="swipe-to-redeem-content" onClick={(e) => e.stopPropagation()}>
+  const body = (
+    <div className={`swipe-to-redeem-content ${inline ? 'swipe-to-redeem-content--inline' : ''} ${compact ? 'swipe-to-redeem-content--compact' : ''}`}>
+      {!compact && (
         <h2 className="swipe-to-redeem-title">
           {t('rewards.swipe.title') || 'Redeem Reward'}
         </h2>
+      )}
+      {label && <p className="swipe-to-redeem-inline-label">{label}</p>}
+      {!compact && (
         <div className="swipe-to-redeem-info">
           <p className="swipe-to-redeem-reward">{rewardTitle}</p>
           <p className="swipe-to-redeem-cost">
             {t('rewards.swipe.cost', { count: pointsCost }) || `${pointsCost} points`}
           </p>
         </div>
+      )}
+      {!compact && (
         <p className="swipe-to-redeem-instruction">
           {t('rewards.swipe.instruction') || 'Swipe right to confirm redemption'}
         </p>
+      )}
 
+      {!compact && (
         <div className="swipe-to-redeem-warning">
           <span className="swipe-to-redeem-warning-icon">⚠️</span>
           <span className="swipe-to-redeem-warning-text">
             {t('rewards.swipe.warning') || 'This QR code is temporary. Please redeem it immediately in front of the person.'}
           </span>
         </div>
+      )}
 
+      <div
+        ref={containerRef}
+        className="swipe-to-redeem-container"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleEnd}
+      >
         <div
-          ref={containerRef}
-          className="swipe-to-redeem-container"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleEnd}
+          className="swipe-to-redeem-slider"
+          style={{ transform: `translateX(${progressPercentage}%)` }}
         >
-          <div
-            className="swipe-to-redeem-slider"
-            style={{ transform: `translateX(${progressPercentage}%)` }}
-          >
-            <div className="swipe-to-redeem-slider-content">
-              <span className="swipe-to-redeem-slider-icon">
-                {isConfirmed ? '✓' : '→'}
-              </span>
-            </div>
-          </div>
-          <div className="swipe-to-redeem-track">
-            <div
-              className="swipe-to-redeem-progress"
-              style={{ width: `${progressPercentage}%` }}
-            />
-            <div className="swipe-to-redeem-track-text">
-              {progressPercentage >= SWIPE_THRESHOLD * 100
-                ? t('rewards.swipe.releasing') || 'Release to confirm'
-                : t('rewards.swipe.swipeRight') || 'Swipe right →'}
-            </div>
+          <div className="swipe-to-redeem-slider-content">
+            <span className="swipe-to-redeem-slider-icon">
+              {isConfirmed ? '✓' : '→'}
+            </span>
           </div>
         </div>
+        <div className="swipe-to-redeem-track">
+          <div
+            className="swipe-to-redeem-progress"
+            style={{ width: `${progressPercentage}%` }}
+          />
+          <div className="swipe-to-redeem-track-text">
+            {progressPercentage >= SWIPE_THRESHOLD * 100
+              ? t('rewards.swipe.releasing') || 'Release to confirm'
+              : t('rewards.swipe.swipeRight') || 'Swipe right →'}
+          </div>
+        </div>
+      </div>
 
+      {!inline && (
         <div className="swipe-to-redeem-actions">
           <button className="swipe-to-redeem-cancel" onClick={onCancel}>
             {t('rewards.swipe.cancel') || 'Cancel'}
           </button>
         </div>
-      </div>
+      )}
+    </div>
+  );
+
+  if (inline) {
+    return <div className="swipe-to-redeem-inline">{body}</div>;
+  }
+
+  return (
+    <div className="swipe-to-redeem-overlay" onClick={onCancel}>
+      <div onClick={(e) => e.stopPropagation()}>{body}</div>
     </div>
   );
 }

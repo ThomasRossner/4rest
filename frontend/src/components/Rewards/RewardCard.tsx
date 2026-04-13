@@ -51,7 +51,6 @@ export function RewardCard({
   hasActiveRedemption = false,
 }: RewardCardProps) {
   const { t } = useTranslation();
-  const [pendingUseTeamPoints, setPendingUseTeamPoints] = useState<boolean | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
 
   const cost = reward.pointsCost;
@@ -158,25 +157,25 @@ export function RewardCard({
         {showRedeemButtons ? (
           <div className={`reward-footer reward-footer--buttons`}>
             <div className="reward-redeem-buttons">
-              {canRedeemPersonal && (
-                <button
-                  type="button"
-                  className="reward-redeem-btn"
-                  disabled={isRedeeming || hasActiveRedemption}
-                  onClick={() => setPendingUseTeamPoints(false)}
-                >
-                  {t('rewards.card.swipeRedeemPersonal', { count: cost })}
-                </button>
+              {canRedeemPersonal && !hasActiveRedemption && (
+                <SwipeToRedeem
+                  rewardTitle={reward.title}
+                  pointsCost={cost}
+                  inline
+                  compact
+                  label={t('rewards.card.swipeRedeemPersonal', { count: cost })}
+                  onConfirm={() => handleRedeem(false)}
+                />
               )}
-              {canRedeemTeam && (
-                <button
-                  type="button"
-                  className="reward-redeem-btn reward-redeem-btn--team"
-                  disabled={isRedeeming || hasActiveRedemption}
-                  onClick={() => setPendingUseTeamPoints(true)}
-                >
-                  {t('rewards.card.swipeRedeemTeam', { count: cost })}
-                </button>
+              {canRedeemTeam && !hasActiveRedemption && (
+                <SwipeToRedeem
+                  rewardTitle={reward.title}
+                  pointsCost={cost}
+                  inline
+                  compact
+                  label={t('rewards.card.swipeRedeemTeam', { count: cost })}
+                  onConfirm={() => handleRedeem(true)}
+                />
               )}
               {hasActiveRedemption && (
                 <p className="reward-redeem-blocked">{t('rewards.card.singleQrOpen')}</p>
@@ -189,17 +188,6 @@ export function RewardCard({
           </div>
         )}
       </>
-      {pendingUseTeamPoints !== null && !hasActiveRedemption && (
-        <SwipeToRedeem
-          rewardTitle={reward.title}
-          pointsCost={cost}
-          onCancel={() => setPendingUseTeamPoints(null)}
-          onConfirm={async () => {
-            await handleRedeem(Boolean(pendingUseTeamPoints));
-            setPendingUseTeamPoints(null);
-          }}
-        />
-      )}
     </div>
   );
 }

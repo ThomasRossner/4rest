@@ -21,6 +21,34 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
+.swipe-to-redeem-inline {
+  width: 100%;
+}
+
+.swipe-to-redeem-content--inline {
+  box-shadow: none;
+  padding: 0;
+  max-width: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.swipe-to-redeem-content--compact .swipe-to-redeem-container {
+  height: 48px;
+  margin-bottom: 0;
+}
+
+.swipe-to-redeem-content--compact .swipe-to-redeem-track-text {
+  font-size: 0.9rem;
+}
+
+.swipe-to-redeem-inline-label {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-light, #6b7280);
+}
+
 .swipe-to-redeem-title {
   font-size: 1.5rem;
   font-weight: 600;

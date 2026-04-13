@@ -175,8 +175,15 @@ export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpda
           <div className="qr-code-container">
             <QRCodeSVG value={qrToken} size={256} level="M" includeMargin />
           </div>
+          <p className="qr-code-token-label">{t('rewards.qr.codeLabel')}</p>
+          <p className="qr-code-token-value">{String(qrToken).toUpperCase()}</p>
           <p className="qr-code-status">{t('rewards.qr.status', { status: t(`rewards.qr.statuses.${status}`) })}</p>
           <p className="qr-code-warning">{t('rewards.qr.warning')}</p>
+          {onClose && (
+            <button type="button" className="qr-code-cancel" onClick={onClose}>
+              {t('common.actions.cancel')}
+            </button>
+          )}
         </div>
       )}
 

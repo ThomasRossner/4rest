@@ -2,7 +2,7 @@
 
 **Typ:** Bug
 
-**Status:** umgesetzt
+**Status:** zu prüfen
 
 **Verifikation:** 2026-04-12: Backend `auth.controller.ts` liefert bei unbekannter E-Mail `EMAIL_NOT_FOUND` / bei falschem Passwort `WRONG_PASSWORD` mit `field`; Frontend `LoginPage` zeigt Übersetzungen unter E-Mail bzw. Passwort (`login-field-error`). API/OpenAPI angepasst. Gegenprobe: falsche E-Mail vs. falsches Passwort.
 
