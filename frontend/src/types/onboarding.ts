@@ -29,5 +29,6 @@ export interface OnboardingConfig {
   introBodyDe: string;
   /** @deprecated legacy fallback */
   introBodyEn: string;
+  characterIcons?: Record<string, string | null>;
   steps: OnboardingStepConfig[];
 }

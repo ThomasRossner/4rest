@@ -36,6 +36,11 @@ export interface OnboardingConfig {
   /** @deprecated legacy fallback for old clients/configs */
   introBodyEn: string;
   steps: OnboardingStepConfig[];
+  /**
+   * Spielercharakter-Icons: Keys wie `dyad_1`, `dyad_2`, … sowie optionale Fallbacks
+   * `pending`, `skipped`, `fallback`.
+   */
+  characterIcons?: Record<string, string | null>;
 }
 
 export const DEFAULT_ONBOARDING_CONFIG: OnboardingConfig = {
@@ -59,6 +64,7 @@ export const DEFAULT_ONBOARDING_CONFIG: OnboardingConfig = {
     'In dieser Welt steckt mehr, als man auf den ersten Blick sieht. Antworte auf ein paar kurze Fragen – und wir verraten dir, welches Wesen tief in dir schlummert.',
   introBodyEn:
     'There is more to this world than meets the eye. Answer a few short questions and we will tell you which creature slumbers within you.',
+  characterIcons: {},
   steps: [
     {
       scenarioDe:
@@ -198,6 +204,20 @@ export function validateOnboardingConfig(raw: unknown): OnboardingConfig {
     });
   }
 
+  const characterIconsRaw = o.characterIcons;
+  const characterIcons: Record<string, string | null> = {};
+  if (characterIconsRaw && typeof characterIconsRaw === 'object' && !Array.isArray(characterIconsRaw)) {
+    for (const [k, v] of Object.entries(characterIconsRaw as Record<string, unknown>)) {
+      const key = String(k || '').trim().slice(0, 120);
+      if (!key) continue;
+      if (v === null || v === undefined || v === '') {
+        characterIcons[key] = null;
+      } else {
+        characterIcons[key] = String(v).slice(0, 2000);
+      }
+    }
+  }
+
   return {
     version: 1,
     dyadCount,
@@ -207,6 +227,7 @@ export function validateOnboardingConfig(raw: unknown): OnboardingConfig {
     introTitleEn: introSlides[0]?.titleEn ?? DEFAULT_ONBOARDING_CONFIG.introTitleEn,
     introBodyDe: introSlides[0]?.bodyDe ?? DEFAULT_ONBOARDING_CONFIG.introBodyDe,
     introBodyEn: introSlides[0]?.bodyEn ?? DEFAULT_ONBOARDING_CONFIG.introBodyEn,
+    characterIcons,
     steps: normalized,
   };
 }

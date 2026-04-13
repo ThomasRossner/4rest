@@ -1428,7 +1428,16 @@
       "loadError": "Konfiguration konnte nicht geladen werden.",
       "saveError": "Speichern fehlgeschlagen.",
       "uploadError": "Upload fehlgeschlagen.",
-      "invalidStructure": "Ungültige Struktur (max. 32 Dyaden, 16 Fragen pro Dyade und höchstens 512 Fragen insgesamt)."
+      "invalidStructure": "Ungültige Struktur (max. 32 Dyaden, 16 Fragen pro Dyade und höchstens 512 Fragen insgesamt).",
+      "characterIconsTitle": "Spielercharakter-Icons",
+      "characterIconsHint": "Eigene Bilder für Dyaden und Fallbacks hochladen. Werden im Profil und Wald statt Emoji angezeigt.",
+      "characterIconDyad": "Dyade {{dyad}}",
+      "characterIconPending": "Fallback: offen",
+      "characterIconSkipped": "Fallback: übersprungen",
+      "characterIconFallback": "Fallback: allgemein",
+      "uploadCharacterIcon": "Icon hochladen",
+      "clearCharacterIcon": "Icon entfernen",
+      "noImage": "Kein Bild"
     },
     "surveyAnalytics": {
       "title": "Umfrage-Analysen",

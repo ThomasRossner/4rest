@@ -55,6 +55,8 @@ export default function OnboardingManage() {
   const [steps, setSteps] = useState<OnboardingStepConfig[]>([]);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [uploadingIntroIndex, setUploadingIntroIndex] = useState<number | null>(null);
+  const [characterIcons, setCharacterIcons] = useState<Record<string, string | null>>({});
+  const [uploadingCharacterKey, setUploadingCharacterKey] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,6 +78,7 @@ export default function OnboardingManage() {
           },
         ]);
       }
+      setCharacterIcons(c.characterIcons ?? {});
       setSteps(c.steps.length ? [...c.steps] : resizeSteps([], c.dyadCount * c.questionsPerDyad));
     } catch (e: unknown) {
       setError(t('admin.onboarding.loadError'));
@@ -111,11 +114,13 @@ export default function OnboardingManage() {
         introTitleEn: introSlides[0]?.titleEn ?? '',
         introBodyDe: introSlides[0]?.bodyDe ?? '',
         introBodyEn: introSlides[0]?.bodyEn ?? '',
+        characterIcons,
         steps,
       };
       const saved = (await api.putAdminOnboardingConfig(payload)) as OnboardingConfig;
       setDyadCount(saved.dyadCount);
       setQuestionsPerDyad(saved.questionsPerDyad);
+      setCharacterIcons(saved.characterIcons ?? {});
       setSteps([...saved.steps]);
     } catch (e: unknown) {
       const msg =
@@ -167,6 +172,30 @@ export default function OnboardingManage() {
       setUploadingIntroIndex(null);
     }
   };
+
+  const uploadCharacterIcon = async (key: string, file: File | null) => {
+    if (!file) return;
+    setUploadingCharacterKey(key);
+    setError(null);
+    try {
+      const { url } = await api.uploadOnboardingCharacterIcon(file);
+      setCharacterIcons((prev) => ({ ...prev, [key]: url }));
+    } catch {
+      setError(t('admin.onboarding.uploadError'));
+    } finally {
+      setUploadingCharacterKey(null);
+    }
+  };
+
+  const characterKeys = Array.from({ length: dyadCount }, (_, idx) => ({
+    key: `dyad_${idx + 1}`,
+    label: t('admin.onboarding.characterIconDyad', { dyad: idx + 1 }),
+  }));
+  characterKeys.push(
+    { key: 'pending', label: t('admin.onboarding.characterIconPending') },
+    { key: 'skipped', label: t('admin.onboarding.characterIconSkipped') },
+    { key: 'fallback', label: t('admin.onboarding.characterIconFallback') }
+  );
 
   const updateStep = (index: number, field: keyof OnboardingStepConfig, value: string | null) => {
     setSteps((prev) => {
@@ -339,6 +368,67 @@ export default function OnboardingManage() {
           </div>
         );
       })}
+
+      <div className="admin-form-section-header" style={{ marginTop: '1.5rem' }}>
+        <div>
+          <h3>{t('admin.onboarding.characterIconsTitle')}</h3>
+          <p className="admin-field-note">{t('admin.onboarding.characterIconsHint')}</p>
+        </div>
+      </div>
+      <div className="admin-form-row" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+        {characterKeys.map(({ key, label }) => {
+          const preview = resolveOnboardingBackgroundUrl(characterIcons[key] ?? null);
+          return (
+            <div
+              key={key}
+              className="admin-form-card"
+              style={{ width: 220, border: '1px solid var(--color-border, #e2e8f0)' }}
+            >
+              <p style={{ marginTop: 0, marginBottom: '0.5rem', fontWeight: 600 }}>{label}</p>
+              <div
+                style={{
+                  width: 88,
+                  height: 88,
+                  borderRadius: 999,
+                  border: '1px solid var(--color-border, #e2e8f0)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#f8fafc',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                {preview ? (
+                  <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ color: '#64748b', fontSize: 12 }}>{t('admin.onboarding.noImage')}</span>
+                )}
+              </div>
+              <label className="admin-field" style={{ marginBottom: '0.5rem' }}>
+                <span>{t('admin.onboarding.uploadCharacterIcon')}</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  disabled={uploadingCharacterKey === key}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    void uploadCharacterIcon(key, f ?? null);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                className="admin-button-secondary"
+                onClick={() => setCharacterIcons((prev) => ({ ...prev, [key]: null }))}
+              >
+                {t('admin.onboarding.clearCharacterIcon')}
+              </button>
+            </div>
+          );
+        })}
+      </div>
 
       <div className="admin-form-section-header" style={{ marginTop: '1.5rem' }}>
         <h3>{t('admin.onboarding.stepsTitle')}</h3>

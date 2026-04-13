@@ -13,7 +13,9 @@ import { ContestQrCodeCarousel } from '../../components/Contests/ContestQrCodeCa
 import { getUserInitials } from '../../utils/userInitials';
 import PlayerProfileOnboarding from '../../components/PlayerProfile/PlayerProfileOnboarding';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
-import { getPlayerCharacterEmoji } from '../../constants/playerCharacter';
+import type { OnboardingConfig } from '../../types/onboarding';
+import { resolveOnboardingBackgroundUrl } from '../../utils/onboardingBackgroundUrl';
+import { getPlayerCharacterEmoji, getPlayerCharacterIconUrl } from '../../constants/playerCharacter';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -68,6 +70,11 @@ function ProfilePage() {
     () => api.getUserActiveTeam(),
     { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds to keep team points updated in real-time
   );
+  const { data: onboardingConfig } = useQuery(
+    'onboardingConfig',
+    () => api.getOnboardingConfig() as Promise<OnboardingConfig>,
+    { staleTime: 5 * 60 * 1000 }
+  );
 
   const [showTeamCreator, setShowTeamCreator] = useState(false);
   const [showTeamJoiner, setShowTeamJoiner] = useState(false);
@@ -78,6 +85,9 @@ function ProfilePage() {
 
   const sihotGuest = user?.sihotGuest;
   const sihotReservations = user?.sihotReservations ?? [];
+  const profileCharacterIcon = resolveOnboardingBackgroundUrl(
+    getPlayerCharacterIconUrl(user?.playerProfile, onboardingConfig?.characterIcons)
+  );
 
   const formatDate = (value: string) => {
     if (!value) return t('profile.sihot.missing');
@@ -193,9 +203,13 @@ function ProfilePage() {
               <div className="profile-player-section__title-row">
                 <h3 className="profile-player-section__title">{t('playerProfile.profileSection.title')}</h3>
                 <div className="profile-player-section__character" aria-label={t('playerProfile.profileSection.title')}>
-                  <span className="profile-player-section__emoji" aria-hidden>
-                    {getPlayerCharacterEmoji(user.playerProfile)}
-                  </span>
+                  {profileCharacterIcon ? (
+                    <img src={profileCharacterIcon} alt="" className="profile-player-section__icon-image" aria-hidden />
+                  ) : (
+                    <span className="profile-player-section__emoji" aria-hidden>
+                      {getPlayerCharacterEmoji(user.playerProfile)}
+                    </span>
+                  )}
                   {user.playerProfile?.profileDisplayName?.trim() && (
                     <span className="profile-player-section__name">
                       {user.playerProfile.profileDisplayName.trim()}

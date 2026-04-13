@@ -113,7 +113,7 @@ function ForestPage() {
               performance={{ min: lowPerfForestMode ? 0.45 : 0.7 }}
               frameloop={lowPerfForestMode ? 'demand' : 'always'}
               camera={{ position: [0, 12, 22], fov: 50 }}
-              style={{ width: '100%', height: '100%', background: '#1a2840' }}
+              style={{ width: '100%', height: '100%', background: 'linear-gradient(180deg, #dff3ff 0%, #eaf8ff 45%, #f4fbff 100%)' }}
             >
               <ForestPrototypeScene
                 globalPoints={Math.min(forestGlobalPoints, forestMaxPoints)}

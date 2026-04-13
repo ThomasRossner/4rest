@@ -1428,7 +1428,16 @@
       "loadError": "Could not load configuration.",
       "saveError": "Save failed.",
       "uploadError": "Upload failed.",
-      "invalidStructure": "Invalid structure (max 32 dyads, 16 questions per dyad, 512 questions total)."
+      "invalidStructure": "Invalid structure (max 32 dyads, 16 questions per dyad, 512 questions total).",
+      "characterIconsTitle": "Player character icons",
+      "characterIconsHint": "Upload custom images for dyads and fallback states. Used in profile and forest instead of emoji.",
+      "characterIconDyad": "Dyad {{dyad}}",
+      "characterIconPending": "Fallback: pending",
+      "characterIconSkipped": "Fallback: skipped",
+      "characterIconFallback": "Fallback: generic",
+      "uploadCharacterIcon": "Upload icon",
+      "clearCharacterIcon": "Remove icon",
+      "noImage": "No image"
     },
     "surveyAnalytics": {
       "title": "Survey Analytics",

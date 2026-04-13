@@ -85,6 +85,13 @@ export const api = {
     return res.data as { url: string };
   },
 
+  async uploadOnboardingCharacterIcon(file: File) {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await apiClient.post('/admin/onboarding/upload-background', fd);
+    return res.data as { url: string };
+  },
+
   async getMe() {
     try {
       // Prefer /users/me if available

@@ -82,9 +82,18 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
 
   return (
     <>
+      <Sky
+        distance={450000}
+        sunPosition={sunPosition}
+        inclination={0.53}
+        azimuth={0.25}
+        turbidity={5}
+        rayleigh={1.6}
+      />
       <directionalLight
         ref={lightRef}
         position={sunPosition}
+        intensity={1.15}
         castShadow
         shadow-mapSize-width={512}
         shadow-mapSize-height={512}
@@ -96,7 +105,8 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
         shadow-camera-far={50}
         // shadow-bias={0.00001}
       />
-      <ambientLight intensity={0.6} />
+      <ambientLight intensity={0.78} />
+      <hemisphereLight args={['#e8f6ff', '#d7ead1', 0.48]} />
 
       {/* 5 schwache Punktlichter im Kreis um den Ursprung */}
       {Array.from({ length: 5 }).map((_, i) => {

@@ -34,6 +34,14 @@
   line-height: 1;
 }
 
+.forest-player-character__icon-image {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
 .forest-player-character__name {
   font-size: 1rem;
   font-weight: 700;
@@ -89,6 +97,12 @@
 
 .forest-player-character--overlay .forest-player-character__emoji {
   font-size: 1.85rem;
+  flex-shrink: 0;
+}
+
+.forest-player-character--overlay .forest-player-character__icon-image {
+  width: 2rem;
+  height: 2rem;
   flex-shrink: 0;
 }
 

@@ -37,7 +37,7 @@
   overflow: hidden;
   border-radius: 0;
   box-shadow: none;
-  background: linear-gradient(to bottom, #87ceeb 0%, #98d8c8 100%);
+  background: linear-gradient(180deg, #dff3ff 0%, #eaf8ff 48%, #f4fbff 100%);
 }
 
 .forest-container {
@@ -93,20 +93,22 @@
   min-width: 0;
   margin: 0;
   padding: 0;
-  pointer-events: auto;
+  pointer-events: none;
   box-sizing: border-box;
 }
 
 /* Glas wie .ppo-fullscreen__panel (Dyaden-Onboarding) */
 .forest-impact-stats--overlay .forest-stat {
-  background: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.42);
   backdrop-filter: blur(16px) saturate(1.15);
   -webkit-backdrop-filter: blur(16px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
   box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    0 2px 10px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  cursor: default;
+  user-select: none;
 }
 
 .forest-impact-stats--overlay .forest-stat-value {

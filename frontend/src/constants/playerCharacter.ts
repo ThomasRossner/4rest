@@ -20,6 +20,21 @@ export function getPlayerCharacterEmoji(profile: PlayerProfilePayload | undefine
   return DOMINANT_EMOJI[d] ?? '🐾';
 }
 
+export function getPlayerCharacterIconUrl(
+  profile: PlayerProfilePayload | undefined,
+  icons?: Record<string, string | null>
+): string | null {
+  if (!icons) return null;
+  if (!profile || profile.status === 'pending') {
+    return icons.pending ?? null;
+  }
+  if (profile.status === 'skipped' || profile.dominantDyad == null) {
+    return icons.skipped ?? icons.fallback ?? null;
+  }
+  const dyadKey = `dyad_${profile.dominantDyad}`;
+  return icons[dyadKey] ?? icons.fallback ?? null;
+}
+
 export function getDominantDyadNumber(
   profile: PlayerProfilePayload | undefined
 ): number | null {
