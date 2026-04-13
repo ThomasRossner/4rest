@@ -277,10 +277,15 @@
       "hubSubtitle": "Tap a category to open its tasks.",
       "backToCategories": "Back to categories",
       "kommunikation": "Communication & networks",
+      "kommunikationDescription": "Strengthen dialogue, team spirit, and collaboration.",
       "mensch": "People & social environment",
+      "menschDescription": "Promote empathy, support, and social impact.",
       "natur": "Nature & environmental protection",
+      "naturDescription": "Protect biodiversity and support ecosystems.",
       "ressourcen": "Resource & material use",
+      "ressourcenDescription": "Reduce consumption and use materials mindfully.",
       "sonstige": "Other tasks",
+      "sonstigeDescription": "Additional actions beyond the core categories.",
       "taskCount": "{{count}} tasks"
     },
     "filters": {

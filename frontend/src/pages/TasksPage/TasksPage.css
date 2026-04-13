@@ -234,9 +234,9 @@
 .tasks-category-tile {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
-  text-align: center;
+  text-align: left;
   min-height: 148px;
   padding: var(--spacing-md) var(--spacing-sm);
   border-radius: 20px;
@@ -245,6 +245,14 @@
   text-decoration: none;
   color: var(--color-text, #111827);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tasks-category-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
 }
 
 .tasks-category-tile:hover {
@@ -256,16 +264,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  margin-bottom: var(--spacing-sm);
-  border-radius: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--tile-accent, var(--color-primary)) 14%, transparent);
 }
 
 .tasks-category-tile-icon-svg {
-  width: 48px;
-  height: 48px;
+  width: 26px;
+  height: 26px;
   color: var(--tile-accent, var(--color-primary));
 }
 
@@ -291,13 +298,28 @@
 
 .tasks-category-tile-title {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  text-align: center;
   margin-bottom: var(--spacing-xs);
 }
 
 .tasks-category-tile-count {
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tile-accent, var(--color-primary)) 14%, #fff);
+  color: color-mix(in srgb, var(--tile-accent, var(--color-primary)) 72%, #0f172a);
+}
+
+.tasks-category-tile-description {
+  font-size: 0.82rem;
+  line-height: 1.35;
   color: var(--color-text-light, #6b7280);
+  text-align: center;
 }
 
 .tasks-task-shell {

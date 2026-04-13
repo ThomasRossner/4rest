@@ -277,10 +277,15 @@
       "hubSubtitle": "Tippe eine Kategorie, um die Aufgaben zu öffnen.",
       "backToCategories": "Zurück zu den Kategorien",
       "kommunikation": "Kommunikation & Netzwerke",
+      "kommunikationDescription": "Dialog, Teamgeist und Zusammenarbeit stärken.",
       "mensch": "Mensch & soziales Umfeld",
+      "menschDescription": "Empathie, Unterstützung und soziale Wirkung fördern.",
       "natur": "Natur & Umweltschutz",
+      "naturDescription": "Biodiversität schützen und Ökosysteme unterstützen.",
       "ressourcen": "Ressourcenverbrauch & Materialeinsatz",
+      "ressourcenDescription": "Verbrauch reduzieren und Materialien bewusst nutzen.",
       "sonstige": "Weitere Aufgaben",
+      "sonstigeDescription": "Zusätzliche Aktionen außerhalb der Kernkategorien.",
       "taskCount": "{{count}} Aufgaben"
     },
     "filters": {

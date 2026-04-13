@@ -346,11 +346,18 @@ function TasksPage() {
                 to={`/tasks/c/${key}`}
                 className={`tasks-category-tile tasks-category-tile--${key}`}
               >
-                <span className="tasks-category-tile-icon" aria-hidden>
-                  <CategoryHubIcon categoryKey={key} className="tasks-category-tile-icon-svg" />
+                <span className="tasks-category-tile-top">
+                  <span className="tasks-category-tile-icon" aria-hidden>
+                    <CategoryHubIcon categoryKey={key} className="tasks-category-tile-icon-svg" />
+                  </span>
+                  <span className="tasks-category-tile-count">
+                    {t('tasks.categories.taskCount', { count })}
+                  </span>
                 </span>
                 <span className="tasks-category-tile-title">{t(`tasks.categories.${key}`)}</span>
-                <span className="tasks-category-tile-count">{t('tasks.categories.taskCount', { count })}</span>
+                <span className="tasks-category-tile-description">
+                  {t(`tasks.categories.${key}Description`)}
+                </span>
               </Link>
             );
           })}
