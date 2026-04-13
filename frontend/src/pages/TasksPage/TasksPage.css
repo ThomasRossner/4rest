@@ -75,7 +75,7 @@
 .tasks-header-category-actions-row {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-end;
   gap: var(--spacing-sm);
   width: 100%;
 }
@@ -131,7 +131,7 @@
 
 .tasks-header-category-actions {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   flex-wrap: nowrap;
   gap: var(--spacing-sm);
@@ -141,7 +141,7 @@
 
 .tasks-header-category-row .tasks-header-category-actions-row {
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
 }
 

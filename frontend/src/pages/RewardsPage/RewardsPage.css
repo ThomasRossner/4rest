@@ -85,8 +85,8 @@
 .rewards-header-location-buttons {
   display: flex;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
 }
 
 .rewards-scan-button {
@@ -114,6 +114,20 @@
   border-radius: calc(16px * 0.6);
   margin-bottom: 0;
   box-shadow: 0 calc(10px * 0.6) calc(30px * 0.6) rgba(102, 126, 234, 0.28);
+}
+
+.rewards-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.rewards-balance--compact {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
 }
 
 .rewards-page--list .rewards-balance-label {
@@ -158,11 +172,15 @@
 
 .rewards-header {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0;
   position: relative;
+}
+
+.rewards-header--actions {
+  flex: 1 1 auto;
 }
 
 .rewards-map-header {
@@ -214,25 +232,19 @@
   pointer-events: none;
 }
 
-.rewards-title {
-  font-size: 1.67rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 0;
-  text-align: center;
-}
-
 .location-button {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   color: white;
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);

@@ -88,7 +88,7 @@ export const api = {
   async uploadOnboardingCharacterIcon(file: File) {
     const fd = new FormData();
     fd.append('image', file);
-    const res = await apiClient.post('/admin/onboarding/upload-background', fd);
+    const res = await apiClient.post('/admin/onboarding/upload-character-icon', fd);
     return res.data as { url: string };
   },
 

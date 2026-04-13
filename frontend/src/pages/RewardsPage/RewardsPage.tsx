@@ -219,53 +219,55 @@ function RewardsPage() {
             <h1 className="rewards-header-category-title">{t('rewards.title')}</h1>
           </div>
         </div>
-        <div className="rewards-balance">
-          <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
-          <span className="rewards-balance-value">
-            {activeTeam?.totalPoints !== undefined ? (
-              <>
-                {activeTeam.totalPoints} / {points}
-              </>
-            ) : (
-              points
-            )}
-          </span>
-        </div>
-        <div className="rewards-header">
-          {showOnlineRewards ? (
-            <button
-              className="location-button"
-              onClick={() => {
-                setShowLocationMap(false);
-                setShowOnlineRewards(false);
-              }}
-            >
-              {t('rewards.prerequisites.clearFilter')}
-            </button>
-          ) : (
-            <div className="rewards-header-location-buttons">
-              <button
-                className="location-button"
-                onClick={() => {
-                  setShowLocationMap(true);
-                  setShowOnlineRewards(false);
-                }}
-                title={t('rewards.showLocation')}
-              >
-                {t('rewards.locationButton')}
-              </button>
+        <div className="rewards-toolbar-row">
+          <div className="rewards-balance rewards-balance--compact">
+            <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
+            <span className="rewards-balance-value">
+              {activeTeam?.totalPoints !== undefined ? (
+                <>
+                  {activeTeam.totalPoints} / {points}
+                </>
+              ) : (
+                points
+              )}
+            </span>
+          </div>
+          <div className="rewards-header rewards-header--actions">
+            {showOnlineRewards ? (
               <button
                 className="location-button"
                 onClick={() => {
                   setShowLocationMap(false);
-                  setShowOnlineRewards(true);
+                  setShowOnlineRewards(false);
                 }}
-                title={t('rewards.showOnline')}
               >
-                {t('rewards.onlineButton')}
+                {t('rewards.prerequisites.clearFilter')}
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="rewards-header-location-buttons">
+                <button
+                  className="location-button"
+                  onClick={() => {
+                    setShowLocationMap(true);
+                    setShowOnlineRewards(false);
+                  }}
+                  title={t('rewards.showLocation')}
+                >
+                  {t('rewards.locationButton')}
+                </button>
+                <button
+                  className="location-button"
+                  onClick={() => {
+                    setShowLocationMap(false);
+                    setShowOnlineRewards(true);
+                  }}
+                  title={t('rewards.showOnline')}
+                >
+                  {t('rewards.onlineButton')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         {user && user.role === 'rezeption' && (
           <button type="button" className="rewards-scan-button" onClick={() => setShowRewardScanner(true)}>
