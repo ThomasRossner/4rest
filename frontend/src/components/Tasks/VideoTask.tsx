@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
@@ -23,6 +23,7 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
   const { t, i18n } = useTranslation();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const showToast = useToastStore((s) => s.showToast);
   const publicLang = i18n.language?.startsWith('en') ? 'en' : 'de';
 
@@ -200,6 +201,30 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
 
   const lockActive =
     lockUntil && new Date(lockUntil).getTime() > Date.now() && !isCurrentVerified;
+  const subtitleTracks = useMemo(() => {
+    const raw = (task as any)?.video_subtitles_i18n;
+    if (!raw || typeof raw !== 'object') return [];
+    const de = typeof raw.de === 'string' ? raw.de.trim() : '';
+    const en = typeof raw.en === 'string' ? raw.en.trim() : '';
+    return [
+      ...(de ? [{ lang: 'de', label: 'Deutsch', src: de }] : []),
+      ...(en ? [{ lang: 'en', label: 'English', src: en }] : []),
+    ];
+  }, [task]);
+  const preferredSubtitleLang = i18n.language?.startsWith('en') ? 'en' : 'de';
+
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || subtitleTracks.length === 0) return;
+    const preferredTrack =
+      subtitleTracks.find((track) => track.lang === preferredSubtitleLang) ??
+      subtitleTracks.find((track) => track.lang === 'de') ??
+      subtitleTracks[0];
+    for (let i = 0; i < videoEl.textTracks.length; i += 1) {
+      const textTrack = videoEl.textTracks[i];
+      textTrack.mode = textTrack.language === preferredTrack.lang ? 'showing' : 'disabled';
+    }
+  }, [preferredSubtitleLang, subtitleTracks]);
 
   return (
     <div className="task-container">
@@ -247,6 +272,7 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
             
             return (
               <video
+                ref={videoRef}
                 controls
                 src={videoUrl}
                 className="task-video"
@@ -258,6 +284,16 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
                   // Video ended, show quiz questions
                 }}
               >
+                {subtitleTracks.map((track) => (
+                  <track
+                    key={track.lang}
+                    kind="subtitles"
+                    srcLang={track.lang}
+                    label={track.label}
+                    src={track.src}
+                    default={track.lang === preferredSubtitleLang}
+                  />
+                ))}
                 {t('tasksComponents.video.notSupported')}
               </video>
             );

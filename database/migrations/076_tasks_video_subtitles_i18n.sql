@@ -1,0 +1,2 @@
+ALTER TABLE tasks
+  ADD COLUMN IF NOT EXISTS video_subtitles_i18n JSONB;

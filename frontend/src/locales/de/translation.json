@@ -33,7 +33,8 @@
     "online": "Online",
     "physical": "Physisch",
     "noData": "Keine Daten verfügbar",
-    "all": "Alle"
+    "all": "Alle",
+    "ok": "OK"
   },
   "playerProfile": {
     "intro": {
@@ -114,7 +115,8 @@
     "forestPointsShort": "Wald {{count}}",
     "pointsBonus": "Punkte-Bonus",
     "scanBonusQr": "Bonus-QR-Code scannen",
-    "contests": "Contests"
+    "contests": "Contests",
+    "mailbox": "Postfach"
   },
   "mailbox": {
     "title": "Postfach",
@@ -129,11 +131,21 @@
   },
   "login": {
     "modes": {
-      "login": { "title": "Melde dich an, um fortzufahren" },
-      "register": { "title": "Erstelle dein Konto" },
-      "forgot-password": { "title": "Setze dein Passwort zurück" },
-      "reset-password": { "title": "Wähle ein neues Passwort" },
-      "passwordless-login": { "title": "Melde dich mit einem Einmal-Code an" }
+      "login": {
+        "title": "Melde dich an, um fortzufahren"
+      },
+      "register": {
+        "title": "Erstelle dein Konto"
+      },
+      "forgot-password": {
+        "title": "Setze dein Passwort zurück"
+      },
+      "reset-password": {
+        "title": "Wähle ein neues Passwort"
+      },
+      "passwordless-login": {
+        "title": "Melde dich mit einem Einmal-Code an"
+      }
     },
     "fields": {
       "name": "Name",
@@ -519,7 +531,10 @@
       "errorTitle": "Fehler",
       "redeemSuccess": "Belohnung eingelöst",
       "redeemMessage": "Belohnung \"{{reward}}\" wurde für {{guest}} eingelöst.",
-      "redeemError": "Belohnung konnte nicht eingelöst werden"
+      "redeemError": "Belohnung konnte nicht eingelöst werden",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet."
     },
     "redemption": {
       "title": "Belohnung gefunden",
@@ -845,7 +860,36 @@
           "save": "Speichern",
           "cancel": "Abbrechen",
           "saved": "Team gespeichert",
-          "error": "Fehler beim Speichern"
+          "error": "Fehler beim Speichern",
+          "members": "Mitglieder",
+          "loadingMembers": "Mitglieder werden geladen...",
+          "noMembers": "Keine Mitglieder vorhanden",
+          "memberName": "Name",
+          "memberEmail": "E-Mail",
+          "memberPoints": "Punkte",
+          "memberJoined": "Beigetreten am",
+          "add": "Hinzufügen",
+          "remove": "Entfernen",
+          "addMembers": "Mitglieder hinzufügen",
+          "removeMembers": "Mitglieder entfernen",
+          "addMembersTitle": "Mitglieder hinzufügen",
+          "removeMembersTitle": "Mitglieder entfernen",
+          "membersAdded": "Mitglieder hinzugefügt",
+          "membersRemoved": "Mitglieder entfernt",
+          "membersAddError": "Mitglieder konnten nicht hinzugefügt werden",
+          "membersRemoveError": "Mitglieder konnten nicht entfernt werden",
+          "nameUpdated": "Name aktualisiert",
+          "nameUpdateError": "Name konnte nicht aktualisiert werden",
+          "statusUpdateError": "Status konnte nicht aktualisiert werden",
+          "showJoinQr": "Beitritts-QR anzeigen",
+          "showRegistrationQr": "Registrierungs-QR anzeigen",
+          "joinQrTitle": "Beitritts-QR-Code",
+          "joinQrDescription": "QR-Code zum Beitritt in dieses Team",
+          "registrationQrTitle": "Registrierungs-QR-Code",
+          "registrationQrDescription": "QR-Code zur Registrierung für dieses Team",
+          "registrationUrl": "Registrierungs-URL",
+          "registrationQrError": "Registrierungs-QR konnte nicht geladen werden",
+          "qrError": "QR-Code konnte nicht geladen werden"
         },
         "qrCodes": {
           "title": "QR-Codes",
@@ -864,7 +908,11 @@
             "generate": "QR-Code generieren",
             "notAvailable": "Registrierung ist nicht aktiviert"
           }
-        }
+        },
+        "createNew": "Neues Team erstellen",
+        "createSuccess": "Team erfolgreich erstellt",
+        "teamActivated": "Team aktiviert",
+        "teamDeactivated": "Team deaktiviert"
       }
     },
     "contest": {
@@ -980,6 +1028,8 @@
         "articleUrl": "Artikel-URL",
         "articleContent": "Artikelinhalt",
         "videoUrl": "Video-URL",
+        "videoSubtitleDe": "Untertitel-URL (Deutsch, VTT)",
+        "videoSubtitleEn": "Untertitel-URL (Englisch, VTT)",
         "qrCodeValue": "QR-Code-Wert",
         "targetLocation": "Zielstandort (GPS-Koordinaten)",
         "address": "Adresse",
@@ -998,7 +1048,11 @@
         "thumbnailPreview": "Thumbnail-Vorschau",
         "geocode": "Geocode",
         "allowPublicCompletion": "Ohne Login abschließbar",
-        "allowPublicCompletionHint": "Deep-Link: /public/task/:taskId — Foto-Aufgaben brauchen für den Upload ein Konto."
+        "allowPublicCompletionHint": "Deep-Link: /public/task/:taskId — Foto-Aufgaben brauchen für den Upload ein Konto.",
+        "qrCodeLabel": "QR-Code-Label",
+        "qrCodeNote": "Hinweis zum QR-Code",
+        "qrCodePlaceholder": "QR-Code-Inhalt eingeben",
+        "qrCodePreview": "QR-Code-Vorschau"
       },
       "articleSource": {
         "url": "Externe Artikel-URL verwenden",
@@ -1009,6 +1063,8 @@
         "upload": "Video-Datei hochladen"
       },
       "videoUrlPlaceholder": "https://example.com/video.mp4",
+      "videoSubtitlePlaceholderDe": "https://example.com/video.de.vtt",
+      "videoSubtitlePlaceholderEn": "https://example.com/video.en.vtt",
       "selectVideoFile": "Wählen Sie eine Video-Datei zum Hochladen",
       "chooseFile": "Datei auswählen",
       "noFileSelected": "Keine Datei ausgewählt",
@@ -1133,7 +1189,13 @@
       "metadataTitle": "Metadaten & Zugriff",
       "metadataDescription": "Metadaten und zusätzliche Informationen zur Aufgabe",
       "chooseThumbnail": "Miniaturbild wählen",
-      "thumbnailNote": "PNG oder JPG, max. 2 MB. Wird auf 48×48 px skaliert."
+      "thumbnailNote": "PNG oder JPG, max. 2 MB. Wird auf 48×48 px skaliert.",
+      "videoPreview": "Video-Vorschau",
+      "qrCodeTitle": "QR-Code",
+      "qrCodeDescription": "QR-Code-Inhalt für diese Aufgabe.",
+      "qrCodeLabel": "QR-Code-Inhalt",
+      "qrCodeError": "QR-Code-Fehler",
+      "qrCodeErrorMessage": "QR-Code konnte nicht verarbeitet werden."
     },
     "reward": {
       "create": {
@@ -1326,7 +1388,8 @@
         "selectReward": "Belohnung auswählen",
         "actions": "Aktionen",
         "possiblePoints": "Mögliche Punkte",
-        "reward": "Belohnung"
+        "reward": "Belohnung",
+        "title": "Titel"
       }
     },
     "rewardManage": {
@@ -1348,7 +1411,13 @@
       "deactivate": "Deaktivieren",
       "selectedCount": "{{count}} ausgewählt",
       "noSelection": "Keine Belohnungen ausgewählt",
-      "noRewards": "Keine Belohnungen gefunden."
+      "noRewards": "Keine Belohnungen gefunden.",
+      "table": {
+        "title": "Titel",
+        "cost": "Kosten",
+        "status": "Status",
+        "location": "Ort"
+      }
     },
     "forestStats": {
       "title": "Wald-Debug-Statistiken",
@@ -1598,7 +1667,8 @@
         "resetPassword": "Passwort zurücksetzen",
         "setPassword": "Passwort setzen",
         "deleteUser": "Benutzer löschen",
-        "hardDeleteUser": "Benutzer dauerhaft löschen"
+        "hardDeleteUser": "Benutzer dauerhaft löschen",
+        "cancelPassword": "Passwort-Eingabe abbrechen"
       },
       "messages": {
         "roleUpdated": "Rolle erfolgreich aktualisiert",
@@ -1614,7 +1684,9 @@
         "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen lang sein",
         "passwordsDoNotMatch": "Die Passwörter stimmen nicht überein",
         "userDeleted": "Benutzer erfolgreich gelöscht",
-        "userDeleteError": "Fehler beim Löschen des Benutzers"
+        "userDeleteError": "Fehler beim Löschen des Benutzers",
+        "userCreated": "Nutzer erfolgreich erstellt.",
+        "userCreateError": "Nutzer konnte nicht erstellt werden."
       },
       "confirmRoleChange": "Möchten Sie die Rolle dieses Benutzers wirklich ändern?",
       "confirmPointsChange": "Möchten Sie die Punkte dieses Benutzers wirklich ändern?",
@@ -1638,6 +1710,21 @@
       "errors": {
         "loadError": "Fehler beim Laden der Benutzer",
         "userNotFound": "Benutzer nicht gefunden"
+      },
+      "newButton": "Neuen Nutzer anlegen",
+      "selectedCount": "{{count}} ausgewählt",
+      "confirmBulkDelete": "Ausgewählte Nutzer wirklich löschen?",
+      "newUser": {
+        "title": "Neuen Nutzer anlegen",
+        "name": "Name",
+        "namePlaceholder": "Name eingeben",
+        "email": "E-Mail",
+        "emailPlaceholder": "E-Mail eingeben",
+        "emailRequired": "E-Mail ist erforderlich",
+        "role": "Rolle",
+        "optional": "optional",
+        "create": "Nutzer erstellen",
+        "creating": "Erstelle Nutzer..."
       }
     },
     "filters": {
@@ -1809,7 +1896,20 @@
       "failedToUpdateContest": "Wettbewerb konnte nicht aktualisiert werden.",
       "failedToDeleteContest": "Wettbewerb konnte nicht gelöscht werden.",
       "selectedContestsActivated": "Ausgewählte Wettbewerbe aktiviert.",
-      "selectedContestsDeactivated": "Ausgewählte Wettbewerbe deaktiviert."
+      "selectedContestsDeactivated": "Ausgewählte Wettbewerbe deaktiviert.",
+      "failedToDeleteItems": "Elemente konnten nicht gelöscht werden.",
+      "failedToUpdateItems": "Elemente konnten nicht aktualisiert werden.",
+      "selectedItemsDeleted": "Ausgewählte Elemente gelöscht.",
+      "selectedItemsActivated": "Ausgewählte Elemente aktiviert.",
+      "selectedItemsDeactivated": "Ausgewählte Elemente deaktiviert.",
+      "selectedUsersDeleted": "Ausgewählte Nutzer gelöscht.",
+      "selectedUsersActivated": "Ausgewählte Nutzer aktiviert.",
+      "selectedUsersDeactivated": "Ausgewählte Nutzer deaktiviert.",
+      "taskDeleted": "Aufgabe gelöscht.",
+      "taskNotFound": "Aufgabe nicht gefunden.",
+      "locationDeleted": "Ort gelöscht.",
+      "rewardDeleted": "Belohnung gelöscht.",
+      "rewardNotFound": "Belohnung nicht gefunden."
     },
     "toasts": {
       "taskCreatedTitle": "Aufgabe erstellt",
@@ -1831,7 +1931,12 @@
         "title": "QR-Code verifiziert!",
         "message": "Belohnung für {{userName}} erfolgreich verifiziert und eingelöst.",
         "reward": "Belohnung: {{title}}"
-      }
+      },
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet.",
+      "cameraNotSupported": "Kamera wird nicht unterstützt.",
+      "cameraRequiresHttps": "Kamerazugriff erfordert HTTPS."
     }
   },
   "forest": {
@@ -2230,23 +2335,16 @@
     }
   },
   "employee": {
+    "contests": {
+      "title": "Contest-Verwaltung",
+      "subtitle": "Verwalten Sie Contests für Gäste",
+      "createButton": "Neuen Contest anlegen",
+      "empty": "Noch keine Contests für Gäste"
+    },
     "pointsBonus": {
-      "title": "Punkte-Bonus QR-Code generieren",
-      "description": "Geben Sie die Anzahl der zu vergebenden Punkte ein und generieren Sie einen QR-Code, den Gäste scannen können, um die Bonus-Punkte zu erhalten.",
-      "forestCategory": "Wald-Kategorie (Bonus gilt auch dort)",
-      "forestCategoryHint": "Die Punkte erhöhen die Gesamtpunkte und die gewählte Wald-Kategorie.",
-      "pointsAmount": "Punkte-Anzahl",
-      "pointsPlaceholder": "Punkte-Anzahl eingeben",
-      "generate": "QR-Code generieren",
-      "generating": "Wird generiert...",
-      "qrGenerated": "QR-Code erfolgreich generiert",
-      "generateError": "QR-Code konnte nicht generiert werden",
-      "invalidAmount": "Bitte geben Sie eine gültige positive Zahl ein",
-      "qrTitle": "QR-Code generiert",
-      "qrInfo": "Punkte-Anzahl: {{amount}}",
-      "expiresAt": "Läuft ab am",
-      "instruction": "Der Gast sollte diesen QR-Code scannen, um die Bonus-Punkte zu erhalten. Dieser Code läuft in 24 Stunden ab.",
-      "generateNew": "Neuen QR-Code generieren"
+      "invalidAmount": "Bitte einen gültigen Betrag eingeben.",
+      "generateError": "QR-Code konnte nicht generiert werden.",
+      "qrGenerated": "QR-Code erfolgreich generiert."
     }
   },
   "teams": {
@@ -2272,7 +2370,10 @@
       "errorTitle": "Fehler",
       "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
       "cameraNotSupported": "Kamera wird nicht unterstützt",
-      "cameraError": "Kamera konnte nicht geöffnet werden"
+      "cameraError": "Kamera konnte nicht geöffnet werden",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet."
     },
     "qrCode": {
       "title": "Team QR-Code",
@@ -2323,7 +2424,22 @@
       "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
       "invalidDateTime": "Ungültiges Datum oder Uhrzeit",
       "startAfterEnd": "Start muss vor dem Ende liegen",
-      "invalidEndDate": "Enddatum muss in der Zukunft liegen"
+      "invalidEndDate": "Enddatum muss in der Zukunft liegen",
+      "loadingUsers": "Nutzer werden geladen...",
+      "errorLoadingUsers": "Nutzer konnten nicht geladen werden.",
+      "noUsers": "Keine Nutzer gefunden.",
+      "filterAllRoles": "Alle Rollen",
+      "allRoles": "Alle Rollen",
+      "filter": "Filter:",
+      "filterByRole": "Nach Rolle filtern",
+      "onlyRezeption": "(Nur Rezeption)",
+      "selectedParticipants": "{{count}} Teilnehmende ausgewählt",
+      "participantsTitle": "Teilnehmende hinzufügen",
+      "noEmail": "Keine E-Mail",
+      "roleAdministrator": "Administrator",
+      "roleGuest": "Gast",
+      "roleRedaktion": "Redaktion",
+      "roleRezeption": "Rezeption"
     },
     "join": {
       "title": "Contest beitreten",
@@ -2335,7 +2451,10 @@
       "errorTitle": "Fehler",
       "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
       "cameraNotSupported": "Kamera wird nicht unterstützt",
-      "cameraError": "Kamera konnte nicht geöffnet werden"
+      "cameraError": "Kamera konnte nicht geöffnet werden",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet."
     },
     "qrCode": {
       "title": "Contest QR-Code",
@@ -2382,14 +2501,6 @@
       "noParticipants": "Noch keine Teilnehmer",
       "noParticipantsDescription": "Sei der Erste, der diesem Contest beitritt!",
       "unnamed": "Unbenannter Contest"
-    }
-  },
-  "employee": {
-    "contests": {
-      "title": "Contest-Verwaltung",
-      "subtitle": "Verwalten Sie Contests für Gäste",
-      "createButton": "Neuen Contest anlegen",
-      "empty": "Noch keine Contests für Gäste"
     }
   },
   "rankings": {
@@ -2516,7 +2627,15 @@
           "registrationQrDescription": "Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch dem Team beizutreten",
           "add": "Hinzufügen",
           "remove": "Entfernen"
-        }
+        },
+        "teams": "Teams",
+        "bulkActivateSuccess": "Ausgewählte Teams aktiviert.",
+        "bulkDeactivateSuccess": "Ausgewählte Teams deaktiviert.",
+        "bulkStatusError": "Team-Status konnte nicht aktualisiert werden.",
+        "deleteSuccess": "Team gelöscht.",
+        "deleteError": "Team konnte nicht gelöscht werden.",
+        "toggleSuccess": "Team-Status aktualisiert.",
+        "toggleError": "Team-Status konnte nicht aktualisiert werden."
       },
       "membersAdded": "Mitglieder erfolgreich hinzugefügt",
       "membersRemoved": "Mitglieder erfolgreich entfernt",
@@ -2581,7 +2700,15 @@
         "toggleConfirm": {
           "title": "Wettbewerbs-Status ändern",
           "description": "Möchten Sie den Status des Wettbewerbs \"{{name}}\" wirklich ändern?"
-        }
+        },
+        "contests": "Wettbewerbe",
+        "bulkActivateSuccess": "Ausgewählte Wettbewerbe aktiviert.",
+        "bulkDeactivateSuccess": "Ausgewählte Wettbewerbe deaktiviert.",
+        "bulkStatusError": "Wettbewerbsstatus konnte nicht aktualisiert werden.",
+        "deleteSuccess": "Wettbewerb gelöscht.",
+        "deleteError": "Wettbewerb konnte nicht gelöscht werden.",
+        "toggleSuccess": "Wettbewerbsstatus aktualisiert.",
+        "toggleError": "Wettbewerbsstatus konnte nicht aktualisiert werden."
       },
       "participantsAdded": "Teilnehmer erfolgreich hinzugefügt",
       "participantsRemoved": "Teilnehmer erfolgreich entfernt",
@@ -2602,7 +2729,8 @@
       "toggleConfirm": {
         "title": "Wettbewerbs-Status ändern",
         "description": "Möchten Sie den Status des Wettbewerbs \"{{name}}\" wirklich ändern?"
-      }
+      },
+      "registrationQrErrorTitle": "Fehler beim Laden des Registrierungs-QR-Codes"
     },
     "pointsBonus": {
       "title": "Bonuspunkte geben"
@@ -2672,4 +2800,3 @@
     "useAdminPage": "Bitte verwenden Sie vorübergehend die Administrator-Seite."
   }
 }
-

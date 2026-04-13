@@ -11,6 +11,7 @@ type Props = {
   plantedAtList?: string[];
   dyad1Scale?: number;
   dyad2Scale?: number;
+  dyad3Scale?: number;
   lowPerformanceMode?: boolean;
 };
 
@@ -26,6 +27,7 @@ export default function ForestPrototypeScene({
   plantedAtList,
   dyad1Scale = 2,
   dyad2Scale = 2,
+  dyad3Scale = 2,
   lowPerformanceMode = false,
 }: Props) {
   return (
@@ -44,6 +46,7 @@ export default function ForestPrototypeScene({
         plantedAtList={plantedAtList}
         dyad1Scale={dyad1Scale}
         dyad2Scale={dyad2Scale}
+        dyad3Scale={dyad3Scale}
       />
     </>
   );

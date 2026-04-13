@@ -46,6 +46,12 @@ function ForestPage() {
     if (!Number.isFinite(numeric)) return 2; // neutral fallback
     return Math.max(0, Math.min(4, numeric));
   }, [user?.playerProfile?.dyadScales]);
+  const dyad3Scale = useMemo(() => {
+    const scale = user?.playerProfile?.dyadScales?.[2];
+    const numeric = Number(scale);
+    if (!Number.isFinite(numeric)) return 2; // neutral fallback
+    return Math.max(0, Math.min(4, numeric));
+  }, [user?.playerProfile?.dyadScales]);
 
   const forestGlobalPoints = Math.round(Math.max(0, sumForestPoints));
   const forestMaxPoints = useMemo(
@@ -150,6 +156,7 @@ function ForestPage() {
                 plantedAtList={plantedAtList}
                 dyad1Scale={dyad1Scale}
                 dyad2Scale={dyad2Scale}
+                dyad3Scale={dyad3Scale}
                 lowPerformanceMode={lowPerfForestMode}
               />
             </Canvas>

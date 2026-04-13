@@ -90,6 +90,7 @@ export interface Task {
   type: string;
   points: number;
   video_url?: string;
+  video_subtitles_i18n?: Record<string, string>;
   quiz_questions?: any;
   qr_code?: string;
   photo_required?: boolean;
@@ -192,7 +193,7 @@ export async function getAllTasks(
   // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles were removed in migration 038)
   let select = `DISTINCT ON (t.id) 
     t.id, t.title, t.description, t.teaser, t.title_i18n, t.description_i18n, t.teaser_i18n, t.article_content_i18n,
-    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.type, t.points, t.video_url, t.video_subtitles_i18n, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
@@ -530,7 +531,7 @@ export async function getTaskById(
   }
   
   let select = `t.id, t.title, t.description, t.teaser, t.title_i18n, t.description_i18n, t.teaser_i18n, t.article_content_i18n,
-    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.type, t.points, t.video_url, t.video_subtitles_i18n, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
@@ -768,6 +769,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        type,
        points,
        video_url,
+      video_subtitles_i18n,
        quiz_questions,
        qr_code,
        photo_required,
@@ -794,7 +796,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
        allowed_contests,
        allow_public_completion
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
      RETURNING *`,
     [
       legacyTitle,
@@ -807,6 +809,9 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.type,
       points,
       data.video_url ?? null,
+      (data as any).video_subtitles_i18n
+        ? JSON.stringify((data as any).video_subtitles_i18n)
+        : null,
       quizPayload,
       data.qr_code ?? null,
       data.photo_required ?? false,
@@ -949,7 +954,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     'title_i18n', 'description_i18n', 'teaser_i18n', 'article_content_i18n',
     'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
     'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-    'thumbnail_url', 'allowed_teams', 'allowed_contests', 'allow_public_completion',
+    'thumbnail_url', 'allowed_teams', 'allowed_contests', 'allow_public_completion', 'video_subtitles_i18n',
   ]);
 
   // If type is being changed, reset type-specific fields of the old type
@@ -1138,7 +1143,7 @@ export async function updateTask(id: string, data: Partial<Task>): Promise<Task 
     }
     // typeof null === 'object' — sonst JSON.stringify(null) und kaputte JSONB-Werte
     if (
-      (key === 'quiz_questions' || key === 'survey_questions') &&
+      (key === 'quiz_questions' || key === 'survey_questions' || key === 'video_subtitles_i18n') &&
       value !== null &&
       typeof value === 'object'
     ) {

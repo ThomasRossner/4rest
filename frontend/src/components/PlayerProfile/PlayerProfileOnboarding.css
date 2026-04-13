@@ -155,7 +155,7 @@
   font-size: 1rem;
   color: #475569;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .player-profile-onboarding__scale-btn:hover {
@@ -164,9 +164,13 @@
 }
 
 .player-profile-onboarding__scale-btn--active {
-  border-color: #0d9488;
-  background: #ecfdf5;
-  color: #0f766e;
+  border-color: #0f766e;
+  background: linear-gradient(180deg, #ccfbf1 0%, #99f6e4 100%);
+  color: #0b3f3a;
+  box-shadow:
+    0 0 0 3px rgba(20, 184, 166, 0.35),
+    0 8px 18px rgba(13, 148, 136, 0.28);
+  transform: translateY(-1px);
 }
 
 .player-profile-onboarding__label {

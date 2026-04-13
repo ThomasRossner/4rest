@@ -6,7 +6,7 @@ import { useThree } from '@react-three/fiber';
 
 import ControllableTree from './ControllableTree';
 
-export default function SceneController({ globalPoints, maxPoints, treeGrowSteps, plantedTrees, plantedAtList = [], dyad1Scale = 2, dyad2Scale = 2 }) {
+export default function SceneController({ globalPoints, maxPoints, treeGrowSteps, plantedTrees, plantedAtList = [], dyad1Scale = 2, dyad2Scale = 2, dyad3Scale = 2 }) {
   const DAILY_GROWTH_BONUS = 0.08;
   const BASE_TREE_SIZE_FACTOR = 1;
   const MIN_AGE_SIZE_FACTOR = 0.75;
@@ -68,12 +68,15 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
   // Dyade 1: 0 = zielorientiert, 4 = erlebnisorientiert
   const clampedDyad1 = Math.max(0, Math.min(4, Number(dyad1Scale)));
   const goalOrientation = 1 - clampedDyad1 / 4;
-  const experienceOrientation = clampedDyad1 / 4;
   const trunkHeightFactor = 1 + goalOrientation * 0.8;
-  const branchCountFactor = 1 + experienceOrientation * 0.9;
   // Dyade 2: 0 = Struktur (homogen), 4 = Freiheit (chaotischer)
   const clampedDyad2 = Math.max(0, Math.min(4, Number(dyad2Scale)));
+  const freedomOrientation = clampedDyad2 / 4;
   const growthChaosStrength = (clampedDyad2 / 4) * 0.35;
+  const branchCountFactor = 1 + freedomOrientation * 0.9;
+  // Dyade 3: beeinflusst die Zweiglänge (0 = kürzer, 4 = länger)
+  const clampedDyad3 = Math.max(0, Math.min(4, Number(dyad3Scale)));
+  const branchLengthFactor = 0.7 + (clampedDyad3 / 4) * 0.6;
 
   const ageSizeFactors = useMemo(() => {
     const list = Array.isArray(plantedAtList) ? plantedAtList : [];
@@ -187,6 +190,7 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
             sizeFactor={tree.sizeFactor}
             trunkHeightFactor={trunkHeightFactor}
             branchCountFactor={branchCountFactor}
+            branchLengthFactor={branchLengthFactor}
             maxTreeGrowSteps={treeGrowSteps}
             maxTrunkGrowth={1} 
             maxTwigGrowth={1} 

@@ -101,6 +101,8 @@ export async function runMigrations(): Promise<void> {
       '073_email_delivery_reliability',
       '074_tasks_teaser_i18n',
       '075_backfill_task_teasers',
+      '076_tasks_video_subtitles_i18n',
+      '077_backfill_video_subtitles_en',
     ];
     
     // Read all migration files

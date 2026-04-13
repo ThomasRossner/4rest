@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { api } from '../../services/api';
@@ -46,6 +46,7 @@ export function TaskDetailView({
   footerReplacement,
 }: TaskDetailViewProps) {
   const { t, i18n } = useTranslation();
+  const completedVideoRef = useRef<HTMLVideoElement | null>(null);
   const lang = publicLang ?? (i18n.language?.startsWith('en') ? 'en' : 'de');
 
   const authQuery = useQuery(
@@ -156,6 +157,31 @@ export function TaskDetailView({
     taskType === 'video' &&
     typeof row.video_url === 'string' &&
     row.video_url.trim() !== '';
+  const videoSubtitleTracks = useMemo(() => {
+    const raw = row.video_subtitles_i18n;
+    if (!raw || typeof raw !== 'object') return [];
+    const subtitleMap = raw as Record<string, unknown>;
+    const de = typeof subtitleMap.de === 'string' ? subtitleMap.de.trim() : '';
+    const en = typeof subtitleMap.en === 'string' ? subtitleMap.en.trim() : '';
+    return [
+      ...(de ? [{ lang: 'de', label: 'Deutsch', src: de }] : []),
+      ...(en ? [{ lang: 'en', label: 'English', src: en }] : []),
+    ];
+  }, [row.video_subtitles_i18n]);
+  const preferredSubtitleLang = i18n.language?.startsWith('en') ? 'en' : 'de';
+
+  useEffect(() => {
+    const videoEl = completedVideoRef.current;
+    if (!videoEl || videoSubtitleTracks.length === 0) return;
+    const preferredTrack =
+      videoSubtitleTracks.find((track) => track.lang === preferredSubtitleLang) ??
+      videoSubtitleTracks.find((track) => track.lang === 'de') ??
+      videoSubtitleTracks[0];
+    for (let i = 0; i < videoEl.textTracks.length; i += 1) {
+      const textTrack = videoEl.textTracks[i];
+      textTrack.mode = textTrack.language === preferredTrack.lang ? 'showing' : 'disabled';
+    }
+  }, [preferredSubtitleLang, videoSubtitleTracks, showCompletedVideo]);
 
   return (
     <div className="task-detail-view">
@@ -188,11 +214,23 @@ export function TaskDetailView({
           <div className="task-detail-video-block">
             <h2 className="task-detail-section-title">{t('tasks.detail.videoSection')}</h2>
             <video
+              ref={completedVideoRef}
               className="task-detail-video-player"
               src={String(row.video_url)}
               controls
               preload="metadata"
-            />
+            >
+              {videoSubtitleTracks.map((track) => (
+                <track
+                  key={track.lang}
+                  kind="subtitles"
+                  srcLang={track.lang}
+                  label={track.label}
+                  src={track.src}
+                  default={track.lang === preferredSubtitleLang}
+                />
+              ))}
+            </video>
           </div>
         )}
 

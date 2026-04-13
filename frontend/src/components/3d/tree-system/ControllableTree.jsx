@@ -11,6 +11,7 @@ export default function ControllableTree({
   sizeFactor = 1,
   trunkHeightFactor = 1,
   branchCountFactor = 1,
+  branchLengthFactor = 1,
   maxTreeGrowSteps=10,
   maxTrunkGrowth=0.9,
   maxTwigGrowth=0.9,
@@ -145,9 +146,10 @@ export default function ControllableTree({
     let allLeafIndex = 0; 
     twigAnchors.slice(0, Math.min(twigCount, maxTwigs)).map((twigAnchor, twigIndex) => {
       const twigGrowth = Math.min((trunkGrowth*maxTreeGrowSteps - (twigIndex+1) * newTwigSteps) / maxTwigGrowSteps, 1);
+      const twigLengthGrowth = Math.max(0, twigGrowth) * branchLengthFactor;
       console.log(num, "twig", twigIndex, "growth:", twigGrowth);
       const twigScaleMatrix = new THREE.Matrix4()
-      twigScaleMatrix.makeScale(twigGrowth, twigGrowth, twigGrowth)
+      twigScaleMatrix.makeScale(twigLengthGrowth, twigLengthGrowth, twigLengthGrowth)
 
       twigAnchorMatrix.compose(
         twigAnchor.position.clone().multiply(trunkAnchorScale),
@@ -187,7 +189,7 @@ export default function ControllableTree({
     })
     leafRef.current.instanceMatrix.needsUpdate = true
     console.log("instanceMatrix", leafRef.current.instanceMatrix);
-  }, [trunkGrowth, trunkAnchorScale, twigRef, twigAnchors, twigCount, maxTwigs, newTwigSteps, maxTwigGrowSteps, leafRef, leafAnchors, maxLeaves, newLeafSteps, maxLeafGrowSteps, trunkQuaternion])
+  }, [trunkGrowth, trunkAnchorScale, twigRef, twigAnchors, twigCount, maxTwigs, newTwigSteps, maxTwigGrowSteps, leafRef, leafAnchors, maxLeaves, newLeafSteps, maxLeafGrowSteps, trunkQuaternion, branchLengthFactor])
 
   return (
     <>

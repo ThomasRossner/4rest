@@ -33,7 +33,8 @@
     "online": "Online",
     "physical": "Physical",
     "noData": "No data available",
-    "all": "All"
+    "all": "All",
+    "ok": "OK"
   },
   "playerProfile": {
     "intro": {
@@ -114,7 +115,8 @@
     "forestPointsShort": "Forest {{count}}",
     "pointsBonus": "Points Bonus",
     "scanBonusQr": "Scan Bonus QR Code",
-    "contests": "Contests"
+    "contests": "Contests",
+    "mailbox": "Mailbox"
   },
   "mailbox": {
     "title": "Mailbox",
@@ -129,11 +131,21 @@
   },
   "login": {
     "modes": {
-      "login": { "title": "Sign in to continue" },
-      "register": { "title": "Create your account" },
-      "forgot-password": { "title": "Reset your password" },
-      "reset-password": { "title": "Choose a new password" },
-      "passwordless-login": { "title": "Sign in with a one-time code" }
+      "login": {
+        "title": "Sign in to continue"
+      },
+      "register": {
+        "title": "Create your account"
+      },
+      "forgot-password": {
+        "title": "Reset your password"
+      },
+      "reset-password": {
+        "title": "Choose a new password"
+      },
+      "passwordless-login": {
+        "title": "Sign in with a one-time code"
+      }
     },
     "fields": {
       "name": "Name",
@@ -519,7 +531,10 @@
       "errorTitle": "Error",
       "redeemSuccess": "Reward redeemed",
       "redeemMessage": "Reward \"{{reward}}\" has been redeemed for {{guest}}.",
-      "redeemError": "Failed to redeem reward"
+      "redeemError": "Failed to redeem reward",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application."
     },
     "redemption": {
       "title": "Reward Found",
@@ -845,7 +860,36 @@
           "save": "Save",
           "cancel": "Cancel",
           "saved": "Team saved",
-          "error": "Error saving team"
+          "error": "Error saving team",
+          "members": "Members",
+          "loadingMembers": "Loading members...",
+          "noMembers": "No members yet",
+          "memberName": "Name",
+          "memberEmail": "Email",
+          "memberPoints": "Points",
+          "memberJoined": "Joined at",
+          "add": "Add",
+          "remove": "Remove",
+          "addMembers": "Add members",
+          "removeMembers": "Remove members",
+          "addMembersTitle": "Add members",
+          "removeMembersTitle": "Remove members",
+          "membersAdded": "Members added",
+          "membersRemoved": "Members removed",
+          "membersAddError": "Failed to add members",
+          "membersRemoveError": "Failed to remove members",
+          "nameUpdated": "Name updated",
+          "nameUpdateError": "Failed to update name",
+          "statusUpdateError": "Failed to update status",
+          "showJoinQr": "Show join QR",
+          "showRegistrationQr": "Show registration QR",
+          "joinQrTitle": "Join QR code",
+          "joinQrDescription": "QR code to join this team",
+          "registrationQrTitle": "Registration QR code",
+          "registrationQrDescription": "QR code for registration to this team",
+          "registrationUrl": "Registration URL",
+          "registrationQrError": "Failed to load registration QR code",
+          "qrError": "Failed to load QR code"
         },
         "qrCodes": {
           "title": "QR Codes",
@@ -864,7 +908,11 @@
             "generate": "Generate QR Code",
             "notAvailable": "Registration is not enabled"
           }
-        }
+        },
+        "createNew": "Create new team",
+        "createSuccess": "Team created successfully",
+        "teamActivated": "Team activated",
+        "teamDeactivated": "Team deactivated"
       }
     },
     "contest": {
@@ -980,6 +1028,8 @@
         "articleUrl": "Article URL",
         "articleContent": "Article Content",
         "videoUrl": "Video URL",
+        "videoSubtitleDe": "Subtitle URL (German, VTT)",
+        "videoSubtitleEn": "Subtitle URL (English, VTT)",
         "qrCodeValue": "QR code value",
         "targetLocation": "Target Location (GPS Coordinates)",
         "address": "Address",
@@ -998,7 +1048,11 @@
         "thumbnailPreview": "Thumbnail preview",
         "geocode": "Geocode",
         "allowPublicCompletion": "Completable without login",
-        "allowPublicCompletionHint": "Deep link: /public/task/:taskId — photo tasks need an account for upload."
+        "allowPublicCompletionHint": "Deep link: /public/task/:taskId — photo tasks need an account for upload.",
+        "qrCodeLabel": "QR code label",
+        "qrCodeNote": "QR code note",
+        "qrCodePlaceholder": "Enter QR code content",
+        "qrCodePreview": "QR code preview"
       },
       "articleSource": {
         "url": "Use external article URL",
@@ -1009,6 +1063,8 @@
         "upload": "Upload video file"
       },
       "videoUrlPlaceholder": "https://example.com/video.mp4",
+      "videoSubtitlePlaceholderDe": "https://example.com/video.de.vtt",
+      "videoSubtitlePlaceholderEn": "https://example.com/video.en.vtt",
       "selectVideoFile": "Select a video file to upload",
       "chooseFile": "Choose file",
       "noFileSelected": "No file selected",
@@ -1133,7 +1189,13 @@
       "metadataTitle": "Metadata & access",
       "metadataDescription": "Metadata and additional information for the task",
       "chooseThumbnail": "Choose thumbnail",
-      "thumbnailNote": "PNG or JPG, max 2MB. Will be resized to 48×48px."
+      "thumbnailNote": "PNG or JPG, max 2MB. Will be resized to 48×48px.",
+      "videoPreview": "Video preview",
+      "qrCodeTitle": "QR code",
+      "qrCodeDescription": "QR code content for this task.",
+      "qrCodeLabel": "QR code content",
+      "qrCodeError": "QR code error",
+      "qrCodeErrorMessage": "QR code could not be processed."
     },
     "reward": {
       "create": {
@@ -1326,7 +1388,8 @@
         "selectReward": "Select reward",
         "actions": "Actions",
         "possiblePoints": "Possible points",
-        "reward": "Reward"
+        "reward": "Reward",
+        "title": "Title"
       }
     },
     "rewardManage": {
@@ -1348,7 +1411,13 @@
       "deactivate": "Deactivate",
       "selectedCount": "{{count}} selected",
       "noSelection": "No rewards selected",
-      "noRewards": "No rewards found."
+      "noRewards": "No rewards found.",
+      "table": {
+        "title": "Title",
+        "cost": "Cost",
+        "status": "Status",
+        "location": "Location"
+      }
     },
     "forestStats": {
       "title": "Forest Debug Stats",
@@ -1598,7 +1667,8 @@
         "resetPassword": "Reset Password",
         "setPassword": "Set Password",
         "deleteUser": "Delete User",
-        "hardDeleteUser": "Delete User Permanently"
+        "hardDeleteUser": "Delete User Permanently",
+        "cancelPassword": "Cancel password input"
       },
       "messages": {
         "roleUpdated": "Role successfully updated",
@@ -1610,7 +1680,14 @@
         "passwordReset": "Password reset token: {{token}}",
         "passwordResetError": "Error resetting password",
         "userDeleted": "User successfully deleted",
-        "userDeleteError": "Error deleting user"
+        "userDeleteError": "Error deleting user",
+        "userCreated": "User created successfully.",
+        "userCreateError": "Failed to create user.",
+        "passwordTooShort": "Password is too short.",
+        "passwordsDoNotMatch": "Passwords do not match.",
+        "passwordSetSuccess": "Password set successfully.",
+        "passwordSetError": "Failed to set password.",
+        "passwordResetEmailSent": "Password reset email sent."
       },
       "confirmRoleChange": "Are you sure you want to change this user's role?",
       "confirmPointsChange": "Are you sure you want to change this user's points?",
@@ -1634,6 +1711,21 @@
       "errors": {
         "loadError": "Error loading users",
         "userNotFound": "User not found"
+      },
+      "newButton": "Create new user",
+      "selectedCount": "{{count}} selected",
+      "confirmBulkDelete": "Delete selected users?",
+      "newUser": {
+        "title": "Create new user",
+        "name": "Name",
+        "namePlaceholder": "Enter name",
+        "email": "Email",
+        "emailPlaceholder": "Enter email",
+        "emailRequired": "Email is required",
+        "role": "Role",
+        "optional": "optional",
+        "create": "Create user",
+        "creating": "Creating user..."
       }
     },
     "filters": {
@@ -1699,69 +1791,68 @@
       "noneAvailable": "No active contests available"
     },
     "fields": {
-      "required": "Required field",
-      "readOnly": "Read only",
       "videoSource": "Video source",
       "videoFile": "Video file",
       "photoRequirement": "Photo requirement",
       "allowedRoles": "Allowed roles",
       "allowedUserTypes": "Allowed user types",
-      "allowedHotels": "Allowed hotels"
+      "allowedHotels": "Allowed hotels",
+      "required": "Required",
+      "readOnly": "Read only"
     },
     "confirm": {
-      "deleteTasks": "Delete tasks",
-      "deleteTask": "Delete task",
-      "deleteRewards": "Delete rewards",
-      "deleteReward": "Delete reward",
-      "deleteLocations": "Delete locations",
-      "deleteLocation": "Delete location",
-      "deleteSelectedTasks": {
-        "title": "Delete selected tasks",
-        "description": "Are you sure you want to permanently delete the selected tasks? This action cannot be undone."
-      },
-      "deleteTaskSingle": {
-        "title": "Delete task",
-        "description": "Are you sure you want to permanently delete this task? This action cannot be undone."
-      },
-      "deleteSelectedRewards": {
-        "title": "Delete selected rewards",
-        "description": "Are you sure you want to permanently delete the selected rewards? This action cannot be undone."
-      },
-      "deleteRewardSingle": {
-        "title": "Delete reward",
-        "description": "Are you sure you want to permanently delete this reward? This action cannot be undone."
-      },
-      "deleteSelectedLocations": {
-        "title": "Delete selected locations",
-        "description": "Are you sure you want to permanently delete the selected locations? This action cannot be undone."
-      },
-      "deleteLocationSingle": {
-        "title": "Delete location",
-        "description": "Are you sure you want to permanently delete this location? This action cannot be undone."
-      },
       "deleteLocationWithName": {
         "title": "Delete {{name}}?",
         "description": "Are you sure you want to delete this location? Tasks and rewards using it will need to be reassigned."
       },
-      "deleteTeams": "Delete teams",
-      "deleteTeam": "Delete team",
-      "deleteContests": "Delete contests",
-      "deleteContest": "Delete contest",
-      "deleteSelectedTeams": {
-        "title": "Delete selected teams",
-        "description": "Are you sure you want to permanently delete the selected teams? This action cannot be undone."
-      },
-      "deleteTeamSingle": {
-        "title": "Delete team",
-        "description": "Are you sure you want to permanently delete this team? This action cannot be undone."
-      },
-      "deleteSelectedContests": {
-        "title": "Delete selected contests",
-        "description": "Are you sure you want to permanently delete the selected contests? This action cannot be undone."
-      },
+      "deleteContest": "Delete contest?",
+      "deleteContests": "Delete selected contests?",
       "deleteContestSingle": {
         "title": "Delete contest",
-        "description": "Are you sure you want to permanently delete this contest? This action cannot be undone."
+        "description": "Do you really want to delete this contest?"
+      },
+      "deleteSelectedContests": {
+        "title": "Delete contests",
+        "description": "Do you really want to delete the selected contests?"
+      },
+      "deleteLocation": "Delete location?",
+      "deleteLocations": "Delete selected locations?",
+      "deleteLocationSingle": {
+        "description": "Do you really want to delete this location?"
+      },
+      "deleteSelectedLocations": {
+        "title": "Delete locations",
+        "description": "Do you really want to delete the selected locations?"
+      },
+      "deleteReward": "Delete reward?",
+      "deleteRewards": "Delete selected rewards?",
+      "deleteRewardSingle": {
+        "title": "Delete reward",
+        "description": "Do you really want to delete this reward?"
+      },
+      "deleteSelectedRewards": {
+        "title": "Delete rewards",
+        "description": "Do you really want to delete the selected rewards?"
+      },
+      "deleteTask": "Delete task?",
+      "deleteTasks": "Delete selected tasks?",
+      "deleteTaskSingle": {
+        "title": "Delete task",
+        "description": "Do you really want to delete this task?"
+      },
+      "deleteSelectedTasks": {
+        "title": "Delete tasks",
+        "description": "Do you really want to delete the selected tasks?"
+      },
+      "deleteTeam": "Delete team?",
+      "deleteTeams": "Delete selected teams?",
+      "deleteTeamSingle": {
+        "title": "Delete team",
+        "description": "Do you really want to delete this team?"
+      },
+      "deleteSelectedTeams": {
+        "title": "Delete teams",
+        "description": "Do you really want to delete the selected teams?"
       }
     },
     "messages": {
@@ -1805,27 +1896,26 @@
       "failedToUpdateContest": "Failed to update contest.",
       "failedToDeleteContest": "Failed to delete contest.",
       "selectedContestsActivated": "Selected contests activated.",
-      "selectedContestsDeactivated": "Selected contests deactivated."
+      "selectedContestsDeactivated": "Selected contests deactivated.",
+      "failedToDeleteItems": "Failed to delete items.",
+      "failedToUpdateItems": "Failed to update items.",
+      "selectedItemsDeleted": "Selected items deleted.",
+      "selectedItemsActivated": "Selected items activated.",
+      "selectedItemsDeactivated": "Selected items deactivated.",
+      "selectedUsersDeleted": "Selected users deleted.",
+      "selectedUsersActivated": "Selected users activated.",
+      "selectedUsersDeactivated": "Selected users deactivated.",
+      "taskDeleted": "Task deleted.",
+      "taskNotFound": "Task not found.",
+      "locationDeleted": "Location deleted.",
+      "rewardDeleted": "Reward deleted.",
+      "rewardNotFound": "Reward not found."
     },
     "toasts": {
       "taskCreatedTitle": "Task created",
       "taskCreatedMessage": "Your new task is now available for users.",
       "rewardCreatedTitle": "Reward created",
       "rewardCreatedMessage": "Your new reward is now visible in the marketplace."
-    },
-    "confirm": {
-      "deleteLocationWithName": {
-        "title": "Delete {{name}}?",
-        "description": "Are you sure you want to delete this location? Tasks and rewards using it will need to be reassigned."
-      }
-    },
-    "fields": {
-      "videoSource": "Video source",
-      "videoFile": "Video file",
-      "photoRequirement": "Photo requirement",
-      "allowedRoles": "Allowed roles",
-      "allowedUserTypes": "Allowed user types",
-      "allowedHotels": "Allowed hotels"
     },
     "qrScanner": {
       "title": "Redeem Rewards",
@@ -1841,7 +1931,12 @@
         "title": "QR Code Verified!",
         "message": "Successfully verified and redeemed reward for {{userName}}.",
         "reward": "Reward: {{title}}"
-      }
+      },
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application.",
+      "cameraNotSupported": "Camera is not supported.",
+      "cameraRequiresHttps": "Camera access requires HTTPS."
     }
   },
   "forest": {
@@ -2039,11 +2134,6 @@
         "errorMessage": "Failed to dissolve contest"
       },
       "ranking": {
-        "title": "Final Ranking",
-        "empty": "No participants",
-        "rewardsAwarded": "Rewards have been awarded"
-      },
-      "ranking": {
         "title": "Contest Ranking",
         "timeRemaining": "Time remaining",
         "days": "days",
@@ -2227,23 +2317,16 @@
     }
   },
   "employee": {
+    "contests": {
+      "title": "Contest Management",
+      "subtitle": "Manage contests for guests",
+      "createButton": "Create New Contest",
+      "empty": "No contests for guests yet"
+    },
     "pointsBonus": {
-      "title": "Generate Points Bonus QR Code",
-      "description": "Enter the number of points to award and generate a QR code that guests can scan to receive the bonus points.",
-      "forestCategory": "Forest category (bonus also counts here)",
-      "forestCategoryHint": "Points increase total score and the selected forest category.",
-      "pointsAmount": "Points Amount",
-      "pointsPlaceholder": "Enter points amount",
-      "generate": "Generate QR Code",
-      "generating": "Generating...",
-      "qrGenerated": "QR code generated successfully",
-      "generateError": "Failed to generate QR code",
-      "invalidAmount": "Please enter a valid positive number",
-      "qrTitle": "QR Code Generated",
-      "qrInfo": "Points Amount: {{amount}}",
-      "expiresAt": "Expires at",
-      "instruction": "Guest should scan this QR code to receive the bonus points. This code will expire in 24 hours.",
-      "generateNew": "Generate New QR Code"
+      "invalidAmount": "Please enter a valid amount.",
+      "generateError": "Failed to generate QR code.",
+      "qrGenerated": "QR code generated successfully."
     }
   },
   "teams": {
@@ -2269,7 +2352,10 @@
       "errorTitle": "Error",
       "cameraRequiresHttps": "Camera access requires HTTPS",
       "cameraNotSupported": "Camera not supported",
-      "cameraError": "Failed to access camera"
+      "cameraError": "Failed to access camera",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application."
     },
     "qrCode": {
       "title": "Team QR Code",
@@ -2327,7 +2413,15 @@
       "selectedParticipants": "{{count}} participants selected",
       "participantsTitle": "Add participants",
       "filter": "Filter:",
-      "noEmail": "No email"
+      "noEmail": "No email",
+      "loadingUsers": "Loading users...",
+      "errorLoadingUsers": "Failed to load users.",
+      "allRoles": "All roles",
+      "filterByRole": "Filter by role",
+      "roleAdministrator": "Administrator",
+      "roleGuest": "Guest",
+      "roleRedaktion": "Editorial",
+      "roleRezeption": "Reception"
     },
     "join": {
       "title": "Join Contest",
@@ -2339,7 +2433,10 @@
       "errorTitle": "Error",
       "cameraRequiresHttps": "Camera access requires HTTPS",
       "cameraNotSupported": "Camera not supported",
-      "cameraError": "Failed to access camera"
+      "cameraError": "Failed to access camera",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application."
     },
     "qrCode": {
       "title": "Contest QR Code",
@@ -2386,14 +2483,6 @@
       "noParticipants": "No participants yet",
       "noParticipantsDescription": "Be the first to join this contest!",
       "unnamed": "Unnamed Contest"
-    }
-  },
-  "employee": {
-    "contests": {
-      "title": "Contest Management",
-      "subtitle": "Manage contests for guests",
-      "createButton": "Create New Contest",
-      "empty": "No contests for guests yet"
     }
   },
   "rankings": {
@@ -2451,10 +2540,6 @@
       "manageContests": {
         "title": "Manage Contests",
         "description": "View, edit all contests and manage registration QR codes"
-      },
-      "pointsBonus": {
-        "title": "Generate Bonus Codes",
-        "description": "Generate QR codes for bonus points"
       },
       "pointsBonus": {
         "title": "Give Bonus Points",
@@ -2522,7 +2607,15 @@
           "registrationQrDescription": "New users can scan this QR code to register and automatically join the team",
           "add": "Add",
           "remove": "Remove"
-        }
+        },
+        "teams": "Teams",
+        "bulkActivateSuccess": "Selected teams activated.",
+        "bulkDeactivateSuccess": "Selected teams deactivated.",
+        "bulkStatusError": "Failed to update team status.",
+        "deleteSuccess": "Team deleted.",
+        "deleteError": "Failed to delete team.",
+        "toggleSuccess": "Team status updated.",
+        "toggleError": "Failed to update team status."
       },
       "membersAdded": "Members added successfully",
       "membersRemoved": "Members removed successfully",
@@ -2587,7 +2680,15 @@
         "toggleConfirm": {
           "title": "Change Contest Status",
           "description": "Are you sure you want to change the status of the contest \"{{name}}\"?"
-        }
+        },
+        "contests": "Contests",
+        "bulkActivateSuccess": "Selected contests activated.",
+        "bulkDeactivateSuccess": "Selected contests deactivated.",
+        "bulkStatusError": "Failed to update contest status.",
+        "deleteSuccess": "Contest deleted.",
+        "deleteError": "Failed to delete contest.",
+        "toggleSuccess": "Contest status updated.",
+        "toggleError": "Failed to update contest status."
       },
       "participantsAdded": "Participants added successfully",
       "participantsRemoved": "Participants removed successfully",
@@ -2608,7 +2709,8 @@
       "toggleConfirm": {
         "title": "Change Contest Status",
         "description": "Are you sure you want to change the status of the contest \"{{name}}\"?"
-      }
+      },
+      "registrationQrErrorTitle": "Error loading registration QR code"
     },
     "pointsBonus": {
       "title": "Give Bonus Points"
@@ -2678,4 +2780,3 @@
     "useAdminPage": "Please use the administrator page temporarily."
   }
 }
-

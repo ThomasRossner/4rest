@@ -69,6 +69,7 @@ type AdminTaskTemplate = {
   type: string;
   points: number;
   video_url?: string | null;
+  video_subtitles_i18n?: { de?: string; en?: string } | null;
   quiz_questions?: any;
   qr_code?: string | null;
   photo_required?: boolean;
@@ -136,6 +137,8 @@ type TaskFormState = {
   type: string;
   points: number;
   video_url: string;
+  video_subtitles_de: string;
+  video_subtitles_en: string;
   videoSource: VideoSourceOption;
   videoFile: File | null;
   quizQuestions: QuizQuestionDraft[];
@@ -1355,6 +1358,8 @@ const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'q
   type,
   points: 0,
   video_url: '',
+  video_subtitles_de: '',
+  video_subtitles_en: '',
   videoSource: 'url',
   videoFile: null,
   quizQuestions: (type === 'video' || type === 'quiz' || type === 'article_quiz') ? [createEmptyQuestion(1)] : [],
@@ -3728,6 +3733,8 @@ function AdminPage() {
       type: template.type,
       points: template.points ?? 0,
       video_url: template.video_url ?? '',
+      video_subtitles_de: (template as any).video_subtitles_i18n?.de ?? '',
+      video_subtitles_en: (template as any).video_subtitles_i18n?.en ?? '',
       videoSource: 'url',
       videoFile: null,
       quizQuestions:
@@ -3788,6 +3795,8 @@ function AdminPage() {
       type: task.type,
       points: task.points ?? 0,
       video_url: task.video_url ?? '',
+      video_subtitles_de: (task as any).video_subtitles_i18n?.de ?? '',
+      video_subtitles_en: (task as any).video_subtitles_i18n?.en ?? '',
       videoSource: isUploadedVideo ? 'upload' : 'url',
       videoFile: null,
       quizQuestions:
@@ -4014,6 +4023,10 @@ function AdminPage() {
             throw new Error('Video URL is required for video tasks.');
           }
           payload.video_url = videoUrl;
+          payload.video_subtitles_i18n = {
+            de: taskForm.video_subtitles_de.trim(),
+            en: taskForm.video_subtitles_en.trim(),
+          };
           payload.quiz_questions = quizPayload;
         }
         if (taskForm.type === 'quiz') {
@@ -4113,6 +4126,10 @@ function AdminPage() {
             throw new Error('Video URL is required for video tasks.');
           }
           payload.video_url = videoUrl;
+          payload.video_subtitles_i18n = {
+            de: taskForm.video_subtitles_de.trim(),
+            en: taskForm.video_subtitles_en.trim(),
+          };
           payload.quiz_questions = quizPayload;
         }
         if (template.type === 'quiz') {
@@ -4209,6 +4226,10 @@ function AdminPage() {
           throw new Error('Video URL is required for video tasks.');
         }
         payload.video_url = videoUrl;
+        payload.video_subtitles_i18n = {
+          de: taskForm.video_subtitles_de.trim(),
+          en: taskForm.video_subtitles_en.trim(),
+        };
         payload.quiz_questions = quizPayload;
       }
       if (taskSource === 'quiz') {
@@ -4814,6 +4835,8 @@ function AdminPage() {
       type: task.type,
       points: task.points ?? 0,
       video_url: task.video_url ?? '',
+      video_subtitles_de: (task as any).video_subtitles_i18n?.de ?? '',
+      video_subtitles_en: (task as any).video_subtitles_i18n?.en ?? '',
       videoSource: 'url',
       videoFile: null,
       quizQuestions:
@@ -6999,6 +7022,28 @@ function AdminPage() {
                             )}
                           </div>
                         )}
+                        <label className="admin-field admin-field-span-2 admin-video-upload-block">
+                          <FieldLabel label={t('admin.task.fields.videoSubtitleDe')} />
+                          <input
+                            type="url"
+                            value={taskForm.video_subtitles_de}
+                            onChange={(event) =>
+                              setTaskForm((prev) => ({ ...prev, video_subtitles_de: event.target.value }))
+                            }
+                            placeholder={t('admin.task.videoSubtitlePlaceholderDe')}
+                          />
+                        </label>
+                        <label className="admin-field admin-field-span-2 admin-video-upload-block">
+                          <FieldLabel label={t('admin.task.fields.videoSubtitleEn')} />
+                          <input
+                            type="url"
+                            value={taskForm.video_subtitles_en}
+                            onChange={(event) =>
+                              setTaskForm((prev) => ({ ...prev, video_subtitles_en: event.target.value }))
+                            }
+                            placeholder={t('admin.task.videoSubtitlePlaceholderEn')}
+                          />
+                        </label>
                       </>
                     )}
                     {taskForm.type === 'qr' && (
