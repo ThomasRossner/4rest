@@ -890,7 +890,12 @@ export async function deleteUserService(userId: string, adminUserId: string, _ha
   try {
     // Remove or detach references that are not cascading.
     await db.query('UPDATE user_tasks SET verified_by = NULL WHERE verified_by = $1', [userId]);
-    await db.query('UPDATE photo_task_verifications SET approved_by = NULL WHERE approved_by = $1', [userId]);
+    try {
+      await db.query('UPDATE photo_task_verifications SET approved_by = NULL WHERE approved_by = $1', [userId]);
+    } catch (error: any) {
+      // Some environments do not have this optional table.
+      if (error?.code !== '42P01') throw error;
+    }
     await db.query('UPDATE points_bonus_qr_tokens SET redeemed_by = NULL WHERE redeemed_by = $1', [userId]);
     await db.query('DELETE FROM points_bonus_qr_tokens WHERE generated_by = $1', [userId]);
 
