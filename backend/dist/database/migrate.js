@@ -100,6 +100,7 @@ export async function runMigrations() {
             '076_tasks_video_subtitles_i18n',
             '077_backfill_video_subtitles_en',
             '078_fix_video_subtitles_for_youtube',
+            '079_backfill_video_subtitles_text_vtt',
         ];
         // Read all migration files
         const migrationFiles = migrations.map((name) => ({
