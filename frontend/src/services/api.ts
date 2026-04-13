@@ -223,6 +223,11 @@ export const api = {
     return response.data;
   },
 
+  async requestResendVerificationEmail(email: string) {
+    const response = await apiClient.post('/auth/resend-verification-request', { email });
+    return response.data;
+  },
+
   async requestLoginCode(email: string) {
     const response = await apiClient.post('/auth/request-login-code', { email });
     return response.data;
@@ -267,6 +272,7 @@ export const api = {
     return response.data as {
       id: string;
       title: string;
+      teaser: string | null;
       description: string | null;
       type: string;
       points: number;

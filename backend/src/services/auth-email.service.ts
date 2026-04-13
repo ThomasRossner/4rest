@@ -80,6 +80,9 @@ export async function sendPasswordSetupEmail(userId: string, email: string, name
       to: email,
       subject: 'Set Your Password - 4rest',
       html,
+      templateKey: 'password_setup',
+      messageType: 'password_setup',
+      metadata: { userId },
     });
   } catch (error: any) {
     console.error('Failed to send password setup email:', error);
@@ -107,6 +110,9 @@ export async function sendAdminCreatedUserEmail(userId: string, email: string, n
       to: email,
       subject: 'Your 4rest Account Has Been Created',
       html,
+      templateKey: 'admin_created_user',
+      messageType: 'admin_created_user',
+      metadata: { userId },
     });
   } catch (error: any) {
     console.error('Failed to send admin created user email:', error);
@@ -132,6 +138,9 @@ export async function sendWelcomeEmail(userId: string, email: string, name: stri
       to: email,
       subject: 'Welcome to 4rest!',
       html,
+      templateKey: 'welcome',
+      messageType: 'welcome',
+      metadata: { userId, role },
     });
   } catch (error: any) {
     console.error('Failed to send welcome email:', error);
@@ -166,6 +175,9 @@ export async function sendPhotoRejectionEmail(userId: string, taskTitle: string,
       to: user.email,
       subject: `Aufgabe abgelehnt: ${taskTitle}`,
       html,
+      templateKey: 'photo_rejection',
+      messageType: 'photo_rejection',
+      metadata: { userId, taskTitle },
     });
   } catch (error: any) {
     console.error('Failed to send photo rejection email:', error);
@@ -198,6 +210,9 @@ export async function sendEmailVerificationEmail(
       to: email,
       subject: 'Verify Your Email Address - 4rest',
       html,
+      templateKey: 'email_verification',
+      messageType: 'email_verification',
+      metadata: { userId },
     });
   } catch (error: any) {
     console.error('Failed to send verification email:', error);
@@ -225,6 +240,9 @@ export async function sendPasswordResetEmail(userId: string, email: string, name
       to: email,
       subject: 'Reset Your Password - 4rest',
       html,
+      templateKey: 'password_reset',
+      messageType: 'password_reset',
+      metadata: { userId },
     });
   } catch (error: any) {
     console.error('Failed to send password reset email:', error);
@@ -374,6 +392,9 @@ export async function sendLoginCodeEmail(userId: string, email: string, name: st
       to: email,
       subject: 'Your Login Code - 4rest',
       html,
+      templateKey: 'login_code',
+      messageType: 'login_code',
+      metadata: { userId },
     });
   } catch (error: any) {
     console.error('Failed to send login code email:', error);

@@ -131,6 +131,7 @@ type RewardSource = '' | 'existing' | RewardType;
 
 type TaskFormState = {
   title: string;
+  teaser: string;
   description: string;
   type: string;
   points: number;
@@ -1344,6 +1345,7 @@ const REWARD_TYPE_OPTIONS = REWARD_TYPES.map((type) => ({
 
 const defaultTaskForm = (type: 'video' | 'quiz' | 'article_quiz' | 'survey' | 'qr' | 'photo' | 'visit_location'): TaskFormState => ({
   title: '',
+  teaser: '',
   description: '',
   type,
   points: 0,
@@ -1799,6 +1801,10 @@ const validateTaskFormState = ({
 
   if (!taskForm.description || !taskForm.description.trim()) {
     return { isValid: false, message: 'Description is required.' };
+  }
+
+  if (!taskForm.teaser || !taskForm.teaser.trim()) {
+    return { isValid: false, message: 'Teaser is required.' };
   }
 
   if (!Number.isFinite(taskForm.points) || Number.isNaN(taskForm.points)) {
@@ -2769,9 +2775,10 @@ function AdminPage() {
   const [contentLanguage, setContentLanguage] = useState<'de' | 'en'>('de');
   const [contentI18n, setContentI18n] = useState<{
     title_i18n: { de: string; en: string };
+    teaser_i18n: { de: string; en: string };
     description_i18n: { de: string; en: string };
     article_content_i18n: { de: string; en: string };
-  }>(() => ({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } }));
+  }>(() => ({ title_i18n: { de: '', en: '' }, teaser_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } }));
   const previousContentLanguageRef = useRef<'de' | 'en'>('de');
   const [taskMessage, setTaskMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(
     null
@@ -3568,7 +3575,7 @@ function AdminPage() {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
       setContentLanguage('de');
-      setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
+      setContentI18n({ title_i18n: { de: '', en: '' }, teaser_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
       setHasAttemptedPublish(false);
       setTaskReturnMode(null);
       void refetchTasks();
@@ -3590,7 +3597,7 @@ function AdminPage() {
         setSelectedExistingTaskId('');
         setTaskForm(defaultTaskForm('video'));
         setContentLanguage('de');
-        setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
+        setContentI18n({ title_i18n: { de: '', en: '' }, teaser_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
         setHasAttemptedPublish(false);
         setTaskReturnMode(null);
         void refetchTasks();
@@ -3694,12 +3701,12 @@ function AdminPage() {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm('video'));
       setContentLanguage('de');
-      setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
+      setContentI18n({ title_i18n: { de: '', en: '' }, teaser_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     } else if (taskSource === 'video' || taskSource === 'quiz' || taskSource === 'article_quiz' || taskSource === 'survey' || taskSource === 'qr' || taskSource === 'photo' || taskSource === 'visit_location') {
       setSelectedExistingTaskId('');
       setTaskForm(defaultTaskForm(taskSource));
       setContentLanguage('de');
-      setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
+      setContentI18n({ title_i18n: { de: '', en: '' }, teaser_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     }
   }, [taskSource, isEditingTask]);
 
@@ -3711,6 +3718,7 @@ function AdminPage() {
     setHasAttemptedPublish(false);
     setTaskForm({
       title: template.title ?? '',
+      teaser: (template as any).teaser ?? template.description ?? '',
       description: template.description ?? '',
       type: template.type,
       points: template.points ?? 0,
@@ -3983,8 +3991,10 @@ function AdminPage() {
 
         const payload: any = {
           title: taskForm.title,
+          teaser: taskForm.teaser,
           description: taskForm.description,
           title_i18n: contentI18n.title_i18n,
+          teaser_i18n: contentI18n.teaser_i18n,
           description_i18n: contentI18n.description_i18n,
           type: taskForm.type,
           points: Number(taskForm.points) || 0,
@@ -4081,8 +4091,10 @@ function AdminPage() {
 
         const payload: any = {
           title: taskForm.title,
+          teaser: taskForm.teaser,
           description: taskForm.description,
           title_i18n: contentI18n.title_i18n,
+          teaser_i18n: contentI18n.teaser_i18n,
           description_i18n: contentI18n.description_i18n,
           type: template.type,
           points: Number(taskForm.points) || 0,
@@ -4174,8 +4186,10 @@ function AdminPage() {
 
       const payload: any = {
         title: taskForm.title,
+        teaser: taskForm.teaser,
         description: taskForm.description,
         title_i18n: contentI18n.title_i18n,
+        teaser_i18n: contentI18n.teaser_i18n,
         description_i18n: contentI18n.description_i18n,
         type: taskForm.type,
         points: Number(taskForm.points) || 0,
@@ -4780,13 +4794,17 @@ function AdminPage() {
     const descriptionI18n = (task as any).description_i18n && typeof (task as any).description_i18n === 'object'
       ? (task as any).description_i18n
       : { de: task.description ?? '', en: task.description ?? '' };
+    const teaserI18n = (task as any).teaser_i18n && typeof (task as any).teaser_i18n === 'object'
+      ? (task as any).teaser_i18n
+      : { de: (task as any).teaser ?? task.description ?? '', en: (task as any).teaser ?? task.description ?? '' };
     const articleContentI18n = (task as any).article_content_i18n && typeof (task as any).article_content_i18n === 'object'
       ? (task as any).article_content_i18n
       : { de: (task as any).article_content ?? '', en: (task as any).article_content ?? '' };
-    setContentI18n({ title_i18n: titleI18n, description_i18n: descriptionI18n, article_content_i18n: articleContentI18n });
+    setContentI18n({ title_i18n: titleI18n, teaser_i18n: teaserI18n, description_i18n: descriptionI18n, article_content_i18n: articleContentI18n });
     setContentLanguage('de');
     setTaskForm({
       title: titleI18n.de ?? task.title ?? '',
+      teaser: teaserI18n.de ?? (task as any).teaser ?? '',
       description: descriptionI18n.de ?? task.description ?? '',
       type: task.type,
       points: task.points ?? 0,
@@ -4876,7 +4894,7 @@ function AdminPage() {
     setSelectedExistingTaskId('');
     setTaskForm(defaultTaskForm('video'));
     setContentLanguage('de');
-    setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
+    setContentI18n({ title_i18n: { de: '', en: '' }, teaser_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     setTaskMessage(null);
     setHasAttemptedPublish(false);
     if (taskReturnMode) {
@@ -5047,7 +5065,7 @@ function AdminPage() {
     setSelectedExistingTaskId('');
     setTaskForm(defaultTaskForm('video'));
     setContentLanguage('de');
-    setContentI18n({ title_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
+    setContentI18n({ title_i18n: { de: '', en: '' }, teaser_i18n: { de: '', en: '' }, description_i18n: { de: '', en: '' }, article_content_i18n: { de: '', en: '' } });
     setHasAttemptedPublish(false);
   };
 
@@ -6500,6 +6518,7 @@ function AdminPage() {
                             const nextI18n = {
                               ...contentI18n,
                               title_i18n: { ...contentI18n.title_i18n, en: taskForm.title },
+                              teaser_i18n: { ...contentI18n.teaser_i18n, en: taskForm.teaser },
                               description_i18n: { ...contentI18n.description_i18n, en: taskForm.description },
                               article_content_i18n: { ...contentI18n.article_content_i18n, en: taskForm.article_content },
                             };
@@ -6508,6 +6527,7 @@ function AdminPage() {
                             setTaskForm((prev) => ({
                               ...prev,
                               title: nextI18n.title_i18n.de,
+                              teaser: nextI18n.teaser_i18n.de,
                               description: nextI18n.description_i18n.de,
                               article_content: nextI18n.article_content_i18n.de,
                             }));
@@ -6524,6 +6544,7 @@ function AdminPage() {
                             const nextI18n = {
                               ...contentI18n,
                               title_i18n: { ...contentI18n.title_i18n, de: taskForm.title },
+                              teaser_i18n: { ...contentI18n.teaser_i18n, de: taskForm.teaser },
                               description_i18n: { ...contentI18n.description_i18n, de: taskForm.description },
                               article_content_i18n: { ...contentI18n.article_content_i18n, de: taskForm.article_content },
                             };
@@ -6532,6 +6553,7 @@ function AdminPage() {
                             setTaskForm((prev) => ({
                               ...prev,
                               title: nextI18n.title_i18n.en,
+                              teaser: nextI18n.teaser_i18n.en,
                               description: nextI18n.description_i18n.en,
                               article_content: nextI18n.article_content_i18n.en,
                             }));
@@ -6579,6 +6601,21 @@ function AdminPage() {
                             title_i18n: { ...prev.title_i18n, [contentLanguage]: v },
                           }));
                         }}
+                      />
+                    </label>
+                    <label className="admin-field admin-field-span-2">
+                      <FieldLabel label={t('admin.task.fields.teaser')} required />
+                      <textarea
+                        value={taskForm.teaser}
+                        onChange={(event) => {
+                          const v = event.target.value;
+                          setTaskForm((prev) => ({ ...prev, teaser: v }));
+                          setContentI18n((prev) => ({
+                            ...prev,
+                            teaser_i18n: { ...prev.teaser_i18n, [contentLanguage]: v },
+                          }));
+                        }}
+                        rows={2}
                       />
                     </label>
                     <label className="admin-field admin-field-span-2">

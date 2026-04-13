@@ -157,7 +157,8 @@
       "sendReset": "Send reset link",
       "resetPassword": "Reset password",
       "getCode": "Get code",
-      "submitCode": "Sign in"
+      "submitCode": "Sign in",
+      "resendVerification": "Resend activation email"
     },
     "divider": "or",
     "privacyCheckbox": "I accept the <1>privacy notice</1> and the processing of my data for using the app.",
@@ -187,6 +188,8 @@
       "passwordMismatch": "Passwords do not match",
       "missingResetToken": "Reset token is missing",
       "emailVerificationRequired": "Email verification required. Please check your inbox ({{email}}).",
+      "verificationResent": "If the address exists and is still unverified, a new activation email has been sent.",
+      "verificationResendFailed": "Activation email could not be resent right now.",
       "passwordSetupRequired": "This account uses passwordless login. A password setup link has been sent to {{email}}.",
       "validationError": "Validation error",
       "registrationFailed": "Registration failed",
@@ -323,8 +326,11 @@
     },
     "detail": {
       "noDescription": "No further description.",
+      "videoSection": "Video",
       "locationSection": "Location on the map",
-      "completedAt": "Completed on {{date}}"
+      "completedAt": "Completed on {{date}}",
+      "quizLockedHint": "This quiz is temporarily locked after a wrong answer.",
+      "quizLockedRemaining": "Available again in about {{minutes}} minute(s)."
     },
     "tile": {
       "noPreview": "No short description"
@@ -417,7 +423,10 @@
       "redeemPersonal": "{{count}} points (personal balance)",
       "redeemPointsShort": "{{count}} points",
       "redeemTeam": "{{count}} points (team balance)",
-      "redeeming": "Redeeming…"
+      "redeeming": "Redeeming…",
+      "swipeRedeemPersonal": "Swipe redeem (personal balance, {{count}} points)",
+      "swipeRedeemTeam": "Swipe redeem (team balance, {{count}} points)",
+      "singleQrOpen": "Only one QR code can be open at a time."
     },
     "messages": {
       "redeemSuccess": "Reward redeemed successfully",
@@ -950,6 +959,7 @@
       "fields": {
         "type": "Task type",
         "title": "Title",
+        "teaser": "Teaser text (short)",
         "description": "Description",
         "points": "Points",
         "location": "Location",

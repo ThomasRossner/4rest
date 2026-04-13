@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, register, refreshToken, githubAuth, githubCallback, googleAuth, googleCallback, facebookAuth, facebookCallback, appleAuth, appleCallback, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail, requestLoginCode, loginWithCode, mergeGuestSession, } from '../controllers/auth.controller.js';
+import { login, register, refreshToken, githubAuth, githubCallback, googleAuth, googleCallback, facebookAuth, facebookCallback, appleAuth, appleCallback, forgotPassword, resetPassword, verifyEmail, resendVerificationEmail, requestResendVerificationEmail, emailDeliveryEvent, requestLoginCode, loginWithCode, mergeGuestSession, } from '../controllers/auth.controller.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import { loginSchema, registerSchema } from '../schemas/auth.schema.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -13,6 +13,8 @@ router.post('/reset-password', resetPassword);
 // Email verification routes
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', authenticate, resendVerificationEmail);
+router.post('/resend-verification-request', requestResendVerificationEmail);
+router.post('/email-events', emailDeliveryEvent);
 // Passwordless login routes
 router.post('/request-login-code', requestLoginCode);
 router.post('/login-with-code', loginWithCode);

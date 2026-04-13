@@ -2,7 +2,7 @@
 
 **Typ:** Bug
 
-**Status:** offen
+**Status:** umgesetzt
 
 **PDF-Bug:** 016
 

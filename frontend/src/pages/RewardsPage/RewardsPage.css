@@ -36,6 +36,37 @@
   z-index: 20;
 }
 
+.rewards-header-category {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 var(--spacing-xs);
+}
+
+.rewards-header-category-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  width: 100%;
+}
+
+.rewards-header-category-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1.05rem, 4.2vw, 1.5rem);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 .rewards-scroll {
   flex: 1 1 auto;
   min-height: 0;
@@ -105,8 +136,8 @@
   gap: var(--spacing-md);
 }
 
-/* Mobil: eine Spalte (lesbarere Karten / QR / Status) */
-@media (max-width: 640px) {
+/* Mobil/Tablet: eine Spalte */
+@media (max-width: 1024px) {
   .rewards-page--list .rewards-grid {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -30,12 +30,21 @@ export function FilterDropdown({ label, value, options, onChange }: FilterDropdo
     function updateMenuPosition() {
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
+        const viewportPadding = 8;
+        const maxMenuWidth = Math.max(220, window.innerWidth - viewportPadding * 2);
+        const preferredWidth = Math.min(Math.max(rect.width, 320), maxMenuWidth);
+        const left = Math.min(
+          Math.max(viewportPadding, rect.left),
+          Math.max(viewportPadding, window.innerWidth - preferredWidth - viewportPadding)
+        );
+
         setMenuStyle({
           position: 'fixed',
-          left: `${rect.left}px`,
+          left: `${left}px`,
           top: `${rect.bottom + 8}px`,
-          width: `${rect.width}px`,
-          maxWidth: `${rect.width}px`,
+          width: `${preferredWidth}px`,
+          minWidth: `${rect.width}px`,
+          maxWidth: `${maxMenuWidth}px`,
           zIndex: 99999,
         });
       } else {

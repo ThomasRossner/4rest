@@ -92,6 +92,9 @@
   color: white;
   box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .reward-redeem-btn:hover:not(:disabled) {
@@ -102,6 +105,15 @@
 .reward-redeem-btn:disabled {
   cursor: wait;
   opacity: 0.85;
+}
+
+.reward-redeem-blocked {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #6b7280);
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .reward-redeem-btn--team {

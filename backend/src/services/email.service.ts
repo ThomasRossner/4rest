@@ -3,6 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import {
+  addEmailSuppression,
+  createDeliveryLog,
+  isEmailSuppressed,
+  updateDeliveryLog,
+} from './email-delivery.service.js';
 
 // Load environment variables before initializing the service
 dotenv.config();
@@ -15,6 +21,9 @@ interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  templateKey?: string;
+  messageType?: string;
+  metadata?: Record<string, unknown>;
 }
 
 class EmailService {
@@ -78,6 +87,18 @@ class EmailService {
     }
 
     this.transporter = nodemailer.createTransport(smtpConfig);
+  }
+
+  private isTransientError(error: any): boolean {
+    const code = String(error?.code || '').toUpperCase();
+    const responseCode = Number(error?.responseCode || 0);
+    if (['ETIMEDOUT', 'ECONNECTION', 'ECONNRESET', 'EAI_AGAIN', 'ESOCKET'].includes(code)) return true;
+    if (responseCode >= 400 && responseCode < 500) return true;
+    return false;
+  }
+
+  private async delay(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private async saveMockEmail(options: EmailOptions, from: string): Promise<void> {
@@ -158,11 +179,47 @@ class EmailService {
     const fromName = process.env.EMAIL_FROM_NAME || '4rest';
     const from = `"${fromName}" <${fromEmail}>`;
 
+    const messageType = options.messageType || options.templateKey || 'generic';
+    const templateKey = options.templateKey || null;
+
+    if (await isEmailSuppressed(options.to)) {
+      await createDeliveryLog({
+        recipientEmail: options.to,
+        messageType,
+        templateKey: templateKey ?? undefined,
+        subject: options.subject,
+        status: 'suppressed',
+        errorMessage: 'recipient suppressed',
+        metadata: options.metadata,
+      });
+      console.warn(`[EMAIL SERVICE] Suppressed recipient skipped: ${options.to}`);
+      return;
+    }
+
+    const deliveryLogId = await createDeliveryLog({
+      recipientEmail: options.to,
+      messageType,
+      templateKey: templateKey ?? undefined,
+      subject: options.subject,
+      status: 'pending',
+      metadata: options.metadata,
+    });
+
     if (this.isMockMode) {
       try {
         await this.saveMockEmail(options, from);
+        await updateDeliveryLog(deliveryLogId, {
+          status: 'sent',
+          smtpResponse: 'mock-mode',
+          attemptCount: 1,
+        });
         console.log(`[MOCK EMAIL] Email saved successfully for: ${options.to}`);
       } catch (error: any) {
+        await updateDeliveryLog(deliveryLogId, {
+          status: 'failed',
+          errorCode: error?.code || 'MOCK_WRITE_ERROR',
+          errorMessage: error?.message || 'Mock email write failed',
+        });
         console.error(`[MOCK EMAIL] Failed to save email:`, error);
         throw error;
       }
@@ -170,23 +227,71 @@ class EmailService {
     }
 
     if (!this.transporter || process.env.EMAIL_ENABLED !== 'true') {
+      await updateDeliveryLog(deliveryLogId, {
+        status: 'failed',
+        errorCode: 'EMAIL_DISABLED',
+        errorMessage: 'Email service is disabled or not configured',
+      });
       console.warn('Email service is disabled or not configured. Email would have been sent to:', options.to);
       return;
     }
 
-    try {
-      await this.transporter.sendMail({
-        from,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || this.htmlToText(options.html),
-      });
-      console.log(`Email sent successfully to: ${options.to}`);
-    } catch (error: any) {
-      console.error('Failed to send email:', error);
-      throw new Error(`Failed to send email: ${error.message}`);
+    const maxRetries = Math.max(1, Number(process.env.EMAIL_MAX_RETRIES || 3));
+    const retryBaseMs = Math.max(200, Number(process.env.EMAIL_RETRY_BASE_MS || 800));
+
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const info = await this.transporter.sendMail({
+          from,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || this.htmlToText(options.html),
+        });
+
+        await updateDeliveryLog(deliveryLogId, {
+          status: 'sent',
+          attemptCount: attempt,
+          smtpResponse: String(info?.response || ''),
+          metadata: {
+            ...(options.metadata || {}),
+            messageId: info?.messageId || null,
+          },
+        });
+        console.log(`Email sent successfully to: ${options.to}`);
+        return;
+      } catch (error: any) {
+        lastError = error;
+        await updateDeliveryLog(deliveryLogId, {
+          status: attempt < maxRetries && this.isTransientError(error) ? 'deferred' : 'failed',
+          attemptCount: attempt,
+          errorCode: error?.code || (error?.responseCode ? `SMTP_${error.responseCode}` : 'SMTP_ERROR'),
+          errorMessage: error?.message || 'sendMail failed',
+          smtpResponse: String(error?.response || ''),
+        });
+
+        const permanent = !this.isTransientError(error) || attempt >= maxRetries;
+        if (permanent) break;
+        await this.delay(retryBaseMs * attempt);
+      }
     }
+
+    if (lastError?.responseCode === 550 || lastError?.responseCode === 551 || lastError?.responseCode === 553) {
+      await addEmailSuppression({
+        email: options.to,
+        reason: 'hard_bounce',
+        source: 'smtp',
+        details: {
+          code: lastError?.code || null,
+          responseCode: lastError?.responseCode || null,
+          response: lastError?.response || null,
+        },
+      });
+    }
+
+    console.error('Failed to send email:', lastError);
+    throw new Error(`Failed to send email: ${lastError?.message || 'unknown error'}`);
   }
 
   private htmlToText(html: string): string {

@@ -532,7 +532,7 @@ function TasksPage() {
             const isLocked = task.is_available === false;
             const isCompleted = !!task.completed && task.verification_status !== 'pending';
             const isValidating = task.verification_status === 'pending';
-            const previewText = descriptionPreviewPlain(task.description);
+            const previewText = descriptionPreviewPlain(task.teaser ?? task.description, 60);
             return (
             <div
               key={task.id}

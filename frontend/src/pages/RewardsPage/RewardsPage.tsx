@@ -42,7 +42,6 @@ function RewardsPage() {
     { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds to keep team points updated in real-time
   );
 
-  // Keep activeRedemption for backward compatibility (if needed elsewhere)
   const [activeRedemption, setActiveRedemption] = useState<{
     qrToken: string;
     redemptionId: string;
@@ -177,16 +176,27 @@ function RewardsPage() {
             variant="rewards"
             height="calc(100vh - 200px)"
             rewards={redeemableRewards}
-            onRewardClick={(rewardId) => {
+            onRewardClick={async (rewardId) => {
               setShowLocationMap(false);
+              if (activeRedemption) {
+                pushToast({ type: 'info', message: t('rewards.card.singleQrOpen') });
+                return;
+              }
               // Find the reward and trigger redeem if user can afford it
               const reward = redeemableRewards.find((r: any) => r.id === rewardId);
               const teamTotalPoints = activeTeam?.totalPoints || 0;
               const canAfford = user && (user.points >= reward.pointsCost || (activeTeam && teamTotalPoints >= reward.pointsCost));
               if (reward && canAfford) {
                 // Always use team points if user is in a team
-              const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
-              handleRedeemClick(reward.id, reward.pointsCost, useTeamPoints);
+                const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
+                const res = await handleRedeemClick(reward.id, reward.pointsCost, useTeamPoints);
+                if (res?.redemption?.qrToken) {
+                  setActiveRedemption({
+                    qrToken: res.redemption.qrToken,
+                    redemptionId: res.redemption.id,
+                    rewardTitle: reward.title,
+                  });
+                }
               }
             }}
           />
@@ -198,6 +208,11 @@ function RewardsPage() {
   return (
     <div className="rewards-page rewards-page--list">
       <div className="rewards-sticky">
+        <div className="rewards-header-category">
+          <div className="rewards-header-category-row">
+            <h1 className="rewards-header-category-title">{t('rewards.title')}</h1>
+          </div>
+        </div>
         <div className="rewards-balance">
           <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
           <span className="rewards-balance-value">
@@ -283,6 +298,14 @@ function RewardsPage() {
               teamTotalPoints={activeTeam != null ? activeTeam.totalPoints ?? 0 : null}
               canAfford={!!user && (user.points >= reward.pointsCost || (activeTeam && (activeTeam.totalPoints || 0) >= reward.pointsCost))}
               onRedeem={(id, cost, useTeamPoints) => handleRedeemClick(id, cost, useTeamPoints)}
+              hasActiveRedemption={Boolean(activeRedemption)}
+              onRedemptionCreated={(redemption) =>
+                setActiveRedemption({
+                  qrToken: redemption.qrToken,
+                  redemptionId: redemption.redemptionId,
+                  rewardTitle: redemption.rewardTitle,
+                })
+              }
             />
           ))}
         </div>

@@ -34,6 +34,8 @@ function LoginPage() {
   const [fieldErrorPassword, setFieldErrorPassword] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendVerificationLoading, setResendVerificationLoading] = useState(false);
+  const [showResendVerificationAction, setShowResendVerificationAction] = useState(false);
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -88,6 +90,22 @@ function LoginPage() {
     } finally {
       setLoading(false);
       verificationInProgressRef.current = false;
+    }
+  };
+
+  const handleResendVerificationEmail = async () => {
+    const targetEmail = email.trim();
+    if (!targetEmail) return;
+    try {
+      setResendVerificationLoading(true);
+      await api.requestResendVerificationEmail(targetEmail);
+      setSuccess(t('login.messages.verificationResent'));
+      setShowResendVerificationAction(false);
+    } catch (err: any) {
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
+      setError(serverMsg || t('login.messages.verificationResendFailed'));
+    } finally {
+      setResendVerificationLoading(false);
     }
   };
 
@@ -194,6 +212,7 @@ function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setShowResendVerificationAction(false);
     setFieldErrorEmail('');
     setFieldErrorPassword('');
     setSuccess('');
@@ -325,6 +344,7 @@ function LoginPage() {
       else if (errorCode === 'EMAIL_NOT_VERIFIED') {
         const userEmail = err?.response?.data?.email || email;
         setError(t('login.messages.emailVerificationRequired', { email: userEmail }));
+        setShowResendVerificationAction(true);
         // Still allow login but show the error
         // The backend will return 403, so login won't succeed
       } else if (errorCode === 'PASSWORD_SETUP_REQUIRED') {
@@ -332,6 +352,7 @@ function LoginPage() {
         setError(t('login.messages.passwordSetupRequired', { email: userEmail }));
         setSuccess(t('login.messages.passwordlessSetup'));
       } else {
+        setShowResendVerificationAction(false);
         setError(
           serverMsg ||
             err?.message ||
@@ -455,6 +476,18 @@ function LoginPage() {
         </div>
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="login-error">{error}</div>}
+          {showResendVerificationAction && mode === 'login' && (
+            <button
+              type="button"
+              className="login-button login-button--secondary login-resend-verification"
+              onClick={handleResendVerificationEmail}
+              disabled={resendVerificationLoading || !email.trim()}
+            >
+              {resendVerificationLoading
+                ? '...'
+                : t('login.actions.resendVerification')}
+            </button>
+          )}
           {success && <div className="login-success">{success}</div>}
           
           {mode === 'register' && (
@@ -480,6 +513,7 @@ function LoginPage() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  setShowResendVerificationAction(false);
                   if (mode === 'login') setFieldErrorEmail('');
                   if (mode === 'passwordless-login') {
                     setCodeSent(false);

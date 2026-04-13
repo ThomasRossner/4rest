@@ -2,7 +2,7 @@
 
 **Typ:** Bug
 
-**Status:** offen
+**Status:** teilweise
 
 **PDF-Bug:** 015
 

@@ -8,8 +8,10 @@ export interface Task {
     id: string;
     title: string;
     description?: string;
+    teaser?: string;
     title_i18n?: Record<string, string>;
     description_i18n?: Record<string, string>;
+    teaser_i18n?: Record<string, string>;
     article_content_i18n?: Record<string, string>;
     type: string;
     points: number;
@@ -99,6 +101,7 @@ export declare function getPublicTaskForGuest(taskId: string, preferredLanguage?
 export type PublicGuestTaskListItem = {
     id: string;
     title: string;
+    teaser: string | null;
     description: string | null;
     type: string;
     points: number;

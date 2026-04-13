@@ -1,5 +1,5 @@
-/** Zeichenobergrenze (ein … am Ende); passt typisch in ~3–4 Zeilen, max-height in CSS fängt Randfälle ab */
-const TASK_TILE_PREVIEW_MAX_CHARS = 160;
+/** Zeichenobergrenze (ein … am Ende); Kachel-Teaser soll kurz bleiben */
+const TASK_TILE_TEASER_MAX_CHARS = 60;
 
 function htmlDescriptionToPlain(text: string): string {
   if (typeof document !== 'undefined') {
@@ -28,8 +28,11 @@ function truncatePreviewAtWordEnd(plain: string, maxLen: number): string {
 }
 
 /** Kurztext für Aufgaben-Kacheln: HTML → Klartext, dann eine saubere Endkürzung */
-export function descriptionPreviewPlain(text: string | null | undefined): string {
+export function descriptionPreviewPlain(
+  text: string | null | undefined,
+  maxChars: number = TASK_TILE_TEASER_MAX_CHARS
+): string {
   if (!text || typeof text !== 'string') return '';
   const plain = htmlDescriptionToPlain(text);
-  return truncatePreviewAtWordEnd(plain, TASK_TILE_PREVIEW_MAX_CHARS);
+  return truncatePreviewAtWordEnd(plain, maxChars);
 }

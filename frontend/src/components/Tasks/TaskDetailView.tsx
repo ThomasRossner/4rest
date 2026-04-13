@@ -29,6 +29,13 @@ function formatCompletedAt(iso: unknown, localeHint: string): string {
   return d.toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
 }
 
+function formatLockRemainingMinutes(lockedUntilIso: string): number {
+  const untilTs = new Date(lockedUntilIso).getTime();
+  if (!Number.isFinite(untilTs)) return 0;
+  const remainingMs = Math.max(0, untilTs - Date.now());
+  return Math.max(0, Math.ceil(remainingMs / 60000));
+}
+
 export function TaskDetailView({
   taskId,
   listTask,
@@ -63,6 +70,18 @@ export function TaskDetailView({
     dataSource === 'public' ? publicQuery : authQuery;
 
   const task = (fetchedTask as Record<string, unknown> | undefined) ?? listTask ?? undefined;
+  const taskType = String((task as Record<string, unknown> | undefined)?.type ?? '');
+  const isQuizLikeTask = taskType === 'quiz' || taskType === 'article_quiz';
+
+  const quizLocksQuery = useQuery(
+    ['quizLocks', taskId, 'detail'],
+    () => api.getQuizQuestionLocks(taskId),
+    {
+      enabled: Boolean(taskId) && dataSource === 'authenticated' && isQuizLikeTask,
+      staleTime: 30_000,
+      refetchInterval: 30_000,
+    }
+  );
 
   const backNavTitle =
     dataSource === 'public' ? t('publicTask.backToOverview') : t('tasks.backToList');
@@ -103,6 +122,16 @@ export function TaskDetailView({
   const isValidating = row.verification_status === 'pending';
   const isLocked = row.is_available === false;
 
+  const activeQuizLocks = (quizLocksQuery.data?.locks ?? []).filter((l) => new Date(l.lockedUntil).getTime() > Date.now());
+  const maxQuizLockedUntil =
+    activeQuizLocks.length > 0
+      ? activeQuizLocks
+          .map((l) => l.lockedUntil)
+          .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
+      : null;
+  const isQuizLockedByWrongAnswer = Boolean(maxQuizLockedUntil) && !isCompleted;
+  const quizLockRemainingMinutes = maxQuizLockedUntil ? formatLockRemainingMinutes(maxQuizLockedUntil) : 0;
+
   const completedAtLabel = formatCompletedAt(row.completed_at, i18n.language || 'de');
 
   const taskForMapPreview = useMemo(() => {
@@ -122,6 +151,11 @@ export function TaskDetailView({
   }, [row]);
 
   const showMapPreview = Boolean(taskForMapPreview);
+  const showCompletedVideo =
+    isCompleted &&
+    taskType === 'video' &&
+    typeof row.video_url === 'string' &&
+    row.video_url.trim() !== '';
 
   return (
     <div className="task-detail-view">
@@ -150,6 +184,18 @@ export function TaskDetailView({
           <p className="task-detail-description task-detail-description--empty">{t('tasks.detail.noDescription')}</p>
         )}
 
+        {showCompletedVideo && (
+          <div className="task-detail-video-block">
+            <h2 className="task-detail-section-title">{t('tasks.detail.videoSection')}</h2>
+            <video
+              className="task-detail-video-player"
+              src={String(row.video_url)}
+              controls
+              preload="metadata"
+            />
+          </div>
+        )}
+
         {showMapPreview && taskForMapPreview && (
           <div className="task-detail-map-block">
             <h2 className="task-detail-section-title">{t('tasks.detail.locationSection')}</h2>
@@ -173,6 +219,14 @@ export function TaskDetailView({
           {isValidating && (
             <p className="task-detail-footer-hint">{t('tasks.badges.validating')}</p>
           )}
+          {isQuizLockedByWrongAnswer && (
+            <div className="task-detail-completed-meta">
+              <p className="task-detail-footer-hint">{t('tasks.detail.quizLockedHint')}</p>
+              <p className="task-detail-completed-date">
+                {t('tasks.detail.quizLockedRemaining', { minutes: quizLockRemainingMinutes })}
+              </p>
+            </div>
+          )}
           {isCompleted && (
             <div className="task-detail-completed-meta">
               {completedAtLabel ? (
@@ -182,7 +236,7 @@ export function TaskDetailView({
               )}
             </div>
           )}
-          {!isCompleted && (
+          {!isCompleted && !isQuizLockedByWrongAnswer && (
             <button
               type="button"
               className="task-detail-start"

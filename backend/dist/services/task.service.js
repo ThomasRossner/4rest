@@ -113,7 +113,7 @@ export async function getAllTasks(filters, userId, options) {
     }
     // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles were removed in migration 038)
     let select = `DISTINCT ON (t.id) 
-    t.id, t.title, t.description, t.title_i18n, t.description_i18n, t.article_content_i18n,
+    t.id, t.title, t.description, t.teaser, t.title_i18n, t.description_i18n, t.teaser_i18n, t.article_content_i18n,
     t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
@@ -217,11 +217,13 @@ export async function getAllTasks(filters, userId, options) {
 function resolveTaskI18n(task, lang) {
     const title = resolveI18n(task.title_i18n, lang, task.title);
     const description = resolveI18n(task.description_i18n, lang, task.description);
+    const teaser = resolveI18n(task.teaser_i18n, lang, task.teaser);
     const article_content = resolveI18n(task.article_content_i18n, lang, task.article_content);
     const out = {
         ...task,
         title,
         description,
+        teaser,
         article_content,
         quiz_questions: resolveQuizQuestionsI18n(task.quiz_questions, lang),
         survey_questions: resolveSurveyQuestionsI18n(task.survey_questions, lang),
@@ -373,7 +375,7 @@ export async function getTaskById(id, preferredLanguage, userId) {
         // If check fails, assume columns don't exist
         columnsExist = false;
     }
-    let select = `t.id, t.title, t.description, t.title_i18n, t.description_i18n, t.article_content_i18n,
+    let select = `t.id, t.title, t.description, t.teaser, t.title_i18n, t.description_i18n, t.teaser_i18n, t.article_content_i18n,
     t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
@@ -543,17 +545,23 @@ export async function createTask(data) {
     const descriptionI18n = data.description_i18n && typeof data.description_i18n === 'object'
         ? data.description_i18n
         : { de: data.description ?? '', en: data.description ?? '' };
+    const teaserI18n = data.teaser_i18n && typeof data.teaser_i18n === 'object'
+        ? data.teaser_i18n
+        : { de: data.teaser ?? descriptionI18n.de ?? '', en: data.teaser ?? descriptionI18n.en ?? '' };
     const articleContentI18n = data.article_content_i18n && typeof data.article_content_i18n === 'object'
         ? data.article_content_i18n
         : { de: data.article_content ?? '', en: data.article_content ?? '' };
     const legacyTitle = data.title ?? titleI18n.de ?? titleI18n.en ?? '';
     const legacyDescription = data.description ?? descriptionI18n.de ?? descriptionI18n.en ?? null;
+    const legacyTeaser = data.teaser ?? teaserI18n.de ?? teaserI18n.en ?? null;
     const legacyArticleContent = data.article_content ?? articleContentI18n.de ?? articleContentI18n.en ?? null;
     const result = await db.query(`INSERT INTO tasks (
        title,
        description,
+       teaser,
        title_i18n,
        description_i18n,
+       teaser_i18n,
        article_content_i18n,
        type,
        points,
@@ -584,12 +592,14 @@ export async function createTask(data) {
        allowed_contests,
        allow_public_completion
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
      RETURNING *`, [
         legacyTitle,
         legacyDescription,
+        legacyTeaser,
         JSON.stringify(titleI18n),
         JSON.stringify(descriptionI18n),
+        JSON.stringify(teaserI18n),
         JSON.stringify(articleContentI18n),
         data.type,
         points,
@@ -724,10 +734,10 @@ export async function updateTask(id, data) {
     let pointsIndex = -1; // Track where points update is in the array
     // Whitelist of valid database columns to prevent SQL injection and invalid field errors
     const validColumns = new Set([
-        'title', 'description', 'type', 'points', 'video_url', 'quiz_questions', 'qr_code',
+        'title', 'description', 'teaser', 'type', 'points', 'video_url', 'quiz_questions', 'qr_code',
         'photo_required', 'co2_savings_kg', 'location_id', 'active', 'recurrence',
         'target_latitude', 'target_longitude', 'article_url', 'article_content',
-        'title_i18n', 'description_i18n', 'article_content_i18n',
+        'title_i18n', 'description_i18n', 'teaser_i18n', 'article_content_i18n',
         'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
         'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
         'thumbnail_url', 'allowed_teams', 'allowed_contests', 'allow_public_completion',
@@ -844,6 +854,15 @@ export async function updateTask(id, data) {
                 }
             }
         }
+        if (key === 'teaser') {
+            const ti = data.teaser_i18n;
+            if (ti != null && typeof ti === 'object') {
+                const r = ti.de ?? ti.en;
+                if (r != null) {
+                    return;
+                }
+            }
+        }
         if (key === 'article_content') {
             const ai = data.article_content_i18n;
             if (ai != null && typeof ai === 'object') {
@@ -870,6 +889,16 @@ export async function updateTask(id, data) {
             const resolved = value.de ?? value.en;
             if (resolved != null) {
                 updates.push(`description = $${paramIndex++}`);
+                values.push(resolved);
+            }
+            return;
+        }
+        if (key === 'teaser_i18n' && value !== null && typeof value === 'object') {
+            updates.push(`teaser_i18n = $${paramIndex++}`);
+            values.push(JSON.stringify(value));
+            const resolved = value.de ?? value.en;
+            if (resolved != null) {
+                updates.push(`teaser = $${paramIndex++}`);
                 values.push(resolved);
             }
             return;
@@ -1257,17 +1286,19 @@ export async function getPublicTaskForGuest(taskId, preferredLanguage) {
 }
 export async function listPublicGuestTasks(lang) {
     const db = getPool();
-    const result = await db.query(`SELECT t.id, t.title, t.title_i18n, t.description, t.description_i18n, t.type, t.points, t.thumbnail_url
+    const result = await db.query(`SELECT t.id, t.title, t.title_i18n, t.teaser, t.teaser_i18n, t.description, t.description_i18n, t.type, t.points, t.thumbnail_url
      FROM tasks t
      INNER JOIN locations l ON l.id = t.location_id
      WHERE t.allow_public_completion = TRUE AND t.active = TRUE
      ORDER BY t.title ASC`);
     return result.rows.map((row) => {
         const title = resolveI18n(row.title_i18n, lang, row.title);
+        const teaserRaw = resolveI18n(row.teaser_i18n, lang, row.teaser);
         const descriptionRaw = resolveI18n(row.description_i18n, lang, row.description);
         return {
             id: row.id,
             title,
+            teaser: teaserRaw && String(teaserRaw).trim() !== '' ? teaserRaw : null,
             description: descriptionRaw && String(descriptionRaw).trim() !== '' ? descriptionRaw : null,
             type: row.type,
             points: row.points ?? 0,

@@ -28,6 +28,11 @@ import { createOAuthCallback, getFrontendUrl } from '../utils/oauth.js';
 import { updateConsent } from '../middleware/gdpr.js';
 import { mergeGuestTaskCompletions } from '../services/task.service.js';
 import { getGuestSessionIdFromRequest } from '../utils/guestSession.js';
+import {
+  addEmailSuppression,
+  canResendVerificationNow,
+  createDeliveryLog,
+} from '../services/email-delivery.service.js';
 
 async function tryMergeGuestSession(req: Request, userId: string): Promise<void> {
   const sid = getGuestSessionIdFromRequest(req);
@@ -718,6 +723,105 @@ export async function resendVerificationEmail(req: Request, res: Response) {
   } catch (error: any) {
     console.error('Resend verification email error:', error);
     res.status(500).json({ error: error.message || 'An error occurred while sending verification email' });
+  }
+}
+
+/**
+ * Öffentlicher Endpoint für "Aktivierungsmail erneut senden" aus dem Login.
+ * Antwort bleibt absichtlich generisch (kein User-Enumeration-Leak).
+ */
+export async function requestResendVerificationEmail(req: Request, res: Response) {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await getUserByEmail(email);
+    if (!user || user.email_verified) {
+      return res.json({
+        message: 'If an account exists and is not verified, a new verification email has been sent.',
+      });
+    }
+
+    const canSendNow = await canResendVerificationNow(email, 60);
+    if (!canSendNow) {
+      return res.json({
+        message: 'If an account exists and is not verified, a new verification email has been sent.',
+      });
+    }
+
+    await sendEmailVerificationEmail(user.id, user.email || email, user.name);
+    return res.json({
+      message: 'If an account exists and is not verified, a new verification email has been sent.',
+    });
+  } catch (error: any) {
+    console.error('Request resend verification email error:', error);
+    return res.status(500).json({ error: error.message || 'Unable to process request' });
+  }
+}
+
+/**
+ * Provider-Webhooks (Bounce/Complaint/Delivery), geschützt per shared secret.
+ */
+export async function emailDeliveryEvent(req: Request, res: Response) {
+  try {
+    const configuredSecret = process.env.EMAIL_EVENTS_SECRET;
+    if (configuredSecret) {
+      const headerSecret = String(req.headers['x-email-events-secret'] || '');
+      if (!headerSecret || headerSecret !== configuredSecret) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+    }
+
+    const eventType = String(req.body?.event || '').toLowerCase();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const reason = String(req.body?.reason || '').trim() || null;
+    const provider = String(req.body?.provider || 'smtp');
+
+    if (!eventType || !email) {
+      return res.status(400).json({ error: 'event and email are required' });
+    }
+
+    if (eventType === 'bounce' || eventType === 'complaint') {
+      await addEmailSuppression({
+        email,
+        reason: eventType === 'bounce' ? 'hard_bounce' : 'complaint',
+        source: provider,
+        details: {
+          reason,
+          payload: req.body || {},
+        },
+      });
+    }
+
+    await createDeliveryLog({
+      recipientEmail: email,
+      messageType: 'provider_event',
+      templateKey: req.body?.templateKey || null,
+      subject: req.body?.subject || null,
+      provider,
+      status:
+        eventType === 'delivery'
+          ? 'sent'
+          : eventType === 'deferred'
+            ? 'deferred'
+            : eventType === 'bounce'
+              ? 'bounced'
+              : eventType === 'complaint'
+                ? 'suppressed'
+                : 'failed',
+      attemptCount: Number(req.body?.attemptCount || 1),
+      errorCode: req.body?.errorCode || null,
+      errorMessage: reason,
+      smtpResponse: req.body?.smtpResponse || null,
+      metadata: req.body || {},
+    });
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    console.error('emailDeliveryEvent error:', error);
+    return res.status(500).json({ error: 'Unable to process email event' });
   }
 }
 

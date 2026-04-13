@@ -157,7 +157,8 @@
       "sendReset": "Link senden",
       "resetPassword": "Passwort zurücksetzen",
       "getCode": "Code anfordern",
-      "submitCode": "Anmelden"
+      "submitCode": "Anmelden",
+      "resendVerification": "Aktivierungsmail erneut senden"
     },
     "divider": "oder",
     "privacyCheckbox": "Ich akzeptiere die <1>Datenschutzhinweise</1> und die Datenverarbeitung für die Nutzung der App.",
@@ -187,6 +188,8 @@
       "passwordMismatch": "Die Passwörter stimmen nicht überein",
       "missingResetToken": "Reset-Token fehlt",
       "emailVerificationRequired": "E-Mail-Bestätigung erforderlich. Prüfe dein Postfach ({{email}}).",
+      "verificationResent": "Falls die Adresse existiert und noch nicht bestätigt ist, wurde eine neue Aktivierungsmail gesendet.",
+      "verificationResendFailed": "Aktivierungsmail konnte gerade nicht erneut gesendet werden.",
       "validationError": "Validierungsfehler",
       "registrationFailed": "Registrierung fehlgeschlagen",
       "privacyRequired": "Bitte akzeptiere die Datenschutzhinweise, um fortzufahren.",
@@ -323,8 +326,11 @@
     },
     "detail": {
       "noDescription": "Keine weitere Beschreibung.",
+      "videoSection": "Video",
       "locationSection": "Ort auf der Karte",
-      "completedAt": "Abgeschlossen am {{date}}"
+      "completedAt": "Abgeschlossen am {{date}}",
+      "quizLockedHint": "Dieses Quiz ist nach einer Falschantwort vorübergehend gesperrt.",
+      "quizLockedRemaining": "Erneut verfügbar in ca. {{minutes}} Minute(n)."
     },
     "tile": {
       "noPreview": "Kein Kurztext"
@@ -417,7 +423,10 @@
       "redeemPersonal": "{{count}} Punkte (eigenes Guthaben)",
       "redeemPointsShort": "{{count}} Punkte",
       "redeemTeam": "{{count}} Punkte (Team-Guthaben)",
-      "redeeming": "Wird eingelöst…"
+      "redeeming": "Wird eingelöst…",
+      "swipeRedeemPersonal": "Swipe einlösen (eigenes Guthaben, {{count}} Punkte)",
+      "swipeRedeemTeam": "Swipe einlösen (Team-Guthaben, {{count}} Punkte)",
+      "singleQrOpen": "Es kann nur ein QR-Code gleichzeitig geöffnet sein."
     },
     "messages": {
       "redeemSuccess": "Belohnung erfolgreich eingelöst",
@@ -950,6 +959,7 @@
       "fields": {
         "type": "Aufgabentyp",
         "title": "Titel",
+        "teaser": "Teasertext (kurz)",
         "description": "Beschreibung",
         "points": "Punkte",
         "location": "Standort",

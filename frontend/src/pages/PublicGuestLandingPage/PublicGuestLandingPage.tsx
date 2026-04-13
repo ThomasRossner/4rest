@@ -59,7 +59,7 @@ export default function PublicGuestLandingPage() {
         {!isLoading && !isError && tasks && tasks.length > 0 && (
           <div className="tasks-category-matrix">
             {tasks.map((task) => {
-              const previewText = descriptionPreviewPlain(task.description);
+              const previewText = descriptionPreviewPlain(task.teaser ?? task.description, 60);
               return (
                 <div
                   key={task.id}

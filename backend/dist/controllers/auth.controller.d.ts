@@ -16,6 +16,15 @@ export declare function forgotPassword(req: Request, res: Response): Promise<Res
 export declare function resetPassword(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 export declare function verifyEmail(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 export declare function resendVerificationEmail(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+/**
+ * Öffentlicher Endpoint für "Aktivierungsmail erneut senden" aus dem Login.
+ * Antwort bleibt absichtlich generisch (kein User-Enumeration-Leak).
+ */
+export declare function requestResendVerificationEmail(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+/**
+ * Provider-Webhooks (Bounce/Complaint/Delivery), geschützt per shared secret.
+ */
+export declare function emailDeliveryEvent(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 export declare function requestLoginCode(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 export declare function loginWithCode(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 //# sourceMappingURL=auth.controller.d.ts.map

@@ -2,7 +2,7 @@
 
 **Typ:** Bug / Requirement
 
-**Status:** offen
+**Status:** umgesetzt
 
 **PDF-Bug:** 004
 

@@ -57,6 +57,9 @@ export async function sendPasswordSetupEmail(userId, email, name) {
             to: email,
             subject: 'Set Your Password - 4rest',
             html,
+            templateKey: 'password_setup',
+            messageType: 'password_setup',
+            metadata: { userId },
         });
     }
     catch (error) {
@@ -82,6 +85,9 @@ export async function sendAdminCreatedUserEmail(userId, email, name) {
             to: email,
             subject: 'Your 4rest Account Has Been Created',
             html,
+            templateKey: 'admin_created_user',
+            messageType: 'admin_created_user',
+            metadata: { userId },
         });
     }
     catch (error) {
@@ -105,6 +111,9 @@ export async function sendWelcomeEmail(userId, email, name, role) {
             to: email,
             subject: 'Welcome to 4rest!',
             html,
+            templateKey: 'welcome',
+            messageType: 'welcome',
+            metadata: { userId, role },
         });
     }
     catch (error) {
@@ -135,6 +144,9 @@ export async function sendPhotoRejectionEmail(userId, taskTitle, rejectionReason
             to: user.email,
             subject: `Aufgabe abgelehnt: ${taskTitle}`,
             html,
+            templateKey: 'photo_rejection',
+            messageType: 'photo_rejection',
+            metadata: { userId, taskTitle },
         });
     }
     catch (error) {
@@ -160,6 +172,9 @@ export async function sendEmailVerificationEmail(userId, email, name, token) {
             to: email,
             subject: 'Verify Your Email Address - 4rest',
             html,
+            templateKey: 'email_verification',
+            messageType: 'email_verification',
+            metadata: { userId },
         });
     }
     catch (error) {
@@ -185,6 +200,9 @@ export async function sendPasswordResetEmail(userId, email, name) {
             to: email,
             subject: 'Reset Your Password - 4rest',
             html,
+            templateKey: 'password_reset',
+            messageType: 'password_reset',
+            metadata: { userId },
         });
     }
     catch (error) {
@@ -290,6 +308,9 @@ export async function sendLoginCodeEmail(userId, email, name, code) {
             to: email,
             subject: 'Your Login Code - 4rest',
             html,
+            templateKey: 'login_code',
+            messageType: 'login_code',
+            metadata: { userId },
         });
     }
     catch (error) {

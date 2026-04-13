@@ -3,6 +3,9 @@ interface EmailOptions {
     subject: string;
     html: string;
     text?: string;
+    templateKey?: string;
+    messageType?: string;
+    metadata?: Record<string, unknown>;
 }
 declare class EmailService {
     private transporter;
@@ -10,6 +13,8 @@ declare class EmailService {
     private mockOutputDir;
     constructor();
     private initializeTransporter;
+    private isTransientError;
+    private delay;
     private saveMockEmail;
     sendEmail(options: EmailOptions): Promise<void>;
     private htmlToText;

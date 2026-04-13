@@ -15,6 +15,8 @@ import {
   resetPassword,
   verifyEmail,
   resendVerificationEmail,
+  requestResendVerificationEmail,
+  emailDeliveryEvent,
   requestLoginCode,
   loginWithCode,
   mergeGuestSession,
@@ -36,6 +38,8 @@ router.post('/reset-password', resetPassword);
 // Email verification routes
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', authenticate, resendVerificationEmail);
+router.post('/resend-verification-request', requestResendVerificationEmail);
+router.post('/email-events', emailDeliveryEvent);
 
 // Passwordless login routes
 router.post('/request-login-code', requestLoginCode);

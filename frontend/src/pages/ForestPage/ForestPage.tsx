@@ -19,6 +19,16 @@ function ForestPage() {
   const userId = useAuthStore((s) => s.user?.id);
   const userPoints = useAuthStore((s) => s.user?.points || 0);
 
+
+  const isLikelyAndroid = useMemo(() => /Android/i.test(navigator.userAgent), []);
+  const lowPerfForestMode = useMemo(() => {
+    const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+    const cores = navigator.hardwareConcurrency || 4;
+    const lowMem = typeof deviceMemory === 'number' && deviceMemory <= 4;
+    const lowCpu = cores <= 6;
+    return isLikelyAndroid && (lowMem || lowCpu);
+  }, [isLikelyAndroid]);
+
   const sumForestPoints = useMemo(() => {
     const fp = user?.forestPoints;
     if (!fp) return 0;
@@ -93,15 +103,15 @@ function ForestPage() {
             <Canvas
               gl={{
                 antialias: false,
-                powerPreference: 'high-performance',
+                powerPreference: lowPerfForestMode ? 'default' : 'high-performance',
                 alpha: false,
                 stencil: false,
                 depth: true,
               }}
-              shadows
-              dpr={[1, 1.5]}
-              performance={{ min: 0.7 }}
-              frameloop="always"
+              shadows={!lowPerfForestMode}
+              dpr={lowPerfForestMode ? 1 : [1, 1.5]}
+              performance={{ min: lowPerfForestMode ? 0.45 : 0.7 }}
+              frameloop={lowPerfForestMode ? 'demand' : 'always'}
               camera={{ position: [0, 12, 22], fov: 50 }}
               style={{ width: '100%', height: '100%', background: '#1a2840' }}
             >
@@ -109,6 +119,7 @@ function ForestPage() {
                 globalPoints={Math.min(forestGlobalPoints, forestMaxPoints)}
                 maxPoints={forestMaxPoints}
                 treeGrowSteps={FOREST_PROTOTYPE_TREE_GROW_STEPS}
+                lowPerformanceMode={lowPerfForestMode}
               />
             </Canvas>
           </Suspense>

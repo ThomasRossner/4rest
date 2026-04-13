@@ -98,6 +98,9 @@ export async function runMigrations(): Promise<void> {
       '070_backfill_forest_points_from_user_tasks_v2',
       '071_reward_recurrence_template_link',
       '072_reward_redemptions_verified_at',
+      '073_email_delivery_reliability',
+      '074_tasks_teaser_i18n',
+      '075_backfill_task_teasers',
     ];
     
     // Read all migration files
