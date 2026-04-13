@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
-import ForestPrototypeScene, {
-  FOREST_PROTOTYPE_TREE_GROW_STEPS,
-} from '../../components/3d/ForestPrototypeScene';
+import ForestScene from '../../components/3d/ForestScene';
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
 import './ForestPage.css';
@@ -28,24 +26,6 @@ function ForestPage() {
     const lowCpu = cores <= 6;
     return isLikelyAndroid && (lowMem || lowCpu);
   }, [isLikelyAndroid]);
-
-  const sumForestPoints = useMemo(() => {
-    const fp = user?.forestPoints;
-    if (!fp) return 0;
-    return fp.kommunikation + fp.mensch + fp.natur + fp.ressourcen;
-  }, [user?.forestPoints]);
-
-  const forestGlobalPoints = Math.round(Math.max(0, sumForestPoints));
-  const forestMaxPoints = useMemo(
-    () =>
-      Math.max(
-        100,
-        forestGlobalPoints + 50,
-        FOREST_PROTOTYPE_TREE_GROW_STEPS + 1,
-        userPoints ?? 0
-      ),
-    [forestGlobalPoints, userPoints]
-  );
 
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
@@ -115,13 +95,7 @@ function ForestPage() {
               camera={{ position: [0, 12, 22], fov: 50 }}
               style={{ width: '100%', height: '100%', background: 'linear-gradient(180deg, #dff3ff 0%, #eaf8ff 45%, #f4fbff 100%)' }}
             >
-              <ForestPrototypeScene
-                globalPoints={Math.min(forestGlobalPoints, forestMaxPoints)}
-                maxPoints={forestMaxPoints}
-                treeGrowSteps={FOREST_PROTOTYPE_TREE_GROW_STEPS}
-                plantedTrees={progress?.treesPlanted ?? 0}
-                lowPerformanceMode={lowPerfForestMode}
-              />
+              <ForestScene />
             </Canvas>
           </Suspense>
         </div>
