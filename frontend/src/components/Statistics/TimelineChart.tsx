@@ -44,13 +44,19 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
   const rangedData = useMemo(() => {
     if (!sortedData || sortedData.length === 0) return [];
 
-    const byDate = new Map(sortedData.map((d) => [d.date, d]));
-    const start = new Date(`${sortedData[0].date}T00:00:00`);
-    const end = new Date(`${sortedData[sortedData.length - 1].date}T00:00:00`);
+    const firstPositiveIndex = sortedData.findIndex((d) => d.totalCumulative > 0);
+    const visibleStartIndex = firstPositiveIndex >= 0 ? firstPositiveIndex : 0;
+    const visibleData = sortedData.slice(visibleStartIndex);
+
+    if (visibleData.length === 0) return [];
+
+    const byDate = new Map(visibleData.map((d) => [d.date, d]));
+    const start = new Date(`${visibleData[0].date}T00:00:00`);
+    const end = new Date(`${visibleData[visibleData.length - 1].date}T00:00:00`);
 
     const result: TimelineDataPoint[] = [];
     let cursor = new Date(start);
-    let lastKnown = sortedData[0];
+    let lastKnown = visibleData[0];
 
     while (cursor.getTime() <= end.getTime()) {
       const key = cursor.toISOString().slice(0, 10);

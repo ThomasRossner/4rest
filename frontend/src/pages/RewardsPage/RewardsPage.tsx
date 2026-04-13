@@ -8,6 +8,7 @@ import { EmptyState } from '../../components/Feedback/EmptyState';
 import { RewardCard } from '../../components/Rewards/RewardCard';
 import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
 import { RewardScanner } from '../../components/Rewards/RewardScanner';
+import { SwipeToRedeem } from '../../components/Rewards/SwipeToRedeem';
 import { pushToast } from '../../components/Toaster/Toaster';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import './RewardsPage.css';
@@ -50,6 +51,12 @@ function RewardsPage() {
   const [showRewardScanner, setShowRewardScanner] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showOnlineRewards, setShowOnlineRewards] = useState(false);
+  const [pendingMapRedemption, setPendingMapRedemption] = useState<{
+    id: string;
+    title: string;
+    cost: number;
+    useTeamPoints: boolean;
+  } | null>(null);
   const [warningShownForReward, setWarningShownForReward] = useState<string | null>(null);
   const warningShownRef = useRef<string | null>(null);
 
@@ -184,19 +191,18 @@ function RewardsPage() {
               }
               // Find the reward and trigger redeem if user can afford it
               const reward = redeemableRewards.find((r: any) => r.id === rewardId);
+              if (!reward) return;
               const teamTotalPoints = activeTeam?.totalPoints || 0;
               const canAfford = user && (user.points >= reward.pointsCost || (activeTeam && teamTotalPoints >= reward.pointsCost));
               if (reward && canAfford) {
-                // Always use team points if user is in a team
+                // Swipe-to-Redeem must apply globally, including map-triggered redemptions.
                 const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
-                const res = await handleRedeemClick(reward.id, reward.pointsCost, useTeamPoints);
-                if (res?.redemption?.qrToken) {
-                  setActiveRedemption({
-                    qrToken: res.redemption.qrToken,
-                    redemptionId: res.redemption.id,
-                    rewardTitle: reward.title,
-                  });
-                }
+                setPendingMapRedemption({
+                  id: reward.id,
+                  title: reward.title,
+                  cost: reward.pointsCost,
+                  useTeamPoints,
+                });
               }
             }}
           />
@@ -326,6 +332,29 @@ function RewardsPage() {
           onClose={() => setShowRewardScanner(false)}
           onSuccess={() => {
             setShowRewardScanner(false);
+          }}
+        />
+      )}
+
+      {pendingMapRedemption && !activeRedemption && (
+        <SwipeToRedeem
+          rewardTitle={pendingMapRedemption.title}
+          pointsCost={pendingMapRedemption.cost}
+          onCancel={() => setPendingMapRedemption(null)}
+          onConfirm={async () => {
+            const res = await handleRedeemClick(
+              pendingMapRedemption.id,
+              pendingMapRedemption.cost,
+              pendingMapRedemption.useTeamPoints
+            );
+            if (res?.redemption?.qrToken) {
+              setActiveRedemption({
+                qrToken: res.redemption.qrToken,
+                redemptionId: res.redemption.id,
+                rewardTitle: pendingMapRedemption.title,
+              });
+            }
+            setPendingMapRedemption(null);
           }}
         />
       )}
