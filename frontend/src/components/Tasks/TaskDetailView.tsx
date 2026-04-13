@@ -157,6 +157,25 @@ export function TaskDetailView({
     taskType === 'video' &&
     typeof row.video_url === 'string' &&
     row.video_url.trim() !== '';
+  const completedVideoUrl = showCompletedVideo ? String(row.video_url).trim() : '';
+  const isCompletedVideoYouTube =
+    completedVideoUrl.includes('youtube.com') || completedVideoUrl.includes('youtu.be');
+  const completedVideoEmbedUrl = useMemo(() => {
+    if (!isCompletedVideoYouTube) return completedVideoUrl;
+    if (completedVideoUrl.includes('/shorts/')) {
+      const videoId = completedVideoUrl.split('/shorts/')[1]?.split('?')[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : completedVideoUrl;
+    }
+    if (completedVideoUrl.includes('youtube.com/watch?v=')) {
+      const videoId = completedVideoUrl.split('v=')[1]?.split('&')[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : completedVideoUrl;
+    }
+    if (completedVideoUrl.includes('youtu.be/')) {
+      const videoId = completedVideoUrl.split('youtu.be/')[1]?.split('?')[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : completedVideoUrl;
+    }
+    return completedVideoUrl;
+  }, [completedVideoUrl, isCompletedVideoYouTube]);
   const videoSubtitleTracks = useMemo(() => {
     const raw = row.video_subtitles_i18n;
     if (!raw || typeof raw !== 'object') return [];
@@ -213,24 +232,34 @@ export function TaskDetailView({
         {showCompletedVideo && (
           <div className="task-detail-video-block">
             <h2 className="task-detail-section-title">{t('tasks.detail.videoSection')}</h2>
-            <video
-              ref={completedVideoRef}
-              className="task-detail-video-player"
-              src={String(row.video_url)}
-              controls
-              preload="metadata"
-            >
-              {videoSubtitleTracks.map((track) => (
-                <track
-                  key={track.lang}
-                  kind="subtitles"
-                  srcLang={track.lang}
-                  label={track.label}
-                  src={track.src}
-                  default={track.lang === preferredSubtitleLang}
-                />
-              ))}
-            </video>
+            {isCompletedVideoYouTube ? (
+              <iframe
+                className="task-detail-video-player"
+                src={completedVideoEmbedUrl}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
+              />
+            ) : (
+              <video
+                ref={completedVideoRef}
+                className="task-detail-video-player"
+                src={completedVideoUrl}
+                controls
+                preload="metadata"
+              >
+                {videoSubtitleTracks.map((track) => (
+                  <track
+                    key={track.lang}
+                    kind="subtitles"
+                    srcLang={track.lang}
+                    label={track.label}
+                    src={track.src}
+                    default={track.lang === preferredSubtitleLang}
+                  />
+                ))}
+              </video>
+            )}
           </div>
         )}
 

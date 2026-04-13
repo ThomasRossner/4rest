@@ -16,6 +16,7 @@ export interface Task {
     type: string;
     points: number;
     video_url?: string;
+    video_subtitles_i18n?: Record<string, string>;
     quiz_questions?: any;
     qr_code?: string;
     photo_required?: boolean;

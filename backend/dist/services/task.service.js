@@ -114,7 +114,7 @@ export async function getAllTasks(filters, userId, options) {
     // Use explicit column list to avoid selecting non-existent columns (allowed_user_types, allowed_hotel_ids, allowed_roles were removed in migration 038)
     let select = `DISTINCT ON (t.id) 
     t.id, t.title, t.description, t.teaser, t.title_i18n, t.description_i18n, t.teaser_i18n, t.article_content_i18n,
-    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.type, t.points, t.video_url, t.video_subtitles_i18n, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
@@ -129,8 +129,15 @@ export async function getAllTasks(filters, userId, options) {
     if (userId) {
         // Add verification_status and completed status
         // A task is only completed if it has a user_task entry AND verification_status is not 'pending'
-        select += `, ut.verification_status, (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed`;
+        select += `, ut.verification_status, (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed, ql.max_locked_until AS quiz_locked_until`;
         from += ` LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $${paramIndex.current++}`;
+        params.push(userId);
+        from += ` LEFT JOIN (
+      SELECT task_id, MAX(locked_until) AS max_locked_until
+      FROM quiz_question_locks
+      WHERE user_id = $${paramIndex.current++} AND locked_until > NOW()
+      GROUP BY task_id
+    ) ql ON ql.task_id = t.id`;
         params.push(userId);
     }
     const clauses = [];
@@ -376,7 +383,7 @@ export async function getTaskById(id, preferredLanguage, userId) {
         columnsExist = false;
     }
     let select = `t.id, t.title, t.description, t.teaser, t.title_i18n, t.description_i18n, t.teaser_i18n, t.article_content_i18n,
-    t.type, t.points, t.video_url, t.quiz_questions, t.qr_code, 
+    t.type, t.points, t.video_url, t.video_subtitles_i18n, t.quiz_questions, t.qr_code, 
     t.photo_required, t.co2_savings_kg, t.external_id, t.location_id, t.active, t.recurrence, 
     t.target_latitude, t.target_longitude, t.article_url, t.article_content, t.survey_questions, 
     t.survey_type, t.prerequisite_task_id, t.prerequisite_task_count, t.prerequisite_task_ids, 
@@ -566,6 +573,7 @@ export async function createTask(data) {
        type,
        points,
        video_url,
+      video_subtitles_i18n,
        quiz_questions,
        qr_code,
        photo_required,
@@ -592,7 +600,7 @@ export async function createTask(data) {
        allowed_contests,
        allow_public_completion
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
      RETURNING *`, [
         legacyTitle,
         legacyDescription,
@@ -604,6 +612,9 @@ export async function createTask(data) {
         data.type,
         points,
         data.video_url ?? null,
+        data.video_subtitles_i18n
+            ? JSON.stringify(data.video_subtitles_i18n)
+            : null,
         quizPayload,
         data.qr_code ?? null,
         data.photo_required ?? false,
@@ -740,7 +751,7 @@ export async function updateTask(id, data) {
         'title_i18n', 'description_i18n', 'teaser_i18n', 'article_content_i18n',
         'survey_questions', 'survey_type', 'prerequisite_task_id', 'prerequisite_task_count',
         'prerequisite_task_ids', 'category', 'difficulty', 'time_required', 'location_tool',
-        'thumbnail_url', 'allowed_teams', 'allowed_contests', 'allow_public_completion',
+        'thumbnail_url', 'allowed_teams', 'allowed_contests', 'allow_public_completion', 'video_subtitles_i18n',
     ]);
     // If type is being changed, reset type-specific fields of the old type
     if (typeChanged) {
@@ -914,7 +925,7 @@ export async function updateTask(id, data) {
             return;
         }
         // typeof null === 'object' — sonst JSON.stringify(null) und kaputte JSONB-Werte
-        if ((key === 'quiz_questions' || key === 'survey_questions') &&
+        if ((key === 'quiz_questions' || key === 'survey_questions' || key === 'video_subtitles_i18n') &&
             value !== null &&
             typeof value === 'object') {
             updates.push(`${key} = $${paramIndex++}`);
@@ -1035,8 +1046,9 @@ export async function submitQuizAnswer(taskId, userId, questionIndex, answerId) 
         throw new Error('Task not found');
     }
     const row = tr.rows[0];
-    if (row.type !== 'quiz') {
-        throw new Error('Quiz answer check is only available for quiz tasks');
+    const supportsQuizLock = row.type === 'quiz' || row.type === 'video' || row.type === 'article_quiz';
+    if (!supportsQuizLock) {
+        throw new Error('Quiz answer check is only available for quiz-capable tasks');
     }
     const questions = parseJsonPayload(row.quiz_questions);
     if (!Array.isArray(questions) || questions.length === 0) {
@@ -1090,7 +1102,8 @@ export async function getActiveQuizQuestionLocks(taskId, userId) {
     if (tr.rows.length === 0) {
         throw new Error('Task not found');
     }
-    if (tr.rows[0].type !== 'quiz') {
+    const type = tr.rows[0].type;
+    if (type !== 'quiz' && type !== 'video' && type !== 'article_quiz') {
         return [];
     }
     const res = await db.query(`SELECT question_index, locked_until FROM quiz_question_locks
