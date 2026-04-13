@@ -15,6 +15,13 @@ interface QRCodeTaskProps {
   variant?: 'default' | 'public';
 }
 
+function normalizeQrValue(value: string): string {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, '')
+    .toUpperCase();
+}
+
 export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: QRCodeTaskProps) {
   const [scannedCode, setScannedCode] = useState('');
   const [decodeError, setDecodeError] = useState<string | null>(null);
@@ -26,6 +33,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
   const { t, i18n } = useTranslation();
   const showToast = useToastStore((s) => s.showToast);
   const publicLang = i18n.language?.startsWith('en') ? 'en' : 'de';
+  const expectedQrCode = normalizeQrValue(qrCode);
 
   const { data: task, isLoading } = useQuery(
     variant === 'public' ? ['publicTask', taskId, publicLang] : ['task', taskId],
@@ -72,6 +80,14 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
           message: t('tasks.toast.completedMessage', { points: task?.points ?? 0, trees: TREES_PER_TASK }),
         });
         onComplete?.();
+      },
+      onError: (error: any) => {
+        const msg = error?.response?.data?.error || error?.message || t('tasksComponents.qr.invalid');
+        showToast({
+          type: 'error',
+          title: t('tasksComponents.quiz.errorTitle'),
+          message: String(msg),
+        });
       },
     }
   );
@@ -395,8 +411,14 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
               if (decodedValue) {
                 console.log('✅ QR Code detected:', decodedValue);
                 setScannedCode(decodedValue);
+                const normalizedDecodedValue = normalizeQrValue(decodedValue);
                 // Auto-complete when QR code matches expected code
-                if (qrCode && decodedValue === qrCode && !completeMutation.isLoading && !completeMutation.isSuccess) {
+                if (
+                  expectedQrCode &&
+                  normalizedDecodedValue === expectedQrCode &&
+                  !completeMutation.isLoading &&
+                  !completeMutation.isSuccess
+                ) {
                   console.log('✅ QR Code matches! Completing task...');
                   completeMutation.mutate();
                 }
@@ -454,7 +476,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
       isProcessing = false;
       frameCount = 0;
     };
-  }, [hasCamera, canDecode, qrCode, completeMutation.isLoading, completeMutation.isSuccess]);
+  }, [hasCamera, canDecode, expectedQrCode, completeMutation.isLoading, completeMutation.isSuccess]);
 
   if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
   if (!task) return <div>{t('tasksComponents.notFound')}</div>;
@@ -621,7 +643,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
             onKeyDown={(e) => {
               if (e.key !== 'Enter' || !scannedCode || completeMutation.isLoading) return;
               e.preventDefault();
-              if (scannedCode === qrCode) {
+              if (normalizeQrValue(scannedCode) === expectedQrCode) {
                 completeMutation.mutate();
               } else {
                 alert(t('tasksComponents.qr.invalid'));
@@ -631,7 +653,7 @@ export function QRCodeTask({ taskId, qrCode, onComplete, variant = 'default' }: 
           <button
             type="button"
             onClick={() => {
-              if (scannedCode === qrCode) {
+              if (normalizeQrValue(scannedCode) === expectedQrCode) {
                 completeMutation.mutate();
               } else {
                 alert(t('tasksComponents.qr.invalid'));

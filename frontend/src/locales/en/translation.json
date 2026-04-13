@@ -355,7 +355,11 @@
     },
     "toast": {
       "completedTitle": "Task completed",
-      "completedMessage": "You planted a new tree and earned {{points}} points!"
+      "completedMessage": "You planted a new tree and earned {{points}} points!",
+      "verificationPendingTitle": "Photo submitted",
+      "verificationPendingMessage": "Your photo was submitted and is waiting for approval.",
+      "errorTitle": "Task could not be completed",
+      "errorMessage": "Please try again."
     },
     "visit_location": {
       "targetLocationNotSet": "Task target location is not set",
@@ -2130,7 +2134,16 @@
       "manualPlaceholder": "Enter QR code",
       "verify": "Verify & complete",
       "invalid": "Invalid QR code",
-      "success": "Task completed successfully!"
+      "success": "Task completed successfully!",
+      "cameraLoading": "Starting camera...",
+      "cameraErrorTitle": "Camera error",
+      "cameraError": "The camera could not be started.",
+      "cameraRequiresHttps": "Camera access requires HTTPS on this device.",
+      "cameraNotSupported": "This browser does not support camera access.",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "The camera is already in use by another app.",
+      "cameraPlayError": "Camera preview could not be played."
     },
     "photo": {
       "fileTooLarge": "File size must be less than 5MB",
@@ -2139,9 +2152,12 @@
       "upload": "Upload & complete",
       "uploading": "Uploading...",
       "success": "Photo uploaded and task completed successfully!",
+      "verificationPending": "Photo uploaded and waiting for approval.",
+      "error": "Photo task could not be completed.",
       "clickToSelect": "Click to select a photo",
       "hint": "Max 5MB • JPG, PNG, WebP",
-      "uploadFailed": "Failed to upload photo"
+      "uploadFailed": "Failed to upload photo",
+      "uploadFailedMessage": "An error occurred while uploading."
     },
     "quiz": {
       "title": "Quiz questions",

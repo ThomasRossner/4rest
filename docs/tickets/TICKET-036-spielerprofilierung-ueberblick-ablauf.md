@@ -2,7 +2,7 @@
 
 **Typ:** Requirement
 
-**Status:** teilweise
+**Status:** umgesetzt
 
 **Beschreibung:**
 Kapitel 1 der Spezifikation umsetzen:

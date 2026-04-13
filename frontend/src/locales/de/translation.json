@@ -355,7 +355,11 @@
     },
     "toast": {
       "completedTitle": "Aufgabe abgeschlossen",
-      "completedMessage": "Du hast einen neuen Baum gepflanzt und {{points}} Punkte gesammelt!"
+      "completedMessage": "Du hast einen neuen Baum gepflanzt und {{points}} Punkte gesammelt!",
+      "verificationPendingTitle": "Foto eingereicht",
+      "verificationPendingMessage": "Dein Foto wurde eingereicht und wartet auf Freigabe.",
+      "errorTitle": "Aufgabe konnte nicht abgeschlossen werden",
+      "errorMessage": "Bitte versuche es erneut."
     },
     "visit_location": {
       "targetLocationNotSet": "Zielstandort der Aufgabe ist nicht festgelegt",
@@ -2133,7 +2137,16 @@
       "manualPlaceholder": "QR-Code eingeben",
       "verify": "Prüfen & abschließen",
       "invalid": "Ungültiger QR-Code",
-      "success": "Aufgabe erfolgreich abgeschlossen!"
+      "success": "Aufgabe erfolgreich abgeschlossen!",
+      "cameraLoading": "Kamera wird gestartet...",
+      "cameraErrorTitle": "Kamerafehler",
+      "cameraError": "Kamera konnte nicht gestartet werden.",
+      "cameraRequiresHttps": "Kamerazugriff erfordert HTTPS auf diesem Gerät.",
+      "cameraNotSupported": "Dieser Browser unterstützt keinen Kamerazugriff.",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Kamera wird bereits von einer anderen Anwendung verwendet.",
+      "cameraPlayError": "Kamerabild konnte nicht abgespielt werden."
     },
     "photo": {
       "fileTooLarge": "Datei darf maximal 5 MB haben",
@@ -2142,9 +2155,12 @@
       "upload": "Hochladen & abschließen",
       "uploading": "Wird hochgeladen...",
       "success": "Foto hochgeladen – Aufgabe erledigt!",
+      "verificationPending": "Foto hochgeladen – wartet auf Freigabe.",
+      "error": "Foto-Aufgabe konnte nicht abgeschlossen werden.",
       "clickToSelect": "Klicke, um ein Foto auszuwählen",
       "hint": "Max. 5 MB • JPG, PNG, WebP",
-      "uploadFailed": "Foto konnte nicht hochgeladen werden"
+      "uploadFailed": "Foto konnte nicht hochgeladen werden",
+      "uploadFailedMessage": "Beim Hochladen ist ein Fehler aufgetreten."
     },
     "quiz": {
       "title": "Quizfragen",
