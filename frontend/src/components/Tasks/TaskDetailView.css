@@ -31,8 +31,8 @@
 .task-detail-view-header {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  flex-direction: row;
+  align-items: center;
   gap: var(--spacing-sm);
   padding-bottom: var(--spacing-md);
   background: var(--color-background, #fff);
@@ -66,8 +66,10 @@
 
 .task-detail-view-heading {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: space-between;
   gap: var(--spacing-sm);
 }
@@ -76,10 +78,13 @@
   margin: 0;
   font-size: clamp(1.25rem, 4vw, 1.5rem);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.1;
   color: var(--color-text, #111827);
   flex: 1 1 auto;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-detail-points {

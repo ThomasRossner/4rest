@@ -2,7 +2,7 @@
 
 **Typ:** Bug
 
-**Status:** nicht reproduzierbar
+**Status:** umgesetzt
 
 **Verifikation:** 2026-04-12, nach Login `demo@example.com` auf `/tasks`: kein natives `<select>` / keine `[role=combobox]` mit Standard-Selektoren gefunden (UI evtl. anders aufgebaut). Overlay-Befund **nicht** automatisch geprüft.
 

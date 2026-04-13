@@ -119,6 +119,9 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
           ? Math.max(1, Math.ceil((until.getTime() - Date.now()) / 60000))
           : 1;
         if (data.status === 'locked' || data.status === 'wrong') {
+          if (variant === 'default') {
+            queryClient.invalidateQueries(['tasks']);
+          }
           showToast({
             type: 'error',
             title: t('tasksComponents.quiz.wrongTitle'),
