@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { File as NodeFile } from 'node:buffer';
 import OpenAI from 'openai';
 
 type SubtitleMap = { de?: string; en?: string };
@@ -24,6 +25,9 @@ export async function generateAndStoreVideoSubtitles(params: {
   videoFilePath: string;
   videoFilename: string;
 }): Promise<SubtitleMap | null> {
+  if (typeof (globalThis as any).File === 'undefined') {
+    (globalThis as any).File = NodeFile;
+  }
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return null;
