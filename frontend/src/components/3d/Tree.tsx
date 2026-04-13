@@ -10,8 +10,6 @@ interface TreeProps {
   scale?: number; // Legacy support - will use size if not provided
   growthPoints?: number; // Growth points from database (1-100+) - enables animated growth
   maxVisibleLeaves?: number; // Limit leaves for performance
-  forestCategory?: string | null;
-  forestPoints?: number | null;
 }
 
 // Simple geometric tree fallback
@@ -69,24 +67,14 @@ function StaticTreeModel({ position, size, scale }: TreeProps) {
 }
 
 // Animated tree component using tree-system
-function AnimatedTreeModel({
-  position,
-  growthPoints,
-  size,
-  maxVisibleLeaves,
-  forestCategory,
-  forestPoints,
-}: TreeProps) {
+function AnimatedTreeModel({ position, growthPoints, size, maxVisibleLeaves }: TreeProps) {
   try {
     return (
       <TreeComponent
         position={position}
         growthPoints={growthPoints}
-        baseScale={size ?? 1}
         modelPath="/models/twigLeafTree.glb"
         maxVisibleLeaves={maxVisibleLeaves}
-        forestCategory={forestCategory}
-        forestPoints={forestPoints}
         disableLeafShadows={true}
         castShadow
         receiveShadow
@@ -100,15 +88,7 @@ function AnimatedTreeModel({
 }
 
 // Memoize Tree component to prevent unnecessary re-renders
-export const Tree = React.memo(function Tree({
-  position,
-  size,
-  scale,
-  growthPoints,
-  maxVisibleLeaves,
-  forestCategory,
-  forestPoints,
-}: TreeProps) {
+export const Tree = React.memo(function Tree({ position, size, scale, growthPoints, maxVisibleLeaves }: TreeProps) {
   const treeSize = size ?? scale ?? 0.035;
   
   // Use animated tree if growthPoints is provided and > 0, otherwise use static tree
@@ -127,8 +107,6 @@ export const Tree = React.memo(function Tree({
             growthPoints={Math.max(1, growthPoints || 1)} // Ensure at least 1 growth point
             size={treeSize}
             maxVisibleLeaves={maxVisibleLeaves}
-            forestCategory={forestCategory}
-            forestPoints={forestPoints}
           />
         ) : (
           <StaticTreeModel 
