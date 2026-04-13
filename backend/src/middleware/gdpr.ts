@@ -43,25 +43,29 @@ export async function deleteUserData(req: Request, res: Response, next: NextFunc
 
     const db = getPool();
 
-    // Soft delete: anonymize user data instead of hard delete
-    // This preserves statistics while removing personal identifiers
-    const result = await db.query(
-      `UPDATE users 
-       SET email = CONCAT('deleted_', id, '@deleted.local'),
-           name = 'Deleted User',
-           password_hash = '',
-           avatar_url = NULL,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1`,
-      [userId]
-    );
+    await db.query('BEGIN');
+    // Remove or detach references that are not cascading.
+    await db.query('UPDATE user_tasks SET verified_by = NULL WHERE verified_by = $1', [userId]);
+    await db.query('UPDATE photo_task_verifications SET approved_by = NULL WHERE approved_by = $1', [userId]);
+    await db.query('UPDATE points_bonus_qr_tokens SET redeemed_by = NULL WHERE redeemed_by = $1', [userId]);
+    await db.query('DELETE FROM points_bonus_qr_tokens WHERE generated_by = $1', [userId]);
+
+    const result = await db.query('DELETE FROM users WHERE id = $1', [userId]);
 
     if (result.rowCount === 0) {
+      await db.query('ROLLBACK');
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ message: 'User data deleted successfully', affected: result.rowCount });
+    await db.query('COMMIT');
+    res.json({ message: 'User permanently deleted', affected: result.rowCount });
   } catch (error: any) {
+    try {
+      const db = getPool();
+      await db.query('ROLLBACK');
+    } catch {
+      // ignore rollback errors
+    }
     next(error);
   }
 }

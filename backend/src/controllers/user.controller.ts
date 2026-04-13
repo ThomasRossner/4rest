@@ -180,9 +180,8 @@ export const deleteUser: RequestHandler = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const hardDelete = req.query.hard === 'true';
-  await deleteUserService(req.params.id, authReq.user.id, hardDelete);
-  res.json({ success: true, message: hardDelete ? 'User permanently deleted' : 'User soft deleted' });
+  await deleteUserService(req.params.id, authReq.user.id, true);
+  res.json({ success: true, message: 'User permanently deleted' });
 });
 
 export const getUserStatistics: RequestHandler = asyncHandler(async (req, res) => {

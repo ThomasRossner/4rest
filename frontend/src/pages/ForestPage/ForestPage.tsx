@@ -119,6 +119,7 @@ function ForestPage() {
                 globalPoints={Math.min(forestGlobalPoints, forestMaxPoints)}
                 maxPoints={forestMaxPoints}
                 treeGrowSteps={FOREST_PROTOTYPE_TREE_GROW_STEPS}
+                plantedTrees={progress?.treesPlanted ?? 0}
                 lowPerformanceMode={lowPerfForestMode}
               />
             </Canvas>

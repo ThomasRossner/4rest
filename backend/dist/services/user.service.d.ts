@@ -190,7 +190,7 @@ export declare function toggleUserActiveService(userId: string, adminUserId: str
 export declare function resetUserPasswordService(userId: string): Promise<{
     message: string;
 }>;
-export declare function deleteUserService(userId: string, adminUserId: string, hardDelete?: boolean): Promise<void>;
+export declare function deleteUserService(userId: string, adminUserId: string, _hardDelete?: boolean): Promise<void>;
 /**
  * Ruft den zeitlichen Verlauf von Punkten, Bäumen und CO2 für einen Benutzer ab
  */

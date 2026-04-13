@@ -878,7 +878,7 @@ export async function resetUserPasswordService(userId: string): Promise<{ messag
   return { message: 'Password reset email sent successfully' };
 }
 
-export async function deleteUserService(userId: string, adminUserId: string, hardDelete: boolean = false): Promise<void> {
+export async function deleteUserService(userId: string, adminUserId: string, _hardDelete: boolean = true): Promise<void> {
   const db = getPool();
   
   // Prevent admin from deleting themselves
@@ -886,19 +886,23 @@ export async function deleteUserService(userId: string, adminUserId: string, har
     throw new Error('Cannot delete yourself');
   }
 
-  if (hardDelete) {
-    // Hard delete: Remove user and all related data
-    await db.query('DELETE FROM users WHERE id = $1', [userId]);
-  } else {
-    // Soft delete: Mark as deleted
-    await db.query(
-      `UPDATE users 
-       SET deleted_at = CURRENT_TIMESTAMP, 
-           active = FALSE, 
-           updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $1`,
-      [userId]
-    );
+  await db.query('BEGIN');
+  try {
+    // Remove or detach references that are not cascading.
+    await db.query('UPDATE user_tasks SET verified_by = NULL WHERE verified_by = $1', [userId]);
+    await db.query('UPDATE photo_task_verifications SET approved_by = NULL WHERE approved_by = $1', [userId]);
+    await db.query('UPDATE points_bonus_qr_tokens SET redeemed_by = NULL WHERE redeemed_by = $1', [userId]);
+    await db.query('DELETE FROM points_bonus_qr_tokens WHERE generated_by = $1', [userId]);
+
+    const result = await db.query('DELETE FROM users WHERE id = $1', [userId]);
+    if (result.rowCount === 0) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+
+    await db.query('COMMIT');
+  } catch (error) {
+    await db.query('ROLLBACK');
+    throw error;
   }
 }
 

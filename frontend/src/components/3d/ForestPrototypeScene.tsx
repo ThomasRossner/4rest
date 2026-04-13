@@ -7,6 +7,7 @@ type Props = {
   globalPoints: number;
   maxPoints: number;
   treeGrowSteps?: number;
+  plantedTrees?: number;
   lowPerformanceMode?: boolean;
 };
 
@@ -18,13 +19,19 @@ export default function ForestPrototypeScene({
   globalPoints,
   maxPoints,
   treeGrowSteps = FOREST_PROTOTYPE_TREE_GROW_STEPS,
+  plantedTrees,
   lowPerformanceMode = false,
 }: Props) {
   return (
     <>
       <OrbitControls zoomSpeed={lowPerformanceMode ? 0.16 : 0.2} zoomToCursor={!lowPerformanceMode} />
       {!lowPerformanceMode && <gridHelper args={[10, 10]} />}
-      <SceneController globalPoints={globalPoints} maxPoints={maxPoints} treeGrowSteps={treeGrowSteps} />
+      <SceneController
+        globalPoints={globalPoints}
+        maxPoints={maxPoints}
+        treeGrowSteps={treeGrowSteps}
+        plantedTrees={plantedTrees}
+      />
     </>
   );
 }

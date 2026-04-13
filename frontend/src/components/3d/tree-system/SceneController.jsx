@@ -6,7 +6,7 @@ import { DirectionalLightHelper, CameraHelper } from "three"
 
 import ControllableTree from './ControllableTree';
 
-export default function SceneController({ globalPoints, maxPoints, treeGrowSteps }) {
+export default function SceneController({ globalPoints, maxPoints, treeGrowSteps, plantedTrees }) {
   const sunPosition = [0, 30, 10];
   const lightRef = useRef()
   // useHelper(lightRef, DirectionalLightHelper, 5)
@@ -41,14 +41,20 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
     [maxPoints, treeGrowSteps]
   );
   const newTreeSteps = useMemo(() => pointSpan / Math.max(maxTrees, 1), [pointSpan, maxTrees]);
-  // Ohne Wald-Punkte war treeCount=0 → keine Bäume, nur Boden. Mindestens ein Baum, sobald Anker existieren.
+  const hasPlantedTreesOverride = Number.isFinite(plantedTrees);
+  // Wenn plantedTrees gesetzt ist, wird die sichtbare Baumanzahl exakt daran ausgerichtet.
+  // Fallback bleibt die bisherige Punkteskalierung.
   const treeCount = useMemo(() => {
     if (maxTrees === 0) return 0;
+    if (hasPlantedTreesOverride) {
+      const requestedTrees = Math.floor(Math.max(0, Number(plantedTrees)));
+      return Math.min(maxTrees, requestedTrees);
+    }
     const raw = Math.floor(
       (Math.min(globalPoints, pointSpan) / pointSpan) * maxTrees
     );
     return Math.min(maxTrees, Math.max(1, raw));
-  }, [globalPoints, pointSpan, maxTrees]);
+  }, [globalPoints, pointSpan, maxTrees, hasPlantedTreesOverride, plantedTrees]);
   
   // Liste der Bäume mit treeAnchorIndex und growth
   const trees = useMemo(() => {         // growth ist sprunghaft (je nach rundung). TODO: growth so anpassen, dass es linear mit den Punkten wächst, z.B. durch Berechnung des Wachstums basierend auf den Punkten und den Schritten zum Wachstum eines Baumes.
