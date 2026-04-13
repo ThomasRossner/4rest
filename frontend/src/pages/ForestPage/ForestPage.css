@@ -216,6 +216,9 @@
 
   .forest-impact-stats--overlay {
     flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    row-gap: 4px;
   }
 
   .forest-impact-stats:not(.forest-impact-stats--overlay) {
@@ -228,6 +231,12 @@
   }
 
   .forest-impact-stats--overlay .forest-stat {
+    flex: 1 1 calc(50% - 2px);
+    min-width: 0;
     padding: 6px 4px;
+  }
+
+  .forest-impact-stats--overlay .forest-stat + .forest-stat {
+    border-left: 0;
   }
 }
