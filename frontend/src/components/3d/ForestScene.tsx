@@ -195,6 +195,16 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
 
   return (
     <>
+      <ambientLight intensity={0.7} />
+      <hemisphereLight intensity={0.45} groundColor="#4a5d46" />
+      <directionalLight
+        position={[25, 35, 18]}
+        intensity={0.9}
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+      />
+
       {/* Background ground (covers multiple areas) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[200, 200]} />
