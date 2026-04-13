@@ -13,7 +13,7 @@ export const FOREST_CATEGORY_LABEL_DE: Record<ForestCategoryKey, string> = {
   kommunikation: 'Kommunikation & Netzwerke',
   mensch: 'Mensch & soziales Umfeld',
   natur: 'Natur & Umweltschutz',
-  ressourcen: 'Ressourcenverbrauch & Materialeinsatz',
+  ressourcen: 'Ressourcen- und Materialeinsatz',
 };
 
 export const OTHER_FOREST_CATEGORY_KEY = 'sonstige' as const;
@@ -23,6 +23,7 @@ export function forestKeyFromTaskCategory(
 ): ForestCategoryKey | typeof OTHER_FOREST_CATEGORY_KEY {
   if (!category || typeof category !== 'string') return OTHER_FOREST_CATEGORY_KEY;
   const trimmed = category.trim();
+  if (trimmed === 'Ressourcenverbrauch & Materialeinsatz') return 'ressourcen';
   const entry = (Object.entries(FOREST_CATEGORY_LABEL_DE) as [ForestCategoryKey, string][]).find(
     ([, label]) => label === trimmed
   );

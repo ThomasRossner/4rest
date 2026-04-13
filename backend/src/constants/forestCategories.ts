@@ -13,6 +13,7 @@ const TASK_LABEL_TO_KEY: Record<string, ForestCategoryKey> = {
   'Kommunikation & Netzwerke': 'kommunikation',
   'Mensch & soziales Umfeld': 'mensch',
   'Natur & Umweltschutz': 'natur',
+  'Ressourcen- und Materialeinsatz': 'ressourcen',
   'Ressourcenverbrauch & Materialeinsatz': 'ressourcen',
 };
 

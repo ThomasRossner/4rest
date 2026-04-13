@@ -156,7 +156,12 @@ type TaskFormState = {
   prerequisite_task_id?: string;
   prerequisite_task_count?: number;
   prerequisite_task_ids?: string[];
-  category?: 'Kommunikation & Netzwerke' | 'Mensch & soziales Umfeld' | 'Natur & Umweltschutz' | 'Ressourcenverbrauch & Materialeinsatz';
+  category?:
+    | 'Kommunikation & Netzwerke'
+    | 'Mensch & soziales Umfeld'
+    | 'Natur & Umweltschutz'
+    | 'Ressourcen- und Materialeinsatz'
+    | 'Ressourcenverbrauch & Materialeinsatz';
   difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
   location_tool?: 'Umgebung' | 'Hotel' | 'egal' | 'Smartphone/PC';

@@ -141,12 +141,13 @@
 }
 
 .login-header-eu {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   min-width: 0;
   max-width: var(--login-brand-icon-size);
+  margin-left: auto;
 }
 
 .login-header-eu .eu-funding-logo,
@@ -155,12 +156,6 @@
   width: auto;
   height: auto;
   display: block;
-}
-
-.login-language-switcher {
-  align-self: center;
-  flex-shrink: 0;
-  position: static;
 }
 
 @media (max-width: 480px) {
@@ -222,12 +217,18 @@
 }
 
 .login-button {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--spacing-md);
   background-color: var(--color-primary);
   color: white;
   font-size: 1rem;
   font-weight: 500;
-  margin-top: var(--spacing-md);
+  margin-top: 0;
 }
 
 .login-button:hover:not(:disabled) {
@@ -248,12 +249,19 @@
   padding: var(--spacing-md);
   font-size: 1rem;
   font-weight: 500;
-  margin-top: var(--spacing-sm);
+  margin-top: 0;
   background: white;
   color: var(--color-primary, #0d9488);
   border: 2px solid var(--color-primary, #0d9488);
   border-radius: var(--border-radius);
   transition: background-color 0.15s ease;
+}
+
+.login-primary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
 }
 
 .login-button--secondary:hover {
@@ -295,6 +303,26 @@
   text-align: center;
   color: var(--color-text-light);
   font-size: 0.9rem;
+}
+
+.login-language-row {
+  margin-top: var(--spacing-md);
+  display: flex;
+  justify-content: center;
+}
+
+.login-language-switcher {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.login-language-switcher .language-button {
+  width: 100%;
+  border-radius: 12px;
+  justify-content: center;
+  min-height: 40px;
 }
 
 .login-footer p {

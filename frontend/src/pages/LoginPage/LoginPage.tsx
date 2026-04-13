@@ -472,7 +472,6 @@ function LoginPage() {
               }}
             />
           </div>
-          <LanguageSwitcher compact className="login-language-switcher" />
         </div>
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="login-error">{error}</div>}
@@ -628,14 +627,16 @@ function LoginPage() {
             </>
           )}
           
-          <button type="submit" className="login-button" disabled={loading}>
-            {getSubmitButtonText()}
-          </button>
-          {mode === 'login' && (
-            <Link to="/public/guest" className="login-button login-button--secondary">
-              {t('login.guestTasksButton')}
-            </Link>
-          )}
+          <div className="login-primary-actions">
+            <button type="submit" className="login-button" disabled={loading}>
+              {getSubmitButtonText()}
+            </button>
+            {mode === 'login' && (
+              <Link to="/public/guest" className="login-button login-button--secondary">
+                {t('login.guestTasksButton')}
+              </Link>
+            )}
+          </div>
         </form>
         
         <div className="login-footer">
@@ -774,6 +775,9 @@ function LoginPage() {
               </button>
             </p>
           )}
+        </div>
+        <div className="login-language-row">
+          <LanguageSwitcher compact className="login-language-switcher" />
         </div>
       </div>
     </div>
