@@ -2,7 +2,7 @@ import { useQuery } from 'react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../services/api';
 import { Tree } from './Tree';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, useGLTF } from '@react-three/drei';
 import { useAuthStore } from '../../stores/authStore';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -13,6 +13,7 @@ interface ForestSceneProps {
 
 function ForestScene({ plantedTrees }: ForestSceneProps) {
   const { data: forest, refetch: refetchForest } = useQuery('forest', () => api.getForest());
+  const { scene: groundScene } = useGLTF('/models/ground2.glb');
   const currentUser = useAuthStore((s) => s.user);
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
@@ -96,6 +97,16 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
 
     return { areas: limitedAreas, flatTrees: limitedFlatTrees };
   }, [forest?.areas, forest?.trees, normalizedPlantedTrees]);
+
+  const groundMesh = useMemo(() => {
+    let firstMesh: THREE.Mesh | null = null;
+    groundScene.traverse((obj) => {
+      if (!firstMesh && obj instanceof THREE.Mesh) {
+        firstMesh = obj;
+      }
+    });
+    return firstMesh;
+  }, [groundScene]);
   
   // Memoize tree world positions to avoid recalculating on every render
   const treeWorldPositionsRef = useRef<Map<string, THREE.Vector3>>(new Map());
@@ -205,11 +216,21 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
         shadow-mapSize-height={1024}
       />
 
-      {/* Background ground (covers multiple areas) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial color="#4a7c59" />
-      </mesh>
+      {/* Prefer detailed terrain mesh from model, fallback to flat plane */}
+      {groundMesh ? (
+        <mesh
+          geometry={groundMesh.geometry}
+          material={groundMesh.material}
+          position={[0, 0, 0]}
+          castShadow
+          receiveShadow
+        />
+      ) : (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+          <planeGeometry args={[200, 200]} />
+          <meshStandardMaterial color="#4a7c59" />
+        </mesh>
+      )}
 
       {/* Render user's forest areas */}
       {areas.length > 0 && areas.map((area: any) => {
@@ -218,11 +239,6 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
         const uniqueKey = `${origin[0]}-${origin[2]}`;
         return (
           <group key={uniqueKey} position={origin}>
-            {/* Area ground tile - positioned to cover 0-12 range (not centered) */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[6, 0.001, 6]}>
-              <planeGeometry args={[12, 12]} />
-              <meshStandardMaterial color="#5b8f69" />
-            </mesh>
             {/* Trees in this area should use local positions (relative to origin) */}
             {area.trees?.map((t: any) => {
               const treeLocalPos = (t.localPosition || t.position) as [number, number, number];
@@ -272,6 +288,8 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
                   size={t.size}
                   growthPoints={t.growthPoints}
                   maxVisibleLeaves={maxLeaves}
+                  forestCategory={t.forestCategory ?? null}
+                  forestPoints={currentUser?.forestPoints ?? null}
                 />
               );
             })}
@@ -328,6 +346,8 @@ function ForestScene({ plantedTrees }: ForestSceneProps) {
             size={t.size}
             growthPoints={t.growthPoints}
             maxVisibleLeaves={maxLeaves}
+            forestCategory={t.forestCategory ?? null}
+            forestPoints={currentUser?.forestPoints ?? null}
           />
         );
       })}
