@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const configuredBaseURL = process.env.BASE_URL || 'http://localhost:3000';
+const runAgainstLiveLuise = /^https?:\/\/(www\.)?luise\.bio\/?$/i.test(configuredBaseURL);
+const disableWebServer = process.env.PW_NO_WEBSERVER === '1' || runAgainstLiveLuise;
+
 export default defineConfig({
   testDir: './e2e/specs',
   fullyParallel: true,
@@ -12,7 +16,7 @@ export default defineConfig({
     ...(process.env.CI ? [['github'] as const] : []),
   ],
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: configuredBaseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -37,10 +41,12 @@ export default defineConfig({
   ],
   globalSetup: require.resolve('./e2e/setup/global-setup.ts'),
   globalTeardown: require.resolve('./e2e/setup/global-teardown.ts'),
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: disableWebServer
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000,
+      },
 });

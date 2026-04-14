@@ -246,11 +246,25 @@
 .ppo-fullscreen__scrim {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(2, 6, 23, 0.5) 0%,
+      rgba(2, 6, 23, 0.6) 45%,
+      rgba(2, 6, 23, 0.78) 100%
+    ),
+    rgba(15, 23, 42, 0.45);
 }
 
 .ppo-fullscreen__scrim--light {
-  background: rgba(15, 23, 42, 0.35);
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(2, 6, 23, 0.32) 0%,
+      rgba(2, 6, 23, 0.42) 45%,
+      rgba(2, 6, 23, 0.55) 100%
+    ),
+    rgba(15, 23, 42, 0.26);
 }
 
 .ppo-fullscreen__inner {
@@ -271,72 +285,65 @@
 .ppo-fullscreen__panel {
   width: 100%;
   max-width: 520px;
-  /* stärker transparent (~65 % „Durchsicht“), Frostglas für Lesbarkeit */
-  background: rgba(255, 255, 255, 0.34);
-  backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 16px;
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    0 16px 48px rgba(2, 6, 23, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
   padding: clamp(1.25rem, 4vw, 2rem);
 }
 
 .ppo-fullscreen__panel--intro {
-  background: rgba(255, 255, 255, 0.34);
+  background: rgba(15, 23, 42, 0.74);
 }
 
-/* Fließtext & Überschriften: dunkler + leichter heller Schatten gegen buntes Foto */
+/* Höherer Kontrast für Text auf Foto-Hintergründen */
 .ppo-fullscreen__panel .player-profile-onboarding__title {
-  color: #020617;
-  text-shadow:
-    0 1px 2px rgba(255, 255, 255, 0.95),
-    0 0 24px rgba(255, 255, 255, 0.65);
+  color: #f8fafc;
+  text-shadow: 0 1px 2px rgba(2, 6, 23, 0.65);
 }
 
 .ppo-fullscreen__panel .player-profile-onboarding__text {
-  color: #0f172a;
+  color: #e2e8f0;
   font-weight: 500;
+  font-size: 1.02rem;
   line-height: 1.6;
-  text-shadow:
-    0 1px 3px rgba(255, 255, 255, 0.92),
-    0 0 18px rgba(255, 255, 255, 0.55);
+  text-shadow: 0 1px 2px rgba(2, 6, 23, 0.55);
 }
 
 .ppo-fullscreen__panel .player-profile-onboarding__step-label {
-  color: #334155;
+  color: #cbd5e1;
   font-weight: 600;
   letter-spacing: 0.05em;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 .ppo-fullscreen__panel .player-profile-onboarding__label {
-  color: #0f172a;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+  color: #e2e8f0;
 }
 
 .ppo-fullscreen__panel .player-profile-onboarding__scale-labels {
-  color: #1e293b;
+  color: #cbd5e1;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.88);
 }
 
 .ppo-fullscreen__panel .player-profile-onboarding__btn--ghost {
-  background: rgba(248, 250, 252, 0.92);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  color: #0f172a;
+  background: rgba(248, 250, 252, 0.2);
+  border: 1px solid rgba(226, 232, 240, 0.45);
+  color: #f8fafc;
 }
 
 .ppo-fullscreen__panel .player-profile-onboarding__error {
-  color: #991b1b;
+  color: #fecaca;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 .ppo-fullscreen__panel .player-profile-onboarding__input {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(248, 250, 252, 0.95);
+  border-color: rgba(226, 232, 240, 0.8);
+  color: #0f172a;
 }
 
 .ppo-fullscreen .player-profile-onboarding__text--on-dark {
@@ -384,11 +391,4 @@
 
 .player-profile-onboarding__error--on-dark {
   color: #fecaca;
-}
-
-/* Frage mit Foto-Hintergrund: etwas stärkerer Blur bei hoher Bilddetail-Dichte */
-.ppo-fullscreen:has(.ppo-fullscreen__bg:not(.ppo-fullscreen__bg--gradient)) .ppo-fullscreen__panel {
-  background: rgba(255, 255, 255, 0.32);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
 }

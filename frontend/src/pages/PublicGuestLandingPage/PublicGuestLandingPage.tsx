@@ -59,13 +59,21 @@ export default function PublicGuestLandingPage() {
         {!isLoading && !isError && tasks && tasks.length > 0 && (
           <div className="tasks-category-matrix">
             {tasks.map((task) => {
+              const guestTask = task as typeof task & {
+                completed?: boolean;
+                is_available?: boolean;
+                verification_status?: string;
+              };
+              const isLocked = guestTask.is_available === false;
+              const isCompleted = !!guestTask.completed && guestTask.verification_status !== 'pending';
+              const isValidating = guestTask.verification_status === 'pending';
               const previewText = descriptionPreviewPlain(task.teaser ?? task.description, 60);
               return (
                 <div
                   key={task.id}
                   role="button"
                   tabIndex={0}
-                  className="task-card task-card--list-tile"
+                  className={`task-card task-card--list-tile ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''}`}
                   onClick={() => openPublicTask(task.id)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -98,12 +106,32 @@ export default function PublicGuestLandingPage() {
                       <span className="task-points task-points--tile">
                         {t('tasksComponents.points', { points: task.points })}
                       </span>
+                      <div className="task-tile-status-icons">
+                        {isCompleted && (
+                          <span className="task-completed-badge task-completed-badge--tile" title={t('tasks.badges.completed')}>
+                            ✓
+                          </span>
+                        )}
+                        {isValidating && (
+                          <span className="task-validating-badge task-validating-badge--tile" title={t('tasks.badges.validating')}>
+                            ⏳
+                          </span>
+                        )}
+                        {isLocked && (
+                          <span className="task-locked-badge task-locked-badge--tile" title={t('tasks.badges.locked')}>
+                            🔒
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="task-tile-zone task-tile-zone--middle">
                     <h3 className="task-title task-title--tile-middle">{task.title}</h3>
                   </div>
                   <div className="task-tile-zone task-tile-zone--bottom">
+                    {isLocked ? (
+                      <p className="task-tile-locked-hint">{t('tasks.prerequisites.unlockMessage')}</p>
+                    ) : null}
                     <p className={`task-tile-preview ${!previewText ? 'task-tile-preview--empty' : ''}`}>
                       {previewText || t('tasks.tile.noPreview')}
                     </p>
