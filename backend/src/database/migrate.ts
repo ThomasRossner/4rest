@@ -105,6 +105,7 @@ export async function runMigrations(): Promise<void> {
       '077_backfill_video_subtitles_en',
       '078_fix_video_subtitles_for_youtube',
       '079_backfill_video_subtitles_text_vtt',
+      '080_daily_login_points',
     ];
     
     // Read all migration files

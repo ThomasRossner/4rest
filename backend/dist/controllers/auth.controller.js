@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
-import { createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
+import { awardDailyLoginPoints, createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
 import { validateTeamRegistrationToken, joinTeamById } from '../services/team.service.js';
 import { validateContestRegistrationToken, joinContestById } from '../services/contest.service.js';
 import { sihot } from '../integrations/sihot.js';
@@ -52,6 +52,14 @@ function normalizeUserType(userType) {
         return userType;
     }
     return 'explorer';
+}
+async function applyDailyLoginPoints(userId) {
+    try {
+        await awardDailyLoginPoints(userId, 2);
+    }
+    catch (error) {
+        console.error('[LOGIN BONUS] Failed to award daily login points', { userId, error });
+    }
 }
 export async function login(req, res) {
     try {
@@ -109,6 +117,7 @@ export async function login(req, res) {
         }
         const userEmail = user.email || user.oauth_email || '';
         const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
+        await applyDailyLoginPoints(user.id);
         await tryMergeGuestSession(req, user.id);
         const userAfterMerge = (await getUserById(user.id)) ?? user;
         const preferredLanguage = userAfterMerge.preferred_language === 'en' ? 'en' : 'de';
@@ -323,6 +332,7 @@ export async function register(req, res) {
         }
         const emailAddress = user.email ?? '';
         const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
+        await applyDailyLoginPoints(user.id);
         await tryMergeGuestSession(req, user.id);
         const userAfterMerge = (await getUserById(user.id)) ?? user;
         // Send email verification email (non-blocking)
@@ -436,7 +446,7 @@ export function githubAuth(req, res, next) {
         return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
     }
 }
-export const githubCallback = createOAuthCallback('github', () => !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET));
+export const githubCallback = createOAuthCallback('github', () => !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET), async (user) => applyDailyLoginPoints(user.id));
 // Google OAuth handlers
 export function googleAuth(req, res, next) {
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
@@ -450,7 +460,7 @@ export function googleAuth(req, res, next) {
         return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
     }
 }
-export const googleCallback = createOAuthCallback('google', () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET));
+export const googleCallback = createOAuthCallback('google', () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET), async (user) => applyDailyLoginPoints(user.id));
 // Facebook OAuth handlers
 export function facebookAuth(req, res, next) {
     if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET) {
@@ -464,7 +474,7 @@ export function facebookAuth(req, res, next) {
         return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
     }
 }
-export const facebookCallback = createOAuthCallback('facebook', () => !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET));
+export const facebookCallback = createOAuthCallback('facebook', () => !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET), async (user) => applyDailyLoginPoints(user.id));
 // Apple OAuth handlers
 export function appleAuth(req, res, next) {
     if (!process.env.APPLE_CLIENT_ID || !process.env.APPLE_TEAM_ID || !process.env.APPLE_KEY_ID || !process.env.APPLE_PRIVATE_KEY) {
@@ -478,7 +488,7 @@ export function appleAuth(req, res, next) {
         return res.redirect(`${getFrontendUrl()}/login?error=oauth_failed`);
     }
 }
-export const appleCallback = createOAuthCallback('apple', () => !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY));
+export const appleCallback = createOAuthCallback('apple', () => !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY), async (user) => applyDailyLoginPoints(user.id));
 export async function forgotPassword(req, res) {
     try {
         const { email } = req.body;

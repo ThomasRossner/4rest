@@ -45,7 +45,11 @@ export function getFrontendUrlFromRequest(req?: { protocol?: string; get?: (name
  * Creates a reusable OAuth callback handler
  * Eliminates code duplication across OAuth providers (DRY principle)
  */
-export function createOAuthCallback(provider: string, envCheck: () => boolean) {
+export function createOAuthCallback(
+  provider: string,
+  envCheck: () => boolean,
+  afterAuth?: (user: any) => Promise<void>
+) {
   return async (req: Request, res: Response, next: any) => {
     if (!envCheck()) {
       return res.redirect(`${getFrontendUrl()}/login?error=oauth_not_configured`);
@@ -64,6 +68,9 @@ export function createOAuthCallback(provider: string, envCheck: () => boolean) {
 
       try {
         console.log(`${provider} OAuth callback: User authenticated, generating token for user:`, user.id);
+        if (afterAuth) {
+          await afterAuth(user);
+        }
         const userEmail = user.email || user.oauth_email || '';
         const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
 

@@ -41,6 +41,11 @@ export interface CreateUserData {
 export declare function createUser(data: CreateUserData): Promise<User>;
 export declare function getUserByEmail(email: string): Promise<User | null>;
 export declare function getUserById(id: string): Promise<User | null>;
+/**
+ * Award daily login points once per calendar day.
+ * Returns awarded points (0 if already awarded today).
+ */
+export declare function awardDailyLoginPoints(userId: string, pointsAmount?: number): Promise<number>;
 export declare function getUserByOAuth(provider: string, oauthId: string): Promise<User | null>;
 export declare function createOrUpdateOAuthUser(data: {
     userId?: string;

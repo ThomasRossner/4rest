@@ -1,7 +1,7 @@
 import { Request, Response, RequestHandler } from 'express';
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
-import { createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
+import { awardDailyLoginPoints, createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
 import { validateTeamRegistrationToken, joinTeamById } from '../services/team.service.js';
 import { validateContestRegistrationToken, joinContestById } from '../services/contest.service.js';
 import { AuthRequest } from '../middleware/authenticate.js';
@@ -75,6 +75,14 @@ function normalizeUserType(userType: unknown): UserType {
   return 'explorer';
 }
 
+async function applyDailyLoginPoints(userId: string): Promise<void> {
+  try {
+    await awardDailyLoginPoints(userId, 2);
+  } catch (error) {
+    console.error('[LOGIN BONUS] Failed to award daily login points', { userId, error });
+  }
+}
+
 export async function login(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
@@ -142,6 +150,7 @@ export async function login(req: Request, res: Response) {
     const userEmail = user.email || user.oauth_email || '';
     const token = signUserToken({ id: user.id, email: userEmail, role: user.role });
 
+    await applyDailyLoginPoints(user.id);
     await tryMergeGuestSession(req, user.id);
     const userAfterMerge = (await getUserById(user.id)) ?? user;
 
@@ -404,6 +413,7 @@ export async function register(req: Request, res: Response) {
     const emailAddress = user.email ?? '';
     const token = signUserToken({ id: user.id, email: emailAddress, role: user.role });
 
+    await applyDailyLoginPoints(user.id);
     await tryMergeGuestSession(req, user.id);
     const userAfterMerge = (await getUserById(user.id)) ?? user;
 
@@ -532,8 +542,10 @@ export function githubAuth(req: Request, res: Response, next: any) {
   }
 }
 
-export const githubCallback = createOAuthCallback('github', () => 
-  !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET)
+export const githubCallback = createOAuthCallback(
+  'github',
+  () => !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+  async (user) => applyDailyLoginPoints(user.id)
 );
 
 // Google OAuth handlers
@@ -550,8 +562,10 @@ export function googleAuth(req: Request, res: Response, next: any) {
   }
 }
 
-export const googleCallback = createOAuthCallback('google', () => 
-  !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+export const googleCallback = createOAuthCallback(
+  'google',
+  () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+  async (user) => applyDailyLoginPoints(user.id)
 );
 
 // Facebook OAuth handlers
@@ -568,8 +582,10 @@ export function facebookAuth(req: Request, res: Response, next: any) {
   }
 }
 
-export const facebookCallback = createOAuthCallback('facebook', () => 
-  !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET)
+export const facebookCallback = createOAuthCallback(
+  'facebook',
+  () => !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET),
+  async (user) => applyDailyLoginPoints(user.id)
 );
 
 // Apple OAuth handlers
@@ -586,8 +602,10 @@ export function appleAuth(req: Request, res: Response, next: any) {
   }
 }
 
-export const appleCallback = createOAuthCallback('apple', () => 
-  !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY)
+export const appleCallback = createOAuthCallback(
+  'apple',
+  () => !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY),
+  async (user) => applyDailyLoginPoints(user.id)
 );
 
 export async function forgotPassword(req: Request, res: Response) {

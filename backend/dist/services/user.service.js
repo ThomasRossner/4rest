@@ -73,6 +73,34 @@ export async function getUserById(id) {
     const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);
     return result.rows[0] || null;
 }
+/**
+ * Award daily login points once per calendar day.
+ * Returns awarded points (0 if already awarded today).
+ */
+export async function awardDailyLoginPoints(userId, pointsAmount = 2) {
+    const db = getPool();
+    const client = await db.connect();
+    try {
+        await client.query('BEGIN');
+        const insertRes = await client.query(`INSERT INTO daily_login_points (user_id, login_date, points_awarded)
+       VALUES ($1, CURRENT_DATE, $2)
+       ON CONFLICT (user_id, login_date) DO NOTHING`, [userId, pointsAmount]);
+        if ((insertRes.rowCount ?? 0) > 0) {
+            await client.query('UPDATE users SET points = points + $1 WHERE id = $2', [pointsAmount, userId]);
+            await client.query('COMMIT');
+            return pointsAmount;
+        }
+        await client.query('COMMIT');
+        return 0;
+    }
+    catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    }
+    finally {
+        client.release();
+    }
+}
 export async function getUserByOAuth(provider, oauthId) {
     const db = getPool();
     const result = await db.query('SELECT * FROM users WHERE oauth_provider = $1 AND oauth_id = $2', [provider, oauthId]);
