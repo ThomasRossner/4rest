@@ -287,6 +287,20 @@
   .debug-stats-range {
     grid-template-columns: 1fr;
   }
+
+  .debug-tree-system-preview {
+    min-height: 420px;
+    height: 62vh;
+    max-height: 640px;
+  }
+}
+
+@media (max-width: 480px) {
+  .debug-tree-system-preview {
+    min-height: 320px;
+    height: 55vh;
+    max-height: 520px;
+  }
 }
 
 /* Debug Logs Viewer */
@@ -433,5 +447,14 @@
   padding: var(--spacing-xl);
   text-align: center;
   color: var(--color-text-light);
+}
+
+.debug-tree-system-preview {
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  min-height: 580px;
+  height: 70vh;
+  max-height: 900px;
 }
 

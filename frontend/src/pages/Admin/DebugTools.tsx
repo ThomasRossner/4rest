@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
+import TreeSystemPrototypeApp from '../../components/3d/tree-system/App.jsx';
 import './DebugTools.css';
 
 export function DebugTools() {
@@ -1280,6 +1281,15 @@ export function DebugTools() {
                 ? t('admin.debugTools.generateStatistics.generating')
                 : t('admin.debugTools.generateStatistics.button')}
             </button>
+          </div>
+        </div>
+
+        {/* Tool 10: Tree-System Prototype App.jsx View */}
+        <div className="debug-tool-card debug-tool-card-wide">
+          <h2 className="debug-tool-title">{t('admin.debugTools.treeSystemApp.title')}</h2>
+          <p className="debug-tool-description">{t('admin.debugTools.treeSystemApp.description')}</p>
+          <div className="debug-tree-system-preview">
+            <TreeSystemPrototypeApp />
           </div>
         </div>
 

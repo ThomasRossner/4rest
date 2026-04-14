@@ -799,6 +799,10 @@
         "error": "Failed to Recalculate Tree Sizes",
         "emailRequired": "User email is required"
       },
+      "treeSystemApp": {
+        "title": "Tree System Prototype (App.jsx)",
+        "description": "Live preview of the original 3D prototype from `components/3d/tree-system/App.jsx` for quick growth and rendering checks."
+      },
       "rateLimit": {
         "title": "Rate Limit Exceeded",
         "message": "Please wait a few seconds before making another request"

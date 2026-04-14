@@ -799,6 +799,10 @@
         "error": "Baumgrößen konnten nicht neu berechnet werden",
         "emailRequired": "Benutzer-E-Mail ist erforderlich"
       },
+      "treeSystemApp": {
+        "title": "Tree-System-Prototyp (App.jsx)",
+        "description": "Live-Ansicht des ursprünglichen 3D-Prototyps aus `components/3d/tree-system/App.jsx` zur schnellen Prüfung von Wachstum und Rendering."
+      },
       "rateLimit": {
         "title": "Rate Limit überschritten",
         "message": "Bitte warten Sie einige Sekunden, bevor Sie eine weitere Anfrage stellen"
