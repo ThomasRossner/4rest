@@ -352,8 +352,11 @@ export const api = {
         // noop if store not available in this context
       }
     }
-    // Sync from server to update any other fields consistently
-    await api.refreshMe();
+    // Sync from server to update any other fields consistently, but don't block
+    // the completion flow on potentially slow /users/me responses.
+    api.refreshMe().catch((error) => {
+      console.debug('Deferred refreshMe after completeTask failed:', error);
+    });
     return response.data;
   },
 
