@@ -110,6 +110,25 @@ export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
     userEmail: authReq.user?.email ?? null,
     tasksCount: Array.isArray(tasks) ? tasks.length : 0,
   });
+  if (Array.isArray(tasks)) {
+    const cradleTasks = tasks
+      .filter((task: any) => String(task?.title ?? '').toLowerCase().includes('cradle-to-cradle'))
+      .map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        is_available: task.is_available,
+        completed: task.completed,
+        verification_status: task.verification_status ?? null,
+        prerequisite_task_id: task.prerequisite_task_id ?? null,
+      }));
+    if (cradleTasks.length > 0) {
+      console.log('[GET /tasks][CRADLE DEBUG]', {
+        userId: authReq.user?.id ?? null,
+        userEmail: authReq.user?.email ?? null,
+        cradleTasks,
+      });
+    }
+  }
 
   res.json(tasks);
 });
