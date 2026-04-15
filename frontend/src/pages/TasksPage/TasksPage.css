@@ -936,6 +936,45 @@
   border-radius: inherit;
 }
 
+.task-card-locked {
+  border: 2px solid #94a3b8;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  cursor: not-allowed;
+  position: relative;
+}
+
+.task-card-locked::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.1) 0%, rgba(100, 116, 139, 0.08) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.task-card-locked:hover {
+  transform: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-color: #94a3b8;
+}
+
+.task-card-locked::before,
+.task-card-locked:hover::before {
+  transform: scaleX(0);
+}
+
+.task-card-locked .task-title--tile-middle {
+  color: #334155;
+}
+
+.task-card-locked .task-tile-preview,
+.task-card-locked .task-tile-locked-hint {
+  color: #475569;
+}
+
 .task-card-quiz-locked {
   border: 2px solid #f97316;
   background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);

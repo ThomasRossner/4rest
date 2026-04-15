@@ -22,7 +22,6 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
   /** Pro Fragenindex: ISO-Zeitpunkt bis wann gesperrt (kommt von API + lokale Updates). */
   const [lockedUntilByQuestion, setLockedUntilByQuestion] = useState<Record<number, string>>({});
   const [tick, setTick] = useState(0);
-  const [autoSubmitAfterVerify, setAutoSubmitAfterVerify] = useState(false);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
   const { t, i18n } = useTranslation();
@@ -54,6 +53,11 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
     }
     setLockedUntilByQuestion(next);
   }, [quizLockPayload, variant]);
+
+  const questions = useMemo(
+    () => normalizeQuizQuestionsForDisplay(task?.quiz_questions || []),
+    [task?.quiz_questions]
+  );
 
   const completeMutation = useMutation(
     (data: { quiz_answers: unknown }) =>
@@ -113,9 +117,18 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
             delete n[variables.questionIndex];
             return n;
           });
+          if (variables.questionIndex === questions.length - 1 && questions.length > 0) {
+            completeMutation.mutate({
+              quiz_answers: questions.map((q, i) => ({
+                questionIndex: i,
+                answerId: answers[q.id],
+                answer:
+                  q.options.find((opt) => opt.id === answers[q.id])?.label ?? answers[q.id] ?? '',
+              })),
+            });
+          }
           return;
         }
-        setAutoSubmitAfterVerify(false);
         if (data.lockedUntil) {
           setLockedUntilByQuestion((prev) => ({
             ...prev,
@@ -167,8 +180,6 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
 
   if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
   if (!task) return <div>{t('tasksComponents.notFound')}</div>;
-
-  const questions = normalizeQuizQuestionsForDisplay(task.quiz_questions || []);
 
   if (questions.length === 0) {
     return (
@@ -299,8 +310,6 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
 
   const handleCheckAnswer = () => {
     if (!currentQuestion || !selectedId) return;
-    const isLastQuestion = currentQuestionIndex === questions.length - 1;
-    setAutoSubmitAfterVerify(isLastQuestion);
     checkMutation.mutate({ questionIndex: currentQuestionIndex, answerId: selectedId });
   };
 
@@ -318,21 +327,6 @@ export function QuizTask({ taskId, onComplete, variant = 'default' }: QuizTaskPr
 
   const lockActive =
     lockUntil && new Date(lockUntil).getTime() > Date.now() && !isCurrentVerified;
-
-  useEffect(() => {
-    if (!autoSubmitAfterVerify) return;
-    if (!isCurrentVerified) return;
-    if (currentQuestionIndex !== questions.length - 1) return;
-    if (completeMutation.isLoading) return;
-    setAutoSubmitAfterVerify(false);
-    handleFinalSubmit();
-  }, [
-    autoSubmitAfterVerify,
-    isCurrentVerified,
-    currentQuestionIndex,
-    questions.length,
-    completeMutation.isLoading,
-  ]);
 
   return (
     <div className="task-container">
