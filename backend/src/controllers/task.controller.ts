@@ -55,18 +55,8 @@ export const getPublicTask: RequestHandler = asyncHandler(async (req, res) => {
 /** POST /api/tasks/public/:id/complete */
 export const completePublicTask: RequestHandler = asyncHandler(async (req, res) => {
   const sessionId = ensureGuestSession(req, res);
-  const startedAt = Date.now();
-  console.log('[POST /tasks/public/:id/complete] start', {
-    taskId: req.params.id,
-    sessionId,
-  });
   try {
     const result = await completePublicGuestTask(req.params.id, sessionId, req.body);
-    console.log('[POST /tasks/public/:id/complete] end', {
-      taskId: req.params.id,
-      sessionId,
-      elapsedMs: Date.now() - startedAt,
-    });
     res.json(result);
   } catch (e: any) {
     const msg = String(e?.message || '');
@@ -104,31 +94,6 @@ export const getTasks: RequestHandler = asyncHandler(async (req, res) => {
     authReq.user?.id,
     { includeAll: includeAllValue, includeInactive: includeInactiveFlag, preferredLanguage: preferredLanguage ?? undefined }
   );
-
-  console.log('[GET /tasks]', {
-    userId: authReq.user?.id ?? null,
-    userEmail: authReq.user?.email ?? null,
-    tasksCount: Array.isArray(tasks) ? tasks.length : 0,
-  });
-  if (Array.isArray(tasks)) {
-    const cradleTasks = tasks
-      .filter((task: any) => String(task?.title ?? '').toLowerCase().includes('cradle-to-cradle'))
-      .map((task: any) => ({
-        id: task.id,
-        title: task.title,
-        is_available: task.is_available,
-        completed: task.completed,
-        verification_status: task.verification_status ?? null,
-        prerequisite_task_id: task.prerequisite_task_id ?? null,
-      }));
-    if (cradleTasks.length > 0) {
-      console.log('[GET /tasks][CRADLE DEBUG]', {
-        userId: authReq.user?.id ?? null,
-        userEmail: authReq.user?.email ?? null,
-        cradleTasks,
-      });
-    }
-  }
 
   res.json(tasks);
 });
@@ -307,21 +272,7 @@ export const submitQuizAnswer: RequestHandler = asyncHandler(async (req, res) =>
     return res.status(400).json({ error: 'questionIndex (non-negative number) and answerId (string) are required' });
   }
   try {
-    const startedAt = Date.now();
-    console.log('[POST /tasks/:id/quiz/answer] start', {
-      taskId: req.params.id,
-      userId: authReq.user.id,
-      questionIndex,
-      answerId,
-    });
     const result = await submitQuizAnswerService(req.params.id, authReq.user.id, questionIndex, answerId);
-    console.log('[POST /tasks/:id/quiz/answer] end', {
-      taskId: req.params.id,
-      userId: authReq.user.id,
-      questionIndex,
-      status: (result as any)?.status ?? null,
-      elapsedMs: Date.now() - startedAt,
-    });
     res.json(result);
   } catch (e: any) {
     const msg = e?.message || 'Error';
@@ -344,22 +295,7 @@ export const completeTask: RequestHandler = asyncHandler(async (req, res) => {
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  console.log('[POST /tasks/:id/complete] start', {
-    taskId: req.params.id,
-    userId: authReq.user.id,
-    userEmail: authReq.user.email ?? null,
-  });
-  const startedAt = Date.now();
   const result = await completeTaskService(req.params.id, authReq.user.id, req.body);
-  const elapsedMs = Date.now() - startedAt;
-  console.log('[POST /tasks/:id/complete]', {
-    taskId: req.params.id,
-    userId: authReq.user.id,
-    userEmail: authReq.user.email ?? null,
-    elapsedMs,
-    pointsEarned: (result as any)?.pointsEarned ?? null,
-    requiresVerification: (result as any)?.requiresVerification ?? false,
-  });
   res.json(result);
 });
 

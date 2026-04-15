@@ -259,7 +259,8 @@ function TasksPage() {
 
   useCategoryTaskGridRowHeight(categoryScrollRef, [categoryKeyParam, filteredTasks.length]);
 
-  const openTaskDetail = (task: { id: string }) => {
+  const openTaskDetail = (task: { id: string; is_available?: boolean }) => {
+    if (task.is_available === false) return;
     setDetailTaskId(task.id);
   };
 
@@ -600,6 +601,7 @@ function TasksPage() {
               key={task.id}
               role="button"
               tabIndex={0}
+              aria-disabled={isLocked}
               className={`task-card task-card--list-tile ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''} ${isQuizLockedByWrongAnswer ? 'task-card-quiz-locked' : ''}`}
               onClick={() => openTaskDetail(task)}
               onKeyDown={(e) => {
