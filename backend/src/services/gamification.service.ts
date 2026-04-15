@@ -160,6 +160,20 @@ export async function plantTree(userId: string, taskId: string) {
     selectedBlock.z + areaSpacing - edgePadding,
     gridMaxZ - edgePadding
   );
+
+  // Load existing tree positions in this block once to avoid a DB roundtrip per attempt.
+  const existingTreesInBlock = await db.query(
+    `SELECT position_x, position_z
+     FROM forest_trees
+     WHERE user_id = $1
+       AND position_x >= $2 AND position_x < $3
+       AND position_z >= $4 AND position_z < $5`,
+    [userId, selectedBlock.x, selectedBlock.x + areaSpacing, selectedBlock.z, selectedBlock.z + areaSpacing]
+  );
+  const existingPositions = existingTreesInBlock.rows.map((row: any) => ({
+    x: Number(row.position_x),
+    z: Number(row.position_z),
+  }));
   
   let absoluteX: number;
   let absoluteZ: number;
@@ -182,17 +196,14 @@ export async function plantTree(userId: string, taskId: string) {
       continue;
     }
     
-    // Check for conflicts
-    const conflictCheck = await db.query(
-      `SELECT COUNT(*) as count 
-       FROM forest_trees 
-       WHERE user_id = $1 
-         AND ABS(position_x - $2) < $3 
-         AND ABS(position_z - $4) < $3`,
-      [userId, absoluteX, minDistance, absoluteZ]
+    // Check conflicts in-memory (fast path).
+    const hasConflict = existingPositions.some(
+      (pos) =>
+        Math.abs(pos.x - absoluteX) < minDistance &&
+        Math.abs(pos.z - absoluteZ) < minDistance
     );
-    
-    if (parseInt(conflictCheck.rows[0].count) === 0) {
+
+    if (!hasConflict) {
       break;
     }
     

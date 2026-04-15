@@ -115,6 +115,16 @@ export async function plantTree(userId, taskId) {
     // Use gridSize to calculate the actual max Z for the entire grid
     const gridMaxZ = primaryAreaOriginZ + areaSpacing * gridSize - 0.001;
     const blockMaxZ = Math.min(selectedBlock.z + areaSpacing - edgePadding, gridMaxZ - edgePadding);
+    // Load existing tree positions in this block once to avoid a DB roundtrip per attempt.
+    const existingTreesInBlock = await db.query(`SELECT position_x, position_z
+     FROM forest_trees
+     WHERE user_id = $1
+       AND position_x >= $2 AND position_x < $3
+       AND position_z >= $4 AND position_z < $5`, [userId, selectedBlock.x, selectedBlock.x + areaSpacing, selectedBlock.z, selectedBlock.z + areaSpacing]);
+    const existingPositions = existingTreesInBlock.rows.map((row) => ({
+        x: Number(row.position_x),
+        z: Number(row.position_z),
+    }));
     let absoluteX;
     let absoluteZ;
     let attempts = 0;
@@ -132,13 +142,10 @@ export async function plantTree(userId, taskId) {
             attempts++;
             continue;
         }
-        // Check for conflicts
-        const conflictCheck = await db.query(`SELECT COUNT(*) as count 
-       FROM forest_trees 
-       WHERE user_id = $1 
-         AND ABS(position_x - $2) < $3 
-         AND ABS(position_z - $4) < $3`, [userId, absoluteX, minDistance, absoluteZ]);
-        if (parseInt(conflictCheck.rows[0].count) === 0) {
+        // Check conflicts in-memory (fast path).
+        const hasConflict = existingPositions.some((pos) => Math.abs(pos.x - absoluteX) < minDistance &&
+            Math.abs(pos.z - absoluteZ) < minDistance);
+        if (!hasConflict) {
             break;
         }
         attempts++;

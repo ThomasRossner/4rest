@@ -1301,22 +1301,25 @@ export async function completeTask(taskId, userId, data) {
         // Check if user is in a team
         const userTeam = await getUserActiveTeam(userId);
         const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
-        // Award points and plant tree for all team members
-        for (const memberId of teamMembers) {
-            await addUserPoints(memberId, task.points);
-            await addForestCategoryPoints(memberId, task.points, taskForestKey);
+        // Process all members concurrently to reduce completion latency.
+        await Promise.all(teamMembers.map(async (memberId) => {
             const newTreeId = await plantTree(memberId, taskId);
-            // Distribute task points to growth of a random existing tree (not the newly planted one)
-            await addGrowthPointsToRandomTree(memberId, task.points, newTreeId);
-            // Update contest points for all active contests this member participates in
-            const activeContests = await db.query(`SELECT c.id FROM contests c
-         INNER JOIN contest_participants cp ON cp.contest_id = c.id
-         WHERE cp.user_id = $1 AND c.active = TRUE AND c.end_date > NOW()`, [memberId]);
-            // Update points for each active contest
-            for (const contest of activeContests.rows) {
-                await updateContestPoints(memberId, contest.id, task.points);
-            }
-        }
+            await Promise.all([
+                addUserPoints(memberId, task.points),
+                addForestCategoryPoints(memberId, task.points, taskForestKey),
+                // Distribute task points to growth of a random existing tree (not the newly planted one)
+                addGrowthPointsToRandomTree(memberId, task.points, newTreeId),
+            ]);
+            // Bulk update active contest points in one query instead of per-contest roundtrips.
+            await db.query(`UPDATE contest_participants cp
+           SET points = cp.points + $1
+           FROM contests c
+           WHERE cp.contest_id = c.id
+             AND cp.user_id = $2
+             AND c.active = TRUE
+             AND c.start_date <= NOW()
+             AND c.end_date >= NOW()`, [task.points, memberId]);
+        }));
     }
     if (task.type === 'quiz') {
         await db.query(`DELETE FROM quiz_question_locks WHERE user_id = $1 AND task_id = $2`, [userId, taskId]);
