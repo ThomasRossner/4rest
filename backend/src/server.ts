@@ -62,6 +62,21 @@ app.use(cors({ origin: corsOriginResolved, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Temporary request tracing to diagnose delayed task completion flows in production.
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on('finish', () => {
+    if (!req.originalUrl.startsWith('/api/tasks')) return;
+    console.log('[HTTP TRACE]', {
+      method: req.method,
+      path: req.originalUrl,
+      status: res.statusCode,
+      elapsedMs: Date.now() - startedAt,
+    });
+  });
+  next();
+});
+
 // Session middleware for Passport (OAuth flows)
 // Use Redis store if available, otherwise fall back to MemoryStore
 let sessionStore: any = undefined;
