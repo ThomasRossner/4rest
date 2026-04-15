@@ -1296,30 +1296,42 @@ export async function completeTask(taskId, userId, data) {
             // Don't fail the task completion if notification fails
         }
     }
-    // Only award points and plant trees if this is NOT a photo task (photo tasks need verification first)
+    // Only award points and plant trees if this is NOT a photo task (photo tasks need verification first).
+    // This is intentionally decoupled from HTTP response time to avoid UI stalls on task completion.
     if (!isPhotoTask) {
-        // Check if user is in a team
-        const userTeam = await getUserActiveTeam(userId);
-        const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
-        // Process all members concurrently to reduce completion latency.
-        await Promise.all(teamMembers.map(async (memberId) => {
-            const newTreeId = await plantTree(memberId, taskId);
-            await Promise.all([
-                addUserPoints(memberId, task.points),
-                addForestCategoryPoints(memberId, task.points, taskForestKey),
-                // Distribute task points to growth of a random existing tree (not the newly planted one)
-                addGrowthPointsToRandomTree(memberId, task.points, newTreeId),
-            ]);
-            // Bulk update active contest points in one query instead of per-contest roundtrips.
-            await db.query(`UPDATE contest_participants cp
-           SET points = cp.points + $1
-           FROM contests c
-           WHERE cp.contest_id = c.id
-             AND cp.user_id = $2
-             AND c.active = TRUE
-             AND c.start_date <= NOW()
-             AND c.end_date >= NOW()`, [task.points, memberId]);
-        }));
+        void (async () => {
+            try {
+                // Check if user is in a team
+                const userTeam = await getUserActiveTeam(userId);
+                const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
+                // Process all members concurrently to reduce completion latency.
+                await Promise.all(teamMembers.map(async (memberId) => {
+                    const newTreeId = await plantTree(memberId, taskId);
+                    await Promise.all([
+                        addUserPoints(memberId, task.points),
+                        addForestCategoryPoints(memberId, task.points, taskForestKey),
+                        // Distribute task points to growth of a random existing tree (not the newly planted one)
+                        addGrowthPointsToRandomTree(memberId, task.points, newTreeId),
+                    ]);
+                    // Bulk update active contest points in one query instead of per-contest roundtrips.
+                    await db.query(`UPDATE contest_participants cp
+               SET points = cp.points + $1
+               FROM contests c
+               WHERE cp.contest_id = c.id
+                 AND cp.user_id = $2
+                 AND c.active = TRUE
+                 AND c.start_date <= NOW()
+                 AND c.end_date >= NOW()`, [task.points, memberId]);
+                }));
+            }
+            catch (backgroundError) {
+                console.error('[COMPLETE TASK] Deferred gamification processing failed:', {
+                    taskId,
+                    userId,
+                    error: backgroundError,
+                });
+            }
+        })();
     }
     if (task.type === 'quiz') {
         await db.query(`DELETE FROM quiz_question_locks WHERE user_id = $1 AND task_id = $2`, [userId, taskId]);
