@@ -1196,8 +1196,21 @@ function assertQuizAnswersMeetThreshold(task, data) {
 }
 export async function completeTask(taskId, userId, data) {
     const db = getPool();
+    const traceId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const startedAt = Date.now();
+    const mark = (phase) => {
+        console.log('[COMPLETE TASK TRACE]', {
+            traceId,
+            taskId,
+            userId,
+            phase,
+            elapsedMs: Date.now() - startedAt,
+        });
+    };
+    mark('start');
     // Check if already completed
     const existing = await db.query('SELECT * FROM user_tasks WHERE user_id = $1 AND task_id = $2', [userId, taskId]);
+    mark('checked-existing');
     if (existing.rows.length > 0) {
         throw new Error('Task already completed');
     }
@@ -1206,7 +1219,9 @@ export async function completeTask(taskId, userId, data) {
     if (!task) {
         throw new Error('Task not found');
     }
+    mark('loaded-task');
     assertQuizAnswersMeetThreshold(task, data);
+    mark('validated-quiz-threshold');
     // Insert completion record
     const surveyResponsesPayload = data?.survey_responses
         ? JSON.stringify(data.survey_responses)
@@ -1235,6 +1250,7 @@ export async function completeTask(taskId, userId, data) {
         verificationStatus,
         taskForestKey,
     ]);
+    mark('inserted-user-task');
     const userTaskId = userTaskResult.rows[0].id;
     console.log('[COMPLETE TASK] Created user_task:', {
         id: userTaskId,
@@ -1295,24 +1311,55 @@ export async function completeTask(taskId, userId, data) {
             console.error('[PHOTO TASK] Failed to notify admins about photo task:', error);
             // Don't fail the task completion if notification fails
         }
+        mark('photo-notification-finished');
     }
     // Only award points and plant trees if this is NOT a photo task (photo tasks need verification first).
     // This is intentionally decoupled from HTTP response time to avoid UI stalls on task completion.
     if (!isPhotoTask) {
+        mark('deferred-gamification-scheduled');
         void (async () => {
+            const backgroundStartedAt = Date.now();
+            const bgMark = (phase) => {
+                console.log('[COMPLETE TASK TRACE BG]', {
+                    traceId,
+                    taskId,
+                    userId,
+                    phase,
+                    elapsedMs: Date.now() - backgroundStartedAt,
+                });
+            };
             try {
+                bgMark('start');
                 // Check if user is in a team
                 const userTeam = await getUserActiveTeam(userId);
                 const teamMembers = userTeam ? await getTeamMembers(userTeam.id) : [userId];
+                bgMark(`resolved-team-members:${teamMembers.length}`);
                 // Process all members concurrently to reduce completion latency.
                 await Promise.all(teamMembers.map(async (memberId) => {
+                    const memberStart = Date.now();
                     const newTreeId = await plantTree(memberId, taskId);
+                    console.log('[COMPLETE TASK TRACE BG MEMBER]', {
+                        traceId,
+                        taskId,
+                        userId,
+                        memberId,
+                        phase: 'planted-tree',
+                        elapsedMs: Date.now() - memberStart,
+                    });
                     await Promise.all([
                         addUserPoints(memberId, task.points),
                         addForestCategoryPoints(memberId, task.points, taskForestKey),
                         // Distribute task points to growth of a random existing tree (not the newly planted one)
                         addGrowthPointsToRandomTree(memberId, task.points, newTreeId),
                     ]);
+                    console.log('[COMPLETE TASK TRACE BG MEMBER]', {
+                        traceId,
+                        taskId,
+                        userId,
+                        memberId,
+                        phase: 'updated-points-and-growth',
+                        elapsedMs: Date.now() - memberStart,
+                    });
                     // Bulk update active contest points in one query instead of per-contest roundtrips.
                     await db.query(`UPDATE contest_participants cp
                SET points = cp.points + $1
@@ -1322,10 +1369,20 @@ export async function completeTask(taskId, userId, data) {
                  AND c.active = TRUE
                  AND c.start_date <= NOW()
                  AND c.end_date >= NOW()`, [task.points, memberId]);
+                    console.log('[COMPLETE TASK TRACE BG MEMBER]', {
+                        traceId,
+                        taskId,
+                        userId,
+                        memberId,
+                        phase: 'updated-contest-points',
+                        elapsedMs: Date.now() - memberStart,
+                    });
                 }));
+                bgMark('completed');
             }
             catch (backgroundError) {
                 console.error('[COMPLETE TASK] Deferred gamification processing failed:', {
+                    traceId,
                     taskId,
                     userId,
                     error: backgroundError,
@@ -1335,7 +1392,9 @@ export async function completeTask(taskId, userId, data) {
     }
     if (task.type === 'quiz') {
         await db.query(`DELETE FROM quiz_question_locks WHERE user_id = $1 AND task_id = $2`, [userId, taskId]);
+        mark('cleared-quiz-locks');
     }
+    mark('returning-response');
     return {
         success: true,
         pointsEarned: isPhotoTask ? 0 : task.points,

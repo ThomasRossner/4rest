@@ -236,7 +236,17 @@ export const completeTask = asyncHandler(async (req, res) => {
     if (!authReq.user) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
+    const startedAt = Date.now();
     const result = await completeTaskService(req.params.id, authReq.user.id, req.body);
+    const elapsedMs = Date.now() - startedAt;
+    console.log('[POST /tasks/:id/complete]', {
+        taskId: req.params.id,
+        userId: authReq.user.id,
+        userEmail: authReq.user.email ?? null,
+        elapsedMs,
+        pointsEarned: result?.pointsEarned ?? null,
+        requiresVerification: result?.requiresVerification ?? false,
+    });
     res.json(result);
 });
 export const uploadPhoto = asyncHandler(async (req, res) => {

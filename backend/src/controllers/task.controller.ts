@@ -301,7 +301,17 @@ export const completeTask: RequestHandler = asyncHandler(async (req, res) => {
   if (!authReq.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  const startedAt = Date.now();
   const result = await completeTaskService(req.params.id, authReq.user.id, req.body);
+  const elapsedMs = Date.now() - startedAt;
+  console.log('[POST /tasks/:id/complete]', {
+    taskId: req.params.id,
+    userId: authReq.user.id,
+    userEmail: authReq.user.email ?? null,
+    elapsedMs,
+    pointsEarned: (result as any)?.pointsEarned ?? null,
+    requiresVerification: (result as any)?.requiresVerification ?? false,
+  });
   res.json(result);
 });
 
