@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Sphere, useGLTF, Sky, useHelper } from "@react-three/drei"
 import { DirectionalLightHelper, CameraHelper, Color } from "three"
 import { useThree } from '@react-three/fiber';
+import * as THREE from "three"
 
 
 import ControllableTree from './ControllableTree';
@@ -19,6 +20,8 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
 
   // console.log("Controller globalPoints:", globalPoints);
   const ground = useGLTF("/models/ground2.glb")
+  const grassGltf = useGLTF("/models/grass.glb")
+
   useEffect(() => {
     // console.log("Ground:", ground);
   }, [ground]);
@@ -35,6 +38,97 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
     return arr
   }, [ground])
 
+  // 🌿 GRASS ANCHORS
+  const grassAnchors = useMemo(() => {
+    const arr = []
+    ground.scene.traverse(o => {
+      if (o.name.startsWith("grassAnchor")) arr.push(o)
+    })
+    return arr
+  }, [ground])
+
+  // 🌾 GRASS MESHES
+  const grassMeshes = useMemo(() => {
+    const meshes = []
+    grassGltf.scene.traverse(o => {
+      if (o.isMesh) meshes.push(o)
+    })
+    return meshes
+  }, [grassGltf])
+
+  // 🔒 STABILER HASH
+  function hashVec3(v) {
+    return (
+      Math.floor(v.x * 1000) * 73856093 ^
+      Math.floor(v.y * 1000) * 19349663 ^
+      Math.floor(v.z * 1000) * 83492791
+    );
+  }
+
+  function seededRandom(seed) {
+    let x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  // 🎯 STABILE ZUWEISUNG
+  const grassAssignments = useMemo(() => {
+    if (!grassAnchors.length || !grassMeshes.length) return []
+
+    return grassAnchors.map((anchor) => {
+      const seed = hashVec3(anchor.position)
+      const rnd = seededRandom(seed)
+      return Math.floor(rnd * grassMeshes.length)
+    })
+  }, [grassAnchors, grassMeshes])
+
+  // 🧠 GROUPING → WICHTIG FÜR INSTANCING
+  const groupedGrass = useMemo(() => {
+    const groups = Array.from({ length: grassMeshes.length }, () => [])
+
+    grassAnchors.forEach((anchor, i) => {
+      const meshIdx = grassAssignments[i]
+      if (meshIdx !== undefined) {
+        groups[meshIdx].push(anchor)
+      }
+    })
+
+    return groups
+  }, [grassAnchors, grassAssignments, grassMeshes])
+
+  function GrassInstances({ mesh, anchors }) {
+    const ref = useRef()
+
+    useEffect(() => {
+      const temp = new THREE.Object3D()
+
+      anchors.forEach((anchor, i) => {
+        const seed = Math.floor(anchor.position.x * 1000)
+
+        temp.position.copy(anchor.position)
+        temp.quaternion.copy(anchor.quaternion)
+
+        // 🌱 kleine zufällige Variation
+        const scaleRand = 0.8 + (Math.sin(seed) * 0.5 + 0.5) * 0.4
+        temp.scale.set(6 * scaleRand, 4 * scaleRand, 6 * scaleRand)
+
+        temp.updateMatrix()
+        ref.current.setMatrixAt(i, temp.matrix)
+      })
+
+      ref.current.instanceMatrix.needsUpdate = true
+    }, [anchors])
+
+    return (
+      <instancedMesh
+        ref={ref}
+        args={[mesh.geometry, mesh.material, Math.floor(anchors.length * (globalPoints / maxPoints))]}
+        castShadow
+        receiveShadow
+      />
+    )
+  }
+
+  // 🌍 GROUND
   const groundMesh = useMemo(() => {
     return ground.scene.children.find(o => o.isMesh)
   }, [ground])
@@ -151,26 +245,10 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
         shadow-camera-bottom={-15}
         shadow-camera-near={1}
         shadow-camera-far={50}
-        // shadow-bias={0.00001}
+        shadow-normalBias={0.1}
       />
-      <ambientLight intensity={0.78} />
-      <hemisphereLight args={['#e8f6ff', '#d7ead1', 0.48]} />
-
-      {/* 5 schwache Punktlichter im Kreis um den Ursprung */}
-      {Array.from({ length: 5 }).map((_, i) => {
-        const angle = (i / 5) * 2 * Math.PI;
-        const radius = 20;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        return (
-          <directionalLight
-            key={i}
-            position={[x, 2, z]}
-            intensity={0.2}
-            castShadow={false}
-          />
-        );
-      })}
+      <ambientLight intensity={1.6} />
+      {/* <hemisphereLight args={['#e8f6ff', '#d7ead1', 0.48]} /> */}
 
       {/* Gelbe Kugel an der Lichtquelle */}
       <mesh position={sunPosition}>
@@ -197,6 +275,20 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
             num={i} 
           />
       ))}
+
+      {/* 🌿 INSTANCED GRASS */}
+      {groupedGrass.map((anchors, meshIdx) => {
+        const mesh = grassMeshes[meshIdx]
+        if (!mesh || anchors.length === 0) return null
+
+        return (
+          <GrassInstances
+            key={meshIdx}
+            mesh={mesh}
+            anchors={anchors}
+          />
+        )
+      })}
     </>
   );
 };

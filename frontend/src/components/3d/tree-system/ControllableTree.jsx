@@ -26,9 +26,9 @@ export default function ControllableTree({
     // console.log("Controller globalPoints:", globalPoints);
   // console.log("ControllableTree props - num:", num, "growth*steps:", Math.floor(trunkGrowth * maxTreeGrowSteps));
 
-  const trunk = useGLTF("/models/trunk.glb")
-  const twig = useGLTF("/models/twig2.glb")
-  const leaf = useGLTF("/models/leaf.glb")
+  const trunk = useGLTF("/models/beechTrunk.glb")
+  const twig = useGLTF("/models/beechTwig.glb")
+  const leaf = useGLTF("/models/beechLeaf.glb")
 
   useEffect(() => {
     // console.log(num, "Trunk:", trunk);
