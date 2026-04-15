@@ -60,7 +60,7 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
     (data: { quiz_answers: unknown }) =>
       variant === 'public' ? api.completePublicTask(taskId, data) : api.completeTask(taskId, data),
     {
-      onSuccess: async () => {
+      onSuccess: () => {
         if (variant === 'public') {
           showToast({
             type: 'success',
@@ -74,19 +74,15 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
         queryClient.invalidateQueries(['userProgress']);
 
         if (userId) {
-          await Promise.all([
-            queryClient.invalidateQueries(['userActiveTeam', userId]),
-            queryClient.invalidateQueries(['userTeams', userId]),
-          ]);
+          queryClient.invalidateQueries(['userActiveTeam', userId]);
+          queryClient.invalidateQueries(['userTeams', userId]);
         }
         queryClient.invalidateQueries(['userActiveTeam']);
         queryClient.invalidateQueries(['userTeams']);
 
-        try {
-          await api.refreshMe();
-        } catch (userError) {
+        api.refreshMe().catch((userError) => {
           console.debug('Failed to refresh user data:', userError);
-        }
+        });
 
         showToast({
           type: 'success',

@@ -335,8 +335,42 @@
   box-sizing: border-box;
 }
 
-.tasks-back-from-task {
+.tasks-execution-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
+}
+
+.tasks-execution-title {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1rem, 3.8vw, 1.25rem);
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tasks-execution-points {
+  background-color: var(--color-accent);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tasks-task-shell .task-header,
+.tasks-task-shell .qr-exec-header {
+  display: none;
+}
+
+.tasks-back-from-task {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1149,5 +1183,14 @@
   .tasks-filters-row {
     gap: 4px;
     padding: 6px;
+  }
+
+  .tasks-execution-title {
+    font-size: clamp(0.95rem, 4vw, 1.1rem);
+  }
+
+  .tasks-execution-points {
+    font-size: 0.8rem;
+    padding: 4px 8px;
   }
 }

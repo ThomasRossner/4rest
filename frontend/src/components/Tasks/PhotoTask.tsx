@@ -34,27 +34,23 @@ export function PhotoTask({ taskId, onComplete }: PhotoTaskProps) {
       return api.completeTask(taskId, { photo_url: photoUrl });
     },
     {
-      onSuccess: async (data) => {
+      onSuccess: (data) => {
         // Invalidate task and progress queries
         queryClient.invalidateQueries(['tasks']);
         queryClient.invalidateQueries(['userProgress']);
         
         // Invalidate team-related queries to update team points and forest
         if (userId) {
-          await Promise.all([
-            queryClient.invalidateQueries(['userActiveTeam', userId]),
-            queryClient.invalidateQueries(['userTeams', userId]),
-          ]);
+          queryClient.invalidateQueries(['userActiveTeam', userId]);
+          queryClient.invalidateQueries(['userTeams', userId]);
         }
         queryClient.invalidateQueries(['userActiveTeam']);
         queryClient.invalidateQueries(['userTeams']);
-        
-        // Refresh user data to update points
-        try {
-          await api.refreshMe();
-        } catch (userError) {
+
+        // Refresh user data to update points without blocking UI.
+        api.refreshMe().catch((userError) => {
           console.debug('Failed to refresh user data:', userError);
-        }
+        });
         
         // Check if task requires verification
         if (data?.requiresVerification) {

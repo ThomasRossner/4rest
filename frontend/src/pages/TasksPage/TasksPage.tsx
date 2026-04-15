@@ -282,17 +282,23 @@ function TasksPage() {
     );
   }
 
-  const wrapTaskShell = (node: React.ReactNode) => (
+  const wrapTaskShell = (taskMeta: { title?: string; points?: number }, node: React.ReactNode) => (
     <div className="tasks-task-shell">
-      <button
-        type="button"
-        className="tasks-back-from-task"
-        onClick={() => setSelectedTask(null)}
-        title={t('tasks.backToList')}
-        aria-label={t('tasks.backToList')}
-      >
-        <BackArrowIcon className="tasks-back-from-task-icon" />
-      </button>
+      <div className="tasks-execution-header">
+        <button
+          type="button"
+          className="tasks-back-from-task"
+          onClick={() => setSelectedTask(null)}
+          title={t('tasks.backToList')}
+          aria-label={t('tasks.backToList')}
+        >
+          <BackArrowIcon className="tasks-back-from-task-icon" />
+        </button>
+        <h2 className="tasks-execution-title">{taskMeta.title ?? ''}</h2>
+        <span className="tasks-execution-points">
+          {t('tasksComponents.points', { points: Number(taskMeta.points ?? 0) })}
+        </span>
+      </div>
       {node}
     </div>
   );
@@ -318,27 +324,28 @@ function TasksPage() {
     if (!task) return <div>{t('tasks.notFound')}</div>;
 
     if (task.type === 'video') {
-      return wrapTaskShell(<VideoTask taskId={task.id} onComplete={handleTaskComplete} />);
+      return wrapTaskShell(task, <VideoTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'quiz') {
-      return wrapTaskShell(<QuizTask taskId={task.id} onComplete={handleTaskComplete} />);
+      return wrapTaskShell(task, <QuizTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'article_quiz') {
-      return wrapTaskShell(<ArticleQuizTask taskId={task.id} onComplete={handleTaskComplete} />);
+      return wrapTaskShell(task, <ArticleQuizTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'survey') {
-      return wrapTaskShell(<SurveyTask taskId={task.id} onComplete={handleTaskComplete} />);
+      return wrapTaskShell(task, <SurveyTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'qr') {
       return wrapTaskShell(
+        task,
         <QRCodeTask taskId={task.id} qrCode={task.qr_code} onComplete={handleTaskComplete} />
       );
     }
     if (task.type === 'photo') {
-      return wrapTaskShell(<PhotoTask taskId={task.id} onComplete={handleTaskComplete} />);
+      return wrapTaskShell(task, <PhotoTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
     if (task.type === 'visit_location') {
-      return wrapTaskShell(<VisitLocationTask taskId={task.id} onComplete={handleTaskComplete} />);
+      return wrapTaskShell(task, <VisitLocationTask taskId={task.id} onComplete={handleTaskComplete} />);
     }
   }
 

@@ -85,7 +85,7 @@ export function VisitLocationTask({ taskId, onComplete, variant = 'default' }: V
   const completeMutation = useMutation(
     () => (variant === 'public' ? api.completePublicTask(taskId, {}) : api.completeTask(taskId, {})),
     {
-      onSuccess: async () => {
+      onSuccess: () => {
         if (variant === 'public') {
           showToast({
             type: 'success',
@@ -99,20 +99,16 @@ export function VisitLocationTask({ taskId, onComplete, variant = 'default' }: V
         queryClient.invalidateQueries(['userProgress']);
 
         if (userId) {
-          await Promise.all([
-            queryClient.invalidateQueries(['userActiveTeam', userId]),
-            queryClient.invalidateQueries(['userTeams', userId]),
-          ]);
+          queryClient.invalidateQueries(['userActiveTeam', userId]);
+          queryClient.invalidateQueries(['userTeams', userId]);
         }
         queryClient.invalidateQueries(['userActiveTeam']);
         queryClient.invalidateQueries(['userTeams']);
-        
-        // Refresh user data to update points
-        try {
-          await api.refreshMe();
-        } catch (userError) {
+
+        // Refresh user data to update points without blocking UI.
+        api.refreshMe().catch((userError) => {
           console.debug('Failed to refresh user data:', userError);
-        }
+        });
         
         showToast({
           type: 'success',
