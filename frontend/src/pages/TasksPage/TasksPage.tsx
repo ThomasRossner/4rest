@@ -236,6 +236,27 @@ function TasksPage() {
     prerequisiteTaskIdsFilter,
   ]);
 
+  const globalLocationTasks = useMemo(() => {
+    if (!tasks) return [];
+    return tasks.filter((task: any) => {
+      if (!task?.location) return false;
+      let location = task.location;
+      if (typeof location === 'string') {
+        try {
+          location = JSON.parse(location);
+        } catch {
+          return false;
+        }
+      }
+      const isOnline =
+        location?.is_online === true ||
+        location?.is_online === 'true' ||
+        String(location?.is_online).toLowerCase() === 'true';
+      if (isOnline) return false;
+      return location?.latitude != null && location?.longitude != null;
+    });
+  }, [tasks]);
+
   useCategoryTaskGridRowHeight(categoryScrollRef, [categoryKeyParam, filteredTasks.length]);
 
   const openTaskDetail = (task: { id: string }) => {
@@ -340,7 +361,7 @@ function TasksPage() {
     );
   }
 
-  if (!categoryKeyParam && !selectedTask) {
+  if (!categoryKeyParam && !selectedTask && !showLocationMap) {
     return (
       <div className="tasks-page tasks-page--hub">
         <div className="tasks-category-grid">
@@ -369,15 +390,22 @@ function TasksPage() {
             );
           })}
         </div>
+        <div className="tasks-hub-map-action">
+          <button
+            type="button"
+            className="location-button"
+            onClick={() => setShowLocationMap(true)}
+            title={t('tasks.showGlobalLocationMap')}
+          >
+            {t('tasks.mapButton')}
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (!categoryKeyParam) {
-    return null;
-  }
-
   if (showLocationMap) {
+    const mapTasks = categoryKeyParam ? filteredTasks : globalLocationTasks;
     return (
       <div className="tasks-page tasks-page--map">
         <div className="tasks-map-header">
@@ -395,7 +423,7 @@ function TasksPage() {
           <UserLocationMap
             variant="tasks"
             height="calc(100dvh - 200px)"
-            tasks={filteredTasks as any[]}
+            tasks={mapTasks as any[]}
             onTaskClick={(taskId) => {
               setShowLocationMap(false);
               setDetailTaskId(taskId);
@@ -404,6 +432,10 @@ function TasksPage() {
         </div>
       </div>
     );
+  }
+
+  if (!categoryKeyParam) {
+    return null;
   }
 
   return (

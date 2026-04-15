@@ -231,3 +231,31 @@
     padding: 6px 4px;
   }
 }
+
+/* iPhone/kleine Displays: Kennzahlen als 2x2-Grid, damit CO2 nicht abgeschnitten wird */
+@media (max-width: 430px) {
+  .forest-hud__player {
+    max-width: min(140px, 34vw);
+  }
+
+  .forest-impact-stats--overlay {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .forest-impact-stats--overlay .forest-stat {
+    border-left: 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+  }
+
+  .forest-impact-stats--overlay .forest-stat:nth-child(1),
+  .forest-impact-stats--overlay .forest-stat:nth-child(2) {
+    border-top: 0;
+  }
+
+  .forest-impact-stats--overlay .forest-stat:nth-child(2n) {
+    border-left: 1px solid rgba(148, 163, 184, 0.35);
+  }
+}

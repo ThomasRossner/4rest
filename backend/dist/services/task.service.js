@@ -265,6 +265,45 @@ export function isQuizAnswerCorrect(params) {
     if (expectedAnswerId && selectedAnswerId && expectedAnswerId === selectedAnswerId) {
         return true;
     }
+    const normalizeQuizText = (value) => {
+        if (typeof value !== 'string')
+            return '';
+        return value.normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
+    };
+    const parseAnswerIndex = (value) => {
+        if (!value)
+            return null;
+        const aMatch = /^a_(\d+)$/i.exec(value);
+        if (aMatch) {
+            const n = Number(aMatch[1]);
+            return Number.isInteger(n) && n > 0 ? n - 1 : null;
+        }
+        const legacyMatch = /_(\d+)$/.exec(value);
+        if (legacyMatch) {
+            const n = Number(legacyMatch[1]);
+            return Number.isInteger(n) && n >= 0 ? n : null;
+        }
+        return null;
+    };
+    // Fallback: Wenn IDs nicht zusammenpassen, versuche die Option über den Index zuzuordnen
+    // und vergleiche den erwarteten Antworttext robust (Whitespace/Kleinschreibung).
+    if (selectedAnswerId && expectedAnswerText && Array.isArray(questionAnswers)) {
+        const selectedIdx = parseAnswerIndex(selectedAnswerId);
+        if (selectedIdx != null && selectedIdx >= 0 && selectedIdx < questionAnswers.length) {
+            const candidate = questionAnswers[selectedIdx];
+            const candidateText = typeof candidate === 'string'
+                ? candidate
+                : candidate?.text ??
+                    candidate?.text_i18n?.de ??
+                    candidate?.text_i18n?.en ??
+                    candidate?.option_i18n?.de ??
+                    candidate?.option_i18n?.en ??
+                    null;
+            if (normalizeQuizText(candidateText) === normalizeQuizText(expectedAnswerText)) {
+                return true;
+            }
+        }
+    }
     if (expectedAnswerId && selectedAnswerText) {
         const resolved = questionAnswers.find((opt) => {
             if (typeof opt === 'string')
@@ -281,7 +320,9 @@ export function isQuizAnswerCorrect(params) {
         if (resolved)
             return true;
     }
-    return Boolean(expectedAnswerText && selectedAnswerText && expectedAnswerText === selectedAnswerText);
+    return Boolean(expectedAnswerText &&
+        selectedAnswerText &&
+        normalizeQuizText(expectedAnswerText) === normalizeQuizText(selectedAnswerText));
 }
 function resolveNestedI18n(value, lang, fallback) {
     if (value && typeof value === 'object') {
