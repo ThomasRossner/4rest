@@ -2405,7 +2405,11 @@ export async function checkPrerequisiteMet(taskId: string, userId: string): Prom
   // Check Type 1: prerequisite_task_id
   if (prerequisiteTaskId) {
     const type1Check = await db.query(
-      'SELECT 1 FROM user_tasks WHERE user_id = $1 AND task_id = $2',
+      `SELECT 1 FROM user_tasks
+       WHERE user_id = $1
+         AND task_id = $2
+         AND (verification_status IS NULL OR verification_status != 'pending')
+       LIMIT 1`,
       [userId, prerequisiteTaskId]
     );
     if (type1Check.rows.length === 0) {
@@ -2420,7 +2424,9 @@ export async function checkPrerequisiteMet(taskId: string, userId: string): Prom
     const type2Check = await db.query(
       `SELECT COUNT(*) as completed_count 
        FROM user_tasks 
-       WHERE user_id = $1 AND task_id IN (${placeholders})`,
+       WHERE user_id = $1
+         AND task_id IN (${placeholders})
+         AND (verification_status IS NULL OR verification_status != 'pending')`,
       [userId, ...prerequisiteTaskIds]
     );
     

@@ -22,6 +22,7 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
   const [lockedUntilByQuestion, setLockedUntilByQuestion] = useState<Record<number, string>>({});
   const [tick, setTick] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [autoSubmitAfterVerify, setAutoSubmitAfterVerify] = useState(false);
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
   const { t, i18n } = useTranslation();
@@ -108,6 +109,7 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
           });
           return;
         }
+        setAutoSubmitAfterVerify(false);
         if (data.lockedUntil) {
           setLockedUntilByQuestion((prev) => ({
             ...prev,
@@ -180,6 +182,8 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
 
   const handleCheckAnswer = () => {
     if (!currentQuestion || !selectedId) return;
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+    setAutoSubmitAfterVerify(isLastQuestion);
     checkMutation.mutate({ questionIndex: currentQuestionIndex, answerId: selectedId });
   };
 
@@ -281,6 +285,21 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
 
   const lockActive =
     lockUntil && new Date(lockUntil).getTime() > Date.now() && !isCurrentVerified;
+
+  useEffect(() => {
+    if (!autoSubmitAfterVerify) return;
+    if (!isCurrentVerified) return;
+    if (currentQuestionIndex !== questions.length - 1) return;
+    if (completeMutation.isLoading) return;
+    setAutoSubmitAfterVerify(false);
+    handleSubmit();
+  }, [
+    autoSubmitAfterVerify,
+    isCurrentVerified,
+    currentQuestionIndex,
+    questions.length,
+    completeMutation.isLoading,
+  ]);
 
   return (
     <div className="task-container">
