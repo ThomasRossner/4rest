@@ -111,16 +111,6 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
             delete n[variables.questionIndex];
             return n;
           });
-          if (variables.questionIndex === questions.length - 1 && questions.length > 0) {
-            completeMutation.mutate({
-              quiz_answers: questions.map((q, i) => ({
-                questionIndex: i,
-                answerId: answers[q.id],
-                answer:
-                  q.options.find((opt) => opt.id === answers[q.id])?.label ?? answers[q.id] ?? '',
-              })),
-            });
-          }
           return;
         }
         if (data.lockedUntil) {
@@ -191,9 +181,27 @@ export function ArticleQuizTask({ taskId, onComplete, variant = 'default' }: Art
     }
   };
 
-  const handleCheckAnswer = () => {
+  const handleCheckAnswer = async () => {
     if (!currentQuestion || !selectedId) return;
-    checkMutation.mutate({ questionIndex: currentQuestionIndex, answerId: selectedId });
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+    try {
+      const result = await checkMutation.mutateAsync({
+        questionIndex: currentQuestionIndex,
+        answerId: selectedId,
+      });
+      if (isLastQuestion && result?.status === 'correct') {
+        completeMutation.mutate({
+          quiz_answers: questions.map((q, i) => ({
+            questionIndex: i,
+            answerId: answers[q.id],
+            answer:
+              q.options.find((opt) => opt.id === answers[q.id])?.label ?? answers[q.id] ?? '',
+          })),
+        });
+      }
+    } catch {
+      // Toast handling is done in mutation onError.
+    }
   };
 
   const handleSubmit = () => {
