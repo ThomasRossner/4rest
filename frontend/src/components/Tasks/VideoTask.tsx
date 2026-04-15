@@ -184,9 +184,28 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
     }
   };
 
-  const handleCheckAnswer = () => {
+  const handleCheckAnswer = async () => {
     if (!currentQuestion || !selectedId) return;
-    checkMutation.mutate({ questionIndex: currentQuestionIndex, answerId: selectedId });
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
+    try {
+      const result = await checkMutation.mutateAsync({
+        questionIndex: currentQuestionIndex,
+        answerId: selectedId,
+      });
+      if (isLastQuestion && result?.status === 'correct') {
+        completeMutation.mutate({
+          quiz_answers: Object.entries(answers).map(([index, answer]) => ({
+            questionIndex: questions.findIndex((q) => q.id === index),
+            answerId: answer,
+            answer:
+              questions.find((q) => q.id === index)?.options.find((opt) => opt.id === answer)?.label ??
+              answer,
+          })),
+        });
+      }
+    } catch {
+      // Toast handling is done in mutation onError.
+    }
   };
 
   const handleSubmit = () => {

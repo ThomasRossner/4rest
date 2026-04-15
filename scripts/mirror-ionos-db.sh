@@ -39,7 +39,13 @@ fi
 # Prüfe ob lokale Datenbank erreichbar ist
 echo "==> Checking local database connection..."
 # Prüfe ob Docker-Container läuft
-LOCAL_CONTAINER=$(docker ps --filter "name=postgres" --format "{{.Names}}" | head -1)
+# Prefer explicit local project DB container to avoid selecting unrelated postgres containers.
+LOCAL_CONTAINER=""
+if docker ps --format "{{.Names}}" | rg -x "roots-postgres" >/dev/null 2>&1; then
+    LOCAL_CONTAINER="roots-postgres"
+else
+    LOCAL_CONTAINER=$(docker ps --filter "name=postgres" --format "{{.Names}}" | head -1)
+fi
 if [ -n "$LOCAL_CONTAINER" ]; then
     echo "   Found Docker container: $LOCAL_CONTAINER"
     USE_DOCKER=true
