@@ -19,7 +19,7 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
   // useHelper(lightRef.current?.shadow?.camera, CameraHelper)
 
   // console.log("Controller globalPoints:", globalPoints);
-  const ground = useGLTF("/models/ground2.glb")
+  const ground = useGLTF("/models/grassGround.glb")
   const grassGltf = useGLTF("/models/grass.glb")
 
   useEffect(() => {
