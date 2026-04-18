@@ -64,15 +64,6 @@ function ForestPage() {
       ),
     [forestGlobalPoints, userPoints]
   );
-  const co2SavedValue = useMemo(() => {
-    const numeric = Number(progress?.co2Saved);
-    if (!Number.isFinite(numeric) || numeric < 0) return 0;
-    return numeric;
-  }, [progress?.co2Saved]);
-  const formattedCo2Saved = useMemo(() => {
-    if (co2SavedValue === 0) return '0';
-    return Number.isInteger(co2SavedValue) ? co2SavedValue.toFixed(0) : co2SavedValue.toFixed(1);
-  }, [co2SavedValue]);
 
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
@@ -85,6 +76,16 @@ function ForestPage() {
     () => api.getUserProgress(userId as string),
     { enabled: !!userId }
   );
+
+  const co2SavedValue = useMemo(() => {
+    const numeric = Number(progress?.co2Saved);
+    if (!Number.isFinite(numeric) || numeric < 0) return 0;
+    return numeric;
+  }, [progress?.co2Saved]);
+  const formattedCo2Saved = useMemo(() => {
+    if (co2SavedValue === 0) return '0';
+    return Number.isInteger(co2SavedValue) ? co2SavedValue.toFixed(0) : co2SavedValue.toFixed(1);
+  }, [co2SavedValue]);
 
   const { data: forestData } = useQuery(
     ['forest', userId],

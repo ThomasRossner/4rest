@@ -208,13 +208,6 @@ function RewardsPage() {
   if (activeRedemption) {
     return (
       <div className="rewards-page rewards-page--list">
-        <div className="rewards-sticky">
-          <div className="rewards-header-category">
-            <div className="rewards-header-category-row">
-              <h1 className="rewards-header-category-title">{t('rewards.title')}</h1>
-            </div>
-          </div>
-        </div>
         <div className="rewards-scroll">
           <QrCodeDisplay
             qrToken={activeRedemption.qrToken}
@@ -231,11 +224,6 @@ function RewardsPage() {
   return (
     <div className="rewards-page rewards-page--list">
       <div className="rewards-sticky">
-        <div className="rewards-header-category">
-          <div className="rewards-header-category-row">
-            <h1 className="rewards-header-category-title">{t('rewards.title')}</h1>
-          </div>
-        </div>
         <div className="rewards-toolbar-row">
           <div className="rewards-balance rewards-balance--compact">
             <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>

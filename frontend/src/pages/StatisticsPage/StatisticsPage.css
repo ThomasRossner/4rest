@@ -12,18 +12,6 @@
   margin: 0 auto;
 }
 
-.rankings-title {
-  font-size: 1.67rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-top: 0;
-  margin-bottom: var(--spacing-lg);
-  text-align: center;
-}
-
 .rankings-section {
   margin-bottom: var(--spacing-xl);
 }

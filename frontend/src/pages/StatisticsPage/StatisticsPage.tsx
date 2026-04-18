@@ -265,7 +265,6 @@ function RankingsPage() {
   if (pageLoading) {
     return (
       <div className="rankings-page">
-        <h1 className="rankings-title">{t('rankings.title')}</h1>
         <LoadingSkeleton lines={10} />
       </div>
     );
@@ -274,7 +273,6 @@ function RankingsPage() {
   if (showEmpty) {
     return (
       <div className="rankings-page">
-        <h1 className="rankings-title">{t('rankings.title')}</h1>
         <EmptyState title={t('rankings.pageEmptyTitle')} description={t('rankings.pageEmptyDescription')} />
       </div>
     );
@@ -282,7 +280,6 @@ function RankingsPage() {
 
   return (
     <div className="rankings-page">
-      <h1 className="rankings-title">{t('rankings.title')}</h1>
       {/* Active Contests */}
       {activeContestsWithRankings.length > 0 && (
         <section className="rankings-section">
