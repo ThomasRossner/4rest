@@ -190,41 +190,45 @@ function ForestPage() {
                   className="forest-impact-stats forest-impact-stats--overlay"
                   aria-label={t('home.impactTitle')}
                 >
-                  <div className="forest-stat">
+                  <div className="forest-stat forest-stat--hud-row">
                     <div className="forest-stat-icon">⭐</div>
-                    <span className="forest-stat-value">
-                      {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null ? (
-                        <>
-                          {activeTeam.totalPoints} / {userPoints}
-                        </>
-                      ) : (
-                        userPoints
-                      )}
-                    </span>
-                    <span className="forest-stat-label">
-                      {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null
-                        ? t('home.stats.teamPoints')
-                        : t('home.stats.totalPoints')}
-                    </span>
+                    <div className="forest-stat-inner">
+                      <span className="forest-stat-value">
+                        {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null ? (
+                          <>
+                            {activeTeam.totalPoints} / {userPoints}
+                          </>
+                        ) : (
+                          userPoints
+                        )}
+                      </span>
+                      <span className="forest-stat-label">
+                        {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null
+                          ? t('home.stats.teamPoints')
+                          : t('home.stats.totalPoints')}
+                      </span>
+                    </div>
                   </div>
-                  {(progress?.treesPlanted ?? 0) > 0 && (
-                    <div className="forest-stat">
-                      <div className="forest-stat-icon">🌲</div>
-                      <span className="forest-stat-value">{progress.treesPlanted}</span>
+                  <div className="forest-stat forest-stat--hud-row">
+                    <div className="forest-stat-icon">🌲</div>
+                    <div className="forest-stat-inner">
+                      <span className="forest-stat-value">{progress?.treesPlanted ?? 0}</span>
                       <span className="forest-stat-label">{t('home.stats.treesPlanted')}</span>
                     </div>
-                  )}
-                  {(progress?.tasksCompleted ?? 0) > 0 && (
-                    <div className="forest-stat">
-                      <div className="forest-stat-icon">✅</div>
-                      <span className="forest-stat-value">{progress.tasksCompleted}</span>
+                  </div>
+                  <div className="forest-stat forest-stat--hud-row">
+                    <div className="forest-stat-icon">✅</div>
+                    <div className="forest-stat-inner">
+                      <span className="forest-stat-value">{progress?.tasksCompleted ?? 0}</span>
                       <span className="forest-stat-label">{t('home.stats.tasksCompleted')}</span>
                     </div>
-                  )}
-                  <div className="forest-stat">
+                  </div>
+                  <div className="forest-stat forest-stat--hud-row">
                     <div className="forest-stat-icon">🌍</div>
-                    <span className="forest-stat-value">{formattedCo2Saved} kg</span>
-                    <span className="forest-stat-label">{t('home.stats.co2Saved')}</span>
+                    <div className="forest-stat-inner">
+                      <span className="forest-stat-value">{formattedCo2Saved} kg</span>
+                      <span className="forest-stat-label">{t('home.stats.co2Saved')}</span>
+                    </div>
                   </div>
                 </div>
               )}

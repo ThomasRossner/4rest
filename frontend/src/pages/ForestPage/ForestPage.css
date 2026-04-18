@@ -48,7 +48,7 @@
   overflow: hidden;
 }
 
-/* HUD über dem Canvas: unten Spieler links, Stats rechts daneben */
+/* HUD über dem Canvas: Namenszeile oben, darunter eine Zeile mit vier Kennzahlen */
 .forest-hud {
   position: absolute;
   inset: 0;
@@ -62,9 +62,9 @@
   right: 0;
   bottom: 0;
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: var(--spacing-xs);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   padding: 0 max(10px, env(safe-area-inset-left, 0px)) env(safe-area-inset-bottom, 0px)
     max(10px, env(safe-area-inset-right, 0px));
   box-sizing: border-box;
@@ -73,7 +73,30 @@
 .forest-hud__player {
   flex-shrink: 0;
   pointer-events: auto;
-  max-width: min(300px, 42vw);
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+/* Komponente hat global width:100% — im Wald nur so breit wie Inhalt (bis max. Viewport) */
+.forest-hud__player .forest-player-character.forest-player-character--overlay {
+  width: auto;
+  max-width: 100%;
+  align-items: flex-start;
+}
+
+/* Voller Anzeigename: kein Ellipsis; bei Bedarf umbrechen statt abschneiden */
+.forest-hud__player .forest-player-character--overlay .forest-player-character__figure {
+  max-width: 100%;
+  width: fit-content;
+}
+
+.forest-hud__player .forest-player-character--overlay .forest-player-character__name {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .forest-hud__player .forest-player-character--overlay {
@@ -89,10 +112,11 @@
   align-items: stretch;
   justify-content: space-between;
   gap: 0;
-  flex: 1 1 0;
+  flex: 0 0 auto;
+  width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 6px 8px;
+  padding: 6px 4px;
   pointer-events: none;
   box-sizing: border-box;
   background: rgba(248, 250, 252, 0.86);
@@ -102,6 +126,9 @@
   border-bottom: 0;
   border-radius: 10px 10px 0 0;
   box-shadow: 0 -1px 8px rgba(15, 23, 42, 0.08);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .forest-impact-stats--overlay .forest-stat {
@@ -111,7 +138,48 @@
   box-shadow: none;
   cursor: default;
   user-select: none;
-  padding: 4px 6px;
+  padding: 4px 4px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Eine Zeile pro Kennzahl: Icon | Wert + Beschriftung (nebeneinander, umbrechen nur innerhalb der Zelle) */
+.forest-impact-stats--overlay .forest-stat--hud-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.2rem;
+}
+
+.forest-impact-stats--overlay .forest-stat--hud-row .forest-stat-icon {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.forest-impact-stats--overlay .forest-stat-inner {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.forest-impact-stats--overlay .forest-stat-inner .forest-stat-value {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.forest-impact-stats--overlay .forest-stat-inner .forest-stat-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-top: 0;
+  text-align: left;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .forest-impact-stats--overlay .forest-stat + .forest-stat {
@@ -197,6 +265,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.forest-impact-stats--overlay .forest-stat-value {
+  font-size: clamp(0.72rem, 2.6vw, 0.95rem);
+}
+
 .forest-stat-label {
   font-size: clamp(0.6rem, 2.2vw, 0.7rem);
   margin-top: 2px;
@@ -207,21 +279,14 @@
   hyphens: auto;
 }
 
+.forest-impact-stats--overlay .forest-stat-label {
+  font-size: clamp(0.52rem, 1.8vw, 0.62rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @media (max-width: 768px) {
-  .forest-hud__bottom {
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-
-  .forest-hud__player {
-    max-width: 100%;
-    flex: 1 1 100%;
-  }
-
-  .forest-impact-stats--overlay {
-    flex: 1 1 100%;
-  }
-
   .forest-impact-stats:not(.forest-impact-stats--overlay) {
     gap: 6px;
     padding: 0;
@@ -232,34 +297,6 @@
   }
 
   .forest-impact-stats--overlay .forest-stat {
-    padding: 6px 4px;
-  }
-}
-
-/* iPhone/kleine Displays: Kennzahlen als 2x2-Grid, damit CO2 nicht abgeschnitten wird */
-@media (max-width: 430px) {
-  .forest-hud__player {
-    max-width: min(140px, 34vw);
-  }
-
-  .forest-impact-stats--overlay {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0;
-    align-items: stretch;
-  }
-
-  .forest-impact-stats--overlay .forest-stat {
-    border-left: 0;
-    border-top: 1px solid rgba(148, 163, 184, 0.35);
-  }
-
-  .forest-impact-stats--overlay .forest-stat:nth-child(1),
-  .forest-impact-stats--overlay .forest-stat:nth-child(2) {
-    border-top: 0;
-  }
-
-  .forest-impact-stats--overlay .forest-stat:nth-child(2n) {
-    border-left: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 4px 2px;
   }
 }
