@@ -16,6 +16,7 @@ import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfile
 import type { OnboardingConfig } from '../../types/onboarding';
 import { resolveOnboardingBackgroundUrl } from '../../utils/onboardingBackgroundUrl';
 import { getPlayerCharacterEmoji, getPlayerCharacterIconUrl } from '../../constants/playerCharacter';
+import { ThemeSwitcher } from '../../components/ThemeSwitcher/ThemeSwitcher';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -110,9 +111,14 @@ function ProfilePage() {
           <div className="profile-info">
             <h2>{user?.name || 'User'}</h2>
             <p>{user?.email || t('profile.noEmail')}</p>
-            <div className="profile-language profile-language--inline">
-              <span className="profile-language-label">{t('profile.language.label')}</span>
-              <div className="profile-language-buttons">
+            <div className="profile-preferences-row">
+              <div className="profile-language profile-language--inline">
+                <span className="profile-language-label">{t('theme.label')}</span>
+                <ThemeSwitcher variant="compact" />
+              </div>
+              <div className="profile-language profile-language--inline">
+                <span className="profile-language-label">{t('profile.language.label')}</span>
+                <div className="profile-language-buttons">
                 <button
                   type="button"
                   className={`profile-language-btn ${(user?.preferredLanguage || i18n.language || 'de').startsWith('de') ? 'active' : ''}`}
@@ -167,6 +173,7 @@ function ProfilePage() {
                 >
                   {t('language.en')}
                 </button>
+                </div>
               </div>
             </div>
           </div>

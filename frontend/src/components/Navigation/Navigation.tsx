@@ -22,7 +22,6 @@ import { api } from '../../services/api';
 import { PointsBonusScanner } from '../Rewards/PointsBonusScanner';
 import { Mailbox } from '../Mailbox/Mailbox';
 import { getUserInitials } from '../../utils/userInitials';
-import { ThemeSwitcher } from '../ThemeSwitcher/ThemeSwitcher';
 import './Navigation.css';
 
 const NAV_ICON = 22;
@@ -226,7 +225,6 @@ function Navigation() {
             <div className="navigation-page-title navigation-page-title--empty" aria-hidden="true" />
           )}
           <div className="navigation-right">
-          <ThemeSwitcher variant="compact" />
           <div className="navigation-extra">
             {/* Empty for non-admin users, can be used for future items */}
           </div>

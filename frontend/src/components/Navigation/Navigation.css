@@ -262,32 +262,6 @@
   min-width: 0;
 }
 
-/* Theme-Umschaltung auf dunkler Nav-Leiste lesbar */
-.navigation .theme-switcher {
-  flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.18);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-.navigation .theme-switcher__btn {
-  color: rgba(255, 255, 255, 0.88);
-}
-
-.navigation .theme-switcher__btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-}
-
-.navigation .theme-switcher__btn--active {
-  background: rgba(255, 255, 255, 0.92) !important;
-  color: var(--color-primary-dark) !important;
-}
-
-.navigation .theme-switcher__btn--active:hover {
-  color: var(--color-primary-dark) !important;
-  background: #fff !important;
-}
-
 .navigation-logo {
   display: flex;
   align-items: center;

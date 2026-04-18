@@ -14,7 +14,7 @@ export function readStoredTheme(): UiTheme {
   } catch {
     /* private mode */
   }
-  return 'atlas';
+  return 'classic';
 }
 
 export function applyThemeToDocument(theme: UiTheme): void {

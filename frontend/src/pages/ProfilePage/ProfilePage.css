@@ -186,6 +186,19 @@
   margin-bottom: 0;
 }
 
+/* Design links, Sprache rechts (eine Zeile wo Platz) */
+.profile-preferences-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xs);
+}
+
+.profile-preferences-row .profile-language {
+  margin-bottom: 0;
+}
+
 .profile-avatar {
   width: 80px;
   height: 80px;
