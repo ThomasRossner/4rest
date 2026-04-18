@@ -228,6 +228,28 @@ interface UpdateRewardInput {
   allowed_contests?: string[] | null;
 }
 
+function normalizeRewardKategorie(
+  value: string | null | undefined
+): 'Hotel' | 'nicht Hotel' | null {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+
+  const normalized = trimmed.toLowerCase();
+  if (normalized === 'hotel') return 'Hotel';
+  if (
+    normalized === 'nicht hotel' ||
+    normalized === 'nicht_hotel' ||
+    normalized === 'online' ||
+    normalized === 'external' ||
+    normalized === 'extern' ||
+    normalized === 'test'
+  ) {
+    return 'nicht Hotel';
+  }
+  return null;
+}
+
 export async function createCustomReward(data: CreateCustomRewardInput) {
   const db = getPool();
   const titleI18n = data.title_i18n && typeof data.title_i18n === 'object'
@@ -243,6 +265,7 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
   const rewardType = validateRewardType(data.rewardType);
   const pointsCost = normalizePointsCost(data.pointsCost);
   const recurrence = validateRecurrence(data.recurrence);
+  const normalizedKategorie = normalizeRewardKategorie(data.kategorie);
 
   const result = await db.query(
     `INSERT INTO rewards (
@@ -278,7 +301,7 @@ export async function createCustomReward(data: CreateCustomRewardInput) {
       data.active ?? true,
       recurrence,
       data.reward_art ?? null,
-      data.kategorie ?? null,
+      normalizedKategorie,
       data.thumbnail_url ?? null,
       data.allowed_teams ?? null,
       data.allowed_contests ?? null,
@@ -399,7 +422,7 @@ export async function updateReward(id: string, data: UpdateRewardInput) {
 
   if (data.kategorie !== undefined) {
     updates.push(`kategorie = $${paramIndex++}`);
-    values.push(data.kategorie ?? null);
+    values.push(normalizeRewardKategorie(data.kategorie ?? null));
   }
 
 
