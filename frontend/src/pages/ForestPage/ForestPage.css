@@ -190,7 +190,11 @@
   color: var(--color-primary);
   line-height: 1.15;
   text-align: center;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+  font-variant-numeric: tabular-nums;
 }
 
 .forest-stat-label {

@@ -64,6 +64,15 @@ function ForestPage() {
       ),
     [forestGlobalPoints, userPoints]
   );
+  const co2SavedValue = useMemo(() => {
+    const numeric = Number(progress?.co2Saved);
+    if (!Number.isFinite(numeric) || numeric < 0) return 0;
+    return numeric;
+  }, [progress?.co2Saved]);
+  const formattedCo2Saved = useMemo(() => {
+    if (co2SavedValue === 0) return '0';
+    return Number.isInteger(co2SavedValue) ? co2SavedValue.toFixed(0) : co2SavedValue.toFixed(1);
+  }, [co2SavedValue]);
 
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
@@ -211,17 +220,11 @@ function ForestPage() {
                       <span className="forest-stat-label">{t('home.stats.tasksCompleted')}</span>
                     </div>
                   )}
-                  {progress?.co2Saved !== undefined &&
-                    progress?.co2Saved !== null &&
-                    Number(progress.co2Saved) > 0 && (
-                      <div className="forest-stat">
-                        <div className="forest-stat-icon">🌍</div>
-                        <span className="forest-stat-value">
-                          {Number(progress.co2Saved).toFixed(1)} kg
-                        </span>
-                        <span className="forest-stat-label">{t('home.stats.co2Saved')}</span>
-                      </div>
-                    )}
+                  <div className="forest-stat">
+                    <div className="forest-stat-icon">🌍</div>
+                    <span className="forest-stat-value">{formattedCo2Saved} kg</span>
+                    <span className="forest-stat-label">{t('home.stats.co2Saved')}</span>
+                  </div>
                 </div>
               )}
             </div>
