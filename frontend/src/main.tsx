@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import App from './App';
 import { Toaster } from './components/Toaster/Toaster';
+import { ThemeProvider } from './theme/ThemeContext';
 import { registerServiceWorker, syncOfflineQRCodes } from './utils/serviceWorker';
 import './index.css';
 import './i18n';
@@ -23,8 +24,10 @@ if (!root) {
   try {
     ReactDOM.createRoot(root).render(
       <QueryClientProvider client={queryClient}>
-        <App />
-        {import.meta.env.VITE_UI_POLISH ? <Toaster /> : null}
+        <ThemeProvider>
+          <App />
+          {import.meta.env.VITE_UI_POLISH ? <Toaster /> : null}
+        </ThemeProvider>
       </QueryClientProvider>
     );
   } catch (error) {

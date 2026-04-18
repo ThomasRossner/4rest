@@ -31,7 +31,7 @@
   flex-shrink: 0;
   width: 100%;
   min-width: 0;
-  background: var(--color-background, #fff);
+  background: var(--color-background);
   padding-bottom: var(--spacing-sm);
   z-index: 20;
 }
@@ -244,7 +244,7 @@
 }
 
 .location-modal-content {
-  background: white;
+  background: var(--color-card-surface);
   border-radius: 20px;
   width: 100%;
   max-width: 900px;
@@ -356,7 +356,7 @@
 }
 
 .reward-card {
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-lg);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -524,7 +524,7 @@
   padding: 10px 20px;
   min-height: 44px;
   border: 2px solid transparent;
-  background: white;
+  background: var(--color-card-surface);
   color: var(--color-primary);
   border-radius: 12px;
   cursor: pointer;
@@ -664,7 +664,7 @@
 }
 
 .rewards-receipt-code {
-  background: white;
+  background: var(--color-card-surface);
   padding: 6px 12px;
   border-radius: 8px;
   font-family: 'Courier New', monospace;

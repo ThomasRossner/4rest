@@ -10,7 +10,7 @@
 
 .profile-section {
   margin-top: var(--spacing-xl);
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-xl);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-md);
@@ -58,7 +58,7 @@
 }
 
 .profile-card {
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-xl);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-md);
@@ -347,7 +347,7 @@
   padding: var(--spacing-md);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  background: white;
+  background: var(--color-card-surface);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);

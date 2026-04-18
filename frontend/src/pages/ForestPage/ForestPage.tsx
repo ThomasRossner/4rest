@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { CheckCircle2, Leaf, Star, Trees } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
@@ -195,7 +196,9 @@ function ForestPage() {
                   aria-label={t('home.impactTitle')}
                 >
                   <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon">⭐</div>
+                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
+                      <Star size={18} strokeWidth={2} />
+                    </div>
                     <span className="forest-stat-value">
                       {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null ? (
                         <>
@@ -212,17 +215,23 @@ function ForestPage() {
                     </span>
                   </div>
                   <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon">🌲</div>
+                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
+                      <Trees size={18} strokeWidth={2} />
+                    </div>
                     <span className="forest-stat-value">{progress?.treesPlanted ?? 0}</span>
                     <span className="forest-stat-label">{t('home.stats.treesPlanted')}</span>
                   </div>
                   <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon">✅</div>
+                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
+                      <CheckCircle2 size={18} strokeWidth={2} />
+                    </div>
                     <span className="forest-stat-value">{progress?.tasksCompleted ?? 0}</span>
                     <span className="forest-stat-label">{t('home.stats.tasksCompleted')}</span>
                   </div>
                   <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon">🌍</div>
+                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
+                      <Leaf size={18} strokeWidth={2} />
+                    </div>
                     <span className="forest-stat-value">{formattedCo2Saved} kg</span>
                     <span className="forest-stat-label">{t('home.stats.co2Saved')}</span>
                   </div>

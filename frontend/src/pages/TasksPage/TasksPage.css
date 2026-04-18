@@ -53,7 +53,7 @@
 
 .tasks-category-sticky {
   flex-shrink: 0;
-  background: var(--color-background, #fff);
+  background: var(--color-card-surface, var(--color-parchment));
   padding-bottom: var(--spacing-xs);
   z-index: 20;
   position: sticky;
@@ -246,7 +246,7 @@
   min-height: 148px;
   padding: var(--spacing-md) var(--spacing-sm);
   border-radius: 20px;
-  background: white;
+  background: var(--color-card-surface);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   text-decoration: none;
   color: var(--color-text, #111827);
@@ -317,7 +317,7 @@
   line-height: 1.2;
   padding: 0.2rem 0.45rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--tile-accent, var(--color-primary)) 14%, #fff);
+  background: color-mix(in srgb, var(--tile-accent, var(--color-primary)) 16%, var(--color-card-surface));
   color: color-mix(in srgb, var(--tile-accent, var(--color-primary)) 72%, #0f172a);
 }
 
@@ -342,7 +342,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding-bottom: var(--spacing-md);
-  background: var(--color-background, #fff);
+  background: var(--color-card-surface, var(--color-parchment));
   z-index: 2;
 }
 
@@ -406,6 +406,12 @@
 }
 
 /* Kategorie-Aufgaben: 2×2-Matrix (2 Spalten, 2 Zeilen im sichtbaren Bereich). Eigene Klasse — nicht .tasks-grid (auto-fill/minmax 320px). */
+.tasks-filter-type-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
 .tasks-category-matrix {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -466,13 +472,21 @@
 }
 
 .tasks-category-matrix .task-icon--tile {
-  font-size: 1.65rem;
   line-height: 1;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   max-height: 100%;
+}
+
+.task-icon-lucide--tile {
+  color: var(--color-primary);
+}
+
+.tasks-category-matrix .task-icon--tile .task-icon-lucide--tile {
+  width: 34px;
+  height: 34px;
 }
 
 .tasks-category-matrix .task-icon-image--tile {
@@ -513,23 +527,58 @@
 .tasks-category-matrix .task-completed-badge--tile {
   width: 22px;
   height: 22px;
-  font-size: 12px;
   margin-left: 0;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tasks-category-matrix .task-validating-badge--tile {
   width: 22px;
   height: 22px;
-  font-size: 11px;
   margin-left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tasks-category-matrix .task-locked-badge--tile {
   width: 22px;
   height: 22px;
-  font-size: 12px;
   margin-left: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-tile-badge-svg {
+  display: block;
+}
+
+.tasks-category-matrix .task-completed-badge--tile .task-tile-badge-svg {
+  color: var(--color-success, #16a34a);
+}
+
+.tasks-category-matrix .task-validating-badge--tile .task-tile-badge-svg {
+  color: var(--color-warning, #ca8a04);
+}
+
+.tasks-category-matrix .task-locked-badge--tile .task-tile-badge-svg {
+  color: var(--color-text-light);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .task-tile-badge-svg--spin {
+    animation: task-validating-spin 0.85s linear infinite;
+  }
+}
+
+@keyframes task-validating-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .task-tile-zone--middle {
@@ -725,7 +774,7 @@
 }
 
 .location-modal-content {
-  background: white;
+  background: var(--color-card-surface);
   border-radius: 20px;
   width: 100%;
   max-width: 900px;
@@ -789,7 +838,7 @@
 }
 
 .task-card {
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-lg);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -824,8 +873,8 @@
 
 .task-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 14px 36px rgba(45, 35, 25, 0.14);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 .task-header {
@@ -1150,7 +1199,7 @@
   margin-bottom: var(--spacing-lg);
   flex-wrap: nowrap;
   justify-content: center;
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-lg);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);

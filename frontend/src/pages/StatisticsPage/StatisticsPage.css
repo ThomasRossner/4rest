@@ -25,7 +25,7 @@
 
 .rankings-contest-card,
 .rankings-team-card {
-  background: white;
+  background: var(--color-card-surface);
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
@@ -116,7 +116,7 @@
 }
 
 .rankings-timeline-card {
-  background: white;
+  background: var(--color-card-surface);
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
@@ -142,7 +142,7 @@
 }
 
 .statistics-card {
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-xl) var(--spacing-lg);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -244,7 +244,7 @@
 }
 
 .statistics-team {
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-xl);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -260,7 +260,7 @@
 }
 
 .daily-stat-bar {
-  background: white;
+  background: var(--color-card-surface);
   padding: var(--spacing-lg);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -339,7 +339,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
-  background: white;
+  background: var(--color-card-surface);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

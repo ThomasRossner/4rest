@@ -1,14 +1,4 @@
-/* Abstand unter fester Top-Nav (Titel ggf. 2 Zeilen) — für Aufgaben u. a. */
-:root {
-  --app-nav-top-offset: 104px;
-  --app-nav-bottom-offset: 88px;
-}
-
-@media (min-width: 1025px) {
-  :root {
-    --app-nav-top-offset: 92px;
-  }
-}
+/* Abstand unter fester Top-Nav: --app-nav-* in index.css */
 
 .layout {
   display: flex;
@@ -73,6 +63,30 @@
   min-width: 0;
   overflow-x: hidden;
   box-sizing: border-box;
+}
+
+html[data-theme='atlas'] .layout-main:not(.layout-main--forest):not(.layout-main--home) {
+  background: linear-gradient(
+    175deg,
+    rgba(250, 243, 232, 0.92) 0%,
+    rgba(237, 226, 210, 0.55) 45%,
+    rgba(228, 216, 198, 0.35) 100%
+  );
+  border-radius: 0 0 24px 24px;
+  box-shadow: var(--shadow-warm-inset);
+}
+
+html[data-theme='classic'] .layout-main:not(.layout-main--forest):not(.layout-main--home) {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.layout-main.layout-main--forest,
+.layout-main.layout-main--home {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 @media (max-width: 1024px) {

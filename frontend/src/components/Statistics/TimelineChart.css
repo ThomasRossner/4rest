@@ -1,5 +1,5 @@
 .timeline-chart {
-  background: white;
+  background: var(--color-card-surface);
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);

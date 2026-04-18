@@ -66,8 +66,8 @@ export default defineConfig({
     })
   ],
   server: {
-    // Frontend läuft auf Port 3001 (3000 kann bei manchen Systemen belegt sein)
-    port: 3001,
+    // Frontend läuft auf Port 3002 (3000/3001 können bei anderen Apps belegt sein)
+    port: 3002,
     host: '0.0.0.0', // Allow external access
     https: (() => {
       // Only enable HTTPS if explicitly requested (e.g., for external device camera access)
@@ -116,15 +116,15 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        // WICHTIG: Backend läuft auf Port 5001 (Port 5000 ist bei Apple belegt)
-        target: process.env.VITE_API_TARGET || 'http://localhost:5001',
+        // WICHTIG: Backend läuft auf Port 5002 (Port 5000 ist bei Apple belegt)
+        target: process.env.VITE_API_TARGET || 'http://localhost:5002',
         changeOrigin: true,
         secure: false, // Allow self-signed certificates
         ws: true
       },
       // Statische Uploads (Aufgaben-Medien, Onboarding-Hintergründe) liegen auf dem Backend
       '/uploads': {
-        target: process.env.VITE_API_TARGET || 'http://localhost:5001',
+        target: process.env.VITE_API_TARGET || 'http://localhost:5002',
         changeOrigin: true,
         secure: false
       }
@@ -146,7 +146,9 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['leaflet', 'leaflet-control-geocoder', 'three'],
+    // lucide-react explizit voroptimieren — verhindert sporadische 504/Timeouts beim ersten
+    // Request im Dev-Server (sonst weiße Seite, bis der Dep-Cache neu gebaut ist).
+    include: ['leaflet', 'leaflet-control-geocoder', 'three', 'lucide-react'],
     esbuildOptions: {
       // Increase memory limit for esbuild
       target: 'es2020',

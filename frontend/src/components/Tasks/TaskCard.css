@@ -1,0 +1,120 @@
+.task-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-card, 14px);
+  border: 1px solid var(--color-border-subtle, var(--color-border));
+  background: linear-gradient(
+    155deg,
+    var(--color-card-surface) 0%,
+    color-mix(in srgb, var(--color-card-surface) 88%, var(--color-primary)) 100%
+  );
+  box-shadow: var(--shadow-card, var(--shadow-sm)), var(--shadow-warm-inset);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.task-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.task-card--disabled {
+  opacity: 0.75;
+}
+
+.task-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.task-card__badges {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.task-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  font-family: var(--font-display, inherit);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.task-card__thumb {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.task-card__type-icon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.task-card__points {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.task-card__lock {
+  flex-shrink: 0;
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+}
+
+.task-card__description {
+  margin: 0;
+  color: var(--color-text-muted, var(--color-text-light));
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.task-card__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-light);
+}
+
+.task-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.task-card__status {
+  font-size: 0.8125rem;
+  color: var(--color-text-light);
+}
+
+.task-card__action {
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-button, 10px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.task-card__action:disabled {
+  background: var(--color-border);
+  color: var(--color-text-light);
+  cursor: not-allowed;
+}

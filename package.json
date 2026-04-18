@@ -1,6 +1,6 @@
 {
   "name": "4rest",
-  "version": "1.1.0-dev.1",
+  "version": "1.2.0",
   "description": "Gamification-based sustainability platform connecting hotel guests and front office staff",
   "private": true,
   "workspaces": [

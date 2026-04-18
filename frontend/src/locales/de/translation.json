@@ -5,6 +5,11 @@
     "de": "Deutsch",
     "switch": "Sprache ändern"
   },
+  "theme": {
+    "label": "Design",
+    "classic": "Klassisch",
+    "atlas": "Atlas"
+  },
   "common": {
     "appName": "4rest",
     "appNameRest": "rest",
@@ -273,6 +278,15 @@
         "title": "Belohnungen einlösen",
         "description": "Tausche Punkte gegen Vorteile"
       }
+    },
+    "atlas": {
+      "sectionTitle": "Heute im Wald",
+      "summaryOpen": "{{open}} von {{total}} Aufgaben offen",
+      "summaryNone": "Noch keine Aufgaben — dein Wald wartet auf dich",
+      "summaryAllDone": "Alle Aufgaben erledigt — besuch den Wald oder löse Belohnungen ein",
+      "ctaTasks": "Zu den Aufgaben",
+      "exploreForest": "Wald erkunden",
+      "openRewards": "Belohnungen"
     }
   },
   "tasks": {

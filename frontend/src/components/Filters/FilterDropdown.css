@@ -20,7 +20,7 @@
   justify-content: space-between;
   padding: 12px 16px;
   min-height: 44px;
-  background: white;
+  background: var(--color-card-surface);
   border: 2px solid transparent;
   border-radius: 12px;
   cursor: pointer;
@@ -42,7 +42,7 @@
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(102, 126, 234, 0.1);
+  background: var(--color-primary-ghost);
   transform: translate(-50%, -50%);
   transition: width 0.4s, height 0.4s;
 }
@@ -54,7 +54,7 @@
 
 .filter-dropdown-button:hover {
   border-color: var(--color-primary);
-  background: white;
+  background: var(--color-card-surface);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
@@ -104,10 +104,12 @@
   left: 0;
   right: 0;
   z-index: 99999; /* ensure on top above all elements */
-  background: white;
-  border: 2px solid rgba(102, 126, 234, 0.2);
+  background: rgba(250, 243, 232, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 28px rgba(35, 28, 22, 0.14);
   overflow: auto; /* allow scrolling if long */
   max-height: 60vh; /* visible within viewport */
   animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -131,9 +133,9 @@
   width: 100%;
   padding: 14px 16px;
   min-height: 44px;
-  background: white;
+  background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(68, 52, 40, 0.08);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.95rem;
@@ -164,12 +166,12 @@
 }
 
 .filter-dropdown-item:hover {
-  background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, transparent 100%);
+  background: linear-gradient(90deg, var(--color-primary-ghost) 0%, transparent 100%);
   transform: translateX(4px);
 }
 
 .filter-dropdown-item.active {
-  background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 14%, transparent) 0%, transparent 100%);
   color: var(--color-primary);
   font-weight: 600;
 }

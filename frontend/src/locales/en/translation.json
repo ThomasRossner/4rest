@@ -5,6 +5,11 @@
     "de": "German",
     "switch": "Switch language"
   },
+  "theme": {
+    "label": "Theme",
+    "classic": "Classic",
+    "atlas": "Atlas"
+  },
   "common": {
     "appName": "4rest",
     "appNameRest": "rest",
@@ -273,6 +278,15 @@
         "title": "Redeem rewards",
         "description": "Exchange points for discounts and benefits"
       }
+    },
+    "atlas": {
+      "sectionTitle": "Today in your forest",
+      "summaryOpen": "{{open}} of {{total}} tasks open",
+      "summaryNone": "No tasks yet — your forest is ready when you are",
+      "summaryAllDone": "All tasks done — visit your forest or redeem rewards",
+      "ctaTasks": "Go to tasks",
+      "exploreForest": "Explore forest",
+      "openRewards": "Rewards"
     }
   },
   "tasks": {

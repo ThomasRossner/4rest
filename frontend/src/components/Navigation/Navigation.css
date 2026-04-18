@@ -1,9 +1,13 @@
-/* Desktop Navigation - Single bar at top */
+/* Desktop Navigation - Single bar at top (Wald-Atlas: ruhig, ohne Dauer-Animation) */
 .navigation {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary-light) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-nav-bg, #115e59) 0%,
+    var(--color-nav-bg-end, #0f766e) 100%
+  );
   color: white;
   padding: var(--spacing-md) 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 2px 12px rgba(17, 94, 89, 0.35);
   position: fixed;
   top: 0;
   left: 0;
@@ -30,30 +34,6 @@
   z-index: 0;
 }
 
-.navigation::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  animation: pulse 4s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.1);
-  }
-}
-
 /* Bottom navigation - shown for all non-admin users */
 .navigation-bottom {
   display: block;
@@ -64,9 +44,13 @@
   right: 0;
   padding: var(--spacing-xs) 0;
   z-index: 1000;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary-light) 100%);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
-  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(
+    0deg,
+    var(--color-nav-bg, #115e59) 0%,
+    var(--color-nav-bg-end, #0f766e) 100%
+  );
+  box-shadow: 0 -2px 14px rgba(17, 94, 89, 0.35);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
   max-height: 80px;
   max-width: 100%;
   overflow-x: clip;
@@ -119,9 +103,15 @@
 }
 
 .navigation-bottom .navigation-item-icon {
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 0;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.navigation-bottom .navigation-item-icon svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
 .navigation-bottom .navigation-item-label {
@@ -142,9 +132,10 @@
 }
 
 .navigation-bottom .navigation-item.active {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .navigation-bottom .navigation-item.active::after {
@@ -269,6 +260,32 @@
   align-items: center;
   gap: var(--spacing-sm);
   min-width: 0;
+}
+
+/* Theme-Umschaltung auf dunkler Nav-Leiste lesbar */
+.navigation .theme-switcher {
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.18);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.navigation .theme-switcher__btn {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.navigation .theme-switcher__btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.navigation .theme-switcher__btn--active {
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--color-primary-dark) !important;
+}
+
+.navigation .theme-switcher__btn--active:hover {
+  color: var(--color-primary-dark) !important;
+  background: #fff !important;
 }
 
 .navigation-logo {
@@ -425,11 +442,17 @@
 }
 
 .navigation-item-icon {
-  font-size: 1.2rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.95);
   transition: transform 0.3s ease;
   position: relative;
   z-index: 1;
+}
+
+.navigation-item-icon svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .navigation-item:hover .navigation-item-icon {
@@ -579,7 +602,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 50%, var(--color-primary-dark) 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary-light) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -639,14 +662,24 @@
 
 .navigation-user-menu {
   position: fixed;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  border: 2px solid rgba(102, 126, 234, 0.2);
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
   overflow: hidden;
   min-width: 160px;
   z-index: 999999 !important; /* Ensure it's always on top, even above AdminPage modals */
   animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html[data-theme='atlas'] .navigation-user-menu {
+  background: rgba(250, 243, 232, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(35, 28, 22, 0.18), var(--shadow-warm-inset);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
 @keyframes slideDown {
@@ -682,7 +715,7 @@
 }
 
 .navigation-user-menu-item:hover {
-  background: rgba(102, 126, 234, 0.1);
+  background: var(--color-primary-ghost);
   color: var(--color-primary);
 }
 
@@ -799,8 +832,12 @@
     right: 0;
     padding: var(--spacing-xs) 0;
     z-index: 1000;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary-light) 100%);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15), 0 0 40px rgba(102, 126, 234, 0.2);
+    background: linear-gradient(
+      0deg,
+      var(--color-nav-bg, #115e59) 0%,
+      var(--color-nav-bg-end, #0f766e) 100%
+    );
+    box-shadow: 0 -2px 14px rgba(17, 94, 89, 0.35);
     border-top: 2px solid rgba(255, 255, 255, 0.2);
     max-height: 80px;
     max-width: 100%;
@@ -855,9 +892,15 @@
   }
 
   .navigation-bottom .navigation-item-icon {
-    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 0;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .navigation-bottom .navigation-item-icon svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
   }
 
   .navigation-bottom .navigation-item-label {
@@ -878,9 +921,10 @@
   }
 
   .navigation-bottom .navigation-item.active {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   .navigation-bottom .navigation-item.active::after {

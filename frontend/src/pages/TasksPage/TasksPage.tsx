@@ -18,9 +18,10 @@ import { ArticleQuizTask } from '../../components/Tasks/ArticleQuizTask';
 import { SurveyTask } from '../../components/Tasks/SurveyTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
+import { CheckCircle2, Loader2, Lock, Timer } from 'lucide-react';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
-import { QRCodeIcon } from '../../components/Icons/QRCodeIcon';
 import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
+import { TaskTypeIcon } from '../../components/Tasks/taskTypeIcons';
 import { CategoryHubIcon } from '../../components/Tasks/CategoryHubIcon';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import { TaskDetailView } from '../../components/Tasks/TaskDetailView';
@@ -43,19 +44,9 @@ function isKnownTaskTypeForFilter(value: string): boolean {
   return KNOWN_TASK_TYPES_FOR_FILTER.has(value);
 }
 
-// Map task types to icons and translation keys
-const getTaskTypeIcon = (type: string) => {
-  switch (type) {
-    case 'video': return '🎥';
-    case 'quiz': return '❓';
-    case 'article_quiz': return '📄';
-    case 'survey': return '📋';
-    case 'qr': return <QRCodeIcon size={20} />;
-    case 'photo': return '📷';
-    case 'visit_location': return '📍';
-    default: return '📝';
-  }
-};
+function filterTaskTypeIcon(type: string) {
+  return <TaskTypeIcon type={type} size={16} strokeWidth={2} className="tasks-filter-type-icon" />;
+}
 
 const CATEGORY_ORDER = [...FOREST_CATEGORY_KEYS, OTHER_FOREST_CATEGORY_KEY];
 
@@ -533,23 +524,23 @@ function TasksPage() {
                   .map((param: any) => ({
                     value: param.value,
                     label: t(`tasks.filters.type.${param.value}`, { defaultValue: param.value }),
-                    icon: getTaskTypeIcon(param.value),
+                    icon: filterTaskTypeIcon(param.value),
                   }))
               : taskTypesFromTasks.length > 0
               ? taskTypesFromTasks.map((type: string) => ({
                   value: type,
                   label: t(`tasks.filters.type.${type}`, { defaultValue: type }),
-                  icon: getTaskTypeIcon(type),
+                  icon: filterTaskTypeIcon(type),
                 }))
               : [
                   // Final fallback to hardcoded types
-                  { value: 'video', label: t('tasks.filters.type.video'), icon: '🎥' },
-                  { value: 'quiz', label: t('tasks.filters.type.quiz'), icon: '❓' },
-                  { value: 'article_quiz', label: t('tasks.filters.type.article_quiz'), icon: '📄' },
-                  { value: 'survey', label: t('tasks.filters.type.survey'), icon: '📋' },
-                  { value: 'qr', label: t('tasks.filters.type.qr'), icon: <QRCodeIcon size={20} /> },
-                  { value: 'photo', label: t('tasks.filters.type.photo'), icon: '📷' },
-                  { value: 'visit_location', label: t('tasks.filters.type.visit_location'), icon: '📍' },
+                  { value: 'video', label: t('tasks.filters.type.video'), icon: filterTaskTypeIcon('video') },
+                  { value: 'quiz', label: t('tasks.filters.type.quiz'), icon: filterTaskTypeIcon('quiz') },
+                  { value: 'article_quiz', label: t('tasks.filters.type.article_quiz'), icon: filterTaskTypeIcon('article_quiz') },
+                  { value: 'survey', label: t('tasks.filters.type.survey'), icon: filterTaskTypeIcon('survey') },
+                  { value: 'qr', label: t('tasks.filters.type.qr'), icon: filterTaskTypeIcon('qr') },
+                  { value: 'photo', label: t('tasks.filters.type.photo'), icon: filterTaskTypeIcon('photo') },
+                  { value: 'visit_location', label: t('tasks.filters.type.visit_location'), icon: filterTaskTypeIcon('visit_location') },
                 ]),
           ]}
         />
@@ -616,12 +607,7 @@ function TasksPage() {
                 {task.thumbnail_url ? (
                   <img src={task.thumbnail_url} alt="" className="task-icon-image task-icon-image--tile" />
                 ) : (
-                  task.type === 'video' ? '🎥' :
-                  task.type === 'quiz' ? '❓' :
-                  task.type === 'article_quiz' ? '📄' :
-                  task.type === 'survey' ? '📋' :
-                  task.type === 'qr' ? <QRCodeIcon size={34} /> :
-                  task.type === 'visit_location' ? '📍' : '📷'
+                  <TaskTypeIcon type={task.type} size={34} strokeWidth={2} className="task-icon-lucide--tile" />
                 )}
               </span>
               <div className="task-tile-top-right">
@@ -629,22 +615,22 @@ function TasksPage() {
                 <div className="task-tile-status-icons">
                   {isCompleted && (
                     <span className="task-completed-badge task-completed-badge--tile" title={t('tasks.badges.completed')}>
-                      ✓
+                      <CheckCircle2 size={16} strokeWidth={2.5} className="task-tile-badge-svg" aria-hidden />
                     </span>
                   )}
                   {isValidating && (
                     <span className="task-validating-badge task-validating-badge--tile" title={t('tasks.badges.validating')}>
-                      ⏳
+                      <Loader2 size={16} strokeWidth={2.5} className="task-tile-badge-svg task-tile-badge-svg--spin" aria-hidden />
                     </span>
                   )}
                   {isLocked && (
                     <span className="task-locked-badge task-locked-badge--tile" title={t('tasks.badges.locked')}>
-                      🔒
+                      <Lock size={15} strokeWidth={2.5} className="task-tile-badge-svg" aria-hidden />
                     </span>
                   )}
                   {isQuizLockedByWrongAnswer && (
                     <span className="task-locked-badge task-locked-badge--tile" title={t('tasks.detail.quizLockedHint')}>
-                      ⏱
+                      <Timer size={15} strokeWidth={2.5} className="task-tile-badge-svg" aria-hidden />
                     </span>
                   )}
                 </div>

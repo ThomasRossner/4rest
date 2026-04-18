@@ -21,17 +21,18 @@
   text-decoration: underline;
 }
 
+/* Classic: einfacher Verlauf + weiße Karte */
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
   padding: var(--spacing-md);
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
 }
 
 .login-container {
-  background: white;
+  background: #ffffff;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   padding: var(--spacing-xl);
@@ -40,6 +41,27 @@
   min-width: 500px;
   container-type: inline-size;
   container-name: login-card;
+}
+
+/* Atlas: Nachtwald + Glas-Karte */
+html[data-theme='atlas'] .login-page {
+  background:
+    radial-gradient(ellipse 100% 70% at 10% 0%, rgba(94, 234, 212, 0.35), transparent 50%),
+    radial-gradient(ellipse 80% 60% at 95% 100%, rgba(251, 191, 36, 0.18), transparent 48%),
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(15, 118, 110, 0.2), transparent 60%),
+    linear-gradient(152deg, #042f2e 0%, #115e59 35%, #0f766e 68%, #134e4a 100%);
+}
+
+html[data-theme='atlas'] .login-container {
+  background: rgba(255, 250, 242, 0.78);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: calc(var(--border-radius) + 4px);
+  box-shadow:
+    0 28px 56px -14px rgba(4, 47, 46, 0.55),
+    0 0 0 1px rgba(20, 184, 166, 0.15) inset,
+    var(--shadow-warm-inset);
 }
 
 .login-header {
@@ -308,7 +330,9 @@
 .login-language-row {
   margin-top: var(--spacing-md);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-md);
 }
 
 .login-language-switcher {

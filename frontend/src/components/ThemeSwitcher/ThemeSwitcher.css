@@ -1,0 +1,65 @@
+.theme-switcher {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface, #eee));
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-switcher--compact {
+  padding: 2px;
+}
+
+.theme-switcher__btn {
+  min-height: 36px !important;
+  min-width: auto !important;
+  padding: 6px 12px !important;
+  border-radius: 999px !important;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-text-light);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.theme-switcher__btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.theme-switcher__btn--active {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-switcher__btn--active:hover {
+  color: #fff !important;
+  background: var(--color-primary-dark) !important;
+}
+
+/* Login: auf dunklem Verlauf lesbar */
+html[data-theme='atlas'] .login-page .theme-switcher {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+html[data-theme='atlas'] .login-page .theme-switcher__btn {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+html[data-theme='atlas'] .login-page .theme-switcher__btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+html[data-theme='atlas'] .login-page .theme-switcher__btn--active {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: var(--color-primary-dark) !important;
+}
+
+html[data-theme='classic'] .login-page .theme-switcher__btn--active {
+  color: #fff !important;
+}

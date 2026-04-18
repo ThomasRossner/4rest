@@ -1,6 +1,19 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate, useMatch } from 'react-router-dom';
+import {
+  Camera,
+  Gift,
+  ListTodo,
+  LogOut,
+  Mail,
+  Ticket,
+  TrendingUp,
+  TreePine,
+  Trees,
+  Trophy,
+  User,
+} from 'lucide-react';
 import { isForestCategoryRouteKey } from '../../constants/forestCategories';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -9,7 +22,11 @@ import { api } from '../../services/api';
 import { PointsBonusScanner } from '../Rewards/PointsBonusScanner';
 import { Mailbox } from '../Mailbox/Mailbox';
 import { getUserInitials } from '../../utils/userInitials';
+import { ThemeSwitcher } from '../ThemeSwitcher/ThemeSwitcher';
 import './Navigation.css';
+
+const NAV_ICON = 22;
+const NAV_ICON_STROKE = 2;
 
 function Navigation() {
   const location = useLocation();
@@ -48,21 +65,6 @@ function Navigation() {
     () => api.getUserActiveTeam(),
     { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds to keep team points updated in real-time
   );
-
-  // Get active contests for contest button
-  const { data: contests } = useQuery(
-    ['userContests', userId],
-    () => api.getUserContests(),
-    { enabled: !!userId, refetchInterval: 5000 }
-  );
-
-  const activeContests = contests?.filter((c: any) => {
-    const endDate = new Date(c.end_date);
-    return endDate > new Date() && c.active;
-  }) || [];
-
-  // Get the first active contest for the button
-  const activeContest = activeContests.length > 0 ? activeContests[0] : null;
 
   const taskCategoryMatch = useMatch({ path: '/tasks/c/:categoryKey', end: true });
   const categoryKey = taskCategoryMatch?.params.categoryKey;
@@ -157,28 +159,28 @@ function Navigation() {
     setShowPointsBonusScanner(true);
   };
 
-  // Base navigation items for all non-admin users (shown in bottom navigation)
-  const baseNavItems = [
-    { path: '/tasks', label: t('navigation.tasks'), icon: '✅' },
-    { path: '/forest', label: t('navigation.forest'), icon: '🌲' },
-    { path: '/rewards', label: t('navigation.rewards'), icon: '🎁' },
-    { 
-      path: '/statistics', 
-      label: userRole === 'guest' ? t('navigation.rankings') : t('navigation.statistics'), 
-      icon: '📈' 
+  const iconProps = { size: NAV_ICON, strokeWidth: NAV_ICON_STROKE, 'aria-hidden': true as const };
+
+  const baseNavItems: { path: string; label: string; icon: ReactNode }[] = [
+    { path: '/tasks', label: t('navigation.tasks'), icon: <ListTodo {...iconProps} /> },
+    { path: '/forest', label: t('navigation.forest'), icon: <Trees {...iconProps} /> },
+    { path: '/rewards', label: t('navigation.rewards'), icon: <Gift {...iconProps} /> },
+    {
+      path: '/statistics',
+      label: userRole === 'guest' ? t('navigation.rankings') : t('navigation.statistics'),
+      icon: <TrendingUp {...iconProps} />,
     },
   ];
-  
-  // Navigation items for bottom bar (all non-admin users)
+
   const bottomNavItems = userRole === 'administrator' ? [] : baseNavItems;
-  
-  // Top bar items for rezeption (Points Bonus and Contests)
-  const employeeTopItems = (userRole === 'rezeption' || userRole === 'administrator')
-    ? [
-        { path: '/points-bonus', label: t('navigation.pointsBonus'), icon: '🎫' },
-        { path: '/employee-contests', label: t('navigation.contests'), icon: '🏆' },
-      ]
-    : [];
+
+  const employeeTopItems =
+    userRole === 'rezeption' || userRole === 'administrator'
+      ? [
+          { path: '/points-bonus', label: t('navigation.pointsBonus'), icon: <Ticket {...iconProps} /> },
+          { path: '/employee-contests', label: t('navigation.contests'), icon: <Trophy {...iconProps} /> },
+        ]
+      : [];
 
   return (
     <>
@@ -190,9 +192,10 @@ function Navigation() {
               className="navigation-mailbox-button"
               onClick={() => setShowMailbox(true)}
               title={t('navigation.mailbox')}
+              type="button"
             >
               <span className={`navigation-mailbox-icon ${unreadCount > 0 ? 'has-unread' : ''}`}>
-                ✉️
+                <Mail size={NAV_ICON} strokeWidth={NAV_ICON_STROKE} aria-hidden />
               </span>
               {unreadCount > 0 && (
                 <span className="navigation-mailbox-badge">{unreadCount}</span>
@@ -223,6 +226,7 @@ function Navigation() {
             <div className="navigation-page-title navigation-page-title--empty" aria-hidden="true" />
           )}
           <div className="navigation-right">
+          <ThemeSwitcher variant="compact" />
           <div className="navigation-extra">
             {/* Empty for non-admin users, can be used for future items */}
           </div>
@@ -267,25 +271,26 @@ function Navigation() {
             </button>
             {isUserMenuOpen && createPortal(
               <div ref={menuRef} className="navigation-user-menu" style={menuStyle}>
-                <button
-                  className="navigation-user-menu-item"
-                  onClick={handleProfileClick}
-                >
-                  <span className="navigation-user-menu-icon">👤</span>
+                <button type="button" className="navigation-user-menu-item" onClick={handleProfileClick}>
+                  <span className="navigation-user-menu-icon" aria-hidden>
+                    <User size={18} strokeWidth={2} />
+                  </span>
                   <span>{t('navigation.profile')}</span>
                 </button>
-                <button
-                  className="navigation-user-menu-item"
-                  onClick={handleScanBonusQrClick}
-                >
-                  <span className="navigation-user-menu-icon">📷</span>
+                <button type="button" className="navigation-user-menu-item" onClick={handleScanBonusQrClick}>
+                  <span className="navigation-user-menu-icon" aria-hidden>
+                    <Camera size={18} strokeWidth={2} />
+                  </span>
                   <span>{t('navigation.scanBonusQr')}</span>
                 </button>
                 <button
+                  type="button"
                   className="navigation-user-menu-item navigation-user-menu-item-logout"
                   onClick={handleLogout}
                 >
-                  <span className="navigation-user-menu-icon">🚪</span>
+                  <span className="navigation-user-menu-icon" aria-hidden>
+                    <LogOut size={18} strokeWidth={2} />
+                  </span>
                   <span>{t('navigation.logout')}</span>
                 </button>
               </div>,
@@ -301,7 +306,9 @@ function Navigation() {
             to="/"
             className={`navigation-item ${location.pathname === '/' ? 'active' : ''}`}
           >
-            <span className="navigation-item-icon">🌳</span>
+            <span className="navigation-item-icon">
+              <TreePine {...iconProps} />
+            </span>
             <span className="navigation-item-label">{t('navigation.home')}</span>
           </Link>
           {bottomNavItems.map((item) => {
