@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Sphere, useGLTF, Sky, useHelper } from "@react-three/drei"
+import { useGLTF, Sky, useHelper } from "@react-three/drei"
 import { DirectionalLightHelper, CameraHelper, Color } from "three"
 import { useThree } from '@react-three/fiber';
 import * as THREE from "three"
@@ -7,7 +7,11 @@ import * as THREE from "three"
 
 import ControllableTree from './ControllableTree';
 
-export default function SceneController({ globalPoints, maxPoints, treeGrowSteps, plantedTrees, plantedAtList = [], dyad1Scale = 2, dyad2Scale = 2, dyad3Scale = 2 }) {
+const INITIAL_TREE_BATCH = 40;
+const TREE_BATCH_STEP = 30;
+const TREE_BATCH_INTERVAL_MS = 34;
+
+export default function SceneController({ globalPoints, maxPoints, treeGrowSteps, plantedTrees, plantedAtList = [], dyad1Scale = 2, dyad2Scale = 2, dyad3Scale = 2, lowPerformanceMode = false }) {
   const DAILY_GROWTH_BONUS = 0.08;
   const BASE_TREE_SIZE_FACTOR = 1;
   const MIN_AGE_SIZE_FACTOR = 0.75;
@@ -207,6 +211,34 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
       };
     });
   }, [treeAnchors, treeCount, maxTrees, globalPoints, newTreeSteps, treeGrowSteps, ageSizeFactors, growthChaosStrength]);
+
+  const [visibleTreeCount, setVisibleTreeCount] = useState(() =>
+    Math.min(treeCount, INITIAL_TREE_BATCH)
+  );
+
+  useEffect(() => {
+    setVisibleTreeCount((previousCount) => {
+      if (treeCount <= INITIAL_TREE_BATCH) return treeCount;
+      return Math.min(treeCount, Math.max(previousCount, INITIAL_TREE_BATCH));
+    });
+  }, [treeCount]);
+
+  useEffect(() => {
+    if (visibleTreeCount >= treeCount) return undefined;
+
+    const step = lowPerformanceMode ? Math.max(10, Math.floor(TREE_BATCH_STEP / 2)) : TREE_BATCH_STEP;
+    const timer = window.setInterval(() => {
+      setVisibleTreeCount((previousCount) => {
+        if (previousCount >= treeCount) {
+          window.clearInterval(timer);
+          return previousCount;
+        }
+        return Math.min(treeCount, previousCount + step);
+      });
+    }, TREE_BATCH_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [treeCount, visibleTreeCount, lowPerformanceMode]);
   
   // // Debug-Ausgabe
   // useEffect(() => {
@@ -258,12 +290,11 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
       <mesh geometry={groundMesh.geometry} material={groundMesh.material} position={[0, 0, 0]} /* rotation={[Math.PI/2,0,0]} */ castShadow receiveShadow />
       {/* <primitive object={ground.scene} position={[0, 0, 0]}  castShadow receiveShadow /> */}
 
-      {trees.slice(0, treeCount).map((tree, i) => (
+      {trees.slice(0, visibleTreeCount).map((tree, i) => (
         <ControllableTree
             key={`tree-${i}-${tree.anchor.uuid ?? tree.anchor.id ?? i}`}
             position={tree.anchor.position} 
             rotation={tree.anchor.rotation}
-            trunkQuaternion={tree.anchor.quaternion}
             growth={tree.growth} 
             sizeFactor={tree.sizeFactor}
             trunkHeightFactor={trunkHeightFactor}
@@ -272,7 +303,6 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
             maxTreeGrowSteps={treeGrowSteps}
             maxTrunkGrowth={1} 
             maxTwigGrowth={1} 
-            num={i} 
           />
       ))}
 

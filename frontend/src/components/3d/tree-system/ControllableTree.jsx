@@ -1,12 +1,11 @@
-import React, { useMemo, useRef, useLayoutEffect, useEffect } from 'react';
-import { Sphere, useGLTF } from "@react-three/drei"
+import React, { useMemo, useRef, useLayoutEffect } from 'react';
+import { useGLTF } from "@react-three/drei"
 import * as THREE from "three"
 
 // 
 export default function ControllableTree({
   position,
   rotation,
-  trunkQuaternion,
   growth: trunkGrowth,
   sizeFactor = 1,
   trunkHeightFactor = 1,
@@ -14,8 +13,7 @@ export default function ControllableTree({
   branchLengthFactor = 1,
   maxTreeGrowSteps=10,
   maxTrunkGrowth=0.9,
-  maxTwigGrowth=0.9,
-  num
+  maxTwigGrowth=0.9
 }) {
   const trunkAnchorScale = useMemo(
     () => new THREE.Vector3(trunkGrowth, trunkGrowth * trunkHeightFactor, trunkGrowth),
@@ -29,12 +27,6 @@ export default function ControllableTree({
   const trunk = useGLTF("/models/beechTrunk.glb")
   const twig = useGLTF("/models/beechTwig.glb")
   const leaf = useGLTF("/models/beechLeaf.glb")
-
-  useEffect(() => {
-    // console.log(num, "Trunk:", trunk);
-    console.log("Twig:", twig);
-    // console.log(num, "Leaf:", leaf);
-  }, [trunk, twig, leaf]);
 
   const trunkMesh = useMemo(() => {
     return trunk.scene.children.find(o => o.isMesh)
@@ -97,18 +89,15 @@ export default function ControllableTree({
   }, [leaf])
 
   const maxLeaves = useMemo(() => {
-    console.log("maxLeaves:", leafAnchors.length);
     return leafAnchors.length
   }, [leafAnchors]);
 
   const maxLeafGrowSteps = useMemo(() => {
-    console.log("maxLeafGrowSteps:", maxTreeGrowSteps / maxLeaves);
     return maxTreeGrowSteps / maxLeaves
   }, [maxTwigGrowSteps, maxLeaves]);
 
   const newLeafSteps = useMemo(() => {
     let steps = (maxTwigGrowSteps - maxLeafGrowSteps) / maxLeaves;
-    console.log("newLeafSteps:", steps);
     return steps;
   }, [maxTwigGrowSteps, maxLeafGrowSteps, maxLeaves]);
 
@@ -147,7 +136,6 @@ export default function ControllableTree({
     twigAnchors.slice(0, Math.min(twigCount, maxTwigs)).map((twigAnchor, twigIndex) => {
       const twigGrowth = Math.min((trunkGrowth*maxTreeGrowSteps - (twigIndex+1) * newTwigSteps) / maxTwigGrowSteps, 1);
       const twigLengthGrowth = Math.max(0, twigGrowth) * branchLengthFactor;
-      console.log(num, "twig", twigIndex, "growth:", twigGrowth);
       const twigScaleMatrix = new THREE.Matrix4()
       twigScaleMatrix.makeScale(twigLengthGrowth, twigLengthGrowth, twigLengthGrowth)
 
@@ -165,7 +153,6 @@ export default function ControllableTree({
 
       leafAnchors.slice(0, Math.min(leafCount, maxLeaves)).map((leafAnchor, leafIndex) => {
         const leafGrowth = Math.min((twigGrowth*maxTwigGrowSteps - (leafIndex+1) * newLeafSteps) / maxLeafGrowSteps, 1);
-        console.log(num, "leaf", leafIndex, "on twig", twigIndex, "allLeafIndex", allLeafIndex, "growth:", leafGrowth);
         const leafScaleMatrix = new THREE.Matrix4()
         leafScaleMatrix.makeScale(leafGrowth, leafGrowth, leafGrowth)
         leafAnchorMatrix.compose(
@@ -179,17 +166,13 @@ export default function ControllableTree({
           .multiply(leafScaleMatrix)
 
         leafRef.current.setMatrixAt(allLeafIndex++, leafMatrix)
-        console.log("twigAnchorMatrix:", twigAnchorMatrix);
-        console.log("leafAnchorMatrix:", leafAnchorMatrix);
-        console.log("leafMatrix:", leafMatrix);
         // console.log(num, "Setting leaf matrix at index", allLeafIndex-1, "for leaf", leafIndex, "on twig", twigIndex, leafMatrix);
       })
       
       
     })
     leafRef.current.instanceMatrix.needsUpdate = true
-    console.log("instanceMatrix", leafRef.current.instanceMatrix);
-  }, [trunkGrowth, trunkAnchorScale, twigRef, twigAnchors, twigCount, maxTwigs, newTwigSteps, maxTwigGrowSteps, leafRef, leafAnchors, maxLeaves, newLeafSteps, maxLeafGrowSteps, trunkQuaternion, branchLengthFactor])
+  }, [trunkGrowth, trunkAnchorScale, twigRef, twigAnchors, twigCount, maxTwigs, newTwigSteps, maxTwigGrowSteps, leafRef, leafAnchors, maxLeaves, newLeafSteps, maxLeafGrowSteps, branchLengthFactor])
 
   return (
     <>
@@ -216,7 +199,7 @@ export default function ControllableTree({
             twigMesh.geometry, 
             twigMesh.material, 
             maxTwigs]} 
-          castShadow receiveShadow 
+          receiveShadow 
         />
         {/* {console.log("leafRef.current:", leafRef.current)} */}
         <instancedMesh
@@ -226,7 +209,7 @@ export default function ControllableTree({
             leafMesh.material,
             maxLeaves * maxTwigs
           ]}
-          castShadow receiveShadow
+          receiveShadow
         />
 
         {/* {twigAnchors.slice(0, Math.min(twigCount, maxTwigs)).map((twigAnchor, twigIndex) => {

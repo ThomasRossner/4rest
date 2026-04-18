@@ -1,7 +1,14 @@
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, useGLTF } from '@react-three/drei';
 import SceneController from './tree-system/SceneController.jsx';
 
 export const FOREST_PROTOTYPE_TREE_GROW_STEPS = 30;
+
+// Assets frueh in den GLTF-Cache laden, um den ersten Waldaufbau zu beschleunigen.
+useGLTF.preload('/models/grassGround.glb');
+useGLTF.preload('/models/grass.glb');
+useGLTF.preload('/models/beechTrunk.glb');
+useGLTF.preload('/models/beechTwig.glb');
+useGLTF.preload('/models/beechLeaf.glb');
 
 /** Standard-Blick: etwas flacher und weiter weg, damit der Wald im oberen Canvas-Bereich liegt (HUD unten). */
 export const FOREST_DEFAULT_CAMERA = {
@@ -57,6 +64,7 @@ export default function ForestPrototypeScene({
         dyad1Scale={dyad1Scale}
         dyad2Scale={dyad2Scale}
         dyad3Scale={dyad3Scale}
+        lowPerformanceMode={lowPerformanceMode}
       />
     </>
   );
