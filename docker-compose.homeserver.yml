@@ -75,6 +75,8 @@ services:
     build:
       context: .
       dockerfile: ./frontend/Dockerfile.prod
+      args:
+        VITE_RELEASE_NAME: ${VITE_RELEASE_NAME:-Malta Demo}
     container_name: roots-frontend-homeserver
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}

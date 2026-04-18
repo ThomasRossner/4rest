@@ -7,6 +7,7 @@ import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwit
 import { ThemeSwitcher } from '../../components/ThemeSwitcher/ThemeSwitcher';
 import './LoginPage.css';
 import { resolveApiBaseUrl } from '../../utils/resolveApiBaseUrl';
+import { RELEASE_DISPLAY_NAME } from '../../config/releaseDisplayName';
 
 const apiBaseUrl = resolveApiBaseUrl();
 
@@ -418,6 +419,9 @@ function LoginPage() {
                   {t('common.appNameRest', { defaultValue: 'rest' })}
                 </span>
               </h1>
+              {RELEASE_DISPLAY_NAME ? (
+                <p className="login-release-name">{RELEASE_DISPLAY_NAME}</p>
+              ) : null}
             </div>
           </div>
           <div className="login-header-eu">

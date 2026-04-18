@@ -123,6 +123,20 @@ html[data-theme='atlas'] .login-container {
   max-width: 100%;
 }
 
+.login-release-name {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-light);
+}
+
+html[data-theme='atlas'] .login-page .login-release-name {
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
 .login-logo-row {
   display: flex;
   align-items: center;

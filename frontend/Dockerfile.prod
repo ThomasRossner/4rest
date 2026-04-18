@@ -16,7 +16,9 @@ COPY frontend/ .
 
 # Vite: genug Heap für große Bundles (auf kleinen VPS sonst OOM/Swap → „hängt“)
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-# Build application
+# Release-Label (z. B. „Malta Demo“) – zur Build-Zeit ins Bundle
+ARG VITE_RELEASE_NAME=
+ENV VITE_RELEASE_NAME=$VITE_RELEASE_NAME
 RUN npm run build
 
 # Production stage with Nginx
