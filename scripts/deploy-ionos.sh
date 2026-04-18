@@ -19,8 +19,9 @@ EOF
 fi
 
 # Now connect and deploy
-# DEPLOY_NO_CACHE=1 ./scripts/deploy-ionos.sh  →  docker compose build --no-cache (alles neu, langsam)
-DEPLOY_NO_CACHE="${DEPLOY_NO_CACHE:-0}"
+# Standard: immer voller Rebuild (--no-cache), damit Produktion nicht mit veralteten Image-Layern läuft.
+# Nur bei Bedarf: DEPLOY_NO_CACHE=0 ./scripts/deploy-ionos.sh  (schneller, nutzt Docker-Layer-Cache)
+DEPLOY_NO_CACHE="${DEPLOY_NO_CACHE:-1}"
 echo "Connecting to IONOS server... (DEPLOY_NO_CACHE=${DEPLOY_NO_CACHE})"
 # Häufige Keepalives + hohes CountMax: lange Remote-Skripte (Migrationen, Docker-Build) ohne „Broken pipe“
 ssh -o StrictHostKeyChecking=no \
