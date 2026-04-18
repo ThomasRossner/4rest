@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import ForestPrototypeScene, {
+  FOREST_DEFAULT_CAMERA,
   FOREST_PROTOTYPE_TREE_GROW_STEPS,
 } from '../../components/3d/ForestPrototypeScene';
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
@@ -155,7 +156,10 @@ function ForestPage() {
               dpr={lowPerfForestMode ? 1 : [1, 1.5]}
               performance={{ min: lowPerfForestMode ? 0.45 : 0.7 }}
               frameloop={lowPerfForestMode ? 'demand' : 'always'}
-              camera={{ position: [0, 12, 22], fov: 50 }}
+              camera={{
+                position: [...FOREST_DEFAULT_CAMERA.position],
+                fov: FOREST_DEFAULT_CAMERA.fov,
+              }}
               style={{ width: '100%', height: '100%', background: 'linear-gradient(180deg, #dff3ff 0%, #eaf8ff 45%, #f4fbff 100%)' }}
             >
               <ForestPrototypeScene

@@ -1,6 +1,7 @@
 import { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import ForestPrototypeScene, {
+  FOREST_DEFAULT_CAMERA,
   FOREST_PROTOTYPE_TREE_GROW_STEPS,
 } from '../ForestPrototypeScene';
 
@@ -64,7 +65,10 @@ export default function TreeSystemPrototypeApp() {
         <Suspense fallback={<div style={{ padding: 24, color: '#94a3b8' }}>Loading 3D…</div>}>
           <Canvas
             shadows
-            camera={{ position: [0, 12, 22], fov: 50 }}
+            camera={{
+              position: [...FOREST_DEFAULT_CAMERA.position],
+              fov: FOREST_DEFAULT_CAMERA.fov,
+            }}
             style={{ width: '100%', height: '100%', background: '#1a2840' }}
           >
             <ForestPrototypeScene
