@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
@@ -14,16 +14,14 @@ function StatisticsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
 
-  // For guests: show rankings view
-  // For others: show statistics view
+  const { data: stats, isLoading } = useQuery('statistics', () => api.getStatistics(), {
+    refetchInterval: 30000,
+    enabled: !isGuest,
+  });
+
   if (isGuest) {
     return <RankingsPage />;
   }
-
-  // Original statistics view for non-guests
-  const { data: stats, isLoading } = useQuery('statistics', () => api.getStatistics(), {
-    refetchInterval: 30000,
-  });
 
   if (isLoading) {
     return (
@@ -152,37 +150,49 @@ function RankingsPage() {
   const [expandedContests, setExpandedContests] = useState<Set<string>>(new Set());
   const [expandedTeam, setExpandedTeam] = useState(false);
 
-  // Get user's contests (active and expired) for rankings page
-  const { data: contests } = useQuery(
+  const RANKINGS_POLL_MS = 30000;
+
+  const { data: contests, isLoading: contestsLoading } = useQuery(
     ['allUserContests', userId],
     () => api.getAllUserContests(),
-    { enabled: !!userId, refetchInterval: 5000 }
+    { enabled: !!userId, refetchInterval: RANKINGS_POLL_MS }
   );
 
-  // Separate active and expired contests
-  const activeContests = contests?.filter((c: any) => {
-    const endDate = new Date(c.end_date);
-    return endDate > new Date() && c.active;
-  }) || [];
+  const activeContests = useMemo(
+    () =>
+      contests?.filter((c: { end_date: string; active: boolean }) => {
+        const endDate = new Date(c.end_date);
+        return endDate > new Date() && c.active;
+      }) ?? [],
+    [contests]
+  );
 
-  const expiredContests = contests?.filter((c: any) => {
-    const endDate = new Date(c.end_date);
-    return endDate <= new Date() && c.active;
-  }) || [];
+  const expiredContests = useMemo(
+    () =>
+      contests?.filter((c: { end_date: string; active: boolean }) => {
+        const endDate = new Date(c.end_date);
+        return endDate <= new Date() && c.active;
+      }) ?? [],
+    [contests]
+  );
 
-  // Get user's active team
+  const activeContestIdsKey = useMemo(() => activeContests.map((c: { id: string }) => c.id).join(','), [activeContests]);
+  const expiredContestIdsKey = useMemo(
+    () => expiredContests.map((c: { id: string }) => c.id).join(','),
+    [expiredContests]
+  );
+
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
     () => api.getUserActiveTeam(),
-    { enabled: !!userId, refetchInterval: 5000 }
+    { enabled: !!userId, refetchInterval: RANKINGS_POLL_MS }
   );
 
-  // Get rankings for active contests
   const activeContestRankingsQueries = useQuery(
-    ['contestRankings', activeContests.map((c: any) => c.id)],
+    ['contestRankings', activeContestIdsKey],
     async () => {
       const rankings = await Promise.all(
-        activeContests.map(async (contest: any) => {
+        activeContests.map(async (contest: { id: string }) => {
           const ranking = await api.getContestRanking(contest.id);
           return {
             ...contest,
@@ -192,15 +202,14 @@ function RankingsPage() {
       );
       return rankings;
     },
-    { enabled: activeContests.length > 0, refetchInterval: 5000 }
+    { enabled: activeContests.length > 0, refetchInterval: RANKINGS_POLL_MS }
   );
 
-  // Get rankings for expired contests
   const expiredContestRankingsQueries = useQuery(
-    ['expiredContestRankings', expiredContests.map((c: any) => c.id)],
+    ['expiredContestRankings', expiredContestIdsKey],
     async () => {
       const rankings = await Promise.all(
-        expiredContests.map(async (contest: any) => {
+        expiredContests.map(async (contest: { id: string }) => {
           const ranking = await api.getContestRanking(contest.id);
           return {
             ...contest,
@@ -210,25 +219,38 @@ function RankingsPage() {
       );
       return rankings;
     },
-    { enabled: expiredContests.length > 0 }
+    { enabled: expiredContests.length > 0, refetchInterval: RANKINGS_POLL_MS }
   );
 
-  const activeContestsWithRankings = activeContestRankingsQueries.data || [];
-  const expiredContestsWithRankings = expiredContestRankingsQueries.data || [];
+  const activeContestsWithRankings = activeContestRankingsQueries.data ?? [];
+  const expiredContestsWithRankings = expiredContestRankingsQueries.data ?? [];
 
-  // Get team ranking if user is in a team
-  const { data: teamRanking } = useQuery(
+  const { data: teamRanking, isLoading: teamRankingLoading } = useQuery(
     ['teamRanking', activeTeam?.id],
     () => api.getTeamRanking(activeTeam!.id),
-    { enabled: !!activeTeam?.id, refetchInterval: 5000 }
+    { enabled: !!activeTeam?.id, refetchInterval: RANKINGS_POLL_MS }
   );
 
-  // Get timeline data
-  const { data: timeline } = useQuery(
+  const { data: timeline, isLoading: timelineLoading } = useQuery(
     ['userTimeline', userId],
     () => api.getUserTimeline(userId!),
     { enabled: !!userId }
   );
+
+  const pageLoading =
+    !userId ||
+    contestsLoading ||
+    timelineLoading ||
+    (!!activeTeam?.id && teamRankingLoading) ||
+    (activeContests.length > 0 && activeContestRankingsQueries.isLoading) ||
+    (expiredContests.length > 0 && expiredContestRankingsQueries.isLoading);
+
+  const hasContestOrTimeline =
+    activeContestsWithRankings.length > 0 ||
+    expiredContestsWithRankings.length > 0 ||
+    !!(timeline && timeline.length > 0);
+  const hasTeamBlock = !!activeTeam && teamRanking !== undefined;
+  const showEmpty = !pageLoading && !hasContestOrTimeline && !hasTeamBlock;
 
   const toggleContestExpanded = (contestId: string) => {
     const newSet = new Set(expandedContests);
@@ -240,17 +262,37 @@ function RankingsPage() {
     setExpandedContests(newSet);
   };
 
+  if (pageLoading) {
+    return (
+      <div className="rankings-page">
+        <h1 className="rankings-title">{t('rankings.title')}</h1>
+        <LoadingSkeleton lines={10} />
+      </div>
+    );
+  }
+
+  if (showEmpty) {
+    return (
+      <div className="rankings-page">
+        <h1 className="rankings-title">{t('rankings.title')}</h1>
+        <EmptyState title={t('rankings.pageEmptyTitle')} description={t('rankings.pageEmptyDescription')} />
+      </div>
+    );
+  }
+
   return (
     <div className="rankings-page">
+      <h1 className="rankings-title">{t('rankings.title')}</h1>
       {/* Active Contests */}
       {activeContestsWithRankings.length > 0 && (
         <section className="rankings-section">
           <h2 className="rankings-section-title">{t('rankings.contests.title')}</h2>
           {activeContestsWithRankings.map((contest: any) => {
+            const ranking = Array.isArray(contest.ranking) ? contest.ranking : [];
             const isExpanded = expandedContests.has(contest.id);
-            const top5 = contest.ranking.slice(0, 5);
-            const hasMore = contest.ranking.length > 5;
-            const displayRanking = isExpanded ? contest.ranking : top5;
+            const top5 = ranking.slice(0, 5);
+            const hasMore = ranking.length > 5;
+            const displayRanking = isExpanded ? ranking : top5;
 
             const startDate = new Date(contest.start_date);
             const endDate = new Date(contest.end_date);
@@ -279,7 +321,7 @@ function RankingsPage() {
                   >
                     {isExpanded
                       ? t('rankings.contests.showLess')
-                      : t('rankings.contests.showAll', { count: contest.ranking.length })}
+                      : t('rankings.contests.showAll', { count: ranking.length })}
                   </button>
                 )}
               </div>
@@ -293,6 +335,7 @@ function RankingsPage() {
         <section className="rankings-section">
           <h2 className="rankings-section-title">{t('rankings.contests.expired')}</h2>
           {expiredContestsWithRankings.map((contest: any) => {
+            const expiredRanking = Array.isArray(contest.ranking) ? contest.ranking : [];
             const startDate = new Date(contest.start_date);
             const endDate = new Date(contest.end_date);
 
@@ -305,8 +348,8 @@ function RankingsPage() {
                   </div>
                 </div>
                 <div className="rankings-list">
-                  {contest.ranking && contest.ranking.length > 0 ? (
-                    contest.ranking.map((entry: any) => (
+                  {expiredRanking.length > 0 ? (
+                    expiredRanking.map((entry: any) => (
                       <div key={entry.user_id} className="rankings-item">
                         <div className="rankings-rank">#{entry.rank}</div>
                         <div className="rankings-name">{entry.user_name}</div>
@@ -347,7 +390,7 @@ function RankingsPage() {
               >
                 {expandedTeam
                   ? t('rankings.team.showLess')
-                  : t('rankings.team.showAll', `Alle ${teamRanking.length} Mitglieder anzeigen`)}
+                  : t('rankings.team.showAll', { count: teamRanking.length })}
               </button>
             )}
           </div>

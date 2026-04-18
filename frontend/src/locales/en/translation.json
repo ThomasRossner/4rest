@@ -2493,6 +2493,8 @@
   },
   "rankings": {
     "title": "Rankings",
+    "pageEmptyTitle": "No rankings yet",
+    "pageEmptyDescription": "Once you join a contest or team, or have points on your timeline, they will appear here.",
     "points": "Points",
     "contests": {
       "title": "Active Contests",
@@ -2512,6 +2514,7 @@
     "timeline": {
       "title": "My Progress",
       "subtitle": "Cumulative points by category from registration through today (one bar per calendar day).",
+      "subtitleSampled": "Over a long period, at most 120 samples are shown (evenly spaced). Cumulative points by category.",
       "noData": "No data available",
       "points": "Points",
       "trees": "Trees",

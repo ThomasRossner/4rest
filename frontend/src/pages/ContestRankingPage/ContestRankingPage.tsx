@@ -22,7 +22,7 @@ function ContestRankingPage() {
   const { data: ranking, isLoading: rankingLoading } = useQuery(
     ['contestRanking', contestId],
     () => api.getContestRanking(contestId!),
-    { enabled: !!contestId, refetchInterval: 5000 } // Refetch every 5 seconds for real-time updates
+    { enabled: !!contestId, refetchInterval: 30000 }
   );
 
   const isLoading = contestLoading || rankingLoading;

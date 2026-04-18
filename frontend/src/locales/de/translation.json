@@ -2511,6 +2511,8 @@
   },
   "rankings": {
     "title": "Rankings",
+    "pageEmptyTitle": "Noch keine Rankings",
+    "pageEmptyDescription": "Sobald du an einem Contest oder Team teilnimmst oder Punkte im Verlauf hast, erscheinen sie hier.",
     "points": "Punkte",
     "contests": {
       "title": "Aktive Contests",
@@ -2532,6 +2534,7 @@
     "timeline": {
       "title": "Mein Fortschritt",
       "subtitle": "Kumulierte Punkte nach Kategorie von der Registrierung bis heute (je Kalendertag ein Balken).",
+      "subtitleSampled": "Über einen langen Zeitraum werden höchstens 120 Stützstellen angezeigt (gleichmäßig verteilt). Kumulierte Punkte nach Kategorie.",
       "noData": "Keine Daten verfügbar",
       "points": "Punkte",
       "trees": "Bäume",

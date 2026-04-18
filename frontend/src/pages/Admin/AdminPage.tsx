@@ -1930,29 +1930,10 @@ const validateTaskFormState = ({
     }
   }
 
-  // Validate prerequisites
+  // Validate prerequisites (lenient): malformed legacy prerequisite fields must not block editing.
+  // The backend remains the source of truth for persistence validation.
   if (taskForm.prerequisite_task_id) {
     // Type 1 prerequisite is set - no additional validation needed (existence will be checked on backend)
-  }
-  
-  const prereqIdsRaw = taskForm.prerequisite_task_ids;
-  const prereqIdsArray = Array.isArray(prereqIdsRaw) ? prereqIdsRaw : [];
-  // Leeres Array wie „keine Voraussetzungen“ (API kann [] liefern); nur nicht-leere Arrays prüfen.
-  if (prereqIdsArray.length > 0) {
-    const taskIdsArray = prereqIdsArray;
-    
-    if (taskForm.prerequisite_task_count !== undefined && taskForm.prerequisite_task_count !== null) {
-      if (!Number.isInteger(taskForm.prerequisite_task_count) || taskForm.prerequisite_task_count < 1) {
-        return { isValid: false, message: t('admin.task.prerequisites.validation.countInvalid') };
-      }
-      if (taskForm.prerequisite_task_count > taskIdsArray.length) {
-        return { isValid: false, message: t('admin.task.prerequisites.validation.countTooLarge', { count: taskForm.prerequisite_task_count, total: taskIdsArray.length }) };
-      }
-    } else {
-      return { isValid: false, message: t('admin.task.prerequisites.validation.countRequired') };
-    }
-  } else if (taskForm.prerequisite_task_count !== undefined && taskForm.prerequisite_task_count !== null) {
-    return { isValid: false, message: t('admin.task.prerequisites.validation.idsRequired') };
   }
 
   if (!taskForm.locationId || !taskForm.locationId.trim()) {
@@ -3714,7 +3695,7 @@ function AdminPage() {
     publishTaskMutation.isLoading ||
     updateTaskMutation.isLoading ||
     isUploadingVideo ||
-    !taskValidation.isValid;
+    (!isEditingTask && !taskValidation.isValid);
   const isRewardPublishDisabled =
     createRewardMutation.isLoading || updateRewardMutation.isLoading || !rewardValidation.isValid;
   const isLocationSubmitDisabled =
@@ -3814,6 +3795,7 @@ function AdminPage() {
     const normalizedPrerequisites = normalizePrerequisiteFields(task);
     setTaskForm((prev) => ({
       title: task.title ?? '',
+      teaser: (task as any).teaser ?? '',
       description: task.description ?? '',
       type: task.type,
       points: task.points ?? 0,
