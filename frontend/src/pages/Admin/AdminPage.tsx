@@ -1790,6 +1790,28 @@ type ValidateRewardFormParams = {
   isEditing?: boolean;
 };
 
+const normalizePrerequisiteFields = (taskLike: any) => {
+  const prerequisite_task_id = taskLike?.prerequisite_task_id ?? undefined;
+  const rawIds = Array.isArray(taskLike?.prerequisite_task_ids) ? taskLike.prerequisite_task_ids : [];
+  const prerequisite_task_ids = rawIds.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0);
+
+  // Legacy-Daten können einen Count ohne IDs enthalten. Das blockiert sonst fälschlich das Speichern.
+  const rawCount = taskLike?.prerequisite_task_count;
+  const parsedCount =
+    typeof rawCount === 'number' && Number.isInteger(rawCount) && rawCount > 0
+      ? rawCount
+      : typeof rawCount === 'string' && /^\d+$/.test(rawCount)
+        ? Number.parseInt(rawCount, 10)
+        : undefined;
+  const prerequisite_task_count = prerequisite_task_ids.length > 0 ? parsedCount : undefined;
+
+  return {
+    prerequisite_task_id,
+    prerequisite_task_ids: prerequisite_task_ids.length > 0 ? prerequisite_task_ids : undefined,
+    prerequisite_task_count,
+  };
+};
+
 const validateTaskFormState = ({
   taskSource,
   selectedExistingTaskId,
@@ -3789,6 +3811,7 @@ function AdminPage() {
     if (!task) return;
     // Determine if video_url is an uploaded video (starts with /uploads/ or contains /uploads/)
     const isUploadedVideo = task.video_url?.includes('/uploads/') || task.video_url?.startsWith('/uploads/');
+    const normalizedPrerequisites = normalizePrerequisiteFields(task);
     setTaskForm((prev) => ({
       title: task.title ?? '',
       description: task.description ?? '',
@@ -3818,9 +3841,9 @@ function AdminPage() {
       target_latitude: task.type === 'visit_location' ? String((task as any).target_latitude ?? '') : undefined,
       target_longitude: task.type === 'visit_location' ? String((task as any).target_longitude ?? '') : undefined,
       target_address: task.type === 'visit_location' ? (task as any).target_address ?? '' : undefined,
-      prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
-      prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
-      prerequisite_task_ids: (task as any).prerequisite_task_ids ?? undefined,
+      prerequisite_task_id: normalizedPrerequisites.prerequisite_task_id,
+      prerequisite_task_count: normalizedPrerequisites.prerequisite_task_count,
+      prerequisite_task_ids: normalizedPrerequisites.prerequisite_task_ids,
       category: (task as any).category ?? undefined,
       difficulty: (task as any).difficulty ?? undefined,
       time_required: (task as any).time_required ?? undefined,
@@ -4836,6 +4859,7 @@ function AdminPage() {
       : { de: (task as any).article_content ?? '', en: (task as any).article_content ?? '' };
     setContentI18n({ title_i18n: titleI18n, teaser_i18n: teaserI18n, description_i18n: descriptionI18n, article_content_i18n: articleContentI18n });
     setContentLanguage('de');
+    const normalizedPrerequisites = normalizePrerequisiteFields(task);
     setTaskForm({
       title: titleI18n.de ?? task.title ?? '',
       teaser: teaserI18n.de ?? (task as any).teaser ?? '',
@@ -4864,9 +4888,9 @@ function AdminPage() {
       active: task.active ?? true,
       allow_public_completion: Boolean((task as any).allow_public_completion),
       recurrence: ((task as any).recurrence as 'once' | 'daily' | 'weekly' | 'monthly') ?? 'once',
-      prerequisite_task_id: (task as any).prerequisite_task_id ?? undefined,
-      prerequisite_task_count: (task as any).prerequisite_task_count ?? undefined,
-      prerequisite_task_ids: (task as any).prerequisite_task_ids ?? undefined,
+      prerequisite_task_id: normalizedPrerequisites.prerequisite_task_id,
+      prerequisite_task_count: normalizedPrerequisites.prerequisite_task_count,
+      prerequisite_task_ids: normalizedPrerequisites.prerequisite_task_ids,
       category: (task as any).category ?? undefined,
       difficulty: (task as any).difficulty ?? undefined,
       time_required: (task as any).time_required ?? undefined,
@@ -7513,9 +7537,7 @@ function AdminPage() {
                       <p className="admin-publish-hint">{t('admin.task.publishHint.uploading')}</p>
                     ) : !taskValidation.isValid ? (
                       <p className="admin-publish-hint">
-                        {hasAttemptedPublish && taskValidation.message
-                          ? taskValidation.message
-                          : t('admin.task.publishHint.completeRequired')}
+                        {taskValidation.message ?? t('admin.task.publishHint.completeRequired')}
                       </p>
                     ) : (
                       <p className="admin-publish-hint">{t('admin.task.publishHint.ready')}</p>
