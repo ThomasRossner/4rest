@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { UserRole, UserType } from '../constants/enums';
 import { resolveApiBaseUrl } from '../utils/resolveApiBaseUrl';
@@ -25,6 +25,23 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+/** Express sendet oft `{ error: "..." }` — ohne diesen Interceptor sieht man nur „Request failed with status code 400“. */
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<{ error?: string; message?: string }>) => {
+    const data = error.response?.data;
+    if (data && typeof data === 'object') {
+      const serverMsg =
+        (typeof data.error === 'string' && data.error.trim()) ||
+        (typeof data.message === 'string' && data.message.trim());
+      if (serverMsg) {
+        return Promise.reject(new Error(serverMsg));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const api = {
   // User

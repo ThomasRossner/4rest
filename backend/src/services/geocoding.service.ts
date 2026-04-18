@@ -22,7 +22,10 @@ export interface GeocodingError {
 }
 
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/search';
-const USER_AGENT = '4rest/1.0'; // Required by Nominatim ToS
+/** Nominatim verlangt eine identifizierbare App + Kontakt (Usage Policy). */
+const USER_AGENT =
+  process.env.NOMINATIM_USER_AGENT?.trim() ||
+  '4rest/1.0 (+https://github.com/4rest; geocoding)';
 
 /**
  * Geocode an address to get coordinates
@@ -31,11 +34,12 @@ const USER_AGENT = '4rest/1.0'; // Required by Nominatim ToS
  * @throws Error if geocoding fails
  */
 export async function geocodeAddress(address: string): Promise<GeocodingResult> {
-  if (!address || typeof address !== 'string' || address.trim().length === 0) {
+  const normalized = typeof address === 'string' ? address.replace(/\s+/g, ' ').trim() : '';
+  if (!normalized) {
     throw new Error('Address is required for geocoding.');
   }
 
-  const encodedAddress = encodeURIComponent(address.trim());
+  const encodedAddress = encodeURIComponent(normalized);
   const url = `${NOMINATIM_BASE_URL}?q=${encodedAddress}&format=json&limit=1&addressdetails=1`;
 
   try {
@@ -72,7 +76,7 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult> 
     return {
       latitude: Number(lat.toFixed(6)),
       longitude: Number(lon.toFixed(6)),
-      display_name: result.display_name || address,
+      display_name: result.display_name || normalized,
       address: result.address || undefined,
     };
   } catch (error: any) {

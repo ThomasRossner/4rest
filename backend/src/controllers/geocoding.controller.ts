@@ -3,9 +3,11 @@ import { geocodeAddress, reverseGeocode } from '../services/geocoding.service.js
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const geocodeAddressController: RequestHandler = asyncHandler(async (req, res) => {
-  const { address } = req.body;
+  const raw = req.body?.address;
+  const address =
+    typeof raw === 'string' ? raw.replace(/\r\n/g, '\n').replace(/\s+/g, ' ').trim() : '';
 
-  if (!address || typeof address !== 'string' || address.trim().length === 0) {
+  if (!address) {
     return res.status(400).json({ error: 'Address is required.' });
   }
 
