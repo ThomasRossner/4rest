@@ -48,7 +48,7 @@
   overflow: hidden;
 }
 
-/* HUD über dem Canvas: Namenszeile oben, darunter eine Zeile mit vier Kennzahlen */
+/* HUD über dem Canvas: Namenszeile oben, darunter 2×2-Kennzahlen-Panel */
 .forest-hud {
   position: absolute;
   inset: 0;
@@ -106,17 +106,15 @@
 }
 
 .forest-impact-stats--overlay {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
   gap: 0;
   flex: 0 0 auto;
   width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 6px 4px;
+  padding: 10px 12px 12px;
   pointer-events: none;
   box-sizing: border-box;
   background: rgba(248, 250, 252, 0.86);
@@ -124,11 +122,8 @@
   -webkit-backdrop-filter: blur(8px) saturate(1.05);
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-bottom: 0;
-  border-radius: 10px 10px 0 0;
+  border-radius: 12px 12px 0 0;
   box-shadow: 0 -1px 8px rgba(15, 23, 42, 0.08);
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
 }
 
 .forest-impact-stats--overlay .forest-stat {
@@ -138,52 +133,34 @@
   box-shadow: none;
   cursor: default;
   user-select: none;
-  padding: 4px 4px;
-  flex: 1 1 0;
   min-width: 0;
 }
 
-/* Eine Zeile pro Kennzahl: Icon | Wert + Beschriftung (nebeneinander, umbrechen nur innerhalb der Zelle) */
-.forest-impact-stats--overlay .forest-stat--hud-row {
-  flex-direction: row;
+/* 2×2-Raster: obere Zeile Punkte | Bäume, untere Zeile Aufgaben | CO₂ */
+.forest-impact-stats--overlay .forest-stat--overlay-tile {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.2rem;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 8px;
+  gap: 4px;
 }
 
-.forest-impact-stats--overlay .forest-stat--hud-row .forest-stat-icon {
+.forest-impact-stats--overlay .forest-stat--overlay-tile .forest-stat-icon {
   margin-bottom: 0;
-  flex-shrink: 0;
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
-.forest-impact-stats--overlay .forest-stat-inner {
-  display: inline-flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: baseline;
-  gap: 0.25rem;
-  min-width: 0;
-  overflow: hidden;
+.forest-impact-stats--overlay .forest-stat:nth-child(1),
+.forest-impact-stats--overlay .forest-stat:nth-child(2) {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
 }
 
-.forest-impact-stats--overlay .forest-stat-inner .forest-stat-value {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.forest-impact-stats--overlay .forest-stat-inner .forest-stat-label {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin-top: 0;
-  text-align: left;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.forest-impact-stats--overlay .forest-stat + .forest-stat {
-  border-left: 1px solid rgba(148, 163, 184, 0.35);
+.forest-impact-stats--overlay .forest-stat:nth-child(1),
+.forest-impact-stats--overlay .forest-stat:nth-child(3) {
+  border-right: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 .forest-impact-stats--overlay .forest-stat-value {
@@ -266,7 +243,11 @@
 }
 
 .forest-impact-stats--overlay .forest-stat-value {
-  font-size: clamp(0.72rem, 2.6vw, 0.95rem);
+  font-size: clamp(0.88rem, 3vw, 1.1rem);
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: 100%;
 }
 
 .forest-stat-label {
@@ -280,10 +261,12 @@
 }
 
 .forest-impact-stats--overlay .forest-stat-label {
-  font-size: clamp(0.52rem, 1.8vw, 0.62rem);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: clamp(0.62rem, 2.1vw, 0.78rem);
+  line-height: 1.25;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 @media (max-width: 768px) {
@@ -296,7 +279,7 @@
     padding: 6px 4px;
   }
 
-  .forest-impact-stats--overlay .forest-stat {
-    padding: 4px 2px;
+  .forest-impact-stats--overlay .forest-stat--overlay-tile {
+    padding: 8px 6px;
   }
 }
