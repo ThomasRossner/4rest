@@ -603,29 +603,51 @@ export async function redeemRewardService(rewardId: string, userId: string, useT
 
   // Check if user exceeds personal points (warning case)
   const exceedsPersonalPoints = shouldUseTeamPoints && user.points < reward.points_cost;
-  
-  // Create redemption record with QR token (points NOT deducted yet - will be deducted on verification)
-  // Store whether team points should be used in a JSON metadata field
+
+  const hasImmediateVoucherFlow = Boolean(voucherCode && String(voucherCode).trim().length > 0);
   const metadata = shouldUseTeamPoints && userTeam ? { useTeamPoints: true, teamId: userTeam.id } : null;
+
+  if (hasImmediateVoucherFlow) {
+    if (shouldUseTeamPoints && userTeam) {
+      await deductTeamPoints(userTeam.id, userId, reward.points_cost);
+    } else {
+      await db.query(
+        'UPDATE users SET points = points - $1 WHERE id = $2',
+        [reward.points_cost, userId]
+      );
+    }
+  }
+
+  const initialStatus = hasImmediateVoucherFlow ? 'used' : 'pending';
   const redemptionResult = await db.query(
-    `INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+    `INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token, metadata, verified_at)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, CASE WHEN $7 THEN CURRENT_TIMESTAMP ELSE NULL END)
      RETURNING *`,
-    [userId, rewardId, voucherCode || null, 'pending', qrToken, metadata]
+    [userId, rewardId, voucherCode || null, initialStatus, qrToken, metadata, hasImmediateVoucherFlow]
   );
+
+  const updatedUserPointsResult = await db.query(
+    'SELECT points FROM users WHERE id = $1',
+    [userId]
+  );
+  const updatedUserPoints = Number(updatedUserPointsResult.rows[0]?.points ?? user.points);
 
   return {
     success: true,
     redemption: {
       id: redemptionResult.rows[0].id,
       qrToken: qrToken,
+      qrCodeValue: reward.external_api_id || qrToken,
+      externalApiId: reward.external_api_id ?? null,
       voucherCode: voucherCode || redemptionResult.rows[0].voucher_code,
       status: redemptionResult.rows[0].status,
     },
-    remainingPoints: user.points, // Points not deducted yet
+    remainingPoints: updatedUserPoints,
     teamTotalPoints: shouldUseTeamPoints ? teamTotalPoints : undefined,
     exceedsPersonalPoints: exceedsPersonalPoints,
-    message: 'QR code generated. Please show it to an administrator for verification.',
+    message: hasImmediateVoucherFlow
+      ? 'Voucher code created. Redemption is completed immediately.'
+      : 'QR code generated. Please show it to an administrator for verification.',
   };
 }
 

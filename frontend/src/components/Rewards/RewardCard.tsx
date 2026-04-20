@@ -22,6 +22,9 @@ type Reward = {
 
 type RedemptionState = {
   qrToken: string;
+  qrCodeValue?: string;
+  voucherCode?: string | null;
+  status?: 'pending' | 'used' | 'expired';
   redemptionId: string;
 };
 
@@ -36,7 +39,7 @@ type RewardCardProps = {
     id: string,
     cost: number,
     useTeamPoints: boolean
-  ) => Promise<{ redemption: { id: string; qrToken: string } }>;
+  ) => Promise<{ redemption: { id: string; qrToken: string; qrCodeValue?: string; voucherCode?: string | null; status?: 'pending' | 'used' | 'expired' } }>;
   onRedemptionCreated?: (redemption: RedemptionState & { rewardTitle: string }) => void;
   hasActiveRedemption?: boolean;
 };
@@ -80,6 +83,9 @@ export function RewardCard({
       if (redemptionData?.qrToken) {
         onRedemptionCreated?.({
           qrToken: redemptionData.qrToken,
+          qrCodeValue: redemptionData.qrCodeValue,
+          voucherCode: redemptionData.voucherCode ?? null,
+          status: redemptionData.status,
           redemptionId: redemptionData.id,
           rewardTitle: reward.title,
         });

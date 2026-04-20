@@ -28,6 +28,7 @@
       "refresh": "Refresh",
       "title": "Actions",
       "done": "Done",
+      "confirm": "Confirm",
       "ok": "OK"
     },
     "status": {
@@ -496,6 +497,12 @@
         "title": "Reward Redeemed Successfully!",
         "message": "Your {{title}} has been verified and redeemed. Points have been deducted from your account."
       }
+    },
+    "voucher": {
+      "title": "Voucher code for {{title}}",
+      "instruction": "Show this voucher code when redeeming.",
+      "codeLabel": "Voucher code",
+      "warning": "Keep this code safe until redemption is completed."
     },
     "pointsBonus": {
       "scanTitle": "Scan Points Bonus QR Code",
@@ -1514,8 +1521,19 @@
       "introBodyEn": "Body (EN)",
       "stepsTitle": "Questions (order: dyad 1 Q1, dyad 1 Q2, …)",
       "stepsHint": "Per question: scenario, pole labels, and optional background (JPEG/PNG/WebP/GIF).",
+      "typeTextsTitle": "Player type description texts",
+      "typeTextsHint": "These texts are shown in “More about my type”. For each dyad, levels 0 to 4 are editable (DE/EN).",
+      "typeTextDyadHeading": "Dyad {{dyad}}",
+      "typeTextScaleHeading": "Level {{scale}}",
+      "typeTextLabelDe": "Heading (DE)",
+      "typeTextLabelEn": "Heading (EN)",
+      "typeTextBodyDe": "Description (DE)",
+      "typeTextBodyEn": "Description (EN)",
       "stepHeading": "Question {{index}} · Dyad {{dyad}}, part {{q}}",
       "backgroundImage": "Background image",
+      "defaultDyadImagesLabel": "Available default dyad images",
+      "useDefaultDyadImage": "Use default image from dyad {{dyad}}",
+      "defaultDyadImageAlt": "Default image dyad {{dyad}}",
       "scenarioDe": "Scenario (DE)",
       "scenarioEn": "Scenario (EN)",
       "poleLowDe": "Low / left pole (DE)",

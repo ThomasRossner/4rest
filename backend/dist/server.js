@@ -23,12 +23,14 @@ console.log(`[SERVER] NODE_ENV: ${process.env.NODE_ENV}`);
 import passport from './config/passport.js';
 const app = express();
 // WICHTIG: Port 5000 ist bei Apple belegt (AirPlay Receiver)
-// Backend läuft daher auf Port 5001
-const PORT = process.env.PORT || 5001;
-/** Typische lokale Vite-URLs; in .env steht oft nur :3000, dann schlägt Login von :3001 fehl (CORS). */
+// Backend läuft daher auf Port 5002
+const PORT = process.env.PORT || 5002;
+/** Typische lokale Vite-URLs; in .env steht oft nur :3000, dann schlägt Login von :3002 fehl (CORS). */
 const LOCAL_DEV_ORIGINS = [
+    'http://localhost:3002',
     'http://localhost:3001',
     'http://localhost:3000',
+    'http://127.0.0.1:3002',
     'http://127.0.0.1:3001',
     'http://127.0.0.1:3000',
 ];
@@ -39,7 +41,7 @@ function getCorsOrigin() {
         : [];
     if (process.env.NODE_ENV === 'production') {
         if (fromEnv.length === 0)
-            return 'http://localhost:3001';
+            return 'http://localhost:3002';
         return fromEnv.length === 1 ? fromEnv[0] : fromEnv;
     }
     // Development: Env-Origins + lokale Vite-Ports (auch wenn nur CORS_ORIGIN=:3000 gesetzt)

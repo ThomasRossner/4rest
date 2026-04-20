@@ -28,6 +28,7 @@
       "refresh": "Aktualisieren",
       "title": "Aktionen",
       "done": "Fertig",
+      "confirm": "Bestätigen",
       "ok": "OK"
     },
     "status": {
@@ -496,6 +497,12 @@
         "title": "Belohnung erfolgreich eingelöst!",
         "message": "Ihre {{title}} wurde verifiziert und eingelöst. Punkte wurden von Ihrem Konto abgezogen."
       }
+    },
+    "voucher": {
+      "title": "Gutscheincode für {{title}}",
+      "instruction": "Zeigen Sie diesen Gutscheincode bei der Einlösung vor.",
+      "codeLabel": "Gutscheincode",
+      "warning": "Bewahren Sie diesen Code sicher auf, bis die Einlösung abgeschlossen ist."
     },
     "pointsBonus": {
       "scanTitle": "Punkte-Bonus QR-Code scannen",
@@ -1514,8 +1521,19 @@
       "introBodyEn": "Text (EN)",
       "stepsTitle": "Fragen (Reihenfolge: Dyade 1 Frage 1, Dyade 1 Frage 2, …)",
       "stepsHint": "Pro Frage Szenario, Polbeschriftungen und optional ein Hintergrundbild (JPEG/PNG/WebP/GIF).",
+      "typeTextsTitle": "Texte für Spielertyp-Beschreibung",
+      "typeTextsHint": "Diese Texte erscheinen bei „Mehr zu meinem Typ“. Pro Dyade sind die Ausprägungen 0 bis 4 editierbar (DE/EN).",
+      "typeTextDyadHeading": "Dyade {{dyad}}",
+      "typeTextScaleHeading": "Ausprägung {{scale}}",
+      "typeTextLabelDe": "Überschrift (DE)",
+      "typeTextLabelEn": "Überschrift (EN)",
+      "typeTextBodyDe": "Beschreibung (DE)",
+      "typeTextBodyEn": "Beschreibung (EN)",
       "stepHeading": "Frage {{index}} · Dyade {{dyad}}, Teil {{q}}",
       "backgroundImage": "Hintergrundbild",
+      "defaultDyadImagesLabel": "Vorhandene Default-Dyadenbilder",
+      "useDefaultDyadImage": "Default-Bild aus Dyade {{dyad}} übernehmen",
+      "defaultDyadImageAlt": "Default-Bild Dyade {{dyad}}",
       "scenarioDe": "Szenario (DE)",
       "scenarioEn": "Szenario (EN)",
       "poleLowDe": "Pol links / niedrig (DE)",

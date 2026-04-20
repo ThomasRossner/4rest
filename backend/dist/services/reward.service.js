@@ -155,6 +155,25 @@ function getRewardIcon(type) {
     };
     return icons[type] || '🎁';
 }
+function normalizeRewardKategorie(value) {
+    if (value == null)
+        return null;
+    const trimmed = String(value).trim();
+    if (!trimmed)
+        return null;
+    const normalized = trimmed.toLowerCase();
+    if (normalized === 'hotel')
+        return 'Hotel';
+    if (normalized === 'nicht hotel' ||
+        normalized === 'nicht_hotel' ||
+        normalized === 'online' ||
+        normalized === 'external' ||
+        normalized === 'extern' ||
+        normalized === 'test') {
+        return 'nicht Hotel';
+    }
+    return null;
+}
 export async function createCustomReward(data) {
     const db = getPool();
     const titleI18n = data.title_i18n && typeof data.title_i18n === 'object'
@@ -170,6 +189,7 @@ export async function createCustomReward(data) {
     const rewardType = validateRewardType(data.rewardType);
     const pointsCost = normalizePointsCost(data.pointsCost);
     const recurrence = validateRecurrence(data.recurrence);
+    const normalizedKategorie = normalizeRewardKategorie(data.kategorie);
     const result = await db.query(`INSERT INTO rewards (
        title,
        description,
@@ -202,7 +222,7 @@ export async function createCustomReward(data) {
         data.active ?? true,
         recurrence,
         data.reward_art ?? null,
-        data.kategorie ?? null,
+        normalizedKategorie,
         data.thumbnail_url ?? null,
         data.allowed_teams ?? null,
         data.allowed_contests ?? null,
@@ -305,7 +325,7 @@ export async function updateReward(id, data) {
     }
     if (data.kategorie !== undefined) {
         updates.push(`kategorie = $${paramIndex++}`);
-        values.push(data.kategorie ?? null);
+        values.push(normalizeRewardKategorie(data.kategorie ?? null));
     }
     if (data.thumbnail_url !== undefined) {
         updates.push(`thumbnail_url = $${paramIndex++}`);
@@ -446,24 +466,38 @@ export async function redeemRewardService(rewardId, userId, useTeamPoints = fals
     }
     // Check if user exceeds personal points (warning case)
     const exceedsPersonalPoints = shouldUseTeamPoints && user.points < reward.points_cost;
-    // Create redemption record with QR token (points NOT deducted yet - will be deducted on verification)
-    // Store whether team points should be used in a JSON metadata field
+    const hasImmediateVoucherFlow = Boolean(voucherCode && String(voucherCode).trim().length > 0);
     const metadata = shouldUseTeamPoints && userTeam ? { useTeamPoints: true, teamId: userTeam.id } : null;
-    const redemptionResult = await db.query(`INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-     RETURNING *`, [userId, rewardId, voucherCode || null, 'pending', qrToken, metadata]);
+    if (hasImmediateVoucherFlow) {
+        if (shouldUseTeamPoints && userTeam) {
+            await deductTeamPoints(userTeam.id, userId, reward.points_cost);
+        }
+        else {
+            await db.query('UPDATE users SET points = points - $1 WHERE id = $2', [reward.points_cost, userId]);
+        }
+    }
+    const initialStatus = hasImmediateVoucherFlow ? 'used' : 'pending';
+    const redemptionResult = await db.query(`INSERT INTO reward_redemptions (user_id, reward_id, voucher_code, status, qr_token, metadata, verified_at)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, CASE WHEN $7 THEN CURRENT_TIMESTAMP ELSE NULL END)
+     RETURNING *`, [userId, rewardId, voucherCode || null, initialStatus, qrToken, metadata, hasImmediateVoucherFlow]);
+    const updatedUserPointsResult = await db.query('SELECT points FROM users WHERE id = $1', [userId]);
+    const updatedUserPoints = Number(updatedUserPointsResult.rows[0]?.points ?? user.points);
     return {
         success: true,
         redemption: {
             id: redemptionResult.rows[0].id,
             qrToken: qrToken,
+            qrCodeValue: reward.external_api_id || qrToken,
+            externalApiId: reward.external_api_id ?? null,
             voucherCode: voucherCode || redemptionResult.rows[0].voucher_code,
             status: redemptionResult.rows[0].status,
         },
-        remainingPoints: user.points, // Points not deducted yet
+        remainingPoints: updatedUserPoints,
         teamTotalPoints: shouldUseTeamPoints ? teamTotalPoints : undefined,
         exceedsPersonalPoints: exceedsPersonalPoints,
-        message: 'QR code generated. Please show it to an administrator for verification.',
+        message: hasImmediateVoucherFlow
+            ? 'Voucher code created. Redemption is completed immediately.'
+            : 'QR code generated. Please show it to an administrator for verification.',
     };
 }
 /**

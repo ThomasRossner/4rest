@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import type { PlayerProfilePayload } from '../../stores/authStore';
+import { api } from '../../services/api';
+import type { OnboardingConfig } from '../../types/onboarding';
 import { getPlayerProfileTypeText } from '../../data/playerProfileTypeTexts';
 import './PlayerProfileTypeModal.css';
 
@@ -12,6 +15,11 @@ type Props = {
 export default function PlayerProfileTypeModal({ profile, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language || 'de';
+  const { data: onboardingConfig } = useQuery(
+    'onboardingConfig',
+    () => api.getOnboardingConfig() as Promise<OnboardingConfig>,
+    { staleTime: 5 * 60 * 1000 }
+  );
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,7 +108,14 @@ export default function PlayerProfileTypeModal({ profile, onClose }: Props) {
           {scales.map((raw, idx) => {
             const dyad = idx + 1;
             const scale = Math.min(4, Math.max(0, raw)) as 0 | 1 | 2 | 3 | 4;
-            const row = getPlayerProfileTypeText(lang, dyad, scale);
+            const configuredRow = onboardingConfig?.typeTexts?.[`dyad_${dyad}`]?.[scale];
+            const fallbackRow = getPlayerProfileTypeText(lang, dyad, scale);
+            const row = configuredRow
+              ? {
+                  label: lang.startsWith('en') ? configuredRow.labelEn : configuredRow.labelDe,
+                  body: lang.startsWith('en') ? configuredRow.bodyEn : configuredRow.bodyDe,
+                }
+              : fallbackRow;
             return (
               <section key={dyad} className="pp-type-modal__section">
                 <h3 className="pp-type-modal__dyad-title">

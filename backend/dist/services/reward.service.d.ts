@@ -56,6 +56,8 @@ export declare function redeemRewardService(rewardId: string, userId: string, us
     redemption: {
         id: any;
         qrToken: string;
+        qrCodeValue: any;
+        externalApiId: any;
         voucherCode: any;
         status: any;
     };

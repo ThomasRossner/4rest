@@ -16,6 +16,13 @@ export interface OnboardingIntroSlideConfig {
   backgroundImageUrl: string | null;
 }
 
+export interface OnboardingTypeTextRow {
+  labelDe: string;
+  labelEn: string;
+  bodyDe: string;
+  bodyEn: string;
+}
+
 export interface OnboardingConfig {
   version: 1;
   dyadCount: number;
@@ -29,6 +36,7 @@ export interface OnboardingConfig {
   introBodyDe: string;
   /** @deprecated legacy fallback */
   introBodyEn: string;
+  typeTexts?: Record<string, OnboardingTypeTextRow[]>;
   characterIcons?: Record<string, string | null>;
   steps: OnboardingStepConfig[];
 }

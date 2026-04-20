@@ -66,6 +66,33 @@
   color: var(--color-text);
 }
 
+.voucher-code-card {
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border: 2px dashed var(--color-primary, #16a34a);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
+}
+
+.voucher-code-label {
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--color-text-light);
+}
+
+.voucher-code-value {
+  margin: 0.65rem 0 0;
+  text-align: center;
+  font-size: 1.15rem;
+  line-height: 1.45;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .qr-code-cancel {
   margin-top: var(--spacing-md);
   border: none;

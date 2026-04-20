@@ -7,19 +7,40 @@ import './QrCodeDisplay.css';
 
 type QrCodeDisplayProps = {
   qrToken: string;
+  qrValue?: string;
+  voucherCode?: string | null;
+  initialStatus?: 'pending' | 'used' | 'expired';
   redemptionId: string;
   rewardTitle: string;
   onStatusUpdate?: (status: 'pending' | 'used' | 'expired') => void;
   onClose?: () => void;
 };
 
-export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpdate, onClose }: QrCodeDisplayProps) {
+export function QrCodeDisplay({
+  qrToken,
+  qrValue,
+  voucherCode,
+  initialStatus = 'pending',
+  redemptionId,
+  rewardTitle,
+  onStatusUpdate,
+  onClose,
+}: QrCodeDisplayProps) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<'pending' | 'used' | 'expired'>('pending');
+  const [status, setStatus] = useState<'pending' | 'used' | 'expired'>(initialStatus);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const hasVoucherCode = Boolean(voucherCode && voucherCode.trim().length > 0);
+  const resolvedQrValue = (qrValue && qrValue.trim()) || qrToken;
 
   useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
+  useEffect(() => {
+    if (hasVoucherCode || status !== 'pending') {
+      return;
+    }
     // Listen for WebSocket updates
     const handleMessage = (event: MessageEvent) => {
       try {
@@ -158,7 +179,7 @@ export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpda
         ws.close();
       }
     };
-  }, [redemptionId, qrToken, status, onStatusUpdate]);
+  }, [redemptionId, qrToken, status, onStatusUpdate, hasVoucherCode]);
 
   return (
     <>
@@ -170,18 +191,36 @@ export function QrCodeDisplay({ qrToken, redemptionId, rewardTitle, onStatusUpda
         </div>
       ) : (
         <div className="qr-code-display">
-          <h3 className="qr-code-title">{t('rewards.qr.title', { title: rewardTitle })}</h3>
-          <p className="qr-code-instruction">{t('rewards.qr.instruction')}</p>
-          <div className="qr-code-container">
-            <QRCodeSVG value={qrToken} size={256} level="M" includeMargin />
-          </div>
-          <p className="qr-code-token-label">{t('rewards.qr.codeLabel')}</p>
-          <p className="qr-code-token-value">{String(qrToken).toUpperCase()}</p>
-          <p className="qr-code-status">{t('rewards.qr.status', { status: t(`rewards.qr.statuses.${status}`) })}</p>
-          <p className="qr-code-warning">{t('rewards.qr.warning')}</p>
+          <h3 className="qr-code-title">
+            {hasVoucherCode ? t('rewards.voucher.title', { title: rewardTitle }) : t('rewards.qr.title', { title: rewardTitle })}
+          </h3>
+          <p className="qr-code-instruction">
+            {hasVoucherCode ? t('rewards.voucher.instruction') : t('rewards.qr.instruction')}
+          </p>
+          {hasVoucherCode ? (
+            <div className="voucher-code-card">
+              <p className="voucher-code-label">{t('rewards.voucher.codeLabel')}</p>
+              <p className="voucher-code-value">{voucherCode}</p>
+            </div>
+          ) : (
+            <>
+              <div className="qr-code-container">
+                <QRCodeSVG value={resolvedQrValue} size={256} level="M" includeMargin />
+              </div>
+              <p className="qr-code-token-label">{t('rewards.qr.codeLabel')}</p>
+              <p className="qr-code-token-value">{String(resolvedQrValue).toUpperCase()}</p>
+            </>
+          )}
+          {!hasVoucherCode && (
+            <>
+              <p className="qr-code-status">{t('rewards.qr.status', { status: t(`rewards.qr.statuses.${status}`) })}</p>
+              <p className="qr-code-warning">{t('rewards.qr.warning')}</p>
+            </>
+          )}
+          {hasVoucherCode && <p className="qr-code-warning">{t('rewards.voucher.warning')}</p>}
           {onClose && (
             <button type="button" className="qr-code-cancel" onClick={onClose}>
-              {t('common.actions.cancel')}
+              {hasVoucherCode ? t('common.actions.confirm') : t('common.actions.cancel')}
             </button>
           )}
         </div>

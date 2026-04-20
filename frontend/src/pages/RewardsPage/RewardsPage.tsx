@@ -44,6 +44,9 @@ function RewardsPage() {
 
   const [activeRedemption, setActiveRedemption] = useState<{
     qrToken: string;
+    qrCodeValue?: string;
+    voucherCode?: string | null;
+    status?: 'pending' | 'used' | 'expired';
     redemptionId: string;
     rewardTitle: string;
   } | null>(null);
@@ -193,6 +196,9 @@ function RewardsPage() {
                 if (res?.redemption?.qrToken) {
                   setActiveRedemption({
                     qrToken: res.redemption.qrToken,
+                    qrCodeValue: res.redemption.qrCodeValue,
+                    voucherCode: res.redemption.voucherCode ?? null,
+                    status: res.redemption.status,
                     redemptionId: res.redemption.id,
                     rewardTitle: reward.title,
                   });
@@ -211,10 +217,16 @@ function RewardsPage() {
         <div className="rewards-scroll">
           <QrCodeDisplay
             qrToken={activeRedemption.qrToken}
+            qrValue={activeRedemption.qrCodeValue}
+            voucherCode={activeRedemption.voucherCode ?? null}
+            initialStatus={activeRedemption.status}
             redemptionId={activeRedemption.redemptionId}
             rewardTitle={activeRedemption.rewardTitle}
             onStatusUpdate={handleQrStatusUpdate}
-            onClose={() => setActiveRedemption(null)}
+            onClose={() => {
+              setActiveRedemption(null);
+              queryClient.invalidateQueries(['rewards']);
+            }}
           />
         </div>
       </div>
@@ -315,6 +327,9 @@ function RewardsPage() {
               onRedemptionCreated={(redemption) =>
                 setActiveRedemption({
                   qrToken: redemption.qrToken,
+                  qrCodeValue: redemption.qrCodeValue,
+                  voucherCode: redemption.voucherCode ?? null,
+                  status: redemption.status,
                   redemptionId: redemption.redemptionId,
                   rewardTitle: redemption.rewardTitle,
                 })

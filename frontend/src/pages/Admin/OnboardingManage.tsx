@@ -5,8 +5,11 @@ import type {
   OnboardingConfig,
   OnboardingIntroSlideConfig,
   OnboardingStepConfig,
+  OnboardingTypeTextRow,
 } from '../../types/onboarding';
 import { resolveOnboardingBackgroundUrl } from '../../utils/onboardingBackgroundUrl';
+import { getPlayerProfileTypeText } from '../../data/playerProfileTypeTexts';
+import { getDefaultPlayerCharacterIcons } from '../../constants/playerCharacter';
 
 function emptyStep(): OnboardingStepConfig {
   return {
@@ -57,6 +60,8 @@ export default function OnboardingManage() {
   const [uploadingIntroIndex, setUploadingIntroIndex] = useState<number | null>(null);
   const [characterIcons, setCharacterIcons] = useState<Record<string, string | null>>({});
   const [uploadingCharacterKey, setUploadingCharacterKey] = useState<string | null>(null);
+  const [defaultDyadBackgrounds, setDefaultDyadBackgrounds] = useState<(string | null)[]>([]);
+  const [typeTexts, setTypeTexts] = useState<Record<string, OnboardingTypeTextRow[]>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,8 +83,47 @@ export default function OnboardingManage() {
           },
         ]);
       }
-      setCharacterIcons(c.characterIcons ?? {});
+      const defaultIcons = getDefaultPlayerCharacterIcons(c.dyadCount);
+      setCharacterIcons({
+        ...defaultIcons,
+        ...(c.characterIcons ?? {}),
+      });
       setSteps(c.steps.length ? [...c.steps] : resizeSteps([], c.dyadCount * c.questionsPerDyad));
+      const defaults = Array.from({ length: c.dyadCount }, (_, dyadIndex) => {
+        const stepIndex = dyadIndex * c.questionsPerDyad;
+        return c.steps[stepIndex]?.backgroundImageUrl ?? null;
+      });
+      setDefaultDyadBackgrounds(defaults);
+      const fallbackTypeTexts: Record<string, OnboardingTypeTextRow[]> = {};
+      for (let dyad = 1; dyad <= c.dyadCount; dyad++) {
+        fallbackTypeTexts[`dyad_${dyad}`] = [0, 1, 2, 3, 4].map((scale) => {
+          const de = getPlayerProfileTypeText('de', dyad, scale as 0 | 1 | 2 | 3 | 4);
+          const en = getPlayerProfileTypeText('en', dyad, scale as 0 | 1 | 2 | 3 | 4);
+          return {
+            labelDe: de.label,
+            labelEn: en.label,
+            bodyDe: de.body,
+            bodyEn: en.body,
+          };
+        });
+      }
+      const configuredTypeTexts = c.typeTexts ?? {};
+      const mergedTypeTexts: Record<string, OnboardingTypeTextRow[]> = {};
+      for (let dyad = 1; dyad <= c.dyadCount; dyad++) {
+        const key = `dyad_${dyad}`;
+        const configuredRows = Array.isArray(configuredTypeTexts[key]) ? configuredTypeTexts[key] : [];
+        mergedTypeTexts[key] = [0, 1, 2, 3, 4].map((idx) => {
+          const fallback = fallbackTypeTexts[key]![idx]!;
+          const current = configuredRows[idx];
+          return {
+            labelDe: current?.labelDe ?? fallback.labelDe,
+            labelEn: current?.labelEn ?? fallback.labelEn,
+            bodyDe: current?.bodyDe ?? fallback.bodyDe,
+            bodyEn: current?.bodyEn ?? fallback.bodyEn,
+          };
+        });
+      }
+      setTypeTexts(mergedTypeTexts);
     } catch (e: unknown) {
       setError(t('admin.onboarding.loadError'));
     } finally {
@@ -114,14 +158,20 @@ export default function OnboardingManage() {
         introTitleEn: introSlides[0]?.titleEn ?? '',
         introBodyDe: introSlides[0]?.bodyDe ?? '',
         introBodyEn: introSlides[0]?.bodyEn ?? '',
+        typeTexts,
         characterIcons,
         steps,
       };
       const saved = (await api.putAdminOnboardingConfig(payload)) as OnboardingConfig;
       setDyadCount(saved.dyadCount);
       setQuestionsPerDyad(saved.questionsPerDyad);
-      setCharacterIcons(saved.characterIcons ?? {});
+      const defaultIcons = getDefaultPlayerCharacterIcons(saved.dyadCount);
+      setCharacterIcons({
+        ...defaultIcons,
+        ...(saved.characterIcons ?? {}),
+      });
       setSteps([...saved.steps]);
+      setTypeTexts(saved.typeTexts ?? {});
     } catch (e: unknown) {
       const msg =
         e && typeof e === 'object' && 'response' in e
@@ -197,6 +247,11 @@ export default function OnboardingManage() {
     { key: 'fallback', label: t('admin.onboarding.characterIconFallback') }
   );
 
+  useEffect(() => {
+    const defaults = getDefaultPlayerCharacterIcons(dyadCount);
+    setCharacterIcons((prev) => ({ ...defaults, ...prev }));
+  }, [dyadCount]);
+
   const updateStep = (index: number, field: keyof OnboardingStepConfig, value: string | null) => {
     setSteps((prev) => {
       const next = [...prev];
@@ -215,6 +270,28 @@ export default function OnboardingManage() {
       const next = [...prev];
       const cur = next[index] ?? emptyIntroSlide();
       next[index] = { ...cur, [field]: value };
+      return next;
+    });
+  };
+
+  const updateTypeText = (
+    dyadIndex: number,
+    scaleIndex: number,
+    field: keyof OnboardingTypeTextRow,
+    value: string
+  ) => {
+    const key = `dyad_${dyadIndex + 1}`;
+    setTypeTexts((prev) => {
+      const next = { ...prev };
+      const rows = Array.isArray(next[key]) ? [...next[key]!] : [];
+      while (rows.length < 5) {
+        rows.push({ labelDe: '', labelEn: '', bodyDe: '', bodyEn: '' });
+      }
+      rows[scaleIndex] = {
+        ...rows[scaleIndex]!,
+        [field]: value,
+      };
+      next[key] = rows;
       return next;
     });
   };
@@ -439,6 +516,15 @@ export default function OnboardingManage() {
         const dyadNum = Math.floor(index / questionsPerDyad) + 1;
         const qInDyad = (index % questionsPerDyad) + 1;
         const preview = resolveOnboardingBackgroundUrl(step.backgroundImageUrl);
+        const resolvedDefaults = defaultDyadBackgrounds
+          .map((url, dyadIndex) => ({
+            dyadIndex,
+            rawUrl: url,
+            url: resolveOnboardingBackgroundUrl(url),
+          }))
+          .filter((item): item is { dyadIndex: number; rawUrl: string; url: string } =>
+            Boolean(item.rawUrl && item.url)
+          );
         return (
           <div
             key={index}
@@ -486,6 +572,43 @@ export default function OnboardingManage() {
                 </label>
               </div>
             </div>
+            {resolvedDefaults.length > 0 && (
+              <div style={{ marginBottom: '0.75rem' }}>
+                <p className="admin-field-note" style={{ marginBottom: '0.5rem' }}>
+                  {t('admin.onboarding.defaultDyadImagesLabel')}
+                </p>
+                <div className="admin-form-row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {resolvedDefaults.map((item) => (
+                    <button
+                      key={`default-dyad-bg-${item.dyadIndex}`}
+                      type="button"
+                      className="admin-button-secondary"
+                      onClick={() => updateStep(index, 'backgroundImageUrl', item.rawUrl)}
+                      title={t('admin.onboarding.useDefaultDyadImage', { dyad: item.dyadIndex + 1 })}
+                      style={{
+                        padding: '0.35rem',
+                        border:
+                          step.backgroundImageUrl === item.rawUrl
+                            ? '2px solid var(--color-primary, #16a34a)'
+                            : undefined,
+                      }}
+                    >
+                      <img
+                        src={item.url}
+                        alt={t('admin.onboarding.defaultDyadImageAlt', { dyad: item.dyadIndex + 1 })}
+                        style={{
+                          width: 74,
+                          height: 52,
+                          objectFit: 'cover',
+                          borderRadius: 6,
+                          display: 'block',
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <label className="admin-field">
               <span>{t('admin.onboarding.scenarioDe')}</span>
               <textarea
@@ -538,6 +661,76 @@ export default function OnboardingManage() {
                 />
               </label>
             </div>
+          </div>
+        );
+      })}
+
+      <div className="admin-form-section-header" style={{ marginTop: '1.5rem' }}>
+        <div>
+          <h3>{t('admin.onboarding.typeTextsTitle')}</h3>
+          <p className="admin-field-note">{t('admin.onboarding.typeTextsHint')}</p>
+        </div>
+      </div>
+      {Array.from({ length: dyadCount }, (_, dyadIdx) => {
+        const key = `dyad_${dyadIdx + 1}`;
+        const rows = typeTexts[key] ?? [];
+        return (
+          <div
+            key={key}
+            className="admin-form-card"
+            style={{ marginTop: '1rem', border: '1px solid var(--color-border, #e2e8f0)' }}
+          >
+            <h4 className="admin-form-section-header">
+              {t('admin.onboarding.typeTextDyadHeading', { dyad: dyadIdx + 1 })}
+            </h4>
+            {[0, 1, 2, 3, 4].map((scaleIdx) => {
+              const row = rows[scaleIdx] ?? { labelDe: '', labelEn: '', bodyDe: '', bodyEn: '' };
+              return (
+                <div
+                  key={`dyad-${dyadIdx + 1}-scale-${scaleIdx}`}
+                  className="admin-form-card"
+                  style={{ marginTop: '0.75rem', border: '1px solid #e2e8f0' }}
+                >
+                  <h5 style={{ marginTop: 0, marginBottom: '0.75rem' }}>
+                    {t('admin.onboarding.typeTextScaleHeading', { scale: scaleIdx })}
+                  </h5>
+                  <div className="admin-form-row" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+                    <label className="admin-field" style={{ flex: 1, minWidth: 220 }}>
+                      <span>{t('admin.onboarding.typeTextLabelDe')}</span>
+                      <input
+                        type="text"
+                        value={row.labelDe}
+                        onChange={(e) => updateTypeText(dyadIdx, scaleIdx, 'labelDe', e.target.value)}
+                      />
+                    </label>
+                    <label className="admin-field" style={{ flex: 1, minWidth: 220 }}>
+                      <span>{t('admin.onboarding.typeTextLabelEn')}</span>
+                      <input
+                        type="text"
+                        value={row.labelEn}
+                        onChange={(e) => updateTypeText(dyadIdx, scaleIdx, 'labelEn', e.target.value)}
+                      />
+                    </label>
+                  </div>
+                  <label className="admin-field">
+                    <span>{t('admin.onboarding.typeTextBodyDe')}</span>
+                    <textarea
+                      value={row.bodyDe}
+                      onChange={(e) => updateTypeText(dyadIdx, scaleIdx, 'bodyDe', e.target.value)}
+                      rows={3}
+                    />
+                  </label>
+                  <label className="admin-field">
+                    <span>{t('admin.onboarding.typeTextBodyEn')}</span>
+                    <textarea
+                      value={row.bodyEn}
+                      onChange={(e) => updateTypeText(dyadIdx, scaleIdx, 'bodyEn', e.target.value)}
+                      rows={3}
+                    />
+                  </label>
+                </div>
+              );
+            })}
           </div>
         );
       })}

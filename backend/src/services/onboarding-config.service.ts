@@ -2,6 +2,14 @@ import { getSystemConfig, setSystemConfig } from './system-config.service.js';
 
 export const ONBOARDING_CONFIG_KEY = 'onboarding_config';
 
+function emojiToTwemojiUrl(emoji: string): string {
+  const codepoint = Array.from(emoji)
+    .map((char) => char.codePointAt(0)?.toString(16))
+    .filter(Boolean)
+    .join('-');
+  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${codepoint}.png`;
+}
+
 export interface OnboardingStepConfig {
   scenarioDe: string;
   scenarioEn: string;
@@ -22,6 +30,13 @@ export interface OnboardingIntroSlideConfig {
   backgroundImageUrl: string | null;
 }
 
+export interface OnboardingTypeTextRow {
+  labelDe: string;
+  labelEn: string;
+  bodyDe: string;
+  bodyEn: string;
+}
+
 export interface OnboardingConfig {
   version: 1;
   dyadCount: number;
@@ -35,6 +50,12 @@ export interface OnboardingConfig {
   introBodyDe: string;
   /** @deprecated legacy fallback for old clients/configs */
   introBodyEn: string;
+  /**
+   * Texte für "Mehr zu meinem Typ".
+   * Key-Format: dyad_1, dyad_2, ...
+   * Pro Dyade 5 Einträge für Skalenwerte 0..4.
+   */
+  typeTexts?: Record<string, OnboardingTypeTextRow[]>;
   steps: OnboardingStepConfig[];
   /**
    * Spielercharakter-Icons: Keys wie `dyad_1`, `dyad_2`, … sowie optionale Fallbacks
@@ -64,7 +85,16 @@ export const DEFAULT_ONBOARDING_CONFIG: OnboardingConfig = {
     'In dieser Welt steckt mehr, als man auf den ersten Blick sieht. Antworte auf ein paar kurze Fragen – und wir verraten dir, welches Wesen tief in dir schlummert.',
   introBodyEn:
     'There is more to this world than meets the eye. Answer a few short questions and we will tell you which creature slumbers within you.',
-  characterIcons: {},
+  typeTexts: {},
+  characterIcons: {
+    dyad_1: emojiToTwemojiUrl('🦌'),
+    dyad_2: emojiToTwemojiUrl('🦉'),
+    dyad_3: emojiToTwemojiUrl('🐺'),
+    dyad_4: emojiToTwemojiUrl('🐝'),
+    pending: emojiToTwemojiUrl('❓'),
+    skipped: emojiToTwemojiUrl('🐌'),
+    fallback: emojiToTwemojiUrl('🐾'),
+  },
   steps: [
     {
       scenarioDe:
@@ -218,6 +248,31 @@ export function validateOnboardingConfig(raw: unknown): OnboardingConfig {
     }
   }
 
+  const typeTextsRaw = o.typeTexts;
+  const typeTexts: Record<string, OnboardingTypeTextRow[]> = {};
+  if (typeTextsRaw && typeof typeTextsRaw === 'object' && !Array.isArray(typeTextsRaw)) {
+    for (const [k, v] of Object.entries(typeTextsRaw as Record<string, unknown>)) {
+      const key = String(k || '').trim().slice(0, 120);
+      if (!key || !Array.isArray(v)) continue;
+      const rows = v
+        .slice(0, 5)
+        .map((row) => {
+          if (!row || typeof row !== 'object') return null;
+          const r = row as Record<string, unknown>;
+          return {
+            labelDe: String(r.labelDe ?? '').slice(0, 2000),
+            labelEn: String(r.labelEn ?? '').slice(0, 2000),
+            bodyDe: String(r.bodyDe ?? '').slice(0, 8000),
+            bodyEn: String(r.bodyEn ?? '').slice(0, 8000),
+          } satisfies OnboardingTypeTextRow;
+        })
+        .filter((row): row is OnboardingTypeTextRow => Boolean(row));
+      if (rows.length > 0) {
+        typeTexts[key] = rows;
+      }
+    }
+  }
+
   return {
     version: 1,
     dyadCount,
@@ -227,6 +282,7 @@ export function validateOnboardingConfig(raw: unknown): OnboardingConfig {
     introTitleEn: introSlides[0]?.titleEn ?? DEFAULT_ONBOARDING_CONFIG.introTitleEn,
     introBodyDe: introSlides[0]?.bodyDe ?? DEFAULT_ONBOARDING_CONFIG.introBodyDe,
     introBodyEn: introSlides[0]?.bodyEn ?? DEFAULT_ONBOARDING_CONFIG.introBodyEn,
+    typeTexts,
     characterIcons,
     steps: normalized,
   };

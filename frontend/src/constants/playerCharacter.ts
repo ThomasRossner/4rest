@@ -12,6 +12,29 @@ const DOMINANT_EMOJI: Record<number, string> = {
   8: '🦔',
 };
 
+const EMOJI_ICON_CDN_BASE = 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72';
+
+function emojiToTwemojiUrl(emoji: string): string {
+  const codepoint = Array.from(emoji)
+    .map((char) => char.codePointAt(0)?.toString(16))
+    .filter(Boolean)
+    .join('-');
+  return `${EMOJI_ICON_CDN_BASE}/${codepoint}.png`;
+}
+
+export function getDefaultPlayerCharacterIcons(dyadCount: number): Record<string, string> {
+  const count = Number.isFinite(dyadCount) ? Math.max(1, Math.min(32, Math.round(dyadCount))) : 4;
+  const defaults: Record<string, string> = {};
+  for (let i = 1; i <= count; i++) {
+    const emoji = DOMINANT_EMOJI[i] ?? '🐾';
+    defaults[`dyad_${i}`] = emojiToTwemojiUrl(emoji);
+  }
+  defaults.pending = emojiToTwemojiUrl('❓');
+  defaults.skipped = emojiToTwemojiUrl('🐌');
+  defaults.fallback = emojiToTwemojiUrl('🐾');
+  return defaults;
+}
+
 export function getPlayerCharacterEmoji(profile: PlayerProfilePayload | undefined): string {
   if (!profile) return '❓';
   if (profile.status === 'pending') return '❓';
@@ -24,15 +47,16 @@ export function getPlayerCharacterIconUrl(
   profile: PlayerProfilePayload | undefined,
   icons?: Record<string, string | null>
 ): string | null {
-  if (!icons) return null;
+  const defaults = getDefaultPlayerCharacterIcons(profile?.dominantDyad ?? 4);
+  const merged = { ...defaults, ...(icons ?? {}) };
   if (!profile || profile.status === 'pending') {
-    return icons.pending ?? null;
+    return merged.pending ?? null;
   }
   if (profile.status === 'skipped' || profile.dominantDyad == null) {
-    return icons.skipped ?? icons.fallback ?? null;
+    return merged.skipped ?? merged.fallback ?? null;
   }
   const dyadKey = `dyad_${profile.dominantDyad}`;
-  return icons[dyadKey] ?? icons.fallback ?? null;
+  return merged[dyadKey] ?? merged.fallback ?? null;
 }
 
 export function getDominantDyadNumber(
