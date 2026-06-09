@@ -113,6 +113,7 @@
     "rewards": "Rewards",
     "statistics": "Statistics",
     "rankings": "Rankings",
+    "groups": "Groups",
     "admin": "Admin",
     "profile": "Profile",
     "logout": "Logout",
@@ -288,6 +289,19 @@
       "ctaTasks": "Go to tasks",
       "exploreForest": "Explore forest",
       "openRewards": "Rewards"
+    },
+    "nextTasks": {
+      "title": "Next tasks",
+      "allTasks": "All tasks"
+    },
+    "progress": {
+      "title": "My progress",
+      "level": "Forest level {{level}} / {{max}}"
+    },
+    "invite": {
+      "title": "Invite a friend",
+      "description": "Create a team or contest in your profile and share the QR code so friends can join.",
+      "cta": "Go to profile"
     }
   },
   "tasks": {
@@ -301,6 +315,24 @@
     "showOnline": "Show online tasks",
     "locationMapTitle": "Your Location",
     "backToList": "Back to list",
+    "hub": {
+      "backToHub": "Back to overview",
+      "all": "All",
+      "sections": {
+        "overview": "Overview",
+        "places": "Places",
+        "collection": "Collection",
+        "online": "Online"
+      },
+      "allTasks": {
+        "title": "All tasks",
+        "subtitle": "Filter, sort, and browse the full list"
+      },
+      "mapView": {
+        "title": "Map view"
+      },
+      "placeTaskCount": "{{count}} tasks"
+    },
     "categories": {
       "hubTitle": "Choose a topic",
       "hubSubtitle": "Tap a category to open its tasks.",
@@ -352,6 +384,7 @@
         "description": "Try adjusting your filter settings."
       }
     },
+    "loadError": "Tasks could not be loaded. Please try again.",
     "buttons": {
       "start": "Start task",
       "completed": "Completed",
@@ -1980,7 +2013,8 @@
   "forest": {
     "title": "Virtual forest",
     "subtitle": "Watch your trees grow as you complete sustainable actions",
-    "loading": "Loading forest..."
+    "loading": "Loading forest...",
+    "loadError": "Forest data could not be loaded. Please try again."
   },
   "statistics": {
     "title": "Statistics & impact",
@@ -2522,6 +2556,9 @@
       "noParticipantsDescription": "Be the first to join this contest!",
       "unnamed": "Unnamed Contest"
     }
+  },
+  "groups": {
+    "title": "Groups"
   },
   "rankings": {
     "title": "Rankings",

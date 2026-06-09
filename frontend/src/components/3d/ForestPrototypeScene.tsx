@@ -10,12 +10,12 @@ useGLTF.preload('/models/beechTrunk.glb');
 useGLTF.preload('/models/beechTwig.glb');
 useGLTF.preload('/models/beechLeaf.glb');
 
-/** Standard-Blick: etwas flacher und weiter weg, damit der Wald im oberen Canvas-Bereich liegt (HUD unten). */
+/** Standard-Blick: leicht nach oben gerichtet, damit der Wald unter dem Top-Panel sichtbar sitzt. */
 export const FOREST_DEFAULT_CAMERA = {
-  position: [0, 10, 29] as const,
+  position: [0, 10.5, 28] as const,
   fov: 45,
   /** OrbitControls-Blickpunkt (Insel/Boden) */
-  target: [0, 2, 0] as const,
+  target: [0, 3.4, 0] as const,
 };
 
 type Props = {
@@ -28,6 +28,8 @@ type Props = {
   dyad2Scale?: number;
   dyad3Scale?: number;
   lowPerformanceMode?: boolean;
+  /** Wird bei OrbitControls-Interaktion (Drag, Zoom, Pan) aufgerufen — nur onStart, nicht onChange */
+  onNavigationActivity?: () => void;
 };
 
 /**
@@ -44,6 +46,7 @@ export default function ForestPrototypeScene({
   dyad2Scale = 2,
   dyad3Scale = 2,
   lowPerformanceMode = false,
+  onNavigationActivity,
 }: Props) {
   return (
     <>
@@ -53,6 +56,7 @@ export default function ForestPrototypeScene({
         zoomToCursor={!lowPerformanceMode}
         minPolarAngle={0.25}
         maxPolarAngle={Math.PI / 2 - 0.06}
+        onStart={onNavigationActivity}
       />
       {!lowPerformanceMode && <gridHelper args={[10, 10]} />}
       <SceneController
@@ -65,6 +69,7 @@ export default function ForestPrototypeScene({
         dyad2Scale={dyad2Scale}
         dyad3Scale={dyad3Scale}
         lowPerformanceMode={lowPerformanceMode}
+        transparentBackground
       />
     </>
   );

@@ -41,6 +41,8 @@ type TimelineChartProps = {
   data: TimelineDataPoint[];
   /** Profil-Gesamtpunkte (`users.points`); Balkenhöhe = kumulativ / max(Profil, letzter Kumulativwert). */
   profileTotalPoints?: number;
+  /** Kompakte Darstellung für Home (weniger Höhe, Glas-Container). */
+  variant?: 'default' | 'compact';
 };
 
 function categoryValue(
@@ -50,7 +52,7 @@ function categoryValue(
   return c[k] ?? 0;
 }
 
-export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) {
+export function TimelineChart({ data, profileTotalPoints, variant = 'default' }: TimelineChartProps) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
   const sortedData = useMemo(
@@ -171,8 +173,11 @@ export function TimelineChart({ data, profileTotalPoints }: TimelineChartProps) 
 
   const last = series[series.length - 1];
 
+  const chartClass =
+    variant === 'compact' ? 'timeline-chart timeline-chart--compact' : 'timeline-chart';
+
   return (
-    <div className="timeline-chart">
+    <div className={chartClass}>
       <p className="timeline-chart-subtitle">
         {chartData.isSampled ? t('rankings.timeline.subtitleSampled') : t('rankings.timeline.subtitle')}
       </p>

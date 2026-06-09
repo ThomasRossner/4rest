@@ -1,17 +1,16 @@
 .task-card {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  border-radius: var(--radius-card, 14px);
-  border: 1px solid var(--color-border-subtle, var(--color-border));
-  background: linear-gradient(
-    155deg,
-    var(--color-card-surface) 0%,
-    color-mix(in srgb, var(--color-card-surface) 88%, var(--color-primary)) 100%
-  );
-  box-shadow: var(--shadow-card, var(--shadow-sm)), var(--shadow-warm-inset);
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-card, 18px);
+  border: 1px solid var(--glass-border, var(--color-border-subtle));
+  background: var(--glass-bg, var(--color-card-surface));
+  box-shadow: var(--glass-shadow-outer, var(--shadow-card)), var(--glass-shadow-inner, var(--shadow-warm-inset));
+  backdrop-filter: blur(var(--glass-blur, 10px)) saturate(1.04);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 10px)) saturate(1.04);
   transition: transform 120ms ease, box-shadow 120ms ease;
+  position: relative;
 }
 
 .task-card:hover {
@@ -27,13 +26,13 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+  padding-right: 4.5rem;
 }
 
 .task-card__badges {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  flex-shrink: 0;
 }
 
 .task-card__title-row {
@@ -48,11 +47,12 @@
 }
 
 .task-card__thumb {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 8px;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(31, 90, 76, 0.12);
 }
 
 .task-card__type-icon {
@@ -60,13 +60,27 @@
   color: var(--color-primary);
 }
 
+.task-card__badges {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+}
+
 .task-card__points {
-  padding: 0.35rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #fff;
-  background: var(--color-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  background: rgba(242, 209, 107, 0.14);
+  border: 1px solid rgba(242, 209, 107, 0.35);
+  box-shadow: var(--glass-shadow-inner);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   flex-shrink: 0;
 }
 

@@ -1,20 +1,13 @@
 export const UI_THEME_STORAGE_KEY = '4rest-ui-theme';
 
-export type UiTheme = 'classic' | 'atlas';
+/** Einziges UI-Theme (Glas / Wald-Atlas). */
+export type UiTheme = 'atlas';
 
-export function isUiTheme(value: string | null | undefined): value is UiTheme {
-  return value === 'classic' || value === 'atlas';
-}
+export const DEFAULT_UI_THEME: UiTheme = 'atlas';
 
 /** Synchron, vor erstem Paint (wird auch aus index.html inline aufgerufen). */
 export function readStoredTheme(): UiTheme {
-  try {
-    const raw = localStorage.getItem(UI_THEME_STORAGE_KEY);
-    if (isUiTheme(raw)) return raw;
-  } catch {
-    /* private mode */
-  }
-  return 'classic';
+  return DEFAULT_UI_THEME;
 }
 
 export function applyThemeToDocument(theme: UiTheme): void {

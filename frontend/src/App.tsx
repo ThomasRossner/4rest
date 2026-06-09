@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuthStore } from './stores/authStore';
+import { api } from './services/api';
 import i18n from './i18n';
 import { ToastContainer } from './components/Feedback/ToastContainer';
 import AdminPage from './pages/Admin/AdminPage';
@@ -77,12 +79,20 @@ function ProtectedApp() {
 function App() {
   // Clear invalid auth state on mount if needed
   React.useEffect(() => {
-    const { user, token, isAuthenticated } = useAuthStore.getState();
-    // If isAuthenticated is true but user or token is missing, clear the state
+    const { user, token, isAuthenticated, logout } = useAuthStore.getState();
     if (isAuthenticated && (!user || !token)) {
       console.log('[App] Clearing invalid auth state');
-      useAuthStore.getState().logout();
+      logout();
+      return;
     }
+    if (!isAuthenticated || !token || !user) return;
+
+    void api.refreshMe({ strict: true }).catch((error) => {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.warn('[App] Session expired');
+        logout();
+      }
+    });
   }, []);
 
   return (

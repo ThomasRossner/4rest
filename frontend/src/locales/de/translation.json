@@ -113,6 +113,7 @@
     "rewards": "Belohnungen",
     "statistics": "Statistiken",
     "rankings": "Rankings",
+    "groups": "Gruppen",
     "admin": "Admin",
     "profile": "Profil",
     "logout": "Abmelden",
@@ -288,6 +289,19 @@
       "ctaTasks": "Zu den Aufgaben",
       "exploreForest": "Wald erkunden",
       "openRewards": "Belohnungen"
+    },
+    "nextTasks": {
+      "title": "Nächste Aufgaben",
+      "allTasks": "Alle Aufgaben"
+    },
+    "progress": {
+      "title": "Mein Fortschritt",
+      "level": "Wald-Stufe {{level}} / {{max}}"
+    },
+    "invite": {
+      "title": "Lade einen Freund ein",
+      "description": "Erstelle ein Team oder einen Contest im Profil und teile den QR-Code — so können Freunde mitmachen.",
+      "cta": "Zum Profil"
     }
   },
   "tasks": {
@@ -301,6 +315,24 @@
     "showOnline": "Online-Aufgaben anzeigen",
     "locationMapTitle": "Ihre Position",
     "backToList": "Zurück zur Liste",
+    "hub": {
+      "backToHub": "Zurück zur Übersicht",
+      "all": "Alle",
+      "sections": {
+        "overview": "Übersicht",
+        "places": "Orte",
+        "collection": "Sammlung",
+        "online": "Online"
+      },
+      "allTasks": {
+        "title": "Alle Aufgaben",
+        "subtitle": "Filter, Sortierung und vollständige Liste"
+      },
+      "mapView": {
+        "title": "Kartenansicht"
+      },
+      "placeTaskCount": "{{count}} Aufgaben"
+    },
     "categories": {
       "hubTitle": "Thema wählen",
       "hubSubtitle": "Tippe eine Kategorie, um die Aufgaben zu öffnen.",
@@ -352,6 +384,7 @@
         "description": "Passe deine Filtereinstellungen an."
       }
     },
+    "loadError": "Aufgaben konnten nicht geladen werden. Bitte erneut versuchen.",
     "buttons": {
       "start": "Aufgabe starten",
       "completed": "Abgeschlossen",
@@ -1980,7 +2013,8 @@
   "forest": {
     "title": "Virtueller Wald",
     "subtitle": "Sieh zu, wie deine Bäume durch nachhaltige Aktionen wachsen",
-    "loading": "Wald wird geladen..."
+    "loading": "Wald wird geladen...",
+    "loadError": "Wald-Daten konnten nicht geladen werden. Bitte erneut versuchen."
   },
   "statistics": {
     "title": "Statistiken & Impact",
@@ -2540,6 +2574,9 @@
       "noParticipantsDescription": "Sei der Erste, der diesem Contest beitritt!",
       "unnamed": "Unbenannter Contest"
     }
+  },
+  "groups": {
+    "title": "Gruppen"
   },
   "rankings": {
     "title": "Rankings",

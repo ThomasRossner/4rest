@@ -3,14 +3,7 @@
   <head>
     <script>
       (function () {
-        try {
-          var k = '4rest-ui-theme';
-          var v = localStorage.getItem(k);
-          var t = v === 'classic' || v === 'atlas' ? v : 'classic';
-          document.documentElement.setAttribute('data-theme', t);
-        } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'classic');
-        }
+        document.documentElement.setAttribute('data-theme', 'atlas');
       })();
     </script>
     <meta charset="UTF-8" />
@@ -22,7 +15,7 @@
       rel="stylesheet"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#115e59" />
+    <meta name="theme-color" content="#1f5a4c" />
     <meta name="description" content="Sustainability gamification platform - Grow your virtual forest through sustainable actions" />
     <title>4rest</title>
     <!-- Prefetch 3D tree models for faster ForestPage loading -->

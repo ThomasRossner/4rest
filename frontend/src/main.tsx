@@ -4,7 +4,11 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import App from './App';
 import { Toaster } from './components/Toaster/Toaster';
 import { ThemeProvider } from './theme/ThemeContext';
-import { registerServiceWorker, syncOfflineQRCodes } from './utils/serviceWorker';
+import {
+  maybeClearClientCachesFromUrl,
+  registerServiceWorker,
+  syncOfflineQRCodes,
+} from './utils/serviceWorker';
 import './index.css';
 import './i18n';
 
@@ -12,10 +16,31 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 1,
+      refetchOnReconnect: true,
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
     },
   },
 });
+
+/** Tasks + forest data: refetch when tab becomes visible or network returns. */
+function setupGuestDataRefetchOnFocus(client: QueryClient) {
+  const invalidateGuestQueries = () => {
+    client.invalidateQueries(['tasks']);
+    client.invalidateQueries({ queryKey: ['forest'] });
+    client.invalidateQueries({ queryKey: ['userProgress'] });
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      invalidateGuestQueries();
+    }
+  });
+
+  window.addEventListener('online', invalidateGuestQueries);
+}
+
+setupGuestDataRefetchOnFocus(queryClient);
 
 const root = document.getElementById('root');
 if (!root) {
@@ -36,11 +61,17 @@ if (!root) {
   }
 }
 
-// Register PWA service worker (disabled automatically in development by the helper)
-registerServiceWorker();
+void (async () => {
+  const cleared = await maybeClearClientCachesFromUrl();
+  if (cleared) {
+    window.location.reload();
+    return;
+  }
 
-// Try to sync any offline QR codes when the app starts and whenever we come back online
-syncOfflineQRCodes();
+  registerServiceWorker();
+  syncOfflineQRCodes();
+})();
+
 window.addEventListener('online', () => {
   syncOfflineQRCodes();
 });

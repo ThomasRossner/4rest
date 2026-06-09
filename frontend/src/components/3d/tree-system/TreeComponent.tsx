@@ -5,7 +5,7 @@ import { mapGrowthPointsToCounter, calculateTwigScale } from './growthMapper';
 import { getProcessedTreeModel } from '../../../utils/treeModelCache';
 
 // Preload the tree model for better performance (also preloaded in main.tsx)
-useGLTF.preload('/models/twigLeafTree.glb');
+useGLTF.preload('/old-models/twigLeafTree.glb');
 
 /**
  * TreeComponent - A procedural tree growth component
@@ -33,7 +33,7 @@ export interface TreeComponentRef {
 const TreeComponent = React.forwardRef<TreeComponentRef, AnimatedTreeProps>((props, ref) => {
   const {
     position = [0, 0, 0],
-    modelPath = '/models/twigLeafTree.glb',
+    modelPath = '/old-models/twigLeafTree.glb',
     trunkGrowSteps = 20,
     twigGrowSteps = 8,
     leavesPerTwig = 32,
@@ -276,4 +276,3 @@ const TreeComponent = React.forwardRef<TreeComponentRef, AnimatedTreeProps>((pro
 TreeComponent.displayName = 'TreeComponent';
 
 export default TreeComponent;
-

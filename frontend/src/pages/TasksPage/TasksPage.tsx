@@ -1,14 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { api } from '../../services/api';
-import {
-  FOREST_CATEGORY_KEYS,
-  OTHER_FOREST_CATEGORY_KEY,
-  forestKeyFromTaskCategory,
-  isForestCategoryRouteKey,
-} from '../../constants/forestCategories';
+import { useAuthStore } from '../../stores/authStore';
+import { forestKeyFromTaskCategory, isForestCategoryRouteKey } from '../../constants/forestCategories';
 import { VideoTask } from '../../components/Tasks/VideoTask';
 import { QRCodeTask } from '../../components/Tasks/QRCodeTask';
 import { PhotoTask } from '../../components/Tasks/PhotoTask';
@@ -18,15 +14,24 @@ import { ArticleQuizTask } from '../../components/Tasks/ArticleQuizTask';
 import { SurveyTask } from '../../components/Tasks/SurveyTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
-import { CheckCircle2, Loader2, Lock, Timer } from 'lucide-react';
+import { CheckCircle2, Globe, ListTodo, Loader2, Lock, Map, MapPin, Shuffle, Star, Timer } from 'lucide-react';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
 import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
 import { TaskTypeIcon } from '../../components/Tasks/taskTypeIcons';
-import { CategoryHubIcon } from '../../components/Tasks/CategoryHubIcon';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
 import { TaskDetailView } from '../../components/Tasks/TaskDetailView';
 import { useCategoryTaskGridRowHeight } from '../../hooks/useCategoryTaskGridRowHeight';
 import { descriptionPreviewPlain } from '../../utils/taskDescriptionPreview';
+import {
+  getOnlineTasks,
+  getUniquePlaces,
+  HUB_SCROLL_LIMIT,
+  isPhysicalPlaceTask,
+  isTaskOnline,
+  parseTaskLocation,
+  pickShuffledTasks,
+  type PlaceSummary,
+} from '../../utils/taskHubUtils';
 import './TasksPage.css';
 
 /** Nur diese Typen erscheinen im Filter (keine kaputten/DB-Testwerte im Dropdown). */
@@ -48,8 +53,6 @@ function filterTaskTypeIcon(type: string) {
   return <TaskTypeIcon type={type} size={16} strokeWidth={2} className="tasks-filter-type-icon" />;
 }
 
-const CATEGORY_ORDER = [...FOREST_CATEGORY_KEYS, OTHER_FOREST_CATEGORY_KEY];
-
 function formatLockRemainingMinutes(lockedUntilIso: string): number {
   const untilTs = new Date(lockedUntilIso).getTime();
   if (!Number.isFinite(untilTs)) return 0;
@@ -57,8 +60,21 @@ function formatLockRemainingMinutes(lockedUntilIso: string): number {
   return Math.max(0, Math.ceil(remainingMs / 60000));
 }
 
+type HubTask = {
+  id: string;
+  title?: string;
+  points?: number;
+  thumbnail_url?: string;
+  type?: string;
+};
+
 function TasksPage() {
   const { categoryKey: categoryKeyParam } = useParams<{ categoryKey: string }>();
+  const [searchParams] = useSearchParams();
+  const viewParam = searchParams.get('view');
+  const placeParam = searchParams.get('place');
+  const onlineParam = searchParams.get('online') === 'true';
+  const mapParam = searchParams.get('map') === 'true';
   const navigate = useNavigate();
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   /** Zwischenliste und Ausführung: Detail mit vollem Text + Karte */
@@ -71,7 +87,20 @@ function TasksPage() {
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [prerequisiteTaskIdsFilter, setPrerequisiteTaskIdsFilter] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
-  const { data: tasks, isLoading, refetch } = useQuery('tasks', () => api.getTasks());
+  const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const {
+    data: tasks,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery('tasks', () => api.getTasks(), {
+    enabled: !!(user && token),
+    retry: 2,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
 
   useEffect(() => {
     if (categoryKeyParam && !isForestCategoryRouteKey(categoryKeyParam)) {
@@ -107,15 +136,32 @@ function TasksPage() {
   });
   const { t } = useTranslation();
 
-  const categoryCounts = useMemo(() => {
-    const m: Partial<Record<string, number>> = {};
-    if (!tasks) return m;
-    for (const task of tasks) {
-      const k = forestKeyFromTaskCategory((task as { category?: string }).category);
-      m[k] = (m[k] || 0) + 1;
-    }
-    return m as Record<string, number>;
-  }, [tasks]);
+  const hubPlaces = useMemo(() => getUniquePlaces(tasks), [tasks]);
+
+  const hubCollectionTasks = useMemo(
+    () => pickShuffledTasks(tasks ?? [], `collection-hub-${user?.id ?? 'guest'}`, HUB_SCROLL_LIMIT),
+    [tasks, user?.id]
+  );
+
+  const hubOnlineTasks = useMemo(
+    () => getOnlineTasks(tasks ?? []).slice(0, HUB_SCROLL_LIMIT),
+    [tasks]
+  );
+
+  const isMapView = showLocationMap || mapParam;
+
+  const isHubView =
+    !categoryKeyParam &&
+    !viewParam &&
+    !placeParam &&
+    !onlineParam &&
+    !mapParam &&
+    !isMapView &&
+    !selectedTask &&
+    !detailTaskId;
+
+  const isFilteredListView =
+    !!categoryKeyParam || viewParam === 'all' || viewParam === 'collection' || viewParam === 'places' || !!placeParam || onlineParam;
 
   // Extract unique task types from loaded tasks as fallback
   const taskTypesFromTasks = useMemo(() => {
@@ -149,6 +195,19 @@ function TasksPage() {
       );
     }
 
+    if (placeParam) {
+      filtered = filtered.filter((task: any) => {
+        const loc = parseTaskLocation(task);
+        return loc?.id === placeParam || task.location_id === placeParam;
+      });
+    } else if (viewParam === 'places') {
+      filtered = filtered.filter((task: any) => isPhysicalPlaceTask(task));
+    }
+
+    if (viewParam === 'collection') {
+      filtered = pickShuffledTasks(filtered, `collection-list-${user?.id ?? 'guest'}`, filtered.length);
+    }
+
     // Filter by prerequisite task IDs (Type 2 prerequisites)
     if (prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0) {
       filtered = filtered.filter((task: any) => 
@@ -157,13 +216,8 @@ function TasksPage() {
     }
 
     // Filter by online status
-    if (showOnlineTasks) {
-      filtered = filtered.filter((task: any) => {
-        if (!task.location) return false;
-        const location = typeof task.location === 'string' ? JSON.parse(task.location) : task.location;
-        const isOnline = location.is_online === true || location.is_online === 'true' || String(location.is_online).toLowerCase() === 'true';
-        return isOnline;
-      });
+    if (showOnlineTasks || onlineParam) {
+      filtered = filtered.filter((task: any) => isTaskOnline(task));
     }
 
     // Filter by type
@@ -220,11 +274,15 @@ function TasksPage() {
   }, [
     tasks,
     categoryKeyParam,
+    viewParam,
+    placeParam,
+    onlineParam,
     typeFilter,
     completionFilter,
     timeFilter,
     showOnlineTasks,
     prerequisiteTaskIdsFilter,
+    user?.id,
   ]);
 
   const globalLocationTasks = useMemo(() => {
@@ -266,10 +324,25 @@ function TasksPage() {
   };
 
   // Conditional returns after all hooks
-  if (isLoading) {
+  if (isLoading || (isFetching && !tasks)) {
     return (
       <div className="tasks-page">
         <LoadingSkeleton lines={6} />
+      </div>
+    );
+  }
+
+  if (isError && !tasks) {
+    return (
+      <div className="tasks-page">
+        <EmptyState
+          title={t('tasks.loadError')}
+          action={
+            <button type="button" className="btn-primary" onClick={() => refetch()}>
+              {t('common.actions.refresh')}
+            </button>
+          }
+        />
       </div>
     );
   }
@@ -360,50 +433,115 @@ function TasksPage() {
     );
   }
 
-  if (!categoryKeyParam && !selectedTask && !showLocationMap) {
+  const renderHubTaskTile = (task: HubTask) => (
+    <button
+      key={task.id}
+      type="button"
+      className="glass-task-tile"
+      onClick={() => setDetailTaskId(task.id)}
+    >
+      <span className="glass-task-tile__thumb">
+        {task.thumbnail_url ? (
+          <img src={task.thumbnail_url} alt="" />
+        ) : (
+          <TaskTypeIcon type={task.type ?? ''} size={22} strokeWidth={2} />
+        )}
+      </span>
+      <span className="glass-task-tile__title">{task.title}</span>
+      <span className="glass-points-badge">
+        <Star size={10} strokeWidth={2} aria-hidden />
+        {t('tasksComponents.points', { points: Number(task.points ?? 0) })}
+      </span>
+    </button>
+  );
+
+  const renderPlaceTile = (place: PlaceSummary) => (
+    <Link key={place.id} to={`/tasks?place=${encodeURIComponent(place.id)}`} className="glass-task-tile">
+      <span className="glass-task-tile__thumb">
+        <MapPin size={22} strokeWidth={2} aria-hidden />
+      </span>
+      <span className="glass-task-tile__title">{place.name}</span>
+      <span className="glass-points-badge">
+        {t('tasks.hub.placeTaskCount', { count: place.taskCount })}
+      </span>
+    </Link>
+  );
+
+  if (isHubView) {
+    const visiblePlaces = hubPlaces.slice(0, HUB_SCROLL_LIMIT);
+
     return (
-      <div className="tasks-page tasks-page--hub">
-        <div className="tasks-category-grid">
-          {CATEGORY_ORDER.map((key) => {
-            const count = categoryCounts[key] || 0;
-            if (count === 0) return null;
-            return (
-              <Link
-                key={key}
-                to={`/tasks/c/${key}`}
-                className={`tasks-category-tile tasks-category-tile--${key}`}
-              >
-                <span className="tasks-category-tile-top">
-                  <span className="tasks-category-tile-icon" aria-hidden>
-                    <CategoryHubIcon categoryKey={key} className="tasks-category-tile-icon-svg" />
-                  </span>
-                  <span className="tasks-category-tile-count">
-                    {t('tasks.categories.taskCount', { count })}
-                  </span>
-                </span>
-                <span className="tasks-category-tile-title">{t(`tasks.categories.${key}`)}</span>
-                <span className="tasks-category-tile-description">
-                  {t(`tasks.categories.${key}Description`)}
-                </span>
+      <div className="tasks-page tasks-page--hub tasks-page--hub-sections">
+        <section className="glass-section tasks-hub-section" aria-labelledby="tasks-hub-overview-title">
+          <h2 id="tasks-hub-overview-title" className="glass-section__title">
+            {t('tasks.hub.sections.overview')}
+          </h2>
+          <div className="tasks-hub-overview-actions">
+            <Link to="/tasks?view=all" className="glass-action-card tasks-hub-action-card">
+              <span className="glass-action-card__head">
+                <ListTodo size={16} strokeWidth={2} aria-hidden />
+                {t('tasks.hub.allTasks.title')}
+              </span>
+            </Link>
+            <Link to="/tasks?map=true" className="glass-action-card tasks-hub-action-card">
+              <span className="glass-action-card__head">
+                <Map size={16} strokeWidth={2} aria-hidden />
+                {t('tasks.hub.mapView.title')}
+              </span>
+            </Link>
+          </div>
+        </section>
+
+        {visiblePlaces.length > 0 && (
+          <section className="glass-section tasks-hub-section" aria-labelledby="tasks-hub-places-title">
+            <h2 id="tasks-hub-places-title" className="glass-section__title">
+              {t('tasks.hub.sections.places')}
+            </h2>
+            <div className="glass-scroll-row tasks-hub-scroll-row">
+              {visiblePlaces.map(renderPlaceTile)}
+              <Link to="/tasks?view=places" className="glass-task-tile glass-task-tile--all">
+                <MapPin size={22} strokeWidth={2} aria-hidden />
+                <span className="glass-task-tile__title">{t('tasks.hub.all')}</span>
               </Link>
-            );
-          })}
-        </div>
-        <div className="tasks-hub-map-action">
-          <button
-            type="button"
-            className="location-button"
-            onClick={() => setShowLocationMap(true)}
-            title={t('tasks.showGlobalLocationMap')}
-          >
-            {t('tasks.mapButton')}
-          </button>
-        </div>
+            </div>
+          </section>
+        )}
+
+        {hubCollectionTasks.length > 0 && (
+          <section className="glass-section tasks-hub-section" aria-labelledby="tasks-hub-collection-title">
+            <h2 id="tasks-hub-collection-title" className="glass-section__title">
+              {t('tasks.hub.sections.collection')}
+            </h2>
+            <div className="glass-scroll-row tasks-hub-scroll-row">
+              {hubCollectionTasks.map(renderHubTaskTile)}
+              <Link to="/tasks?view=collection" className="glass-task-tile glass-task-tile--all">
+                <Shuffle size={22} strokeWidth={2} aria-hidden />
+                <span className="glass-task-tile__title">{t('tasks.hub.all')}</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {hubOnlineTasks.length > 0 && (
+          <section className="glass-section tasks-hub-section" aria-labelledby="tasks-hub-online-title">
+            <h2 id="tasks-hub-online-title" className="glass-section__title">
+              {t('tasks.hub.sections.online')}
+            </h2>
+            <div className="glass-scroll-row tasks-hub-scroll-row">
+              {hubOnlineTasks.map(renderHubTaskTile)}
+              <Link to="/tasks?online=true" className="glass-task-tile glass-task-tile--all">
+                <Globe size={22} strokeWidth={2} aria-hidden />
+                <span className="glass-task-tile__title">{t('tasks.hub.all')}</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
       </div>
     );
   }
 
-  if (showLocationMap) {
+  if (isMapView) {
     const mapTasks = categoryKeyParam ? filteredTasks : globalLocationTasks;
     return (
       <div className="tasks-page tasks-page--map">
@@ -411,7 +549,10 @@ function TasksPage() {
           <button
             type="button"
             className="tasks-map-back"
-            onClick={() => setShowLocationMap(false)}
+            onClick={() => {
+              setShowLocationMap(false);
+              if (mapParam) navigate('/tasks');
+            }}
             title={t('tasks.backToList')}
             aria-label={t('tasks.backToList')}
           >
@@ -433,9 +574,26 @@ function TasksPage() {
     );
   }
 
-  if (!categoryKeyParam) {
+  if (!isFilteredListView) {
     return null;
   }
+
+  const listViewTitle = (() => {
+    if (categoryKeyParam && isForestCategoryRouteKey(categoryKeyParam)) {
+      return t(`tasks.categories.${categoryKeyParam}`);
+    }
+    if (placeParam) {
+      const place = hubPlaces.find((p) => p.id === placeParam);
+      return place?.name ?? t('tasks.hub.sections.places');
+    }
+    if (viewParam === 'all') return t('tasks.hub.allTasks.title');
+    if (viewParam === 'collection') return t('tasks.hub.sections.collection');
+    if (viewParam === 'places') return t('tasks.hub.sections.places');
+    if (onlineParam) return t('tasks.hub.sections.online');
+    return t('tasks.title');
+  })();
+
+  const backToHubLabel = t('tasks.hub.backToHub');
 
   return (
       <div className="tasks-page tasks-page--category">
@@ -446,11 +604,12 @@ function TasksPage() {
               type="button"
               className="tasks-icon-back"
               onClick={() => navigate('/tasks')}
-              title={t('tasks.categories.backToCategories')}
-              aria-label={t('tasks.categories.backToCategories')}
+              title={backToHubLabel}
+              aria-label={backToHubLabel}
             >
               <BackArrowIcon className="tasks-icon-back-svg" />
             </button>
+            <h2 className="tasks-header-category-title">{listViewTitle}</h2>
           <div className="tasks-header-category-actions">
             {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
               <div className="tasks-header-category-actions-row">
@@ -470,12 +629,33 @@ function TasksPage() {
                   {t('tasks.locationButton')}
                 </button>
               </div>
-            ) : showOnlineTasks ? (
+            ) : showOnlineTasks || onlineParam ? (
               <div className="tasks-header-category-actions-row">
                 <button
                   type="button"
                   className="location-button"
-                  onClick={() => setShowOnlineTasks(false)}
+                  onClick={() => {
+                    setShowOnlineTasks(false);
+                    navigate('/tasks');
+                  }}
+                >
+                  {t('tasks.prerequisites.clearFilter')}
+                </button>
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => setShowLocationMap(true)}
+                  title={t('tasks.showLocation')}
+                >
+                  {t('tasks.locationButton')}
+                </button>
+              </div>
+            ) : placeParam ? (
+              <div className="tasks-header-category-actions-row">
+                <button
+                  type="button"
+                  className="location-button"
+                  onClick={() => navigate('/tasks')}
                 >
                   {t('tasks.prerequisites.clearFilter')}
                 </button>
@@ -593,7 +773,7 @@ function TasksPage() {
               role="button"
               tabIndex={0}
               aria-disabled={isLocked}
-              className={`task-card task-card--list-tile ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''} ${isQuizLockedByWrongAnswer ? 'task-card-quiz-locked' : ''}`}
+              className={`task-card task-card--list-row ${isCompleted ? 'task-card-completed' : ''} ${isValidating ? 'task-card-validating' : ''} ${isLocked ? 'task-card-locked' : ''} ${isQuizLockedByWrongAnswer ? 'task-card-quiz-locked' : ''}`}
               onClick={() => openTaskDetail(task)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -602,69 +782,69 @@ function TasksPage() {
                 }
               }}
             >
-            <div className="task-tile-zone task-tile-zone--top">
-              <span className="task-icon task-icon--tile">
+              <span className="task-list-thumb">
                 {task.thumbnail_url ? (
-                  <img src={task.thumbnail_url} alt="" className="task-icon-image task-icon-image--tile" />
+                  <img src={task.thumbnail_url} alt="" className="task-list-thumb__image" />
                 ) : (
-                  <TaskTypeIcon type={task.type} size={34} strokeWidth={2} className="task-icon-lucide--tile" />
+                  <TaskTypeIcon type={task.type} size={28} strokeWidth={2} className="task-list-thumb__icon" />
                 )}
               </span>
-              <div className="task-tile-top-right">
-                <span className="task-points task-points--tile">{t('tasksComponents.points', { points: task.points })}</span>
-                <div className="task-tile-status-icons">
+              <div className="task-list-body">
+                <h3 className="task-list-title">{task.title}</h3>
+                {isQuizLockedByWrongAnswer && (
+                  <p className="task-list-hint">
+                    {t('tasks.detail.quizLockedRemaining', { minutes: quizLockRemainingMinutes })}
+                  </p>
+                )}
+                {isLocked ? (
+                  <p className="task-list-hint">{t('tasks.prerequisites.unlockMessage')}</p>
+                ) : (
+                  <p className={`task-list-preview ${!previewText ? 'task-list-preview--empty' : ''}`}>
+                    {previewText || t('tasks.tile.noPreview')}
+                  </p>
+                )}
+                {task.prerequisite_task_ids && Array.isArray(task.prerequisite_task_ids) && task.prerequisite_task_ids.length > 0 && (
+                  <button
+                    type="button"
+                    className="task-prerequisite-button task-prerequisite-button--list"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPrerequisiteTaskIdsFilter(task.prerequisite_task_ids);
+                    }}
+                  >
+                    {t('tasks.prerequisites.showPrerequisites')}
+                  </button>
+                )}
+              </div>
+              <div className="task-list-meta">
+                <span className="glass-points-badge">
+                  <Star size={12} strokeWidth={2} aria-hidden />
+                  {t('tasksComponents.points', { points: task.points })}
+                </span>
+                <div className="task-list-status-icons">
                   {isCompleted && (
-                    <span className="task-completed-badge task-completed-badge--tile" title={t('tasks.badges.completed')}>
-                      <CheckCircle2 size={16} strokeWidth={2.5} className="task-tile-badge-svg" aria-hidden />
+                    <span className="task-list-status" title={t('tasks.badges.completed')}>
+                      <CheckCircle2 size={15} strokeWidth={2.5} aria-hidden />
                     </span>
                   )}
                   {isValidating && (
-                    <span className="task-validating-badge task-validating-badge--tile" title={t('tasks.badges.validating')}>
-                      <Loader2 size={16} strokeWidth={2.5} className="task-tile-badge-svg task-tile-badge-svg--spin" aria-hidden />
+                    <span className="task-list-status" title={t('tasks.badges.validating')}>
+                      <Loader2 size={15} strokeWidth={2.5} className="task-tile-badge-svg--spin" aria-hidden />
                     </span>
                   )}
                   {isLocked && (
-                    <span className="task-locked-badge task-locked-badge--tile" title={t('tasks.badges.locked')}>
-                      <Lock size={15} strokeWidth={2.5} className="task-tile-badge-svg" aria-hidden />
+                    <span className="task-list-status" title={t('tasks.badges.locked')}>
+                      <Lock size={14} strokeWidth={2.5} aria-hidden />
                     </span>
                   )}
                   {isQuizLockedByWrongAnswer && (
-                    <span className="task-locked-badge task-locked-badge--tile" title={t('tasks.detail.quizLockedHint')}>
-                      <Timer size={15} strokeWidth={2.5} className="task-tile-badge-svg" aria-hidden />
+                    <span className="task-list-status" title={t('tasks.detail.quizLockedHint')}>
+                      <Timer size={14} strokeWidth={2.5} aria-hidden />
                     </span>
                   )}
                 </div>
               </div>
             </div>
-            <div className="task-tile-zone task-tile-zone--middle">
-              <h3 className="task-title task-title--tile-middle">{task.title}</h3>
-            </div>
-            <div className="task-tile-zone task-tile-zone--bottom">
-              {isQuizLockedByWrongAnswer && (
-                <p className="task-tile-locked-hint">
-                  {t('tasks.detail.quizLockedRemaining', { minutes: quizLockRemainingMinutes })}
-                </p>
-              )}
-              {isLocked ? (
-                <p className="task-tile-locked-hint">{t('tasks.prerequisites.unlockMessage')}</p>
-              ) : null}
-              <p className={`task-tile-preview ${!previewText ? 'task-tile-preview--empty' : ''}`}>
-                {previewText || t('tasks.tile.noPreview')}
-              </p>
-              {task.prerequisite_task_ids && Array.isArray(task.prerequisite_task_ids) && task.prerequisite_task_ids.length > 0 && (
-                <button
-                  type="button"
-                  className="task-prerequisite-button task-prerequisite-button--tile"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPrerequisiteTaskIdsFilter(task.prerequisite_task_ids);
-                  }}
-                >
-                  {t('tasks.prerequisites.showPrerequisites')}
-                </button>
-              )}
-            </div>
-          </div>
           );
           })}
         </div>

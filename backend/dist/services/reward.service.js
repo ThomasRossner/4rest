@@ -115,6 +115,13 @@ export async function getRewardsService(userId) {
     if (hideRecurrenceForPlayer) {
         const kept = [];
         for (const row of rows) {
+            // Defensive check: hide reward immediately when this exact reward row has a pending redemption.
+            // This avoids edge cases where family-based checks may miss the current row in production data.
+            const pendingExact = await db.query(`SELECT 1 FROM reward_redemptions
+         WHERE user_id = $1 AND reward_id = $2 AND status = 'pending'
+         LIMIT 1`, [userId, row.id]);
+            if (pendingExact.rows.length > 0)
+                continue;
             if (await hasPendingRewardRedemption(userId, row.id))
                 continue;
             if (row.recurrence === 'once') {

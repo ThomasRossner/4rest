@@ -11,7 +11,7 @@ const INITIAL_TREE_BATCH = 40;
 const TREE_BATCH_STEP = 30;
 const TREE_BATCH_INTERVAL_MS = 34;
 
-export default function SceneController({ globalPoints, maxPoints, treeGrowSteps, plantedTrees, plantedAtList = [], dyad1Scale = 2, dyad2Scale = 2, dyad3Scale = 2, lowPerformanceMode = false }) {
+export default function SceneController({ globalPoints, maxPoints, treeGrowSteps, plantedTrees, plantedAtList = [], dyad1Scale = 2, dyad2Scale = 2, dyad3Scale = 2, lowPerformanceMode = false, transparentBackground = false }) {
   const DAILY_GROWTH_BONUS = 0.08;
   const BASE_TREE_SIZE_FACTOR = 1;
   const MIN_AGE_SIZE_FACTOR = 0.75;
@@ -30,8 +30,12 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
     // console.log("Ground:", ground);
   }, [ground]);
   useEffect(() => {
+    if (transparentBackground) {
+      scene.background = null;
+      return;
+    }
     scene.background = new Color('#2f6fe4');
-  }, [scene]);
+  }, [scene, transparentBackground]);
 
   const treeAnchors = useMemo(() => {
     const arr = []
@@ -256,14 +260,16 @@ export default function SceneController({ globalPoints, maxPoints, treeGrowSteps
 
   return (
     <>
-      <Sky
-        distance={450000}
-        sunPosition={sunPosition}
-        inclination={0.5}
-        azimuth={0.25}
-        turbidity={2.0}
-        rayleigh={2.6}
-      />
+      {!transparentBackground && (
+        <Sky
+          distance={450000}
+          sunPosition={sunPosition}
+          inclination={0.5}
+          azimuth={0.25}
+          turbidity={2.0}
+          rayleigh={2.6}
+        />
+      )}
       <directionalLight
         ref={lightRef}
         position={sunPosition}

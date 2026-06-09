@@ -15,7 +15,7 @@ interface LeavesProps {
 
 const Leaves = React.forwardRef<THREE.Group, LeavesProps>((props, ref) => {
   const {
-    modelPath = '/models/leaves.glb',
+    modelPath = '/old-models/leaves.glb',
     ...otherProps
   } = props;
   
@@ -29,4 +29,3 @@ const Leaves = React.forwardRef<THREE.Group, LeavesProps>((props, ref) => {
 Leaves.displayName = 'Leaves';
 
 export default Leaves;
-

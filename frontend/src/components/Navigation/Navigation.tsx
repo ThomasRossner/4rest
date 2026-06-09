@@ -8,11 +8,11 @@ import {
   LogOut,
   Mail,
   Ticket,
-  TrendingUp,
   TreePine,
   Trees,
   Trophy,
   User,
+  Users,
 } from 'lucide-react';
 import { isForestCategoryRouteKey } from '../../constants/forestCategories';
 import { useTranslation } from 'react-i18next';
@@ -84,6 +84,9 @@ function Navigation() {
     }
     if (path === '/rewards') {
       return t('rewards.title');
+    }
+    if (path === '/groups') {
+      return t('groups.title');
     }
     if (path === '/statistics') {
       return userRole === 'guest' ? t('rankings.title') : t('statistics.title');
@@ -165,9 +168,9 @@ function Navigation() {
     { path: '/forest', label: t('navigation.forest'), icon: <Trees {...iconProps} /> },
     { path: '/rewards', label: t('navigation.rewards'), icon: <Gift {...iconProps} /> },
     {
-      path: '/statistics',
-      label: userRole === 'guest' ? t('navigation.rankings') : t('navigation.statistics'),
-      icon: <TrendingUp {...iconProps} />,
+      path: '/groups',
+      label: t('navigation.groups'),
+      icon: <Users {...iconProps} />,
     },
   ];
 

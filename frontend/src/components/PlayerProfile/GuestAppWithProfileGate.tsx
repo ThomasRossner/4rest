@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
@@ -11,6 +12,7 @@ import ForestLabPage from '../../pages/ForestLabPage/ForestLabPage';
 import TreeSystemAppDemoPage from '../../pages/TreeSystemAppDemoPage/TreeSystemAppDemoPage';
 import RewardsPage from '../../pages/RewardsPage/RewardsPage';
 import StatisticsPage from '../../pages/StatisticsPage/StatisticsPage';
+import GroupsPage from '../../pages/GroupsPage/GroupsPage';
 import ProfilePage from '../../pages/ProfilePage/ProfilePage';
 import PointsBonusPage from '../../pages/Employee/PointsBonusPage';
 import ContestRankingPage from '../../pages/ContestRankingPage/ContestRankingPage';
@@ -28,17 +30,27 @@ type Props = {
  */
 export default function GuestAppWithProfileGate({ user }: Props) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
   const [bootReady, setBootReady] = useState(false);
   const [bootFailed, setBootFailed] = useState(false);
+  const [bootAuthFailed, setBootAuthFailed] = useState(false);
   const liveUser = useAuthStore((s) => s.user);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        await api.refreshMe();
-      } catch {
-        if (!cancelled) setBootFailed(true);
+        await api.refreshMe({ strict: true });
+      } catch (error) {
+        if (!cancelled) {
+          const authFailed = axios.isAxiosError(error) && error.response?.status === 401;
+          if (authFailed) {
+            logout();
+            setBootAuthFailed(true);
+          }
+          setBootFailed(true);
+        }
       } finally {
         if (!cancelled) setBootReady(true);
       }
@@ -46,7 +58,7 @@ export default function GuestAppWithProfileGate({ user }: Props) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [logout]);
 
   if (!bootReady) {
     return (
@@ -60,14 +72,25 @@ export default function GuestAppWithProfileGate({ user }: Props) {
     return (
       <div className="player-profile-boot">
         <p>{t('playerProfile.error.loadProfile')}</p>
-        <button
-          type="button"
-          className="player-profile-onboarding__btn player-profile-onboarding__btn--primary"
-          style={{ marginTop: 12 }}
-          onClick={() => window.location.reload()}
-        >
-          {t('common.actions.refresh')}
-        </button>
+        {bootAuthFailed ? (
+          <button
+            type="button"
+            className="player-profile-onboarding__btn player-profile-onboarding__btn--primary"
+            style={{ marginTop: 12 }}
+            onClick={() => navigate('/login?session=expired', { replace: true })}
+          >
+            {t('navigation.logout')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="player-profile-onboarding__btn player-profile-onboarding__btn--primary"
+            style={{ marginTop: 12 }}
+            onClick={() => window.location.reload()}
+          >
+            {t('common.actions.refresh')}
+          </button>
+        )}
       </div>
     );
   }
@@ -91,6 +114,7 @@ export default function GuestAppWithProfileGate({ user }: Props) {
         <Route path="forest-lab" element={<ForestLabPage />} />
         <Route path="tree-system-app" element={<TreeSystemAppDemoPage />} />
         <Route path="rewards" element={<RewardsPage />} />
+        <Route path="groups" element={<GroupsPage />} />
         <Route path="statistics" element={<StatisticsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="contests/:contestId" element={<ContestRankingPage />} />

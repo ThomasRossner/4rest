@@ -1,4 +1,14 @@
-/* Abstand unter fester Top-Nav: --app-nav-* in index.css */
+.layout-main {
+  flex: 1;
+  padding: var(--spacing-md);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8px + var(--app-nav-top-offset));
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
 
 .layout {
   display: flex;
@@ -6,24 +16,25 @@
   min-height: 100vh;
 }
 
-/* Startseite: kein Seiten-Scroll — fester Viewport, Inhalt nur im Flex-Bereich */
 .layout.layout--home {
-  min-height: unset;
+  min-height: 100dvh;
   height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
 }
 
 .layout-main.layout-main--home {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  padding: 0 var(--spacing-sm);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 6px + var(--app-nav-top-offset));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px + var(--app-nav-bottom-offset));
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Wald: volle Fläche zwischen fester Titelzeile und unterer Button-Leiste */
 .layout.layout--forest {
   min-height: unset;
   height: 100dvh;
@@ -42,44 +53,8 @@
   margin: 0;
   max-width: 100%;
   width: 100%;
-  padding-top: calc(72px + env(safe-area-inset-top, 0px));
-  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  position: relative;
   box-sizing: border-box;
-}
-
-@media (min-width: 1025px) {
-  .layout-main.layout-main--forest {
-    padding-top: calc(80px + env(safe-area-inset-top, 0px));
-  }
-}
-
-.layout-main {
-  flex: 1;
-  padding: var(--spacing-md);
-  padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-md) + var(--app-nav-top-offset));
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  min-width: 0;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-html[data-theme='atlas'] .layout-main:not(.layout-main--forest):not(.layout-main--home) {
-  background: linear-gradient(
-    175deg,
-    rgba(250, 243, 232, 0.92) 0%,
-    rgba(237, 226, 210, 0.55) 45%,
-    rgba(228, 216, 198, 0.35) 100%
-  );
-  border-radius: 0 0 24px 24px;
-  box-shadow: var(--shadow-warm-inset);
-}
-
-html[data-theme='classic'] .layout-main:not(.layout-main--forest):not(.layout-main--home) {
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 .layout-main.layout-main--forest,
@@ -94,5 +69,11 @@ html[data-theme='classic'] .layout-main:not(.layout-main--forest):not(.layout-ma
     padding: var(--spacing-xs);
     padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-xs) + var(--app-nav-top-offset));
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-xs) + var(--app-nav-bottom-offset));
+  }
+
+  .layout-main.layout-main--forest {
+    padding: 0;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 }

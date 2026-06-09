@@ -4,7 +4,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LanguageSwitcher } from '../../components/LanguageSwitcher/LanguageSwitcher';
-import { ThemeSwitcher } from '../../components/ThemeSwitcher/ThemeSwitcher';
 import './LoginPage.css';
 import { resolveApiBaseUrl } from '../../utils/resolveApiBaseUrl';
 import { RELEASE_DISPLAY_NAME } from '../../config/releaseDisplayName';
@@ -782,7 +781,6 @@ function LoginPage() {
           )}
         </div>
         <div className="login-language-row">
-          <ThemeSwitcher variant="compact" />
           <LanguageSwitcher compact className="login-language-switcher" />
         </div>
       </div>

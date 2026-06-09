@@ -30,6 +30,23 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ error?: string; message?: string }>) => {
+    const status = error.response?.status;
+    if (status === 401) {
+      const path = window.location.pathname;
+      const isPublicRoute =
+        path.startsWith('/login') ||
+        path.startsWith('/public/') ||
+        path.startsWith('/auth/') ||
+        path === '/privacy';
+      const store = useAuthStore.getState();
+      if (!isPublicRoute && (store.isAuthenticated || store.token)) {
+        store.logout();
+        if (!path.startsWith('/login')) {
+          window.location.assign('/login?session=expired');
+        }
+      }
+    }
+
     const data = error.response?.data;
     if (data && typeof data === 'object') {
       const serverMsg =
@@ -123,18 +140,21 @@ export const api = {
     }
   },
 
-  async refreshMe() {
+  async refreshMe(options?: { strict?: boolean }) {
     try {
       const data = await this.getMe();
       if (data) {
         const store = useAuthStore.getState();
-        const nextUser = (data.user || data);
+        const nextUser = data.user || data;
         if (nextUser) {
-          // Replace entirely to ensure new reference and re-render
-          store.setUser(nextUser as any);
+          store.setUser(nextUser as Parameters<typeof store.setUser>[0]);
         }
+      } else if (options?.strict) {
+        throw new Error('User profile unavailable');
       }
-    } catch (_) {}
+    } catch (error) {
+      if (options?.strict) throw error;
+    }
   },
 
   // GDPR

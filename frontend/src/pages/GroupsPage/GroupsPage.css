@@ -1,0 +1,31 @@
+.groups-page {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 440px;
+  margin: auto;
+  width: 100%;
+  padding: 0 10px 6px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.groups-page .groups-section {
+  flex-shrink: 0;
+  margin: 0 4px;
+  border-radius: 18px;
+}
+
+@media (max-width: 480px) {
+  .groups-page {
+    gap: 16px;
+    padding: 0 8px 4px;
+  }
+
+  .groups-page .groups-section {
+    margin: 0 2px;
+  }
+}

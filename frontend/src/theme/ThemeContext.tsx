@@ -1,49 +1,28 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import {
+  DEFAULT_UI_THEME,
   UI_THEME_STORAGE_KEY,
   type UiTheme,
   applyThemeToDocument,
-  readStoredTheme,
 } from './uiTheme';
 
 type ThemeContextValue = {
   theme: UiTheme;
-  setTheme: (theme: UiTheme) => void;
-  toggleTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<UiTheme>(() => readStoredTheme());
-
-  const setTheme = useCallback((next: UiTheme) => {
-    setThemeState(next);
-    applyThemeToDocument(next);
+  useEffect(() => {
+    applyThemeToDocument(DEFAULT_UI_THEME);
     try {
-      localStorage.setItem(UI_THEME_STORAGE_KEY, next);
+      localStorage.setItem(UI_THEME_STORAGE_KEY, DEFAULT_UI_THEME);
     } catch {
       /* ignore */
     }
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setThemeState((prev) => {
-      const next = prev === 'atlas' ? 'classic' : 'atlas';
-      applyThemeToDocument(next);
-      try {
-        localStorage.setItem(UI_THEME_STORAGE_KEY, next);
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }, []);
-
-  const value = useMemo(
-    () => ({ theme, setTheme, toggleTheme }),
-    [theme, setTheme, toggleTheme]
-  );
+  const value = useMemo(() => ({ theme: DEFAULT_UI_THEME }), []);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
@@ -54,9 +33,4 @@ export function useTheme(): ThemeContextValue {
     throw new Error('useTheme must be used within ThemeProvider');
   }
   return ctx;
-}
-
-/** Optional: außerhalb des Providers (z. B. Storybook) — nur lesen. */
-export function useThemeOptional(): ThemeContextValue | null {
-  return useContext(ThemeContext);
 }

@@ -1,71 +1,40 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { useGLTF } from '@react-three/drei';
-import { ArrowRight, Gift, Trees } from 'lucide-react';
+import { ListTodo, Star, UserPlus } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
+import { TaskTypeIcon } from '../../components/Tasks/taskTypeIcons';
+import { forestKeyFromTaskCategory } from '../../constants/forestCategories';
+import ForestCategoryProgressGrid from '../../components/Forest/ForestCategoryProgressGrid';
+import { FOREST_PROTOTYPE_TREE_GROW_STEPS } from '../../components/3d/ForestPrototypeScene';
+import { filterExecutableTasks } from '../../utils/executableTasks';
 import './HomePage.css';
 
 function HomePage() {
   const user = useAuthStore((s) => s.user);
+  const userId = user?.id;
+  const forestPoints = user?.forestPoints;
   const { t } = useTranslation();
 
   const { data: tasks } = useQuery('tasks', () => api.getTasks(), {
     enabled: !!user,
   });
 
-  const { openCount, totalCount } = useMemo(() => {
-    const list = Array.isArray(tasks) ? tasks : [];
-    const total = list.length;
-    const open = list.filter((task: { completed?: boolean }) => !task.completed).length;
-    return { openCount: open, totalCount: total };
-  }, [tasks]);
+  const { data: progress } = useQuery(
+    ['userProgress', userId],
+    () => api.getUserProgress(userId as string),
+    { enabled: !!userId }
+  );
 
-  const summaryText = useMemo(() => {
-    if (totalCount === 0) {
-      return t('home.atlas.summaryNone');
-    }
-    if (openCount === 0) {
-      return t('home.atlas.summaryAllDone');
-    }
-    return t('home.atlas.summaryOpen', { open: openCount, total: totalCount });
-  }, [totalCount, openCount, t]);
+  const nextTasks = useMemo(() => filterExecutableTasks(tasks).slice(0, 10), [tasks]);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const preloadModels = () => {
-      try {
-        useGLTF.preload('/models/twigLeafTree.glb');
-        useGLTF.preload('/models/tree.glb');
-        useGLTF.preload('/models/leaves.glb');
-      } catch (error) {
-        console.debug('Model preload:', error);
-      }
-    };
-
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(preloadModels, { timeout: 2000 });
-    } else {
-      setTimeout(preloadModels, 100);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    const html = document.documentElement;
-    const prevHtml = html.style.overflow;
-    const prevBody = document.body.style.overflow;
-    html.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    return () => {
-      html.style.overflow = prevHtml;
-      document.body.style.overflow = prevBody;
-    };
-  }, [user]);
+  const forestLevel = useMemo(() => {
+    const planted = progress?.treesPlanted ?? 0;
+    return Math.min(planted, FOREST_PROTOTYPE_TREE_GROW_STEPS);
+  }, [progress?.treesPlanted]);
 
   if (!user) {
     return (
@@ -76,33 +45,67 @@ function HomePage() {
   }
 
   return (
-    <div className="home-page home-page--no-scroll">
-      <div className="home-hero">
-        <p className="home-subtitle">{t('home.subtitle')}</p>
-      </div>
-
-      <div className="home-content">
-        <section className="home-atlas" aria-labelledby="home-atlas-heading">
-          <h2 id="home-atlas-heading" className="home-atlas__title">
-            {t('home.atlas.sectionTitle')}
-          </h2>
-          <p className="home-atlas__summary">{summaryText}</p>
-          <Link to="/tasks" className="home-atlas__cta btn-primary">
-            <span>{t('home.atlas.ctaTasks')}</span>
-            <ArrowRight size={20} strokeWidth={2} className="home-atlas__cta-icon" aria-hidden />
+    <div className="home-page home-page--sections">
+      <section className="glass-section home-section" aria-labelledby="home-next-tasks-title">
+        <h2 id="home-next-tasks-title" className="glass-section__title">
+          {t('home.nextTasks.title')}
+        </h2>
+        <div className="glass-scroll-row home-task-row">
+          {nextTasks.map((task) => {
+            const categoryKey = forestKeyFromTaskCategory(
+              (task as { category?: string }).category
+            );
+            return (
+            <Link
+              key={task.id}
+              to={`/tasks/c/${categoryKey}`}
+              className="glass-task-tile"
+            >
+              <span className="glass-task-tile__thumb">
+                {task.thumbnail_url ? (
+                  <img src={task.thumbnail_url} alt="" />
+                ) : (
+                  <TaskTypeIcon type={task.type ?? ''} size={22} strokeWidth={2} />
+                )}
+              </span>
+              <span className="glass-task-tile__title">{task.title}</span>
+              <span className="glass-points-badge">
+                <Star size={10} strokeWidth={2} aria-hidden />
+                {t('tasksComponents.points', { points: Number(task.points ?? 0) })}
+              </span>
+            </Link>
+            );
+          })}
+          <Link to="/tasks" className="glass-task-tile glass-task-tile--all">
+            <ListTodo size={22} strokeWidth={2} aria-hidden />
+            <span className="glass-task-tile__title">{t('home.nextTasks.allTasks')}</span>
           </Link>
-          <div className="home-atlas__secondary">
-            <Link to="/forest" className="home-atlas__link">
-              <Trees size={20} strokeWidth={2} aria-hidden />
-              <span>{t('home.atlas.exploreForest')}</span>
-            </Link>
-            <Link to="/rewards" className="home-atlas__link">
-              <Gift size={20} strokeWidth={2} aria-hidden />
-              <span>{t('home.atlas.openRewards')}</span>
-            </Link>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
+
+      <section className="glass-section home-section" aria-labelledby="home-progress-title">
+        <h2 id="home-progress-title" className="glass-section__title">
+          {t('home.progress.title')}
+        </h2>
+        <span className="glass-level-badge">
+          {t('home.progress.level', {
+            level: forestLevel,
+            max: FOREST_PROTOTYPE_TREE_GROW_STEPS,
+          })}
+        </span>
+        <ForestCategoryProgressGrid forestPoints={forestPoints} className="home-category-grid" />
+      </section>
+
+      <section className="glass-section home-section home-invite" aria-labelledby="home-invite-title">
+        <h2 id="home-invite-title" className="glass-section__title">
+          {t('home.invite.title')}
+        </h2>
+        <p className="home-invite__text">{t('home.invite.description')}</p>
+        <Link to="/profile" className="glass-invite-cta">
+          <UserPlus size={14} strokeWidth={2} aria-hidden />
+          {t('home.invite.cta')}
+        </Link>
+      </section>
     </div>
   );
 }

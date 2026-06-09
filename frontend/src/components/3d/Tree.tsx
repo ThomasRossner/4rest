@@ -31,7 +31,7 @@ function FallbackTree({ position, size }: TreeProps) {
 
 // Static tree model (fallback for when animated tree is not available)
 function StaticTreeModel({ position, size, scale }: TreeProps) {
-  const { scene } = useGLTF('/models/tree.glb');
+  const { scene } = useGLTF('/old-models/tree.glb');
   
   // Use size from database if available, otherwise fallback to scale prop or default
   const treeSize = size ?? scale ?? 0.035;
@@ -73,7 +73,7 @@ function AnimatedTreeModel({ position, growthPoints, size, maxVisibleLeaves }: T
       <TreeComponent
         position={position}
         growthPoints={growthPoints}
-        modelPath="/models/twigLeafTree.glb"
+        modelPath="/old-models/twigLeafTree.glb"
         maxVisibleLeaves={maxVisibleLeaves}
         disableLeafShadows={true}
         castShadow
@@ -146,11 +146,11 @@ class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Tree model loading error:', error, errorInfo);
     if (this.props.useAnimated) {
-      console.error('File path attempted: /models/twigLeafTree.glb');
-      console.error('Make sure the file exists at: frontend/public/models/twigLeafTree.glb');
+      console.error('File path attempted: /old-models/twigLeafTree.glb');
+      console.error('Make sure the file exists at: frontend/public/old-models/twigLeafTree.glb');
     } else {
-      console.error('File path attempted: /models/tree.glb');
-      console.error('Make sure the file exists at: frontend/public/models/tree.glb');
+      console.error('File path attempted: /old-models/tree.glb');
+      console.error('Make sure the file exists at: frontend/public/old-models/tree.glb');
     }
     console.error('Try restarting the Vite dev server if you just added the file');
   }

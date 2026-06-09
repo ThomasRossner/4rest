@@ -1,6 +1,5 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { CheckCircle2, Leaf, Star, Trees } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
@@ -9,18 +8,22 @@ import ForestPrototypeScene, {
   FOREST_DEFAULT_CAMERA,
   FOREST_PROTOTYPE_TREE_GROW_STEPS,
 } from '../../components/3d/ForestPrototypeScene';
+import ForestCategoryProgressGrid from '../../components/Forest/ForestCategoryProgressGrid';
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
 import './ForestPage.css';
+
+const PANEL_RESHOW_MS = 5000;
 
 function ForestPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [progressPanelVisible, setProgressPanelVisible] = useState(true);
+  const panelReshowTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const userId = useAuthStore((s) => s.user?.id);
   const userPoints = useAuthStore((s) => s.user?.points || 0);
-
 
   const isLikelyAndroid = useMemo(() => /Android/i.test(navigator.userAgent), []);
   const lowPerfForestMode = useMemo(() => {
@@ -36,22 +39,25 @@ function ForestPage() {
     if (!fp) return 0;
     return fp.kommunikation + fp.mensch + fp.natur + fp.ressourcen;
   }, [user?.forestPoints]);
+
   const dyad1Scale = useMemo(() => {
     const scale = user?.playerProfile?.dyadScales?.[0];
     const numeric = Number(scale);
-    if (!Number.isFinite(numeric)) return 2; // neutral fallback
+    if (!Number.isFinite(numeric)) return 2;
     return Math.max(0, Math.min(4, numeric));
   }, [user?.playerProfile?.dyadScales]);
+
   const dyad2Scale = useMemo(() => {
     const scale = user?.playerProfile?.dyadScales?.[1];
     const numeric = Number(scale);
-    if (!Number.isFinite(numeric)) return 2; // neutral fallback
+    if (!Number.isFinite(numeric)) return 2;
     return Math.max(0, Math.min(4, numeric));
   }, [user?.playerProfile?.dyadScales]);
+
   const dyad3Scale = useMemo(() => {
     const scale = user?.playerProfile?.dyadScales?.[2];
     const numeric = Number(scale);
-    if (!Number.isFinite(numeric)) return 2; // neutral fallback
+    if (!Number.isFinite(numeric)) return 2;
     return Math.max(0, Math.min(4, numeric));
   }, [user?.playerProfile?.dyadScales]);
 
@@ -67,42 +73,58 @@ function ForestPage() {
     [forestGlobalPoints, userPoints]
   );
 
-  const { data: activeTeam } = useQuery(
-    ['userActiveTeam', userId],
-    () => api.getUserActiveTeam(),
-    { enabled: !!userId, refetchInterval: 5000 }
-  );
-
-  const { data: progress } = useQuery(
+  const {
+    data: progress,
+    isLoading: progressLoading,
+    isError: progressError,
+    refetch: refetchProgress,
+  } = useQuery(
     ['userProgress', userId],
     () => api.getUserProgress(userId as string),
-    { enabled: !!userId }
+    { enabled: !!userId, retry: 2, refetchOnWindowFocus: true, refetchOnReconnect: true }
   );
 
-  const co2SavedValue = useMemo(() => {
-    const numeric = Number(progress?.co2Saved);
-    if (!Number.isFinite(numeric) || numeric < 0) return 0;
-    return numeric;
-  }, [progress?.co2Saved]);
-  const formattedCo2Saved = useMemo(() => {
-    if (co2SavedValue === 0) return '0';
-    return Number.isInteger(co2SavedValue) ? co2SavedValue.toFixed(0) : co2SavedValue.toFixed(1);
-  }, [co2SavedValue]);
-
-  const { data: forestData } = useQuery(
+  const {
+    data: forestData,
+    isError: forestError,
+    refetch: refetchForest,
+  } = useQuery(
     ['forest', userId],
     () => api.getForest(),
-    { enabled: !!userId }
+    { enabled: !!userId, retry: 2, refetchOnWindowFocus: true, refetchOnReconnect: true }
   );
 
   const plantedAtList = useMemo(() => {
     const trees = Array.isArray(forestData?.trees) ? forestData.trees : [];
     return trees
-      .map((tree: any) => tree?.plantedAt)
-      .filter((value: any) => typeof value === 'string' || value instanceof Date)
-      .map((value: any) => new Date(value).toISOString())
-      .sort((a: string, b: string) => new Date(a).getTime() - new Date(b).getTime());
+      .map((tree: { plantedAt?: string | Date }) => tree?.plantedAt)
+      .filter((value): value is string | Date => typeof value === 'string' || value instanceof Date)
+      .map((value) => new Date(value).toISOString())
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
   }, [forestData?.trees]);
+
+  const handleNavigationStart = useCallback(() => {
+    if (panelReshowTimerRef.current) {
+      clearTimeout(panelReshowTimerRef.current);
+    }
+    setProgressPanelVisible((visible) => (visible ? false : visible));
+    panelReshowTimerRef.current = setTimeout(() => {
+      setProgressPanelVisible(true);
+    }, PANEL_RESHOW_MS);
+  }, []);
+
+  useEffect(() => {
+    setProgressPanelVisible(true);
+    if (panelReshowTimerRef.current) {
+      clearTimeout(panelReshowTimerRef.current);
+      panelReshowTimerRef.current = undefined;
+    }
+    return () => {
+      if (panelReshowTimerRef.current) {
+        clearTimeout(panelReshowTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleUpdate = (event: CustomEvent) => {
@@ -140,18 +162,68 @@ function ForestPage() {
     };
   }, [userId]);
 
+  const showProgressLoadError = progressError && !progress;
+  const showForestLoadError = forestError && !forestData;
+  const sceneLoading = progressLoading && !progress;
+
   return (
     <div className="forest-page forest-page--immersive">
       <div className="forest-viewport">
+        <div className="glass-hero-fog forest-viewport__fog" aria-hidden />
+        <div className="glass-hero-vignette forest-viewport__vignette" aria-hidden />
+
+        <div
+          className={`forest-progress-panel${progressPanelVisible ? '' : ' forest-progress-panel--hidden'}`}
+          aria-label={t('home.progress.title')}
+          aria-hidden={!progressPanelVisible}
+        >
+          {user?.playerProfile && (
+            <div className="forest-progress-panel__character">
+              <ForestPlayerCharacter
+                variant="overlay"
+                user={user}
+                onOpenMore={() => setTypeModalOpen(true)}
+              />
+            </div>
+          )}
+          <ForestCategoryProgressGrid
+            forestPoints={user?.forestPoints}
+            className="forest-progress-panel__grid"
+          />
+        </div>
+
         <div className="forest-container">
-          <Suspense fallback={<div className="forest-loading">{t('forest.loading')}</div>}>
+          {showProgressLoadError && (
+            <div className="forest-load-error forest-load-error--overlay" role="alert">
+              <p>{t('forest.loadError')}</p>
+              <button type="button" className="btn-primary forest-load-error__retry" onClick={() => refetchProgress()}>
+                {t('common.actions.refresh')}
+              </button>
+            </div>
+          )}
+          {showForestLoadError && !showProgressLoadError && (
+            <div className="forest-load-error forest-load-error--overlay" role="alert">
+              <p>{t('forest.loadError')}</p>
+              <button type="button" className="btn-primary forest-load-error__retry" onClick={() => refetchForest()}>
+                {t('common.actions.refresh')}
+              </button>
+            </div>
+          )}
+          {sceneLoading && !showProgressLoadError && (
+            <div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>
+          )}
+          <Suspense fallback={<div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>}>
             <Canvas
               gl={{
                 antialias: false,
                 powerPreference: lowPerfForestMode ? 'default' : 'high-performance',
-                alpha: false,
+                alpha: true,
                 stencil: false,
                 depth: true,
+              }}
+              onCreated={({ gl, scene }) => {
+                gl.setClearColor(0x000000, 0);
+                scene.background = null;
               }}
               shadows={!lowPerfForestMode}
               dpr={lowPerfForestMode ? 1 : [1, 1.5]}
@@ -161,7 +233,7 @@ function ForestPage() {
                 position: [...FOREST_DEFAULT_CAMERA.position],
                 fov: FOREST_DEFAULT_CAMERA.fov,
               }}
-              style={{ width: '100%', height: '100%', background: 'linear-gradient(180deg, #dff3ff 0%, #eaf8ff 45%, #f4fbff 100%)' }}
+              style={{ width: '100%', height: '100%' }}
             >
               <ForestPrototypeScene
                 globalPoints={Math.min(forestGlobalPoints, forestMaxPoints)}
@@ -173,73 +245,11 @@ function ForestPage() {
                 dyad2Scale={dyad2Scale}
                 dyad3Scale={dyad3Scale}
                 lowPerformanceMode={lowPerfForestMode}
+                onNavigationActivity={handleNavigationStart}
               />
             </Canvas>
           </Suspense>
         </div>
-
-        {(user?.playerProfile || (user && progress)) && (
-          <div className="forest-hud">
-            <div className="forest-hud__bottom">
-              {user?.playerProfile && (
-                <div className="forest-hud__player">
-                  <ForestPlayerCharacter
-                    variant="overlay"
-                    user={user}
-                    onOpenMore={() => setTypeModalOpen(true)}
-                  />
-                </div>
-              )}
-              {user && progress && (
-                <div
-                  className="forest-impact-stats forest-impact-stats--overlay"
-                  aria-label={t('home.impactTitle')}
-                >
-                  <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
-                      <Star size={18} strokeWidth={2} />
-                    </div>
-                    <span className="forest-stat-value">
-                      {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null ? (
-                        <>
-                          {activeTeam.totalPoints} / {userPoints}
-                        </>
-                      ) : (
-                        userPoints
-                      )}
-                    </span>
-                    <span className="forest-stat-label">
-                      {activeTeam?.totalPoints !== undefined && activeTeam.totalPoints !== null
-                        ? t('home.stats.teamPoints')
-                        : t('home.stats.totalPoints')}
-                    </span>
-                  </div>
-                  <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
-                      <Trees size={18} strokeWidth={2} />
-                    </div>
-                    <span className="forest-stat-value">{progress?.treesPlanted ?? 0}</span>
-                    <span className="forest-stat-label">{t('home.stats.treesPlanted')}</span>
-                  </div>
-                  <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
-                      <CheckCircle2 size={18} strokeWidth={2} />
-                    </div>
-                    <span className="forest-stat-value">{progress?.tasksCompleted ?? 0}</span>
-                    <span className="forest-stat-label">{t('home.stats.tasksCompleted')}</span>
-                  </div>
-                  <div className="forest-stat forest-stat--overlay-tile">
-                    <div className="forest-stat-icon forest-stat-icon--lucide" aria-hidden>
-                      <Leaf size={18} strokeWidth={2} />
-                    </div>
-                    <span className="forest-stat-value">{formattedCo2Saved} kg</span>
-                    <span className="forest-stat-label">{t('home.stats.co2Saved')}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {user?.playerProfile && typeModalOpen && (

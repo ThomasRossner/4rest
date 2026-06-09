@@ -89,12 +89,16 @@
 
 .task-detail-points {
   flex-shrink: 0;
-  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-  color: white;
-  padding: 8px 14px;
-  border-radius: 20px;
+  background: var(--glass-bg);
+  color: var(--color-primary-dark);
+  border: 1px solid var(--glass-border);
+  padding: 6px 12px;
+  border-radius: 999px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  box-shadow: var(--glass-shadow-outer);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .task-detail-view-body {
@@ -131,8 +135,9 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #000;
+  box-shadow: var(--glass-shadow-outer);
 }
 
 .task-detail-section-title {
@@ -146,8 +151,10 @@
   flex-shrink: 0;
   padding-top: var(--spacing-md);
   padding-bottom: env(safe-area-inset-bottom, 0);
-  border-top: 1px solid var(--color-border, #e5e7eb);
-  background: var(--color-background, #fff);
+  border-top: 1px solid var(--glass-border, var(--color-border));
+  background: var(--glass-bg, var(--color-background));
+  backdrop-filter: blur(var(--glass-blur, 10px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
 }
 
 .task-detail-footer-hint {

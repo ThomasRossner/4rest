@@ -9,6 +9,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Custom registration in utils/serviceWorker.ts — avoid double registerSW.js + main.tsx
+      injectRegister: false,
       includeAssets: ['favicon.ico', 'robots.txt'],
       // Disable PWA in development to prevent service worker caching issues
       devOptions: {
@@ -39,15 +41,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,glb}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\./i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 // 1 hour
-              }
-            }
+            // Same-origin API (luise.bio/api/...) — never cache auth-sensitive responses
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+            handler: 'NetworkOnly',
           },
           {
             // Cache 3D models aggressively for fast repeat visits

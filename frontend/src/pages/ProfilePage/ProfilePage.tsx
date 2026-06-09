@@ -4,19 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { ConsentManager } from '../../components/GDPR/ConsentManager';
-import { TeamCreator } from '../../components/Teams/TeamCreator';
-import { TeamJoiner } from '../../components/Teams/TeamJoiner';
-import { ContestCreator } from '../../components/Contests/ContestCreator';
-import { ContestJoiner } from '../../components/Contests/ContestJoiner';
-import { TeamQrCodeCarousel } from '../../components/Teams/TeamQrCodeCarousel';
-import { ContestQrCodeCarousel } from '../../components/Contests/ContestQrCodeCarousel';
+import { TimelineChart } from '../../components/Statistics/TimelineChart';
+import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { getUserInitials } from '../../utils/userInitials';
 import PlayerProfileOnboarding from '../../components/PlayerProfile/PlayerProfileOnboarding';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
 import type { OnboardingConfig } from '../../types/onboarding';
 import { resolveOnboardingBackgroundUrl } from '../../utils/onboardingBackgroundUrl';
 import { getPlayerCharacterEmoji, getPlayerCharacterIconUrl } from '../../constants/playerCharacter';
-import { ThemeSwitcher } from '../../components/ThemeSwitcher/ThemeSwitcher';
 import './ProfilePage.css';
 
 function ProfilePage() {
@@ -35,33 +30,9 @@ function ProfilePage() {
     { enabled: !!userId }
   );
 
-  const { data: teams, refetch: refetchTeams } = useQuery(
-    ['userTeams', userId],
-    () => api.getUserTeams(),
-    { enabled: !!userId }
-  );
-
-  // For employees: only show contests between employees
-  // For guests: show all their contests
-  const isEmployee = user?.role === 'rezeption' || user?.role === 'administrator';
-  
-  const { data: contests, refetch: refetchContests } = useQuery(
-    ['userContests', userId, isEmployee],
-    () => {
-      if (isEmployee) {
-        // For employees: filter to only show contests where all participants are employees/administrators
-        return api.getUserContests().then((allContests: any[]) => {
-          // Filter contests where all participants are employees/administrators
-          // This is a simplified approach - in production, you might want a dedicated API endpoint
-          return allContests.filter((contest: any) => {
-            // For now, we'll show all contests for employees in profile
-            // The employee-contests page will show only guest contests
-            return true; // Show all contests in profile for employees
-          });
-        });
-      }
-      return api.getUserContests();
-    },
+  const { data: timeline, isLoading: timelineLoading } = useQuery(
+    ['userTimeline', userId],
+    () => api.getUserTimeline(userId as string),
     { enabled: !!userId }
   );
 
@@ -77,10 +48,6 @@ function ProfilePage() {
     { staleTime: 5 * 60 * 1000 }
   );
 
-  const [showTeamCreator, setShowTeamCreator] = useState(false);
-  const [showTeamJoiner, setShowTeamJoiner] = useState(false);
-  const [showContestCreator, setShowContestCreator] = useState(false);
-  const [showContestJoiner, setShowContestJoiner] = useState(false);
   const [showPlayerTypeModal, setShowPlayerTypeModal] = useState(false);
   const [showPlayerRetake, setShowPlayerRetake] = useState(false);
 
@@ -112,10 +79,6 @@ function ProfilePage() {
             <h2>{user?.name || 'User'}</h2>
             <p>{user?.email || t('profile.noEmail')}</p>
             <div className="profile-preferences-row">
-              <div className="profile-language profile-language--inline">
-                <span className="profile-language-label">{t('theme.label')}</span>
-                <ThemeSwitcher variant="compact" />
-              </div>
               <div className="profile-language profile-language--inline">
                 <span className="profile-language-label">{t('profile.language.label')}</span>
                 <div className="profile-language-buttons">
@@ -374,122 +337,18 @@ function ProfilePage() {
         </section>
       )}
 
-      {/* Teams */}
-      <section className="profile-section">
-        <div className="profile-section-header">
-          <h2>{t('profile.teams.title')}</h2>
-          {(!teams || teams.length === 0) && (
-            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-              <button
-                type="button"
-                className="profile-action-button"
-                onClick={() => setShowTeamJoiner(true)}
-              >
-                {t('profile.teams.joinButton')}
-              </button>
-              <button
-                type="button"
-                className="profile-action-button"
-                onClick={() => setShowTeamCreator(true)}
-              >
-                {t('profile.teams.createButton')}
-              </button>
-            </div>
-          )}
-        </div>
-        {showTeamCreator && (
-          <TeamCreator
-            onSuccess={(teamId) => {
-              refetchTeams();
-              setShowTeamCreator(false);
-            }}
-            onClose={() => setShowTeamCreator(false)}
-          />
-        )}
-        {showTeamJoiner && (
-          <TeamJoiner
-            onSuccess={() => {
-              refetchTeams();
-              setShowTeamJoiner(false);
-            }}
-            onClose={() => setShowTeamJoiner(false)}
-          />
-        )}
-        {teams && teams.length > 0 ? (
-          <div className="profile-teams-list">
-            {teams.map((team: any) => (
-              <TeamQrCodeCarousel
-                key={team.id}
-                teamId={team.id}
-                teamName={team.name}
-                isCreator={team.created_by === userId}
-                onDissolve={() => refetchTeams()}
-                onLeave={() => refetchTeams()}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="profile-empty-state">{t('profile.teams.empty')}</p>
-        )}
-      </section>
+      {timelineLoading && (
+        <section className="profile-section profile-timeline-section">
+          <LoadingSkeleton lines={6} />
+        </section>
+      )}
 
-      {/* Contests */}
-      <section className="profile-section">
-        <div className="profile-section-header">
-          <h2>{t('profile.contests.title')}</h2>
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-            <button
-              type="button"
-              className="profile-action-button"
-              onClick={() => setShowContestJoiner(true)}
-            >
-              {t('profile.contests.joinButton')}
-            </button>
-            <button
-              type="button"
-              className="profile-action-button"
-              onClick={() => setShowContestCreator(true)}
-            >
-              {t('profile.contests.createButton')}
-            </button>
-          </div>
-        </div>
-        {showContestCreator && (
-          <ContestCreator
-            onlyEmployeeParticipants={isEmployee}
-            onSuccess={(contestId) => {
-              refetchContests();
-              setShowContestCreator(false);
-            }}
-            onClose={() => setShowContestCreator(false)}
-          />
-        )}
-        {showContestJoiner && (
-          <ContestJoiner
-            onSuccess={() => {
-              refetchContests();
-              setShowContestJoiner(false);
-            }}
-            onClose={() => setShowContestJoiner(false)}
-          />
-        )}
-        {contests && contests.length > 0 ? (
-          <div className="profile-contests-list">
-            {contests.map((contest: any) => (
-              <ContestQrCodeCarousel
-                key={contest.id}
-                contestId={contest.id}
-                contestName={contest.name}
-                isCreator={contest.created_by === userId}
-                onDissolve={() => refetchContests()}
-                onLeave={() => refetchContests()}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="profile-empty-state">{t('profile.contests.empty')}</p>
-        )}
-      </section>
+      {!timelineLoading && timeline && timeline.length > 0 && (
+        <section className="profile-section profile-timeline-section">
+          <h2 className="profile-timeline-title">{t('rankings.timeline.title')}</h2>
+          <TimelineChart data={timeline} profileTotalPoints={points} />
+        </section>
+      )}
     </div>
   );
 }
