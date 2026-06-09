@@ -465,6 +465,15 @@
       "multipleAtLocation": "{{count}} rewards at this location"
     },
     "backToList": "Back to list",
+    "hub": {
+      "backToHub": "Back to overview",
+      "all": "All",
+      "sections": {
+        "places": "Places",
+        "online": "Online"
+      },
+      "placeRewardCount": "{{count}} rewards"
+    },
     "onlineButton": "Online",
     "showOnline": "Show online rewards",
     "balanceLabel": "Your points",

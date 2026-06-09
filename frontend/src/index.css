@@ -8,9 +8,10 @@
 
 /* Struktur + Nature-Tech Glass (Mock target-ui-mock.png) */
 :root {
+  --app-content-top-gap: 14px;
   --app-nav-top-offset: 72px;
   --app-nav-bottom-offset: 88px;
-  --app-nav-top-total: calc(env(safe-area-inset-top, 0px) + 6px + var(--app-nav-top-offset));
+  --app-nav-top-total: calc(env(safe-area-inset-top, 0px) + var(--app-content-top-gap) + var(--app-nav-top-offset));
   --app-nav-bottom-total: calc(env(safe-area-inset-bottom, 0px) + 6px + var(--app-nav-bottom-offset));
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;

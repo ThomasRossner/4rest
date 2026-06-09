@@ -465,6 +465,15 @@
       "multipleAtLocation": "{{count}} Belohnungen an diesem Ort"
     },
     "backToList": "Zurück zur Liste",
+    "hub": {
+      "backToHub": "Zurück zur Übersicht",
+      "all": "Alle",
+      "sections": {
+        "places": "Orte",
+        "online": "Online"
+      },
+      "placeRewardCount": "{{count}} Belohnungen"
+    },
     "onlineButton": "Online",
     "showOnline": "Online-Belohnungen anzeigen",
     "balanceLabel": "Deine Punkte",

@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Globe, MapPin, Star } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
@@ -10,16 +12,39 @@ import { QrCodeDisplay } from '../../components/Rewards/QrCodeDisplay';
 import { RewardScanner } from '../../components/Rewards/RewardScanner';
 import { pushToast } from '../../components/Toaster/Toaster';
 import { UserLocationMap } from '../../components/LocationMap/UserLocationMap';
+import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
+import {
+  getOnlineRewards,
+  getUniqueRewardPlaces,
+  HUB_SCROLL_LIMIT,
+  isPhysicalPlaceReward,
+  isRewardOnline,
+  parseRewardLocation,
+  type RewardWithLocation,
+} from '../../utils/rewardHubUtils';
 import './RewardsPage.css';
+
+type HubReward = {
+  id: string;
+  title?: string;
+  pointsCost?: number;
+  rewardType?: string;
+  thumbnail_url?: string;
+};
 
 function RewardsPage() {
   const user = useAuthStore((s) => s.user);
   const userId = useAuthStore((s) => s.user?.id);
   const points = useAuthStore((s) => s.user?.points || 0);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const viewParam = searchParams.get('view');
+  const placeParam = searchParams.get('place');
+  const onlineParam = searchParams.get('online') === 'true';
+  const mapParam = searchParams.get('map') === 'true';
   const { data: rewards, isLoading, isError } = useQuery('rewards', () => api.getRewards());
 
-  // Listen for WebSocket reward updates
   React.useEffect(() => {
     const handleUpdate = (event: CustomEvent) => {
       if (event.detail?.type === 'reward:update') {
@@ -32,14 +57,14 @@ function RewardsPage() {
       window.removeEventListener('data:update', handleUpdate as EventListener);
     };
   }, [queryClient]);
+
   const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'benefit' | 'team_event'>('all');
   const { t } = useTranslation();
 
-  // Get active team and total points
   const { data: activeTeam } = useQuery(
     ['userActiveTeam', userId],
     () => api.getUserActiveTeam(),
-    { enabled: !!userId, refetchInterval: 5000 } // Refetch every 5 seconds to keep team points updated in real-time
+    { enabled: !!userId, refetchInterval: 5000 }
   );
 
   const [activeRedemption, setActiveRedemption] = useState<{
@@ -51,24 +76,24 @@ function RewardsPage() {
     rewardTitle: string;
   } | null>(null);
   const [showRewardScanner, setShowRewardScanner] = useState(false);
-  const [showLocationMap, setShowLocationMap] = useState(false);
-  const [showOnlineRewards, setShowOnlineRewards] = useState(false);
-  const [warningShownForReward, setWarningShownForReward] = useState<string | null>(null);
   const warningShownRef = useRef<string | null>(null);
+
+  const teamTotalPoints = activeTeam?.totalPoints ?? 0;
+
+  const canAffordReward = (reward: { pointsCost: number }) =>
+    !!user && (user.points >= reward.pointsCost || (activeTeam && teamTotalPoints >= reward.pointsCost));
 
   const handleRedeemClick = async (rewardId: string, cost: number, useTeamPoints: boolean = false) => {
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Check if using team points
     const shouldUseTeamPoints = useTeamPoints && activeTeam !== null && activeTeam !== undefined;
-    const teamTotalPoints = activeTeam?.totalPoints || 0;
     const availablePoints = shouldUseTeamPoints ? teamTotalPoints : user.points;
     const exceedsPersonalPoints = shouldUseTeamPoints && user.points < cost;
 
     if (availablePoints < cost) {
-      const infoMessage = shouldUseTeamPoints 
+      const infoMessage = shouldUseTeamPoints
         ? t('rewards.messages.notEnoughTeamPoints')
         : t('rewards.messages.notEnoughPoints');
       if (import.meta.env.VITE_UI_POLISH) {
@@ -79,35 +104,26 @@ function RewardsPage() {
       throw new Error('Insufficient points');
     }
 
-    // Show warning if exceeding personal points (only once per reward)
-    // Use ref for synchronous check to prevent duplicate warnings even with parallel calls
     if (exceedsPersonalPoints && warningShownRef.current !== rewardId) {
       warningShownRef.current = rewardId;
-      setWarningShownForReward(rewardId);
       const warningMessage = t('rewards.messages.exceedsPersonalPoints', { points: user.points });
       if (!window.confirm(warningMessage)) {
-        // Reset flag if user cancels
         warningShownRef.current = null;
-        setWarningShownForReward(null);
         throw new Error('Redemption cancelled by user');
       }
     }
 
     try {
       const res = await api.redeemReward(rewardId, cost, shouldUseTeamPoints);
-      // Reset warning flag after successful redemption
       if (warningShownRef.current === rewardId) {
         warningShownRef.current = null;
-        setWarningShownForReward(null);
       }
       return res;
-    } catch (error: any) {
-      // Reset warning flag on error so it can be shown again
+    } catch (error: unknown) {
       if (warningShownRef.current === rewardId) {
         warningShownRef.current = null;
-        setWarningShownForReward(null);
       }
-      const errorMessage = error?.message || t('rewards.messages.redeemError');
+      const errorMessage = (error as { message?: string })?.message || t('rewards.messages.redeemError');
       if (import.meta.env.VITE_UI_POLISH) {
         pushToast({ type: 'error', message: errorMessage });
       } else {
@@ -117,58 +133,139 @@ function RewardsPage() {
     }
   };
 
-  const handleQrStatusUpdate = (status: 'pending' | 'used' | 'expired') => {
+  const handleQrStatusUpdate = (_status: 'pending' | 'used' | 'expired') => {
     // Status update handled by QrCodeDisplay component
-    // Don't auto-clear - let user close the modal manually
   };
+
+  const hubPlaces = useMemo(() => getUniqueRewardPlaces(rewards as RewardWithLocation[]), [rewards]);
+
+  const hubOnlineRewards = useMemo(() => {
+    if (!rewards || !user) return [];
+    const online = getOnlineRewards(rewards as RewardWithLocation[]);
+    return online
+      .filter((r) => user.points >= r.pointsCost || (activeTeam && teamTotalPoints >= r.pointsCost))
+      .slice(0, HUB_SCROLL_LIMIT);
+  }, [rewards, user, activeTeam, teamTotalPoints]);
+
+  const isMapView = mapParam;
+
+  const isHubView =
+    !viewParam && !placeParam && !onlineParam && !mapParam && !activeRedemption;
+
+  const isFilteredListView =
+    viewParam === 'places' || !!placeParam || onlineParam;
 
   const filteredRewards = useMemo(() => {
     if (!rewards) {
       return [];
     }
     let filtered = [...rewards];
-    
-    // Filter by online status
-    if (showOnlineRewards) {
-      filtered = filtered.filter((r: any) => {
-        if (!r.location) return false;
-        const location = typeof r.location === 'string' ? JSON.parse(r.location) : r.location;
-        const isOnline = location.is_online === true || location.is_online === 'true' || String(location.is_online).toLowerCase() === 'true';
-        return isOnline;
-      });
-    }
-    
-    // Filter by type
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter((r: any) => r.rewardType === typeFilter);
-    }
-    
-    return filtered;
-  }, [rewards, typeFilter, showOnlineRewards]);
 
-  // Filter rewards that are redeemable (user has enough points or team has enough)
+    if (placeParam) {
+      filtered = filtered.filter((r: RewardWithLocation) => {
+        const loc = parseRewardLocation(r);
+        return loc?.id === placeParam || r.location_id === placeParam;
+      });
+    } else if (viewParam === 'places') {
+      filtered = filtered.filter((r: RewardWithLocation) => isPhysicalPlaceReward(r));
+    }
+
+    if (onlineParam) {
+      filtered = filtered.filter((r: RewardWithLocation) => isRewardOnline(r));
+    }
+
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter((r: { rewardType?: string }) => r.rewardType === typeFilter);
+    }
+
+    return filtered;
+  }, [rewards, typeFilter, placeParam, viewParam, onlineParam]);
+
   const redeemableRewards = useMemo(() => {
     if (!filteredRewards || !user) {
       return [];
     }
-    const teamTotalPoints = activeTeam?.totalPoints || 0;
-    return filteredRewards.filter((r: any) => {
-      // Can redeem if user has enough points OR team has enough points
-      return user.points >= r.pointsCost || (activeTeam && teamTotalPoints >= r.pointsCost);
+    return filteredRewards.filter((r: { pointsCost: number }) => canAffordReward(r));
+  }, [filteredRewards, user, activeTeam, teamTotalPoints]);
+
+  const globalLocationRewards = useMemo(() => {
+    if (!rewards) return [];
+    return rewards.filter((r: RewardWithLocation) => {
+      const loc = parseRewardLocation(r);
+      if (!loc || loc.is_online) return false;
+      return loc.latitude != null && loc.longitude != null;
     });
-  }, [filteredRewards, user, activeTeam]);
+  }, [rewards]);
 
   const uiPolish = !!import.meta.env.VITE_UI_POLISH;
 
-  // Show map view if button was clicked
-  if (showLocationMap) {
+  const renderRewardTile = (reward: HubReward) => (
+    <Link
+      key={reward.id}
+      to="/rewards?online=true"
+      className="glass-task-tile"
+    >
+      <span className="glass-task-tile__thumb">
+        {reward.thumbnail_url ? (
+          <img src={reward.thumbnail_url} alt="" />
+        ) : reward.rewardType === 'discount' ? (
+          '🏷️'
+        ) : reward.rewardType === 'benefit' ? (
+          '✨'
+        ) : reward.rewardType === 'team_event' ? (
+          '🤝'
+        ) : (
+          '🎁'
+        )}
+      </span>
+      <span className="glass-task-tile__title">{reward.title}</span>
+      <span className="glass-points-badge">
+        <Star size={10} strokeWidth={2} aria-hidden />
+        {t('rewards.card.cost', { count: Number(reward.pointsCost ?? 0) })}
+      </span>
+    </Link>
+  );
+
+  const renderPlaceTile = (place: { id: string; name: string; taskCount: number }) => (
+    <Link
+      key={place.id}
+      to={`/rewards?place=${encodeURIComponent(place.id)}`}
+      className="glass-task-tile"
+    >
+      <span className="glass-task-tile__thumb">
+        <MapPin size={22} strokeWidth={2} aria-hidden />
+      </span>
+      <span className="glass-task-tile__title">{place.name}</span>
+      <span className="glass-points-badge">
+        {t('rewards.hub.placeRewardCount', { count: place.taskCount })}
+      </span>
+    </Link>
+  );
+
+  const balanceBlock = (
+    <div className="rewards-balance rewards-balance--compact">
+      <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
+      <span className="rewards-balance-value">
+        {activeTeam?.totalPoints !== undefined ? (
+          <>
+            {activeTeam.totalPoints} / {points}
+          </>
+        ) : (
+          points
+        )}
+      </span>
+    </div>
+  );
+
+  if (isMapView) {
+    const mapRewards = placeParam || viewParam || onlineParam ? redeemableRewards : globalLocationRewards;
     return (
       <div className="rewards-page">
         <div className="rewards-map-header">
           <button
             type="button"
             className="rewards-map-back"
-            onClick={() => setShowLocationMap(false)}
+            onClick={() => navigate('/rewards')}
             title={t('common.actions.back')}
           >
             ← {t('common.actions.back')}
@@ -178,19 +275,16 @@ function RewardsPage() {
           <UserLocationMap
             variant="rewards"
             height="calc(100vh - 200px)"
-            rewards={redeemableRewards}
+            rewards={mapRewards}
             onRewardClick={async (rewardId) => {
-              setShowLocationMap(false);
+              navigate('/rewards');
               if (activeRedemption) {
                 pushToast({ type: 'info', message: t('rewards.card.singleQrOpen') });
                 return;
               }
-              // Find the reward and trigger redeem if user can afford it
-              const reward = redeemableRewards.find((r: any) => r.id === rewardId);
+              const reward = mapRewards.find((r: { id: string }) => r.id === rewardId);
               if (!reward) return;
-              const teamTotalPoints = activeTeam?.totalPoints || 0;
-              const canAfford = user && (user.points >= reward.pointsCost || (activeTeam && teamTotalPoints >= reward.pointsCost));
-              if (reward && canAfford) {
+              if (canAffordReward(reward)) {
                 const useTeamPoints = activeTeam !== null && activeTeam !== undefined;
                 const res = await handleRedeemClick(reward.id, reward.pointsCost, useTeamPoints);
                 if (res?.redemption?.qrToken) {
@@ -233,59 +327,111 @@ function RewardsPage() {
     );
   }
 
+  if (isHubView) {
+    const visiblePlaces = hubPlaces.slice(0, HUB_SCROLL_LIMIT);
+
+    return (
+      <div className="rewards-page rewards-page--hub rewards-page--hub-sections">
+        <div className="rewards-hub-balance">{balanceBlock}</div>
+
+        {user && user.role === 'rezeption' && (
+          <button type="button" className="rewards-scan-button rewards-scan-button--hub" onClick={() => setShowRewardScanner(true)}>
+            {t('rewards.scanner.button')}
+          </button>
+        )}
+
+        {isLoading && <LoadingSkeleton lines={4} />}
+
+        {!isLoading && !isError && visiblePlaces.length > 0 && (
+          <section className="glass-section rewards-hub-section" aria-labelledby="rewards-hub-places-title">
+            <h2 id="rewards-hub-places-title" className="glass-section__title">
+              {t('rewards.hub.sections.places')}
+            </h2>
+            <div className="glass-scroll-row rewards-hub-scroll-row">
+              {visiblePlaces.map(renderPlaceTile)}
+              <Link to="/rewards?view=places" className="glass-task-tile glass-task-tile--all">
+                <MapPin size={22} strokeWidth={2} aria-hidden />
+                <span className="glass-task-tile__title">{t('rewards.hub.all')}</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {!isLoading && !isError && hubOnlineRewards.length > 0 && (
+          <section className="glass-section rewards-hub-section" aria-labelledby="rewards-hub-online-title">
+            <h2 id="rewards-hub-online-title" className="glass-section__title">
+              {t('rewards.hub.sections.online')}
+            </h2>
+            <div className="glass-scroll-row rewards-hub-scroll-row">
+              {hubOnlineRewards.map(renderRewardTile)}
+              <Link to="/rewards?online=true" className="glass-task-tile glass-task-tile--all">
+                <Globe size={22} strokeWidth={2} aria-hidden />
+                <span className="glass-task-tile__title">{t('rewards.hub.all')}</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {!isLoading && !isError && visiblePlaces.length === 0 && hubOnlineRewards.length === 0 && (
+          <EmptyState title={t('rewards.empty.title')} description={t('rewards.empty.description')} />
+        )}
+
+        {showRewardScanner && (
+          <RewardScanner
+            onClose={() => setShowRewardScanner(false)}
+            onSuccess={() => setShowRewardScanner(false)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (!isFilteredListView) {
+    return null;
+  }
+
+  const listViewTitle = (() => {
+    if (placeParam) {
+      const place = hubPlaces.find((p) => p.id === placeParam);
+      return place?.name ?? t('rewards.hub.sections.places');
+    }
+    if (viewParam === 'places') return t('rewards.hub.sections.places');
+    if (onlineParam) return t('rewards.hub.sections.online');
+    return t('rewards.title');
+  })();
+
+  const backToHubLabel = t('rewards.hub.backToHub');
+
   return (
     <div className="rewards-page rewards-page--list">
       <div className="rewards-sticky">
-        <div className="rewards-toolbar-row">
-          <div className="rewards-balance rewards-balance--compact">
-            <span className="rewards-balance-label">{t('rewards.balanceLabel')}:</span>
-            <span className="rewards-balance-value">
-              {activeTeam?.totalPoints !== undefined ? (
-                <>
-                  {activeTeam.totalPoints} / {points}
-                </>
-              ) : (
-                points
-              )}
-            </span>
-          </div>
-          <div className="rewards-header rewards-header--actions">
-            {showOnlineRewards ? (
-              <button
-                className="location-button"
-                onClick={() => {
-                  setShowLocationMap(false);
-                  setShowOnlineRewards(false);
-                }}
-              >
-                {t('rewards.prerequisites.clearFilter')}
-              </button>
-            ) : (
-              <div className="rewards-header-location-buttons">
-                <button
-                  className="location-button"
-                  onClick={() => {
-                    setShowLocationMap(true);
-                    setShowOnlineRewards(false);
-                  }}
-                  title={t('rewards.showLocation')}
-                >
-                  {t('rewards.locationButton')}
-                </button>
-                <button
-                  className="location-button"
-                  onClick={() => {
-                    setShowLocationMap(false);
-                    setShowOnlineRewards(true);
-                  }}
-                  title={t('rewards.showOnline')}
-                >
-                  {t('rewards.onlineButton')}
-                </button>
-              </div>
-            )}
+        <div className="rewards-list-header">
+          <button
+            type="button"
+            className="rewards-icon-back"
+            onClick={() => navigate('/rewards')}
+            title={backToHubLabel}
+            aria-label={backToHubLabel}
+          >
+            <BackArrowIcon className="rewards-icon-back-svg" />
+          </button>
+          <h2 className="rewards-list-title">{listViewTitle}</h2>
+          <div className="rewards-list-header-actions">
+            <button
+              type="button"
+              className="location-button"
+              onClick={() => navigate('/rewards?map=true')}
+              title={t('rewards.showLocation')}
+            >
+              {t('rewards.locationButton')}
+            </button>
           </div>
         </div>
+
+        <div className="rewards-toolbar-row">
+          {balanceBlock}
+        </div>
+
         {user && user.role === 'rezeption' && (
           <button type="button" className="rewards-scan-button" onClick={() => setShowRewardScanner(true)}>
             {t('rewards.scanner.button')}
@@ -315,39 +461,38 @@ function RewardsPage() {
         )}
 
         <div className="rewards-grid">
-          {!isLoading && !isError && filteredRewards.map((reward: any) => (
-            <RewardCard
-              key={reward.id}
-              reward={reward}
-              userPoints={user?.points ?? 0}
-              teamTotalPoints={activeTeam != null ? activeTeam.totalPoints ?? 0 : null}
-              canAfford={!!user && (user.points >= reward.pointsCost || (activeTeam && (activeTeam.totalPoints || 0) >= reward.pointsCost))}
-              onRedeem={(id, cost, useTeamPoints) => handleRedeemClick(id, cost, useTeamPoints)}
-              hasActiveRedemption={Boolean(activeRedemption)}
-              onRedemptionCreated={(redemption) =>
-                setActiveRedemption({
-                  qrToken: redemption.qrToken,
-                  qrCodeValue: redemption.qrCodeValue,
-                  voucherCode: redemption.voucherCode ?? null,
-                  status: redemption.status,
-                  redemptionId: redemption.redemptionId,
-                  rewardTitle: redemption.rewardTitle,
-                })
-              }
-            />
-          ))}
+          {!isLoading &&
+            !isError &&
+            filteredRewards.map((reward: HubReward & { pointsCost: number }) => (
+              <RewardCard
+                key={reward.id}
+                reward={reward}
+                userPoints={user?.points ?? 0}
+                teamTotalPoints={activeTeam != null ? activeTeam.totalPoints ?? 0 : null}
+                canAfford={canAffordReward(reward)}
+                onRedeem={(id, cost, useTeamPoints) => handleRedeemClick(id, cost, useTeamPoints)}
+                hasActiveRedemption={Boolean(activeRedemption)}
+                onRedemptionCreated={(redemption) =>
+                  setActiveRedemption({
+                    qrToken: redemption.qrToken,
+                    qrCodeValue: redemption.qrCodeValue,
+                    voucherCode: redemption.voucherCode ?? null,
+                    status: redemption.status,
+                    redemptionId: redemption.redemptionId,
+                    rewardTitle: redemption.rewardTitle,
+                  })
+                }
+              />
+            ))}
         </div>
       </div>
 
       {showRewardScanner && (
         <RewardScanner
           onClose={() => setShowRewardScanner(false)}
-          onSuccess={() => {
-            setShowRewardScanner(false);
-          }}
+          onSuccess={() => setShowRewardScanner(false)}
         />
       )}
-
     </div>
   );
 }

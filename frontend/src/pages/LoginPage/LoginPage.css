@@ -9,59 +9,53 @@
   font-size: 0.9rem;
   line-height: 1.4;
   cursor: pointer;
+  color: var(--glass-text-muted);
 }
 
 .login-privacy-label input {
   margin-top: 0.2rem;
   flex-shrink: 0;
+  accent-color: var(--color-accent);
 }
 
 .login-inline-link {
-  color: var(--color-primary, #0d9488);
+  color: var(--color-accent);
   text-decoration: underline;
 }
 
-/* Classic: einfacher Verlauf + weiße Karte */
+.login-inline-link:hover {
+  color: #fff4c8;
+}
+
+/* Nature-Valley Hintergrund (body) + Liquid-Glass-Karte */
 .login-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  background: transparent;
+  position: relative;
 }
 
 .login-container {
-  background: #ffffff;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-lg);
+  background:
+    linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.84) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-card, 24px);
+  box-shadow:
+    var(--glass-shadow-outer),
+    var(--glass-shadow-inner),
+    0 28px 56px -14px rgba(4, 28, 20, 0.45);
+  backdrop-filter: blur(var(--glass-blur-strong, 20px)) saturate(1.18);
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong, 20px)) saturate(1.18);
   padding: var(--spacing-xl);
   width: 100%;
   max-width: 600px;
   min-width: 500px;
   container-type: inline-size;
   container-name: login-card;
-}
-
-/* Atlas: Nachtwald + Glas-Karte */
-html[data-theme='atlas'] .login-page {
-  background:
-    radial-gradient(ellipse 100% 70% at 10% 0%, rgba(94, 234, 212, 0.35), transparent 50%),
-    radial-gradient(ellipse 80% 60% at 95% 100%, rgba(251, 191, 36, 0.18), transparent 48%),
-    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(15, 118, 110, 0.2), transparent 60%),
-    linear-gradient(152deg, #042f2e 0%, #115e59 35%, #0f766e 68%, #134e4a 100%);
-}
-
-html[data-theme='atlas'] .login-container {
-  background: rgba(255, 250, 242, 0.78);
-  backdrop-filter: blur(18px) saturate(1.15);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: calc(var(--border-radius) + 4px);
-  box-shadow:
-    0 28px 56px -14px rgba(4, 47, 46, 0.55),
-    0 0 0 1px rgba(20, 184, 166, 0.15) inset,
-    var(--shadow-warm-inset);
+  color: var(--glass-text);
 }
 
 .login-header {
@@ -129,11 +123,7 @@ html[data-theme='atlas'] .login-container {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-light);
-}
-
-html[data-theme='atlas'] .login-page .login-release-name {
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--glass-text-muted);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
@@ -153,7 +143,7 @@ html[data-theme='atlas'] .login-page .login-release-name {
   margin: 0;
   padding: 0;
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--glass-text);
   white-space: nowrap;
   line-height: 1;
   min-width: 0;
@@ -171,9 +161,10 @@ html[data-theme='atlas'] .login-page .login-release-name {
 .login-brand-title__rest {
   font-size: calc(var(--login-brand-icon-size) * 0.42);
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-accent);
   letter-spacing: -0.02em;
   line-height: 1;
+  text-shadow: 0 1px 8px rgba(242, 209, 107, 0.35);
 }
 
 .login-header-eu {
@@ -236,20 +227,49 @@ html[data-theme='atlas'] .login-page .login-release-name {
 }
 
 .login-field label {
-  font-weight: 500;
-  color: var(--color-text);
+  font-weight: 600;
+  color: var(--glass-text);
+  font-size: 0.9rem;
 }
 
 .login-field input {
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: var(--border-radius);
   font-size: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.login-field input::placeholder {
+  color: var(--glass-text-muted);
 }
 
 .login-field input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: rgba(242, 209, 107, 0.55);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+    0 0 0 2px rgba(242, 209, 107, 0.18);
+}
+
+.login-field input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-field input.login-field-input--code {
+  text-align: center;
+  font-size: 1.5rem;
+  letter-spacing: 0.35em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.login-field-hint {
+  font-size: 0.75rem;
+  color: var(--glass-text-muted);
+  margin-top: 0.25rem;
 }
 
 .login-button {
@@ -260,15 +280,18 @@ html[data-theme='atlas'] .login-page .login-release-name {
   align-items: center;
   justify-content: center;
   padding: var(--spacing-md);
-  background-color: var(--color-primary);
-  color: white;
+  background: var(--color-primary);
+  color: #0a2218;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 700;
   margin-top: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: var(--shadow-sm);
 }
 
 .login-button:hover:not(:disabled) {
-  background-color: var(--color-primary-light);
+  filter: brightness(1.06);
+  transform: translateY(-1px);
 }
 
 .login-button:disabled {
@@ -284,13 +307,16 @@ html[data-theme='atlas'] .login-page .login-release-name {
   text-decoration: none;
   padding: var(--spacing-md);
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 0;
-  background: white;
-  color: var(--color-primary, #0d9488);
-  border: 2px solid var(--color-primary, #0d9488);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--border-radius);
-  transition: background-color 0.15s ease;
+  box-shadow: var(--glass-shadow-inner);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
 .login-primary-actions {
@@ -301,13 +327,15 @@ html[data-theme='atlas'] .login-page .login-release-name {
 }
 
 .login-button--secondary:hover {
-  background: rgba(13, 148, 136, 0.08);
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
 }
 
 .login-error {
   padding: var(--spacing-sm);
-  background-color: #ffebee;
-  color: var(--color-error);
+  background: rgba(248, 113, 113, 0.14);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.35);
   border-radius: var(--border-radius);
   text-align: center;
 }
@@ -321,8 +349,9 @@ html[data-theme='atlas'] .login-page .login-release-name {
 
 .login-success {
   padding: var(--spacing-sm);
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background: rgba(110, 231, 168, 0.12);
+  color: #a7f3d0;
+  border: 1px solid rgba(110, 231, 168, 0.32);
   border-radius: var(--border-radius);
   text-align: center;
 }
@@ -335,9 +364,9 @@ html[data-theme='atlas'] .login-page .login-release-name {
 .login-footer {
   margin-top: var(--spacing-xl);
   padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
   text-align: center;
-  color: var(--color-text-light);
+  color: var(--glass-text-muted);
   font-size: 0.9rem;
 }
 
@@ -361,6 +390,20 @@ html[data-theme='atlas'] .login-page .login-release-name {
   border-radius: 12px;
   justify-content: center;
   min-height: 40px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--glass-text);
+}
+
+.login-language-switcher .language-button:hover {
+  border-color: rgba(242, 209, 107, 0.45);
+  color: var(--color-accent);
+}
+
+.login-language-switcher .language-button.active {
+  background: rgba(242, 209, 107, 0.16);
+  color: var(--color-accent);
+  border-color: rgba(242, 209, 107, 0.42);
 }
 
 .login-footer p {
@@ -385,7 +428,7 @@ html[data-theme='atlas'] .login-page .login-release-name {
 .link-button {
   background: none;
   border: none;
-  color: var(--color-primary);
+  color: var(--color-accent);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -398,12 +441,12 @@ html[data-theme='atlas'] .login-page .login-release-name {
 }
 
 .link-button:hover {
-  color: var(--color-primary-light);
+  color: #fff4c8;
   text-decoration-thickness: 2px;
 }
 
 .link-button:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 4px;
   text-decoration: none;
@@ -549,6 +592,26 @@ html[data-theme='atlas'] .login-page .login-release-name {
 
 .apple-button:hover .social-icon {
   filter: brightness(0) invert(1);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .login-container {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(31, 90, 76, 0.96) !important;
+  }
+
+  .login-button--secondary {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-button:hover:not(:disabled),
+  .login-button--secondary:hover {
+    transform: none;
+  }
 }
 
 .github-button {

@@ -61,14 +61,14 @@ export function RewardCard({
   const canRedeemTeam = teamTotalPoints !== null && teamTotalPoints >= cost;
   const showRedeemButtons = canAfford && (canRedeemPersonal || canRedeemTeam);
 
-  const badgeColor =
+  const badgeClass =
     reward.rewardType === 'discount'
-      ? '#0ea5e9'
+      ? 'reward-type-badge--discount'
       : reward.rewardType === 'benefit'
-        ? '#10b981'
+        ? 'reward-type-badge--benefit'
         : reward.rewardType === 'team_event'
-          ? '#f59e0b'
-          : '#9ca3af';
+          ? 'reward-type-badge--team_event'
+          : 'reward-type-badge--default';
 
   const handleRedeem = async (useTeamPoints: boolean) => {
     if (isRedeeming || hasActiveRedemption) return;
@@ -124,41 +124,21 @@ export function RewardCard({
         <div className="reward-title-row">
           <h3 className="reward-title">{reward.title}</h3>
           {reward.rewardType && (
-            <span
-              className="reward-type-badge"
-              style={{
-                background: badgeColor,
-                color: 'white',
-                borderRadius: 999,
-                padding: '2px 10px',
-                fontSize: 12,
-              }}
-            >
+            <span className={`reward-type-badge ${badgeClass}`}>
               {reward.rewardType}
             </span>
           )}
         </div>
         {reward.description && <p className="reward-description">{reward.description}</p>}
         {reward.location?.category && (
-          <div style={{ marginTop: '8px', marginBottom: '8px' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                fontSize: 11,
-                color: '#6b7280',
-                backgroundColor: '#f3f4f6',
-                padding: '4px 8px',
-                borderRadius: 4,
-              }}
-            >
-              {reward.location.category === 'online' && '🌐 Online'}
-              {reward.location.category === 'hotel_reception' && '🏨 Hotel Reception'}
-              {reward.location.category === 'hotel_restaurant' && '🍽️ Hotel Restaurant'}
-              {reward.location.category === 'external' && '📍 External'}
-              {reward.location.category === 'physical' && '📍 Physical Location'}
-              {reward.location.category_description && ` - ${reward.location.category_description}`}
-            </span>
-          </div>
+          <span className="reward-location-tag">
+            {reward.location.category === 'online' && '🌐 Online'}
+            {reward.location.category === 'hotel_reception' && '🏨 Hotel Reception'}
+            {reward.location.category === 'hotel_restaurant' && '🍽️ Hotel Restaurant'}
+            {reward.location.category === 'external' && '📍 External'}
+            {reward.location.category === 'physical' && '📍 Physical Location'}
+            {reward.location.category_description && ` - ${reward.location.category_description}`}
+          </span>
         )}
         {showRedeemButtons ? (
           <div className={`reward-footer reward-footer--buttons`}>

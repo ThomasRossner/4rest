@@ -21,7 +21,7 @@ function Layout() {
     >
       <Navigation />
       <main
-        className={`layout-main ${isViewportFit ? 'layout-main--home' : ''} ${isForest ? 'layout-main--forest' : ''}`}
+        className={`layout-main ${isViewportFit ? 'layout-main--home' : ''} ${isTasksHub ? 'layout-main--tasks-hub' : ''} ${isForest ? 'layout-main--forest' : ''}`}
       >
         <Outlet />
       </main>

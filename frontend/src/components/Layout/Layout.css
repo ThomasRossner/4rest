@@ -1,7 +1,7 @@
 .layout-main {
   flex: 1;
   padding: var(--spacing-md);
-  padding-top: calc(env(safe-area-inset-top, 0px) + 8px + var(--app-nav-top-offset));
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--app-content-top-gap) + var(--app-nav-top-offset));
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -30,7 +30,7 @@
   flex-direction: column;
   align-items: stretch;
   padding: 0 var(--spacing-sm);
-  padding-top: calc(env(safe-area-inset-top, 0px) + 6px + var(--app-nav-top-offset));
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--app-content-top-gap) + var(--app-nav-top-offset));
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px + var(--app-nav-bottom-offset));
   -webkit-overflow-scrolling: touch;
 }
@@ -64,10 +64,22 @@
   box-shadow: none;
 }
 
+/* Tasks-Hub: kein Page-Scroll, Inhalt unter Top-Nav halten */
+.layout-main.layout-main--tasks-hub {
+  overflow-y: hidden;
+  justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .layout-main.layout-main--tasks-hub {
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 1024px) {
   .layout-main {
     padding: var(--spacing-xs);
-    padding-top: calc(env(safe-area-inset-top, 0px) + var(--spacing-xs) + var(--app-nav-top-offset));
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--app-content-top-gap) + var(--app-nav-top-offset));
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-xs) + var(--app-nav-bottom-offset));
   }
 

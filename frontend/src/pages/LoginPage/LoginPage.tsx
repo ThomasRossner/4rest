@@ -594,9 +594,9 @@ function LoginPage() {
                 required
                 placeholder={t('login.placeholders.loginCode')}
                 maxLength={6}
-                style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '8px', fontFamily: 'monospace' }}
+                className="login-field-input--code"
               />
-              <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              <p className="login-field-hint">
                 {t('login.passwordlessHint')}
               </p>
             </div>
