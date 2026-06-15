@@ -2337,7 +2337,7 @@
   "tasksComponents": {
     "loading": "Aufgabe wird geladen...",
     "notFound": "Aufgabe nicht gefunden",
-    "points": "+{{points}} Punkte",
+    "points": "+{{points}}",
     "video": {
       "notSupported": "Dein Browser unterstützt dieses Video nicht.",
       "quizTitle": "Quizfragen",

@@ -21,7 +21,7 @@ type TaskCardProps = {
 };
 
 function formatPoints(points: number): string {
-  return `+${points} pts`;
+  return `+${points}`;
 }
 
 function TaskCard({ task, onSelect, disabled, isAvailable }: TaskCardProps) {

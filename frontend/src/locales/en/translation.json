@@ -2319,7 +2319,7 @@
   "tasksComponents": {
     "loading": "Loading task...",
     "notFound": "Task not found",
-    "points": "+{{points}} points",
+    "points": "+{{points}}",
     "video": {
       "notSupported": "Your browser does not support the video tag.",
       "quizTitle": "Quiz questions",

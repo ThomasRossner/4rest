@@ -14,6 +14,6 @@ describe('TaskCard', () => {
 
     render(<TaskCard task={task} />);
     expect(screen.getByText('Test Task')).toBeInTheDocument();
-    expect(screen.getByText('+50 pts')).toBeInTheDocument();
+    expect(screen.getByText('+50')).toBeInTheDocument();
   });
 });
