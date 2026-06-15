@@ -2182,15 +2182,32 @@
   }
 }
 
-/* Runde Icon-/Toggle-Buttons */
-.admin-icon-button,
+/* Runde Icon-Buttons (Zurück/Aktualisieren/Schließen) – einheitlich mit der
+   User-Sicht (.task-detail-back): kreisrund, dezenter Mint-Tint, Mint-Pfeil. */
+.admin-icon-button {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border: none;
+  color: var(--color-primary);
+  box-shadow: none;
+}
+
+.admin-icon-button:hover {
+  background: color-mix(in srgb, var(--color-primary) 24%, transparent);
+  box-shadow: none;
+}
+
+/* Pfeil-Icon analog zur User-Sicht (.task-detail-back-icon) */
+.admin-icon-svg {
+  width: 22px;
+  height: 22px;
+}
+
 .admin-mobile-filter-button {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--glass-border);
   color: var(--glass-text);
 }
 
-.admin-icon-button:hover,
 .admin-mobile-filter-button:hover {
   background: rgba(255, 255, 255, 0.18);
 }
@@ -2281,6 +2298,29 @@
 .admin-action-button:disabled,
 .admin-submit:disabled,
 .admin-button:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--glass-border) !important;
+}
+
+/* Standorte-Tabelle (6 Spalten, kompakte 3-Button-Aktionen):
+   überschreibt die hoch-spezifische Mint+Weiß-Regel weiter oben.
+   Gleiche/höhere Spezifität nötig, daß der Forest-Glas-Tint greift. */
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  background-color: rgba(24, 72, 60, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button.danger {
+  background: linear-gradient(145deg, rgba(160, 56, 52, 0.92) 0%, rgba(118, 34, 32, 0.95) 100%) !important;
+  background-color: rgba(140, 40, 36, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 200, 196, 0.35) !important;
+}
+
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button:disabled {
   background: rgba(255, 255, 255, 0.08) !important;
   color: var(--color-text-light) !important;
   border-color: var(--glass-border) !important;

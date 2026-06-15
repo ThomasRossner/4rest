@@ -644,14 +644,22 @@
 }
 
 /* Icon-Button */
+/* Runde Icon-Buttons einheitlich mit der User-Sicht (.task-detail-back) */
 .rezeption-icon-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--glass-border);
-  color: var(--glass-text);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border: none;
+  color: var(--color-primary);
+  box-shadow: none;
 }
 
 .rezeption-icon-button:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--color-primary) 24%, transparent);
+  box-shadow: none;
+}
+
+.rezeption-icon-svg {
+  width: 22px;
+  height: 22px;
 }
 
 /* Buttons: Forest-Glas statt Mint+Weiß */

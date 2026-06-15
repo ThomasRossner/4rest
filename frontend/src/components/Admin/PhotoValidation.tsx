@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
+import { BackArrowIcon } from '../Tasks/BackArrowIcon';
 import './PhotoValidation.css';
 
 interface PendingPhotoTask {
@@ -148,8 +149,15 @@ export function PhotoValidation({ onBack, cssPrefix = 'admin', filterUserTaskId 
   return (
     <div className={`${cssPrefix}-section`}>
       {onBack && (
-        <button onClick={onBack} className={`${cssPrefix}-back-button`}>
-          ← {t('common.actions.back')}
+        <button
+          type="button"
+          onClick={onBack}
+          className={`${cssPrefix}-icon-button ${cssPrefix}-back-button`}
+          title={t('common.actions.back')}
+          aria-label={t('common.actions.back')}
+        >
+          <BackArrowIcon className={`${cssPrefix}-icon-svg`} />
+          <span className="sr-only">{t('common.actions.back')}</span>
         </button>
       )}
 

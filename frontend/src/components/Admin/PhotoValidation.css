@@ -217,20 +217,13 @@
   color: #666;
 }
 
+/* Zurück-Button nutzt jetzt den runden Icon-Button-Stil (.{prefix}-icon-button),
+   einheitlich mit der User-Sicht. Hier nur noch Abstand/Cursor, keine Pillen-Optik. */
 .admin-back-button,
-.rezeption-back-button {
-  margin-bottom: 20px;
-  padding: 10px 20px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+.rezeption-back-button,
+.redaktion-back-button {
+  margin-bottom: var(--spacing-md, 16px);
   cursor: pointer;
-  font-size: 14px;
-}
-
-.admin-back-button:hover,
-.rezeption-back-button:hover {
-  background: #e0e0e0;
 }
 
 .admin-section-title,

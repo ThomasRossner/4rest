@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { BackArrowIcon } from '../Tasks/BackArrowIcon';
 
 type IconName = 'back' | 'refresh' | 'close' | 'filter';
 
@@ -74,7 +75,7 @@ export function ManagementHeader({
             title={backTitle}
             type="button"
           >
-            <Icon name="back" />
+            <BackArrowIcon className={`${cssPrefix}-icon-svg`} />
             <span className="sr-only">{backTitle}</span>
           </button>
         )}
