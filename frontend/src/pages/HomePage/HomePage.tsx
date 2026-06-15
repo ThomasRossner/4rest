@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { ListTodo, Star, UserPlus } from 'lucide-react';
+import { ListTodo, Star, UserPlus, Share2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
+import { useToastStore } from '../../stores/toastStore';
+import { shareInvite } from '../../utils/invite';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { TaskTypeIcon } from '../../components/Tasks/taskTypeIcons';
 import { forestKeyFromTaskCategory } from '../../constants/forestCategories';
@@ -18,6 +20,29 @@ function HomePage() {
   const userId = user?.id;
   const forestPoints = user?.forestPoints;
   const { t } = useTranslation();
+  const showToast = useToastStore((s) => s.showToast);
+
+  const handleShareApp = async () => {
+    const url = `${window.location.origin}/login`;
+    const result = await shareInvite({
+      url,
+      title: t('home.invite.shareTitle') || '4rest',
+      text: t('home.invite.shareText') || 'Join me on 4rest!',
+    });
+    if (result === 'copied') {
+      showToast({
+        type: 'success',
+        title: t('home.invite.linkCopied') || 'Link copied',
+        message: t('home.invite.linkCopiedMessage') || 'Invite link copied to clipboard',
+      });
+    } else if (result === 'failed') {
+      showToast({
+        type: 'error',
+        title: t('home.invite.shareError') || 'Error',
+        message: t('home.invite.shareErrorMessage') || 'Could not share the invite link',
+      });
+    }
+  };
 
   const { data: tasks } = useQuery('tasks', () => api.getTasks(), {
     enabled: !!user,
@@ -101,10 +126,16 @@ function HomePage() {
           {t('home.invite.title')}
         </h2>
         <p className="home-invite__text">{t('home.invite.description')}</p>
-        <Link to="/profile" className="glass-invite-cta">
-          <UserPlus size={14} strokeWidth={2} aria-hidden />
-          {t('home.invite.cta')}
-        </Link>
+        <div className="home-invite__actions">
+          <button type="button" className="glass-invite-cta" onClick={handleShareApp}>
+            <Share2 size={14} strokeWidth={2} aria-hidden />
+            {t('home.invite.share')}
+          </button>
+          <Link to="/profile" className="glass-invite-cta glass-invite-cta--secondary">
+            <UserPlus size={14} strokeWidth={2} aria-hidden />
+            {t('home.invite.cta')}
+          </Link>
+        </div>
       </section>
     </div>
   );

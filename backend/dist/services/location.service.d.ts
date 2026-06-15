@@ -9,6 +9,7 @@ export interface Location {
     active: boolean;
     category?: string | null;
     category_description?: string | null;
+    image_url?: string | null;
     created_at?: string;
     updated_at?: string;
     name_i18n?: Record<string, string>;
@@ -30,6 +31,7 @@ interface LocationInput {
     active?: boolean;
     category?: string | null;
     category_description?: string | null;
+    image_url?: string | null;
 }
 interface LocationUpdateInput {
     name?: string;
@@ -44,6 +46,7 @@ interface LocationUpdateInput {
     longitude?: number | null;
     category?: string | null;
     category_description?: string | null;
+    image_url?: string | null;
 }
 export declare function getLocations(includeInactive?: boolean, preferredLanguage?: string): Promise<Location[]>;
 export declare function getLocationById(id: string, preferredLanguage?: string): Promise<Location | null>;

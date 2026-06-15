@@ -23,6 +23,8 @@ import {
   getPublicTaskForGuest,
   completePublicGuestTask,
   listPublicGuestTasks as listPublicGuestTasksService,
+  addTaskToCollection as addTaskToCollectionService,
+  removeTaskFromCollection as removeTaskFromCollectionService,
 } from '../services/task.service.js';
 import { getPreferredLanguage } from '../services/user.service.js';
 import { ensureGuestSession } from '../utils/guestSession.js';
@@ -297,6 +299,33 @@ export const completeTask: RequestHandler = asyncHandler(async (req, res) => {
   }
   const result = await completeTaskService(req.params.id, authReq.user.id, req.body);
   res.json(result);
+});
+
+/** POST /api/tasks/:id/collection — Aufgabe zur persönlichen Sammlung hinzufügen. */
+export const addTaskToCollection: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    await addTaskToCollectionService(authReq.user.id, req.params.id);
+    res.json({ in_collection: true });
+  } catch (e: any) {
+    if (String(e?.message || '').includes('not found')) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    throw e;
+  }
+});
+
+/** DELETE /api/tasks/:id/collection — Aufgabe aus der persönlichen Sammlung entfernen. */
+export const removeTaskFromCollection: RequestHandler = asyncHandler(async (req, res) => {
+  const authReq = req as AuthRequest;
+  if (!authReq.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  await removeTaskFromCollectionService(authReq.user.id, req.params.id);
+  res.json({ in_collection: false });
 });
 
 export const uploadPhoto: RequestHandler = asyncHandler(async (req, res) => {

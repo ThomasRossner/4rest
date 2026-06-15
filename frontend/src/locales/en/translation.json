@@ -301,7 +301,14 @@
     "invite": {
       "title": "Invite a friend",
       "description": "Create a team or contest in your profile and share the QR code so friends can join.",
-      "cta": "Go to profile"
+      "cta": "Go to profile",
+      "share": "Share app",
+      "shareTitle": "4rest",
+      "shareText": "Join me on 4rest!",
+      "linkCopied": "Link copied",
+      "linkCopiedMessage": "Invite link copied to clipboard",
+      "shareError": "Error",
+      "shareErrorMessage": "Could not share the invite link"
     }
   },
   "tasks": {
@@ -390,6 +397,10 @@
       "completed": "Completed",
       "locked": "Locked",
       "validating": "Validating"
+    },
+    "collection": {
+      "add": "Add to collection",
+      "remove": "Remove from collection"
     },
     "detail": {
       "noDescription": "No further description.",
@@ -1367,8 +1378,15 @@
         "inactive": "Inactive",
         "locationType": "Location type",
         "category": "Category",
-        "categoryDescription": "Category Description"
+        "categoryDescription": "Category Description",
+        "image": "Image"
       },
+      "chooseImage": "Choose image",
+      "removeImage": "Remove",
+      "currentImage": "Current image",
+      "noImage": "No image selected",
+      "imageNote": "PNG, JPG or WEBP, max 5 MB. Shown in the task list and on the place tile.",
+      "imagePreviewAlt": "Image preview",
       "categorySelect": "Select a category (optional)",
       "categoryDescriptionPlaceholder": "Optional additional description for the category",
       "online": "Online",
@@ -2126,11 +2144,17 @@
       },
       "qrCode": {
         "title": "Team QR Code",
-        "description": "Share this QR code to let others join your team",
+        "description": "Let friends scan this QR code or share the link so they can join your team — even without a 4rest account yet.",
         "loading": "Loading QR code...",
         "error": "Failed to load QR code",
         "errorMessage": "Failed to load QR code",
-        "retry": "Try again"
+        "retry": "Try again",
+        "share": "Share invite link",
+        "shareText": "Join my team on 4rest!",
+        "linkCopied": "Link copied",
+        "linkCopiedMessage": "Invite link copied to clipboard",
+        "shareError": "Error",
+        "shareErrorMessage": "Could not share the invite link"
       },
       "dissolve": {
         "button": "Dissolve Team",
@@ -2199,11 +2223,17 @@
       },
       "qrCode": {
         "title": "Contest QR Code",
-        "description": "Share this QR code to let others join your contest",
+        "description": "Let friends scan this QR code or share the link so they can join your contest — even without a 4rest account yet.",
         "loading": "Loading QR code...",
         "error": "Failed to load QR code",
         "errorMessage": "Failed to load QR code",
-        "retry": "Try again"
+        "retry": "Try again",
+        "share": "Share invite link",
+        "shareText": "Join my contest on 4rest!",
+        "linkCopied": "Link copied",
+        "linkCopiedMessage": "Invite link copied to clipboard",
+        "shareError": "Error",
+        "shareErrorMessage": "Could not share the invite link"
       },
       "dissolve": {
         "button": "Dissolve Contest",

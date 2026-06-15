@@ -369,7 +369,7 @@ export const getContestRegistrationQrCodeController: RequestHandler = asyncHandl
   }
   
   const frontendUrl = getFrontendUrlFromRequest(req);
-  const registrationUrl = `${frontendUrl}/register?contest=${registrationQr.qrToken}`;
+  const registrationUrl = `${frontendUrl}/login?contest=${registrationQr.qrToken}`;
   
   res.json({
     qrToken: registrationQr.qrToken,

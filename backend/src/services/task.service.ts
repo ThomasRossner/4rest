@@ -111,6 +111,8 @@ export interface Task {
   prerequisite_task_count?: number;
   prerequisite_task_ids?: string[];
   is_available?: boolean;
+  /** Vom eingeloggten Nutzer in die persönliche Sammlung aufgenommen (Bookmark). */
+  in_collection?: boolean;
   category?: 'Kommunikation & Netzwerke' | 'Mensch & soziales Umfeld' | 'Natur & Umweltschutz' | 'Ressourcenverbrauch & Materialeinsatz';
   difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
   time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
@@ -220,6 +222,10 @@ export async function getAllTasks(
       WHERE user_id = $${paramIndex.current++} AND locked_until > NOW()
       GROUP BY task_id
     ) ql ON ql.task_id = t.id`;
+    params.push(userId);
+    // Persönliche Sammlung (Bookmark) des eingeloggten Nutzers
+    select += `, (tcm.user_id IS NOT NULL) AS in_collection`;
+    from += ` LEFT JOIN task_collection_marks tcm ON tcm.task_id = t.id AND tcm.user_id = $${paramIndex.current++}`;
     params.push(userId);
   }
 
@@ -594,13 +600,15 @@ export async function getTaskById(
     select += `,
     ut.verification_status AS verification_status,
     ut.completed_at AS completed_at,
-    (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed`;
+    (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed,
+    (tcm.user_id IS NOT NULL) AS in_collection`;
   }
 
   select += `, row_to_json(l.*) AS location`;
 
   const userJoin = userId
-    ? `LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $2`
+    ? `LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $2
+       LEFT JOIN task_collection_marks tcm ON tcm.task_id = t.id AND tcm.user_id = $2`
     : '';
 
   const result = await db.query(
@@ -617,6 +625,35 @@ export async function getTaskById(
     return resolveTaskI18n(row, normalizeContentLang(preferredLanguage));
   }
   return row;
+}
+
+/**
+ * Markiert eine Aufgabe für die persönliche Sammlung des Nutzers (idempotent).
+ * Wirft einen ValidationError, wenn die Aufgabe nicht existiert.
+ */
+export async function addTaskToCollection(userId: string, taskId: string): Promise<void> {
+  const db = getPool();
+  const taskExists = await db.query('SELECT id FROM tasks WHERE id = $1', [taskId]);
+  if (taskExists.rows.length === 0) {
+    throw clientValidationError('Task not found');
+  }
+  await db.query(
+    `INSERT INTO task_collection_marks (user_id, task_id)
+     VALUES ($1, $2)
+     ON CONFLICT (user_id, task_id) DO NOTHING`,
+    [userId, taskId]
+  );
+}
+
+/**
+ * Entfernt eine Aufgabe aus der persönlichen Sammlung des Nutzers (idempotent).
+ */
+export async function removeTaskFromCollection(userId: string, taskId: string): Promise<void> {
+  const db = getPool();
+  await db.query(
+    'DELETE FROM task_collection_marks WHERE user_id = $1 AND task_id = $2',
+    [userId, taskId]
+  );
 }
 
 /**

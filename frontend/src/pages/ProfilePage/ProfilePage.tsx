@@ -337,13 +337,13 @@ function ProfilePage() {
         </section>
       )}
 
-      {timelineLoading && (
+      {!showPlayerRetake && timelineLoading && (
         <section className="profile-section profile-timeline-section">
           <LoadingSkeleton lines={6} />
         </section>
       )}
 
-      {!timelineLoading && timeline && timeline.length > 0 && (
+      {!showPlayerRetake && !timelineLoading && timeline && timeline.length > 0 && (
         <section className="profile-section profile-timeline-section">
           <h2 className="profile-timeline-title">{t('rankings.timeline.title')}</h2>
           <TimelineChart data={timeline} profileTotalPoints={points} />

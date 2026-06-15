@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
+import { extractJoinToken } from '../../utils/invite';
 import jsQR from 'jsqr';
 import '../../pages/Admin/QrScannerPage.css';
 
@@ -152,7 +153,10 @@ export function ContestJoiner({ onSuccess, onClose }: ContestJoinerProps) {
     setIsJoining(true);
 
     try {
-      await api.joinContest(qrData);
+      // QR enthält jetzt eine Einladungs-URL (…/login?contest=<token>); ältere QR-Codes
+      // enthalten den rohen Token. Beide Fälle robust behandeln.
+      const contestToken = extractJoinToken(qrData, 'contest');
+      await api.joinContest(contestToken);
       
       showToast({
         type: 'success',

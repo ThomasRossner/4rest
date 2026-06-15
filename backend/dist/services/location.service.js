@@ -1,6 +1,6 @@
 import { getPool } from '../database/connection.js';
 import { resolveI18n } from '../utils/i18n.js';
-const SELECT_FIELDS = 'id, name, description, is_online, address, latitude, longitude, active, category, category_description, created_at, updated_at, name_i18n, description_i18n, address_i18n, category_description_i18n';
+const SELECT_FIELDS = 'id, name, description, is_online, address, latitude, longitude, active, category, category_description, image_url, created_at, updated_at, name_i18n, description_i18n, address_i18n, category_description_i18n';
 function mapLocation(row, lang) {
     if (!row)
         return row;
@@ -19,6 +19,7 @@ function mapLocation(row, lang) {
         active: row.active,
         category: row.category ?? null,
         category_description,
+        image_url: row.image_url ?? null,
         created_at: row.created_at,
         updated_at: row.updated_at,
         ...(lang ? {} : { name_i18n: row.name_i18n, description_i18n: row.description_i18n, address_i18n: row.address_i18n, category_description_i18n: row.category_description_i18n }),
@@ -85,6 +86,14 @@ function normalizeLocationInput(data, { partial = false } = {}) {
                 ? data.category_description.trim() || null
                 : String(data.category_description).trim() || null;
         normalized.category_description = catDesc;
+    }
+    if (!partial || data.image_url !== undefined) {
+        const img = data.image_url === null || data.image_url === undefined
+            ? null
+            : typeof data.image_url === 'string'
+                ? data.image_url.trim() || null
+                : null;
+        normalized.image_url = img;
     }
     const isOnline = normalized.is_online ?? data.is_online;
     if (isOnline === true) {
@@ -161,8 +170,8 @@ export async function createLocation(data) {
     const descI18n = data.description_i18n && typeof data.description_i18n === 'object' ? data.description_i18n : { de: payload.description ?? '', en: payload.description ?? '' };
     const addrI18n = data.address_i18n && typeof data.address_i18n === 'object' ? data.address_i18n : { de: payload.address ?? '', en: payload.address ?? '' };
     const catDescI18n = data.category_description_i18n && typeof data.category_description_i18n === 'object' ? data.category_description_i18n : { de: payload.category_description ?? '', en: payload.category_description ?? '' };
-    const result = await db.query(`INSERT INTO locations (name, description, is_online, address, latitude, longitude, active, category, category_description, name_i18n, description_i18n, address_i18n, category_description_i18n)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    const result = await db.query(`INSERT INTO locations (name, description, is_online, address, latitude, longitude, active, category, category_description, image_url, name_i18n, description_i18n, address_i18n, category_description_i18n)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING ${SELECT_FIELDS}`, [
         payload.name,
         payload.description ?? null,
@@ -173,6 +182,7 @@ export async function createLocation(data) {
         data.active ?? true,
         payload.category ?? null,
         payload.category_description ?? null,
+        payload.image_url ?? null,
         JSON.stringify(nameI18n),
         JSON.stringify(descI18n),
         JSON.stringify(addrI18n),
@@ -195,11 +205,12 @@ export async function updateLocation(id, data) {
         longitude: data.longitude !== undefined ? data.longitude : existing.longitude,
         category: data.category !== undefined ? data.category : existing.category ?? null,
         category_description: data.category_description !== undefined ? data.category_description : existing.category_description ?? null,
+        image_url: data.image_url !== undefined ? data.image_url : existing.image_url ?? null,
     };
     const payload = normalizeLocationInput(mergedInput);
     const updates = [
         'name = $1', 'description = $2', 'is_online = $3', 'address = $4', 'latitude = $5', 'longitude = $6',
-        'active = $7', 'category = $8', 'category_description = $9', 'updated_at = CURRENT_TIMESTAMP',
+        'active = $7', 'category = $8', 'category_description = $9', 'image_url = $10', 'updated_at = CURRENT_TIMESTAMP',
     ];
     const values = [
         payload.name,
@@ -211,8 +222,9 @@ export async function updateLocation(id, data) {
         data.active ?? existing.active,
         payload.category ?? null,
         payload.category_description ?? null,
+        payload.image_url ?? null,
     ];
-    let idx = 10;
+    let idx = 11;
     if (data.name_i18n !== undefined && data.name_i18n !== null && typeof data.name_i18n === 'object') {
         updates.push(`name_i18n = $${idx}`);
         values.push(JSON.stringify(data.name_i18n));

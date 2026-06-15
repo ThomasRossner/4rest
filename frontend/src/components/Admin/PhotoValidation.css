@@ -240,3 +240,71 @@
   font-weight: 600;
   color: #333;
 }
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Foto-Validierung
+   ============================================================ */
+.photo-validation-item {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+.photo-validation-info h3 {
+  color: var(--glass-text);
+}
+
+.photo-validation-user,
+.photo-validation-points,
+.photo-validation-date,
+.photo-validation-description {
+  color: var(--glass-text-muted);
+}
+
+/* Freigeben-Button: lesbares Forest-Glas statt Mint-Verlauf + Weiß */
+.photo-validation-approve-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.photo-validation-approve-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.96) 0%, rgba(24, 72, 60, 0.98) 100%);
+}
+
+/* Ablehnen-Dialog auf dunklem Glas */
+.photo-validation-reject-dialog {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.97) 0%, rgba(16, 42, 32, 0.98) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.photo-validation-reject-dialog h3 {
+  color: var(--glass-text);
+}
+
+.photo-validation-reject-dialog p {
+  color: var(--glass-text-muted);
+}
+
+.photo-validation-rejection-reason {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.photo-validation-rejection-reason::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.photo-validation-cancel-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.photo-validation-cancel-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}

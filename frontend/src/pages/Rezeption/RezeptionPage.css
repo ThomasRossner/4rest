@@ -599,3 +599,84 @@
 }
 
 /* Removed danger button style - all buttons use unified design */
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Rezeption
+   ============================================================ */
+.rezeption-section {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+.rezeption-choice-card {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+.rezeption-choice-card:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.rezeption-modal {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.97) 0%, rgba(16, 42, 32, 0.98) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+/* Formularfelder */
+.rezeption-field input,
+.rezeption-field select,
+.rezeption-filter-group input,
+.rezeption-filter-group select {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.rezeption-field input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Icon-Button */
+.rezeption-icon-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.rezeption-icon-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Buttons: Forest-Glas statt Mint+Weiß */
+.rezeption-logout-button,
+.rezeption-action-button,
+.rezeption-button,
+.rezeption-form-actions button,
+.rezeption-form-actions .rezeption-button,
+.rezeption-modal-footer button,
+.rezeption-modal-footer .rezeption-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  background-color: rgba(24, 72, 60, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.rezeption-logout-button:hover,
+.rezeption-action-button:hover,
+.rezeption-button:hover,
+.rezeption-form-actions button:hover,
+.rezeption-form-actions .rezeption-button:hover,
+.rezeption-modal-footer button:hover,
+.rezeption-modal-footer .rezeption-button:hover {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.96) 0%, rgba(24, 72, 60, 0.98) 100%) !important;
+  background-color: rgba(38, 105, 88, 0.98) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}

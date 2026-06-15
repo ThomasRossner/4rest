@@ -4,6 +4,7 @@ import { useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
+import { extractJoinToken } from '../../utils/invite';
 import jsQR from 'jsqr';
 import '../../pages/Admin/QrScannerPage.css';
 
@@ -156,7 +157,10 @@ export function TeamJoiner({ onSuccess, onClose }: TeamJoinerProps) {
     setIsJoining(true);
 
     try {
-      await api.joinTeam(qrData);
+      // QR enthält jetzt eine Einladungs-URL (…/login?team=<token>); ältere QR-Codes
+      // enthalten den rohen Token. Beide Fälle robust behandeln.
+      const teamToken = extractJoinToken(qrData, 'team');
+      await api.joinTeam(teamToken);
       
       // Invalidate all relevant queries to immediately update UI
       if (userId) {

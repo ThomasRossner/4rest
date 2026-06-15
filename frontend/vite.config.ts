@@ -4,7 +4,18 @@ import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'fs';
 import path from 'path';
 
+// Build-Version-Token: package version + Build-Zeitpunkt. Wird als __BUILD_ID__ ins
+// Bundle eingebettet und beim App-Start gegen die zuletzt geladene Version verglichen
+// (version-basiertes Cache-Busting nach Server-Updates).
+const pkgVersion = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')
+).version as string;
+const buildId = `${pkgVersion}-${Date.now()}`;
+
 export default defineConfig({
+  define: {
+    __BUILD_ID__: JSON.stringify(buildId),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -38,12 +49,34 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,glb}'],
+        // Bewusst OHNE 'html': die App-Shell (index.html) wird nicht mehr precached,
+        // sondern network-first geladen (siehe NavigationRoute unten). Verhindert, dass
+        // sich ein Client nach Server-Updates an eine alte index.html klammert.
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff2,glb}'],
+        // Keine CacheFirst-Navigation aus dem Precache mehr — wir routen Navigationen selbst.
+        navigateFallback: null,
+        cleanupOutdatedCaches: true,
+        // Neuer SW übernimmt sofort die Kontrolle -> löst controllerchange-Reload aus.
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             // Same-origin API (luise.bio/api/...) — never cache auth-sensitive responses
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
             handler: 'NetworkOnly',
+          },
+          {
+            // App-Shell / Navigationen: immer zuerst Netzwerk (frische index.html mit
+            // aktuellen JS-Hashes). Cache dient nur als Offline-Fallback.
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-shell',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 10,
+              },
+            },
           },
           {
             // Cache 3D models aggressively for fast repeat visits

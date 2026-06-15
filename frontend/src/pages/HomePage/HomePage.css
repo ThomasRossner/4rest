@@ -8,11 +8,11 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   max-width: 440px;
   margin: auto;
   width: 100%;
-  padding: 0 10px 6px;
+  padding: 0 10px 4px;
   box-sizing: border-box;
 }
 
@@ -22,17 +22,17 @@
 }
 
 .home-section.glass-section {
-  padding: 0.55rem 0.65rem;
+  padding: 0.45rem 0.6rem;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(18, 54, 44, 0.42);
   border-color: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(12px) saturate(1.12) brightness(1.02);
   -webkit-backdrop-filter: blur(12px) saturate(1.12) brightness(1.02);
 }
 
 .home-section .glass-section__title {
-  font-size: 0.82rem;
-  margin-bottom: 0.45rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.3rem;
 }
 
 .home-section .glass-task-tile {
@@ -40,7 +40,7 @@
   padding: 0.38rem;
   gap: 0.3rem;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(31, 90, 76, 0.5);
 }
 
 .home-section .glass-task-tile__thumb {
@@ -48,16 +48,16 @@
 }
 
 .home-section .glass-task-tile__title {
-  font-size: 0.64rem;
+  font-size: 0.8rem;
   min-height: 2.2em;
 }
 
 .home-section .glass-task-tile--all .glass-task-tile__title {
-  font-size: 0.7rem;
+  font-size: 0.86rem;
 }
 
 .home-section .glass-points-badge {
-  font-size: 0.62rem;
+  font-size: 0.76rem;
   padding: 0.22rem 0.45rem;
   gap: 0.2rem;
 }
@@ -72,54 +72,76 @@
 }
 
 .home-section .glass-level-badge {
-  font-size: 0.68rem;
-  padding: 0.25rem 0.55rem;
-  margin-bottom: 0.4rem;
+  font-size: 0.84rem;
+  padding: 0.22rem 0.5rem;
+  margin-bottom: 0.3rem;
 }
 
 .home-section .glass-category-grid {
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .home-category-grid {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.2rem;
 }
 
 .home-section .glass-category-stat {
-  padding: 0.32rem 0.28rem;
+  padding: 0.28rem 0.26rem;
   border-radius: 11px;
 }
 
 .home-section .glass-category-stat__value {
-  font-size: 0.85rem;
+  font-size: 1.04rem;
 }
 
 .home-section .glass-category-stat__label {
-  font-size: 0.52rem;
+  font-size: 0.66rem;
 }
 
 .home-invite__text {
-  font-size: 0.74rem;
-  line-height: 1.4;
+  font-size: 0.85rem;
+  line-height: 1.3;
   color: var(--glass-text-muted);
   margin: 0;
 }
 
 .home-section .glass-invite-cta {
-  font-size: 0.74rem;
-  padding: 0.42rem 0.68rem;
-  margin-top: 0.35rem;
+  font-size: 0.88rem;
+  padding: 0.38rem 0.64rem;
+  margin-top: 0.25rem;
   gap: 0.3rem;
+}
+
+.home-invite__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.home-section .home-invite__actions .glass-invite-cta {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.home-section .glass-invite-cta--secondary {
+  opacity: 0.85;
 }
 
 @media (max-width: 480px) {
   .home-page.home-page--sections {
-    gap: 16px;
-    padding: 0 8px 4px;
+    gap: 10px;
+    padding: 0 8px 2px;
   }
 
   .home-section.glass-section {
-    padding: 0.5rem 0.58rem;
+    padding: 0.42rem 0.52rem;
     margin: 0 2px;
+  }
+
+  .home-section .glass-section__title {
+    font-size: 0.9rem;
+    margin-bottom: 0.26rem;
   }
 }

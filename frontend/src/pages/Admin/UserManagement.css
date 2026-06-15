@@ -268,3 +268,75 @@
   background: var(--color-surface-secondary) !important;
   color: var(--color-text-light) !important;
 }
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Benutzerverwaltung
+   ============================================================ */
+
+/* Details-Modal auf dunklem Glas */
+.user-details-content {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.97) 0%, rgba(16, 42, 32, 0.98) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.user-details-header,
+.user-details-actions {
+  border-color: var(--glass-border);
+}
+
+.user-details-header h2 {
+  color: var(--glass-text);
+}
+
+.user-details-stat {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.user-details-field span,
+.user-details-field input,
+.user-details-field select {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+/* Status-Texte auf Dunkel lesbar */
+.status-active {
+  color: var(--color-success);
+}
+
+.status-inactive {
+  color: var(--color-error);
+}
+
+/* Auswahl-Zeile dezenter Tint statt hellem Mint */
+.user-management-table-wrapper table tbody tr.selected {
+  background-color: rgba(126, 207, 176, 0.18);
+}
+
+/* Sekundär-/Pagination-Buttons lesbar */
+.admin-button-secondary,
+.user-management-pagination button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.admin-button-secondary:hover:not(:disabled),
+.user-management-pagination button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Aktions-Buttons in der Tabelle: Forest-Glas statt Mint+Weiß */
+.user-management-table-wrapper .admin-action-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.user-management-table-wrapper .admin-action-button:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--glass-border) !important;
+}

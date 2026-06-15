@@ -2061,3 +2061,228 @@
   flex: 1;
 }
 
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Admin
+   Nur Farben/Hintergründe; keine globalen Tokens, keine Logik.
+   Ersetzt unlesbare Kombination „weiß auf hellem Mint" sowie
+   „weiß auf weiß" durch dunkle Forest-Glas-Flächen + heller Text.
+   ============================================================ */
+
+/* Panels / Karten auf Glas */
+.admin-section,
+.admin-management-card,
+.admin-form-actions,
+.admin-template-list,
+.admin-quiz-builder {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+.admin-choice-card,
+.admin-quiz-question {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+/* Choice-Card ist ein <button>: Text erbt UA-Schwarz -> explizit hell */
+.admin-choice-card,
+.admin-choice-card h2,
+.admin-choice-card h3,
+.admin-choice-card p {
+  color: var(--glass-text);
+}
+
+.admin-choice-card:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Formular-Sektion: helles Verlauf -> Forest-Glas */
+.admin-form-section {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-form-section::before {
+  background: linear-gradient(135deg, rgba(126, 207, 176, 0.12), transparent 55%);
+}
+
+/* Modal */
+.admin-modal {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.97) 0%, rgba(16, 42, 32, 0.98) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+/* Formularfelder lesbar auf Glas */
+.admin-field input,
+.admin-field select,
+.admin-field textarea,
+.admin-field .admin-multi-select-toggle,
+.admin-filter-group input,
+.admin-filter-group select,
+.admin-quiz-answer-row input[type='text'] {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.admin-field input::placeholder,
+.admin-field textarea::placeholder,
+.admin-filter-group input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Readonly-Felder weiterhin gedämpft kennzeichnen */
+.admin-field input[readonly],
+.admin-field textarea[readonly],
+.admin-input-readonly {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-light);
+}
+
+/* Multi-Select */
+.admin-multi-select-toggle {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-multi-select-value {
+  color: var(--glass-text);
+}
+
+.admin-multi-select-dropdown,
+.admin-filter-dropdown,
+.admin-mobile-filter-modal {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.98) 0%, rgba(16, 42, 32, 0.99) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-filter-option,
+.admin-mobile-filter-option {
+  color: var(--glass-text);
+}
+
+/* Tabellen-Kopf + Mobile-Karten */
+.admin-table th {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+}
+
+@media (max-width: 768px) {
+  .admin-table tr {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+  }
+}
+
+/* Runde Icon-/Toggle-Buttons */
+.admin-icon-button,
+.admin-mobile-filter-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-icon-button:hover,
+.admin-mobile-filter-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.admin-debug-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-debug-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: var(--glass-text);
+}
+
+.admin-debug-toggle.active {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+/* Status-Badge „aktiv" deutlicher */
+.admin-status-badge.active {
+  color: var(--color-success);
+  border-color: rgba(110, 231, 168, 0.4);
+  background: rgba(110, 231, 168, 0.16);
+}
+
+/* ---- Buttons: lesbare Forest-Glas-Variante statt Mint+Weiß ---- */
+.admin-logout-button,
+.admin-button,
+.admin-submit,
+.admin-upload-button,
+.admin-action-button,
+.admin-form-actions button,
+.admin-form-actions .admin-button,
+.admin-modal-footer button,
+.admin-modal-footer .admin-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  background-color: rgba(24, 72, 60, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.admin-logout-button:hover,
+.admin-button:hover,
+.admin-submit:hover:not(:disabled),
+.admin-upload-button:hover,
+.admin-action-button:hover:not(:disabled),
+.admin-form-actions button:hover,
+.admin-form-actions .admin-button:hover,
+.admin-modal-footer button:hover,
+.admin-modal-footer .admin-button:hover {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.96) 0%, rgba(24, 72, 60, 0.98) 100%) !important;
+  background-color: rgba(38, 105, 88, 0.98) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Destruktive / Abbruch-Buttons: rötlicher Glas-Tint, weiß bleibt lesbar */
+.admin-action-button.danger,
+.admin-action-button.cancel {
+  background: linear-gradient(145deg, rgba(160, 56, 52, 0.92) 0%, rgba(118, 34, 32, 0.95) 100%) !important;
+  background-color: rgba(140, 40, 36, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 200, 196, 0.35) !important;
+}
+
+.admin-action-button.danger:hover,
+.admin-action-button.cancel:hover {
+  background: linear-gradient(145deg, rgba(184, 64, 58, 0.96) 0%, rgba(140, 40, 36, 0.98) 100%) !important;
+  color: #fff !important;
+}
+
+/* Sekundär-Button */
+.admin-action-button.secondary {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--glass-text) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.admin-action-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: var(--glass-text) !important;
+}
+
+/* Deaktivierte Buttons gedämpft, aber lesbar */
+.admin-action-button:disabled,
+.admin-submit:disabled,
+.admin-button:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--glass-border) !important;
+}
+

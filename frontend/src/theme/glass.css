@@ -31,7 +31,7 @@
 
 .glass-section__title {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--glass-text);
   margin: 0 0 0.65rem;
@@ -85,7 +85,7 @@
 }
 
 .glass-task-tile__title {
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 600;
   line-height: 1.25;
   display: -webkit-box;
@@ -103,7 +103,7 @@
 }
 
 .glass-task-tile--all .glass-task-tile__title {
-  font-size: 0.8rem;
+  font-size: 0.96rem;
   min-height: auto;
 }
 
@@ -139,13 +139,13 @@
   gap: 0.15rem;
   padding: 0.45rem 0.35rem;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(31, 90, 76, 0.42);
   border: 1px solid var(--glass-border-subtle, rgba(255, 255, 255, 0.12));
 }
 
 .glass-category-stat__value {
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--glass-text);
   font-variant-numeric: tabular-nums;
@@ -153,7 +153,7 @@
 }
 
 .glass-category-stat__label {
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--glass-text-muted);
   text-align: center;
@@ -166,7 +166,7 @@
   gap: 0.35rem;
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--color-accent);
   background: rgba(242, 209, 107, 0.12);
@@ -182,7 +182,7 @@
   margin-top: 0.5rem;
   padding: 0.55rem 0.85rem;
   border-radius: 999px;
-  font-size: 0.82rem;
+  font-size: 0.96rem;
   font-weight: 700;
   text-decoration: none;
   color: #0a2218 !important;
@@ -230,7 +230,7 @@
 
 .glass-chip__value {
   font-family: var(--font-display, inherit);
-  font-size: 0.72rem;
+  font-size: 0.86rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--glass-text, var(--color-text));
@@ -240,7 +240,7 @@
 }
 
 .glass-chip__label {
-  font-size: 0.56rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--glass-text-muted, var(--color-text-muted));
@@ -285,7 +285,7 @@
 }
 
 .glass-chip--horizontal .glass-chip__label {
-  font-size: 0.62rem;
+  font-size: 0.74rem;
 }
 
 .glass-chip--compact-inline {
@@ -298,7 +298,7 @@
 }
 
 .glass-chip--compact-inline .glass-chip__text {
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--glass-text);
   white-space: nowrap;
@@ -336,8 +336,8 @@
   text-decoration: none;
   color: var(--glass-text, var(--color-text)) !important;
   font-weight: 600;
-  font-size: 0.9rem;
-  background: var(--glass-bg-strong, var(--glass-bg));
+  font-size: 0.95rem;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.62) 0%, rgba(20, 62, 52, 0.58) 100%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow-outer), var(--glass-shadow-inner);
   backdrop-filter: blur(var(--glass-blur)) saturate(1.12);
@@ -367,7 +367,8 @@
   border-radius: 22px;
   text-decoration: none;
   color: var(--glass-text) !important;
-  background: var(--glass-bg-strong);
+  /* Dunkler Forest-Tint hinter weißem Text → bessere Lesbarkeit (statt hellem Glas) */
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.6) 0%, rgba(20, 62, 52, 0.55) 100%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow-outer), var(--glass-shadow-inner);
   backdrop-filter: blur(var(--glass-blur)) saturate(1.12);
@@ -377,6 +378,7 @@
 
 .glass-action-card:hover {
   transform: translateY(-2px);
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.7) 0%, rgba(24, 72, 60, 0.66) 100%);
   box-shadow: var(--shadow-md), var(--glass-chip-glow);
 }
 
@@ -385,7 +387,7 @@
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.18rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -396,7 +398,7 @@
 }
 
 .glass-action-card__sub {
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   font-weight: 500;
   color: var(--glass-text-muted);
   padding-left: 1.75rem;
@@ -427,7 +429,7 @@
 
 .glass-summary-card__value {
   font-family: var(--font-display);
-  font-size: clamp(1rem, 3.5vw, 1.25rem);
+  font-size: clamp(1.12rem, 3.8vw, 1.4rem);
   font-weight: 700;
   color: var(--glass-text);
   line-height: 1.1;
@@ -435,7 +437,7 @@
 }
 
 .glass-summary-card__label {
-  font-size: 0.52rem;
+  font-size: 0.64rem;
   font-weight: 600;
   color: var(--glass-text-muted);
   line-height: 1.15;
@@ -468,7 +470,7 @@
   gap: 0.25rem;
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: var(--color-accent);
   background: rgba(242, 209, 107, 0.14);
@@ -482,6 +484,71 @@
 
 .glass-points-badge svg {
   color: var(--color-accent);
+}
+
+/**
+ * Lesbarer Standard-Action-Button (Glas).
+ * Dunkler Forest-Tint (#1F5A4C-Bereich) hinter weißem Text — ersetzt die
+ * unlesbare Kombination „weiß auf hellem Mint" (var(--color-primary)).
+ * Zentral definiert; auf allen Hauptseiten wiederverwendbar.
+ */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-button, 12px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text) !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: var(--glass-shadow-inner);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.glass-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.glass-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.glass-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.glass-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Destruktiv (z. B. Auflösen/Löschen): rötlicher Tint, weißer Text bleibt lesbar. */
+.glass-btn--danger {
+  background: linear-gradient(145deg, rgba(160, 56, 52, 0.9) 0%, rgba(118, 34, 32, 0.94) 100%);
+  border-color: rgba(255, 200, 196, 0.35);
+}
+
+.glass-btn--danger:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(184, 64, 58, 0.95) 0%, rgba(140, 40, 36, 0.97) 100%);
+  border-color: rgba(255, 200, 196, 0.5);
+}
+
+/* Warnung (z. B. Verlassen): bernsteinfarbener Tint, weißer Text lesbar. */
+.glass-btn--warning {
+  background: linear-gradient(145deg, rgba(176, 120, 22, 0.92) 0%, rgba(138, 92, 14, 0.95) 100%);
+  border-color: rgba(255, 233, 196, 0.35);
+}
+
+.glass-btn--warning:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(196, 136, 28, 0.96) 0%, rgba(156, 104, 18, 0.97) 100%);
+  border-color: rgba(255, 233, 196, 0.5);
 }
 
 @media (max-width: 480px) {

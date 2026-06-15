@@ -76,13 +76,15 @@
   background-color: var(--color-border);
 }
 
+/* Bestätigen: lesbarer Forest-Glas-Tint statt Weiß auf hellem Mint. */
 .contest-form-actions button:last-child {
-  background-color: var(--color-primary);
-  color: white;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .contest-form-actions button:last-child:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
 }
 
 .contest-form-actions button:disabled {

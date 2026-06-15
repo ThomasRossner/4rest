@@ -26,6 +26,8 @@ import {
   getPendingPhotoTasks,
   getGallery,
   getTaskQrCode,
+  addTaskToCollection,
+  removeTaskFromCollection,
 } from '../controllers/task.controller.js';
 import { publicTaskRateLimit } from '../middleware/publicTaskRateLimit.js';
 
@@ -149,5 +151,7 @@ router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), upda
 router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
 router.post('/:id/quiz/answer', authenticate, submitQuizAnswer);
 router.post('/:id/complete', authenticate, completeTask);
+router.post('/:id/collection', authenticate, addTaskToCollection);
+router.delete('/:id/collection', authenticate, removeTaskFromCollection);
 
 export default router;

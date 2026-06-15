@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
+import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { api } from '../../services/api';
 import { UserLocationMap } from '../LocationMap/UserLocationMap';
 import { BackArrowIcon } from './BackArrowIcon';
@@ -46,8 +47,16 @@ export function TaskDetailView({
   footerReplacement,
 }: TaskDetailViewProps) {
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
   const completedVideoRef = useRef<HTMLVideoElement | null>(null);
   const lang = publicLang ?? (i18n.language?.startsWith('en') ? 'en' : 'de');
+  /** Optimistischer Override des Sammlungs-Status (null = Serverwert verwenden). */
+  const [collectionOverride, setCollectionOverride] = useState<boolean | null>(null);
+  const [collectionBusy, setCollectionBusy] = useState(false);
+
+  useEffect(() => {
+    setCollectionOverride(null);
+  }, [taskId]);
 
   const authQuery = useQuery(
     ['task', taskId],
@@ -122,6 +131,29 @@ export function TaskDetailView({
   const isCompleted = !!row.completed && row.verification_status !== 'pending';
   const isValidating = row.verification_status === 'pending';
   const isLocked = row.is_available === false;
+
+  const showCollectionToggle = dataSource === 'authenticated';
+  const inCollection = collectionOverride ?? Boolean(row.in_collection);
+
+  const handleToggleCollection = async () => {
+    if (collectionBusy) return;
+    const next = !inCollection;
+    setCollectionOverride(next);
+    setCollectionBusy(true);
+    try {
+      if (next) {
+        await api.addTaskToCollection(taskId);
+      } else {
+        await api.removeTaskFromCollection(taskId);
+      }
+      queryClient.invalidateQueries(['tasks']);
+      queryClient.invalidateQueries(['task', taskId]);
+    } catch (_) {
+      setCollectionOverride(!next);
+    } finally {
+      setCollectionBusy(false);
+    }
+  };
 
   const activeQuizLocks = (quizLocksQuery.data?.locks ?? []).filter((l) => new Date(l.lockedUntil).getTime() > Date.now());
   const maxQuizLockedUntil =
@@ -219,6 +251,23 @@ export function TaskDetailView({
           <span className="task-detail-points">
             {t('tasksComponents.points', { points: Number(row.points ?? 0) })}
           </span>
+          {showCollectionToggle && (
+            <button
+              type="button"
+              className={`task-detail-collection-toggle ${inCollection ? 'task-detail-collection-toggle--active' : ''}`}
+              onClick={handleToggleCollection}
+              disabled={collectionBusy}
+              aria-pressed={inCollection}
+              title={inCollection ? t('tasks.collection.remove') : t('tasks.collection.add')}
+              aria-label={inCollection ? t('tasks.collection.remove') : t('tasks.collection.add')}
+            >
+              {inCollection ? (
+                <BookmarkCheck size={20} strokeWidth={2} aria-hidden />
+              ) : (
+                <Bookmark size={20} strokeWidth={2} aria-hidden />
+              )}
+            </button>
+          )}
         </div>
       </div>
 

@@ -68,12 +68,14 @@
   background: var(--color-error-dark);
 }
 
+/* Bestätigen: lesbarer Forest-Glas-Tint statt Weiß auf hellem Mint. */
 .redemption-modal-button.confirm {
-  background: var(--color-primary);
-  color: white;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .redemption-modal-button.confirm:hover {
-  background: var(--color-primary-dark);
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
 }
 

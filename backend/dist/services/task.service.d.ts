@@ -36,6 +36,8 @@ export interface Task {
     prerequisite_task_count?: number;
     prerequisite_task_ids?: string[];
     is_available?: boolean;
+    /** Vom eingeloggten Nutzer in die persönliche Sammlung aufgenommen (Bookmark). */
+    in_collection?: boolean;
     category?: 'Kommunikation & Netzwerke' | 'Mensch & soziales Umfeld' | 'Natur & Umweltschutz' | 'Ressourcenverbrauch & Materialeinsatz';
     difficulty?: 'sehr einfach' | 'einfach' | 'mittel' | 'schwer' | 'sehr schwer';
     time_required?: '1-3 Min' | '3-10 Min' | '10-30 Min' | '30-60 Min' | '60+ Min';
@@ -64,6 +66,15 @@ export declare function isQuizAnswerCorrect(params: {
 export declare function resolveQuizQuestionsI18n(payload: any, lang: 'de' | 'en'): any[];
 export declare function resolveSurveyQuestionsI18n(payload: any, lang: 'de' | 'en'): any[];
 export declare function getTaskById(id: string, preferredLanguage?: string, userId?: string | null): Promise<Task | null>;
+/**
+ * Markiert eine Aufgabe für die persönliche Sammlung des Nutzers (idempotent).
+ * Wirft einen ValidationError, wenn die Aufgabe nicht existiert.
+ */
+export declare function addTaskToCollection(userId: string, taskId: string): Promise<void>;
+/**
+ * Entfernt eine Aufgabe aus der persönlichen Sammlung des Nutzers (idempotent).
+ */
+export declare function removeTaskFromCollection(userId: string, taskId: string): Promise<void>;
 /**
  * Calculate task points automatically based on difficulty and time_required weights
  * Formula: (difficulty_weight * time_required_weight) / factor

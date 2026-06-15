@@ -10,9 +10,13 @@ useGLTF.preload('/models/beechTrunk.glb');
 useGLTF.preload('/models/beechTwig.glb');
 useGLTF.preload('/models/beechLeaf.glb');
 
-/** Standard-Blick: leicht nach oben gerichtet, damit der Wald unter dem Top-Panel sichtbar sitzt. */
+/**
+ * Standard-Blick: leicht nach oben gerichtet, damit der Wald unter dem Top-Panel sichtbar sitzt.
+ * Initial bewusst weiter entfernt, damit die gesamte Wald-Grundfläche auf einen Blick passt.
+ * Zoom/Navigation bleibt über OrbitControls voll möglich.
+ */
 export const FOREST_DEFAULT_CAMERA = {
-  position: [0, 10.5, 28] as const,
+  position: [0, 14, 42] as const,
   fov: 45,
   /** OrbitControls-Blickpunkt (Insel/Boden) */
   target: [0, 3.4, 0] as const,

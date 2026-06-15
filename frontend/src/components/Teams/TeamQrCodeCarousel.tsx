@@ -5,6 +5,7 @@ import { useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
+import { buildInviteUrl, shareInvite } from '../../utils/invite';
 import './TeamQrCodeCarousel.css';
 
 type TeamQrCodeCarouselProps = {
@@ -140,6 +141,30 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
     }
   };
 
+  const inviteUrl = qrToken ? buildInviteUrl('team', qrToken) : null;
+
+  const handleShare = async () => {
+    if (!inviteUrl) return;
+    const result = await shareInvite({
+      url: inviteUrl,
+      title: teamName || t('teams.qrCode.title') || 'Team',
+      text: t('teams.qrCode.shareText') || 'Join my team on 4rest!',
+    });
+    if (result === 'copied') {
+      showToast({
+        type: 'success',
+        title: t('teams.qrCode.linkCopied') || 'Link copied',
+        message: t('teams.qrCode.linkCopiedMessage') || 'Invite link copied to clipboard',
+      });
+    } else if (result === 'failed') {
+      showToast({
+        type: 'error',
+        title: t('teams.qrCode.shareError') || 'Error',
+        message: t('teams.qrCode.shareErrorMessage') || 'Could not share the invite link',
+      });
+    }
+  };
+
   const membershipActions = isCreator ? (
     <button
       type="button"
@@ -185,9 +210,12 @@ export function TeamQrCodeCarousel({ teamId, teamName, onDissolve, onLeave, isCr
     <div className="team-qr-carousel">
       <h4>{teamName || t('teams.qrCode.title') || 'Team QR Code'}</h4>
       <div className="team-qr-code-wrapper">
-        <QRCodeSVG value={qrToken} size={200} level="M" />
+        <QRCodeSVG value={inviteUrl ?? qrToken} size={200} level="M" />
       </div>
       <p className="team-qr-description">{t('teams.qrCode.description') || 'Share this QR code to let others join your team'}</p>
+      <button type="button" className="team-qr-share-button" onClick={handleShare}>
+        {t('teams.qrCode.share') || 'Share invite link'}
+      </button>
       {membershipActions}
     </div>
   );

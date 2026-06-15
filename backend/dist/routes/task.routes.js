@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/requireRole.js';
-import { getTasks, getTask, listPublicGuestTasks, getPublicTask, completePublicTask, createTask, updateTask, deleteTask, completeTask, submitQuizAnswer, getQuizQuestionLocks, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, approvePhotoTask, rejectPhotoTask, getPendingPhotoTasks, getGallery, getTaskQrCode, } from '../controllers/task.controller.js';
+import { getTasks, getTask, listPublicGuestTasks, getPublicTask, completePublicTask, createTask, updateTask, deleteTask, completeTask, submitQuizAnswer, getQuizQuestionLocks, uploadPhoto, uploadVideo, uploadThumbnail, bulkUpdateTaskStatus, bulkDeleteTasks, approvePhotoTask, rejectPhotoTask, getPendingPhotoTasks, getGallery, getTaskQrCode, addTaskToCollection, removeTaskFromCollection, } from '../controllers/task.controller.js';
 import { publicTaskRateLimit } from '../middleware/publicTaskRateLimit.js';
 const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
 // Ensure upload directory exists
@@ -109,5 +109,7 @@ router.put('/:id', authenticate, requireRole('redaktion', 'administrator'), upda
 router.delete('/:id', authenticate, requireRole('redaktion', 'administrator'), deleteTask);
 router.post('/:id/quiz/answer', authenticate, submitQuizAnswer);
 router.post('/:id/complete', authenticate, completeTask);
+router.post('/:id/collection', authenticate, addTaskToCollection);
+router.delete('/:id/collection', authenticate, removeTaskFromCollection);
 export default router;
 //# sourceMappingURL=task.routes.js.map

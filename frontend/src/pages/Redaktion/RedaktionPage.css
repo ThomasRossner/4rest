@@ -315,3 +315,74 @@
   color: var(--color-text-light);
   line-height: 1.4;
 }
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Redaktion
+   ============================================================ */
+.redaktion-section {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+.redaktion-location-item {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.redaktion-icon-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.redaktion-icon-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.redaktion-filter-input,
+.redaktion-filter-select {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.redaktion-filter-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Buttons: Forest-Glas statt Mint+Weiß */
+.redaktion-logout-button,
+.redaktion-action-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  background-color: rgba(24, 72, 60, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.redaktion-logout-button:hover,
+.redaktion-action-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.96) 0%, rgba(24, 72, 60, 0.98) 100%) !important;
+  background-color: rgba(38, 105, 88, 0.98) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.redaktion-action-button.danger {
+  background: linear-gradient(145deg, rgba(160, 56, 52, 0.92) 0%, rgba(118, 34, 32, 0.95) 100%) !important;
+  background-color: rgba(140, 40, 36, 0.95) !important;
+  border: 1px solid rgba(255, 200, 196, 0.35) !important;
+}
+
+.redaktion-action-button.danger:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(184, 64, 58, 0.96) 0%, rgba(140, 40, 36, 0.98) 100%) !important;
+}
+
+.redaktion-action-button:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--glass-border) !important;
+}

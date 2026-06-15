@@ -170,3 +170,33 @@
     width: 100%;
   }
 }
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Benutzer-Auswahl
+   ============================================================ */
+.user-selection-modal {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.97) 0%, rgba(16, 42, 32, 0.98) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.user-selection-search,
+.user-selection-sort select,
+.user-selection-sort-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.user-selection-search::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.user-selection-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.user-selection-item.selected {
+  background-color: rgba(126, 207, 176, 0.18);
+  border-color: rgba(126, 207, 176, 0.5);
+}

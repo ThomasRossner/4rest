@@ -367,7 +367,7 @@ export const getTeamRegistrationQrCodeController: RequestHandler = asyncHandler(
   }
   
   const frontendUrl = getFrontendUrlFromRequest(req);
-  const registrationUrl = `${frontendUrl}/register?team=${registrationQr.qrToken}`;
+  const registrationUrl = `${frontendUrl}/login?team=${registrationQr.qrToken}`;
   
   res.json({
     qrToken: registrationQr.qrToken,

@@ -5,6 +5,7 @@ import App from './App';
 import { Toaster } from './components/Toaster/Toaster';
 import { ThemeProvider } from './theme/ThemeContext';
 import {
+  enforceFreshVersion,
   maybeClearClientCachesFromUrl,
   registerServiceWorker,
   syncOfflineQRCodes,
@@ -67,6 +68,10 @@ void (async () => {
     window.location.reload();
     return;
   }
+
+  // Neue Build-Version erkannt? -> Caches löschen + einmaliger Reload (Auth bleibt erhalten).
+  const reloading = await enforceFreshVersion();
+  if (reloading) return;
 
   registerServiceWorker();
   syncOfflineQRCodes();

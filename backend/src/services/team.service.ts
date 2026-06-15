@@ -861,7 +861,39 @@ export async function validateTeamRegistrationToken(qrToken: string): Promise<st
     return null;
   }
   
-  return result.rows[0].id;
+  return result.rows[0].team_id;
+}
+
+/**
+ * Löst die Team-ID aus einem regulären Beitritts-QR-Token (team_qr_codes) auf.
+ * Wird genutzt, damit Einladungslinks/QR-Codes auch für Personen ohne Account
+ * funktionieren: Der beim Registrieren übergebene Token entspricht dem normalen
+ * Team-Beitritts-Token. Gibt nur eine ID zurück, wenn das Team aktiv ist.
+ */
+export async function getTeamIdByQrToken(qrToken: string): Promise<string | null> {
+  const db = getPool();
+
+  const result = await db.query(
+    'SELECT team_id FROM team_qr_codes WHERE qr_token = $1',
+    [qrToken]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const teamId = result.rows[0].team_id;
+
+  const teamResult = await db.query(
+    'SELECT id FROM teams WHERE id = $1 AND active = TRUE',
+    [teamId]
+  );
+
+  if (teamResult.rows.length === 0) {
+    return null;
+  }
+
+  return teamId;
 }
 
 /**

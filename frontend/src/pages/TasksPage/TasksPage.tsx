@@ -14,7 +14,7 @@ import { ArticleQuizTask } from '../../components/Tasks/ArticleQuizTask';
 import { SurveyTask } from '../../components/Tasks/SurveyTask';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { EmptyState } from '../../components/Feedback/EmptyState';
-import { CheckCircle2, Globe, ListTodo, Loader2, Lock, Map, MapPin, Shuffle, Star, Timer } from 'lucide-react';
+import { Bookmark, CheckCircle2, Globe, ListTodo, Loader2, Lock, Map, MapPin, Star, Timer } from 'lucide-react';
 import { FilterDropdown } from '../../components/Filters/FilterDropdown';
 import { BackArrowIcon } from '../../components/Tasks/BackArrowIcon';
 import { TaskTypeIcon } from '../../components/Tasks/taskTypeIcons';
@@ -23,13 +23,13 @@ import { TaskDetailView } from '../../components/Tasks/TaskDetailView';
 import { useCategoryTaskGridRowHeight } from '../../hooks/useCategoryTaskGridRowHeight';
 import { descriptionPreviewPlain } from '../../utils/taskDescriptionPreview';
 import {
+  getCollectionTasks,
   getOnlineTasks,
   getUniquePlaces,
   HUB_SCROLL_LIMIT,
-  isPhysicalPlaceTask,
+  isPlaceTask,
   isTaskOnline,
   parseTaskLocation,
-  pickShuffledTasks,
   type PlaceSummary,
 } from '../../utils/taskHubUtils';
 import './TasksPage.css';
@@ -139,8 +139,8 @@ function TasksPage() {
   const hubPlaces = useMemo(() => getUniquePlaces(tasks), [tasks]);
 
   const hubCollectionTasks = useMemo(
-    () => pickShuffledTasks(tasks ?? [], `collection-hub-${user?.id ?? 'guest'}`, HUB_SCROLL_LIMIT),
-    [tasks, user?.id]
+    () => getCollectionTasks(tasks ?? []).slice(0, HUB_SCROLL_LIMIT),
+    [tasks]
   );
 
   const hubOnlineTasks = useMemo(
@@ -201,11 +201,11 @@ function TasksPage() {
         return loc?.id === placeParam || task.location_id === placeParam;
       });
     } else if (viewParam === 'places') {
-      filtered = filtered.filter((task: any) => isPhysicalPlaceTask(task));
+      filtered = filtered.filter((task: any) => isPlaceTask(task));
     }
 
     if (viewParam === 'collection') {
-      filtered = pickShuffledTasks(filtered, `collection-list-${user?.id ?? 'guest'}`, filtered.length);
+      filtered = getCollectionTasks(filtered);
     }
 
     // Filter by prerequisite task IDs (Type 2 prerequisites)
@@ -458,7 +458,11 @@ function TasksPage() {
   const renderPlaceTile = (place: PlaceSummary) => (
     <Link key={place.id} to={`/tasks?place=${encodeURIComponent(place.id)}`} className="glass-task-tile">
       <span className="glass-task-tile__thumb">
-        <MapPin size={22} strokeWidth={2} aria-hidden />
+        {place.image_url ? (
+          <img src={place.image_url} alt="" />
+        ) : (
+          <MapPin size={22} strokeWidth={2} aria-hidden />
+        )}
       </span>
       <span className="glass-task-tile__title">{place.name}</span>
       <span className="glass-points-badge">
@@ -507,21 +511,6 @@ function TasksPage() {
           </section>
         )}
 
-        {hubCollectionTasks.length > 0 && (
-          <section className="glass-section tasks-hub-section" aria-labelledby="tasks-hub-collection-title">
-            <h2 id="tasks-hub-collection-title" className="glass-section__title">
-              {t('tasks.hub.sections.collection')}
-            </h2>
-            <div className="glass-scroll-row tasks-hub-scroll-row">
-              {hubCollectionTasks.map(renderHubTaskTile)}
-              <Link to="/tasks?view=collection" className="glass-task-tile glass-task-tile--all">
-                <Shuffle size={22} strokeWidth={2} aria-hidden />
-                <span className="glass-task-tile__title">{t('tasks.hub.all')}</span>
-              </Link>
-            </div>
-          </section>
-        )}
-
         {hubOnlineTasks.length > 0 && (
           <section className="glass-section tasks-hub-section" aria-labelledby="tasks-hub-online-title">
             <h2 id="tasks-hub-online-title" className="glass-section__title">
@@ -531,6 +520,21 @@ function TasksPage() {
               {hubOnlineTasks.map(renderHubTaskTile)}
               <Link to="/tasks?online=true" className="glass-task-tile glass-task-tile--all">
                 <Globe size={22} strokeWidth={2} aria-hidden />
+                <span className="glass-task-tile__title">{t('tasks.hub.all')}</span>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {hubCollectionTasks.length > 0 && (
+          <section className="glass-section tasks-hub-section" aria-labelledby="tasks-hub-collection-title">
+            <h2 id="tasks-hub-collection-title" className="glass-section__title">
+              {t('tasks.hub.sections.collection')}
+            </h2>
+            <div className="glass-scroll-row tasks-hub-scroll-row">
+              {hubCollectionTasks.map(renderHubTaskTile)}
+              <Link to="/tasks?view=collection" className="glass-task-tile glass-task-tile--all">
+                <Bookmark size={22} strokeWidth={2} aria-hidden />
                 <span className="glass-task-tile__title">{t('tasks.hub.all')}</span>
               </Link>
             </div>
@@ -593,6 +597,8 @@ function TasksPage() {
     return t('tasks.title');
   })();
 
+  const activePlace = placeParam ? hubPlaces.find((p) => p.id === placeParam) : undefined;
+
   const backToHubLabel = t('tasks.hub.backToHub');
 
   return (
@@ -609,6 +615,13 @@ function TasksPage() {
             >
               <BackArrowIcon className="tasks-icon-back-svg" />
             </button>
+            {activePlace?.image_url && (
+              <img
+                src={activePlace.image_url}
+                alt=""
+                className="tasks-header-place-image"
+              />
+            )}
             <h2 className="tasks-header-category-title">{listViewTitle}</h2>
           <div className="tasks-header-category-actions">
             {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (

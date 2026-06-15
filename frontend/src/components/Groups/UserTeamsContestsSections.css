@@ -18,7 +18,7 @@
 }
 
 .groups-section h2 {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   color: var(--color-text);
   margin: 0;
 }
@@ -29,18 +29,12 @@
   flex-wrap: wrap;
 }
 
+/* Farben/Hover liefert die zentrale .glass-btn (lesbarer Forest-Glas-Tint). */
 .groups-action-button {
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-primary);
-  color: white;
-  border: none;
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.groups-action-button:hover {
-  background: var(--color-primary-dark);
+  font-size: 1rem;
 }
 
 .groups-list {

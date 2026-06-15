@@ -51,14 +51,14 @@ export function UserTeamsContestsSections() {
             <div className="groups-section-actions">
               <button
                 type="button"
-                className="groups-action-button"
+                className="groups-action-button glass-btn"
                 onClick={() => setShowTeamJoiner(true)}
               >
                 {t('profile.teams.joinButton')}
               </button>
               <button
                 type="button"
-                className="groups-action-button"
+                className="groups-action-button glass-btn"
                 onClick={() => setShowTeamCreator(true)}
               >
                 {t('profile.teams.createButton')}
@@ -108,14 +108,14 @@ export function UserTeamsContestsSections() {
           <div className="groups-section-actions">
             <button
               type="button"
-              className="groups-action-button"
+              className="groups-action-button glass-btn"
               onClick={() => setShowContestJoiner(true)}
             >
               {t('profile.contests.joinButton')}
             </button>
             <button
               type="button"
-              className="groups-action-button"
+              className="groups-action-button glass-btn"
               onClick={() => setShowContestCreator(true)}
             >
               {t('profile.contests.createButton')}

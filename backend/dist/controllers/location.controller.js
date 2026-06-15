@@ -1,5 +1,6 @@
 import { bulkDeleteLocations, createLocation, deleteLocation, getLocations, setLocationsActiveState, updateLocation, } from '../services/location.service.js';
 import { getPreferredLanguage } from '../services/user.service.js';
+import { publicUploadFileUrl } from '../services/task.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 export const listLocations = asyncHandler(async (req, res) => {
     const includeInactive = req.query.includeInactive === 'true';
@@ -44,6 +45,7 @@ export const createLocationController = asyncHandler(async (req, res) => {
         active: payload.active !== undefined ? Boolean(payload.active) : true,
         category: payload.category ? payload.category : null,
         category_description: payload.categoryDescription || null,
+        image_url: payload.image_url !== undefined ? payload.image_url : null,
     });
     res.status(201).json(location);
 });
@@ -87,8 +89,18 @@ export const updateLocationController = asyncHandler(async (req, res) => {
         updateData.category = payload.category;
     if (payload.categoryDescription !== undefined)
         updateData.category_description = payload.categoryDescription;
+    if (payload.image_url !== undefined)
+        updateData.image_url = payload.image_url;
     const location = await updateLocation(req.params.id, updateData);
     res.json(location);
+});
+export const uploadLocationImage = asyncHandler(async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const imageUrl = publicUploadFileUrl(file.filename);
+    res.json({ image_url: imageUrl });
 });
 export const deleteLocationController = asyncHandler(async (req, res) => {
     await deleteLocation(req.params.id);

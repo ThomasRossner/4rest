@@ -1238,7 +1238,39 @@ export async function validateContestRegistrationToken(qrToken: string): Promise
     return null;
   }
   
-  return result.rows[0].id;
+  return result.rows[0].contest_id;
+}
+
+/**
+ * Löst die Contest-ID aus einem regulären Beitritts-QR-Token (contest_qr_codes)
+ * auf. Ermöglicht Einladungslinks/QR-Codes für Personen ohne Account: Der beim
+ * Registrieren übergebene Token entspricht dem normalen Contest-Beitritts-Token.
+ * Gibt nur eine ID zurück, wenn der Contest aktiv und nicht abgelaufen ist.
+ */
+export async function getContestIdByQrToken(qrToken: string): Promise<string | null> {
+  const db = getPool();
+
+  const result = await db.query(
+    'SELECT contest_id FROM contest_qr_codes WHERE qr_token = $1',
+    [qrToken]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const contestId = result.rows[0].contest_id;
+
+  const contestResult = await db.query(
+    'SELECT id FROM contests WHERE id = $1 AND active = TRUE AND end_date > NOW()',
+    [contestId]
+  );
+
+  if (contestResult.rows.length === 0) {
+    return null;
+  }
+
+  return contestId;
 }
 
 /**

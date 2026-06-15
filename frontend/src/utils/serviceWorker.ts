@@ -2,6 +2,112 @@
 
 const LEGACY_CACHE_PREFIXES = ['roots-of-impact', 'runtime-cache', 'api-cache', 'workbox-precache'];
 
+// Version-basiertes Cache-Busting: Build-Token der zuletzt geladenen App.
+const APP_VERSION_KEY = '4rest-app-version';
+// Loop-Schutz: pro Tab-Session nur ein versions-bedingter Reload.
+const VERSION_RELOAD_GUARD = '4rest-version-reloaded';
+
+/** Lösche ausschließlich Cache Storage (NICHT localStorage/Auth, NICHT IndexedDB). */
+async function clearAllCacheStorage(): Promise<void> {
+  if (!('caches' in window)) return;
+  const names = await caches.keys();
+  await Promise.all(names.map((name) => caches.delete(name)));
+}
+
+/**
+ * Stellt nach einem Server-/Frontend-Update sicher, dass die neueste Version aktiv ist.
+ *
+ * Strategie (bewusst version-basiert statt "bei jedem Start"):
+ * - Vergleicht den ins Bundle eingebetteten Build-Token (__BUILD_ID__) mit dem zuletzt
+ *   gespeicherten Wert.
+ * - Nur bei Abweichung werden alle Caches gelöscht und ein einmaliger Reload ausgelöst.
+ *   So gibt es keine Reload-Loops und keine Performance-/Offline-Einbußen bei jedem Load.
+ * - Auth/localStorage bleiben erhalten (User bleibt eingeloggt).
+ *
+ * Loop-Schutz: sessionStorage-Guard + neue Version wird erst NACH dem Cache-Clear gespeichert.
+ *
+ * @returns true, wenn ein Reload ausgelöst wurde (Aufrufer sollte dann abbrechen).
+ */
+export async function enforceFreshVersion(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+
+  const current = typeof __BUILD_ID__ !== 'undefined' ? __BUILD_ID__ : '';
+  if (!current) return false;
+
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(APP_VERSION_KEY);
+  } catch {
+    return false;
+  }
+
+  // In der Entwicklung kein aggressives Clearing (SW/HMR sind ohnehin deaktiviert),
+  // nur die Version merken.
+  if (import.meta.env.DEV) {
+    try {
+      localStorage.setItem(APP_VERSION_KEY, current);
+    } catch {
+      // ignore
+    }
+    return false;
+  }
+
+  // Erster Start auf diesem Gerät: nichts zu löschen, nur Version merken.
+  if (!stored) {
+    try {
+      localStorage.setItem(APP_VERSION_KEY, current);
+    } catch {
+      // ignore
+    }
+    return false;
+  }
+
+  if (stored === current) {
+    sessionStorage.removeItem(VERSION_RELOAD_GUARD);
+    return false;
+  }
+
+  // Version hat sich geändert. Loop-Schutz: pro Session nur einmal reloaden.
+  if (sessionStorage.getItem(VERSION_RELOAD_GUARD) === current) {
+    try {
+      localStorage.setItem(APP_VERSION_KEY, current);
+    } catch {
+      // ignore
+    }
+    return false;
+  }
+
+  sessionStorage.setItem(VERSION_RELOAD_GUARD, current);
+
+  await clearAllCacheStorage();
+
+  // Neuen SW so schnell wie möglich aktivieren.
+  if ('serviceWorker' in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        registrations.map(async (registration) => {
+          registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+          await registration.update().catch(() => undefined);
+        })
+      );
+    } catch {
+      // ignore
+    }
+  }
+
+  // Version erst NACH dem Cache-Clear speichern (falls vorher ein Fehler auftritt,
+  // wird beim nächsten Start erneut gelöscht statt eine veraltete Version zu "bestätigen").
+  try {
+    localStorage.setItem(APP_VERSION_KEY, current);
+  } catch {
+    // ignore
+  }
+
+  window.location.reload();
+  return true;
+}
+
 /** Remove stale SW caches from pre-workbox or misconfigured versions (client-specific fix). */
 export async function purgeLegacyCaches(): Promise<void> {
   if (!('caches' in window)) return;
@@ -59,6 +165,9 @@ export function registerServiceWorker() {
 
   if (!('serviceWorker' in navigator)) return;
 
+  // Beim Erst-Install (noch kein Controller) darf clients.claim() KEINEN Reload auslösen.
+  const hadController = !!navigator.serviceWorker.controller;
+
   const register = async () => {
     try {
       await purgeLegacyCaches();
@@ -80,6 +189,8 @@ export function registerServiceWorker() {
       await purgeLegacyCaches();
 
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // Erst-Install: kein Reload nötig (nur ein neuer SW übernimmt -> Update).
+        if (!hadController) return;
         if (sessionStorage.getItem('4rest-sw-reloaded')) return;
         sessionStorage.setItem('4rest-sw-reloaded', '1');
         window.location.reload();

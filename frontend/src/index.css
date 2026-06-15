@@ -6,6 +6,13 @@
   box-sizing: border-box;
 }
 
+/* Zentrale Schriftgrößen-Basis: hebt ALLE rem-Werte global an (auch jene, die in
+   Seiten-CSS überschrieben werden), damit die Schrift spürbar größer wird.
+   16px (Browser-Default) → 18px. */
+html {
+  font-size: 112.5%;
+}
+
 /* Struktur + Nature-Tech Glass (Mock target-ui-mock.png) */
 :root {
   --app-content-top-gap: 14px;
@@ -44,8 +51,10 @@
   /* Liquid Glass — siehe docs/design/target-ui-mock.png */
   --glass-blur: 16px;
   --glass-blur-strong: 20px;
-  --glass-bg: rgba(255, 255, 255, 0.11);
-  --glass-bg-strong: rgba(255, 255, 255, 0.2);
+  /* Forest-getöntes Glas (statt weiß/transparent) — Panels & Controls bleiben
+     auch über hellen Stellen des Wald-Fotos klar sichtbar. Vgl. target-ui-mock.png */
+  --glass-bg: rgba(18, 54, 44, 0.52);
+  --glass-bg-strong: rgba(24, 64, 52, 0.66);
   --glass-border: rgba(255, 255, 255, 0.28);
   --glass-border-subtle: rgba(255, 255, 255, 0.16);
   --glass-shadow-outer: 0 8px 32px rgba(0, 0, 0, 0.26);

@@ -112,12 +112,14 @@
   background: var(--color-background-tertiary, #e5e7eb);
 }
 
+/* Einlösen: lesbarer Forest-Glas-Tint statt Weiß auf hellem Mint. */
 .reward-redemption-button-redeem {
-  background: var(--color-primary);
-  color: white;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .reward-redemption-button-redeem:hover:not(:disabled) {
-  background: var(--color-primary-dark);
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
 }
 

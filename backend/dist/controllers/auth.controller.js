@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
 import { awardDailyLoginPoints, createUser, getUserByEmail, getUserById, updateUserPassword } from '../services/user.service.js';
-import { validateTeamRegistrationToken, joinTeamById } from '../services/team.service.js';
-import { validateContestRegistrationToken, joinContestById } from '../services/contest.service.js';
+import { validateTeamRegistrationToken, getTeamIdByQrToken, joinTeamById } from '../services/team.service.js';
+import { validateContestRegistrationToken, getContestIdByQrToken, joinContestById } from '../services/contest.service.js';
 import { sihot } from '../integrations/sihot.js';
 import { USER_ROLES, USER_TYPES } from '../constants/enums.js';
 import { getPool } from '../database/connection.js';
@@ -233,7 +233,9 @@ export async function register(req, res) {
                 let joinedTeam = null;
                 let joinedContest = null;
                 if (teamRegistrationToken) {
-                    const teamId = await validateTeamRegistrationToken(teamRegistrationToken);
+                    // Akzeptiere sowohl Registrierungs-Token als auch normalen Beitritts-QR-Token
+                    const teamId = (await validateTeamRegistrationToken(teamRegistrationToken)) ||
+                        (await getTeamIdByQrToken(teamRegistrationToken));
                     if (teamId) {
                         try {
                             joinedTeam = await joinTeamById(user.id, teamId);
@@ -244,7 +246,9 @@ export async function register(req, res) {
                     }
                 }
                 if (contestRegistrationToken) {
-                    const contestId = await validateContestRegistrationToken(contestRegistrationToken);
+                    // Akzeptiere sowohl Registrierungs-Token als auch normalen Beitritts-QR-Token
+                    const contestId = (await validateContestRegistrationToken(contestRegistrationToken)) ||
+                        (await getContestIdByQrToken(contestRegistrationToken));
                     if (contestId) {
                         try {
                             joinedContest = await joinContestById(user.id, contestId);
@@ -274,13 +278,19 @@ export async function register(req, res) {
         let teamId = null;
         let contestId = null;
         if (teamRegistrationToken) {
-            teamId = await validateTeamRegistrationToken(teamRegistrationToken);
+            // Akzeptiere sowohl Registrierungs-Token als auch normalen Beitritts-QR-Token,
+            // damit Einladungslinks/QR-Codes auch für Personen ohne Account funktionieren.
+            teamId =
+                (await validateTeamRegistrationToken(teamRegistrationToken)) ||
+                    (await getTeamIdByQrToken(teamRegistrationToken));
             if (!teamId) {
                 return res.status(400).json({ error: 'Invalid or disabled team registration token' });
             }
         }
         if (contestRegistrationToken) {
-            contestId = await validateContestRegistrationToken(contestRegistrationToken);
+            contestId =
+                (await validateContestRegistrationToken(contestRegistrationToken)) ||
+                    (await getContestIdByQrToken(contestRegistrationToken));
             if (!contestId) {
                 return res.status(400).json({ error: 'Invalid or disabled contest registration token' });
             }

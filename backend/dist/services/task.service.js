@@ -140,6 +140,10 @@ export async function getAllTasks(filters, userId, options) {
       GROUP BY task_id
     ) ql ON ql.task_id = t.id`;
         params.push(userId);
+        // Persönliche Sammlung (Bookmark) des eingeloggten Nutzers
+        select += `, (tcm.user_id IS NOT NULL) AS in_collection`;
+        from += ` LEFT JOIN task_collection_marks tcm ON tcm.task_id = t.id AND tcm.user_id = $${paramIndex.current++}`;
+        params.push(userId);
     }
     const clauses = [];
     if (!includeInactive) {
@@ -440,11 +444,13 @@ export async function getTaskById(id, preferredLanguage, userId) {
         select += `,
     ut.verification_status AS verification_status,
     ut.completed_at AS completed_at,
-    (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed`;
+    (ut.user_id IS NOT NULL AND (ut.verification_status IS NULL OR ut.verification_status != 'pending')) AS completed,
+    (tcm.user_id IS NOT NULL) AS in_collection`;
     }
     select += `, row_to_json(l.*) AS location`;
     const userJoin = userId
-        ? `LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $2`
+        ? `LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = $2
+       LEFT JOIN task_collection_marks tcm ON tcm.task_id = t.id AND tcm.user_id = $2`
         : '';
     const result = await db.query(`SELECT ${select}
      FROM tasks t
@@ -456,6 +462,27 @@ export async function getTaskById(id, preferredLanguage, userId) {
         return resolveTaskI18n(row, normalizeContentLang(preferredLanguage));
     }
     return row;
+}
+/**
+ * Markiert eine Aufgabe für die persönliche Sammlung des Nutzers (idempotent).
+ * Wirft einen ValidationError, wenn die Aufgabe nicht existiert.
+ */
+export async function addTaskToCollection(userId, taskId) {
+    const db = getPool();
+    const taskExists = await db.query('SELECT id FROM tasks WHERE id = $1', [taskId]);
+    if (taskExists.rows.length === 0) {
+        throw clientValidationError('Task not found');
+    }
+    await db.query(`INSERT INTO task_collection_marks (user_id, task_id)
+     VALUES ($1, $2)
+     ON CONFLICT (user_id, task_id) DO NOTHING`, [userId, taskId]);
+}
+/**
+ * Entfernt eine Aufgabe aus der persönlichen Sammlung des Nutzers (idempotent).
+ */
+export async function removeTaskFromCollection(userId, taskId) {
+    const db = getPool();
+    await db.query('DELETE FROM task_collection_marks WHERE user_id = $1 AND task_id = $2', [userId, taskId]);
 }
 /**
  * Calculate task points automatically based on difficulty and time_required weights

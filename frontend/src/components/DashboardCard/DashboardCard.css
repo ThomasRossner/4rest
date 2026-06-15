@@ -43,3 +43,28 @@
   margin: 0;
   line-height: 1.5;
 }
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Dashboard-Karten
+   (nur in Redaktion verwendet). Weißer Grund -> dunkles Forest-Glas,
+   damit der helle Titel/Beschreibungstext lesbar bleibt.
+   ============================================================ */
+.dashboard-card {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+.dashboard-card:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.dashboard-card-title {
+  color: var(--glass-text);
+}
+
+.dashboard-card-description {
+  color: var(--glass-text-muted);
+}

@@ -397,6 +397,18 @@ export const api = {
     return response.data;
   },
 
+  /** Aufgabe zur persönlichen Sammlung hinzufügen (Bookmark). */
+  async addTaskToCollection(taskId: string) {
+    const response = await apiClient.post(`/tasks/${taskId}/collection`, {});
+    return response.data as { in_collection: boolean };
+  },
+
+  /** Aufgabe aus der persönlichen Sammlung entfernen. */
+  async removeTaskFromCollection(taskId: string) {
+    const response = await apiClient.delete(`/tasks/${taskId}/collection`);
+    return response.data as { in_collection: boolean };
+  },
+
   // Photo Task Verification
   async approvePhotoTask(userTaskId: string) {
     const response = await apiClient.post('/tasks/approve-photo', { userTaskId });
@@ -638,6 +650,15 @@ export const api = {
   // Locations
   async getLocations(params?: { includeInactive?: boolean }) {
     const response = await apiClient.get('/locations', { params });
+    return response.data;
+  },
+
+  async uploadLocationImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await apiClient.post('/locations/upload/image', formData, {
+      // Don't set Content-Type manually - axios will set it automatically with boundary for FormData
+    });
     return response.data;
   },
 

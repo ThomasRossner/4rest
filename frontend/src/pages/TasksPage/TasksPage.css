@@ -131,6 +131,16 @@
   overflow-wrap: anywhere;
 }
 
+.tasks-header-place-image {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.28));
+  box-shadow: var(--glass-shadow-outer, 0 8px 32px rgba(0, 0, 0, 0.26));
+}
+
 .tasks-header-category-actions {
   display: flex;
   justify-content: flex-end;
@@ -203,7 +213,7 @@
   align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(100dvh - var(--app-nav-top-total) - var(--app-nav-bottom-total));
+  max-height: calc(100dvh - var(--app-nav-top-total) - var(--app-nav-bottom-total) - var(--app-content-top-gap));
   padding: 0;
   box-sizing: border-box;
   width: 100%;
@@ -221,10 +231,18 @@
   width: 100%;
   padding: 0 8px 4px;
   overflow-x: hidden;
-  overflow-y: hidden;
+  /* Sicherheitsventil: sollte der Inhalt (größere Schrift) doch zu hoch sein,
+     scrollt er innerhalb der reservierten Fläche statt unter die Bottom-Nav zu ragen. */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   min-height: 0;
   max-height: 100%;
-  justify-content: center;
+  justify-content: flex-start;
+}
+
+.tasks-page.tasks-page--hub-sections::-webkit-scrollbar {
+  display: none;
 }
 
 .tasks-hub-section {
@@ -232,12 +250,12 @@
   margin: 0 2px;
   padding: 0.42rem 0.5rem;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(18, 54, 44, 0.42);
   border-color: rgba(255, 255, 255, 0.22);
 }
 
 .tasks-hub-section .glass-section__title {
-  font-size: 0.76rem;
+  font-size: 0.95rem;
   margin-bottom: 0.32rem;
 }
 
@@ -246,7 +264,7 @@
   padding: 0.3rem;
   gap: 0.22rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(31, 90, 76, 0.5);
   border: 1px solid var(--glass-border-subtle, rgba(255, 255, 255, 0.12));
   cursor: pointer;
   font: inherit;
@@ -262,18 +280,25 @@
 }
 
 .tasks-hub-section .glass-task-tile__title {
-  font-size: 0.58rem;
+  font-size: 0.72rem;
   min-height: 2em;
 }
 
 .tasks-hub-section .glass-task-tile--all .glass-task-tile__title {
-  font-size: 0.62rem;
+  font-size: 0.76rem;
 }
 
 .tasks-hub-section .glass-points-badge {
-  font-size: 0.56rem;
+  font-size: 0.68rem;
   padding: 0.16rem 0.36rem;
   gap: 0.15rem;
+  max-width: 100%;
+  align-self: center;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .tasks-hub-scroll-row {
@@ -296,7 +321,7 @@
 }
 
 .tasks-hub-action-card .glass-action-card__head {
-  font-size: 0.72rem;
+  font-size: 0.9rem;
   gap: 0.35rem;
   line-height: 1.15;
 }
@@ -320,7 +345,7 @@
   }
 
   .tasks-hub-section .glass-section__title {
-    font-size: 0.68rem;
+    font-size: 0.84rem;
     margin-bottom: 0.22rem;
   }
 
@@ -336,16 +361,16 @@
   }
 
   .tasks-hub-section .glass-task-tile__title {
-    font-size: 0.52rem;
+    font-size: 0.64rem;
     min-height: 1.8em;
   }
 
   .tasks-hub-section .glass-task-tile--all .glass-task-tile__title {
-    font-size: 0.56rem;
+    font-size: 0.68rem;
   }
 
   .tasks-hub-section .glass-points-badge {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
     padding: 0.12rem 0.28rem;
     gap: 0.1rem;
   }
@@ -366,7 +391,7 @@
   }
 
   .tasks-hub-action-card .glass-action-card__head {
-    font-size: 0.62rem;
+    font-size: 0.76rem;
     gap: 0.28rem;
     line-height: 1.1;
   }
@@ -389,7 +414,7 @@
   }
 
   .tasks-hub-section .glass-section__title {
-    font-size: 0.64rem;
+    font-size: 0.74rem;
     margin-bottom: 0.18rem;
   }
 
@@ -400,7 +425,7 @@
   }
 
   .tasks-hub-section .glass-task-tile__title {
-    font-size: 0.48rem;
+    font-size: 0.56rem;
     min-height: 1.6em;
   }
 
@@ -410,7 +435,7 @@
   }
 
   .tasks-hub-action-card .glass-action-card__head {
-    font-size: 0.58rem;
+    font-size: 0.66rem;
   }
 }
 
@@ -1051,22 +1076,31 @@
 }
 
 .location-button {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-  color: white;
-  border: none;
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Dunkler Forest-Glas-Tint hinter weißem Text → lesbar (vorher Weiß auf hellem Mint) */
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.85) 0%, rgba(20, 62, 52, 0.9) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 12px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  box-shadow: var(--glass-shadow-inner);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.08);
   white-space: nowrap;
 }
 
 .location-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.92) 0%, rgba(24, 72, 60, 0.95) 100%);
+  border-color: rgba(255, 255, 255, 0.38);
+  transform: translateY(-1px);
 }
 
 .location-button:active {
@@ -1441,8 +1475,8 @@
   padding: 12px 24px;
   min-height: 44px;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-  color: white;
-  font-weight: 600;
+  color: #0a2218;
+  font-weight: 700;
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -1514,9 +1548,9 @@
 
 .task-prerequisite-button:hover {
   background-color: var(--color-primary);
-  color: white;
+  color: #0a2218;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(20, 62, 52, 0.3);
 }
 
 .task-prerequisite-button:active {

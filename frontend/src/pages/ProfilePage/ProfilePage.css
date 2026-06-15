@@ -32,23 +32,24 @@
 }
 
 .profile-section h2 {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   color: var(--color-text);
   margin: 0;
 }
 
+/* Lesbarer Forest-Glas-Tint statt Weiß auf hellem Mint. */
 .profile-action-button {
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-primary);
-  color: white;
-  border: none;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .profile-action-button:hover {
-  background: var(--color-primary-dark);
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
 }
 
 .profile-timeline-section {
@@ -143,15 +144,24 @@
   margin-left: auto;
 }
 
+/* Forest-Glas statt hellem Teal — konsistent mit .glass-btn / restlichen Controls. */
 .profile-player-section__btn {
   padding: var(--spacing-xs) var(--spacing-md);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--border-radius);
-  font-size: 0.88rem;
+  font-size: 0.96rem;
   font-weight: 600;
   cursor: pointer;
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
-  color: #fff;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text);
+  box-shadow: var(--glass-shadow-inner);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.profile-player-section__btn:hover {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .profile-language {
@@ -173,13 +183,16 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-background);
+  color: var(--glass-text);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
+/* Aktiv: helles Mint mit DUNKLEM Text (statt unlesbarem Weiß auf Mint). */
 .profile-language-btn.active {
   background: var(--color-primary);
-  color: white;
+  color: #0a2218;
   border-color: var(--color-primary);
+  font-weight: 700;
 }
 .profile-language-btn:disabled {
   opacity: 0.7;

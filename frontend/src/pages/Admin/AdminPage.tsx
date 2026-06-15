@@ -125,6 +125,7 @@ type AdminLocation = {
   active: boolean;
   category?: string | null;
   category_description?: string | null;
+  image_url?: string | null;
 };
 
 type VideoSourceOption = 'url' | 'upload';
@@ -205,6 +206,8 @@ type LocationFormState = {
   active: boolean;
   category: string;
   categoryDescription: string;
+  imageUrl: string | null;
+  imageFile: File | null;
 };
 
 type QuizAnswerDraft = {
@@ -1420,6 +1423,8 @@ const defaultLocationForm = (): LocationFormState => ({
   active: true,
   category: '',
   categoryDescription: '',
+  imageUrl: null,
+  imageFile: null,
 });
 
 const isDefaultLocationRecord = (location: AdminLocation): boolean =>
@@ -4444,6 +4449,20 @@ function AdminPage() {
         return;
       }
 
+      let imageUrl: string | null = locationForm.imageUrl ?? null;
+      if (locationForm.imageFile) {
+        try {
+          const uploadResult = await api.uploadLocationImage(locationForm.imageFile);
+          imageUrl = uploadResult.image_url;
+        } catch (error: any) {
+          setLocationMessage({
+            type: 'error',
+            text: error?.response?.data?.error || error?.message || 'Failed to upload location image.',
+          });
+          return;
+        }
+      }
+
       const payload: any = {
         name: locationForm.name.trim(),
         description: locationForm.description.trim(),
@@ -4451,6 +4470,7 @@ function AdminPage() {
         description_i18n: locationContentI18n.description_i18n,
         mode: locationForm.mode,
         active: Boolean(locationForm.active),
+        image_url: imageUrl,
       };
 
       if (locationForm.mode === 'physical') {
@@ -5053,6 +5073,8 @@ function AdminPage() {
       active: location.active ?? true,
       category: (location as any).category ?? '',
       categoryDescription: categoryDescI18n.de ?? (location as any).category_description ?? '',
+      imageUrl: (location as any).image_url ?? null,
+      imageFile: null,
     });
     setIsEditingLocation(true);
     setEditingLocationId(location.id);
@@ -8340,6 +8362,54 @@ function AdminPage() {
                       placeholder={t('admin.location.categoryDescriptionPlaceholder')}
                     />
                   </label>
+                  <div className="admin-field admin-field-span-2">
+                    <FieldLabel label={t('admin.location.fields.image')} />
+                    <div className="admin-upload-field">
+                      {(locationForm.imageUrl || locationForm.imageFile) && (
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <img
+                            src={locationForm.imageFile ? URL.createObjectURL(locationForm.imageFile) : locationForm.imageUrl || ''}
+                            alt={t('admin.location.imagePreviewAlt')}
+                            style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--color-border)' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLocationForm((prev) => ({ ...prev, imageFile: null, imageUrl: null }));
+                            }}
+                            style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.875rem' }}
+                          >
+                            {t('admin.location.removeImage')}
+                          </button>
+                        </div>
+                      )}
+                      <div className="admin-upload-control">
+                        <label className="admin-upload-button">
+                          <span>{t('admin.location.chooseImage')}</span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            onChange={(event) => {
+                              const file = event.target.files?.[0] ?? null;
+                              setLocationForm((prev) => ({
+                                ...prev,
+                                imageFile: file,
+                                imageUrl: file ? null : prev.imageUrl,
+                              }));
+                            }}
+                          />
+                        </label>
+                        <span className="admin-upload-filename">
+                          {locationForm.imageFile
+                            ? locationForm.imageFile.name
+                            : locationForm.imageUrl
+                            ? t('admin.location.currentImage')
+                            : t('admin.location.noImage')}
+                        </span>
+                      </div>
+                      <p className="admin-field-note">{t('admin.location.imageNote')}</p>
+                    </div>
+                  </div>
                 </div>
               </section>
 

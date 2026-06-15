@@ -15,6 +15,10 @@ export declare const bulkDeleteTasks: RequestHandler;
 export declare const getQuizQuestionLocks: RequestHandler;
 export declare const submitQuizAnswer: RequestHandler;
 export declare const completeTask: RequestHandler;
+/** POST /api/tasks/:id/collection — Aufgabe zur persönlichen Sammlung hinzufügen. */
+export declare const addTaskToCollection: RequestHandler;
+/** DELETE /api/tasks/:id/collection — Aufgabe aus der persönlichen Sammlung entfernen. */
+export declare const removeTaskFromCollection: RequestHandler;
 export declare const uploadPhoto: RequestHandler;
 export declare const uploadVideo: RequestHandler;
 export declare const uploadThumbnail: RequestHandler;

@@ -12,12 +12,14 @@ export type ParsedTaskLocation = {
   is_online: boolean;
   latitude: number | null;
   longitude: number | null;
+  image_url: string | null;
 };
 
 export type PlaceSummary = {
   id: string;
   name: string;
   taskCount: number;
+  image_url: string | null;
 };
 
 function coerceBool(value: unknown): boolean {
@@ -49,12 +51,17 @@ export function parseTaskLocation(task: TaskWithLocation): ParsedTaskLocation | 
   const longitude =
     lng == null ? null : typeof lng === 'string' ? parseFloat(lng) : Number(lng);
 
+  const rawImage = loc.image_url;
+  const image_url =
+    typeof rawImage === 'string' && rawImage.trim() ? rawImage.trim() : null;
+
   return {
     id,
     name: String(loc.name ?? id),
     is_online: coerceBool(loc.is_online),
     latitude: Number.isFinite(latitude) ? latitude : null,
     longitude: Number.isFinite(longitude) ? longitude : null,
+    image_url,
   };
 }
 
@@ -70,6 +77,12 @@ export function isPhysicalPlaceTask(task: TaskWithLocation): boolean {
   return loc.latitude != null && loc.longitude != null;
 }
 
+/** Ortsbasierte Aufgabe (nicht-online Ort, unabhängig von Koordinaten). */
+export function isPlaceTask(task: TaskWithLocation): boolean {
+  const loc = parseTaskLocation(task);
+  return !!loc && !loc.is_online;
+}
+
 export function getUniquePlaces(tasks: TaskWithLocation[] | null | undefined): PlaceSummary[] {
   if (!Array.isArray(tasks)) return [];
 
@@ -81,8 +94,11 @@ export function getUniquePlaces(tasks: TaskWithLocation[] | null | undefined): P
     const existing = map.get(loc.id);
     if (existing) {
       existing.taskCount += 1;
+      if (!existing.image_url && loc.image_url) {
+        existing.image_url = loc.image_url;
+      }
     } else {
-      map.set(loc.id, { id: loc.id, name: loc.name, taskCount: 1 });
+      map.set(loc.id, { id: loc.id, name: loc.name, taskCount: 1, image_url: loc.image_url });
     }
   }
 
@@ -92,6 +108,16 @@ export function getUniquePlaces(tasks: TaskWithLocation[] | null | undefined): P
 export function getOnlineTasks<T extends TaskWithLocation>(tasks: T[] | null | undefined): T[] {
   if (!Array.isArray(tasks)) return [];
   return tasks.filter(isTaskOnline);
+}
+
+export type CollectionTask = { in_collection?: boolean; completed?: boolean };
+
+/** Alle vom Nutzer markierten Aufgaben (persönliche Sammlung, unabhängig vom Erfüllungsstatus). */
+export function getCollectionTasks<T extends CollectionTask>(
+  tasks: T[] | null | undefined
+): T[] {
+  if (!Array.isArray(tasks)) return [];
+  return tasks.filter((task) => Boolean(task.in_collection));
 }
 
 /** Deterministic shuffle so hub tiles stay stable per session seed. */

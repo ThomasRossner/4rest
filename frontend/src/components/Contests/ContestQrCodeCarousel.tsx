@@ -4,6 +4,7 @@ import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
+import { buildInviteUrl, shareInvite } from '../../utils/invite';
 import './ContestQrCodeCarousel.css';
 
 type ContestQrCodeCarouselProps = {
@@ -126,6 +127,30 @@ export function ContestQrCodeCarousel({
     }
   };
 
+  const inviteUrl = qrToken ? buildInviteUrl('contest', qrToken) : null;
+
+  const handleShare = async () => {
+    if (!inviteUrl) return;
+    const result = await shareInvite({
+      url: inviteUrl,
+      title: contestName || t('contests.qrCode.title') || 'Contest',
+      text: t('contests.qrCode.shareText') || 'Join my contest on 4rest!',
+    });
+    if (result === 'copied') {
+      showToast({
+        type: 'success',
+        title: t('contests.qrCode.linkCopied') || 'Link copied',
+        message: t('contests.qrCode.linkCopiedMessage') || 'Invite link copied to clipboard',
+      });
+    } else if (result === 'failed') {
+      showToast({
+        type: 'error',
+        title: t('contests.qrCode.shareError') || 'Error',
+        message: t('contests.qrCode.shareErrorMessage') || 'Could not share the invite link',
+      });
+    }
+  };
+
   const membershipActions = isCreator ? (
     <button
       type="button"
@@ -210,7 +235,7 @@ export function ContestQrCodeCarousel({
     <div className="contest-qr-carousel">
       <h4>{contestName || t('contests.qrCode.title')}</h4>
       <div className="contest-qr-code-wrapper">
-        <QRCodeSVG value={qrToken} size={200} level="M" />
+        <QRCodeSVG value={inviteUrl ?? qrToken} size={200} level="M" />
       </div>
       {startDate && endDate && (
         <div className="contest-qr-duration">
@@ -220,6 +245,9 @@ export function ContestQrCodeCarousel({
         </div>
       )}
       <p className="contest-qr-description">{t('contests.qrCode.description')}</p>
+      <button type="button" className="contest-qr-share-button" onClick={handleShare}>
+        {t('contests.qrCode.share') || 'Share invite link'}
+      </button>
       {membershipActions}
     </div>
   );
