@@ -22,9 +22,12 @@ export default function HybridSceneController({
   trees = [],
   areas = [],
   treeGrowSteps = 30,
-  dyad1Scale = 2,
-  dyad2Scale = 2,
-  dyad3Scale = 2,
+  morphology = {
+    trunkHeightFactor: 1.4,
+    branchCountFactor: 1.45,
+    branchLengthFactor: 1,
+    growthChaosStrength: 0.06,
+  },
   lowPerformanceMode = false,
   transparentBackground = false,
 }) {
@@ -45,17 +48,12 @@ export default function HybridSceneController({
     scene.background = new Color('#2f6fe4');
   }, [scene, transparentBackground]);
 
-  const clampedDyad1 = Math.max(0, Math.min(4, Number(dyad1Scale)));
-  const goalOrientation = 1 - clampedDyad1 / 4;
-  const trunkHeightFactor = 1 + goalOrientation * 0.8;
-
-  const clampedDyad2 = Math.max(0, Math.min(4, Number(dyad2Scale)));
-  const freedomOrientation = clampedDyad2 / 4;
-  const growthChaosStrength = (clampedDyad2 / 4) * 0.12;
-  const branchCountFactor = 1 + freedomOrientation * 0.9;
-
-  const clampedDyad3 = Math.max(0, Math.min(4, Number(dyad3Scale)));
-  const branchLengthFactor = 0.7 + (clampedDyad3 / 4) * 0.6;
+  const {
+    trunkHeightFactor,
+    branchCountFactor,
+    branchLengthFactor,
+    growthChaosStrength,
+  } = morphology;
 
   const treesWithGrowth = useMemo(() => {
     return trees.map((tree) => {
@@ -159,11 +157,6 @@ export default function HybridSceneController({
         shadow-normalBias={0.1}
       />
       <ambientLight intensity={1.6} />
-
-      <mesh position={sunPosition}>
-        <sphereGeometry args={[2.6, 32, 32]} />
-        <meshBasicMaterial color="#ffe7a6" toneMapped={false} />
-      </mesh>
 
       <DynamicForestGround areas={areas} lowPerformanceMode={lowPerformanceMode} />
 

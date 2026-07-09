@@ -4,6 +4,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import HybridSceneController from './tree-system/HybridSceneController';
 import { ForestCameraRig } from '../../hooks/useForestCamera';
+import type { ForestCameraFraming } from '../../utils/forestCameraFraming';
+import type { TreeMorphologyParams } from '../../utils/forestCategoryMorphology';
 import type { ForestArea, HybridTree } from './forestTypes';
 
 export const FOREST_HYBRID_TREE_GROW_STEPS = 30;
@@ -23,37 +25,29 @@ useGLTF.preload('/models/beechLeaf.glb');
 type ForestHybridSceneProps = {
   trees: HybridTree[];
   areas: ForestArea[];
-  cameraOrigin: [number, number, number] | null;
+  cameraFraming: ForestCameraFraming | null;
   treeGrowSteps?: number;
-  dyad1Scale?: number;
-  dyad2Scale?: number;
-  dyad3Scale?: number;
+  morphology: TreeMorphologyParams;
   lowPerformanceMode?: boolean;
   onNavigationActivity?: () => void;
 };
 
 /**
- * Hybrid forest: DB positions + growth_points with prototype beech assets and dyad morphology.
+ * Hybrid forest: DB positions + growth_points with prototype beech assets and category morphology.
  */
 export default function ForestHybridScene({
   trees,
   areas,
-  cameraOrigin,
+  cameraFraming,
   treeGrowSteps = FOREST_HYBRID_TREE_GROW_STEPS,
-  dyad1Scale = 2,
-  dyad2Scale = 2,
-  dyad3Scale = 2,
+  morphology,
   lowPerformanceMode = false,
   onNavigationActivity,
 }: ForestHybridSceneProps) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
 
-  const controlsTarget = cameraOrigin
-    ? ([cameraOrigin[0], FOREST_HYBRID_DEFAULT_CAMERA.target[1], cameraOrigin[2]] as [
-        number,
-        number,
-        number,
-      ])
+  const controlsTarget = cameraFraming
+    ? ([...cameraFraming.target] as [number, number, number])
     : ([...FOREST_HYBRID_DEFAULT_CAMERA.target] as [number, number, number]);
 
   return (
@@ -72,14 +66,12 @@ export default function ForestHybridScene({
         zoomToCursor={!lowPerformanceMode}
         onStart={onNavigationActivity}
       />
-      <ForestCameraRig origin={cameraOrigin} controlsRef={controlsRef} />
+      <ForestCameraRig framing={cameraFraming} controlsRef={controlsRef} />
       <HybridSceneController
         trees={trees}
         areas={areas}
         treeGrowSteps={treeGrowSteps}
-        dyad1Scale={dyad1Scale}
-        dyad2Scale={dyad2Scale}
-        dyad3Scale={dyad3Scale}
+        morphology={morphology}
         lowPerformanceMode={lowPerformanceMode}
         transparentBackground
       />

@@ -8,6 +8,7 @@ import ForestHybridScene, {
   FOREST_HYBRID_DEFAULT_CAMERA,
 } from '../../components/3d/ForestHybridScene';
 import { mapForestApiToHybridForest } from '../../utils/forestTreeMapper';
+import { resolveTreeMorphology } from '../../utils/forestCategoryMorphology';
 import ForestCategoryProgressGrid from '../../components/Forest/ForestCategoryProgressGrid';
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
@@ -33,26 +34,14 @@ function ForestPage() {
     return isLikelyAndroid && (lowMem || lowCpu);
   }, [isLikelyAndroid]);
 
-  const dyad1Scale = useMemo(() => {
-    const scale = user?.playerProfile?.dyadScales?.[0];
-    const numeric = Number(scale);
-    if (!Number.isFinite(numeric)) return 2;
-    return Math.max(0, Math.min(4, numeric));
-  }, [user?.playerProfile?.dyadScales]);
-
-  const dyad2Scale = useMemo(() => {
-    const scale = user?.playerProfile?.dyadScales?.[1];
-    const numeric = Number(scale);
-    if (!Number.isFinite(numeric)) return 2;
-    return Math.max(0, Math.min(4, numeric));
-  }, [user?.playerProfile?.dyadScales]);
-
-  const dyad3Scale = useMemo(() => {
-    const scale = user?.playerProfile?.dyadScales?.[2];
-    const numeric = Number(scale);
-    if (!Number.isFinite(numeric)) return 2;
-    return Math.max(0, Math.min(4, numeric));
-  }, [user?.playerProfile?.dyadScales]);
+  const treeMorphology = useMemo(
+    () =>
+      resolveTreeMorphology({
+        forestPoints: user?.forestPoints,
+        dyadScales: user?.playerProfile?.dyadScales,
+      }),
+    [user?.forestPoints, user?.playerProfile?.dyadScales]
+  );
 
   const {
     data: forestData,
@@ -66,6 +55,11 @@ function ForestPage() {
   );
 
   const hybridForest = useMemo(() => mapForestApiToHybridForest(forestData), [forestData]);
+
+  const initialCamera = hybridForest.cameraFraming ?? {
+    position: [...FOREST_HYBRID_DEFAULT_CAMERA.position] as [number, number, number],
+    target: [...FOREST_HYBRID_DEFAULT_CAMERA.target] as [number, number, number],
+  };
 
   const handleNavigationStart = useCallback(() => {
     if (panelReshowTimerRef.current) {
@@ -187,7 +181,7 @@ function ForestPage() {
               performance={{ min: lowPerfForestMode ? 0.45 : 0.7 }}
               frameloop={lowPerfForestMode ? 'demand' : 'always'}
               camera={{
-                position: [...FOREST_HYBRID_DEFAULT_CAMERA.position],
+                position: initialCamera.position,
                 fov: FOREST_HYBRID_DEFAULT_CAMERA.fov,
               }}
               style={{ width: '100%', height: '100%' }}
@@ -195,10 +189,8 @@ function ForestPage() {
               <ForestHybridScene
                 trees={hybridForest.trees}
                 areas={hybridForest.areas}
-                cameraOrigin={hybridForest.cameraOrigin}
-                dyad1Scale={dyad1Scale}
-                dyad2Scale={dyad2Scale}
-                dyad3Scale={dyad3Scale}
+                cameraFraming={hybridForest.cameraFraming}
+                morphology={treeMorphology}
                 lowPerformanceMode={lowPerfForestMode}
                 onNavigationActivity={handleNavigationStart}
               />

@@ -1,35 +1,35 @@
 import { useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import type { ForestCameraFraming } from '../utils/forestCameraFraming';
 
-const CAMERA_OFFSET = { x: 15, y: 14, z: 15 };
-const CAMERA_TARGET_Y = 3.4;
 const MIN_CAMERA_Y = 0.3;
 
 type ForestCameraRigProps = {
-  origin: [number, number, number] | null;
+  framing: ForestCameraFraming | null;
   controlsRef: React.RefObject<OrbitControlsImpl | null>;
 };
 
 /**
- * Positions camera on the user's forest centroid (ported from legacy ForestScene).
+ * Positions camera to frame the user's full forest on load.
  */
-export function ForestCameraRig({ origin, controlsRef }: ForestCameraRigProps) {
+export function ForestCameraRig({ framing, controlsRef }: ForestCameraRigProps) {
   const { camera } = useThree();
 
   useEffect(() => {
-    if (!origin) return;
+    if (!framing) return;
 
-    const [originX, , originZ] = origin;
-    camera.position.set(originX + CAMERA_OFFSET.x, CAMERA_OFFSET.y, originZ + CAMERA_OFFSET.z);
+    const [px, py, pz] = framing.position;
+    const [tx, ty, tz] = framing.target;
+    camera.position.set(px, py, pz);
     camera.updateProjectionMatrix();
 
     const controls = controlsRef.current;
     if (controls) {
-      controls.target.set(originX, CAMERA_TARGET_Y, originZ);
+      controls.target.set(tx, ty, tz);
       controls.update();
     }
-  }, [origin, camera, controlsRef]);
+  }, [framing, camera, controlsRef]);
 
   useFrame(() => {
     if (camera.position.y < MIN_CAMERA_Y) {

@@ -16,6 +16,7 @@ describe('mapForestApiToHybridForest', () => {
     expect(result.trees).toHaveLength(0);
     expect(result.areas).toHaveLength(1);
     expect(result.cameraOrigin).toBeNull();
+    expect(result.cameraFraming).toBeNull();
   });
 
   it('maps flat trees with positions', () => {
@@ -47,6 +48,8 @@ describe('mapForestApiToHybridForest', () => {
     expect(result.trees[1].growth).toBeCloseTo(0.8, 2);
     expect(result.trees[1].forestCategory).toBe('natur');
     expect(result.cameraOrigin).not.toBeNull();
+    expect(result.cameraFraming).not.toBeNull();
+    expect(result.cameraFraming!.position[1]).toBeGreaterThan(result.cameraFraming!.target[1]);
   });
 
   it('maps area trees with local positions', () => {

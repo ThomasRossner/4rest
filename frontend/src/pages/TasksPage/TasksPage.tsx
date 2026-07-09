@@ -629,8 +629,7 @@ function TasksPage() {
   const showCategoryClearFilter =
     (prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0) ||
     showOnlineTasks ||
-    Boolean(onlineParam) ||
-    Boolean(placeParam);
+    Boolean(onlineParam);
 
   const handleCategoryClearFilter = () => {
     if (prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0) {
@@ -639,10 +638,6 @@ function TasksPage() {
     }
     if (showOnlineTasks || onlineParam) {
       setShowOnlineTasks(false);
-      navigate('/tasks');
-      return;
-    }
-    if (placeParam) {
       navigate('/tasks');
     }
   };

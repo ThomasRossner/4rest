@@ -7,6 +7,10 @@ import type {
   HybridTree,
 } from '../components/3d/forestTypes';
 import { FOREST_BLOCK_SIZE, FOREST_TREE_SURFACE_Y } from '../components/3d/forestTypes';
+import {
+  computeForestCameraFromScene,
+  type ForestCameraFraming,
+} from './forestCameraFraming';
 
 const MIN_AGE_SIZE_FACTOR = 0.75;
 const MAX_AGE_SIZE_FACTOR = 1.25;
@@ -25,7 +29,9 @@ export const FOREST_CATEGORY_LEAF_TINT: Record<ForestCategoryKey | 'sonstige', s
 export type MappedHybridForest = {
   trees: HybridTree[];
   areas: ForestArea[];
+  /** @deprecated Use cameraFraming.target — centroid kept for compatibility */
   cameraOrigin: [number, number, number] | null;
+  cameraFraming: ForestCameraFraming | null;
 };
 
 function hashStringToUnit(id: string): number {
@@ -204,6 +210,7 @@ export function mapForestApiToHybridForest(data: ForestApiResponse | null | unde
 
   const resolvedAreas = areas.length > 0 ? areas : defaultEmptyArea();
   const cameraOrigin = computeCameraOrigin(trees, resolvedAreas);
+  const cameraFraming = computeForestCameraFromScene(trees, resolvedAreas);
 
-  return { trees, areas: resolvedAreas, cameraOrigin };
+  return { trees, areas: resolvedAreas, cameraOrigin, cameraFraming };
 }
