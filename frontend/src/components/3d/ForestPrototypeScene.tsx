@@ -1,26 +1,16 @@
-import { OrbitControls, useGLTF } from '@react-three/drei';
+/**
+ * @deprecated Production uses ForestHybridScene. Kept for Forest Lab and tree-system demos.
+ */
+import { OrbitControls } from '@react-three/drei';
 import SceneController from './tree-system/SceneController.jsx';
 
-export const FOREST_PROTOTYPE_TREE_GROW_STEPS = 30;
+import {
+  FOREST_HYBRID_DEFAULT_CAMERA,
+  FOREST_HYBRID_TREE_GROW_STEPS,
+} from './ForestHybridScene';
 
-// Assets frueh in den GLTF-Cache laden, um den ersten Waldaufbau zu beschleunigen.
-useGLTF.preload('/models/grassGround.glb');
-useGLTF.preload('/models/grass.glb');
-useGLTF.preload('/models/beechTrunk.glb');
-useGLTF.preload('/models/beechTwig.glb');
-useGLTF.preload('/models/beechLeaf.glb');
-
-/**
- * Standard-Blick: leicht nach oben gerichtet, damit der Wald unter dem Top-Panel sichtbar sitzt.
- * Initial bewusst weiter entfernt, damit die gesamte Wald-Grundfläche auf einen Blick passt.
- * Zoom/Navigation bleibt über OrbitControls voll möglich.
- */
-export const FOREST_DEFAULT_CAMERA = {
-  position: [0, 14, 42] as const,
-  fov: 45,
-  /** OrbitControls-Blickpunkt (Insel/Boden) */
-  target: [0, 3.4, 0] as const,
-};
+export const FOREST_PROTOTYPE_TREE_GROW_STEPS = FOREST_HYBRID_TREE_GROW_STEPS;
+export const FOREST_DEFAULT_CAMERA = FOREST_HYBRID_DEFAULT_CAMERA;
 
 type Props = {
   globalPoints: number;

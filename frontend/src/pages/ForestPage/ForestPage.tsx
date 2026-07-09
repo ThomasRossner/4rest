@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from 'react-query';
 import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
-import ForestPrototypeScene, {
-  FOREST_DEFAULT_CAMERA,
-  FOREST_PROTOTYPE_TREE_GROW_STEPS,
-} from '../../components/3d/ForestPrototypeScene';
+import ForestHybridScene, {
+  FOREST_HYBRID_DEFAULT_CAMERA,
+} from '../../components/3d/ForestHybridScene';
+import { mapForestApiToHybridForest } from '../../utils/forestTreeMapper';
 import ForestCategoryProgressGrid from '../../components/Forest/ForestCategoryProgressGrid';
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
@@ -23,7 +23,6 @@ function ForestPage() {
   const [progressPanelVisible, setProgressPanelVisible] = useState(true);
   const panelReshowTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const userId = useAuthStore((s) => s.user?.id);
-  const userPoints = useAuthStore((s) => s.user?.points || 0);
 
   const isLikelyAndroid = useMemo(() => /Android/i.test(navigator.userAgent), []);
   const lowPerfForestMode = useMemo(() => {
@@ -33,12 +32,6 @@ function ForestPage() {
     const lowCpu = cores <= 6;
     return isLikelyAndroid && (lowMem || lowCpu);
   }, [isLikelyAndroid]);
-
-  const sumForestPoints = useMemo(() => {
-    const fp = user?.forestPoints;
-    if (!fp) return 0;
-    return fp.kommunikation + fp.mensch + fp.natur + fp.ressourcen;
-  }, [user?.forestPoints]);
 
   const dyad1Scale = useMemo(() => {
     const scale = user?.playerProfile?.dyadScales?.[0];
@@ -61,31 +54,9 @@ function ForestPage() {
     return Math.max(0, Math.min(4, numeric));
   }, [user?.playerProfile?.dyadScales]);
 
-  const forestGlobalPoints = Math.round(Math.max(0, sumForestPoints));
-  const forestMaxPoints = useMemo(
-    () =>
-      Math.max(
-        100,
-        forestGlobalPoints + 50,
-        FOREST_PROTOTYPE_TREE_GROW_STEPS + 1,
-        userPoints ?? 0
-      ),
-    [forestGlobalPoints, userPoints]
-  );
-
-  const {
-    data: progress,
-    isLoading: progressLoading,
-    isError: progressError,
-    refetch: refetchProgress,
-  } = useQuery(
-    ['userProgress', userId],
-    () => api.getUserProgress(userId as string),
-    { enabled: !!userId, retry: 2, refetchOnWindowFocus: true, refetchOnReconnect: true }
-  );
-
   const {
     data: forestData,
+    isLoading: forestLoading,
     isError: forestError,
     refetch: refetchForest,
   } = useQuery(
@@ -94,14 +65,7 @@ function ForestPage() {
     { enabled: !!userId, retry: 2, refetchOnWindowFocus: true, refetchOnReconnect: true }
   );
 
-  const plantedAtList = useMemo(() => {
-    const trees = Array.isArray(forestData?.trees) ? forestData.trees : [];
-    return trees
-      .map((tree: { plantedAt?: string | Date }) => tree?.plantedAt)
-      .filter((value): value is string | Date => typeof value === 'string' || value instanceof Date)
-      .map((value) => new Date(value).toISOString())
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-  }, [forestData?.trees]);
+  const hybridForest = useMemo(() => mapForestApiToHybridForest(forestData), [forestData]);
 
   const handleNavigationStart = useCallback(() => {
     if (panelReshowTimerRef.current) {
@@ -129,6 +93,7 @@ function ForestPage() {
   useEffect(() => {
     const handleUpdate = (event: CustomEvent) => {
       if (event.detail?.type === 'task:update' || event.detail?.type === 'photo:task:update') {
+        queryClient.invalidateQueries(['forest', userId]);
         queryClient.invalidateQueries(['userProgress', userId]);
         queryClient.invalidateQueries(['userActiveTeam', userId]);
         queryClient.invalidateQueries(['tasks']);
@@ -151,6 +116,7 @@ function ForestPage() {
       try {
         const result = await api.visitForest();
         if (result.success && !cancelled) {
+          await queryClient.invalidateQueries(['forest', userId]);
           await api.refreshMe();
         }
       } catch (error) {
@@ -160,11 +126,10 @@ function ForestPage() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, queryClient]);
 
-  const showProgressLoadError = progressError && !progress;
   const showForestLoadError = forestError && !forestData;
-  const sceneLoading = progressLoading && !progress;
+  const sceneLoading = forestLoading && !forestData;
 
   return (
     <div className="forest-page forest-page--immersive">
@@ -193,15 +158,7 @@ function ForestPage() {
         </div>
 
         <div className="forest-container">
-          {showProgressLoadError && (
-            <div className="forest-load-error forest-load-error--overlay" role="alert">
-              <p>{t('forest.loadError')}</p>
-              <button type="button" className="btn-primary forest-load-error__retry" onClick={() => refetchProgress()}>
-                {t('common.actions.refresh')}
-              </button>
-            </div>
-          )}
-          {showForestLoadError && !showProgressLoadError && (
+          {showForestLoadError && (
             <div className="forest-load-error forest-load-error--overlay" role="alert">
               <p>{t('forest.loadError')}</p>
               <button type="button" className="btn-primary forest-load-error__retry" onClick={() => refetchForest()}>
@@ -209,7 +166,7 @@ function ForestPage() {
               </button>
             </div>
           )}
-          {sceneLoading && !showProgressLoadError && (
+          {sceneLoading && !showForestLoadError && (
             <div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>
           )}
           <Suspense fallback={<div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>}>
@@ -230,17 +187,15 @@ function ForestPage() {
               performance={{ min: lowPerfForestMode ? 0.45 : 0.7 }}
               frameloop={lowPerfForestMode ? 'demand' : 'always'}
               camera={{
-                position: [...FOREST_DEFAULT_CAMERA.position],
-                fov: FOREST_DEFAULT_CAMERA.fov,
+                position: [...FOREST_HYBRID_DEFAULT_CAMERA.position],
+                fov: FOREST_HYBRID_DEFAULT_CAMERA.fov,
               }}
               style={{ width: '100%', height: '100%' }}
             >
-              <ForestPrototypeScene
-                globalPoints={Math.min(forestGlobalPoints, forestMaxPoints)}
-                maxPoints={forestMaxPoints}
-                treeGrowSteps={FOREST_PROTOTYPE_TREE_GROW_STEPS}
-                plantedTrees={progress?.treesPlanted ?? 0}
-                plantedAtList={plantedAtList}
+              <ForestHybridScene
+                trees={hybridForest.trees}
+                areas={hybridForest.areas}
+                cameraOrigin={hybridForest.cameraOrigin}
                 dyad1Scale={dyad1Scale}
                 dyad2Scale={dyad2Scale}
                 dyad3Scale={dyad3Scale}

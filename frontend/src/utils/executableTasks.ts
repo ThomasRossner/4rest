@@ -1,4 +1,6 @@
-/** Tasks the user can still complete (same rules as TasksPage: not done, available). */
+/** Tasks the user can still complete on the home screen ("Nächste Aufgaben"). */
+
+import { isTaskNearby, isTaskOnline } from './taskHubUtils';
 
 export type ExecutableTask = {
   id: string;
@@ -6,32 +8,36 @@ export type ExecutableTask = {
   points?: number;
   thumbnail_url?: string;
   type?: string;
+  location?: unknown;
+  location_id?: string;
+  target_latitude?: number | null;
+  target_longitude?: number | null;
   completed?: boolean;
   is_available?: boolean;
   verification_status?: string;
 };
 
-export function filterExecutableTasks(tasks: ExecutableTask[] | null | undefined): ExecutableTask[] {
+export type FilterExecutableTasksOptions = {
+  userLocation?: { lat: number; lng: number } | null;
+};
+
+export function filterExecutableTasks(
+  tasks: ExecutableTask[] | null | undefined,
+  options?: FilterExecutableTasksOptions
+): ExecutableTask[] {
   if (!Array.isArray(tasks)) return [];
 
-  const open = tasks.filter((task) => !task.completed && task.is_available !== false);
+  const userLocation = options?.userLocation ?? null;
 
-  open.sort((a, b) => {
-    const aCompleted = !!a.completed;
-    const bCompleted = !!b.completed;
-    const aValidating = a.verification_status === 'pending';
-    const bValidating = b.verification_status === 'pending';
+  return tasks.filter((task) => {
+    if (task.completed) return false;
+    if (task.is_available === false) return false;
+    if (task.verification_status === 'pending') return false;
 
-    if (!aCompleted && bCompleted) return -1;
-    if (aCompleted && !bCompleted) return 1;
+    if (isTaskOnline(task)) return true;
 
-    if (aCompleted && bCompleted) {
-      if (aValidating && !bValidating) return -1;
-      if (!aValidating && bValidating) return 1;
-    }
+    if (!userLocation) return false;
 
-    return 0;
+    return isTaskNearby(task, userLocation);
   });
-
-  return open;
 }

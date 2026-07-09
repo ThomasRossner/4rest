@@ -122,13 +122,15 @@
 }
 
 .tasks-header-category-title {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   text-align: center;
   font-size: clamp(1.05rem, 4.2vw, 1.5rem);
-  line-height: 1.25;
-  overflow-wrap: anywhere;
+  line-height: 1.3;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .tasks-header-place-image {
@@ -145,10 +147,8 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  flex-wrap: nowrap;
+  flex: 0 0 auto;
   gap: var(--spacing-sm);
-  flex: 1 1 auto;
-  min-width: 0;
 }
 
 .tasks-header-category-row .tasks-header-category-actions-row {

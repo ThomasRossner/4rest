@@ -13,7 +13,8 @@ export default function ControllableTree({
   branchLengthFactor = 1,
   maxTreeGrowSteps=10,
   maxTrunkGrowth=0.9,
-  maxTwigGrowth=0.9
+  maxTwigGrowth=0.9,
+  leafTint,
 }) {
   const trunkAnchorScale = useMemo(
     () => new THREE.Vector3(trunkGrowth, trunkGrowth * trunkHeightFactor, trunkGrowth),
@@ -87,6 +88,14 @@ export default function ControllableTree({
   const leafMesh = useMemo(() => {
     return leaf.scene.children.find(o => o.isMesh)
   }, [leaf])
+
+  const leafMaterial = useMemo(() => {
+    if (!leafMesh?.material || !leafTint) return leafMesh?.material;
+    const base = Array.isArray(leafMesh.material) ? leafMesh.material[0] : leafMesh.material;
+    const tinted = base.clone();
+    tinted.color.set(leafTint);
+    return tinted;
+  }, [leafMesh, leafTint]);
 
   const maxLeaves = useMemo(() => {
     return leafAnchors.length
@@ -206,7 +215,7 @@ export default function ControllableTree({
           ref={leafRef}
           args={[
             leafMesh.geometry,
-            leafMesh.material,
+            leafMaterial,
             maxLeaves * maxTwigs
           ]}
           receiveShadow

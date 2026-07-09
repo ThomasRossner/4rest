@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { ListTodo, Star, UserPlus, Share2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
@@ -9,7 +9,6 @@ import { useToastStore } from '../../stores/toastStore';
 import { shareInvite } from '../../utils/invite';
 import { LoadingSkeleton } from '../../components/Feedback/LoadingSkeleton';
 import { TaskTypeIcon } from '../../components/Tasks/taskTypeIcons';
-import { forestKeyFromTaskCategory } from '../../constants/forestCategories';
 import ForestCategoryProgressGrid from '../../components/Forest/ForestCategoryProgressGrid';
 import { FOREST_PROTOTYPE_TREE_GROW_STEPS } from '../../components/3d/ForestPrototypeScene';
 import { filterExecutableTasks } from '../../utils/executableTasks';
@@ -44,6 +43,8 @@ function HomePage() {
     }
   };
 
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
   const { data: tasks } = useQuery('tasks', () => api.getTasks(), {
     enabled: !!user,
   });
@@ -54,7 +55,27 @@ function HomePage() {
     { enabled: !!userId }
   );
 
-  const nextTasks = useMemo(() => filterExecutableTasks(tasks).slice(0, 10), [tasks]);
+  useEffect(() => {
+    if (!user || !navigator.geolocation) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      () => setUserLocation(null),
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [user]);
+
+  const nextTasks = useMemo(
+    () => filterExecutableTasks(tasks, { userLocation }).slice(0, 10),
+    [tasks, userLocation]
+  );
 
   const forestLevel = useMemo(() => {
     const planted = progress?.treesPlanted ?? 0;
@@ -76,14 +97,10 @@ function HomePage() {
           {t('home.nextTasks.title')}
         </h2>
         <div className="glass-scroll-row home-task-row">
-          {nextTasks.map((task) => {
-            const categoryKey = forestKeyFromTaskCategory(
-              (task as { category?: string }).category
-            );
-            return (
+          {nextTasks.map((task) => (
             <Link
               key={task.id}
-              to={`/tasks/c/${categoryKey}`}
+              to={`/tasks?task=${encodeURIComponent(task.id)}`}
               className="glass-task-tile"
             >
               <span className="glass-task-tile__thumb">
@@ -99,8 +116,7 @@ function HomePage() {
                 {t('tasksComponents.points', { points: Number(task.points ?? 0) })}
               </span>
             </Link>
-            );
-          })}
+          ))}
           <Link to="/tasks" className="glass-task-tile glass-task-tile--all">
             <ListTodo size={22} strokeWidth={2} aria-hidden />
             <span className="glass-task-tile__title">{t('home.nextTasks.allTasks')}</span>

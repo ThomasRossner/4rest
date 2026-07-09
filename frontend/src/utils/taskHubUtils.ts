@@ -77,6 +77,75 @@ export function isPhysicalPlaceTask(task: TaskWithLocation): boolean {
   return loc.latitude != null && loc.longitude != null;
 }
 
+export const NEARBY_TASK_MAX_DISTANCE_M = 2000;
+
+/** Haversine distance in meters between two WGS84 coordinates. */
+export function haversineDistanceMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+export type TaskGeoCoordinatesSource = TaskWithLocation & {
+  type?: string;
+  target_latitude?: number | null;
+  target_longitude?: number | null;
+};
+
+/** Physical coordinates for proximity checks (visit targets or place locations). */
+export function getTaskGeoCoordinates(task: TaskGeoCoordinatesSource): {
+  latitude: number;
+  longitude: number;
+} | null {
+  if (task.type === 'visit_location') {
+    const lat = task.target_latitude;
+    const lng = task.target_longitude;
+    if (lat != null && lng != null) {
+      const latitude = Number(lat);
+      const longitude = Number(lng);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        return { latitude, longitude };
+      }
+    }
+  }
+
+  const loc = parseTaskLocation(task);
+  if (!loc || loc.is_online) return null;
+  if (loc.latitude == null || loc.longitude == null) return null;
+  return { latitude: loc.latitude, longitude: loc.longitude };
+}
+
+export function isTaskNearby(
+  task: TaskGeoCoordinatesSource,
+  userLocation: { lat: number; lng: number },
+  maxDistanceM = NEARBY_TASK_MAX_DISTANCE_M
+): boolean {
+  const coords = getTaskGeoCoordinates(task);
+  if (!coords) return false;
+
+  const distance = haversineDistanceMeters(
+    userLocation.lat,
+    userLocation.lng,
+    coords.latitude,
+    coords.longitude
+  );
+  return distance < maxDistanceM;
+}
+
 /** Ortsbasierte Aufgabe (nicht-online Ort, unabhängig von Koordinaten). */
 export function isPlaceTask(task: TaskWithLocation): boolean {
   const loc = parseTaskLocation(task);

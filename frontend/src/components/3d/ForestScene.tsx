@@ -7,6 +7,9 @@ import { useAuthStore } from '../../stores/authStore';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
+/**
+ * @deprecated Production uses ForestHybridScene. Kept as reference for DB-position rendering.
+ */
 function ForestScene() {
   const { data: forest, refetch: refetchForest } = useQuery('forest', () => api.getForest());
   const currentUser = useAuthStore((s) => s.user);

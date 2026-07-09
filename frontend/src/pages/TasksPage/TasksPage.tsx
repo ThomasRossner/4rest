@@ -113,8 +113,15 @@ function TasksPage() {
   }, [categoryKeyParam]);
 
   useEffect(() => {
-    setDetailTaskId(null);
-  }, [categoryKeyParam]);
+    const taskIdFromUrl = searchParams.get('task');
+    if (taskIdFromUrl) {
+      setDetailTaskId(taskIdFromUrl);
+      return;
+    }
+    if (categoryKeyParam) {
+      setDetailTaskId(null);
+    }
+  }, [categoryKeyParam, searchParams]);
 
   // Listen for WebSocket task updates
   React.useEffect(() => {
@@ -369,15 +376,33 @@ function TasksPage() {
   );
 
   if (detailTaskId) {
+    const openedFromUrl = searchParams.get('task') === detailTaskId;
+
+    const clearTaskQueryParam = () => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('task');
+      const qs = next.toString();
+      navigate(qs ? `/tasks?${qs}` : '/tasks', { replace: true });
+    };
+
     return (
       <div className="tasks-page tasks-page--detail">
         <TaskDetailView
           taskId={detailTaskId}
           listTask={tasks?.find((x: any) => x.id === detailTaskId) as Record<string, unknown> | undefined}
-          onBack={() => setDetailTaskId(null)}
+          onBack={() => {
+            if (openedFromUrl) {
+              navigate(-1);
+              return;
+            }
+            setDetailTaskId(null);
+          }}
           onStartExecution={() => {
             setSelectedTask(detailTaskId);
             setDetailTaskId(null);
+            if (openedFromUrl) {
+              clearTaskQueryParam();
+            }
           }}
         />
       </div>
@@ -601,6 +626,27 @@ function TasksPage() {
 
   const backToHubLabel = t('tasks.hub.backToHub');
 
+  const showCategoryClearFilter =
+    (prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0) ||
+    showOnlineTasks ||
+    Boolean(onlineParam) ||
+    Boolean(placeParam);
+
+  const handleCategoryClearFilter = () => {
+    if (prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0) {
+      setPrerequisiteTaskIdsFilter(null);
+      return;
+    }
+    if (showOnlineTasks || onlineParam) {
+      setShowOnlineTasks(false);
+      navigate('/tasks');
+      return;
+    }
+    if (placeParam) {
+      navigate('/tasks');
+    }
+  };
+
   return (
       <div className="tasks-page tasks-page--category">
         <div className="tasks-category-sticky">
@@ -623,85 +669,17 @@ function TasksPage() {
               />
             )}
             <h2 className="tasks-header-category-title">{listViewTitle}</h2>
-          <div className="tasks-header-category-actions">
-            {prerequisiteTaskIdsFilter && prerequisiteTaskIdsFilter.length > 0 ? (
-              <div className="tasks-header-category-actions-row">
+            {showCategoryClearFilter && (
+              <div className="tasks-header-category-actions">
                 <button
                   type="button"
                   className="location-button"
-                  onClick={() => setPrerequisiteTaskIdsFilter(null)}
+                  onClick={handleCategoryClearFilter}
                 >
                   {t('tasks.prerequisites.clearFilter')}
-                </button>
-                <button
-                  type="button"
-                  className="location-button"
-                  onClick={() => setShowLocationMap(true)}
-                  title={t('tasks.showLocation')}
-                >
-                  {t('tasks.locationButton')}
-                </button>
-              </div>
-            ) : showOnlineTasks || onlineParam ? (
-              <div className="tasks-header-category-actions-row">
-                <button
-                  type="button"
-                  className="location-button"
-                  onClick={() => {
-                    setShowOnlineTasks(false);
-                    navigate('/tasks');
-                  }}
-                >
-                  {t('tasks.prerequisites.clearFilter')}
-                </button>
-                <button
-                  type="button"
-                  className="location-button"
-                  onClick={() => setShowLocationMap(true)}
-                  title={t('tasks.showLocation')}
-                >
-                  {t('tasks.locationButton')}
-                </button>
-              </div>
-            ) : placeParam ? (
-              <div className="tasks-header-category-actions-row">
-                <button
-                  type="button"
-                  className="location-button"
-                  onClick={() => navigate('/tasks')}
-                >
-                  {t('tasks.prerequisites.clearFilter')}
-                </button>
-                <button
-                  type="button"
-                  className="location-button"
-                  onClick={() => setShowLocationMap(true)}
-                  title={t('tasks.showLocation')}
-                >
-                  {t('tasks.locationButton')}
-                </button>
-              </div>
-            ) : (
-              <div className="tasks-header-category-actions-row">
-                <button
-                  type="button"
-                  className="location-button"
-                  onClick={() => setShowLocationMap(true)}
-                  title={t('tasks.showLocation')}
-                >
-                  {t('tasks.locationButton')}
-                </button>
-                <button
-                  type="button"
-                  className="location-button"
-                  onClick={() => setShowOnlineTasks(true)}
-                  title={t('tasks.showOnline')}
-                >
-                  {t('tasks.onlineButton')}
                 </button>
               </div>
             )}
-          </div>
           </div>
         </div>
       

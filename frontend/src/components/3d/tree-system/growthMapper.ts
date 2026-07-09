@@ -24,6 +24,18 @@ export function mapGrowthPointsToCounter(
 }
 
 /**
+ * Map DB growth_points (1–100+) to ControllableTree growth progress (0–1).
+ */
+export function mapGrowthPointsToProgress(
+  growthPoints: number,
+  maxGrowthPoints: number = 100
+): number {
+  if (growthPoints <= 0) return 0;
+  const normalized = Math.min(Math.max(growthPoints, 0), maxGrowthPoints);
+  return Math.max(0.06, normalized / maxGrowthPoints);
+}
+
+/**
  * Determine if a twig should be visible based on growth counter
  * @param twigIndex - Index of the twig (0-based)
  * @param growthCounter - Current growth counter (0 to trunkGrowSteps)
