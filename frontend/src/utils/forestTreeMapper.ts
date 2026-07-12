@@ -6,7 +6,7 @@ import type {
   ForestArea,
   HybridTree,
 } from '../components/3d/forestTypes';
-import { FOREST_BLOCK_SIZE, FOREST_TREE_SURFACE_Y } from '../components/3d/forestTypes';
+import { FOREST_BLOCK_SIZE, getForestTreeSurfaceY } from '../components/3d/forestTypes';
 import {
   computeForestCameraFromScene,
   type ForestCameraFraming,
@@ -68,27 +68,28 @@ function resolveCategoryKey(
   return 'sonstige';
 }
 
-function applyTreeSurfaceY(y: number | undefined | null): number {
+function applyTreeSurfaceY(y: number | undefined | null, surfaceY: number): number {
   const base = Number(y ?? 0);
-  if (!Number.isFinite(base)) return FOREST_TREE_SURFACE_Y;
-  return base + FOREST_TREE_SURFACE_Y;
+  if (!Number.isFinite(base)) return surfaceY;
+  return base + surfaceY;
 }
 
 function resolvePosition(
   tree: ForestApiTree,
-  areaOrigin?: [number, number, number]
+  areaOrigin: [number, number, number] | undefined,
+  surfaceY: number
 ): [number, number, number] | null {
   if (Array.isArray(tree.position) && tree.position.length >= 3) {
     return [
       Number(tree.position[0]),
-      applyTreeSurfaceY(tree.position[1]),
+      applyTreeSurfaceY(tree.position[1], surfaceY),
       Number(tree.position[2]),
     ];
   }
   if (areaOrigin && Array.isArray(tree.localPosition) && tree.localPosition.length >= 3) {
     return [
       areaOrigin[0] + Number(tree.localPosition[0]),
-      applyTreeSurfaceY(tree.localPosition[1]),
+      applyTreeSurfaceY(tree.localPosition[1], surfaceY),
       areaOrigin[2] + Number(tree.localPosition[2]),
     ];
   }
@@ -173,13 +174,14 @@ export function mapForestApiToHybridForest(data: ForestApiResponse | null | unde
 
   const trees: HybridTree[] = [];
   const areas: ForestArea[] = [];
+  const provisionalSurfaceY = getForestTreeSurfaceY([]);
 
   if (apiAreas.length > 0) {
     for (const area of apiAreas) {
       const origin = area.origin as [number, number, number];
       const areaTrees: HybridTree[] = [];
       for (const apiTree of area.trees ?? []) {
-        const position = resolvePosition(apiTree, origin);
+        const position = resolvePosition(apiTree, origin, provisionalSurfaceY);
         if (!position) continue;
         const hybrid = mapApiTree(apiTree, position, ageFactors.get(String(apiTree.id)) ?? 1);
         areaTrees.push(hybrid);
@@ -189,13 +191,12 @@ export function mapForestApiToHybridForest(data: ForestApiResponse | null | unde
     }
   } else {
     for (const apiTree of flatTrees) {
-      const position = resolvePosition(apiTree);
+      const position = resolvePosition(apiTree, undefined, provisionalSurfaceY);
       if (!position) continue;
       const hybrid = mapApiTree(apiTree, position, ageFactors.get(String(apiTree.id)) ?? 1);
       trees.push(hybrid);
       const blockX = Math.floor(position[0] / FOREST_BLOCK_SIZE) * FOREST_BLOCK_SIZE;
       const blockZ = Math.floor(position[2] / FOREST_BLOCK_SIZE) * FOREST_BLOCK_SIZE;
-      const key = `${blockX},${blockZ}`;
       let area = areas.find(
         (candidate) =>
           candidate.origin[0] === blockX && candidate.origin[2] === blockZ
@@ -209,6 +210,10 @@ export function mapForestApiToHybridForest(data: ForestApiResponse | null | unde
   }
 
   const resolvedAreas = areas.length > 0 ? areas : defaultEmptyArea();
+  const surfaceY = getForestTreeSurfaceY(resolvedAreas);
+  for (const tree of trees) {
+    tree.position[1] = applyTreeSurfaceY(0, surfaceY);
+  }
   const cameraOrigin = computeCameraOrigin(trees, resolvedAreas);
   const cameraFraming = computeForestCameraFromScene(trees, resolvedAreas);
 

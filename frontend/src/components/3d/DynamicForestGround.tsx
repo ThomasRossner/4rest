@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import {
-  FOREST_GROUND_SCALE,
-  getForestBlockGroundCenter,
-  mapForestGroundLocalToWorld,
+  getForestGroundLayout,
+  mapForestGroundLayoutLocalToWorld,
   type ForestArea,
 } from './forestTypes';
 
@@ -75,8 +74,7 @@ function GrassInstances({
 }
 
 /**
- * Renders the original grassGround island per forest block plus instanced grass
- * (same look as ForestPrototypeScene / SceneController).
+ * Renders one grassGround island for the full forest plus instanced grass on that surface.
  */
 export default function DynamicForestGround({
   areas,
@@ -115,24 +113,27 @@ export default function DynamicForestGround({
     return meshes;
   }, [grassGltf]);
 
+  const groundLayout = useMemo(
+    () => getForestGroundLayout(areas),
+    [areas]
+  );
+
   const groupedGrass = useMemo(() => {
-    if (!grassAnchorsTemplate.length || !grassMeshes.length || areas.length === 0) {
+    if (!grassAnchorsTemplate.length || !grassMeshes.length || !groundLayout) {
       return [] as GrassAnchorRef[][];
     }
 
     const worldAnchors: GrassAnchorRef[] = [];
-    for (const area of areas) {
-      for (const anchor of grassAnchorsTemplate) {
-        const [worldX, worldY, worldZ] = mapForestGroundLocalToWorld(area.origin, [
-          anchor.position.x,
-          anchor.position.y,
-          anchor.position.z,
-        ]);
-        worldAnchors.push({
-          position: new THREE.Vector3(worldX, worldY, worldZ),
-          quaternion: anchor.quaternion.clone(),
-        });
-      }
+    for (const anchor of grassAnchorsTemplate) {
+      const [worldX, worldY, worldZ] = mapForestGroundLayoutLocalToWorld(groundLayout, [
+        anchor.position.x,
+        anchor.position.y,
+        anchor.position.z,
+      ]);
+      worldAnchors.push({
+        position: new THREE.Vector3(worldX, worldY, worldZ),
+        quaternion: anchor.quaternion.clone(),
+      });
     }
 
     const groups = Array.from({ length: grassMeshes.length }, () => [] as GrassAnchorRef[]);
@@ -143,27 +144,20 @@ export default function DynamicForestGround({
     });
 
     return groups;
-  }, [areas, grassAnchorsTemplate, grassMeshes]);
+  }, [groundLayout, grassAnchorsTemplate, grassMeshes]);
 
-  if (!groundMesh) return null;
+  if (!groundMesh || !groundLayout) return null;
 
   return (
     <group>
-      {areas.map((area) => {
-        const key = `${area.origin[0]}-${area.origin[2]}`;
-        const center = getForestBlockGroundCenter(area.origin);
-        return (
-          <mesh
-            key={key}
-            geometry={groundMesh.geometry}
-            material={groundMesh.material}
-            position={center}
-            scale={[FOREST_GROUND_SCALE, FOREST_GROUND_SCALE, FOREST_GROUND_SCALE]}
-            castShadow
-            receiveShadow
-          />
-        );
-      })}
+      <mesh
+        geometry={groundMesh.geometry}
+        material={groundMesh.material}
+        position={groundLayout.center}
+        scale={groundLayout.scale}
+        castShadow
+        receiveShadow
+      />
 
       {!lowPerformanceMode &&
         groupedGrass.map((anchors, meshIndex) => {
