@@ -39,6 +39,8 @@
 .task-video {
   width: 100%;
   max-height: 400px;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
   background: #000;
 }
 

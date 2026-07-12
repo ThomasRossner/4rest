@@ -172,6 +172,8 @@
   display: block;
   width: 100%;
   max-width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
   border-radius: 16px;
   background: #000;
   box-shadow: var(--glass-shadow-outer);

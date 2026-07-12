@@ -7,6 +7,7 @@ import { useToastStore } from '../../stores/toastStore';
 import { TREES_PER_TASK } from '../../constants/toast';
 import { normalizeQuizQuestionsForDisplay } from '../../utils/taskQuestionI18n';
 import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
+import { applyIosInlineVideoAttributes } from '../../utils/iosVideoPlayback';
 import './TaskComponents.css';
 
 interface VideoTaskProps {
@@ -205,6 +206,18 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
 
   const preferredSubtitleLang = i18n.language?.startsWith('en') ? 'en' : 'de';
 
+  const rawVideoUrl = typeof task?.video_url === 'string' ? task.video_url.trim() : '';
+  const videoUrl = resolveMediaUrl(rawVideoUrl) ?? rawVideoUrl;
+  const isYouTube =
+    videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+  const embedUrl = isYouTube ? toYouTubeEmbedUrl(videoUrl) : '';
+
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || !videoUrl || isYouTube) return;
+    applyIosInlineVideoAttributes(videoEl);
+  }, [videoUrl, isYouTube]);
+
   useEffect(() => {
     const videoEl = videoRef.current;
     if (!videoEl || subtitleTracks.length === 0) return;
@@ -217,12 +230,6 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
       textTrack.mode = textTrack.language === preferredTrack.lang ? 'showing' : 'disabled';
     }
   }, [preferredSubtitleLang, subtitleTracks]);
-
-  const rawVideoUrl = typeof task?.video_url === 'string' ? task.video_url.trim() : '';
-  const videoUrl = resolveMediaUrl(rawVideoUrl) ?? rawVideoUrl;
-  const isYouTube =
-    videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
-  const embedUrl = isYouTube ? toYouTubeEmbedUrl(videoUrl) : '';
 
   const handleAnswer = (questionId: string, optionId: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -300,7 +307,14 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
               style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
             />
           ) : (
-            <video ref={videoRef} controls src={videoUrl} className="task-video">
+            <video
+              ref={videoRef}
+              controls
+              playsInline
+              preload="metadata"
+              className="task-video"
+            >
+              <source src={videoUrl} type="video/mp4" />
               {subtitleTracks.map((track) => (
                 <track
                   key={track.lang}

@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import { UserLocationMap } from '../LocationMap/UserLocationMap';
 import { BackArrowIcon } from './BackArrowIcon';
 import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
+import { applyIosInlineVideoAttributes } from '../../utils/iosVideoPlayback';
 import './TaskDetailView.css';
 
 type TaskDetailViewProps = {
@@ -230,6 +231,12 @@ export function TaskDetailView({
 
   useEffect(() => {
     const videoEl = completedVideoRef.current;
+    if (!videoEl || !completedVideoUrl || isCompletedVideoYouTube || !showCompletedVideo) return;
+    applyIosInlineVideoAttributes(videoEl);
+  }, [completedVideoUrl, isCompletedVideoYouTube, showCompletedVideo]);
+
+  useEffect(() => {
+    const videoEl = completedVideoRef.current;
     if (!videoEl || videoSubtitleTracks.length === 0) return;
     const preferredTrack =
       videoSubtitleTracks.find((track) => track.lang === preferredSubtitleLang) ??
@@ -300,10 +307,11 @@ export function TaskDetailView({
               <video
                 ref={completedVideoRef}
                 className="task-detail-video-player"
-                src={completedVideoUrl}
                 controls
+                playsInline
                 preload="metadata"
               >
+                <source src={completedVideoUrl} type="video/mp4" />
                 {videoSubtitleTracks.map((track) => (
                   <track
                     key={track.lang}
