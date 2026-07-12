@@ -6,12 +6,29 @@ import { api } from '../../services/api';
 import { useToastStore } from '../../stores/toastStore';
 import { TREES_PER_TASK } from '../../constants/toast';
 import { normalizeQuizQuestionsForDisplay } from '../../utils/taskQuestionI18n';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 import './TaskComponents.css';
 
 interface VideoTaskProps {
   taskId: string;
   onComplete?: () => void;
   variant?: 'default' | 'public';
+}
+
+function toYouTubeEmbedUrl(videoUrl: string): string {
+  if (videoUrl.includes('/shorts/')) {
+    const videoId = videoUrl.split('/shorts/')[1]?.split('?')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : videoUrl;
+  }
+  if (videoUrl.includes('youtube.com/watch?v=')) {
+    const videoId = videoUrl.split('v=')[1]?.split('&')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : videoUrl;
+  }
+  if (videoUrl.includes('youtu.be/')) {
+    const videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : videoUrl;
+  }
+  return videoUrl;
 }
 
 export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTaskProps) {
@@ -148,11 +165,10 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
     }
   );
 
-  if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
-  if (!task) return <div>{t('tasksComponents.notFound')}</div>;
-
-
-  const questions = normalizeQuizQuestionsForDisplay(task.quiz_questions || []);
+  const questions = useMemo(
+    () => normalizeQuizQuestionsForDisplay(task?.quiz_questions || []),
+    [task?.quiz_questions]
+  );
   const currentQuestion = questions[currentQuestionIndex];
   const selectedId = currentQuestion ? answers[currentQuestion.id] : undefined;
   const isCurrentVerified = verified[currentQuestionIndex] === true;
@@ -171,6 +187,42 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
     const ms = new Date(lockUntil).getTime() - Date.now();
     return Math.max(0, Math.ceil(ms / 60000));
   }, [lockUntil, tick]);
+
+  const subtitleTracks = useMemo(() => {
+    const raw = task?.video_subtitles_i18n;
+    if (!raw || typeof raw !== 'object') return [];
+    const de = typeof raw.de === 'string' ? raw.de.trim() : '';
+    const en = typeof raw.en === 'string' ? raw.en.trim() : '';
+    return [
+      ...(de
+        ? [{ lang: 'de', label: 'Deutsch', src: resolveMediaUrl(de) ?? de }]
+        : []),
+      ...(en
+        ? [{ lang: 'en', label: 'English', src: resolveMediaUrl(en) ?? en }]
+        : []),
+    ];
+  }, [task?.video_subtitles_i18n]);
+
+  const preferredSubtitleLang = i18n.language?.startsWith('en') ? 'en' : 'de';
+
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl || subtitleTracks.length === 0) return;
+    const preferredTrack =
+      subtitleTracks.find((track) => track.lang === preferredSubtitleLang) ??
+      subtitleTracks.find((track) => track.lang === 'de') ??
+      subtitleTracks[0];
+    for (let i = 0; i < videoEl.textTracks.length; i += 1) {
+      const textTrack = videoEl.textTracks[i];
+      textTrack.mode = textTrack.language === preferredTrack.lang ? 'showing' : 'disabled';
+    }
+  }, [preferredSubtitleLang, subtitleTracks]);
+
+  const rawVideoUrl = typeof task?.video_url === 'string' ? task.video_url.trim() : '';
+  const videoUrl = resolveMediaUrl(rawVideoUrl) ?? rawVideoUrl;
+  const isYouTube =
+    videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+  const embedUrl = isYouTube ? toYouTubeEmbedUrl(videoUrl) : '';
 
   const handleAnswer = (questionId: string, optionId: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -222,32 +274,11 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
     }
   };
 
+  if (isLoading) return <div>{t('tasksComponents.loading')}</div>;
+  if (!task) return <div>{t('tasksComponents.notFound')}</div>;
+
   const lockActive =
     lockUntil && new Date(lockUntil).getTime() > Date.now() && !isCurrentVerified;
-  const subtitleTracks = useMemo(() => {
-    const raw = (task as any)?.video_subtitles_i18n;
-    if (!raw || typeof raw !== 'object') return [];
-    const de = typeof raw.de === 'string' ? raw.de.trim() : '';
-    const en = typeof raw.en === 'string' ? raw.en.trim() : '';
-    return [
-      ...(de ? [{ lang: 'de', label: 'Deutsch', src: de }] : []),
-      ...(en ? [{ lang: 'en', label: 'English', src: en }] : []),
-    ];
-  }, [task]);
-  const preferredSubtitleLang = i18n.language?.startsWith('en') ? 'en' : 'de';
-
-  useEffect(() => {
-    const videoEl = videoRef.current;
-    if (!videoEl || subtitleTracks.length === 0) return;
-    const preferredTrack =
-      subtitleTracks.find((track) => track.lang === preferredSubtitleLang) ??
-      subtitleTracks.find((track) => track.lang === 'de') ??
-      subtitleTracks[0];
-    for (let i = 0; i < videoEl.textTracks.length; i += 1) {
-      const textTrack = videoEl.textTracks[i];
-      textTrack.mode = textTrack.language === preferredTrack.lang ? 'showing' : 'disabled';
-    }
-  }, [preferredSubtitleLang, subtitleTracks]);
 
   return (
     <div className="task-container">
@@ -258,69 +289,31 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
         </span>
       </div>
 
-      {task.video_url && (
+      {videoUrl && (
         <div className="video-container">
-          {(() => {
-            const videoUrl = task.video_url;
-            const isYouTube = videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be');
-            
-            if (isYouTube) {
-              // Convert YouTube URL to embed format
-              let embedUrl = '';
-              if (videoUrl.includes('/shorts/')) {
-                const videoId = videoUrl.split('/shorts/')[1]?.split('?')[0];
-                embedUrl = `https://www.youtube.com/embed/${videoId}`;
-              } else if (videoUrl.includes('youtube.com/watch?v=')) {
-                const videoId = videoUrl.split('v=')[1]?.split('&')[0];
-                embedUrl = `https://www.youtube.com/embed/${videoId}`;
-              } else if (videoUrl.includes('youtu.be/')) {
-                const videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
-                embedUrl = `https://www.youtube.com/embed/${videoId}`;
-              } else {
-                embedUrl = videoUrl;
-              }
-              
-              
-              return (
-                <iframe
-                  src={embedUrl}
-                  className="task-video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
+          {isYouTube ? (
+            <iframe
+              src={embedUrl}
+              className="task-video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
+            />
+          ) : (
+            <video ref={videoRef} controls src={videoUrl} className="task-video">
+              {subtitleTracks.map((track) => (
+                <track
+                  key={track.lang}
+                  kind="subtitles"
+                  srcLang={track.lang}
+                  label={track.label}
+                  src={track.src}
+                  default={track.lang === preferredSubtitleLang}
                 />
-              );
-            }
-            
-            
-            return (
-              <video
-                ref={videoRef}
-                controls
-                src={videoUrl}
-                className="task-video"
-                onError={(e) => {
-                }}
-                onLoadStart={() => {
-                }}
-                onEnded={() => {
-                  // Video ended, show quiz questions
-                }}
-              >
-                {subtitleTracks.map((track) => (
-                  <track
-                    key={track.lang}
-                    kind="subtitles"
-                    srcLang={track.lang}
-                    label={track.label}
-                    src={track.src}
-                    default={track.lang === preferredSubtitleLang}
-                  />
-                ))}
-                {t('tasksComponents.video.notSupported')}
-              </video>
-            );
-          })()}
+              ))}
+              {t('tasksComponents.video.notSupported')}
+            </video>
+          )}
         </div>
       )}
 
@@ -343,7 +336,7 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
           <div className="question-card">
             <p className="question-text">{currentQuestion.question}</p>
             <div className="answer-options">
-              {currentQuestion.options.map((option, optionIndex: number) => (
+              {currentQuestion.options.map((option) => (
                 <button
                   key={option.id}
                   className={`answer-button ${

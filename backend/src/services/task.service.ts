@@ -1861,7 +1861,12 @@ export async function mergeGuestTaskCompletions(
 /** Öffentliche URL für eine Datei im gemeinsamen Upload-Verzeichnis (gleiche Logik wie Aufgaben-Fotos/Videos). */
 export function publicUploadFileUrl(filename: string): string {
   const baseUrl =
-    process.env.BASE_URL || process.env.BACKEND_URL || process.env.API_URL || 'http://localhost:5001';
+    process.env.APP_URL ||
+    process.env.FRONTEND_URL ||
+    process.env.BASE_URL ||
+    process.env.BACKEND_URL ||
+    process.env.API_URL ||
+    'http://localhost:5001';
   const cleanBaseUrl = baseUrl.replace(/\/$/, '');
   return `${cleanBaseUrl}/uploads/${filename}`;
 }

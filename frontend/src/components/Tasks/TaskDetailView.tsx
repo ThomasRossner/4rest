@@ -5,6 +5,7 @@ import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { api } from '../../services/api';
 import { UserLocationMap } from '../LocationMap/UserLocationMap';
 import { BackArrowIcon } from './BackArrowIcon';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 import './TaskDetailView.css';
 
 type TaskDetailViewProps = {
@@ -189,7 +190,9 @@ export function TaskDetailView({
     taskType === 'video' &&
     typeof row.video_url === 'string' &&
     row.video_url.trim() !== '';
-  const completedVideoUrl = showCompletedVideo ? String(row.video_url).trim() : '';
+  const completedVideoUrl = showCompletedVideo
+    ? resolveMediaUrl(String(row.video_url).trim()) ?? String(row.video_url).trim()
+    : '';
   const isCompletedVideoYouTube =
     completedVideoUrl.includes('youtube.com') || completedVideoUrl.includes('youtu.be');
   const completedVideoEmbedUrl = useMemo(() => {
@@ -215,8 +218,12 @@ export function TaskDetailView({
     const de = typeof subtitleMap.de === 'string' ? subtitleMap.de.trim() : '';
     const en = typeof subtitleMap.en === 'string' ? subtitleMap.en.trim() : '';
     return [
-      ...(de ? [{ lang: 'de', label: 'Deutsch', src: de }] : []),
-      ...(en ? [{ lang: 'en', label: 'English', src: en }] : []),
+      ...(de
+        ? [{ lang: 'de', label: 'Deutsch', src: resolveMediaUrl(de) ?? de }]
+        : []),
+      ...(en
+        ? [{ lang: 'en', label: 'English', src: resolveMediaUrl(en) ?? en }]
+        : []),
     ];
   }, [row.video_subtitles_i18n]);
   const preferredSubtitleLang = i18n.language?.startsWith('en') ? 'en' : 'de';

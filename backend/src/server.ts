@@ -40,14 +40,19 @@ const LOCAL_DEV_ORIGINS = [
 ];
 
 function getCorsOrigin(): string | string[] {
-  const raw = process.env.CORS_ORIGIN || process.env.FRONTEND_URL;
-  const fromEnv = raw
-    ? raw.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
+  const fromEnv = [
+    process.env.CORS_ORIGIN,
+    process.env.FRONTEND_URL,
+    process.env.APP_URL,
+  ]
+    .flatMap((value) => (value ? value.split(',') : []))
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   if (process.env.NODE_ENV === 'production') {
-    if (fromEnv.length === 0) return 'http://localhost:3002';
-    return fromEnv.length === 1 ? fromEnv[0] : fromEnv;
+    const origins = Array.from(new Set(fromEnv));
+    if (origins.length === 0) return 'http://localhost:3002';
+    return origins.length === 1 ? origins[0] : origins;
   }
 
   // Development: Env-Origins + lokale Vite-Ports (auch wenn nur CORS_ORIGIN=:3000 gesetzt)
