@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mapForestApiToHybridForest } from './forestTreeMapper';
 import { mapGrowthPointsToProgress } from '../components/3d/tree-system/growthMapper';
+import { FOREST_TREE_SURFACE_Y } from '../components/3d/forestTypes';
 
 describe('mapGrowthPointsToProgress', () => {
   it('maps growth points to 0–1 progress', () => {
@@ -42,7 +43,7 @@ describe('mapForestApiToHybridForest', () => {
 
     expect(result.trees).toHaveLength(2);
     expect(result.trees[0].position[0]).toBe(3);
-    expect(result.trees[0].position[1]).toBeCloseTo(0.92, 2);
+    expect(result.trees[0].position[1]).toBeCloseTo(FOREST_TREE_SURFACE_Y, 2);
     expect(result.trees[0].position[2]).toBe(4);
     expect(result.trees[0].growth).toBeCloseTo(0.25, 2);
     expect(result.trees[1].growth).toBeCloseTo(0.8, 2);
@@ -70,6 +71,6 @@ describe('mapForestApiToHybridForest', () => {
     });
 
     expect(result.trees).toHaveLength(1);
-    expect(result.trees[0].position).toEqual([14, 0.92, 3]);
+    expect(result.trees[0].position).toEqual([14, FOREST_TREE_SURFACE_Y, 3]);
   });
 });

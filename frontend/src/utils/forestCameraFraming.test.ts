@@ -5,12 +5,12 @@ import {
   computeForestCameraFromScene,
 } from './forestCameraFraming';
 import type { ForestArea, HybridTree } from '../components/3d/forestTypes';
-import { FOREST_BLOCK_SIZE } from '../components/3d/forestTypes';
+import { FOREST_BLOCK_SIZE, FOREST_TREE_SURFACE_Y } from '../components/3d/forestTypes';
 
 function makeTree(id: string, x: number, z: number): HybridTree {
   return {
     id,
-    position: [x, 0.92, z],
+    position: [x, FOREST_TREE_SURFACE_Y, z],
     growth: 0.5,
     sizeFactor: 1,
     rotationY: 0,

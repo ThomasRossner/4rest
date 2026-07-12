@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import type { ForestArea } from './forestTypes';
+import {
+  FOREST_GROUND_SCALE,
+  getForestBlockGroundCenter,
+  mapForestGroundLocalToWorld,
+  type ForestArea,
+} from './forestTypes';
 
 type GrassAnchorRef = {
   position: THREE.Vector3;
@@ -117,10 +122,14 @@ export default function DynamicForestGround({
 
     const worldAnchors: GrassAnchorRef[] = [];
     for (const area of areas) {
-      const offset = new THREE.Vector3(area.origin[0], area.origin[1], area.origin[2]);
       for (const anchor of grassAnchorsTemplate) {
+        const [worldX, worldY, worldZ] = mapForestGroundLocalToWorld(area.origin, [
+          anchor.position.x,
+          anchor.position.y,
+          anchor.position.z,
+        ]);
         worldAnchors.push({
-          position: anchor.position.clone().add(offset),
+          position: new THREE.Vector3(worldX, worldY, worldZ),
           quaternion: anchor.quaternion.clone(),
         });
       }
@@ -142,12 +151,14 @@ export default function DynamicForestGround({
     <group>
       {areas.map((area) => {
         const key = `${area.origin[0]}-${area.origin[2]}`;
+        const center = getForestBlockGroundCenter(area.origin);
         return (
           <mesh
             key={key}
             geometry={groundMesh.geometry}
             material={groundMesh.material}
-            position={area.origin}
+            position={center}
+            scale={[FOREST_GROUND_SCALE, FOREST_GROUND_SCALE, FOREST_GROUND_SCALE]}
             castShadow
             receiveShadow
           />
