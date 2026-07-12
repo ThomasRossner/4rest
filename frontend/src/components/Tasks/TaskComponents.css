@@ -1,8 +1,11 @@
 .task-container {
-  background: white;
+  background: var(--glass-bg, var(--color-card-surface));
+  border: 1px solid var(--glass-border, var(--color-border));
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--glass-shadow-outer, var(--shadow-md)), var(--glass-shadow-inner, var(--shadow-warm-inset));
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(1.08);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -87,7 +90,8 @@
 
 .answer-button {
   padding: var(--spacing-md);
-  background: white;
+  background: var(--color-surface);
+  color: var(--color-text);
   border: 2px solid var(--color-border);
   border-radius: var(--border-radius);
   text-align: left;
@@ -97,7 +101,7 @@
 
 .answer-button:hover {
   border-color: var(--color-primary);
-  background: var(--color-surface);
+  background: var(--color-surface-elevated);
 }
 
 .answer-button.selected {
@@ -196,7 +200,8 @@
 
 .scanner-frame {
   width: 70%;
-  height: 70%;
+  aspect-ratio: 1;
+  height: auto;
   border: 3px solid var(--color-primary);
   border-radius: var(--border-radius);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
@@ -225,6 +230,8 @@
   border: 2px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .qr-input:focus {
@@ -287,12 +294,12 @@
 }
 
 .qr-scanner.qr-scanner--execution {
-  flex: 1 1 auto;
-  width: 100%;
+  flex: 0 0 auto;
+  align-self: center;
+  width: min(100%, calc(100dvh - 14rem), 400px);
   max-width: 100%;
-  min-height: 140px;
-  max-height: clamp(160px, 42vh, 340px);
-  aspect-ratio: unset;
+  aspect-ratio: 1;
+  min-height: 0;
 }
 
 .qr-exec-input-panel {
@@ -362,6 +369,7 @@
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  background: var(--color-surface);
 }
 
 .photo-upload-area:hover {
@@ -503,7 +511,7 @@
 }
 
 .survey-question-card {
-  background: white;
+  background: var(--color-card-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   padding: var(--spacing-lg);
@@ -590,7 +598,7 @@
 
 .radio-option:hover,
 .checkbox-option:hover {
-  background: white;
+  background: var(--color-surface-elevated);
   border-color: var(--color-primary-light);
   transform: translateX(4px);
 }
@@ -633,7 +641,7 @@
   font-family: inherit;
   line-height: 1.5;
   color: var(--color-text);
-  background: white;
+  background: var(--color-surface);
   resize: vertical;
   transition: all 0.2s ease;
 }
@@ -660,7 +668,7 @@
   min-width: 48px;
   height: 48px;
   padding: var(--spacing-sm) var(--spacing-md);
-  background: white;
+  background: var(--color-surface);
   border: 2px solid var(--color-border);
   border-radius: var(--border-radius);
   font-size: 1.1rem;

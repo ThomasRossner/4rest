@@ -147,7 +147,7 @@ function HomePage() {
             <Share2 size={14} strokeWidth={2} aria-hidden />
             {t('home.invite.share')}
           </button>
-          <Link to="/profile" className="glass-invite-cta glass-invite-cta--secondary">
+          <Link to="/groups#contests" className="glass-invite-cta glass-invite-cta--secondary">
             <UserPlus size={14} strokeWidth={2} aria-hidden />
             {t('home.invite.cta')}
           </Link>

@@ -14,6 +14,8 @@ interface VideoTaskProps {
   taskId: string;
   onComplete?: () => void;
   variant?: 'default' | 'public';
+  /** Video wurde bereits in der Vorschau gezeigt — nur Fragebogen anzeigen. */
+  skipVideo?: boolean;
 }
 
 function toYouTubeEmbedUrl(videoUrl: string): string {
@@ -32,7 +34,7 @@ function toYouTubeEmbedUrl(videoUrl: string): string {
   return videoUrl;
 }
 
-export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTaskProps) {
+export function VideoTask({ taskId, onComplete, variant = 'default', skipVideo = false }: VideoTaskProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [verified, setVerified] = useState<Record<number, boolean>>({});
@@ -296,7 +298,7 @@ export function VideoTask({ taskId, onComplete, variant = 'default' }: VideoTask
         </span>
       </div>
 
-      {videoUrl && (
+      {videoUrl && !skipVideo && (
         <div className="video-container">
           {isYouTube ? (
             <iframe

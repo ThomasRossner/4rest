@@ -301,7 +301,7 @@
     "invite": {
       "title": "Invite a friend",
       "description": "Create a team or contest in your profile and share the QR code so friends can join.",
-      "cta": "Go to profile",
+      "cta": "Contests",
       "share": "Share app",
       "shareTitle": "4rest",
       "shareText": "Join me on 4rest!",

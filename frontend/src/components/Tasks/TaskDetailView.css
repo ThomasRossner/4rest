@@ -22,8 +22,9 @@
   width: 100%;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid var(--color-border, #e5e7eb);
-  background: var(--color-surface, #f9fafb);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-weight: 600;
   cursor: pointer;
 }
@@ -35,7 +36,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding-bottom: var(--spacing-md);
-  background: var(--color-background, #fff);
+  background: var(--glass-bg, var(--color-card-surface));
   z-index: 2;
 }
 

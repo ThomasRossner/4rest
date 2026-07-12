@@ -89,7 +89,8 @@
 
 .qr-scanner-frame {
   width: 70%;
-  height: 70%;
+  aspect-ratio: 1;
+  height: auto;
   border: 3px solid var(--color-primary);
   border-radius: var(--border-radius);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
@@ -179,13 +180,41 @@
 }
 
 .points-bonus-scanner .qr-scanner-container {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  align-self: center;
   min-height: 0;
-  width: 100%;
+  width: min(100%, calc(100dvh - 5.5rem), 500px);
   max-width: min(500px, 100%);
-  max-height: min(100vw, calc(100dvh - 5.5rem));
   aspect-ratio: 1;
   height: auto;
+}
+
+.qr-scanner-video-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  aspect-ratio: 1;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: #000;
+}
+
+.qr-scanner-video-container .qr-scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.qr-scanner-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--glass-bg, white);
+  border: 1px solid var(--glass-border, var(--color-gray, #e5e7eb));
+  border-radius: var(--border-radius);
+  color: var(--glass-text, var(--color-text));
 }
 
 .qr-scanner-error-hint {

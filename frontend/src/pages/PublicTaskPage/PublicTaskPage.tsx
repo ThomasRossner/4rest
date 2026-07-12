@@ -136,7 +136,7 @@ export default function PublicTaskPage() {
       case 'survey':
         return wrapRun(<SurveyTask taskId={taskId} variant="public" onComplete={onTaskDone} />);
       case 'video':
-        return wrapRun(<VideoTask taskId={taskId} variant="public" onComplete={onTaskDone} />);
+        return wrapRun(<VideoTask taskId={taskId} variant="public" onComplete={onTaskDone} skipVideo />);
       case 'quiz':
         return wrapRun(<QuizTask taskId={taskId} variant="public" onComplete={onTaskDone} />);
       case 'qr':

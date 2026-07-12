@@ -414,7 +414,7 @@ function TasksPage() {
     if (!task) return <div>{t('tasks.notFound')}</div>;
 
     if (task.type === 'video') {
-      return wrapTaskShell(task, <VideoTask taskId={task.id} onComplete={handleTaskComplete} />);
+      return wrapTaskShell(task, <VideoTask taskId={task.id} onComplete={handleTaskComplete} skipVideo />);
     }
     if (task.type === 'quiz') {
       return wrapTaskShell(task, <QuizTask taskId={task.id} onComplete={handleTaskComplete} />);

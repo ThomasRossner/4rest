@@ -551,7 +551,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding-bottom: var(--spacing-md);
-  background: var(--color-card-surface, var(--color-parchment));
+  background: var(--glass-bg, var(--color-card-surface));
   z-index: 2;
 }
 

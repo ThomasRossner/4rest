@@ -102,7 +102,7 @@ export function UserTeamsContestsSections() {
         )}
       </section>
 
-      <section className="groups-section">
+      <section id="contests" className="groups-section">
         <div className="groups-section-header">
           <h2>{t('profile.contests.title')}</h2>
           <div className="groups-section-actions">

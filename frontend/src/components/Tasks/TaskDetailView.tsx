@@ -50,7 +50,7 @@ export function TaskDetailView({
 }: TaskDetailViewProps) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const completedVideoRef = useRef<HTMLVideoElement | null>(null);
+  const taskVideoRef = useRef<HTMLVideoElement | null>(null);
   const lang = publicLang ?? (i18n.language?.startsWith('en') ? 'en' : 'de');
   /** Optimistischer Override des Sammlungs-Status (null = Serverwert verwenden). */
   const [collectionOverride, setCollectionOverride] = useState<boolean | null>(null);
@@ -186,32 +186,31 @@ export function TaskDetailView({
   }, [row]);
 
   const showMapPreview = Boolean(taskForMapPreview);
-  const showCompletedVideo =
-    isCompleted &&
+  const showVideo =
     taskType === 'video' &&
     typeof row.video_url === 'string' &&
     row.video_url.trim() !== '';
-  const completedVideoUrl = showCompletedVideo
+  const taskVideoUrl = showVideo
     ? resolveMediaUrl(String(row.video_url).trim()) ?? String(row.video_url).trim()
     : '';
-  const isCompletedVideoYouTube =
-    completedVideoUrl.includes('youtube.com') || completedVideoUrl.includes('youtu.be');
-  const completedVideoEmbedUrl = useMemo(() => {
-    if (!isCompletedVideoYouTube) return completedVideoUrl;
-    if (completedVideoUrl.includes('/shorts/')) {
-      const videoId = completedVideoUrl.split('/shorts/')[1]?.split('?')[0];
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : completedVideoUrl;
+  const isTaskVideoYouTube =
+    taskVideoUrl.includes('youtube.com') || taskVideoUrl.includes('youtu.be');
+  const taskVideoEmbedUrl = useMemo(() => {
+    if (!isTaskVideoYouTube) return taskVideoUrl;
+    if (taskVideoUrl.includes('/shorts/')) {
+      const videoId = taskVideoUrl.split('/shorts/')[1]?.split('?')[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : taskVideoUrl;
     }
-    if (completedVideoUrl.includes('youtube.com/watch?v=')) {
-      const videoId = completedVideoUrl.split('v=')[1]?.split('&')[0];
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : completedVideoUrl;
+    if (taskVideoUrl.includes('youtube.com/watch?v=')) {
+      const videoId = taskVideoUrl.split('v=')[1]?.split('&')[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : taskVideoUrl;
     }
-    if (completedVideoUrl.includes('youtu.be/')) {
-      const videoId = completedVideoUrl.split('youtu.be/')[1]?.split('?')[0];
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : completedVideoUrl;
+    if (taskVideoUrl.includes('youtu.be/')) {
+      const videoId = taskVideoUrl.split('youtu.be/')[1]?.split('?')[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : taskVideoUrl;
     }
-    return completedVideoUrl;
-  }, [completedVideoUrl, isCompletedVideoYouTube]);
+    return taskVideoUrl;
+  }, [taskVideoUrl, isTaskVideoYouTube]);
   const videoSubtitleTracks = useMemo(() => {
     const raw = row.video_subtitles_i18n;
     if (!raw || typeof raw !== 'object') return [];
@@ -230,13 +229,13 @@ export function TaskDetailView({
   const preferredSubtitleLang = i18n.language?.startsWith('en') ? 'en' : 'de';
 
   useEffect(() => {
-    const videoEl = completedVideoRef.current;
-    if (!videoEl || !completedVideoUrl || isCompletedVideoYouTube || !showCompletedVideo) return;
+    const videoEl = taskVideoRef.current;
+    if (!videoEl || !taskVideoUrl || isTaskVideoYouTube || !showVideo) return;
     applyIosInlineVideoAttributes(videoEl);
-  }, [completedVideoUrl, isCompletedVideoYouTube, showCompletedVideo]);
+  }, [taskVideoUrl, isTaskVideoYouTube, showVideo]);
 
   useEffect(() => {
-    const videoEl = completedVideoRef.current;
+    const videoEl = taskVideoRef.current;
     if (!videoEl || videoSubtitleTracks.length === 0) return;
     const preferredTrack =
       videoSubtitleTracks.find((track) => track.lang === preferredSubtitleLang) ??
@@ -246,7 +245,7 @@ export function TaskDetailView({
       const textTrack = videoEl.textTracks[i];
       textTrack.mode = textTrack.language === preferredTrack.lang ? 'showing' : 'disabled';
     }
-  }, [preferredSubtitleLang, videoSubtitleTracks, showCompletedVideo]);
+  }, [preferredSubtitleLang, videoSubtitleTracks, showVideo]);
 
   return (
     <div className="task-detail-view">
@@ -292,26 +291,26 @@ export function TaskDetailView({
           <p className="task-detail-description task-detail-description--empty">{t('tasks.detail.noDescription')}</p>
         )}
 
-        {showCompletedVideo && (
+        {showVideo && (
           <div className="task-detail-video-block">
             <h2 className="task-detail-section-title">{t('tasks.detail.videoSection')}</h2>
-            {isCompletedVideoYouTube ? (
+            {isTaskVideoYouTube ? (
               <iframe
                 className="task-detail-video-player"
-                src={completedVideoEmbedUrl}
+                src={taskVideoEmbedUrl}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
               />
             ) : (
               <video
-                ref={completedVideoRef}
+                ref={taskVideoRef}
                 className="task-detail-video-player"
                 controls
                 playsInline
                 preload="metadata"
               >
-                <source src={completedVideoUrl} type="video/mp4" />
+                <source src={taskVideoUrl} type="video/mp4" />
                 {videoSubtitleTracks.map((track) => (
                   <track
                     key={track.lang}
