@@ -66,7 +66,13 @@ export default function ForestHybridScene({
         zoomToCursor={!lowPerformanceMode}
         onStart={onNavigationActivity}
       />
-      <ForestCameraRig framing={cameraFraming} controlsRef={controlsRef} />
+      <ForestCameraRig
+        framing={cameraFraming}
+        controlsRef={controlsRef}
+        trees={trees}
+        areas={areas}
+        fovDeg={FOREST_HYBRID_DEFAULT_CAMERA.fov}
+      />
       <HybridSceneController
         trees={trees}
         areas={areas}

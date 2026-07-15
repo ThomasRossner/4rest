@@ -4,6 +4,7 @@ import { FOREST_BLOCK_SIZE } from '../components/3d/forestTypes';
 export const FOREST_CAMERA_TARGET_Y = 3.4;
 const TREE_HEIGHT_ESTIMATE = 10;
 const FRAMING_PADDING = 1.2;
+const LEGACY_REFERENCE_ASPECT = 16 / 9;
 
 export type ForestBounds = {
   minX: number;
@@ -102,11 +103,20 @@ export function computeForestCameraFraming(
   const verticalExtent = Math.max(bounds.maxY - bounds.minY, 6);
 
   const fovRad = (fovDeg * Math.PI) / 180;
-  const vFovRad = 2 * Math.atan(Math.tan(fovRad / 2) / aspect);
+  const horizontalFovRad = 2 * Math.atan(Math.tan(fovRad / 2) * aspect);
+  const legacyNarrowFovRad =
+    2 * Math.atan(Math.tan(fovRad / 2) / LEGACY_REFERENCE_ASPECT);
 
-  const distH = (horizontalExtent / 2) / Math.tan(fovRad / 2);
-  const distV = (verticalExtent / 2) / Math.tan(vFovRad / 2);
-  const distance = Math.max(distH, distV) * FRAMING_PADDING;
+  const legacyDistH = (horizontalExtent / 2) / Math.tan(fovRad / 2);
+  const legacyDistV = (verticalExtent / 2) / Math.tan(legacyNarrowFovRad / 2);
+  const responsiveDistH = (horizontalExtent / 2) / Math.tan(horizontalFovRad / 2);
+  const responsiveDistV = (verticalExtent / 2) / Math.tan(fovRad / 2);
+  const distance = Math.max(
+    legacyDistH,
+    legacyDistV,
+    responsiveDistH,
+    responsiveDistV
+  ) * FRAMING_PADDING;
 
   const viewOffsetX = 15;
   const viewOffsetY = 14 - FOREST_CAMERA_TARGET_Y;

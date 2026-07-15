@@ -18,6 +18,10 @@ import teamRoutes from './team.routes.js';
 import contestRoutes from './contest.routes.js';
 import messageRoutes from './message.routes.js';
 import { onboardingPublicRouter, onboardingAdminRouter } from './onboarding.routes.js';
+import {
+  pageBackgroundAdminRouter,
+  pageBackgroundPublicRouter,
+} from './page-background.routes.js';
 
 export function setupRoutes(): Router {
   const router = Router();
@@ -38,6 +42,8 @@ export function setupRoutes(): Router {
   router.use('/admin/system-config', systemConfigRoutes);
   router.use('/onboarding', onboardingPublicRouter);
   router.use('/admin/onboarding', onboardingAdminRouter);
+  router.use('/page-backgrounds', pageBackgroundPublicRouter);
+  router.use('/admin/page-backgrounds', pageBackgroundAdminRouter);
   router.use('/user/qr-code', userQrRoutes);
   router.use('/teams', teamRoutes);
   router.use('/contests', contestRoutes);

@@ -694,6 +694,10 @@
         "title": "Onboarding verwalten",
         "description": "Dyaden, Fragen pro Dyade, Texte und Hintergrundbilder für die Spielerprofilierung bearbeiten."
       },
+      "pageBackgrounds": {
+        "title": "Seitenhintergründe",
+        "description": "Hintergrundbilder für Roots, Aufgaben, Wald, Belohnungen und Gruppen hochladen."
+      },
       "surveyAnalytics": {
         "title": "Umfrage-Analysen",
         "description": "Zeigen Sie aggregierte Umfrageantworten mit visuellen Diagrammen und Statistiken an."
@@ -1615,6 +1619,32 @@
       "uploadCharacterIcon": "Icon hochladen",
       "clearCharacterIcon": "Icon entfernen",
       "noImage": "Kein Bild"
+    },
+    "pageBackgrounds": {
+      "title": "Seitenhintergründe",
+      "subtitle": "Eigene Hintergrundbilder für die fünf Hauptseiten der Gäste-App verwalten. Ohne Upload wird das bereitgestellte Standardbild verwendet.",
+      "hint": "Die Bilder werden direkt als Seitenhintergrund verwendet. Querformat-Bilder wirken auf Desktop und Mobilgerät am stabilsten.",
+      "loadError": "Hintergründe konnten nicht geladen werden.",
+      "uploadError": "Bild konnte nicht hochgeladen werden.",
+      "resetError": "Standardbild konnte nicht wiederhergestellt werden.",
+      "uploadSuccess": "Hintergrund aktualisiert",
+      "resetSuccess": "Standardbild wiederhergestellt",
+      "upload": "Bild hochladen",
+      "uploading": "Wird hochgeladen...",
+      "reset": "Standard verwenden",
+      "resetting": "Wird zurückgesetzt...",
+      "custom": "Eigenes Bild",
+      "default": "Standardbild",
+      "defaultHint": "Aktuell wird das bereitgestellte Standardbild verwendet.",
+      "customHint": "Aktuell wird ein eigenes Bild verwendet.",
+      "fileTypes": "JPEG, PNG, WebP oder GIF",
+      "pages": {
+        "home": "Roots",
+        "tasks": "Aufgaben",
+        "forest": "Wald",
+        "rewards": "Belohnungen",
+        "groups": "Gruppen"
+      }
     },
     "surveyAnalytics": {
       "title": "Umfrage-Analysen",

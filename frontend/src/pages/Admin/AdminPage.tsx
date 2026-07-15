@@ -40,6 +40,7 @@ import { BulkActionsBar } from '../../components/Management/BulkActionsBar';
 import { ManagementTable, type TableColumn } from '../../components/Management/ManagementTable';
 import PointsBonusPage from '../Employee/PointsBonusPage';
 import OnboardingManage from './OnboardingManage';
+import PageBackgroundManage from './PageBackgroundManage';
 
 type AdminMode =
   | 'task'
@@ -51,6 +52,7 @@ type AdminMode =
   | 'qrScanner'
   | 'forestStats'
   | 'onboardingManage'
+  | 'pageBackgrounds'
   | 'surveyAnalytics'
   | 'debugTools'
   | 'parameterManage'
@@ -5587,6 +5589,11 @@ function AdminPage() {
               <h2>{t('admin.actions.onboardingManage.title')}</h2>
               <p>{t('admin.actions.onboardingManage.description')}</p>
             </button>
+            <button className="admin-choice-card" onClick={() => setMode('pageBackgrounds')}>
+              <span className="admin-choice-icon">🖼️</span>
+              <h2>{t('admin.actions.pageBackgrounds.title')}</h2>
+              <p>{t('admin.actions.pageBackgrounds.description')}</p>
+            </button>
           </div>
           {/* 2. Reihe: Aufgaben, Belohnungen, Standorte, Teams, Wettbewerbe */}
           <div className="admin-choice-grid admin-choice-grid-compact">
@@ -6005,6 +6012,28 @@ function AdminPage() {
             </div>
           </header>
           <OnboardingManage />
+        </section>
+      )}
+
+      {mode === 'pageBackgrounds' && (
+        <section className="admin-section">
+          <header className="admin-section-header">
+            <div>
+              <h2>{t('admin.pageBackgrounds.title')}</h2>
+              <p>{t('admin.pageBackgrounds.subtitle')}</p>
+            </div>
+            <div className="admin-actions">
+              <button
+                className="admin-icon-button"
+                onClick={() => setMode(null)}
+                title={t('admin.common.back')}
+              >
+                <Icon name="back" />
+                <span className="sr-only">{t('admin.common.back')}</span>
+              </button>
+            </div>
+          </header>
+          <PageBackgroundManage />
         </section>
       )}
 
@@ -10226,4 +10255,3 @@ function AdminPage() {
 }
 
 export default AdminPage;
-

@@ -80,7 +80,7 @@ export default defineConfig({
           },
           {
             // Cache 3D models aggressively for fast repeat visits
-            urlPattern: /\/models\/.*\.glb$/i,
+            urlPattern: /\/(?:old-)?models\/.*\.glb$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'tree-models-cache',

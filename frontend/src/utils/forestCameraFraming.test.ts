@@ -80,6 +80,30 @@ describe('computeForestCameraFraming', () => {
     );
     expect(largeDist).toBeGreaterThan(smallDist);
   });
+
+  it('moves the camera farther back for narrow portrait viewports', () => {
+    const bounds = {
+      minX: 0,
+      maxX: FOREST_BLOCK_SIZE * 2,
+      minZ: 0,
+      maxZ: FOREST_BLOCK_SIZE,
+      minY: 0,
+      maxY: 8,
+    };
+
+    const landscape = computeForestCameraFraming(bounds, 45, 16 / 9);
+    const portrait = computeForestCameraFraming(bounds, 45, 393 / 852);
+
+    const distance = (framing: typeof landscape) =>
+      Math.hypot(
+        framing.position[0] - framing.target[0],
+        framing.position[1] - framing.target[1],
+        framing.position[2] - framing.target[2]
+      );
+
+    expect(portrait.target).toEqual(landscape.target);
+    expect(distance(portrait)).toBeGreaterThan(distance(landscape));
+  });
 });
 
 describe('computeForestCameraFromScene', () => {

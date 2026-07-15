@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { UserRole, UserType } from '../constants/enums';
 import { resolveApiBaseUrl } from '../utils/resolveApiBaseUrl';
+import type { PageBackgroundConfig, PageBackgroundKey } from '../types/pageBackgrounds';
 
 const apiBaseUrl = resolveApiBaseUrl();
 
@@ -124,6 +125,28 @@ export const api = {
     fd.append('image', file);
     const res = await apiClient.post('/admin/onboarding/upload-character-icon', fd);
     return res.data as { url: string };
+  },
+
+  async getPageBackgrounds(): Promise<PageBackgroundConfig> {
+    const res = await apiClient.get('/page-backgrounds');
+    return res.data;
+  },
+
+  async getAdminPageBackgrounds(): Promise<PageBackgroundConfig> {
+    const res = await apiClient.get('/admin/page-backgrounds');
+    return res.data;
+  },
+
+  async uploadPageBackground(pageKey: PageBackgroundKey, file: File): Promise<PageBackgroundConfig> {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await apiClient.post(`/admin/page-backgrounds/${pageKey}/upload`, fd);
+    return res.data;
+  },
+
+  async resetPageBackground(pageKey: PageBackgroundKey): Promise<PageBackgroundConfig> {
+    const res = await apiClient.delete(`/admin/page-backgrounds/${pageKey}`);
+    return res.data;
   },
 
   async getMe() {

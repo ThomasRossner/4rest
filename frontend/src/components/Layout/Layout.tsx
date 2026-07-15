@@ -1,10 +1,12 @@
 import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import Navigation from '../Navigation/Navigation';
+import { useMainPageBackground } from '../../hooks/useMainPageBackground';
 import './Layout.css';
 
 function Layout() {
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
+  useMainPageBackground(pathname);
   const isHome = pathname === '/' || pathname === '';
   const isForest = pathname === '/forest';
   const isTasksHub =

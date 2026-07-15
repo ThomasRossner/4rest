@@ -702,6 +702,10 @@
         "title": "Manage onboarding",
         "description": "Edit dyads, questions per dyad, copy, and background images for player profiling."
       },
+      "pageBackgrounds": {
+        "title": "Page backgrounds",
+        "description": "Upload background images for Roots, Tasks, Forest, Rewards, and Groups."
+      },
       "surveyAnalytics": {
         "title": "Survey Analytics",
         "description": "View aggregated survey responses with visual charts and statistics."
@@ -1615,6 +1619,32 @@
       "uploadCharacterIcon": "Upload icon",
       "clearCharacterIcon": "Remove icon",
       "noImage": "No image"
+    },
+    "pageBackgrounds": {
+      "title": "Page backgrounds",
+      "subtitle": "Manage custom background images for the five main guest app pages. Without an upload, the provided default image is used.",
+      "hint": "Images are used directly as the page background. Landscape images are the most stable across desktop and mobile.",
+      "loadError": "Could not load backgrounds.",
+      "uploadError": "Could not upload image.",
+      "resetError": "Could not restore the default image.",
+      "uploadSuccess": "Background updated",
+      "resetSuccess": "Default image restored",
+      "upload": "Upload image",
+      "uploading": "Uploading...",
+      "reset": "Use default",
+      "resetting": "Resetting...",
+      "custom": "Custom image",
+      "default": "Default image",
+      "defaultHint": "The provided default image is currently used.",
+      "customHint": "A custom image is currently used.",
+      "fileTypes": "JPEG, PNG, WebP, or GIF",
+      "pages": {
+        "home": "Roots",
+        "tasks": "Tasks",
+        "forest": "Forest",
+        "rewards": "Rewards",
+        "groups": "Groups"
+      }
     },
     "surveyAnalytics": {
       "title": "Survey Analytics",

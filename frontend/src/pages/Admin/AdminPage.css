@@ -431,6 +431,127 @@
   font-size: 0.95rem;
 }
 
+.page-background-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.page-background-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.page-background-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: linear-gradient(145deg, rgba(118, 184, 126, 0.94), rgba(67, 139, 91, 0.92));
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.page-background-preview {
+  min-height: 170px;
+  aspect-ratio: 16 / 9;
+  background-color: rgba(18, 70, 55, 0.12);
+  background-position: center;
+  background-size: cover;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.page-background-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.page-background-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.page-background-card-header h3 {
+  margin: 0 0 var(--spacing-xs);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.page-background-card .admin-field-note {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.page-background-status {
+  flex: 0 0 auto;
+  border: 1px solid rgba(31, 90, 76, 0.28);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: rgba(20, 62, 52, 0.95);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.page-background-status.custom {
+  background: rgba(110, 231, 168, 0.18);
+}
+
+.page-background-status.default {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.page-background-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+}
+
+.page-background-upload .admin-upload-control {
+  min-width: 0;
+  display: block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.page-background-actions .admin-action-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.page-background-upload .admin-upload-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow: var(--shadow-sm);
+}
+
+.page-background-upload .admin-upload-filename {
+  display: none;
+}
+
+.page-background-filetypes {
+  display: block;
+  margin-top: 0.4rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
 .admin-form-layout {
   display: flex;
   flex-direction: column;
@@ -2325,4 +2446,3 @@
   color: var(--color-text-light) !important;
   border-color: var(--glass-border) !important;
 }
-
