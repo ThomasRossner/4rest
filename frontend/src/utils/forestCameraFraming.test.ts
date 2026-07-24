@@ -32,6 +32,21 @@ describe('computeForestBounds', () => {
     expect(bounds!.maxZ).toBe(FOREST_BLOCK_SIZE);
   });
 
+  it('ignores empty API padding blocks without trees', () => {
+    const areas: ForestArea[] = [
+      { origin: [0, 0, 0], trees: [makeTree('t1', 2, 2)] },
+      { origin: [12, 0, 0], trees: [] },
+      { origin: [0, 0, 12], trees: [] },
+      { origin: [12, 0, 12], trees: [] },
+    ];
+    const trees = areas[0].trees;
+    const bounds = computeForestBounds(trees, areas);
+    expect(bounds!.minX).toBe(0);
+    expect(bounds!.maxX).toBe(FOREST_BLOCK_SIZE);
+    expect(bounds!.minZ).toBe(0);
+    expect(bounds!.maxZ).toBe(FOREST_BLOCK_SIZE);
+  });
+
   it('spans multiple distant areas', () => {
     const areas: ForestArea[] = [
       { origin: [0, 0, 0], trees: [makeTree('t1', 2, 2)] },

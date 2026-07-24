@@ -54,14 +54,56 @@ function withPineMixFactor(params: TreeMorphologyBaseParams): TreeMorphologyPara
   };
 }
 
-export function resolveTreeTypeForForestTree(
-  treeId: string,
-  morphology: TreeMorphologyParams
-): ForestTreeType {
-  const pineMixFactor = Number.isFinite(morphology.pineMixFactor)
+function resolvePineMixFactor(morphology: TreeMorphologyParams): number {
+  const raw = Number.isFinite(morphology.pineMixFactor)
     ? morphology.pineMixFactor
     : pineMixFactorFromMorphology(morphology);
-  return hashStringToUnit(treeId) < clampRange(pineMixFactor, 0.05, 0.85) ? 'pine' : 'beech';
+  return clampRange(raw, 0.05, 0.85);
+}
+
+/** Pine count from mix factor; guarantees at least one pine when mix is meaningful. */
+export function resolvePineCount(treeCount: number, pineMixFactor: number): number {
+  if (treeCount <= 0) return 0;
+
+  const mix = clampRange(pineMixFactor, 0.05, 0.85);
+  let count = Math.round(treeCount * mix);
+
+  if (mix >= 0.15 && treeCount >= 2 && count === 0) {
+    count = 1;
+  }
+
+  return Math.min(count, treeCount);
+}
+
+/**
+ * Assigns tree types so ~round(n * pineMixFactor) trees are pine, ranked by deterministic hash.
+ * Same tree ids always get the same relative rank; adding trees never demotes an existing pine.
+ */
+export function assignForestTreeTypes(
+  treeIds: string[],
+  morphology: TreeMorphologyParams
+): Map<string, ForestTreeType> {
+  const mix = resolvePineMixFactor(morphology);
+  const pineCount = resolvePineCount(treeIds.length, mix);
+  const rankedByHash = [...treeIds].sort(
+    (left, right) => hashStringToUnit(right) - hashStringToUnit(left)
+  );
+  const pineIds = new Set(rankedByHash.slice(0, pineCount));
+
+  return new Map(treeIds.map((treeId) => [treeId, pineIds.has(treeId) ? 'pine' : 'beech']));
+}
+
+export function resolveTreeTypeForForestTree(
+  treeId: string,
+  morphology: TreeMorphologyParams,
+  allTreeIds?: string[]
+): ForestTreeType {
+  if (allTreeIds && allTreeIds.length > 0) {
+    return assignForestTreeTypes(allTreeIds, morphology).get(treeId) ?? 'beech';
+  }
+
+  const mix = resolvePineMixFactor(morphology);
+  return hashStringToUnit(treeId) < mix ? 'pine' : 'beech';
 }
 
 /** Same ranges as legacy dyad mapping in HybridSceneController. */

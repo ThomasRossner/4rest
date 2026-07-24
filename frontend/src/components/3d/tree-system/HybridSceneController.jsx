@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import ControllableTree from './ControllableTree';
 import PineTree from './PineTree';
 import DynamicForestGround from '../DynamicForestGround';
-import { resolveTreeTypeForForestTree } from '../../../utils/forestCategoryMorphology';
+import { assignForestTreeTypes } from '../../../utils/forestCategoryMorphology';
 
 const INITIAL_TREE_BATCH = 40;
 const TREE_BATCH_STEP = 30;
@@ -59,12 +59,15 @@ export default function HybridSceneController({
   } = morphology;
 
   const treesWithGrowth = useMemo(() => {
+    const treeIds = trees.map((tree) => tree.id);
+    const treeTypeById = assignForestTreeTypes(treeIds, morphology);
+
     return trees.map((tree) => {
       const seed = Array.from(tree.id).reduce((acc, char) => acc + char.charCodeAt(0), 0);
       const normalized = Math.abs((Math.sin(seed * 12.9898) * 43758.5453) % 1);
       const chaosOffset = (normalized * 2 - 1) * growthChaosStrength;
       const growth = Math.max(0, Math.min(1, tree.growth + chaosOffset));
-      const treeType = resolveTreeTypeForForestTree(tree.id, morphology);
+      const treeType = treeTypeById.get(tree.id) ?? 'beech';
       return { ...tree, growth, treeType };
     });
   }, [trees, growthChaosStrength, morphology]);

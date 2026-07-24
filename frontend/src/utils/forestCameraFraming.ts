@@ -38,7 +38,8 @@ function extendBounds(
 }
 
 /**
- * Axis-aligned bounds of trees and ground blocks (each area spans FOREST_BLOCK_SIZE).
+ * Axis-aligned bounds of trees and occupied ground blocks (each area spans FOREST_BLOCK_SIZE).
+ * Empty padding blocks from the API grid are ignored so framing matches DynamicForestGround.
  */
 export function computeForestBounds(
   trees: HybridTree[],
@@ -51,7 +52,7 @@ export function computeForestBounds(
 
   let bounds: ForestBounds | null = null;
 
-  for (const area of areas) {
+  for (const area of areas.filter((candidate) => candidate.trees.length > 0)) {
     const [originX, , originZ] = area.origin;
     const corners: [number, number, number][] = [
       [originX, 0, originZ],

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assignForestTreeTypes,
   morphologyFromCategoryPoints,
   morphologyFromDyadScales,
   pineMixFactorFromMorphology,
+  resolvePineCount,
   resolveTreeTypeForForestTree,
   resolveTreeMorphology,
 } from './forestCategoryMorphology';
@@ -42,8 +44,9 @@ describe('pineMixFactorFromMorphology', () => {
 describe('resolveTreeTypeForForestTree', () => {
   it('keeps the selected tree type stable for the same tree id', () => {
     const morphology = morphologyFromDyadScales(2, 2, 2);
-    const first = resolveTreeTypeForForestTree('tree-123', morphology);
-    expect(resolveTreeTypeForForestTree('tree-123', morphology)).toBe(first);
+    const treeIds = ['tree-123', 'tree-456', 'tree-789'];
+    const first = resolveTreeTypeForForestTree('tree-123', morphology, treeIds);
+    expect(resolveTreeTypeForForestTree('tree-123', morphology, treeIds)).toBe(first);
   });
 
   it('selects more pines when the derived pine mix is higher', () => {
@@ -63,14 +66,83 @@ describe('resolveTreeTypeForForestTree', () => {
       pineMixFactor: 0.8,
     };
 
-    const lowPines = treeIds.filter(
-      (treeId) => resolveTreeTypeForForestTree(treeId, lowPineMorphology) === 'pine'
+    const lowPines = [...assignForestTreeTypes(treeIds, lowPineMorphology).values()].filter(
+      (type) => type === 'pine'
     ).length;
-    const highPines = treeIds.filter(
-      (treeId) => resolveTreeTypeForForestTree(treeId, highPineMorphology) === 'pine'
+    const highPines = [...assignForestTreeTypes(treeIds, highPineMorphology).values()].filter(
+      (type) => type === 'pine'
     ).length;
 
     expect(highPines).toBeGreaterThan(lowPines);
+  });
+
+  it('assigns proportional pines via hash ranking instead of independent thresholds', () => {
+    const morphology = {
+      trunkHeightFactor: 1.4,
+      branchCountFactor: 1.45,
+      branchLengthFactor: 1,
+      growthChaosStrength: 0.06,
+      pineMixFactor: 0.34,
+    };
+    const treeIds = Array.from({ length: 7 }, (_, index) => `thomas-tree-${index}`);
+
+    const legacyPines = treeIds.filter(
+      (treeId) => resolveTreeTypeForForestTree(treeId, morphology) === 'pine'
+    ).length;
+    const rankedPines = [...assignForestTreeTypes(treeIds, morphology).values()].filter(
+      (type) => type === 'pine'
+    ).length;
+
+    expect(rankedPines).toBe(resolvePineCount(treeIds.length, morphology.pineMixFactor));
+    expect(rankedPines).toBeGreaterThanOrEqual(2);
+    expect(rankedPines).toBeLessThanOrEqual(3);
+    expect(legacyPines).toBe(0);
+  });
+
+  it('guarantees at least one pine for meaningful mix with multiple trees', () => {
+    const morphology = {
+      trunkHeightFactor: 1,
+      branchCountFactor: 1.9,
+      branchLengthFactor: 0.7,
+      growthChaosStrength: 0,
+      pineMixFactor: 0.15,
+    };
+    const treeIds = ['tree-a', 'tree-b'];
+
+    const pines = [...assignForestTreeTypes(treeIds, morphology).values()].filter(
+      (type) => type === 'pine'
+    ).length;
+    expect(pines).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('thomas@rossner.tk morphology simulation', () => {
+  it('yields 2–3 pines out of 7 trees for category-based morphology', () => {
+    const morphology = morphologyFromCategoryPoints({
+      kommunikation: 60,
+      mensch: 15,
+      natur: 28,
+      ressourcen: 58,
+    });
+    expect(morphology).not.toBeNull();
+    expect(morphology!.pineMixFactor).toBeGreaterThan(0.3);
+    expect(morphology!.pineMixFactor).toBeLessThan(0.4);
+
+    const treeIds = [
+      '9a4379fc-b2e7-416a-800d-471037f2860e',
+      '9d0ec588-f9e1-498b-8fe5-10db6ff0e497',
+      'tree-3',
+      'tree-4',
+      'tree-5',
+      'tree-6',
+      'tree-7',
+    ];
+    const types = assignForestTreeTypes(treeIds, morphology!);
+    const pineCount = [...types.values()].filter((type) => type === 'pine').length;
+
+    expect(pineCount).toBe(resolvePineCount(treeIds.length, morphology!.pineMixFactor));
+    expect(pineCount).toBeGreaterThanOrEqual(2);
+    expect(pineCount).toBeLessThanOrEqual(3);
   });
 });
 

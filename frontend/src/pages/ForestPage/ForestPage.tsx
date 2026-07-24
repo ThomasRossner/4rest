@@ -164,6 +164,7 @@ function ForestPage() {
             <div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>
           )}
           <Suspense fallback={<div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>}>
+            {!sceneLoading && forestData && (
             <Canvas
               gl={{
                 antialias: false,
@@ -195,6 +196,7 @@ function ForestPage() {
                 onNavigationActivity={handleNavigationStart}
               />
             </Canvas>
+            )}
           </Suspense>
         </div>
       </div>
