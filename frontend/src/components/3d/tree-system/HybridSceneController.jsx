@@ -4,7 +4,9 @@ import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import ControllableTree from './ControllableTree';
+import PineTree from './PineTree';
 import DynamicForestGround from '../DynamicForestGround';
+import { resolveTreeTypeForForestTree } from '../../../utils/forestCategoryMorphology';
 
 const INITIAL_TREE_BATCH = 40;
 const TREE_BATCH_STEP = 30;
@@ -27,6 +29,7 @@ export default function HybridSceneController({
     branchCountFactor: 1.45,
     branchLengthFactor: 1,
     growthChaosStrength: 0.06,
+    pineMixFactor: 0.475,
   },
   lowPerformanceMode = false,
   transparentBackground = false,
@@ -61,9 +64,10 @@ export default function HybridSceneController({
       const normalized = Math.abs((Math.sin(seed * 12.9898) * 43758.5453) % 1);
       const chaosOffset = (normalized * 2 - 1) * growthChaosStrength;
       const growth = Math.max(0, Math.min(1, tree.growth + chaosOffset));
-      return { ...tree, growth };
+      const treeType = resolveTreeTypeForForestTree(tree.id, morphology);
+      return { ...tree, growth, treeType };
     });
-  }, [trees, growthChaosStrength]);
+  }, [trees, growthChaosStrength, morphology]);
 
   const [visibleTreeCount, setVisibleTreeCount] = useState(() =>
     Math.min(treesWithGrowth.length, INITIAL_TREE_BATCH)
@@ -160,22 +164,26 @@ export default function HybridSceneController({
 
       <DynamicForestGround areas={areas} lowPerformanceMode={lowPerformanceMode} />
 
-      {visibleTrees.map((tree) => (
-        <ControllableTree
-          key={tree.id}
-          position={tree.position}
-          rotation={[0, tree.rotationY, 0]}
-          growth={tree.growth}
-          sizeFactor={tree.sizeFactor}
-          trunkHeightFactor={trunkHeightFactor}
-          branchCountFactor={branchCountFactor}
-          branchLengthFactor={branchLengthFactor}
-          maxTreeGrowSteps={treeGrowSteps}
-          maxTrunkGrowth={1}
-          maxTwigGrowth={1}
-          leafTint={tree.leafTint}
-        />
-      ))}
+      {visibleTrees.map((tree) => {
+        const TreeComponent = tree.treeType === 'pine' ? PineTree : ControllableTree;
+
+        return (
+          <TreeComponent
+            key={tree.id}
+            position={tree.position}
+            rotation={[0, tree.rotationY, 0]}
+            growth={tree.growth}
+            sizeFactor={tree.sizeFactor}
+            trunkHeightFactor={trunkHeightFactor}
+            branchCountFactor={branchCountFactor}
+            branchLengthFactor={branchLengthFactor}
+            maxTreeGrowSteps={treeGrowSteps}
+            maxTrunkGrowth={1}
+            maxTwigGrowth={1}
+            leafTint={tree.leafTint}
+          />
+        );
+      })}
 
     </>
   );

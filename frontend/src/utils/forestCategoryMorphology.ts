@@ -7,9 +7,62 @@ export type TreeMorphologyParams = {
   branchCountFactor: number;
   branchLengthFactor: number;
   growthChaosStrength: number;
+  pineMixFactor: number;
 };
 
 const DEFAULT_DYAD_SCALE = 2;
+
+type TreeMorphologyBaseParams = Omit<TreeMorphologyParams, 'pineMixFactor'>;
+export type ForestTreeType = 'beech' | 'pine';
+
+function clamp01(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+function clampRange(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) return min;
+  return Math.max(min, Math.min(max, value));
+}
+
+function hashStringToUnit(id: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    hash ^= id.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0xffffffff;
+}
+
+export function pineMixFactorFromMorphology(params: TreeMorphologyBaseParams): number {
+  const tall = clamp01((params.trunkHeightFactor - 1) / 0.8);
+  const manyBranches = clamp01((params.branchCountFactor - 1) / 0.9);
+  const longBranches = clamp01((params.branchLengthFactor - 0.7) / 0.6);
+  const chaos = clamp01(params.growthChaosStrength / 0.12);
+
+  return clampRange(
+    0.3 + tall * 0.25 + longBranches * 0.15 + chaos * 0.15 - manyBranches * 0.2,
+    0.1,
+    0.8
+  );
+}
+
+function withPineMixFactor(params: TreeMorphologyBaseParams): TreeMorphologyParams {
+  return {
+    ...params,
+    pineMixFactor: pineMixFactorFromMorphology(params),
+  };
+}
+
+export function resolveTreeTypeForForestTree(
+  treeId: string,
+  morphology: TreeMorphologyParams
+): ForestTreeType {
+  const pineMixFactor = Number.isFinite(morphology.pineMixFactor)
+    ? morphology.pineMixFactor
+    : pineMixFactorFromMorphology(morphology);
+  return hashStringToUnit(treeId) < clampRange(pineMixFactor, 0.05, 0.85) ? 'pine' : 'beech';
+}
 
 /** Same ranges as legacy dyad mapping in HybridSceneController. */
 export function morphologyFromDyadScales(
@@ -29,12 +82,12 @@ export function morphologyFromDyadScales(
   const clampedDyad3 = clampDyad(dyad3);
   const branchLengthFactor = 0.7 + (clampedDyad3 / 4) * 0.6;
 
-  return {
+  return withPineMixFactor({
     trunkHeightFactor,
     branchCountFactor,
     branchLengthFactor,
     growthChaosStrength,
-  };
+  });
 }
 
 function clampDyad(scale: number): number {
@@ -62,6 +115,7 @@ function categoryShares(points: ForestCategoryPoints): [number, number, number, 
  * | branchCountFactor    | 1 + (k + r) * 0.9                                 |
  * | branchLengthFactor   | 0.7 + (r + n) * 0.6                               |
  * | growthChaosStrength  | stdDev(shares) * (0.12 / 0.433)  (max ~0.12)      |
+ * | pineMixFactor        | derived from the four morphology controls         |
  */
 export function morphologyFromCategoryPoints(points: ForestCategoryPoints): TreeMorphologyParams | null {
   const shares = categoryShares(points);
@@ -79,12 +133,12 @@ export function morphologyFromCategoryPoints(points: ForestCategoryPoints): Tree
   const stdDev = Math.sqrt(variance);
   const growthChaosStrength = stdDev * (0.12 / 0.433);
 
-  return {
+  return withPineMixFactor({
     trunkHeightFactor,
     branchCountFactor,
     branchLengthFactor,
     growthChaosStrength,
-  };
+  });
 }
 
 type MorphologyInput = {
