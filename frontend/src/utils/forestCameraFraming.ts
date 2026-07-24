@@ -1,5 +1,5 @@
 import type { ForestArea, HybridTree } from '../components/3d/forestTypes';
-import { FOREST_BLOCK_SIZE } from '../components/3d/forestTypes';
+import { FOREST_BLOCK_SIZE, getForestGroundLayout } from '../components/3d/forestTypes';
 
 export const FOREST_CAMERA_TARGET_Y = 3.4;
 const TREE_HEIGHT_ESTIMATE = 10;
@@ -85,17 +85,24 @@ export function computeForestBounds(
   return bounds;
 }
 
+export type ForestCameraPivot = {
+  centerX: number;
+  centerZ: number;
+};
+
 /**
  * Derives OrbitControls target + camera position so the full forest fits in view.
  * Keeps the legacy viewing angle (elevated corner) but scales distance to bounds.
+ * Optional pivot overrides the horizontal orbit center (defaults to bounds centroid).
  */
 export function computeForestCameraFraming(
   bounds: ForestBounds,
   fovDeg = 45,
-  aspect = 16 / 9
+  aspect = 16 / 9,
+  pivot?: ForestCameraPivot
 ): ForestCameraFraming {
-  const centerX = (bounds.minX + bounds.maxX) / 2;
-  const centerZ = (bounds.minZ + bounds.maxZ) / 2;
+  const centerX = pivot?.centerX ?? (bounds.minX + bounds.maxX) / 2;
+  const centerZ = pivot?.centerZ ?? (bounds.minZ + bounds.maxZ) / 2;
   const target: [number, number, number] = [centerX, FOREST_CAMERA_TARGET_Y, centerZ];
 
   const extentX = bounds.maxX - bounds.minX;
@@ -147,5 +154,11 @@ export function computeForestCameraFromScene(
 ): ForestCameraFraming | null {
   const bounds = computeForestBounds(trees, areas);
   if (!bounds) return null;
-  return computeForestCameraFraming(bounds, fovDeg, aspect);
+
+  const groundLayout = getForestGroundLayout(areas);
+  const pivot = groundLayout
+    ? { centerX: groundLayout.center[0], centerZ: groundLayout.center[2] }
+    : undefined;
+
+  return computeForestCameraFraming(bounds, fovDeg, aspect, pivot);
 }

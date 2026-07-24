@@ -5,7 +5,11 @@ import {
   computeForestCameraFromScene,
 } from './forestCameraFraming';
 import type { ForestArea, HybridTree } from '../components/3d/forestTypes';
-import { FOREST_BLOCK_SIZE, FOREST_TREE_SURFACE_Y } from '../components/3d/forestTypes';
+import {
+  FOREST_BLOCK_SIZE,
+  FOREST_TREE_SURFACE_Y,
+  getForestGroundLayout,
+} from '../components/3d/forestTypes';
 
 function makeTree(id: string, x: number, z: number): HybridTree {
   return {
@@ -129,5 +133,40 @@ describe('computeForestCameraFromScene', () => {
     expect(framing).not.toBeNull();
     expect(framing!.target[0]).toBeGreaterThan(0);
     expect(framing!.position[1]).toBeGreaterThan(framing!.target[1]);
+  });
+
+  it('centers orbit pivot on ground layout center, not block-corner bounds', () => {
+    // Asymmetric multi-block forest (thomas@rossner.tk pattern): blocks (48,12) and (60,12),
+    // trees shifted toward +X so block-corner centroid differs from ground ellipse center.
+    const areas: ForestArea[] = [
+      {
+        origin: [48, 0, 12],
+        trees: [
+          makeTree('t1', 56, 18),
+          makeTree('t2', 54, 16),
+          makeTree('t3', 58, 20),
+        ],
+      },
+      {
+        origin: [60, 0, 12],
+        trees: [
+          makeTree('t4', 68, 20),
+          makeTree('t5', 70, 22),
+          makeTree('t6', 66, 14),
+          makeTree('t7', 62, 16),
+        ],
+      },
+    ];
+    const trees = areas.flatMap((area) => area.trees);
+    const layout = getForestGroundLayout(areas);
+    const bounds = computeForestBounds(trees, areas);
+    const blockCornerFraming = computeForestCameraFraming(bounds!);
+    const sceneFraming = computeForestCameraFromScene(trees, areas);
+
+    expect(layout).not.toBeNull();
+    expect(sceneFraming).not.toBeNull();
+    expect(sceneFraming!.target[0]).toBeCloseTo(layout!.center[0], 4);
+    expect(sceneFraming!.target[2]).toBeCloseTo(layout!.center[2], 4);
+    expect(Math.abs(sceneFraming!.target[0] - blockCornerFraming.target[0])).toBeGreaterThan(0.5);
   });
 });
