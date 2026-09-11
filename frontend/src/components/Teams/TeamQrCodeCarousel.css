@@ -1,0 +1,124 @@
+.team-qr-carousel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--color-surface);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.team-qr-carousel h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.1rem;
+  color: var(--color-text);
+}
+
+.team-qr-code-wrapper {
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.team-qr-description {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Auflösen = destruktiv: roter Glas-Tint, weißer Text lesbar (vorher Weiß auf hellem Mint). */
+.team-dissolve-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(145deg, rgba(160, 56, 52, 0.9) 0%, rgba(118, 34, 32, 0.94) 100%) !important;
+  color: var(--glass-text) !important;
+  border: 1px solid rgba(255, 200, 196, 0.35) !important;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.team-dissolve-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(184, 64, 58, 0.95) 0%, rgba(140, 40, 36, 0.97) 100%) !important;
+}
+
+.team-dissolve-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Verlassen = Warnung: dunkler Bernstein-Glas-Tint, weißer Text lesbar. */
+.team-leave-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(145deg, rgba(176, 120, 22, 0.92) 0%, rgba(138, 92, 14, 0.95) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 233, 196, 0.35);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.team-leave-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(196, 136, 28, 0.96) 0%, rgba(156, 104, 18, 0.97) 100%);
+}
+
+.team-leave-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Teilen-Button: primärer Glas-Grünton, gut lesbarer weißer Text. */
+.team-qr-share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: linear-gradient(145deg, rgba(46, 125, 90, 0.92) 0%, rgba(32, 96, 68, 0.95) 100%);
+  color: var(--glass-text, #fff);
+  border: 1px solid rgba(196, 255, 220, 0.35);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.team-qr-share-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(54, 146, 104, 0.96) 0%, rgba(38, 112, 80, 0.97) 100%);
+}
+
+.team-qr-loading {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.team-qr-carousel--error-state {
+  border: 1px solid var(--color-border);
+}
+
+.team-qr-error-message {
+  margin: 0 0 var(--spacing-md) 0;
+  text-align: center;
+  color: var(--color-error, #c62828);
+  font-size: 0.95rem;
+}
+
+.team-qr-retry-button {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface-secondary, #e5e5e5);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.team-qr-retry-button:hover {
+  background: var(--color-border);
+}
+

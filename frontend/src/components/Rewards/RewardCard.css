@@ -1,0 +1,261 @@
+.reward-card {
+  background:
+    linear-gradient(145deg, rgba(31, 90, 76, 0.62) 0%, rgba(20, 62, 52, 0.58) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-card, 20px);
+  padding: 1rem;
+  box-shadow:
+    var(--glass-shadow-outer),
+    var(--glass-shadow-inner),
+    0 12px 28px -8px rgba(4, 28, 20, 0.35);
+  backdrop-filter: blur(var(--glass-blur-strong, 20px)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong, 20px)) saturate(1.15);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  color: var(--glass-text);
+}
+
+.reward-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.38);
+  box-shadow: var(--shadow-md), var(--glass-shadow-inner), 0 16px 32px -10px rgba(4, 28, 20, 0.4);
+}
+
+.reward-icon {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.reward-icon-image {
+  width: 100%;
+  max-width: 100%;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.reward-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reward-title-row .reward-type-badge {
+  flex-shrink: 0;
+}
+
+.reward-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-family: var(--font-display, inherit);
+  color: var(--glass-text);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.reward-type-badge {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.reward-type-badge--discount {
+  background: rgba(107, 168, 201, 0.35);
+  color: #d4ecfa;
+}
+
+.reward-type-badge--benefit {
+  background: rgba(110, 231, 168, 0.25);
+  color: #c8f5df;
+}
+
+.reward-type-badge--team_event {
+  background: rgba(242, 209, 107, 0.28);
+  color: var(--color-accent);
+}
+
+.reward-type-badge--default {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--glass-text-muted);
+}
+
+.reward-description {
+  color: var(--glass-text-muted);
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.reward-location-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--glass-text-muted);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 4px 8px;
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.reward-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.reward-footer--buttons {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  border-top: none;
+  padding-top: 0.5rem;
+}
+
+.reward-redeem-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.reward-redeem-btn {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.85) 0%, rgba(20, 62, 52, 0.9) 100%);
+  color: var(--glass-text);
+  box-shadow: var(--glass-shadow-inner);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.reward-redeem-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.92) 0%, rgba(24, 72, 60, 0.95) 100%);
+  box-shadow: var(--glass-shadow-inner), 0 4px 12px rgba(4, 28, 20, 0.3);
+}
+
+.reward-redeem-btn:disabled {
+  cursor: wait;
+  opacity: 0.85;
+}
+
+.reward-redeem-blocked {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--glass-text-muted);
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.reward-redeem-btn--team {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.7) 0%, rgba(15, 48, 40, 0.85) 100%);
+  border-color: rgba(242, 209, 107, 0.28);
+}
+
+.reward-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: var(--font-display, inherit);
+  color: var(--color-accent);
+  background: rgba(242, 209, 107, 0.14);
+  border: 1px solid rgba(242, 209, 107, 0.35);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  box-shadow: var(--glass-shadow-inner);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.reward-button {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.85) 0%, rgba(20, 62, 52, 0.9) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+  box-shadow: var(--glass-shadow-inner);
+}
+
+.reward-button:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.92) 0%, rgba(24, 72, 60, 0.95) 100%);
+  transform: translateY(-1px);
+}
+
+.reward-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.reward-qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.reward-qr-code {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  box-shadow: var(--glass-shadow-outer);
+}
+
+.reward-qr-status {
+  font-size: 0.875rem;
+  color: var(--glass-text-muted);
+  margin-top: 0.5rem;
+  text-align: center;
+  max-width: 100%;
+  padding: 0 0.25rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

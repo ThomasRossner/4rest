@@ -1,0 +1,110 @@
+.qr-success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: var(--spacing-lg);
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.qr-success-modal-content {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl);
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.qr-success-modal-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  margin: 0 auto var(--spacing-lg);
+  animation: scaleIn 0.3s ease-out 0.1s both;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.qr-success-modal-title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.5rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.qr-success-modal-message {
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--color-text);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.qr-success-modal-details {
+  margin: var(--spacing-md) 0;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.qr-success-modal-button {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-xl);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--border-radius);
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.qr-success-modal-button:hover {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+

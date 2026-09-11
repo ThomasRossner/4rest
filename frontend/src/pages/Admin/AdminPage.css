@@ -1,0 +1,2448 @@
+.admin-page {
+  padding: var(--spacing-lg) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.admin-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-xl);
+}
+
+.admin-navbar-space {
+  flex: 1;
+}
+
+.admin-navbar-action {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.admin-debug-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #d1d5db);
+  background: white;
+  color: var(--color-text, #111827);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.admin-debug-toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.admin-debug-toggle.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.admin-navbar-language {
+  margin-right: var(--spacing-sm);
+}
+
+.admin-logout-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.admin-logout-button:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.admin-hero {
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.admin-hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 var(--spacing-sm);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.admin-hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.admin-title {
+  font-size: 2.35rem;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.admin-subtitle {
+  color: var(--color-text);
+  max-width: 720px;
+  font-size: 1.05rem;
+}
+
+.admin-logout-button {
+  position: relative;
+}
+
+.admin-section {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+}
+
+.admin-section-header h2 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.admin-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.admin-choice-grid-compact {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.admin-choice-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl);
+  background: white;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-choice-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-choice-icon {
+  font-size: 2rem;
+}
+
+.admin-icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: white;
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.admin-icon-button:hover {
+  background: rgba(37, 99, 235, 0.08);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-icon-button:active {
+  transform: translateY(1px);
+}
+
+.admin-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius);
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--color-primary);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-type-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.admin-type-badge span:last-child {
+  font-size: 0.9rem;
+}
+
+.admin-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke-width: 1.5;
+}
+
+.admin-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.admin-form-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  overflow: visible;
+  position: relative;
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea,
+.admin-field .admin-multi-select-toggle {
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.admin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.admin-toggle label {
+  cursor: pointer;
+}
+
+.admin-checkbox,
+.admin-radio {
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.25rem 0 0;
+  accent-color: var(--color-primary);
+  transform: scale(0.6);
+  transform-origin: center;
+}
+
+.admin-video-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.admin-video-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.admin-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.admin-radio-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.admin-upload-field input[type='file'] {
+  display: none;
+}
+
+.admin-video-upload-block {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-size: 0.95rem;
+  color: var(--color-text-light);
+}
+
+.admin-upload-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 8rem;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius-sm, 4px);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.admin-upload-button span {
+  pointer-events: none;
+}
+
+.admin-upload-button:hover {
+  background: var(--color-primary-dark);
+}
+
+.admin-upload-button:active {
+  transform: translateY(1px);
+}
+
+.admin-upload-filename {
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.admin-quiz-block {
+  margin-top: var(--spacing-lg);
+}
+
+.admin-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.admin-field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.admin-field-required {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.admin-field-readonly {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  background: var(--color-border);
+  color: var(--color-text-light);
+  border-radius: 999px;
+}
+
+.admin-field input[readonly],
+.admin-field textarea[readonly],
+.admin-input-readonly {
+  background: var(--color-surface);
+  border-style: dashed;
+  color: var(--color-text-light);
+  cursor: not-allowed;
+}
+
+.admin-field-note {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+}
+
+.page-background-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.page-background-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.page-background-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: linear-gradient(145deg, rgba(118, 184, 126, 0.94), rgba(67, 139, 91, 0.92));
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.page-background-preview {
+  min-height: 170px;
+  aspect-ratio: 16 / 9;
+  background-color: rgba(18, 70, 55, 0.12);
+  background-position: center;
+  background-size: cover;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.page-background-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.page-background-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.page-background-card-header h3 {
+  margin: 0 0 var(--spacing-xs);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.page-background-card .admin-field-note {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.page-background-status {
+  flex: 0 0 auto;
+  border: 1px solid rgba(31, 90, 76, 0.28);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: rgba(20, 62, 52, 0.95);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.page-background-status.custom {
+  background: rgba(110, 231, 168, 0.18);
+}
+
+.page-background-status.default {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.page-background-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+}
+
+.page-background-upload .admin-upload-control {
+  min-width: 0;
+  display: block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.page-background-actions .admin-action-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.page-background-upload .admin-upload-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow: var(--shadow-sm);
+}
+
+.page-background-upload .admin-upload-filename {
+  display: none;
+}
+
+.page-background-filetypes {
+  display: block;
+  margin-top: 0.4rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.admin-form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.admin-form-section {
+  position: relative;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 255, 0.98));
+  border: 1px solid rgba(62, 90, 166, 0.08);
+  box-shadow: var(--shadow-md);
+  overflow: visible;
+}
+
+.admin-form-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(62, 90, 166, 0.12), transparent 55%);
+  opacity: 0.55;
+}
+
+.admin-form-section-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.admin-form-section-header > .admin-type-badge {
+  margin-left: auto;
+}
+
+.admin-form-section-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--color-primary);
+}
+
+.admin-form-section-header p {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+}
+
+.admin-form-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-md);
+  overflow: visible;
+}
+
+.admin-form-grid-two {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+/* Make "Active" field consistent across both modes on desktop */
+@media (min-width: 768px) {
+  /* Always make single-column fields in location form span full width for consistency */
+  .admin-form-grid.admin-form-grid-two > .admin-field:not(.admin-field-span-2):not(.location-map-field):not(.location-details-field) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* Force 2 columns for location form on desktop when map is present - Map on LEFT */
+@media (min-width: 768px) {
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-auto-flow: row;
+  }
+  
+  /* Map field on left column */
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location .location-map-field {
+    grid-column: 1 !important;
+  }
+  
+  /* Details field on right column - same row as map */
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location .location-details-field {
+    grid-column: 2 !important;
+  }
+  
+  /* Ensure fields that span 2 columns take full width */
+  .admin-form-grid.admin-form-grid-two.admin-form-grid-location .admin-field-span-2 {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+.admin-field-span-2 {
+  grid-column: span 2;
+}
+
+.location-map-field {
+  grid-column: 1;
+  align-self: start;
+}
+
+.location-details-field {
+  grid-column: 2;
+  align-self: start;
+}
+
+@media (max-width: 768px) {
+  .location-map-field,
+  .location-details-field {
+    grid-column: 1 / -1;
+  }
+}
+
+.admin-form-full {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  background: white;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-form-actions button,
+.admin-form-actions .admin-button {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.admin-form-actions button:hover,
+.admin-form-actions .admin-button:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.admin-form-feedback {
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-form-feedback p {
+  margin: 0;
+}
+
+.admin-publish-hint {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.admin-quiz-builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+}
+
+.admin-quiz-header h3 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.admin-quiz-header p {
+  margin: var(--spacing-xxs) 0 0;
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+}
+
+.admin-quiz-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.admin-quiz-question {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.admin-quiz-question h4 {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.05rem;
+}
+
+.admin-quiz-question-controls {
+  display: inline-flex;
+  gap: var(--spacing-xxs);
+}
+
+.admin-quiz-question-controls button {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 2px 6px;
+  border-radius: var(--border-radius-sm, 4px);
+  cursor: pointer;
+}
+
+.admin-quiz-question-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-quiz-answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.admin-quiz-answer-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.admin-quiz-answer-row input[type='text'] {
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem;
+}
+
+.admin-quiz-answer-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xxs);
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.admin-quiz-answer-controls {
+  display: inline-flex;
+  gap: var(--spacing-xxs);
+}
+
+.admin-quiz-answer-controls button,
+.admin-quiz-add-answer,
+.admin-quiz-add-question {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm, 4px);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.admin-quiz-answer-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-quiz-add-answer:hover,
+.admin-quiz-add-question:hover,
+.admin-quiz-answer-controls button:hover {
+  background: var(--color-border);
+}
+
+.admin-quiz-empty {
+  margin: 0;
+  color: var(--color-text-light);
+}
+
+.admin-multi-select {
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.admin-multi-select.open {
+  z-index: 10001;
+}
+
+.admin-multi-select-toggle {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  background: white;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-multi-select-label {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.admin-multi-select-value {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.admin-multi-select-icon {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+
+.admin-multi-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  isolation: isolate;
+}
+
+.admin-multi-select-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-multi-select-clear {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.admin-multi-select-options {
+  padding: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  overflow-y: auto;
+}
+
+.admin-multi-select-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 0.95rem;
+  padding: var(--spacing-xxs) var(--spacing-xs);
+}
+
+.admin-multi-select-option input {
+  accent-color: var(--color-primary);
+}
+
+.admin-submit {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+}
+
+.admin-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-form-actions-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.admin-action-button.secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.admin-action-button.secondary:hover {
+  background: var(--color-border);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.admin-action-button.cancel {
+  background: var(--color-error);
+  color: white;
+  border: none;
+}
+
+.admin-action-button.cancel:hover {
+  background: var(--color-error-dark);
+  color: white;
+}
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  z-index: 1000;
+}
+
+.admin-modal {
+  background: white;
+  border-radius: var(--border-radius-lg, 18px);
+  box-shadow: var(--shadow-lg);
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-modal-header,
+.admin-modal-body,
+.admin-modal-footer {
+  padding: var(--spacing-xl);
+}
+
+.admin-modal-header h3 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.admin-modal-body p {
+  margin: 0;
+  color: var(--color-text-light);
+  line-height: 1.5;
+}
+
+.admin-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-modal-footer button,
+.admin-modal-footer .admin-button {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.admin-modal-footer button:hover,
+.admin-modal-footer .admin-button:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.admin-template-list {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  background: var(--color-surface);
+}
+
+.admin-template-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.admin-template-meta {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.admin-error {
+  color: #b91c1c;
+}
+
+.admin-success {
+  color: #047857;
+}
+
+.admin-management-card {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  background: white;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.admin-management-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.admin-management-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.admin-management-top h3 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.admin-management-top p {
+  margin: var(--spacing-xxs) 0 0;
+  color: var(--color-text-light);
+  max-width: 520px;
+}
+
+.admin-management-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.admin-bulk-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.admin-table th:last-child,
+.admin-table td:last-child {
+  text-align: right;
+}
+
+.admin-table td:last-child .admin-bulk-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.admin-selection-count {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+  table-layout: fixed;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: var(--spacing-xs) var(--spacing-xs);
+  text-align: left;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-size: 0.875rem;
+}
+
+/* Checkbox column - minimal width */
+.admin-table th:first-child,
+.admin-table td:first-child {
+  width: 3.5rem;
+  min-width: 3.5rem;
+  max-width: 3.5rem;
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-xs) var(--spacing-xs);
+}
+
+/* Rewards table: Use same checkbox column settings as tasks */
+.admin-table-wrapper-rewards .admin-table th:first-child,
+.admin-table-wrapper-rewards .admin-table td:first-child {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  padding: var(--spacing-xs);
+}
+
+/* Ensure Actions column (last child) is ALWAYS visible in rewards table, regardless of media queries */
+.admin-table-wrapper-rewards .admin-table th:last-child,
+.admin-table-wrapper-rewards .admin-table td:last-child {
+  width: auto !important;
+  min-width: 14rem !important;
+  max-width: none !important;
+  display: table-cell !important;
+  visibility: visible !important;
+}
+
+/* Override any media query rules that might hide the Actions column in rewards table */
+@media (max-width: 1600px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 1400px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 1000px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-table-wrapper-rewards .admin-table th:last-child,
+  .admin-table-wrapper-rewards .admin-table td:last-child {
+    display: table-cell !important;
+  }
+}
+
+/* Title/Name column - flexible but constrained */
+/* BUT: Don't apply to Contest/Team tables */
+.admin-table:not(.contest-team-table) th:nth-child(2),
+.admin-table:not(.contest-team-table) td:nth-child(2) {
+  width: 15%;
+  min-width: 8rem;
+  /* max-width removed to allow more flexibility */
+  padding-left: var(--spacing-md);
+}
+
+/* Type column - compact */
+/* BUT: Don't apply to Contest/Team tables */
+.admin-table:not(.contest-team-table) th:nth-child(3),
+.admin-table:not(.contest-team-table) td:nth-child(3) {
+  width: 7%;
+  min-width: 5rem;
+  /* max-width removed to allow more flexibility */
+}
+
+/* Location column - medium */
+/* BUT: Don't apply to Contest/Team tables (they have 5 columns, not 13+) */
+/* Use :not() to exclude contest-team-table */
+.admin-table:not(.contest-team-table) th:nth-child(4),
+.admin-table:not(.contest-team-table) td:nth-child(4) {
+  width: 12%;
+  min-width: 7rem;
+  /* max-width removed to allow more flexibility */
+}
+
+/* Zielgruppe column - compact */
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+  width: 9%;
+  min-width: 6rem;
+  /* max-width removed to allow more flexibility */
+}
+
+/* Points/Cost column - very compact */
+.admin-table th:nth-child(6),
+.admin-table td:nth-child(6) {
+  width: 5%;
+  min-width: 3.5rem;
+  /* max-width removed to allow more flexibility */
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Status column - compact */
+.admin-table th:nth-child(7),
+.admin-table td:nth-child(7) {
+  width: 6%;
+  min-width: 4.5rem;
+  /* max-width removed to allow more flexibility */
+  white-space: nowrap;
+}
+
+/* Recurrence column - compact */
+.admin-table th:nth-child(8),
+.admin-table td:nth-child(8) {
+  width: 7%;
+  min-width: 5rem;
+  /* max-width removed to allow more flexibility */
+  white-space: nowrap;
+}
+
+/* Additional metadata columns (Kategorie, Schwierigkeit, etc.) - very compact */
+/* General column styling - but never apply to last child (Actions column) */
+.admin-table th:nth-child(9):not(:last-child),
+.admin-table td:nth-child(9):not(:last-child),
+.admin-table th:nth-child(10):not(:last-child),
+.admin-table td:nth-child(10):not(:last-child),
+.admin-table th:nth-child(11):not(:last-child),
+.admin-table td:nth-child(11):not(:last-child),
+.admin-table th:nth-child(12):not(:last-child),
+.admin-table td:nth-child(12):not(:last-child),
+.admin-table th:nth-child(13):not(:last-child),
+.admin-table td:nth-child(13):not(:last-child) {
+  width: 6%;
+  min-width: 4rem;
+  /* max-width removed to allow more flexibility */
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================
+   CONTEST/TEAM TABLES (5 columns only)
+   ============================================ */
+/* These tables have: Checkbox | Name | Created By | Status | Actions */
+
+/* Contest/Team table: Checkbox column (1st column) */
+.admin-table.contest-team-table th:first-child,
+.admin-table.contest-team-table td:first-child {
+  width: 3rem !important;
+  min-width: 3rem !important;
+  max-width: 3rem !important;
+}
+
+/* Contest/Team table: Name column (2nd column) - make it wider */
+.admin-table.contest-team-table th:nth-child(2),
+.admin-table.contest-team-table td:nth-child(2) {
+  width: 45% !important;
+  min-width: 15rem !important;
+  max-width: none !important;
+}
+
+/* Contest/Team table: Created By column (3rd column) */
+.admin-table.contest-team-table th:nth-child(3),
+.admin-table.contest-team-table td:nth-child(3) {
+  width: 20% !important;
+  min-width: 8rem !important;
+  max-width: none !important;
+}
+
+/* Contest/Team table: Status column (4th column) - make it narrower */
+.admin-table.contest-team-table th:nth-child(4),
+.admin-table.contest-team-table td:nth-child(4) {
+  width: 5% !important;
+  max-width: 5% !important;
+  min-width: 2rem !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Contest/Team table: Actions column (5th column) */
+.admin-table.contest-team-table th:last-child,
+.admin-table.contest-team-table td:last-child {
+  width: auto !important;
+  min-width: 14rem !important;
+  max-width: none !important;
+}
+
+/* Actions column - fills remaining space */
+/* CRITICAL: Always ensure Actions column is visible - never hide it */
+.admin-table th:last-child,
+.admin-table td:last-child {
+  width: auto;
+  min-width: 14rem;
+  display: table-cell !important;
+  visibility: visible !important;
+  /* max-width removed to allow Actions column to fill remaining space */
+}
+
+/* Locations table has only 6 columns - make Actions column narrower but still flexible */
+.admin-table th:nth-child(6):last-child,
+.admin-table td:nth-child(6):last-child {
+  width: auto;
+  min-width: 10rem;
+  /* max-width removed to allow Actions column to fill remaining space */
+}
+
+/* For locations table with only 3 buttons, keep them in one row and make them more compact */
+.admin-table td:nth-child(6):last-child .admin-table-actions {
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+}
+
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7rem;
+  background: var(--color-primary) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button:disabled {
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
+}
+
+.admin-table tbody tr:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table th {
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.admin-table-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-table-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+
+.admin-table-title {
+  font-weight: 600;
+  color: var(--color-text);
+  word-break: break-word;
+  line-height: 1.2;
+  font-size: 0.875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-table-subtitle {
+  color: var(--color-text-light);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.125rem;
+}
+
+/* Removed: admin-table-type scaling - icons should be displayed at full size */
+
+.admin-table-actions {
+  display: flex;
+  gap: var(--spacing-xxs);
+  flex-wrap: wrap;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.admin-action-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: none !important;
+  background: var(--color-primary) !important;
+  color: white !important;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.admin-action-button:hover:not(:disabled) {
+  background: var(--color-primary-dark) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.admin-action-button:disabled {
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.admin-action-button.danger {
+  background: var(--color-error) !important;
+  color: white !important;
+}
+
+.admin-action-button.danger:hover {
+  background: var(--color-error-dark) !important;
+  color: white !important;
+}
+
+.admin-action-button.danger:disabled {
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
+}
+
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xxs);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.4rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.admin-status-badge.active {
+  color: var(--color-primary);
+  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.admin-status-badge.inactive {
+  color: #9ca3af;
+  border-color: rgba(156, 163, 175, 0.35);
+  background: rgba(156, 163, 175, 0.12);
+}
+
+.admin-table-empty {
+  text-align: center;
+  color: var(--color-text-light);
+  font-style: italic;
+  padding: var(--spacing-lg);
+}
+
+.admin-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+/* TeamManagement/ContestManagement component styles */
+.admin-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.admin-button:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+/* Removed .admin-button-danger - all buttons use unified design */
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.admin-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-background-light, #f9fafb);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+
+.admin-list-item-content {
+  flex: 1;
+}
+
+.admin-list-item-content h3 {
+  margin: 0 0 var(--spacing-xs);
+  color: var(--color-text);
+}
+
+.admin-list-item-content p {
+  margin: var(--spacing-xs) 0;
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+}
+
+.admin-list-item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.admin-filters {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-filter-group {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.admin-filter-group label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.admin-filter-group label:has(input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-filter-group input,
+.admin-filter-group select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.admin-message {
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-message-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid var(--color-primary);
+}
+
+.admin-message-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+@media (min-width: 768px) {
+
+}
+
+/* Responsive table layout - progressive column hiding based on priority */
+
+/* Priority 1: Hide least important columns first (Event/Gruppe, Ort/Werkzeug, Zeitaufwand, Schwierigkeit, Kategorie) */
+@media (max-width: 1600px) {
+  /* Tasks: Hide Event/Gruppe (13th column) */
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(13):not(:last-child),
+  .admin-table td:nth-child(13):not(:last-child) {
+    display: none;
+  }
+  
+  /* Rewards: Hide Mögliche Punkte (13th column) */
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(13):not(:last-child),
+  .admin-table td:nth-child(13):not(:last-child) {
+    display: none;
+  }
+}
+
+/* Priority 2: Hide Ort/Werkzeug, Zeitaufwand, Schwierigkeit, Kategorie */
+@media (max-width: 1400px) {
+  /* Tasks: Hide Ort/Werkzeug (12th), Zeitaufwand (11th), Schwierigkeit (10th), Kategorie (9th) */
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(9):not(:last-child),
+  .admin-table td:nth-child(9):not(:last-child),
+  .admin-table th:nth-child(10):not(:last-child),
+  .admin-table td:nth-child(10):not(:last-child),
+  .admin-table th:nth-child(11):not(:last-child),
+  .admin-table td:nth-child(11):not(:last-child),
+  .admin-table th:nth-child(12):not(:last-child),
+  .admin-table td:nth-child(12):not(:last-child) {
+    display: none;
+  }
+  
+  /* Rewards: Hide Event/Gruppe (12th), Kategorie (11th), Art (10th) */
+  /* BUT: Never hide the last column (Actions) - use :not(:last-child) */
+  .admin-table th:nth-child(10):not(:last-child),
+  .admin-table td:nth-child(10):not(:last-child),
+  .admin-table th:nth-child(11):not(:last-child),
+  .admin-table td:nth-child(11):not(:last-child),
+  .admin-table th:nth-child(12):not(:last-child),
+  .admin-table td:nth-child(12):not(:last-child) {
+    display: none;
+  }
+}
+
+/* Priority 3: Hide Recurrence and Zielgruppe */
+@media (max-width: 1200px) {
+  .admin-table {
+    table-layout: auto;
+    min-width: 800px;
+  }
+  
+  /* Tasks: Hide Recurrence (8th) and Zielgruppe (5th) */
+  .admin-table th:nth-child(5),
+  .admin-table td:nth-child(5),
+  .admin-table th:nth-child(8),
+  .admin-table td:nth-child(8) {
+    display: none;
+  }
+  
+  /* Rewards: Hide Recurrence (8th) and Zielgruppe (5th) */
+  .admin-table th:nth-child(5),
+  .admin-table td:nth-child(5),
+  .admin-table th:nth-child(8),
+  .admin-table td:nth-child(8) {
+    display: none;
+  }
+}
+
+/* Priority 4: Keep only essential columns (Checkbox, Title, Type, Location, Points/Cost, Status, Actions) */
+@media (max-width: 1000px) {
+  /* Hide Location if space is very tight */
+  /* BUT: Don't hide Status column in Contest/Team tables */
+  .admin-table:not(.contest-team-table) th:nth-child(4),
+  .admin-table:not(.contest-team-table) td:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Show mobile "New task" button, hide desktop one */
+  .admin-mobile-new-task-button {
+    display: block;
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .admin-desktop-new-task-button {
+    display: none;
+  }
+
+  .admin-management-card {
+    padding: var(--spacing-lg);
+  }
+
+  .admin-management-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-bulk-buttons {
+    justify-content: space-between;
+  }
+
+  .admin-table {
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-table tr {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .admin-table td {
+    padding: var(--spacing-xxs) 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .admin-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    min-width: 30%;
+  }
+
+  .admin-table td:first-child {
+    padding-bottom: var(--spacing-sm);
+    justify-content: flex-start;
+  }
+
+  .admin-table td:first-child input {
+    margin-right: var(--spacing-sm);
+  }
+
+  .admin-table td:last-child {
+    border-bottom: none;
+  }
+
+  .admin-table-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+  }
+
+  .admin-action-button {
+    width: 100%;
+    text-align: center;
+    background: var(--color-primary) !important;
+    color: white !important;
+    border: none !important;
+  }
+  
+  /* Show all columns in mobile card view */
+  .admin-table td {
+    display: flex;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-header {
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+  }
+
+  .admin-navbar {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .admin-hero {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+  .admin-field-span-2 {
+    grid-column: span 1;
+  }
+  .admin-form-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.location-map-container {
+  width: 100%;
+  min-height: 400px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* Leaflet Geocoder Control Styles */
+.leaflet-control-geocoder {
+  border-radius: var(--border-radius);
+  background: white;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.leaflet-control-geocoder a {
+  background-color: white;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.leaflet-control-geocoder a:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.leaflet-control-geocoder-form {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.leaflet-control-geocoder-form input {
+  border: none;
+  outline: none;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.leaflet-control-geocoder-icon {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjExIiBjeT0iMTEiIHI9IjgiLz48cGF0aCBkPSJtMjEgMjEtNC4zNS00LjM1Ii8+PC9zdmc+');
+  background-size: 18px 18px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.leaflet-control-geocoder-alternatives {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.leaflet-control-geocoder-alternatives li {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.leaflet-control-geocoder-alternatives li:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.leaflet-control-geocoder-alternatives li:last-child {
+  border-bottom: none;
+}
+
+.admin-filter-header {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.admin-filter-header:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.admin-filter-dropdown {
+  position: fixed;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  min-width: 200px;
+  max-width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.admin-filter-dropdown-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.admin-filter-clear {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  margin-left: auto;
+}
+
+.admin-filter-clear:hover {
+  text-decoration: underline;
+}
+
+.admin-filter-dropdown-list {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-xxs) 0;
+}
+
+.admin-filter-option {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  transition: background-color 0.15s;
+}
+
+.admin-filter-option:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.admin-filter-option.active {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Mobile Filter Button */
+.admin-mobile-filter-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: white;
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.admin-mobile-filter-button:hover {
+  background: rgba(37, 99, 235, 0.08);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-mobile-filter-button:active {
+  transform: translateY(1px);
+}
+
+.admin-mobile-filter-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 2px solid white;
+}
+
+/* Hide mobile filter button on desktop */
+@media (min-width: 769px) {
+  .admin-mobile-filter-button {
+    display: none;
+  }
+
+  /* Hide mobile "New task" button, show desktop one */
+  .admin-mobile-new-task-button {
+    display: none;
+  }
+
+  .admin-desktop-new-task-button {
+    display: inline-block;
+  }
+}
+
+/* Hide desktop filter headers on mobile */
+@media (max-width: 768px) {
+  .admin-filter-header {
+    display: none;
+  }
+}
+
+/* Mobile Filter Modal */
+.admin-mobile-filter-modal {
+  background: white;
+  border-radius: var(--border-radius-lg, 18px) var(--border-radius-lg, 18px) 0 0;
+  box-shadow: var(--shadow-lg);
+  max-width: 100%;
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.admin-mobile-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-mobile-filter-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text);
+}
+
+.admin-mobile-filter-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.admin-mobile-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.admin-mobile-filter-section h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+}
+
+.admin-mobile-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.admin-mobile-filter-option {
+  background: none;
+  border: 1px solid var(--color-border);
+  text-align: left;
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  border-radius: var(--border-radius);
+  transition: all 0.15s ease;
+}
+
+.admin-mobile-filter-option:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.admin-mobile-filter-option.active {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+  font-weight: 600;
+  border-color: var(--color-primary);
+}
+
+.admin-mobile-filter-footer {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.admin-mobile-filter-footer button {
+  flex: 1;
+}
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Admin
+   Nur Farben/Hintergründe; keine globalen Tokens, keine Logik.
+   Ersetzt unlesbare Kombination „weiß auf hellem Mint" sowie
+   „weiß auf weiß" durch dunkle Forest-Glas-Flächen + heller Text.
+   ============================================================ */
+
+/* Panels / Karten auf Glas */
+.admin-section,
+.admin-management-card,
+.admin-form-actions,
+.admin-template-list,
+.admin-quiz-builder {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+.admin-choice-card,
+.admin-quiz-question {
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.1);
+}
+
+/* Choice-Card ist ein <button>: Text erbt UA-Schwarz -> explizit hell */
+.admin-choice-card,
+.admin-choice-card h2,
+.admin-choice-card h3,
+.admin-choice-card p {
+  color: var(--glass-text);
+}
+
+.admin-choice-card:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* Formular-Sektion: helles Verlauf -> Forest-Glas */
+.admin-form-section {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-form-section::before {
+  background: linear-gradient(135deg, rgba(126, 207, 176, 0.12), transparent 55%);
+}
+
+/* Modal */
+.admin-modal {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.97) 0%, rgba(16, 42, 32, 0.98) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+/* Formularfelder lesbar auf Glas */
+.admin-field input,
+.admin-field select,
+.admin-field textarea,
+.admin-field .admin-multi-select-toggle,
+.admin-filter-group input,
+.admin-filter-group select,
+.admin-quiz-answer-row input[type='text'] {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.admin-field input::placeholder,
+.admin-field textarea::placeholder,
+.admin-filter-group input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Readonly-Felder weiterhin gedämpft kennzeichnen */
+.admin-field input[readonly],
+.admin-field textarea[readonly],
+.admin-input-readonly {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-light);
+}
+
+/* Multi-Select */
+.admin-multi-select-toggle {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-multi-select-value {
+  color: var(--glass-text);
+}
+
+.admin-multi-select-dropdown,
+.admin-filter-dropdown,
+.admin-mobile-filter-modal {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.98) 0%, rgba(16, 42, 32, 0.99) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-filter-option,
+.admin-mobile-filter-option {
+  color: var(--glass-text);
+}
+
+/* Tabellen-Kopf + Mobile-Karten */
+.admin-table th {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+}
+
+@media (max-width: 768px) {
+  .admin-table tr {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+  }
+}
+
+/* Runde Icon-Buttons (Zurück/Aktualisieren/Schließen) – einheitlich mit der
+   User-Sicht (.task-detail-back): kreisrund, dezenter Mint-Tint, Mint-Pfeil. */
+.admin-icon-button {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border: none;
+  color: var(--color-primary);
+  box-shadow: none;
+}
+
+.admin-icon-button:hover {
+  background: color-mix(in srgb, var(--color-primary) 24%, transparent);
+  box-shadow: none;
+}
+
+/* Pfeil-Icon analog zur User-Sicht (.task-detail-back-icon) */
+.admin-icon-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.admin-mobile-filter-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-mobile-filter-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.admin-debug-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.admin-debug-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: var(--glass-text);
+}
+
+.admin-debug-toggle.active {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+/* Status-Badge „aktiv" deutlicher */
+.admin-status-badge.active {
+  color: var(--color-success);
+  border-color: rgba(110, 231, 168, 0.4);
+  background: rgba(110, 231, 168, 0.16);
+}
+
+/* ---- Buttons: lesbare Forest-Glas-Variante statt Mint+Weiß ---- */
+.admin-logout-button,
+.admin-button,
+.admin-submit,
+.admin-upload-button,
+.admin-action-button,
+.admin-form-actions button,
+.admin-form-actions .admin-button,
+.admin-modal-footer button,
+.admin-modal-footer .admin-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  background-color: rgba(24, 72, 60, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.admin-logout-button:hover,
+.admin-button:hover,
+.admin-submit:hover:not(:disabled),
+.admin-upload-button:hover,
+.admin-action-button:hover:not(:disabled),
+.admin-form-actions button:hover,
+.admin-form-actions .admin-button:hover,
+.admin-modal-footer button:hover,
+.admin-modal-footer .admin-button:hover {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.96) 0%, rgba(24, 72, 60, 0.98) 100%) !important;
+  background-color: rgba(38, 105, 88, 0.98) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Destruktive / Abbruch-Buttons: rötlicher Glas-Tint, weiß bleibt lesbar */
+.admin-action-button.danger,
+.admin-action-button.cancel {
+  background: linear-gradient(145deg, rgba(160, 56, 52, 0.92) 0%, rgba(118, 34, 32, 0.95) 100%) !important;
+  background-color: rgba(140, 40, 36, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 200, 196, 0.35) !important;
+}
+
+.admin-action-button.danger:hover,
+.admin-action-button.cancel:hover {
+  background: linear-gradient(145deg, rgba(184, 64, 58, 0.96) 0%, rgba(140, 40, 36, 0.98) 100%) !important;
+  color: #fff !important;
+}
+
+/* Sekundär-Button */
+.admin-action-button.secondary {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--glass-text) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.admin-action-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: var(--glass-text) !important;
+}
+
+/* Deaktivierte Buttons gedämpft, aber lesbar */
+.admin-action-button:disabled,
+.admin-submit:disabled,
+.admin-button:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--glass-border) !important;
+}
+
+/* Standorte-Tabelle (6 Spalten, kompakte 3-Button-Aktionen):
+   überschreibt die hoch-spezifische Mint+Weiß-Regel weiter oben.
+   Gleiche/höhere Spezifität nötig, daß der Forest-Glas-Tint greift. */
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  background-color: rgba(24, 72, 60, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button.danger {
+  background: linear-gradient(145deg, rgba(160, 56, 52, 0.92) 0%, rgba(118, 34, 32, 0.95) 100%) !important;
+  background-color: rgba(140, 40, 36, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 200, 196, 0.35) !important;
+}
+
+.admin-table td:nth-child(6):last-child .admin-table-actions .admin-action-button:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--glass-border) !important;
+}

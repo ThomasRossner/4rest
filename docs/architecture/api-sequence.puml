@@ -1,0 +1,47 @@
+@startuml Roots of Impact - Task Completion Flow
+skinparam backgroundColor #FFFFFF
+
+actor User
+participant "Frontend" as Frontend
+participant "API Gateway" as API
+participant "Task Service" as TaskService
+participant "Gamification" as Gamification
+participant "Database" as DB
+participant "HotelKit" as HotelKit
+
+== User Completes Video Task ==
+
+User -> Frontend: Watch video and answer quiz
+Frontend -> Frontend: Validate answers 70 percent correct
+Frontend -> API: POST /api/tasks/:id/complete\nwith quiz_answers
+
+API -> API: Authenticate JWT token
+API -> TaskService: completeTask(taskId, userId, data)
+
+TaskService -> DB: Check if task already completed
+DB --> TaskService: Not completed
+
+TaskService -> DB: Validate quiz answers\n70 percent threshold
+DB --> TaskService: Answers valid
+
+TaskService -> DB: Insert user_tasks record
+TaskService -> Gamification: addUserPoints(userId, points)
+Gamification -> DB: UPDATE users points
+
+TaskService -> Gamification: plantTree(userId, taskId)
+Gamification -> DB: INSERT forest trees
+
+alt External Task from HotelKit
+    TaskService -> HotelKit: markTaskCompleted(taskId, employeeId)
+    HotelKit --> TaskService: Success
+end
+
+TaskService -> DB: UPDATE user progress
+DB --> TaskService: Success
+TaskService --> API: success pointsEarned
+API --> Frontend: Response
+Frontend -> Frontend: Update UI\nRefresh forest\nShow success message
+
+Frontend -> User: Display\nTask Complete plus 50 points
+
+@enduml

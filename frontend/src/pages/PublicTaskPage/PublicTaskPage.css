@@ -1,0 +1,41 @@
+/* Öffentliche Aufgabe: gleiche Höhenlogik wie tasks-page--detail, ohne eingeloggte App-Navigation */
+.tasks-page.tasks-page--detail.tasks-page--public-task {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: var(--spacing-xs);
+  padding-right: var(--spacing-xs);
+  box-sizing: border-box;
+  max-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2 * var(--spacing-xs)
+  );
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tasks-page--public-task .task-detail-view {
+  flex: 0 1 auto;
+  width: 100%;
+  max-height: none;
+  min-height: 0;
+}
+
+.public-task-completion .task-detail-title {
+  margin-bottom: var(--spacing-sm);
+}
+
+.public-task-completion-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.public-task-completion-links span {
+  opacity: 0.6;
+}

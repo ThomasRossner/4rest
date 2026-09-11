@@ -1,0 +1,172 @@
+import { describe, expect, it } from 'vitest';
+import {
+  computeForestBounds,
+  computeForestCameraFraming,
+  computeForestCameraFromScene,
+} from './forestCameraFraming';
+import type { ForestArea, HybridTree } from '../components/3d/forestTypes';
+import {
+  FOREST_BLOCK_SIZE,
+  FOREST_TREE_SURFACE_Y,
+  getForestGroundLayout,
+} from '../components/3d/forestTypes';
+
+function makeTree(id: string, x: number, z: number): HybridTree {
+  return {
+    id,
+    position: [x, FOREST_TREE_SURFACE_Y, z],
+    growth: 0.5,
+    sizeFactor: 1,
+    rotationY: 0,
+  };
+}
+
+describe('computeForestBounds', () => {
+  it('returns null for empty forest', () => {
+    expect(computeForestBounds([], [{ origin: [0, 0, 0], trees: [] }])).toBeNull();
+  });
+
+  it('includes ground block corners per area', () => {
+    const areas: ForestArea[] = [{ origin: [12, 0, 0], trees: [makeTree('t1', 14, 3)] }];
+    const bounds = computeForestBounds(areas[0].trees, areas);
+    expect(bounds).not.toBeNull();
+    expect(bounds!.minX).toBe(12);
+    expect(bounds!.maxX).toBe(12 + FOREST_BLOCK_SIZE);
+    expect(bounds!.minZ).toBe(0);
+    expect(bounds!.maxZ).toBe(FOREST_BLOCK_SIZE);
+  });
+
+  it('ignores empty API padding blocks without trees', () => {
+    const areas: ForestArea[] = [
+      { origin: [0, 0, 0], trees: [makeTree('t1', 2, 2)] },
+      { origin: [12, 0, 0], trees: [] },
+      { origin: [0, 0, 12], trees: [] },
+      { origin: [12, 0, 12], trees: [] },
+    ];
+    const trees = areas[0].trees;
+    const bounds = computeForestBounds(trees, areas);
+    expect(bounds!.minX).toBe(0);
+    expect(bounds!.maxX).toBe(FOREST_BLOCK_SIZE);
+    expect(bounds!.minZ).toBe(0);
+    expect(bounds!.maxZ).toBe(FOREST_BLOCK_SIZE);
+  });
+
+  it('spans multiple distant areas', () => {
+    const areas: ForestArea[] = [
+      { origin: [0, 0, 0], trees: [makeTree('t1', 2, 2)] },
+      { origin: [24, 0, 24], trees: [makeTree('t2', 26, 26)] },
+    ];
+    const trees = areas.flatMap((area) => area.trees);
+    const bounds = computeForestBounds(trees, areas);
+    expect(bounds!.minX).toBe(0);
+    expect(bounds!.maxX).toBe(24 + FOREST_BLOCK_SIZE);
+    expect(bounds!.minZ).toBe(0);
+    expect(bounds!.maxZ).toBe(24 + FOREST_BLOCK_SIZE);
+  });
+});
+
+describe('computeForestCameraFraming', () => {
+  it('centers target on bounds and places camera farther for larger forests', () => {
+    const small = computeForestCameraFraming({
+      minX: 0,
+      maxX: FOREST_BLOCK_SIZE,
+      minZ: 0,
+      maxZ: FOREST_BLOCK_SIZE,
+      minY: 0,
+      maxY: 8,
+    });
+    const large = computeForestCameraFraming({
+      minX: 0,
+      maxX: FOREST_BLOCK_SIZE * 4,
+      minZ: 0,
+      maxZ: FOREST_BLOCK_SIZE * 4,
+      minY: 0,
+      maxY: 8,
+    });
+
+    expect(small.target[0]).toBeCloseTo(FOREST_BLOCK_SIZE / 2, 1);
+    expect(large.target[0]).toBeCloseTo(FOREST_BLOCK_SIZE * 2, 1);
+
+    const smallDist = Math.hypot(
+      small.position[0] - small.target[0],
+      small.position[1] - small.target[1],
+      small.position[2] - small.target[2]
+    );
+    const largeDist = Math.hypot(
+      large.position[0] - large.target[0],
+      large.position[1] - large.target[1],
+      large.position[2] - large.target[2]
+    );
+    expect(largeDist).toBeGreaterThan(smallDist);
+  });
+
+  it('moves the camera farther back for narrow portrait viewports', () => {
+    const bounds = {
+      minX: 0,
+      maxX: FOREST_BLOCK_SIZE * 2,
+      minZ: 0,
+      maxZ: FOREST_BLOCK_SIZE,
+      minY: 0,
+      maxY: 8,
+    };
+
+    const landscape = computeForestCameraFraming(bounds, 45, 16 / 9);
+    const portrait = computeForestCameraFraming(bounds, 45, 393 / 852);
+
+    const distance = (framing: typeof landscape) =>
+      Math.hypot(
+        framing.position[0] - framing.target[0],
+        framing.position[1] - framing.target[1],
+        framing.position[2] - framing.target[2]
+      );
+
+    expect(portrait.target).toEqual(landscape.target);
+    expect(distance(portrait)).toBeGreaterThan(distance(landscape));
+  });
+});
+
+describe('computeForestCameraFromScene', () => {
+  it('returns framing for trees with positions', () => {
+    const trees = [makeTree('t1', 3, 4), makeTree('t2', 8, 9)];
+    const areas: ForestArea[] = [{ origin: [0, 0, 0], trees }];
+    const framing = computeForestCameraFromScene(trees, areas);
+    expect(framing).not.toBeNull();
+    expect(framing!.target[0]).toBeGreaterThan(0);
+    expect(framing!.position[1]).toBeGreaterThan(framing!.target[1]);
+  });
+
+  it('centers orbit pivot on ground layout center, not block-corner bounds', () => {
+    // Asymmetric multi-block forest (thomas@rossner.tk pattern): blocks (48,12) and (60,12),
+    // trees shifted toward +X so block-corner centroid differs from ground ellipse center.
+    const areas: ForestArea[] = [
+      {
+        origin: [48, 0, 12],
+        trees: [
+          makeTree('t1', 56, 18),
+          makeTree('t2', 54, 16),
+          makeTree('t3', 58, 20),
+        ],
+      },
+      {
+        origin: [60, 0, 12],
+        trees: [
+          makeTree('t4', 68, 20),
+          makeTree('t5', 70, 22),
+          makeTree('t6', 66, 14),
+          makeTree('t7', 62, 16),
+        ],
+      },
+    ];
+    const trees = areas.flatMap((area) => area.trees);
+    const layout = getForestGroundLayout(areas);
+    const bounds = computeForestBounds(trees, areas);
+    const blockCornerFraming = computeForestCameraFraming(bounds!);
+    const sceneFraming = computeForestCameraFromScene(trees, areas);
+
+    expect(layout).not.toBeNull();
+    expect(sceneFraming).not.toBeNull();
+    expect(sceneFraming!.target[0]).toBeCloseTo(layout!.center[0], 4);
+    expect(sceneFraming!.target[2]).toBeCloseTo(layout!.center[2], 4);
+    expect(Math.abs(sceneFraming!.target[0] - blockCornerFraming.target[0])).toBeGreaterThan(0.5);
+  });
+});

@@ -1,0 +1,49 @@
+.forest-lab-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.forest-lab-panel {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #334155;
+}
+
+.forest-lab-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.forest-lab-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.forest-lab-label input[type='range'] {
+  width: min(420px, 100%);
+}
+
+.forest-lab-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.forest-lab-canvas-wrap {
+  flex: 1;
+  min-height: 60vh;
+}
+
+.forest-lab-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: #94a3b8;
+}

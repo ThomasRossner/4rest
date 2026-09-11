@@ -1,0 +1,10 @@
+@startuml Test Fixed Syntax
+actor User
+participant Frontend
+participant Backend
+
+User -> Frontend: Test message
+Frontend -> Backend: API call
+Backend --> Frontend: Response
+Frontend --> User: Display result
+@enduml

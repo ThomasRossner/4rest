@@ -1,0 +1,51 @@
+@startuml Roots of Impact - User Journey
+skinparam backgroundColor #FFFFFF
+
+|#LightGreen|Guest User|
+start
+:Register/Login;
+:View Dashboard;
+:Browse Available Tasks;
+note right
+  Video tasks
+  QR code challenges
+  Photo tasks
+end note
+
+|#LightBlue|Task Execution|
+:Select Task;
+if (Video Task?) then (yes)
+  :Watch Video;
+  :Answer Quiz Questions;
+  :Submit Answers;
+elseif (QR Code Task?) then (yes)
+  :Scan QR Code at Location;
+  :Code Verified;
+else (Photo Task)
+  :Upload Photo as Proof;
+  :Submit Photo;
+endif
+
+|#LightGreen|Reward System|
+:Points Awarded;
+:Tree Planted in Forest;
+:Check Rewards Available;
+:Redeem Reward for Points;
+:Receive Voucher Code;
+
+|#LightGreen|Engagement|
+:View Virtual Forest;
+:Check Statistics;
+:See Team Leaderboard;
+stop
+
+|#Yellow|Employee User|
+start
+:Login HotelKit Sync;
+:View Employee Tasks;
+:Complete Sustainability Task;
+:HotelKit Sync Updates;
+:Receive Team Benefits;
+stop
+
+@enduml

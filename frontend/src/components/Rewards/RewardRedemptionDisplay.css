@@ -1,0 +1,125 @@
+.reward-redemption-display {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.reward-redemption-content {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.reward-redemption-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--color-text, #1f2937);
+}
+
+.reward-redemption-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.reward-redemption-section {
+  padding: 1rem;
+  background: var(--color-background-secondary, #f9fafb);
+  border-radius: 0.375rem;
+}
+
+.reward-redemption-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #6b7280);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.reward-redemption-reward-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text, #1f2937);
+  margin-bottom: 0.5rem;
+}
+
+.reward-redemption-reward-description {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #6b7280);
+  margin-bottom: 0.5rem;
+}
+
+.reward-redemption-points {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  margin-top: 0.5rem;
+}
+
+.reward-redemption-guest-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text, #1f2937);
+}
+
+.reward-redemption-guest-email {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #6b7280);
+  margin-top: 0.25rem;
+}
+
+.reward-redemption-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.reward-redemption-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.reward-redemption-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reward-redemption-button-cancel {
+  background: var(--color-background-secondary, #f3f4f6);
+  color: var(--color-text, #1f2937);
+}
+
+.reward-redemption-button-cancel:hover:not(:disabled) {
+  background: var(--color-background-tertiary, #e5e7eb);
+}
+
+/* Einlösen: lesbarer Forest-Glas-Tint statt Weiß auf hellem Mint. */
+.reward-redemption-button-redeem {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.88) 0%, rgba(20, 62, 52, 0.92) 100%);
+  color: var(--glass-text);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.reward-redemption-button-redeem:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(38, 105, 88, 0.94) 0%, rgba(24, 72, 60, 0.96) 100%);
+}
+

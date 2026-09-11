@@ -1,0 +1,42 @@
+{
+  "name": "4rest",
+  "version": "1.2.1",
+  "description": "Gamification-based sustainability platform connecting hotel guests and front office staff",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "install:all": "npm install && cd frontend && npm install --no-workspaces && cd ../backend && npm install --no-workspaces",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm run test",
+    "test:backend": "cd backend && npm run test",
+    "test:e2e": "playwright test",
+    "test:e2e:luise": "playwright test --config=playwright.luise.config.ts",
+    "test:e2e:luise:full": "E2E_LUISE_FULL=1 playwright test --config=playwright.luise.config.ts",
+    "test:e2e:luise:ui": "playwright test --config=playwright.luise.config.ts --ui",
+    "verify:luise": "node scripts/verify-jason-ticket-findings.mjs"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "@playwright/test": "^1.57.0",
+    "@types/pg": "^8.16.0",
+    "axios": "^1.13.2",
+    "concurrently": "^8.2.2",
+    "dotenv": "^16.6.1",
+    "pg": "^8.17.1",
+    "playwright": "^1.57.0",
+    "pptxgenjs": "^4.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

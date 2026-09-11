@@ -1,0 +1,254 @@
+.forest-page--immersive {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Nav backdrop-filter blurs layers below — canvas sky must not sit under header/footer. */
+.forest-page--immersive::before,
+.forest-page--immersive::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  pointer-events: none;
+  background-color: #0a2218;
+  background-image: var(--app-body-background);
+  background-size: var(--app-body-background-size);
+  background-position: var(--app-body-background-position);
+  background-attachment: fixed;
+}
+
+.forest-page--immersive::before {
+  top: 0;
+  height: var(--app-nav-top-total);
+}
+
+.forest-page--immersive::after {
+  bottom: 0;
+  height: var(--app-nav-bottom-total);
+}
+
+.forest-viewport {
+  --forest-header-height: var(--app-nav-top-total);
+  --forest-panel-top-inset: calc(var(--forest-header-height) + 8px);
+  position: absolute;
+  inset: 0;
+  flex: none;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* Strong dim over nature-valley body bg; canvas stays transparent on top. */
+.forest-viewport::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      168deg,
+      rgba(31, 90, 76, 0.28) 0%,
+      rgba(8, 28, 20, 0.62) 52%,
+      rgba(0, 0, 0, 0.58) 100%
+    );
+}
+
+.forest-viewport__fog,
+.forest-viewport__vignette {
+  z-index: 3;
+  border-radius: inherit;
+  opacity: 0.45;
+}
+
+.forest-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  overflow: hidden;
+  z-index: 1;
+  background: transparent;
+}
+
+.forest-container canvas {
+  background: transparent !important;
+}
+
+.forest-progress-panel {
+  position: absolute;
+  top: var(--forest-panel-top-inset);
+  left: 10px;
+  right: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.48rem 0.55rem;
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(31, 90, 76, 0.9) 0%, rgba(20, 62, 52, 0.86) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(20px) saturate(1.18);
+  -webkit-backdrop-filter: blur(20px) saturate(1.18);
+  pointer-events: auto;
+  transition: opacity 350ms ease, transform 350ms ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.forest-progress-panel--hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+.forest-progress-panel__character {
+  flex-shrink: 0;
+  max-width: min(38%, 148px);
+}
+
+.forest-progress-panel__character .forest-player-character--overlay {
+  margin: 0;
+  padding: 0;
+}
+
+.forest-progress-panel__character .forest-player-character__figure {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(255, 255, 255, 0.26);
+  padding: 0.38rem 0.55rem;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.forest-progress-panel__character .forest-player-character__emoji {
+  font-size: 1.55rem;
+}
+
+.forest-progress-panel__character .forest-player-character__icon-image {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.forest-progress-panel__character .forest-player-character__name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.forest-progress-panel__grid {
+  flex: 1;
+  min-width: 0;
+  gap: 0.3rem;
+}
+
+.forest-progress-panel__grid .glass-category-stat {
+  padding: 0.32rem 0.24rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.forest-progress-panel__grid .glass-category-stat__value {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.42);
+}
+
+.forest-progress-panel__grid .glass-category-stat__label {
+  font-size: 0.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.38);
+}
+
+.forest-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--glass-text-muted);
+  font-size: 1rem;
+}
+
+.forest-loading--overlay,
+.forest-load-error--overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.forest-load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 240px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--glass-text-muted);
+}
+
+.forest-load-error__retry {
+  margin-top: 4px;
+}
+
+.forest-page:not(.forest-page--immersive) {
+  padding: var(--spacing-md) 0 var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (max-width: 480px) {
+  .forest-progress-panel {
+    left: 8px;
+    right: 8px;
+    gap: 6px;
+    padding: 0.4rem 0.44rem;
+  }
+
+  .forest-progress-panel__character {
+    max-width: min(42%, 120px);
+  }
+
+  .forest-progress-panel__character .forest-player-character__name {
+    font-size: 0.68rem;
+  }
+
+  .forest-progress-panel__grid .glass-category-stat__value {
+    font-size: 0.8rem;
+  }
+
+  .forest-progress-panel__grid .glass-category-stat__label {
+    font-size: 0.48rem;
+  }
+}

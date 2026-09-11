@@ -1,0 +1,2621 @@
+openapi: 3.0.3
+info:
+  title: 4rest API
+  description: |
+    API for the 4rest gamification platform. This API provides endpoints for:
+    - User authentication and management
+    - Task management and completion
+    - Reward system
+    - Forest/gamification features
+    - Statistics and analytics
+    - GDPR compliance
+    - Integration with HotelKit and Sihot systems
+  version: 1.0.0
+  contact:
+    name: 4rest
+servers:
+  - url: http://localhost:5001/api
+    description: Development server
+  - url: https://api.4rest.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration
+  - name: Tasks
+    description: Task management and completion
+  - name: Rewards
+    description: Reward system and redemption
+  - name: Users
+    description: User profile and progress
+  - name: Locations
+    description: Manage locations used by tasks and rewards
+  - name: Forest
+    description: Forest/gamification features
+  - name: Statistics
+    description: Statistics and analytics
+  - name: GDPR
+    description: GDPR compliance endpoints
+  - name: HotelKit
+    description: HotelKit integration
+  - name: Sihot
+    description: Sihot PMS integration
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check if the API is running
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login
+      description: Authenticate user with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Unknown email or wrong password (field-specific codes)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Das Passwort ist nicht korrekt.
+                  code:
+                    type: string
+                    enum: ['EMAIL_NOT_FOUND', 'WRONG_PASSWORD']
+                    example: WRONG_PASSWORD
+                  field:
+                    type: string
+                    enum: ['email', 'password']
+                    example: password
+        '403':
+          description: Email verification required or password setup required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email verification required
+                  code:
+                    type: string
+                    enum: ['EMAIL_NOT_VERIFIED', 'PASSWORD_SETUP_REQUIRED']
+                    example: PASSWORD_SETUP_REQUIRED
+                  email:
+                    type: string
+                    format: email
+                    example: user@example.com
+                  message:
+                    type: string
+                    example: This account uses passwordless login. A password setup link has been sent to your email. Please check your inbox to set a password.
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register
+      description: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                name:
+                  type: string
+                  minLength: 2
+                role:
+                  type: string
+                  enum: [guest, front_office, administrator]
+                  default: guest
+                userType:
+                  type: string
+                  enum: [explorer, guest_in_house, observer, advocate]
+                  default: explorer
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh token
+      description: Refresh authentication token
+      security: []
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+
+  /auth/github:
+    get:
+      tags:
+        - Authentication
+      summary: GitHub OAuth
+      description: Initiate GitHub OAuth flow
+      security: []
+      responses:
+        '302':
+          description: Redirect to GitHub
+
+  /auth/github/callback:
+    get:
+      tags:
+        - Authentication
+      summary: GitHub OAuth callback
+      description: GitHub OAuth callback handler
+      security: []
+      responses:
+        '302':
+          description: Redirect after authentication
+
+  /auth/google:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth
+      description: Initiate Google OAuth flow
+      security: []
+      responses:
+        '302':
+          description: Redirect to Google
+
+  /auth/google/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Google OAuth callback
+      description: Google OAuth callback handler
+      security: []
+      responses:
+        '302':
+          description: Redirect to frontend with JWT token
+
+  /auth/facebook:
+    get:
+      tags:
+        - Authentication
+      summary: Facebook OAuth
+      description: Initiate Facebook OAuth flow
+      security: []
+      responses:
+        '302':
+          description: Redirect to Facebook
+
+  /auth/facebook/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Facebook OAuth callback
+      description: Facebook OAuth callback handler
+      security: []
+      responses:
+        '302':
+          description: Redirect to frontend with JWT token
+
+  /auth/apple:
+    get:
+      tags:
+        - Authentication
+      summary: Apple OAuth (Sign in with Apple)
+      description: Initiate Apple OAuth flow
+      security: []
+      responses:
+        '302':
+          description: Redirect to Apple
+
+  /auth/apple/callback:
+    get:
+      tags:
+        - Authentication
+      summary: Apple OAuth callback
+      description: Apple OAuth callback handler
+      security: []
+      responses:
+        '302':
+          description: Redirect to frontend with JWT token
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      description: Request a password reset email. Always returns success to prevent email enumeration.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        '200':
+          description: Password reset email sent (if account exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: If an account exists with this email, a password reset link has been sent.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset password or set password
+      description: |
+        Reset password using a token from the password reset email, or set a password for a passwordless account using a token from the password setup email.
+        
+        This endpoint handles both:
+        - Password reset: For accounts that already have a password
+        - Password setup: For passwordless accounts (accounts created via passwordless login)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - password
+              properties:
+                token:
+                  type: string
+                  description: Password reset/setup token from email
+                  example: abc123def456...
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                  description: New password (for reset) or password to set (for setup)
+                  example: newpassword123
+      responses:
+        '200':
+          description: Password reset or set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Password has been reset successfully
+                    description: |
+                      Message varies based on operation:
+                      - "Password has been reset successfully" for password reset
+                      - "Password has been set successfully. You can now sign in with your email and password." for password setup
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Authentication
+      summary: Verify email address
+      description: Verify email address using a token from the verification email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Email verification token from email
+                  example: abc123def456...
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email verified successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/resend-verification:
+    post:
+      tags:
+        - Authentication
+      summary: Resend verification email
+      description: Resend email verification email to the authenticated user
+      requestBody:
+        required: false
+      responses:
+        '200':
+          description: Verification email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Verification email sent successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/request-login-code:
+    post:
+      tags:
+        - Authentication
+      summary: Request login code
+      description: |
+        Request a passwordless login code via email. The code expires in 10 minutes and can only be used once.
+        
+        If no account exists with the given email, a new account will be created automatically with:
+        - Email verified (since they're receiving the code at this email)
+        - Default role: guest
+        - Default user type: explorer
+        - Name extracted from email address
+        - No password (passwordless account)
+        
+        For existing accounts, email verification is required.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address of the user
+                  example: user@example.com
+      responses:
+        '200':
+          description: Login code sent (account created if it didn't exist)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: If an account exists with this email, a login code has been sent.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Email verification required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email verification required
+                  message:
+                    type: string
+                    example: Please verify your email address before using passwordless login.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login-with-code:
+    post:
+      tags:
+        - Authentication
+      summary: Login with code
+      description: Authenticate user using a login code received via email. The code is single-use and expires after 10 minutes.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - code
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address of the user
+                  example: user@example.com
+                code:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  description: 6-digit login code from email
+                  example: '123456'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid or expired login code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid or expired login code
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /tasks:
+    get:
+      tags:
+        - Tasks
+      summary: Get tasks
+      description: Get list of tasks with optional filtering
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: includeAll
+          in: query
+          schema:
+            type: boolean
+          description: Include all tasks (admin only)
+        - name: includeInactive
+          in: query
+          schema:
+            type: boolean
+          description: Include inactive tasks (admin only)
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create task
+      description: Create a new task (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tasks/bulk/status:
+    post:
+      tags:
+        - Tasks
+      summary: Bulk update task status
+      description: Update active status for multiple tasks (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+                - active
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Tasks updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tasks/bulk/delete:
+    post:
+      tags:
+        - Tasks
+      summary: Bulk delete tasks
+      description: Permanently delete multiple tasks (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Tasks deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tasks/upload:
+    post:
+      tags:
+        - Tasks
+      summary: Upload task photo
+      description: Upload a photo for task completion
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - photo
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks/upload/video:
+    post:
+      tags:
+        - Tasks
+      summary: Upload task video
+      description: Upload a video file for a task (admin only)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - video
+              properties:
+                video:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Video uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tasks/{id}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task by ID
+      description: Get a single task by ID
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update task
+      description: Update an existing task (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete task
+      description: Permanently delete a task (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tasks/{id}/complete:
+    post:
+      tags:
+        - Tasks
+      summary: Complete task
+      description: Mark a task as completed by the current user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                photo_url:
+                  type: string
+                quiz_answers:
+                  type: object
+      responses:
+        '200':
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  points_earned:
+                    type: integer
+                  tree_planted:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /rewards:
+    get:
+      tags:
+        - Rewards
+      summary: Get rewards
+      description: Get list of available rewards for the current user
+      responses:
+        '200':
+          description: List of rewards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reward'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Rewards
+      summary: Create reward
+      description: Create a new reward (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewardCreate'
+      responses:
+        '201':
+          description: Reward created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reward'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /rewards/templates:
+    get:
+      tags:
+        - Rewards
+      summary: Get reward templates
+      description: Get all rewards including inactive ones (admin only)
+      parameters:
+        - name: includeInactive
+          in: query
+          schema:
+            type: boolean
+          description: Include inactive rewards
+      responses:
+        '200':
+          description: List of rewards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reward'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /rewards/bulk/status:
+    post:
+      tags:
+        - Rewards
+      summary: Bulk update reward status
+      description: Update active status for multiple rewards (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+                - active
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Rewards updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /rewards/bulk/delete:
+    post:
+      tags:
+        - Rewards
+      summary: Bulk delete rewards
+      description: Permanently delete multiple rewards (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Rewards deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /rewards/{id}:
+    put:
+      tags:
+        - Rewards
+      summary: Update reward
+      description: Update an existing reward (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewardUpdate'
+      responses:
+        '200':
+          description: Reward updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reward'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rewards/{id}/redeem:
+    post:
+      tags:
+        - Rewards
+      summary: Redeem reward
+      description: Redeem a reward for the current user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reward redeemed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  redemption:
+                    $ref: '#/components/schemas/RewardRedemption'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /locations:
+    get:
+      tags:
+        - Locations
+      summary: List locations
+      description: Retrieve all locations (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: includeInactive
+          in: query
+          schema:
+            type: boolean
+          description: Include inactive locations
+      responses:
+        '200':
+          description: List of locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Locations
+      summary: Create location
+      description: Create a new location (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationCreate'
+      responses:
+        '201':
+          description: Location created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /locations/{id}:
+    put:
+      tags:
+        - Locations
+      summary: Update location
+      description: Update an existing location (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationUpdate'
+      responses:
+        '200':
+          description: Location updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+  /locations/bulk/status:
+    post:
+      tags:
+        - Locations
+      summary: Bulk update location status
+      description: Update active status for multiple locations (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+                - active
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                active:
+                  type: boolean
+      responses:
+        '204':
+          description: Locations updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /locations/bulk/delete:
+    post:
+      tags:
+        - Locations
+      summary: Bulk delete locations
+      description: Permanently delete locations (admin only). Locations referenced by tasks or rewards cannot be removed.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '204':
+          description: Locations deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+      tags:
+        - Locations
+      summary: Delete location
+      description: Delete a location (admin only). Locations referenced by tasks or rewards cannot be removed.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Location deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user
+      description: Get the currently authenticated user's information
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserWithPlayerProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me/player-profile:
+    patch:
+      tags:
+        - Users
+      summary: Spielerprofilierung aktualisieren
+      description: |
+        Dyaden-Skalen (0–4), Skip (Undecided) oder optionaler Anzeigename.
+        Bei `status: completed` sind vier Werte in `dyadScales` erforderlich.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlayerProfileRequest'
+      responses:
+        '200':
+          description: Aktualisierter Nutzer (wie GET /users/me)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserWithPlayerProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{id}/progress:
+    get:
+      tags:
+        - Users
+      summary: Get user progress
+      description: Get progress information for a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProgress'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{id}/profile:
+    get:
+      tags:
+        - Users
+      summary: Get user profile
+      description: Get profile information for a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update profile information for a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                userType:
+                  type: string
+                  enum: [explorer, guest_in_house, observer, advocate]
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /forest:
+    get:
+      tags:
+        - Forest
+      summary: Get forest
+      description: Get forest data for all users
+      responses:
+        '200':
+          description: Forest data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trees:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ForestTree'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /forest/users/{userId}:
+    get:
+      tags:
+        - Forest
+      summary: Get user forest
+      description: Get forest data for a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User forest data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trees:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ForestTree'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /statistics:
+    get:
+      tags:
+        - Statistics
+      summary: Get statistics
+      description: Get global statistics
+      responses:
+        '200':
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Statistics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /statistics/users/{userId}:
+    get:
+      tags:
+        - Statistics
+      summary: Get user statistics
+      description: Get statistics for a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStatistics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /statistics/tasks/{taskId}/co2:
+    get:
+      tags:
+        - Statistics
+      summary: Get task CO2 savings
+      description: Get CO2 savings statistics for a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: CO2 savings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_co2_kg:
+                    type: number
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /gdpr/export/{userId}:
+    get:
+      tags:
+        - GDPR
+      summary: Export user data
+      description: Export all data for a user (GDPR right to access)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User data export
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /gdpr/delete/{userId}:
+    delete:
+      tags:
+        - GDPR
+      summary: Delete user data
+      description: Delete all data for a user (GDPR right to deletion)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User data deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /gdpr/consent:
+    post:
+      tags:
+        - GDPR
+      summary: Update consent preferences
+      description: Update GDPR consent preferences for the current user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                analytics:
+                  type: boolean
+                marketing:
+                  type: boolean
+      responses:
+        '200':
+          description: Consent updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /hotelkit/sync:
+    post:
+      tags:
+        - HotelKit
+      summary: Sync HotelKit tasks
+      description: Sync tasks from HotelKit (employee only)
+      responses:
+        '200':
+          description: Sync completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  synced:
+                    type: integer
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /hotelkit/employees/{employeeId}:
+    get:
+      tags:
+        - HotelKit
+      summary: Get HotelKit employee
+      description: Get employee information from HotelKit
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee information
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /hotelkit/webhook:
+    post:
+      tags:
+        - HotelKit
+      summary: HotelKit webhook
+      description: Webhook endpoint for HotelKit events
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+  /sihot/properties:
+    get:
+      tags:
+        - Sihot
+      summary: List properties
+      description: List all properties from Sihot
+      security: []
+      responses:
+        '200':
+          description: List of properties
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  properties:
+                    type: array
+
+  /sihot/guests:
+    get:
+      tags:
+        - Sihot
+      summary: List guests
+      description: List all guests from Sihot
+      security: []
+      responses:
+        '200':
+          description: List of guests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  guests:
+                    type: array
+
+  /sihot/guests/{guestId}:
+    get:
+      tags:
+        - Sihot
+      summary: Get guest
+      description: Get a specific guest from Sihot
+      security: []
+      parameters:
+        - name: guestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Guest information
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sihot/reservations:
+    get:
+      tags:
+        - Sihot
+      summary: List reservations
+      description: List reservations from Sihot with optional filters
+      security: []
+      parameters:
+        - name: propertyId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: arrivalDateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: arrivalDateTo
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: departureDateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: departureDateTo
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of reservations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservations:
+                    type: array
+
+    post:
+      tags:
+        - Sihot
+      summary: Create reservation
+      description: Create a new reservation in Sihot
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Reservation created
+
+  /sihot/reservations/{reservationId}:
+    get:
+      tags:
+        - Sihot
+      summary: Get reservation
+      description: Get a specific reservation from Sihot
+      security: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reservation information
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Sihot
+      summary: Update reservation
+      description: Update a reservation in Sihot
+      security: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Reservation updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sihot/reservations/{reservationId}/folio:
+    get:
+      tags:
+        - Sihot
+      summary: Get reservation folio
+      description: Get folio information for a reservation
+      security: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Folio information
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sihot/reservations/{reservationId}/check-in:
+    post:
+      tags:
+        - Sihot
+      summary: Check in reservation
+      description: Check in a reservation
+      security: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reservation checked in
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sihot/reservations/{reservationId}/check-out:
+    post:
+      tags:
+        - Sihot
+      summary: Check out reservation
+      description: Check out a reservation
+      security: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reservation checked out
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sihot/reservations/{reservationId}/cancel:
+    post:
+      tags:
+        - Sihot
+      summary: Cancel reservation
+      description: Cancel a reservation
+      security: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reservation cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /sihot/reservations/{reservationId}/charges:
+    post:
+      tags:
+        - Sihot
+      summary: Add charge to reservation
+      description: Add a charge to a reservation
+      security: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Charge added
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login or /auth/register
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [guest, front_office, administrator]
+        points:
+          type: integer
+          minimum: 0
+        userType:
+          type: string
+          enum: [explorer, guest_in_house, observer, advocate]
+        emailVerified:
+          type: boolean
+          description: Whether the user's email has been verified
+        emailNotificationsEnabled:
+          type: boolean
+          description: Whether the user has email notifications enabled
+        sihotGuestId:
+          type: string
+          nullable: true
+        sihotGuest:
+          type: object
+          nullable: true
+        sihotReservations:
+          type: array
+          items:
+            type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+
+    PlayerProfile:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, skipped, completed]
+        dyadScales:
+          type: array
+          nullable: true
+          minItems: 4
+          maxItems: 4
+          items:
+            type: integer
+            minimum: 0
+            maximum: 4
+        dominantDyad:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 4
+        profileDisplayName:
+          type: string
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - status
+        - dyadScales
+        - dominantDyad
+        - profileDisplayName
+        - completedAt
+
+    UserWithPlayerProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            playerProfile:
+              $ref: '#/components/schemas/PlayerProfile'
+
+    UpdatePlayerProfileRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [skipped, completed]
+        dyadScales:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: integer
+            minimum: 0
+            maximum: 4
+          description: Nur bei status completed erforderlich (Dyade 1–4)
+        profileDisplayName:
+          type: string
+          nullable: true
+          maxLength: 128
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT authentication token
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - token
+        - user
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+        points:
+          type: integer
+          minimum: 0
+        video_url:
+          type: string
+          nullable: true
+        quiz_questions:
+          type: object
+          nullable: true
+        qr_code:
+          type: string
+          nullable: true
+        photo_required:
+          type: boolean
+        co2_savings_kg:
+          type: number
+          nullable: true
+        external_id:
+          type: string
+          nullable: true
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: [guest, front_office, administrator]
+        allowed_user_types:
+          type: array
+          items:
+            type: string
+            enum: [explorer, guest_in_house, observer, advocate]
+        allowed_hotel_ids:
+          type: array
+          items:
+            type: string
+            enum: [ROI-BER, ROI-VIE]
+        location_id:
+          type: string
+          format: uuid
+          description: Identifier of the location associated with this task
+        location:
+          $ref: '#/components/schemas/Location'
+        active:
+          type: boolean
+        prerequisite_task_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of a specific task that must be completed before this task becomes available (Type 1 prerequisite)
+        prerequisite_task_count:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Minimum number of tasks from prerequisite_task_ids that must be completed (Type 2 prerequisite)
+        prerequisite_task_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          description: Array of task IDs from which prerequisite_task_count must be completed (Type 2 prerequisite)
+        is_available:
+          type: boolean
+          nullable: true
+          description: Whether this task is available to the current user (based on prerequisite completion)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - type
+        - points
+        - location_id
+
+    TaskCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        points:
+          type: integer
+          minimum: 0
+        video_url:
+          type: string
+        quiz_questions:
+          type: object
+        qr_code:
+          type: string
+        photo_required:
+          type: boolean
+        co2_savings_kg:
+          type: number
+        external_id:
+          type: string
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: [guest, front_office, administrator]
+        allowed_user_types:
+          type: array
+          items:
+            type: string
+            enum: [explorer, guest_in_house, observer, advocate]
+        allowed_hotel_ids:
+          type: array
+          items:
+            type: string
+            enum: [ROI-BER, ROI-VIE]
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location associated with the task
+        active:
+          type: boolean
+        prerequisite_task_id:
+          type: string
+          format: uuid
+          description: ID of a specific task that must be completed before this task becomes available (Type 1 prerequisite)
+        prerequisite_task_count:
+          type: integer
+          minimum: 1
+          description: Minimum number of tasks from prerequisite_task_ids that must be completed (Type 2 prerequisite)
+        prerequisite_task_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Array of task IDs from which prerequisite_task_count must be completed (Type 2 prerequisite)
+      required:
+        - title
+        - type
+        - points
+        - locationId
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        points:
+          type: integer
+          minimum: 0
+        video_url:
+          type: string
+        quiz_questions:
+          type: object
+        qr_code:
+          type: string
+        photo_required:
+          type: boolean
+        co2_savings_kg:
+          type: number
+        external_id:
+          type: string
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: [guest, front_office, administrator]
+        allowed_user_types:
+          type: array
+          items:
+            type: string
+            enum: [explorer, guest_in_house, observer, advocate]
+        allowed_hotel_ids:
+          type: array
+          items:
+            type: string
+            enum: [ROI-BER, ROI-VIE]
+        locationId:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+        prerequisite_task_id:
+          type: string
+          format: uuid
+          description: ID of a specific task that must be completed before this task becomes available (Type 1 prerequisite)
+        prerequisite_task_count:
+          type: integer
+          minimum: 1
+          description: Minimum number of tasks from prerequisite_task_ids that must be completed (Type 2 prerequisite)
+        prerequisite_task_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Array of task IDs from which prerequisite_task_count must be completed (Type 2 prerequisite)
+
+    Reward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        points_cost:
+          type: integer
+          minimum: 0
+        reward_type:
+          type: string
+          enum: [discount, voucher, benefit, team_event]
+        voucher_code:
+          type: string
+          nullable: true
+        external_api_id:
+          type: string
+          nullable: true
+        active:
+          type: boolean
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: [guest, front_office, administrator]
+        allowed_user_types:
+          type: array
+          items:
+            type: string
+            enum: [explorer, guest_in_house, observer, advocate]
+        allowed_hotel_ids:
+          type: array
+          items:
+            type: string
+            enum: [ROI-BER, ROI-VIE]
+        location_id:
+          type: string
+          format: uuid
+          description: Identifier of the associated location
+        location:
+          $ref: '#/components/schemas/Location'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - points_cost
+        - reward_type
+        - location_id
+
+    RewardCreate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        pointsCost:
+          type: integer
+          minimum: 0
+        rewardType:
+          type: string
+          enum: [discount, voucher, benefit, team_event]
+        voucherCode:
+          type: string
+        externalApiId:
+          type: string
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: [guest, front_office, administrator]
+        allowed_user_types:
+          type: array
+          items:
+            type: string
+            enum: [explorer, guest_in_house, observer, advocate]
+        allowed_hotel_ids:
+          type: array
+          items:
+            type: string
+            enum: [ROI-BER, ROI-VIE]
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location associated with the reward
+        active:
+          type: boolean
+      required:
+        - title
+        - pointsCost
+        - rewardType
+        - locationId
+
+    RewardUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        pointsCost:
+          type: integer
+          minimum: 0
+        rewardType:
+          type: string
+          enum: [discount, voucher, benefit, team_event]
+        voucherCode:
+          type: string
+        externalApiId:
+          type: string
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: [guest, front_office, administrator]
+        allowed_user_types:
+          type: array
+          items:
+            type: string
+            enum: [explorer, guest_in_house, observer, advocate]
+        allowed_hotel_ids:
+          type: array
+          items:
+            type: string
+            enum: [ROI-BER, ROI-VIE]
+        locationId:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+
+    Location:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        is_online:
+          type: boolean
+        address:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        active:
+          type: boolean
+        category:
+          type: string
+          nullable: true
+          enum: [online, hotel_reception, hotel_restaurant, external, physical]
+          description: Category indicating where rewards can be obtained
+        category_description:
+          type: string
+          nullable: true
+          description: Optional additional description for the category
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - is_online
+        - active
+
+    LocationCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        mode:
+          type: string
+          enum: [online, physical]
+          description: Whether the location is online or physical
+        address:
+          type: string
+          description: Required for physical locations
+        latitude:
+          type: number
+          format: double
+          description: Required for physical locations
+        longitude:
+          type: number
+          format: double
+          description: Required for physical locations
+        active:
+          type: boolean
+          description: Whether the location is active
+        category:
+          type: string
+          nullable: true
+          enum: [online, hotel_reception, hotel_restaurant, external, physical]
+          description: Category indicating where rewards can be obtained
+        categoryDescription:
+          type: string
+          nullable: true
+          description: Optional additional description for the category
+      required:
+        - name
+        - description
+        - mode
+
+    LocationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        mode:
+          type: string
+          enum: [online, physical]
+        address:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        active:
+          type: boolean
+        category:
+          type: string
+          nullable: true
+          enum: [online, hotel_reception, hotel_restaurant, external, physical]
+          description: Category indicating where rewards can be obtained
+        categoryDescription:
+          type: string
+          nullable: true
+          description: Optional additional description for the category
+
+    RewardRedemption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        reward_id:
+          type: string
+          format: uuid
+        redeemed_at:
+          type: string
+          format: date-time
+        voucher_code:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, used, expired]
+
+    UserProgress:
+      type: object
+      properties:
+        completed_tasks:
+          type: integer
+        total_points:
+          type: integer
+        trees_planted:
+          type: integer
+        co2_saved_kg:
+          type: number
+
+    ForestTree:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        tree_type:
+          type: string
+        position_x:
+          type: number
+        position_y:
+          type: number
+        position_z:
+          type: number
+        planted_at:
+          type: string
+          format: date-time
+        task_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    Statistics:
+      type: object
+      properties:
+        total_users:
+          type: integer
+        total_tasks_completed:
+          type: integer
+        total_co2_saved_kg:
+          type: number
+        total_trees_planted:
+          type: integer
+
+    UserStatistics:
+      type: object
+      properties:
+        completed_tasks:
+          type: integer
+        total_points:
+          type: integer
+        trees_planted:
+          type: integer
+        co2_saved_kg:
+          type: number
+        rank:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+

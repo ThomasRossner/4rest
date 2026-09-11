@@ -1,0 +1,416 @@
+.player-profile-onboarding {
+  min-height: 100vh;
+  position: relative;
+  padding: 0;
+  box-sizing: border-box;
+  background: #0f172a;
+}
+
+.player-profile-onboarding--inline {
+  position: fixed;
+  top: var(--app-nav-top-total);
+  left: 0;
+  right: 0;
+  bottom: var(--app-nav-bottom-total);
+  max-height: calc(100dvh - var(--app-nav-top-total) - var(--app-nav-bottom-total));
+  z-index: 10040;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* Inline-Variante an den verfügbaren Bereich anpassen statt 100vh erzwingen */
+.player-profile-onboarding--inline .ppo-fullscreen {
+  min-height: 100%;
+  height: 100%;
+}
+
+/* Inhalt zentrieren, bei Überlauf nach oben ausrichten (Buttons bleiben scrollbar erreichbar) */
+.player-profile-onboarding--inline .ppo-fullscreen__inner {
+  justify-content: safe center;
+}
+
+/* Abbrechen-Button innerhalb des begrenzten Panels statt am Bildschirmrand */
+.player-profile-onboarding--inline .player-profile-onboarding__topbar {
+  position: absolute;
+}
+
+.player-profile-onboarding__topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 10050;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  pointer-events: none;
+}
+
+.player-profile-onboarding__topbar button {
+  pointer-events: auto;
+}
+
+.player-profile-onboarding__cancel {
+  border: none;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.player-profile-onboarding__cancel:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.player-profile-onboarding__cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.player-profile-onboarding__panel {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.player-profile-onboarding__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1rem;
+  line-height: 1.35;
+}
+
+.player-profile-onboarding__title--sm {
+  font-size: 1.15rem;
+}
+
+.player-profile-onboarding__step-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin: 0 0 0.75rem;
+}
+
+.player-profile-onboarding__text {
+  color: #334155;
+  line-height: 1.55;
+  margin: 0 0 1.25rem;
+  font-size: 0.98rem;
+}
+
+.player-profile-onboarding__actions,
+.player-profile-onboarding__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.player-profile-onboarding__row {
+  margin-top: 1.25rem;
+  justify-content: space-between;
+}
+
+.player-profile-onboarding__btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.player-profile-onboarding__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.player-profile-onboarding__btn--primary {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+.player-profile-onboarding__btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.player-profile-onboarding__btn--ghost {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.player-profile-onboarding__scale-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.player-profile-onboarding__scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.player-profile-onboarding__scale-btn {
+  flex: 1;
+  min-width: 2.5rem;
+  height: 2.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #475569;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.player-profile-onboarding__scale-btn:hover {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.player-profile-onboarding__scale-btn--active {
+  border-color: #0f766e;
+  background: linear-gradient(180deg, #ccfbf1 0%, #99f6e4 100%);
+  color: #0b3f3a;
+  box-shadow:
+    0 0 0 3px rgba(20, 184, 166, 0.35),
+    0 8px 18px rgba(13, 148, 136, 0.28);
+  transform: translateY(-1px);
+}
+
+.player-profile-onboarding__label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.player-profile-onboarding__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.85rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.player-profile-onboarding__input:focus {
+  outline: none;
+  border-color: #2dd4bf;
+}
+
+.player-profile-onboarding__error {
+  color: #b91c1c;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
+}
+
+.player-profile-boot {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #0f766e 0%, #14b8a6 100%);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.player-profile-onboarding__boot-error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: #fecaca;
+  text-align: center;
+}
+
+/* Vollbild-Schritte mit optionalem Hintergrundbild */
+.ppo-fullscreen {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ppo-fullscreen__bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-color: #0f172a;
+}
+
+.ppo-fullscreen__bg--gradient {
+  background-image: linear-gradient(145deg, #0f766e 0%, #14b8a6 45%, #0d9488 100%);
+}
+
+.ppo-fullscreen__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.ppo-fullscreen__scrim--light {
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.ppo-fullscreen__inner {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 0;
+  padding: clamp(1rem, 4vw, 2rem);
+  padding-top: clamp(2.5rem, 8vw, 3.5rem);
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+
+.ppo-fullscreen__panel {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 520px;
+  background: rgba(15, 23, 42, 0.66);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 16px;
+  box-shadow:
+    0 16px 48px rgba(2, 6, 23, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.ppo-fullscreen__panel--intro {
+  background: rgba(15, 23, 42, 0.62);
+}
+
+/* Dunkler Bereich nur lokal hinter der Textbox statt auf dem ganzen Bild */
+.ppo-fullscreen__panel::before {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  z-index: -1;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 95% at 50% 58%, rgba(2, 6, 23, 0.52) 0%, rgba(2, 6, 23, 0.28) 70%, rgba(2, 6, 23, 0) 100%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* Höherer Kontrast für Text auf Foto-Hintergründen */
+.ppo-fullscreen__panel .player-profile-onboarding__title {
+  color: #f8fafc;
+  text-shadow: 0 1px 2px rgba(2, 6, 23, 0.65);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__text {
+  color: #e2e8f0;
+  font-weight: 500;
+  font-size: 1.02rem;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(2, 6, 23, 0.55);
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__step-label {
+  color: #cbd5e1;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__label {
+  color: #e2e8f0;
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__scale-labels {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__btn--ghost {
+  background: rgba(248, 250, 252, 0.2);
+  border: 1px solid rgba(226, 232, 240, 0.45);
+  color: #f8fafc;
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__error {
+  color: #fecaca;
+  font-weight: 600;
+}
+
+.ppo-fullscreen__panel .player-profile-onboarding__input {
+  background: rgba(248, 250, 252, 0.95);
+  border-color: rgba(226, 232, 240, 0.8);
+  color: #0f172a;
+}
+
+.ppo-fullscreen .player-profile-onboarding__text--on-dark {
+  color: #0f172a;
+}
+
+.player-profile-onboarding__title--on-dark {
+  color: #020617;
+}
+
+.player-profile-onboarding__scale-labels--on-dark {
+  color: #1e293b;
+}
+
+.player-profile-onboarding__btn--primary-on-dark {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+}
+
+.player-profile-onboarding__btn--ghost-on-dark {
+  background: rgba(241, 245, 249, 0.95);
+  color: #334155;
+}
+
+.player-profile-onboarding__scale-btn--on-dark {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+
+.player-profile-onboarding__scale-btn--on-dark.player-profile-onboarding__scale-btn--active {
+  border-color: #0d9488;
+  background: #ecfdf5;
+  color: #0f766e;
+}
+
+.player-profile-onboarding__label--on-dark {
+  color: #334155;
+}
+
+.player-profile-onboarding__input--on-dark {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+
+.player-profile-onboarding__error--on-dark {
+  color: #fecaca;
+}

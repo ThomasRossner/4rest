@@ -1,0 +1,15 @@
+/* Ohne App-Shell (kein Header/Tab ~7rem): Kategorie-Layout nicht künstlich kürzen */
+.tasks-page.tasks-page--category.tasks-page--public-guest {
+  max-height: none;
+  min-height: 100dvh;
+  height: 100dvh;
+  box-sizing: border-box;
+  padding-top: var(--spacing-md);
+}
+
+@media (max-width: 1024px) {
+  .tasks-page.tasks-page--category.tasks-page--public-guest {
+    max-height: none;
+  }
+}
+

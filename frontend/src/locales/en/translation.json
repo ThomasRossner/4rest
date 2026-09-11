@@ -1,0 +1,2929 @@
+{
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "de": "German",
+    "switch": "Switch language"
+  },
+  "theme": {
+    "label": "Theme",
+    "classic": "Classic",
+    "atlas": "Atlas"
+  },
+  "common": {
+    "appName": "4rest",
+    "appNameRest": "rest",
+    "loading": "Loading...",
+    "points": "{{count}} Points",
+    "pointsShort": "{{count}} pts",
+    "actions": {
+      "back": "Back",
+      "close": "Close",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "show": "Show",
+      "hide": "Hide",
+      "refresh": "Refresh",
+      "title": "Actions",
+      "done": "Done",
+      "confirm": "Confirm",
+      "ok": "OK"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "completed": "Completed"
+    },
+    "online": "Online",
+    "physical": "Physical",
+    "noData": "No data available",
+    "all": "All",
+    "ok": "OK"
+  },
+  "playerProfile": {
+    "intro": {
+      "title": "Glad you’re here!",
+      "body": "There’s more to this world than meets the eye. Answer a few short questions—and we’ll hint at what creature lives inside you.",
+      "start": "Let’s go",
+      "skipLater": "Decide later"
+    },
+    "skipHint": "You can find your character anytime under “Profile” or by tapping your figure in the forest.",
+    "progress": "Question {{current}} of {{total}}",
+    "progressDyad": "Question {{current}} of {{total}} · Dyad {{dyad}}, part {{qInDyad}}",
+    "continue": "Continue",
+    "finish": "Done",
+    "scaleAria": "Answer on a scale from 0 to 4",
+    "name": {
+      "title": "What should we call you?",
+      "hint": "Optional—you can leave this field empty.",
+      "label": "Display name",
+      "placeholder": "e.g. first name or nickname"
+    },
+    "error": {
+      "generic": "Your answers could not be saved.",
+      "loadProfile": "Could not load profile."
+    },
+    "dyads": {
+      "1": {
+        "scenario": "Picture the next few weeks: What steadies you more—clear goals and milestones, or the open path and moments along the way?",
+        "poleLow": "More goal-oriented",
+        "poleHigh": "More experience-oriented"
+      },
+      "2": {
+        "scenario": "When you plan a day off: Do you prefer structure and fixed times—or lots of room for spontaneity?",
+        "poleLow": "More structure",
+        "poleHigh": "More freedom"
+      },
+      "3": {
+        "scenario": "In a group: Do you like to steer—or go with the flow and strengthen togetherness?",
+        "poleLow": "More steering / control",
+        "poleHigh": "More acceptance / going along"
+      },
+      "4": {
+        "scenario": "In decisions: What weighs more for you—your own wellbeing or the good of everyone involved?",
+        "poleLow": "More self-focused",
+        "poleHigh": "More common good"
+      }
+    },
+    "inline": {
+      "cancel": "Cancel"
+    },
+    "moreAbout": {
+      "title": "More about my type",
+      "shortCta": "More about my type",
+      "dyadHeading": "Dyad {{n}}",
+      "noScales": "No evaluation data available.",
+      "skippedBody": "You skipped the questions for now. Your symbol is the snail (Undecided). You can answer the survey anytime under “Answer questions again”."
+    },
+    "forest": {
+      "figureAria": "Character and display name – tap for details",
+      "undecidedHint": "Please complete the short survey (shown after sign-in)."
+    },
+    "profileSection": {
+      "title": "Your character",
+      "retake": "Answer questions again"
+    }
+  },
+  "navigation": {
+    "home": "Roots",
+    "tasks": "Tasks",
+    "forest": "Forest",
+    "rewards": "Rewards",
+    "statistics": "Statistics",
+    "rankings": "Rankings",
+    "groups": "Groups",
+    "admin": "Admin",
+    "profile": "Profile",
+    "logout": "Logout",
+    "points": "{{count}} Points",
+    "forestPoints": "Forest (total): {{count}} — Communication {{k}}, People {{m}}, Nature {{n}}, Resources {{r}}",
+    "forestPointsShort": "Forest {{count}}",
+    "pointsBonus": "Points Bonus",
+    "scanBonusQr": "Scan Bonus QR Code",
+    "contests": "Contests",
+    "mailbox": "Mailbox"
+  },
+  "mailbox": {
+    "title": "Mailbox",
+    "noMessages": "No messages",
+    "loading": "Loading messages…",
+    "back": "Back",
+    "confirmDelete": "Really delete this message?",
+    "rejectionReason": "Rejection reason",
+    "reviewPhoto": "Review photo",
+    "deleting": "Deleting…",
+    "delete": "Delete"
+  },
+  "login": {
+    "modes": {
+      "login": {
+        "title": "Sign in to continue"
+      },
+      "register": {
+        "title": "Create your account"
+      },
+      "forgot-password": {
+        "title": "Reset your password"
+      },
+      "reset-password": {
+        "title": "Choose a new password"
+      },
+      "passwordless-login": {
+        "title": "Sign in with a one-time code"
+      }
+    },
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "loginCode": "Login code",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password"
+    },
+    "placeholders": {
+      "name": "Your name",
+      "email": "you@example.com",
+      "password": "••••••••",
+      "loginCode": "000000"
+    },
+    "passwordlessHint": "Enter the 6-digit code sent to your email",
+    "guestTasksButton": "Try tasks as a guest",
+    "actions": {
+      "signIn": "Sign in",
+      "register": "Create account",
+      "sendReset": "Send reset link",
+      "resetPassword": "Reset password",
+      "getCode": "Get code",
+      "submitCode": "Sign in",
+      "resendVerification": "Resend activation email"
+    },
+    "divider": "or",
+    "privacyCheckbox": "I accept the <1>privacy notice</1> and the processing of my data for using the app.",
+    "links": {
+      "noAccount": "Don't have an account?",
+      "alreadyHaveAccount": "Already have an account?",
+      "forgotPassword": "Forgot your password?",
+      "passwordless": "Sign in with email code",
+      "requestNewCode": "Request a new code",
+      "backToPassword": "Back to password login",
+      "rememberPassword": "Remember your password?",
+      "backToLogin": "Back to sign in",
+      "backToRegistration": "Back to registration"
+    },
+    "messages": {
+      "verificationSuccess": "Email verified successfully! You can now sign in.",
+      "verificationFailed": "Email verification failed. The link may have expired.",
+      "codeSent": "If an account exists with this email, a login code has been sent.",
+      "accountCreated": "Account created successfully! Please verify your email.",
+      "passwordReset": "Password reset successfully! You can now sign in.",
+      "passwordSetup": "Password set successfully! You can now sign in.",
+      "passwordlessSetup": "Password setup email sent! Please check your inbox.",
+      "loginCodeRequired": "Please enter the login code",
+      "loginCodeRequested": "Please enter your email address",
+      "nameRequired": "Please enter your name",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "passwordMismatch": "Passwords do not match",
+      "missingResetToken": "Reset token is missing",
+      "emailVerificationRequired": "Email verification required. Please check your inbox ({{email}}).",
+      "verificationResent": "If the address exists and is still unverified, a new activation email has been sent.",
+      "verificationResendFailed": "Activation email could not be resent right now.",
+      "passwordSetupRequired": "This account uses passwordless login. A password setup link has been sent to {{email}}.",
+      "validationError": "Validation error",
+      "registrationFailed": "Registration failed",
+      "privacyRequired": "Please accept the privacy notice to continue.",
+      "requestFailed": "Operation failed. Please try again.",
+      "oauthFailed": "Social authentication failed. Please try again.",
+      "oauthTokenFailed": "Authentication succeeded but token generation failed. Please try again.",
+      "oauthNotConfigured": "Social login is not configured. Please use email/password login.",
+      "defaultError": "An error occurred during authentication.",
+      "loginFailed": "Invalid email or password",
+      "fieldErrors": {
+        "emailNotFound": "There is no account for this email address.",
+        "wrongPassword": "The password is incorrect."
+      },
+      "resetLinkSent": "If an account exists with this email, a password reset link has been sent.",
+      "authenticating": "Authenticating…"
+    },
+    "social": {
+      "google": "Continue with Google",
+      "facebook": "Continue with Facebook",
+      "apple": "Continue with Apple",
+      "github": "Continue with GitHub"
+    }
+  },
+  "privacyNotice": {
+    "title": "Privacy notice",
+    "intro": "This notice explains how we process personal data when you use the 4rest app, in line with the EU General Data Protection Regulation (GDPR).",
+    "purposesTitle": "Purposes of processing",
+    "purposesBody": "We process your data to provide your user account, enable app features (e.g. gameplay, points, tasks), and contact you by email when needed (e.g. verification, password reset).",
+    "dataTitle": "Categories of data",
+    "dataBody": "This includes in particular: email address, password (stored as a secure hash), the name you provide, and usage and points data generated in the app.",
+    "legalTitle": "Legal bases",
+    "legalBody": "Processing is based on performing the contract for using the app (Art. 6(1)(b) GDPR) and, where applicable, legitimate interests (Art. 6(1)(f) GDPR), e.g. operating the service securely. Where you give consent, Art. 6(1)(a) GDPR applies.",
+    "rightsTitle": "Your rights",
+    "rightsBody": "You have the right to access, rectification, erasure, restriction of processing, data portability, and to object to certain processing. You may also lodge a complaint with a supervisory authority. You may withdraw consent at any time with effect for the future.",
+    "contactTitle": "Contact",
+    "contactBody": "For privacy questions or to exercise your rights, please use the contact details given in the imprint or in the app (e.g. support email)."
+  },
+  "home": {
+    "title": "Welcome to 4rest",
+    "subtitle": "Grow your virtual forest through sustainable actions",
+    "impactTitle": "Your Impact",
+    "impactSubtitle": "Track your sustainability progress",
+    "stats": {
+      "totalPoints": "Total points",
+      "teamPoints": "Team / Own Points",
+      "treesPlanted": "Trees planted",
+      "tasksCompleted": "Tasks completed",
+      "co2Saved": "CO₂ saved"
+    },
+    "contests": {
+      "title": "Contest",
+      "points": "Points",
+      "rank": "Rank",
+      "unnamed": "Unnamed Contest"
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "subtitle": "Continue your sustainability journey",
+      "tasks": {
+        "title": "Complete tasks",
+        "description": "Earn points by completing sustainability challenges"
+      },
+      "forest": {
+        "title": "Visit forest",
+        "description": "Watch your trees grow in the virtual forest"
+      },
+      "rewards": {
+        "title": "Redeem rewards",
+        "description": "Exchange points for discounts and benefits"
+      }
+    },
+    "atlas": {
+      "sectionTitle": "Today in your forest",
+      "summaryOpen": "{{open}} of {{total}} tasks open",
+      "summaryNone": "No tasks yet — your forest is ready when you are",
+      "summaryAllDone": "All tasks done — visit your forest or redeem rewards",
+      "ctaTasks": "Go to tasks",
+      "exploreForest": "Explore forest",
+      "openRewards": "Rewards"
+    },
+    "nextTasks": {
+      "title": "Next tasks",
+      "allTasks": "All tasks"
+    },
+    "progress": {
+      "title": "My progress",
+      "level": "Forest level {{level}} / {{max}}"
+    },
+    "invite": {
+      "title": "Invite a friend",
+      "description": "Create a team or contest in your profile and share the QR code so friends can join.",
+      "cta": "Contests",
+      "share": "Share app",
+      "shareTitle": "4rest",
+      "shareText": "Join me on 4rest!",
+      "linkCopied": "Link copied",
+      "linkCopiedMessage": "Invite link copied to clipboard",
+      "shareError": "Error",
+      "shareErrorMessage": "Could not share the invite link"
+    }
+  },
+  "tasks": {
+    "title": "Available tasks",
+    "notFound": "Task not found",
+    "locationButton": "Here",
+    "mapButton": "Map",
+    "onlineButton": "Online",
+    "showLocation": "Show location",
+    "showGlobalLocationMap": "Show all location-based tasks on map",
+    "showOnline": "Show online tasks",
+    "locationMapTitle": "Your Location",
+    "backToList": "Back to list",
+    "hub": {
+      "backToHub": "Back to overview",
+      "all": "All",
+      "sections": {
+        "overview": "Overview",
+        "places": "Places",
+        "collection": "Collection",
+        "online": "Online"
+      },
+      "allTasks": {
+        "title": "All tasks",
+        "subtitle": "Filter, sort, and browse the full list"
+      },
+      "mapView": {
+        "title": "Map view"
+      },
+      "placeTaskCount": "{{count}} tasks"
+    },
+    "categories": {
+      "hubTitle": "Choose a topic",
+      "hubSubtitle": "Tap a category to open its tasks.",
+      "backToCategories": "Back to categories",
+      "kommunikation": "Communication & networks",
+      "kommunikationDescription": "Strengthen dialogue, team spirit, and collaboration.",
+      "mensch": "People & social environment",
+      "menschDescription": "Promote empathy, support, and social impact.",
+      "natur": "Nature & environmental protection",
+      "naturDescription": "Protect biodiversity and support ecosystems.",
+      "ressourcen": "Resource & material use",
+      "ressourcenDescription": "Reduce consumption and use materials mindfully.",
+      "sonstige": "Other tasks",
+      "sonstigeDescription": "Additional actions beyond the core categories.",
+      "taskCount": "{{count}} tasks"
+    },
+    "filters": {
+      "type": {
+        "label": "Type",
+        "all": "All types",
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
+        "article_quiz": "Article Quiz",
+        "survey": "Survey",
+        "qr": "QR code",
+        "photo": "Photo",
+        "visit_location": "Visit location"
+      },
+      "completion": {
+        "label": "Completion",
+        "all": "All tasks",
+        "not_completed": "Not completed",
+        "completed": "Completed",
+        "validating": "Validating"
+      },
+      "time": {
+        "label": "Time",
+        "all": "All time",
+        "recent": "Recent (7 days)"
+      }
+    },
+    "empty": {
+      "all": {
+        "title": "No tasks available",
+        "description": "Check back later for new sustainability tasks."
+      },
+      "filtered": {
+        "title": "No tasks match your filters",
+        "description": "Try adjusting your filter settings."
+      }
+    },
+    "loadError": "Tasks could not be loaded. Please try again.",
+    "buttons": {
+      "start": "Start task",
+      "completed": "Completed",
+      "locked": "Locked",
+      "validating": "Validating"
+    },
+    "collection": {
+      "add": "Add to collection",
+      "remove": "Remove from collection"
+    },
+    "detail": {
+      "noDescription": "No further description.",
+      "videoSection": "Video",
+      "locationSection": "Location on the map",
+      "completedAt": "Completed on {{date}}",
+      "quizLockedHint": "This quiz is temporarily locked after a wrong answer.",
+      "quizLockedRemaining": "Available again in about {{minutes}} minute(s)."
+    },
+    "tile": {
+      "noPreview": "No short description"
+    },
+    "status": {
+      "available": "Available task"
+    },
+    "badges": {
+      "completed": "Task completed",
+      "locked": "Prerequisites not met",
+      "validating": "Awaiting validation"
+    },
+    "prerequisites": {
+      "unlockMessage": "Complete prerequisite tasks to unlock",
+      "showPrerequisites": "Show prerequisites",
+      "clearFilter": "Clear filter"
+    },
+    "toast": {
+      "completedTitle": "Task completed",
+      "completedMessage": "You planted a new tree and earned {{points}} points!",
+      "verificationPendingTitle": "Photo submitted",
+      "verificationPendingMessage": "Your photo was submitted and is waiting for approval.",
+      "errorTitle": "Task could not be completed",
+      "errorMessage": "Please try again."
+    },
+    "visit_location": {
+      "targetLocationNotSet": "Task target location is not set",
+      "geolocationNotSupported": "Geolocation is not supported by your browser",
+      "positionError": "Error retrieving position: {{message}}",
+      "locationError": "Location error: {{message}}",
+      "locationTrackingError": "Location tracking error: {{message}}",
+      "targetLocation": "Target Location",
+      "yourLocation": "Your Location",
+      "noTargetLocation": "This task does not have a target location configured.",
+      "atLocation": "✓ You are at the location!",
+      "distance": "Distance: {{distance}}m",
+      "startTracking": "Start Location Tracking",
+      "stopTracking": "Stop Tracking",
+      "yourLocationLabel": "Your location: {{lat}}, {{lng}}",
+      "locationReached": "Location reached! Task completed successfully.",
+      "mapInitError": "Error initializing map: {{message}}",
+      "mapUnknownError": "Unknown error",
+      "yourCurrentPosition": "Your current position",
+      "startTask": "Start task",
+      "locatingPosition": "Getting position…",
+      "loadingMap": "Loading map…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} tasks at this location"
+    }
+  },
+  "rewards": {
+    "title": "Rewards marketplace",
+    "locationButton": "Here",
+    "showLocation": "Show location",
+    "locationMapTitle": "Your Location",
+    "map": {
+      "yourCurrentPosition": "Your current position",
+      "geolocationNotSupported": "Geolocation is not supported by your browser",
+      "positionError": "Error retrieving position: {{message}}",
+      "mapInitError": "Error initializing map: {{message}}",
+      "mapUnknownError": "Unknown error",
+      "locatingPosition": "Getting position…",
+      "loadingMap": "Loading map…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} rewards at this location"
+    },
+    "backToList": "Back to list",
+    "hub": {
+      "backToHub": "Back to overview",
+      "all": "All",
+      "sections": {
+        "places": "Places",
+        "online": "Online"
+      },
+      "placeRewardCount": "{{count}} rewards"
+    },
+    "onlineButton": "Online",
+    "showOnline": "Show online rewards",
+    "balanceLabel": "Your points",
+    "prerequisites": {
+      "clearFilter": "Clear filter"
+    },
+    "filters": {
+      "all": "All",
+      "discount": "🏷️ Discounts",
+      "benefit": "✨ Benefits",
+      "team_event": "🤝 Team events"
+    },
+    "empty": {
+      "title": "No rewards available",
+      "description": "Please check back later or change the filter."
+    },
+    "receipt": {
+      "title": "Redemption receipt",
+      "voucherCode": "Voucher code",
+      "expires": "Expires",
+      "reward": "Reward"
+    },
+    "card": {
+      "cost": "{{count}} points",
+      "redeem": "Redeem",
+      "insufficient": "Insufficient",
+      "redeemPersonal": "{{count}} points (personal balance)",
+      "redeemPointsShort": "{{count}} points",
+      "redeemTeam": "{{count}} points (team balance)",
+      "redeeming": "Redeeming…",
+      "swipeRedeemPersonal": "Swipe redeem (personal balance, {{count}} points)",
+      "swipeRedeemTeam": "Swipe redeem (team balance, {{count}} points)",
+      "singleQrOpen": "Only one QR code can be open at a time."
+    },
+    "messages": {
+      "redeemSuccess": "Reward redeemed successfully",
+      "redeemError": "Failed to redeem reward",
+      "notEnoughPoints": "Not enough points",
+      "notEnoughTeamPoints": "Not enough team points",
+      "exceedsPersonalPoints": "You exceed your own point balance ({{points}} points). Do you want to continue anyway?"
+    },
+    "confirm": {
+      "title": "Confirm Redemption",
+      "message": "Are you sure you want to redeem {{title}} for {{cost}} points?",
+      "warning": "This QR code is temporary and will disappear if you leave this page. Points will only be deducted after an administrator scans and verifies the QR code.",
+      "yes": "Yes, redeem",
+      "no": "No, cancel"
+    },
+    "qr": {
+      "title": "QR Code for {{title}}",
+      "instruction": "Show this QR code to an administrator for verification",
+      "codeLabel": "Redemption code",
+      "status": "Status: {{status}}",
+      "statuses": {
+        "pending": "Pending verification",
+        "used": "Verified and redeemed",
+        "expired": "Expired"
+      },
+      "warning": "Do not close this page until the QR code is verified",
+      "confirmed": "Successfully Verified!",
+      "confirmedMessage": "Your reward has been verified and redeemed. Points have been deducted.",
+      "successModal": {
+        "title": "Reward Redeemed Successfully!",
+        "message": "Your {{title}} has been verified and redeemed. Points have been deducted from your account."
+      }
+    },
+    "voucher": {
+      "title": "Voucher code for {{title}}",
+      "instruction": "Show this voucher code when redeeming.",
+      "codeLabel": "Voucher code",
+      "warning": "Keep this code safe until redemption is completed."
+    },
+    "pointsBonus": {
+      "scanTitle": "Scan Points Bonus QR Code",
+      "noToken": "No QR token available",
+      "scanSubtitle": "Scan a QR code to receive bonus points",
+      "scanInstruction": "Point your camera at the QR code",
+      "scanning": "Scanning...",
+      "redeeming": "Redeeming...",
+      "redeemed": "Successfully redeemed {{points}} points! New balance: {{balance}}",
+      "redeemError": "Failed to redeem QR code",
+      "cameraError": "Failed to access camera",
+      "cameraNotSupported": "Camera access is not supported in this browser. Please use a modern browser with camera support.",
+      "cameraRequiresHttps": "Camera access requires HTTPS when accessing from another device. Please use HTTPS or access from localhost.",
+      "cameraHint": "Please allow camera access to scan QR codes",
+      "cameraPermissionDenied": "Camera access was denied. Please allow camera access in your browser settings.",
+      "cameraNotFound": "No camera found. Please ensure a camera is connected.",
+      "cameraInUse": "The camera is already in use by another application. Please close other applications using the camera.",
+      "toast": {
+        "title": "Points Bonus Received!",
+        "message": "You received {{points}} bonus points! New balance: {{balance}} points",
+        "errorTitle": "Redemption Failed"
+      }
+    },
+    "swipe": {
+      "title": "Redeem Reward",
+      "cost": "{{count}} points",
+      "instruction": "Swipe right to confirm redemption",
+      "swipe": "Swipe to redeem",
+      "swipeRight": "Swipe right →",
+      "releasing": "Release to confirm",
+      "redeeming": "Redeeming...",
+      "confirmed": "Confirmed!",
+      "cancel": "Cancel",
+      "warning": "This QR code is temporary. Please redeem it immediately in front of the person."
+    },
+    "scanPointsBonus": "📷 Scan Points Bonus QR Code",
+    "scanner": {
+      "button": "Redeem Guest Reward",
+      "title": "Redeem Guest Reward",
+      "subtitle": "Scan the reward QR code",
+      "instruction": "Point your camera at the QR code",
+      "scanning": "Scanning...",
+      "verifying": "Verifying...",
+      "cameraError": "Failed to access camera",
+      "cameraNotSupported": "Camera access is not supported in this browser. Please use a modern browser with camera support.",
+      "cameraRequiresHttps": "Camera access requires HTTPS when accessing from another device. Please use HTTPS or access from localhost.",
+      "cameraHint": "Please allow camera access to scan QR codes",
+      "invalidQr": "Invalid QR code",
+      "errorTitle": "Error",
+      "redeemSuccess": "Reward redeemed",
+      "redeemMessage": "Reward \"{{reward}}\" has been redeemed for {{guest}}.",
+      "redeemError": "Failed to redeem reward",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application."
+    },
+    "redemption": {
+      "title": "Reward Found",
+      "reward": "Reward",
+      "guest": "Guest",
+      "pointsCost": "{{count}} points",
+      "unknownGuest": "Unknown guest",
+      "redeem": "Redeem reward",
+      "redeeming": "Redeeming..."
+    }
+  },
+  "photoValidation": {
+    "title": "Verify Photo Tasks",
+    "loading": "Loading pending photos...",
+    "error": "Error loading photo tasks:",
+    "noPendingTasks": "No pending photo tasks.",
+    "filterNoMatch": "Filter: {{id}} – No matching task found",
+    "user": "User",
+    "points": "Points",
+    "uploadedAt": "Uploaded at",
+    "approve": "Approve",
+    "approving": "Approving...",
+    "reject": "Reject",
+    "rejecting": "Rejecting...",
+    "confirmApprove": "Do you really want to approve this photo?",
+    "approvedTitle": "Photo approved",
+    "approvedMessage": "The photo was approved and points have been awarded.",
+    "approveErrorTitle": "Error",
+    "approveErrorMessage": "Error approving the photo.",
+    "rejectedTitle": "Photo rejected",
+    "rejectedMessage": "The photo was rejected and the user has been notified.",
+    "rejectErrorTitle": "Error",
+    "rejectErrorMessage": "Error rejecting the photo.",
+    "rejectDialogTitle": "Reject photo",
+    "rejectDialogMessage": "Do you really want to reject this photo? You can optionally provide a reason.",
+    "rejectionReasonPlaceholder": "Reason (optional)",
+    "confirmReject": "Reject"
+  },
+  "admin": {
+    "title": "Administrator Area",
+    "requiresPrivileges": "You need administrator privileges to access this page.",
+    "home": {
+      "title": "Administrator Home",
+      "subtitle": "Curate experiences for guests and front office staff."
+    },
+    "logout": "Logout",
+    "actions": {
+      "createTask": {
+        "title": "Create Task",
+        "description": "Use an existing task or start from scratch."
+      },
+      "createReward": {
+        "title": "Create Reward",
+        "description": "Publish a new reward for the marketplace."
+      },
+      "manageTasks": {
+        "title": "Manage Tasks",
+        "description": "Browse, edit, activate, deactivate, or delete existing tasks."
+      },
+      "manageRewards": {
+        "title": "Manage Rewards",
+        "description": "Review and maintain rewards available to users."
+      },
+      "createLocation": {
+        "title": "Create Location",
+        "description": "Define an online or physical location for tasks and rewards."
+      },
+      "manageLocations": {
+        "title": "Manage Locations",
+        "description": "Update or remove available locations."
+      },
+      "manageParameters": {
+        "title": "Manage Parameters",
+        "description": "Manage dropdown values for tasks and rewards"
+      },
+      "manageUsers": {
+        "title": "Manage Users",
+        "description": "View, edit, and manage users"
+      },
+      "redeemRewards": {
+        "title": "Redeem Rewards",
+        "description": "Scan QR codes to verify and redeem rewards."
+      },
+      "forestDebugStats": {
+        "title": "Forest Debug Stats",
+        "description": "View per-user tree and completed-task counts for debugging."
+      },
+      "onboardingManage": {
+        "title": "Manage onboarding",
+        "description": "Edit dyads, questions per dyad, copy, and background images for player profiling."
+      },
+      "pageBackgrounds": {
+        "title": "Page backgrounds",
+        "description": "Upload background images for Roots, Tasks, Forest, Rewards, and Groups."
+      },
+      "surveyAnalytics": {
+        "title": "Survey Analytics",
+        "description": "View aggregated survey responses with visual charts and statistics."
+      },
+      "debugTools": {
+        "title": "Debug Tools",
+        "description": "Advanced debugging tools for testing and data manipulation."
+      },
+      "manageTeams": {
+        "title": "Manage Teams",
+        "description": "View all teams, edit them, and manage registration QR codes"
+      },
+      "manageContests": {
+        "title": "Manage Contests",
+        "description": "View all contests, edit them, and manage registration QR codes"
+      },
+      "pointsBonus": {
+        "title": "Generate Bonus Codes",
+        "description": "Generate QR codes for bonus points"
+      },
+      "photoValidation": {
+        "title": "Verify Photo Tasks",
+        "description": "Review and approve or reject photo tasks"
+      }
+    },
+    "debugMode": {
+      "enable": "Enable Debug Mode",
+      "disable": "Disable Debug Mode"
+    },
+    "debugTools": {
+      "title": "Debug Tools",
+      "subtitle": "Advanced debugging tools for testing and data manipulation. Use with caution.",
+      "createTasks": {
+        "title": "Create 20 Test Tasks",
+        "description": "Create 20 test tasks (15, 20, or 25 points) for a specific user. Tasks are only visible to that user.",
+        "userEmail": "User Email",
+        "button": "Create 20 Tasks",
+        "creating": "Creating...",
+        "success": "Tasks Created",
+        "error": "Failed to Create Tasks",
+        "emailRequired": "User email is required"
+      },
+      "completeTasks": {
+        "title": "Complete 20 Tasks",
+        "description": "Complete 20 uncompleted tasks for a specific user. This will award points and plant trees.",
+        "userEmail": "User Email",
+        "button": "Complete 20 Tasks",
+        "completing": "Completing...",
+        "success": "Tasks Completed",
+        "error": "Failed to Complete Tasks",
+        "emailRequired": "User email is required"
+      },
+      "deleteData": {
+        "title": "Delete Tasks & Remove Points",
+        "description": "Delete finished tasks and remove points from a specific user. Forest validation will check tree consistency after deletion.",
+        "userEmail": "User Email",
+        "taskCount": "Number of Tasks to Delete",
+        "pointsToRemove": "Points to Remove",
+        "button": "Delete & Remove Points",
+        "deleting": "Deleting...",
+        "success": "Data Deleted",
+        "error": "Failed to Delete Data",
+        "emailRequired": "User email is required",
+        "invalidNumbers": "Task count and points must be non-negative numbers"
+      },
+      "createSurvey": {
+        "title": "Create Survey with Random Participants",
+        "description": "Create a survey task and generate random responses from a specified number of participants.",
+        "surveyTitle": "Survey Title",
+        "surveyDescription": "Survey Description",
+        "participantCount": "Number of Participants",
+        "questions": "Survey Questions",
+        "addQuestion": "Add Question",
+        "questionPlaceholder": "Enter question text",
+        "titlePlaceholder": "Enter survey title",
+        "descriptionPlaceholder": "Enter survey description (optional)",
+        "button": "Create Survey with Participants",
+        "creating": "Creating...",
+        "success": "Survey Created",
+        "error": "Failed to Create Survey",
+        "titleRequired": "Survey title is required",
+        "questionsRequired": "At least one question is required",
+        "invalidParticipantCount": "Participant count must be at least 1"
+      },
+      "timeBasedActivity": {
+        "title": "Simulate Time-Based Activity",
+        "description": "Create task completions with custom dates distributed across a time range. Useful for demonstrating statistics and analytics over time.",
+        "userEmail": "User Email",
+        "taskCount": "Number of Tasks",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "distribution": "Distribution",
+        "distributionUniform": "Uniform (evenly spaced)",
+        "distributionRandom": "Random",
+        "button": "Simulate Activity",
+        "creating": "Creating...",
+        "success": "Activity Simulated",
+        "error": "Failed to Simulate Activity",
+        "emailRequired": "User email is required",
+        "datesRequired": "Start date and end date are required",
+        "invalidCount": "Task count must be at least 1"
+      },
+      "rewardRedemption": {
+        "title": "Simulate Reward Redemption",
+        "description": "Create a reward redemption for a user. Points will be added automatically if needed. Optionally auto-verify the redemption.",
+        "userEmail": "User Email",
+        "rewardId": "Reward ID",
+        "optional": "Optional",
+        "rewardIdPlaceholder": "Leave empty to use first available reward",
+        "autoVerify": "Auto-verify redemption (deduct points immediately)",
+        "button": "Simulate Redemption",
+        "processing": "Processing...",
+        "success": "Redemption Simulated",
+        "error": "Failed to Simulate Redemption",
+        "emailRequired": "User email is required"
+      },
+      "resetUserData": {
+        "title": "Reset User Data",
+        "description": "Clear user progress data. Select which data to reset. WARNING: This action cannot be undone!",
+        "userEmail": "User Email",
+        "resetTasks": "Reset Tasks",
+        "resetTrees": "Reset Trees",
+        "resetPoints": "Reset Points",
+        "resetRedemptions": "Reset Redemptions",
+        "button": "Reset User Data",
+        "confirm": "Confirm Reset",
+        "cancel": "Cancel",
+        "confirmMessage": "Are you sure you want to reset the selected data for this user? This action cannot be undone!",
+        "success": "User Data Reset",
+        "error": "Failed to Reset User Data",
+        "emailRequired": "User email is required"
+      },
+      "generateStatistics": {
+        "title": "Generate Statistics Data",
+        "description": "Generate realistic statistics data over a time period. Creates users, tasks, and completions with CO2 savings values.",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "userCount": "Number of Users",
+        "tasksPerUserMin": "Min Tasks per User",
+        "tasksPerUserMax": "Max Tasks per User",
+        "co2PerTaskMin": "Min CO2 per Task",
+        "co2PerTaskMax": "Max CO2 per Task",
+        "button": "Generate Statistics Data",
+        "generating": "Generating...",
+        "success": "Statistics Data Generated",
+        "error": "Failed to Generate Statistics Data",
+        "datesRequired": "Start date and end date are required",
+        "invalidUserCount": "User count must be at least 1"
+      },
+      "simulateForestVisits": {
+        "title": "Simulate Forest Visits",
+        "description": "Simulate multiple days of forest visits to test tree growth progression. Each visit adds 1 growth point to all user's trees.",
+        "userEmail": "User Email",
+        "days": "Number of Days",
+        "daysPlaceholder": "Enter number of days (1-365)",
+        "submit": "Simulate Visits",
+        "simulating": "Simulating...",
+        "success": "Forest Visits Simulated",
+        "error": "Failed to Simulate Forest Visits",
+        "emailRequired": "User email is required",
+        "invalidDays": "Number of days must be between 1 and 365",
+        "noTrees": "User has no trees to grow"
+      },
+      "recalculateTreeSizes": {
+        "title": "Recalculate Tree Sizes",
+        "description": "Recalculate tree sizes based on current growth points and stage. Fixes trees with incorrect sizes.",
+        "userEmail": "User Email",
+        "submit": "Recalculate Sizes",
+        "recalculating": "Recalculating...",
+        "success": "Tree Sizes Recalculated",
+        "error": "Failed to Recalculate Tree Sizes",
+        "emailRequired": "User email is required"
+      },
+      "treeSystemApp": {
+        "title": "Tree System Prototype (App.jsx)",
+        "description": "Live preview of the original 3D prototype from `components/3d/tree-system/App.jsx` for quick growth and rendering checks."
+      },
+      "rateLimit": {
+        "title": "Rate Limit Exceeded",
+        "message": "Please wait a few seconds before making another request"
+      },
+      "logs": {
+        "title": "Debug Operation Logs",
+        "description": "View audit trail of all debug operations performed by administrators.",
+        "filterAll": "All Levels",
+        "filterInfo": "Info",
+        "filterWarn": "Warning",
+        "filterError": "Error",
+        "filterOperation": "Filter by operation...",
+        "refresh": "Refresh",
+        "clear": "Clear Logs",
+        "cleared": "Logs Cleared",
+        "clearedMessage": "All debug logs have been cleared",
+        "clearError": "Failed to Clear Logs",
+        "viewDetails": "View Details",
+        "empty": "No logs available. Debug operations will appear here."
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Manage Teams",
+        "subtitle": "View and manage all teams",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading...",
+        "loadError": "Error loading teams",
+        "showInactive": "Show inactive",
+        "openFilters": "Filters",
+        "selectAll": "Select all",
+        "selectedCount": "{{count}} selected",
+        "noSelection": "No selection",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "existing": {
+          "title": "Existing Teams",
+          "subtitle": "Manage all teams"
+        },
+        "list": {
+          "title": "All Teams",
+          "name": "Name",
+          "creator": "Creator",
+          "members": "Members",
+          "points": "Points",
+          "createdAt": "Created At",
+          "updatedAt": "Updated At",
+          "active": "Active",
+          "inactive": "Inactive",
+          "edit": "Edit",
+          "noTeams": "No teams found",
+          "untitled": "Untitled"
+        },
+        "edit": {
+          "title": "Edit Team",
+          "name": "Team Name",
+          "active": "Active",
+          "save": "Save",
+          "cancel": "Cancel",
+          "saved": "Team saved",
+          "error": "Error saving team",
+          "members": "Members",
+          "loadingMembers": "Loading members...",
+          "noMembers": "No members yet",
+          "memberName": "Name",
+          "memberEmail": "Email",
+          "memberPoints": "Points",
+          "memberJoined": "Joined at",
+          "add": "Add",
+          "remove": "Remove",
+          "addMembers": "Add members",
+          "removeMembers": "Remove members",
+          "addMembersTitle": "Add members",
+          "removeMembersTitle": "Remove members",
+          "membersAdded": "Members added",
+          "membersRemoved": "Members removed",
+          "membersAddError": "Failed to add members",
+          "membersRemoveError": "Failed to remove members",
+          "nameUpdated": "Name updated",
+          "nameUpdateError": "Failed to update name",
+          "statusUpdateError": "Failed to update status",
+          "showJoinQr": "Show join QR",
+          "showRegistrationQr": "Show registration QR",
+          "joinQrTitle": "Join QR code",
+          "joinQrDescription": "QR code to join this team",
+          "registrationQrTitle": "Registration QR code",
+          "registrationQrDescription": "QR code for registration to this team",
+          "registrationUrl": "Registration URL",
+          "registrationQrError": "Failed to load registration QR code",
+          "qrError": "Failed to load QR code"
+        },
+        "qrCodes": {
+          "title": "QR Codes",
+          "joinExisting": {
+            "title": "QR Code for Existing Users",
+            "description": "This QR code can be scanned by already registered users to join the team",
+            "download": "Download QR Code"
+          },
+          "registration": {
+            "title": "Registration QR Code",
+            "description": "This QR code can be scanned by new users to register and automatically join the team",
+            "enable": "Allow registration for new users",
+            "enabled": "Registration enabled",
+            "disabled": "Registration disabled",
+            "download": "Download Registration QR Code",
+            "generate": "Generate QR Code",
+            "notAvailable": "Registration is not enabled"
+          }
+        },
+        "createNew": "Create new team",
+        "createSuccess": "Team created successfully",
+        "teamActivated": "Team activated",
+        "teamDeactivated": "Team deactivated"
+      }
+    },
+    "contest": {
+      "manage": {
+        "title": "Manage Contests",
+        "subtitle": "View and manage all contests",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading...",
+        "loadError": "Error loading contests",
+        "showInactive": "Show inactive",
+        "openFilters": "Filters",
+        "selectAll": "Select all",
+        "selectedCount": "{{count}} selected",
+        "noSelection": "No selection",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "existing": {
+          "title": "Existing Contests",
+          "subtitle": "Manage all contests"
+        },
+        "list": {
+          "title": "All Contests",
+          "name": "Name",
+          "creator": "Creator",
+          "participants": "Participants",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "rewards": "Rewards",
+          "createdAt": "Created At",
+          "updatedAt": "Updated At",
+          "active": "Active",
+          "inactive": "Inactive",
+          "edit": "Edit",
+          "noContests": "No contests found",
+          "untitled": "Untitled"
+        },
+        "edit": {
+          "title": "Edit Contest",
+          "name": "Contest Name",
+          "endDate": "End Date",
+          "active": "Active",
+          "save": "Save",
+          "cancel": "Cancel",
+          "saved": "Contest saved",
+          "error": "Error saving contest"
+        },
+        "qrCodes": {
+          "title": "QR Codes",
+          "joinExisting": {
+            "title": "QR Code for Existing Users",
+            "description": "This QR code can be scanned by already registered users to join the contest",
+            "download": "Download QR Code"
+          },
+          "registration": {
+            "title": "Registration QR Code",
+            "description": "This QR code can be scanned by new users to register and automatically join the contest",
+            "enable": "Allow registration for new users",
+            "enabled": "Registration enabled",
+            "disabled": "Registration disabled",
+            "download": "Download Registration QR Code",
+            "generate": "QR Code",
+            "notAvailable": "Registration is not enabled"
+          }
+        }
+      }
+    },
+    "task": {
+      "publish": {
+        "title": "Publish Task",
+        "subtitle": "Select an existing task or start from scratch depending on the task type."
+      },
+      "edit": {
+        "title": "Edit Task",
+        "subtitle": "Update the selected task using the form below."
+      },
+      "createFrom": "Create from",
+      "selectOption": "Select option",
+      "existingTask": "Existing task",
+      "startFromScratch": {
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
+        "articleQuiz": "Article Quiz",
+        "survey": "Survey",
+        "qr": "QR",
+        "photo": "Photo",
+        "visitLocation": "Visit location"
+      },
+      "selectExisting": "Select existing task",
+      "selectTask": "Select task",
+      "showQrCode": "Show QR code",
+      "contentLanguage": "Content language",
+      "contentLanguageDe": "German content",
+      "contentLanguageEn": "English content",
+      "basics": {
+        "title": "Task basics",
+        "subtitle": "Provide the essential details for this task."
+      },
+      "selectLocation": "Select location",
+      "noLocations": "No locations available.",
+      "loadingLocations": "Loading locations…",
+      "fields": {
+        "type": "Task type",
+        "title": "Title",
+        "teaser": "Teaser text (short)",
+        "description": "Description",
+        "points": "Points",
+        "location": "Location",
+        "active": "Active",
+        "inactive": "Inactive",
+        "co2Savings": "CO₂ savings (kg)",
+        "articleSource": "Article Source",
+        "articleUrl": "Article URL",
+        "articleContent": "Article Content",
+        "videoUrl": "Video URL",
+        "videoSubtitleDe": "Subtitle URL (German, VTT)",
+        "videoSubtitleEn": "Subtitle URL (English, VTT)",
+        "qrCodeValue": "QR code value",
+        "targetLocation": "Target Location (GPS Coordinates)",
+        "address": "Address",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "surveyType": "Survey Type",
+        "category": "Category",
+        "difficulty": "Difficulty",
+        "timeRequired": "Time required",
+        "locationTool": "Location/tool",
+        "teamsOptional": "Teams (optional)",
+        "contestsOptional": "Contests (optional)",
+        "taskTeamsHint": "If teams are selected, this task is only visible to members of those teams. No selection = visible to all.",
+        "taskContestsHint": "If contests are selected, this task is only visible to participants of those contests. No selection = visible to all.",
+        "thumbnailOptional": "Thumbnail (optional)",
+        "thumbnailPreview": "Thumbnail preview",
+        "geocode": "Geocode",
+        "allowPublicCompletion": "Completable without login",
+        "allowPublicCompletionHint": "Deep link: /public/task/:taskId — photo tasks need an account for upload.",
+        "qrCodeLabel": "QR code label",
+        "qrCodeNote": "QR code note",
+        "qrCodePlaceholder": "Enter QR code content",
+        "qrCodePreview": "QR code preview"
+      },
+      "articleSource": {
+        "url": "Use external article URL",
+        "content": "Enter article content"
+      },
+      "videoSource": {
+        "url": "Use external video URL",
+        "upload": "Upload video file"
+      },
+      "videoUrlPlaceholder": "https://example.com/video.mp4",
+      "videoSubtitlePlaceholderDe": "https://example.com/video.de.vtt",
+      "videoSubtitlePlaceholderEn": "https://example.com/video.en.vtt",
+      "selectVideoFile": "Select a video file to upload",
+      "chooseFile": "Choose file",
+      "noFileSelected": "No file selected",
+      "articleUrlPlaceholder": "https://example.com/article",
+      "articleContentPlaceholder": "Enter the article content here...",
+      "targetLocation": {
+        "title": "Target Location",
+        "addressPlaceholder": "Address will be auto-filled from map selection",
+        "latitudePlaceholder": "52.5200",
+        "longitudePlaceholder": "13.4050"
+      },
+      "audience": {
+        "title": "Audience & access",
+        "subtitle": "Restrict visibility to specific roles, user types, or hotels.",
+        "allRoles": "All roles",
+        "allUserTypes": "All user types",
+        "allHotels": "All hotels"
+      },
+      "recurrence": {
+        "title": "Recurrence",
+        "subtitle": "Set how often this task should be automatically regenerated.",
+        "typeLabel": "Recurrence type",
+        "once": "Once - Task is created once and disappears when finished",
+        "daily": "Daily - Task appears once daily (if previous is finished, waits until next day)",
+        "weekly": "Weekly - Task appears once weekly (if previous is finished, waits until next week)",
+        "monthly": "Monthly - Task appears once monthly (if previous is finished, waits until next month)"
+      },
+      "publishHint": {
+        "editing": "Editing existing task.",
+        "uploading": "Uploading video file…",
+        "ready": "All mandatory fields are complete.",
+        "completeRequired": "Complete required fields to enable publish."
+      },
+      "quiz": {
+        "title": "Quiz questions",
+        "empty": "No questions yet. Add your first question below.",
+        "questionText": "Question text",
+        "questionPlaceholder": "Enter the question prompt",
+        "correct": "Correct",
+        "question": "Question {{number}}",
+        "remove": "Remove",
+        "addAnswer": "Add answer",
+        "addQuestion": "Add question",
+        "answerOption": "Answer option {{number}}",
+        "description": "Add multiple choice questions for this video. Each question needs at least two answers and one correct answer."
+      },
+      "survey": {
+        "title": "Survey Questions",
+        "description": "Add survey questions with different types. Each question can be required or optional.",
+        "empty": "No questions yet. Add your first question below.",
+        "addQuestion": "Add question",
+        "questionNumber": "Question {{number}}",
+        "questionText": "Question text",
+        "questionPlaceholder": "Enter the question text",
+        "questionType": "Question type",
+        "typeSingleChoice": "Single Choice",
+        "typeMultipleChoice": "Multiple Choice",
+        "typeText": "Text Input",
+        "typeRating": "Rating Scale",
+        "typeMixed": "Mixed (all question types allowed)",
+        "typeSingleChoiceOnly": "Single Choice Only",
+        "typeMultipleChoiceOnly": "Multiple Choice Only",
+        "typeTextOnly": "Text Only",
+        "typeRatingOnly": "Rating Only",
+        "options": "Options",
+        "optionPlaceholder": "Option {{number}}",
+        "addOption": "Add option",
+        "minRating": "Minimum rating",
+        "maxRating": "Maximum rating",
+        "required": "Required",
+        "remove": "Remove"
+      },
+      "prerequisites": {
+        "type1": {
+          "label": "Prerequisite Task (Type 1)",
+          "noPrerequisite": "No prerequisite task",
+          "description": "Select a specific task that must be completed before this task becomes available.",
+          "searchHint": "Tip: Search by task type (e.g., QUIZ, VIDEO, VISIT_LOCATION) to filter tasks."
+        },
+        "type2": {
+          "label": "Prerequisite Tasks (Type 2)",
+          "placeholder": "Select tasks for prerequisite set",
+          "buttonLabel": "Select prerequisite tasks",
+          "minCountLabel": "Minimum Required Count",
+          "description": "Minimum number of tasks (out of {{count}} selected) that must be completed.",
+          "searchHint": "Tip: Search by task type (e.g., QUIZ, VIDEO, VISIT_LOCATION) to filter tasks."
+        },
+        "validation": {
+          "idsEmpty": "prerequisite_task_ids must contain at least one task ID.",
+          "countInvalid": "prerequisite_task_count must be an integer >= 1.",
+          "countTooLarge": "prerequisite_task_count ({{count}}) cannot be greater than the number of tasks in prerequisite_task_ids ({{total}}).",
+          "countRequired": "prerequisite_task_count is required when prerequisite_task_ids is set.",
+          "idsRequired": "prerequisite_task_count requires prerequisite_task_ids to be set."
+        },
+        "modal": {
+          "title": "Select Prerequisite Task",
+          "titleMulti": "Select Prerequisite Tasks",
+          "searchPlaceholder": "Search tasks...",
+          "noTasksFound": "No tasks found",
+          "selectTask": "Select a task",
+          "selectTasks": "Select tasks",
+          "selectedCount": "{{count}} selected",
+          "clear": "Clear",
+          "apply": "Apply",
+          "noSelection": "No task selected",
+          "noSelectionMulti": "No tasks selected"
+        }
+      },
+      "refresh": "Refresh tasks",
+      "loading": "Loading tasks…",
+      "loadError": "Failed to load existing tasks.",
+      "locationsError": "Failed to load locations. Create or refresh locations before publishing tasks.",
+      "cancelEditing": "Cancel editing",
+      "back": "Back to main menu",
+      "createLocation": "Create a location",
+      "publishing": "Publishing…",
+      "publishButton": "Publish Task",
+      "saving": "Saving…",
+      "saveChanges": "Save Task Changes",
+      "untitled": "Untitled task",
+      "noTasksFound": "No tasks found.",
+      "metadataTitle": "Metadata & access",
+      "metadataDescription": "Metadata and additional information for the task",
+      "chooseThumbnail": "Choose thumbnail",
+      "thumbnailNote": "PNG or JPG, max 2MB. Will be resized to 48×48px.",
+      "videoPreview": "Video preview",
+      "qrCodeTitle": "QR code",
+      "qrCodeDescription": "QR code content for this task.",
+      "qrCodeLabel": "QR code content",
+      "qrCodeError": "QR code error",
+      "qrCodeErrorMessage": "QR code could not be processed."
+    },
+    "reward": {
+      "create": {
+        "title": "Publish Reward",
+        "subtitle": "Select an existing reward or start from scratch."
+      },
+      "edit": {
+        "title": "Edit Reward",
+        "subtitle": "Update the selected reward using the form below."
+      },
+      "createFrom": "Create from",
+      "selectOption": "Select option",
+      "existingReward": "Existing reward",
+      "selectExisting": "Select existing reward",
+      "selectReward": "Select reward",
+      "details": {
+        "title": "Reward details",
+        "subtitle": "Define the reward content and optional integrations."
+      },
+      "selectLocation": "Select location",
+      "noLocations": "No locations available.",
+      "loadingLocations": "Loading locations…",
+      "fields": {
+        "type": "Type",
+        "pointsCost": "Points cost",
+        "voucherCode": "Voucher code",
+        "externalApiId": "External API ID",
+        "art": "Type",
+        "kategorie": "Category",
+        "teamsOptional": "Teams (optional)",
+        "contestsOptional": "Contests (optional)",
+        "rewardTeamsHint": "If teams are selected, this reward is only visible to members of those teams. No selection = visible to all.",
+        "rewardContestsHint": "If contests are selected, this reward is only visible to participants of those contests. No selection = visible to all.",
+        "thumbnailOptional": "Thumbnail (optional)",
+        "thumbnailPreview": "Thumbnail preview"
+      },
+      "voucherCodePlaceholder": "Optional code for voucher-based rewards",
+      "externalApiPlaceholder": "Optional identifier for external integrations",
+      "audience": {
+        "title": "Audience & access",
+        "subtitle": "Limit the reward visibility to certain roles, user types, or hotels.",
+        "allRoles": "All roles",
+        "allUserTypes": "All user types",
+        "allHotels": "All hotels"
+      },
+      "recurrence": {
+        "title": "Recurrence",
+        "subtitle": "Set how often this reward should be automatically regenerated.",
+        "typeLabel": "Recurrence Type",
+        "once": "Once - Reward is created once and disappears when finished",
+        "daily": "Daily - Reward appears once daily (if previous is finished, waits until next day)",
+        "weekly": "Weekly - Reward appears once weekly (if previous is finished, waits until next week)",
+        "monthly": "Monthly - Reward appears once monthly (if previous is finished, waits until next month)"
+      },
+      "publishHint": {
+        "editing": "Editing existing reward.",
+        "ready": "All mandatory fields are complete.",
+        "completeRequired": "Complete required fields to enable publish."
+      },
+      "refresh": "Refresh rewards",
+      "loading": "Loading reward templates…",
+      "loadError": "Failed to load reward templates.",
+      "cancelEditing": "Cancel editing",
+      "back": "Back to main menu",
+      "publishing": "Publishing…",
+      "publishButton": "Publish Reward",
+      "saving": "Saving…",
+      "saveChanges": "Save Reward Changes",
+      "locationsError": "Failed to load locations. Create or refresh locations before publishing rewards.",
+      "untitled": "Untitled reward",
+      "chooseThumbnail": "Choose thumbnail",
+      "thumbnailNote": "PNG or JPG, max 2MB. Will be resized to 48×48px.",
+      "selectExistingReward": "Select existing reward",
+      "defineContent": "Define the reward content and optional integrations.",
+      "loadingTemplates": "Loading reward templates…",
+      "failedLoadTemplates": "Failed to load reward templates.",
+      "metadataTitle": "Metadata & access",
+      "metadataDescription": "Metadata and additional information for the reward",
+      "optionalPointsPlaceholder": "Optional: points on redemption"
+    },
+    "location": {
+      "create": {
+        "title": "Create Location",
+        "subtitle": "Define where tasks and rewards take place. Locations can be online or physical with an address and GPS coordinates."
+      },
+      "edit": {
+        "title": "Edit Location",
+        "subtitle": "Update the location details below."
+      },
+      "details": {
+        "title": "Location details",
+        "subtitle": "Provide the basic information for this location."
+      },
+      "onlineLocation": "Online location",
+      "physicalLocation": "Physical location",
+      "fields": {
+        "name": "Name",
+        "description": "Description",
+        "active": "Active",
+        "inactive": "Inactive",
+        "locationType": "Location type",
+        "category": "Category",
+        "categoryDescription": "Category Description",
+        "image": "Image"
+      },
+      "chooseImage": "Choose image",
+      "removeImage": "Remove",
+      "currentImage": "Current image",
+      "noImage": "No image selected",
+      "imageNote": "PNG, JPG or WEBP, max 5 MB. Shown in the task list and on the place tile.",
+      "imagePreviewAlt": "Image preview",
+      "categorySelect": "Select a category (optional)",
+      "categoryDescriptionPlaceholder": "Optional additional description for the category",
+      "online": "Online",
+      "physical": "Physical",
+      "enterAddress": "Enter the full address",
+      "generateCoordinates": "Generate coordinates from address",
+      "latPlaceholder": "e.g. 52.520008",
+      "lngPlaceholder": "e.g. 13.404954",
+      "provideBasicInfo": "Provide the basic information for this location.",
+      "categories": {
+        "online": "Online",
+        "hotel_reception": "Hotel Reception",
+        "hotel_restaurant": "Hotel Restaurant",
+        "external": "External",
+        "physical": "Physical"
+      },
+      "createButton": "Create Location",
+      "updateButton": "Update Location",
+      "addressPlaceholder": "Enter the full address",
+      "latitudePlaceholder": "e.g. 52.520008",
+      "longitudePlaceholder": "e.g. 13.404954",
+      "publishHint": {
+        "editing": "Editing existing location.",
+        "ready": "All mandatory fields are complete.",
+        "completeRequired": "Complete required fields to enable save."
+      },
+      "back": "Back"
+    },
+    "locationManage": {
+      "title": "Manage Locations",
+      "subtitle": "Review existing locations, edit their details, or remove unused entries.",
+      "refresh": "Refresh locations",
+      "back": "Back to main menu",
+      "loading": "Loading locations…",
+      "loadError": "Failed to load locations. Please try again.",
+      "existing": {
+        "title": "Existing locations",
+        "subtitle": "Each task and reward references one of these locations."
+      },
+      "showInactive": "Show inactive",
+      "selectAll": "Select all locations",
+      "online": "Accessible online",
+      "newButton": "New location",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "selectedCount": "{{count}} selected",
+      "noSelection": "No locations selected",
+      "table": {
+        "name": "Name",
+        "type": "Type",
+        "details": "Details",
+        "status": "Status"
+      },
+      "physical": "Physical",
+      "noLocations": "No locations found."
+    },
+    "taskManage": {
+      "title": "Manage Tasks",
+      "subtitle": "Browse all tasks, toggle availability, or clean up unused entries.",
+      "reviewDescription": "Review, edit, activate, deactivate, or delete tasks directly.",
+      "refresh": "Refresh tasks",
+      "back": "Back to main menu",
+      "loading": "Loading tasks…",
+      "loadError": "Failed to load existing tasks.",
+      "existing": {
+        "title": "Existing tasks"
+      },
+      "showInactive": "Show inactive",
+      "openFilters": "Open filters",
+      "selectAll": "Select all tasks",
+      "newButton": "New task",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "selectedCount": "{{count}} selected",
+      "noSelection": "No tasks selected",
+      "noItems": "No items found.",
+      "noTasks": "No tasks found.",
+      "actionsColumn": "Actions",
+      "table": {
+        "task": "Task",
+        "location": "Location",
+        "points": "Points",
+        "cost": "Cost",
+        "status": "Status",
+        "noRewardsFound": "No rewards found.",
+        "selectReward": "Select reward",
+        "actions": "Actions",
+        "possiblePoints": "Possible points",
+        "reward": "Reward",
+        "title": "Title"
+      }
+    },
+    "rewardManage": {
+      "title": "Manage Rewards",
+      "subtitle": "Review existing rewards and adjust their details or availability.",
+      "refresh": "Refresh rewards",
+      "back": "Back to main menu",
+      "loading": "Loading rewards…",
+      "loadError": "Failed to load rewards.",
+      "existing": {
+        "title": "Existing rewards",
+        "subtitle": "Maintain active rewards, edit their details, or clean up inactive entries."
+      },
+      "showInactive": "Show inactive",
+      "openFilters": "Open filters",
+      "selectAll": "Select all rewards",
+      "newButton": "New reward",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "selectedCount": "{{count}} selected",
+      "noSelection": "No rewards selected",
+      "noRewards": "No rewards found.",
+      "table": {
+        "title": "Title",
+        "cost": "Cost",
+        "status": "Status",
+        "location": "Location"
+      }
+    },
+    "forestStats": {
+      "title": "Forest Debug Stats",
+      "subtitle": "Per-user tree counts vs. completed tasks, based on the current database state. Useful for checking the forest validation script without using psql.",
+      "refresh": "Refresh forest stats",
+      "back": "Back to main menu",
+      "loading": "Loading forest stats…",
+      "noUsers": "No users found.",
+      "table": {
+        "title": "Per-user trees vs. completed tasks",
+        "subtitle": "Compare points, planted trees, and completed tasks for each user.",
+        "email": "Email",
+        "points": "Points",
+        "trees": "Trees",
+        "completedTasks": "Completed tasks",
+        "consistent": "Counts consistent?"
+      },
+      "validation": {
+        "title": "Forest Validation & Fix",
+        "subtitle": "Run the validation script to check and fix forest tree coordinates, block layout, and consistency with completed tasks.",
+        "dryRun": "Dry run (preview only)",
+        "dryRunHint": "Preview changes without applying them. Recommended for first-time use.",
+        "forceGeometry": "Force geometry repositioning",
+        "forceGeometryHint": "Reposition all trees even if they're already in valid positions.",
+        "userFilter": "User filter (optional)",
+        "userFilterPlaceholder": "Email or user ID (leave empty for all users)",
+        "userFilterHint": "Run validation for a specific user only. Enter email or user ID.",
+        "run": "Run Validation",
+        "error": "Validation Error",
+        "startFailed": "Failed to start validation. Please try again.",
+        "failed": "Validation failed",
+        "confirmDryRun": {
+          "title": "Run Forest Validation (Dry Run)?",
+          "description": "This will preview what changes would be made without applying them. No database changes will occur."
+        },
+        "confirmLive": {
+          "title": "Run Forest Validation (LIVE)?",
+          "description": "⚠️ WARNING: This will modify the database! Trees may be deleted, moved, or recreated based on completed tasks and geometry rules. This action cannot be undone. Are you sure you want to continue?"
+        },
+        "status": {
+          "pending": "Pending…",
+          "running": "Running…",
+          "completed": "Completed",
+          "failed": "Failed"
+        },
+        "results": {
+          "title": "Validation Results",
+          "usersProcessed": "Users processed",
+          "treesMoved": "Trees moved",
+          "treesDeleted": "Trees deleted",
+          "totalFixed": "Total fixed",
+          "errors": "Errors",
+          "showErrors": "Show error details"
+        },
+        "closeResults": "Close Results"
+      }
+    },
+    "onboarding": {
+      "title": "Manage onboarding",
+      "subtitle": "Structure, copy, and background images for guest player profiling.",
+      "structureTitle": "Structure",
+      "structureHint": "Adjust dyads and questions per dyad, then “Apply structure”. Fill all questions and save.",
+      "dyadCount": "Number of dyads",
+      "questionsPerDyad": "Questions per dyad",
+      "applyStructure": "Apply structure",
+      "introSlidesTitle": "Intro slides",
+      "introSlidesHint": "Create any number of intro pages, each with its own text and optional background image.",
+      "addIntroSlide": "Add intro slide",
+      "introSlideHeading": "Intro slide {{index}}",
+      "introTitle": "Intro (start screen)",
+      "introTitleDe": "Title (DE)",
+      "introTitleEn": "Title (EN)",
+      "introBodyDe": "Body (DE)",
+      "introBodyEn": "Body (EN)",
+      "stepsTitle": "Questions (order: dyad 1 Q1, dyad 1 Q2, …)",
+      "stepsHint": "Per question: scenario, pole labels, and optional background (JPEG/PNG/WebP/GIF).",
+      "typeTextsTitle": "Player type description texts",
+      "typeTextsHint": "These texts are shown in “More about my type”. For each dyad, levels 0 to 4 are editable (DE/EN).",
+      "typeTextDyadHeading": "Dyad {{dyad}}",
+      "typeTextScaleHeading": "Level {{scale}}",
+      "typeTextLabelDe": "Heading (DE)",
+      "typeTextLabelEn": "Heading (EN)",
+      "typeTextBodyDe": "Description (DE)",
+      "typeTextBodyEn": "Description (EN)",
+      "stepHeading": "Question {{index}} · Dyad {{dyad}}, part {{q}}",
+      "backgroundImage": "Background image",
+      "defaultDyadImagesLabel": "Available default dyad images",
+      "useDefaultDyadImage": "Use default image from dyad {{dyad}}",
+      "defaultDyadImageAlt": "Default image dyad {{dyad}}",
+      "scenarioDe": "Scenario (DE)",
+      "scenarioEn": "Scenario (EN)",
+      "poleLowDe": "Low / left pole (DE)",
+      "poleLowEn": "Low / left pole (EN)",
+      "poleHighDe": "High / right pole (DE)",
+      "poleHighEn": "High / right pole (EN)",
+      "save": "Save",
+      "saving": "Saving…",
+      "loadError": "Could not load configuration.",
+      "saveError": "Save failed.",
+      "uploadError": "Upload failed.",
+      "invalidStructure": "Invalid structure (max 32 dyads, 16 questions per dyad, 512 questions total).",
+      "characterIconsTitle": "Player character icons",
+      "characterIconsHint": "Upload custom images for dyads and fallback states. Used in profile and forest instead of emoji.",
+      "characterIconDyad": "Dyad {{dyad}}",
+      "characterIconPending": "Fallback: pending",
+      "characterIconSkipped": "Fallback: skipped",
+      "characterIconFallback": "Fallback: generic",
+      "uploadCharacterIcon": "Upload icon",
+      "clearCharacterIcon": "Remove icon",
+      "noImage": "No image"
+    },
+    "pageBackgrounds": {
+      "title": "Page backgrounds",
+      "subtitle": "Manage custom background images for the five main guest app pages. Without an upload, the provided default image is used.",
+      "hint": "Images are used directly as the page background. Landscape images are the most stable across desktop and mobile.",
+      "loadError": "Could not load backgrounds.",
+      "uploadError": "Could not upload image.",
+      "resetError": "Could not restore the default image.",
+      "uploadSuccess": "Background updated",
+      "resetSuccess": "Default image restored",
+      "upload": "Upload image",
+      "uploading": "Uploading...",
+      "reset": "Use default",
+      "resetting": "Resetting...",
+      "custom": "Custom image",
+      "default": "Default image",
+      "defaultHint": "The provided default image is currently used.",
+      "customHint": "A custom image is currently used.",
+      "fileTypes": "JPEG, PNG, WebP, or GIF",
+      "pages": {
+        "home": "Roots",
+        "tasks": "Tasks",
+        "forest": "Forest",
+        "rewards": "Rewards",
+        "groups": "Groups"
+      }
+    },
+    "surveyAnalytics": {
+      "title": "Survey Analytics",
+      "selectTask": "Select Survey Task",
+      "allSurveys": "All Surveys",
+      "totalResponses": "{{count}} Response",
+      "totalResponses_plural": "{{count}} Responses",
+      "noData": "No Survey Data",
+      "noDataDescription": "No survey responses found. Responses will appear here once users complete survey tasks.",
+      "averageRating": "Average Rating: {{value}}",
+      "textResponses": "{{count}} Text Response",
+      "textResponses_plural": "{{count}} Text Responses"
+    },
+    "common": {
+      "back": "Back",
+      "refresh": "Refresh"
+    },
+    "parameterManage": {
+      "title": "Manage Parameters",
+      "subtitle": "Manage dropdown values for tasks and rewards",
+      "loading": "Loading parameters...",
+      "taskParameters": "Task Parameters",
+      "rewardParameters": "Reward Parameters",
+      "parameterType": "Parameter Type",
+      "value": "Value",
+      "displayOrder": "Display Order",
+      "weight": "Weight",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actions": "Actions",
+      "edit": "Edit",
+      "delete": "Delete",
+      "newParameter": "New Parameter",
+      "save": "Save",
+      "cancel": "Cancel",
+      "enterValue": "Enter value",
+      "confirmDelete": "Do you really want to delete this parameter?",
+      "created": "Parameter created successfully",
+      "updated": "Parameter updated successfully",
+      "deleted": "Parameter deleted successfully",
+      "error": "Error loading parameters",
+      "createError": "Error creating parameter",
+      "updateError": "Error updating parameter",
+      "deleteError": "Error deleting parameter",
+      "valueRequired": "Please enter a value",
+      "pointsCalculationFactor": "Points Calculation Factor (Tasks)",
+      "pointsCalculationFactorDescription": "The factor is used to automatically calculate task points: (difficulty_weight × time_required_weight) × factor",
+      "rewardCostCalculationFactor": "Cost Calculation Factor (Rewards)",
+      "rewardCostCalculationFactorDescription": "The factor is used to automatically calculate reward costs: kosten_weight × factor",
+      "factorUpdated": "Factor updated successfully",
+      "factorMustBePositive": "Factor must be a positive number",
+      "fieldNames": {
+        "type": "Type",
+        "category": "Category",
+        "difficulty": "Difficulty",
+        "time_required": "Time Required",
+        "location_tool": "Location/Tool",
+        "zielgruppe": "Target Group",
+        "reward_art": "Type",
+        "kategorie": "Category",
+        "kosten": "Cost"
+      }
+    },
+    "userSelection": {
+      "title": "Select users",
+      "search": "Search…",
+      "sortBy": "Sort by",
+      "sortName": "Name",
+      "sortEmail": "Email",
+      "sortRole": "Role",
+      "sortPoints": "Points",
+      "loading": "Loading users…",
+      "error": "Error loading users",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "selected": "{{count}} selected",
+      "noSelection": "No selection",
+      "noUsers": "No users found",
+      "points": "Points",
+      "add": "Add"
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage users, roles, points and statistics",
+      "loading": "Loading...",
+      "noUsers": "No users found",
+      "existing": {
+        "title": "Existing Users",
+        "subtitle": "Select users and perform actions"
+      },
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "noSelection": "No selection",
+      "filters": {
+        "role": "Role",
+        "status": "Status",
+        "search": "Search",
+        "allRoles": "All Roles",
+        "allStatuses": "All Statuses",
+        "active": "Active",
+        "inactive": "Inactive",
+        "searchPlaceholder": "Search by name or email"
+      },
+      "table": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "points": "Points",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "roles": {
+        "guest": "Guest",
+        "rezeption": "Rezeption",
+        "redaktion": "Redaktion",
+        "administrator": "Administrator"
+      },
+      "details": {
+        "title": "User Details",
+        "basicInfo": "Basic Information",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "userType": "User Type",
+        "points": "Points",
+        "status": "Status",
+        "createdAt": "Created At",
+        "statistics": "Statistics"
+      },
+      "stats": {
+        "tasksCompleted": "Tasks Completed",
+        "treesPlanted": "Trees Planted",
+        "totalPointsEarned": "Total Points Earned",
+        "co2Saved": "CO2 Saved",
+        "rewardsRedeemed": "Rewards Redeemed",
+        "tasksLast7Days": "Tasks (Last 7 Days)",
+        "tasksLast30Days": "Tasks (Last 30 Days)"
+      },
+      "actions": {
+        "viewDetails": "View Details",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "resetPassword": "Reset Password",
+        "setPassword": "Set Password",
+        "deleteUser": "Delete User",
+        "hardDeleteUser": "Delete User Permanently",
+        "cancelPassword": "Cancel password input"
+      },
+      "messages": {
+        "roleUpdated": "Role successfully updated",
+        "roleUpdateError": "Error updating role",
+        "pointsUpdated": "Points successfully updated",
+        "pointsUpdateError": "Error updating points",
+        "activeToggled": "Status successfully changed",
+        "activeToggleError": "Error changing status",
+        "passwordReset": "Password reset token: {{token}}",
+        "passwordResetError": "Error resetting password",
+        "userDeleted": "User successfully deleted",
+        "userDeleteError": "Error deleting user",
+        "userCreated": "User created successfully.",
+        "userCreateError": "Failed to create user.",
+        "passwordTooShort": "Password is too short.",
+        "passwordsDoNotMatch": "Passwords do not match.",
+        "passwordSetSuccess": "Password set successfully.",
+        "passwordSetError": "Failed to set password.",
+        "passwordResetEmailSent": "Password reset email sent."
+      },
+      "confirmRoleChange": "Are you sure you want to change this user's role?",
+      "confirmPointsChange": "Are you sure you want to change this user's points?",
+      "confirmToggleActive": "Are you sure you want to change this user's status?",
+      "confirmPasswordReset": "Are you sure you want to reset the password for this user? An email with a reset link will be sent to the user.",
+      "setPassword": {
+        "title": "Set Password",
+        "newPassword": "New Password",
+        "newPasswordPlaceholder": "Enter password (at least 6 characters)",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter password",
+        "submit": "Set Password"
+      },
+      "confirmSoftDelete": "Are you sure you want to delete this user?",
+      "confirmHardDelete": "Are you sure you want to permanently delete this user? This action cannot be undone!",
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{current}} of {{total}}"
+      },
+      "errors": {
+        "loadError": "Error loading users",
+        "userNotFound": "User not found"
+      },
+      "newButton": "Create new user",
+      "selectedCount": "{{count}} selected",
+      "confirmBulkDelete": "Delete selected users?",
+      "newUser": {
+        "title": "Create new user",
+        "name": "Name",
+        "namePlaceholder": "Enter name",
+        "email": "Email",
+        "emailPlaceholder": "Enter email",
+        "emailRequired": "Email is required",
+        "role": "Role",
+        "optional": "optional",
+        "create": "Create user",
+        "creating": "Creating user..."
+      }
+    },
+    "filters": {
+      "title": "Filters",
+      "mobileTitle": "Filters ({{count}})",
+      "close": "Close filters",
+      "location": "Location",
+      "status": "Status",
+      "recurrence": "Recurrence",
+      "type": "Type",
+      "typeIcon": "Type/Icon",
+      "name": "Name",
+      "creator": "Creator",
+      "endDate": "End Date",
+      "filterBy": "Filter by {{type}}",
+      "allRecurrences": "All Recurrences",
+      "allLocations": "All Locations",
+      "allStatuses": "All Statuses",
+      "allTypes": "All Types",
+      "allCreators": "All Creators",
+      "clear": "Clear",
+      "clearAll": "Clear All",
+      "applyFilters": "Apply Filters",
+      "clearSelection": "Clear selection",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Search by title...",
+      "namePlaceholder": "Search by name...",
+      "points": "Points",
+      "cost": "Cost",
+      "min": "Min",
+      "max": "Max",
+      "minPlaceholder": "Min value",
+      "maxPlaceholder": "Max value"
+    },
+    "table": {
+      "category": "Category",
+      "difficulty": "Difficulty",
+      "timeRequired": "Time required",
+      "locationTool": "Location / Tool",
+      "actions": "Actions",
+      "points": "Points",
+      "location": "Location",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "possiblePoints": "Possible points",
+      "noTasksFound": "No tasks found.",
+      "task": "Task",
+      "reward": "Reward",
+      "cost": "Cost",
+      "noRewardsFound": "No rewards found.",
+      "selectReward": "Select reward",
+      "locationOnline": "Online",
+      "locationInactive": "Inactive"
+    },
+    "noSelection": "— No selection —",
+    "teams": {
+      "loading": "Loading teams…",
+      "noneAvailable": "No active teams available"
+    },
+    "contests": {
+      "loading": "Loading contests…",
+      "noneAvailable": "No active contests available"
+    },
+    "fields": {
+      "videoSource": "Video source",
+      "videoFile": "Video file",
+      "photoRequirement": "Photo requirement",
+      "allowedRoles": "Allowed roles",
+      "allowedUserTypes": "Allowed user types",
+      "allowedHotels": "Allowed hotels",
+      "required": "Required",
+      "readOnly": "Read only"
+    },
+    "confirm": {
+      "deleteLocationWithName": {
+        "title": "Delete {{name}}?",
+        "description": "Are you sure you want to delete this location? Tasks and rewards using it will need to be reassigned."
+      },
+      "deleteContest": "Delete contest?",
+      "deleteContests": "Delete selected contests?",
+      "deleteContestSingle": {
+        "title": "Delete contest",
+        "description": "Do you really want to delete this contest?"
+      },
+      "deleteSelectedContests": {
+        "title": "Delete contests",
+        "description": "Do you really want to delete the selected contests?"
+      },
+      "deleteLocation": "Delete location?",
+      "deleteLocations": "Delete selected locations?",
+      "deleteLocationSingle": {
+        "description": "Do you really want to delete this location?"
+      },
+      "deleteSelectedLocations": {
+        "title": "Delete locations",
+        "description": "Do you really want to delete the selected locations?"
+      },
+      "deleteReward": "Delete reward?",
+      "deleteRewards": "Delete selected rewards?",
+      "deleteRewardSingle": {
+        "title": "Delete reward",
+        "description": "Do you really want to delete this reward?"
+      },
+      "deleteSelectedRewards": {
+        "title": "Delete rewards",
+        "description": "Do you really want to delete the selected rewards?"
+      },
+      "deleteTask": "Delete task?",
+      "deleteTasks": "Delete selected tasks?",
+      "deleteTaskSingle": {
+        "title": "Delete task",
+        "description": "Do you really want to delete this task?"
+      },
+      "deleteSelectedTasks": {
+        "title": "Delete tasks",
+        "description": "Do you really want to delete the selected tasks?"
+      },
+      "deleteTeam": "Delete team?",
+      "deleteTeams": "Delete selected teams?",
+      "deleteTeamSingle": {
+        "title": "Delete team",
+        "description": "Do you really want to delete this team?"
+      },
+      "deleteSelectedTeams": {
+        "title": "Delete teams",
+        "description": "Do you really want to delete the selected teams?"
+      }
+    },
+    "messages": {
+      "selectedTasksDeleted": "Selected tasks deleted.",
+      "failedToDeleteTasks": "Failed to delete selected tasks.",
+      "taskActivated": "Task activated.",
+      "taskDeactivated": "Task deactivated.",
+      "failedToUpdateTask": "Failed to update task.",
+      "selectedRewardsDeleted": "Selected rewards deleted.",
+      "failedToDeleteRewards": "Failed to delete selected rewards.",
+      "rewardActivated": "Reward activated.",
+      "rewardDeactivated": "Reward deactivated.",
+      "failedToUpdateReward": "Failed to update reward.",
+      "selectedLocationsDeleted": "Selected locations deleted.",
+      "failedToDeleteLocations": "Failed to delete selected locations.",
+      "locationActivated": "Location activated.",
+      "locationDeactivated": "Location deactivated.",
+      "failedToUpdateLocation": "Failed to update location.",
+      "selectedTasksActivated": "Selected tasks activated.",
+      "selectedTasksDeactivated": "Selected tasks deactivated.",
+      "selectedRewardsActivated": "Selected rewards activated.",
+      "selectedRewardsDeactivated": "Selected rewards deactivated.",
+      "selectedLocationsActivated": "Selected locations activated.",
+      "selectedLocationsDeactivated": "Selected locations deactivated.",
+      "locationDeletedSuccessfully": "Location deleted successfully.",
+      "failedToDeleteTask": "Failed to delete task.",
+      "failedToDeleteReward": "Failed to delete reward.",
+      "failedToDeleteLocation": "Failed to delete location.",
+      "selectedTeamsDeleted": "Selected teams deleted.",
+      "failedToDeleteTeams": "Failed to delete selected teams.",
+      "teamActivated": "Team activated.",
+      "teamDeactivated": "Team deactivated.",
+      "failedToUpdateTeam": "Failed to update team.",
+      "failedToDeleteTeam": "Failed to delete team.",
+      "selectedTeamsActivated": "Selected teams activated.",
+      "selectedTeamsDeactivated": "Selected teams deactivated.",
+      "selectedContestsDeleted": "Selected contests deleted.",
+      "failedToDeleteContests": "Failed to delete selected contests.",
+      "contestActivated": "Contest activated.",
+      "contestDeactivated": "Contest deactivated.",
+      "failedToUpdateContest": "Failed to update contest.",
+      "failedToDeleteContest": "Failed to delete contest.",
+      "selectedContestsActivated": "Selected contests activated.",
+      "selectedContestsDeactivated": "Selected contests deactivated.",
+      "failedToDeleteItems": "Failed to delete items.",
+      "failedToUpdateItems": "Failed to update items.",
+      "selectedItemsDeleted": "Selected items deleted.",
+      "selectedItemsActivated": "Selected items activated.",
+      "selectedItemsDeactivated": "Selected items deactivated.",
+      "selectedUsersDeleted": "Selected users deleted.",
+      "selectedUsersActivated": "Selected users activated.",
+      "selectedUsersDeactivated": "Selected users deactivated.",
+      "taskDeleted": "Task deleted.",
+      "taskNotFound": "Task not found.",
+      "locationDeleted": "Location deleted.",
+      "rewardDeleted": "Reward deleted.",
+      "rewardNotFound": "Reward not found."
+    },
+    "toasts": {
+      "taskCreatedTitle": "Task created",
+      "taskCreatedMessage": "Your new task is now available for users.",
+      "rewardCreatedTitle": "Reward created",
+      "rewardCreatedMessage": "Your new reward is now visible in the marketplace."
+    },
+    "qrScanner": {
+      "title": "Redeem Rewards",
+      "subtitle": "Scan QR codes to verify and redeem user rewards",
+      "instruction": "Position the QR code within the frame",
+      "scanning": "Scanning...",
+      "cameraError": "Failed to access camera",
+      "cameraHint": "Please allow camera access and ensure you're using a device with a camera",
+      "verificationSuccess": "QR code verified successfully",
+      "verificationError": "Failed to verify QR code",
+      "backToMain": "Back to main",
+      "successModal": {
+        "title": "QR Code Verified!",
+        "message": "Successfully verified and redeemed reward for {{userName}}.",
+        "reward": "Reward: {{title}}"
+      },
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application.",
+      "cameraNotSupported": "Camera is not supported.",
+      "cameraRequiresHttps": "Camera access requires HTTPS."
+    }
+  },
+  "forest": {
+    "title": "Virtual forest",
+    "subtitle": "Watch your trees grow as you complete sustainable actions",
+    "loading": "Loading forest...",
+    "loadError": "Forest data could not be loaded. Please try again."
+  },
+  "statistics": {
+    "title": "Statistics & impact",
+    "emptyTitle": "No statistics available",
+    "emptyDescription": "Statistics will appear here once tasks are completed.",
+    "noData": "No data available",
+    "cards": {
+      "co2Saved": "CO₂ saved",
+      "co2PerTask": "~{{value}} kg per task",
+      "trees": "Total trees",
+      "activeUsers": "Active users",
+      "activeUsersSubtitle": "Last 30 days",
+      "tasksCompleted": "Tasks completed",
+      "avgPoints": "Avg points/user"
+    },
+    "dailyProgress": "Daily progress (last 30 days)",
+    "teamLeaderboard": "Team leaderboard",
+    "leaderboard": {
+      "tasks": "{{count}} tasks",
+      "points": "{{count}} pts",
+      "co2": "{{value}} kg CO₂"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "noEmail": "No email provided",
+    "role": "Role: {{role}}",
+    "stats": {
+      "points": "Total points",
+      "teamPoints": "Team / Own Points",
+      "trees": "Your trees"
+    },
+    "privacy": {
+      "show": "Show privacy settings",
+      "hide": "Hide privacy settings"
+    },
+    "language": {
+      "label": "Language"
+    },
+    "sihot": {
+      "title": "SIHOT guest profile",
+      "guestId": "Guest ID: {{id}}",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "loyaltyLevel": "Loyalty level",
+        "language": "Preferred language",
+        "preferences": "Preferences",
+        "notes": "Notes"
+      },
+      "reservations": {
+        "title": "Recent reservations",
+        "room": "Room {{room}}",
+        "confirmation": "Confirmation: {{number}}",
+        "balance": "Balance: {{amount}}"
+      },
+      "missing": "—"
+    },
+    "qrCode": {
+      "sectionTitle": "Personal QR Code",
+      "title": "Your Personal QR Code",
+      "description": "Share this QR code to create teams or contests with others",
+      "loading": "Loading QR code...",
+      "error": "Failed to load QR code"
+    },
+    "teams": {
+      "title": "My Teams",
+      "createButton": "Create Team",
+      "joinButton": "Join Team",
+      "empty": "No teams yet. Create one or join one!",
+      "create": {
+        "title": "Create Team",
+        "teamName": "Team Name",
+        "teamNamePlaceholder": "Enter team name (optional)",
+        "hint": "If no name is provided, your name will be used as the team name.",
+        "createButton": "Create Team",
+        "creating": "Creating team...",
+        "success": "Team created",
+        "successMessage": "Team created successfully",
+        "error": "Failed to create team",
+        "errorTitle": "Error"
+      },
+      "join": {
+        "title": "Join Team",
+        "subtitle": "Scan a team QR code to join",
+        "joining": "Joining team...",
+        "success": "Team joined",
+        "successMessage": "Successfully joined team",
+        "error": "Failed to join team",
+        "errorTitle": "Error",
+        "cameraRequiresHttps": "Camera access requires HTTPS",
+        "cameraNotSupported": "Camera not supported",
+        "cameraError": "Failed to access camera"
+      },
+      "scanner": {
+        "cameraRequiresHttps": "Camera access requires HTTPS",
+        "cameraNotSupported": "Camera not supported",
+        "cameraError": "Failed to access camera"
+      },
+      "qrCode": {
+        "title": "Team QR Code",
+        "description": "Let friends scan this QR code or share the link so they can join your team — even without a 4rest account yet.",
+        "loading": "Loading QR code...",
+        "error": "Failed to load QR code",
+        "errorMessage": "Failed to load QR code",
+        "retry": "Try again",
+        "share": "Share invite link",
+        "shareText": "Join my team on 4rest!",
+        "linkCopied": "Link copied",
+        "linkCopiedMessage": "Invite link copied to clipboard",
+        "shareError": "Error",
+        "shareErrorMessage": "Could not share the invite link"
+      },
+      "dissolve": {
+        "button": "Dissolve Team",
+        "dissolving": "Dissolving team...",
+        "confirm": "Are you sure you want to dissolve this team? Each member will keep their own points.",
+        "success": "Team dissolved",
+        "successMessage": "Team has been dissolved. Each member keeps their own points.",
+        "error": "Failed to dissolve team",
+        "errorMessage": "Failed to dissolve team"
+      },
+      "leave": {
+        "button": "Leave Team",
+        "leaving": "Leaving...",
+        "confirm": "Are you sure you want to leave this team? You will keep your own points.",
+        "success": "Left team",
+        "successMessage": "You have left the team. You keep your own points.",
+        "error": "Failed to leave team",
+        "errorMessage": "Failed to leave team"
+      }
+    },
+    "contests": {
+      "title": "My Contests",
+      "createButton": "Create Contest",
+      "joinButton": "Join Contest",
+      "empty": "No contests yet. Create one or join one!",
+      "create": {
+        "title": "Create Contest",
+        "contestName": "Contest Name",
+        "contestNamePlaceholder": "Enter contest name (optional)",
+        "nameHint": "If no name is provided, your name will be used as the contest name.",
+        "formTitle": "Contest Details",
+        "endDate": "End Date",
+        "rewardsTitle": "Rewards (Optional)",
+        "rewardFirst": "Points for 1st Place",
+        "rewardSecond": "Points for 2nd Place",
+        "rewardThird": "Points for 3rd Place",
+        "createButton": "Create Contest",
+        "creating": "Creating contest...",
+        "success": "Contest created",
+        "successMessage": "Contest created successfully",
+        "error": "Failed to create contest",
+        "errorTitle": "Error",
+        "missingFields": "Please fill in all required fields",
+        "invalidEndDate": "End date must be in the future"
+      },
+      "join": {
+        "title": "Join Contest",
+        "subtitle": "Scan a contest QR code to join",
+        "joining": "Joining contest...",
+        "success": "Contest joined",
+        "successMessage": "Successfully joined contest",
+        "error": "Failed to join contest",
+        "errorTitle": "Error",
+        "cameraRequiresHttps": "Camera access requires HTTPS",
+        "cameraNotSupported": "Camera not supported",
+        "cameraError": "Failed to access camera"
+      },
+      "scanner": {
+        "cameraRequiresHttps": "Camera access requires HTTPS",
+        "cameraNotSupported": "Camera not supported",
+        "cameraError": "Failed to access camera"
+      },
+      "scan": {
+        "error": "Failed to scan QR code",
+        "errorTitle": "Error"
+      },
+      "qrCode": {
+        "title": "Contest QR Code",
+        "description": "Let friends scan this QR code or share the link so they can join your contest — even without a 4rest account yet.",
+        "loading": "Loading QR code...",
+        "error": "Failed to load QR code",
+        "errorMessage": "Failed to load QR code",
+        "retry": "Try again",
+        "share": "Share invite link",
+        "shareText": "Join my contest on 4rest!",
+        "linkCopied": "Link copied",
+        "linkCopiedMessage": "Invite link copied to clipboard",
+        "shareError": "Error",
+        "shareErrorMessage": "Could not share the invite link"
+      },
+      "dissolve": {
+        "button": "Dissolve Contest",
+        "dissolving": "Dissolving contest...",
+        "confirm": "Are you sure you want to dissolve this contest?",
+        "success": "Contest dissolved",
+        "successMessage": "Contest has been dissolved",
+        "error": "Failed to dissolve contest",
+        "errorMessage": "Failed to dissolve contest"
+      },
+      "ranking": {
+        "title": "Contest Ranking",
+        "timeRemaining": "Time remaining",
+        "days": "days",
+        "hours": "hours",
+        "minutes": "minutes",
+        "ended": "Contest has ended",
+        "rank": "Rank",
+        "name": "Name",
+        "points": "Points",
+        "you": "You",
+        "notFound": "Contest not found",
+        "notFoundDescription": "The contest you are looking for does not exist or has been deleted.",
+        "noParticipants": "No participants yet",
+        "noParticipantsDescription": "Be the first to join this contest!",
+        "unnamed": "Unnamed Contest"
+      }
+    }
+  },
+  "consent": {
+    "title": "Privacy & data management",
+    "preferences": "Consent preferences",
+    "dataProcessing": {
+      "label": "Data processing (required)",
+      "description": "Allow processing of your data for core functionality",
+      "lockedHint": "Required to use the app; cannot be turned off here."
+    },
+    "analytics": {
+      "label": "Analytics",
+      "description": "Allow collection of anonymous usage statistics"
+    },
+    "marketing": {
+      "label": "Marketing",
+      "description": "Allow promotional emails and notifications"
+    },
+    "save": "Save preferences",
+    "saved": "✓ Saved",
+    "dataRights": "Your data rights",
+    "export": "Export my data",
+    "delete": "Delete my account",
+    "alerts": {
+      "saveError": "Failed to save consent preferences",
+      "exportError": "Failed to export data",
+      "deleteConfirm": "Are you sure you want to delete all your data? This cannot be undone.",
+      "deleteSuccess": "Your data has been deleted. You will be logged out.",
+      "deleteError": "Failed to delete data"
+    }
+  },
+  "publicGuest": {
+    "title": "Tasks without signing in",
+    "empty": "No tasks are available for guests without signing in at the moment.",
+    "loadError": "Could not load the task list. Please try again later.",
+    "backToLogin": "Back to sign in"
+  },
+  "publicTask": {
+    "backToOverview": "Back to overview",
+    "toast": {
+      "title": "Task completed",
+      "body": "Nice work! You earned {{points}} points. Sign up or log in so we can credit them to your account."
+    },
+    "notFound": "This task is not publicly available or does not exist.",
+    "invalidLink": "Invalid link.",
+    "goToLogin": "Go to login",
+    "unsupportedType": "This task type is not wired up on this page yet.",
+    "photoRequiresLogin": "Photo tasks cannot be completed here without signing in (upload requires an account). Please use the app while logged in.",
+    "cta": {
+      "title": "Save your points",
+      "body": "Create an account or log in now—your pending points will be merged.",
+      "register": "Register",
+      "login": "Log in"
+    }
+  },
+  "tasksComponents": {
+    "loading": "Loading task...",
+    "notFound": "Task not found",
+    "points": "+{{points}}",
+    "video": {
+      "notSupported": "Your browser does not support the video tag.",
+      "quizTitle": "Quiz questions",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "complete": "Complete task",
+      "submitting": "Submitting..."
+    },
+    "qr": {
+      "scanned": "Scanned: {{value}}",
+      "completing": "Completing task...",
+      "manualPrompt": "Enter the QR code manually:",
+      "manualPlaceholder": "Enter QR code",
+      "verify": "Verify & complete",
+      "invalid": "Invalid QR code",
+      "success": "Task completed successfully!",
+      "cameraLoading": "Starting camera...",
+      "cameraErrorTitle": "Camera error",
+      "cameraError": "The camera could not be started.",
+      "cameraRequiresHttps": "Camera access requires HTTPS on this device.",
+      "cameraNotSupported": "This browser does not support camera access.",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "The camera is already in use by another app.",
+      "cameraPlayError": "Camera preview could not be played."
+    },
+    "photo": {
+      "fileTooLarge": "File size must be less than 5MB",
+      "invalidFile": "Please select an image file",
+      "change": "Change photo",
+      "upload": "Upload & complete",
+      "uploading": "Uploading...",
+      "success": "Photo uploaded and task completed successfully!",
+      "verificationPending": "Photo uploaded and waiting for approval.",
+      "error": "Photo task could not be completed.",
+      "clickToSelect": "Click to select a photo",
+      "hint": "Max 5MB • JPG, PNG, WebP",
+      "uploadFailed": "Failed to upload photo",
+      "uploadFailedMessage": "An error occurred while uploading."
+    },
+    "quiz": {
+      "title": "Quiz questions",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "complete": "Complete task",
+      "submitting": "Submitting...",
+      "noQuestions": "This quiz task has no questions configured.",
+      "checkAnswer": "Check answer",
+      "checking": "Checking…",
+      "correctTitle": "Correct",
+      "correctBody": "That is the right answer.",
+      "wrongTitle": "Wrong or locked",
+      "wrongBody": "That was not correct. Try again in {{minutes}} minute(s).",
+      "lockedBody": "This question is still locked. Try again in {{minutes}} minute(s).",
+      "lockCountdown": "About {{minutes}} minute(s) until you can try again.",
+      "errorTitle": "Quiz"
+    },
+    "article_quiz": {
+      "readArticle": "Read the Article",
+      "readInstruction": "Please read the article below, then answer the quiz questions.",
+      "quizPrompt": "After reading the article, click the button below to start the quiz.",
+      "startQuiz": "Start Quiz",
+      "quizTitle": "Quiz questions",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "complete": "Complete task",
+      "submitting": "Submitting...",
+      "noArticle": "This article quiz task has no article configured.",
+      "noQuestions": "This article quiz task has no questions configured."
+    },
+    "visit_location": {
+      "targetLocationNotSet": "Task target location is not set",
+      "geolocationNotSupported": "Geolocation is not supported by your browser",
+      "positionError": "Error retrieving position: {{message}}",
+      "locationError": "Location error: {{message}}",
+      "locationTrackingError": "Location tracking error: {{message}}",
+      "targetLocation": "Target Location",
+      "yourLocation": "Your Location",
+      "noTargetLocation": "This task does not have a target location configured.",
+      "atLocation": "✓ You are at the location!",
+      "distance": "Distance: {{distance}}m",
+      "startTracking": "Start Location Tracking",
+      "stopTracking": "Stop Tracking",
+      "yourLocationLabel": "Your location: {{lat}}, {{lng}}",
+      "locationReached": "Location reached! Task completed successfully.",
+      "mapInitError": "Error initializing map: {{message}}",
+      "mapUnknownError": "Unknown error",
+      "yourCurrentPosition": "Your current position",
+      "startTask": "Start task",
+      "locatingPosition": "Getting position…",
+      "loadingMap": "Loading map…",
+      "details": "Details"
+    },
+    "survey": {
+      "title": "Survey",
+      "instruction": "Please answer all required questions.",
+      "required": "Required",
+      "textPlaceholder": "Enter your answer here...",
+      "submit": "Submit Survey",
+      "submitting": "Submitting...",
+      "noQuestions": "This survey task has no questions configured.",
+      "requiredQuestions": "Please answer all required questions before submitting."
+    }
+  },
+  "employee": {
+    "contests": {
+      "title": "Contest Management",
+      "subtitle": "Manage contests for guests",
+      "createButton": "Create New Contest",
+      "empty": "No contests for guests yet"
+    },
+    "pointsBonus": {
+      "invalidAmount": "Please enter a valid amount.",
+      "generateError": "Failed to generate QR code.",
+      "qrGenerated": "QR code generated successfully."
+    }
+  },
+  "teams": {
+    "create": {
+      "title": "Create Team",
+      "teamName": "Team Name",
+      "teamNamePlaceholder": "Enter team name (optional)",
+      "hint": "If no name is provided, your name will be used as the team name.",
+      "createButton": "Create Team",
+      "creating": "Creating team...",
+      "success": "Team created",
+      "successMessage": "Team created successfully",
+      "error": "Failed to create team",
+      "errorTitle": "Error"
+    },
+    "join": {
+      "title": "Join Team",
+      "subtitle": "Scan a team QR code to join",
+      "joining": "Joining team...",
+      "success": "Team joined",
+      "successMessage": "Successfully joined team",
+      "error": "Failed to join team",
+      "errorTitle": "Error",
+      "cameraRequiresHttps": "Camera access requires HTTPS",
+      "cameraNotSupported": "Camera not supported",
+      "cameraError": "Failed to access camera",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application."
+    },
+    "qrCode": {
+      "title": "Team QR Code",
+      "description": "Share this QR code to let others join your team",
+      "loading": "Loading QR code...",
+      "error": "Failed to load QR code",
+      "errorMessage": "Failed to load QR code",
+      "retry": "Try again"
+    },
+    "dissolve": {
+      "button": "Dissolve Team",
+      "dissolving": "Dissolving team...",
+      "confirm": "Are you sure you want to dissolve this team? Points will be distributed equally among members.",
+      "success": "Team dissolved",
+      "successMessage": "Team has been dissolved and points distributed",
+      "error": "Failed to dissolve team",
+      "errorMessage": "Failed to dissolve team"
+    },
+    "leave": {
+      "button": "Leave Team",
+      "leaving": "Leaving...",
+      "confirm": "Are you sure you want to leave this team? Your contributed points will be returned to you.",
+      "success": "Left team",
+      "successMessage": "You have left the team and your contributed points have been returned",
+      "error": "Failed to leave team",
+      "errorMessage": "Failed to leave team"
+    }
+  },
+  "contests": {
+    "create": {
+      "title": "Create Contest",
+      "contestName": "Contest Name",
+      "contestNamePlaceholder": "Enter contest name (optional)",
+      "nameHint": "If no name is provided, your name will be used as the contest name.",
+      "formTitle": "Contest Details",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "rewardsTitle": "Rewards (Optional)",
+      "rewardFirst": "Points for 1st Place",
+      "rewardSecond": "Points for 2nd Place",
+      "rewardThird": "Points for 3rd Place",
+      "createButton": "Create Contest",
+      "creating": "Creating contest...",
+      "success": "Contest created",
+      "successMessage": "Contest created successfully",
+      "error": "Failed to create contest",
+      "errorTitle": "Error",
+      "missingFields": "Please fill in all required fields",
+      "invalidDateTime": "Invalid date or time",
+      "startAfterEnd": "Start date must be before end date",
+      "invalidEndDate": "End date must be in the future",
+      "noUsers": "No users found.",
+      "filterAllRoles": "All roles",
+      "onlyRezeption": "(Reception only)",
+      "selectedParticipants": "{{count}} participants selected",
+      "participantsTitle": "Add participants",
+      "filter": "Filter:",
+      "noEmail": "No email",
+      "loadingUsers": "Loading users...",
+      "errorLoadingUsers": "Failed to load users.",
+      "allRoles": "All roles",
+      "filterByRole": "Filter by role",
+      "roleAdministrator": "Administrator",
+      "roleGuest": "Guest",
+      "roleRedaktion": "Editorial",
+      "roleRezeption": "Reception"
+    },
+    "join": {
+      "title": "Join Contest",
+      "subtitle": "Scan a contest QR code to join",
+      "joining": "Joining contest...",
+      "success": "Contest joined",
+      "successMessage": "Successfully joined contest",
+      "error": "Failed to join contest",
+      "errorTitle": "Error",
+      "cameraRequiresHttps": "Camera access requires HTTPS",
+      "cameraNotSupported": "Camera not supported",
+      "cameraError": "Failed to access camera",
+      "cameraPermissionDenied": "Camera access was denied. Please grant permission.",
+      "cameraNotFound": "No camera found.",
+      "cameraInUse": "Camera is already in use by another application."
+    },
+    "qrCode": {
+      "title": "Contest QR Code",
+      "description": "Share this QR code to let others join your contest",
+      "duration": "Duration",
+      "loading": "Loading QR code...",
+      "error": "Failed to load QR code",
+      "errorMessage": "Failed to load QR code",
+      "retry": "Try again"
+    },
+    "dissolve": {
+      "button": "Dissolve Contest",
+      "dissolving": "Dissolving contest...",
+      "confirm": "Are you sure you want to dissolve this contest?",
+      "success": "Contest dissolved",
+      "successMessage": "Contest has been dissolved",
+      "error": "Failed to dissolve contest",
+      "errorMessage": "Failed to dissolve contest"
+    },
+    "leave": {
+      "button": "Leave Contest",
+      "leaving": "Leaving...",
+      "confirm": "Are you sure you want to leave this contest?",
+      "success": "Left contest",
+      "successMessage": "You have left the contest",
+      "error": "Failed to leave contest",
+      "errorMessage": "Failed to leave contest"
+    },
+    "ranking": {
+      "title": "Contest Ranking",
+      "empty": "No participants",
+      "rewardsAwarded": "Rewards have been awarded",
+      "timeRemaining": "Time remaining",
+      "days": "days",
+      "hours": "hours",
+      "minutes": "minutes",
+      "ended": "Contest has ended",
+      "rank": "Rank",
+      "name": "Name",
+      "points": "Points",
+      "you": "You",
+      "notFound": "Contest not found",
+      "notFoundDescription": "The contest you are looking for does not exist or has been deleted.",
+      "noParticipants": "No participants yet",
+      "noParticipantsDescription": "Be the first to join this contest!",
+      "unnamed": "Unnamed Contest"
+    }
+  },
+  "groups": {
+    "title": "Groups"
+  },
+  "rankings": {
+    "title": "Rankings",
+    "pageEmptyTitle": "No rankings yet",
+    "pageEmptyDescription": "Once you join a contest or team, or have points on your timeline, they will appear here.",
+    "points": "Points",
+    "contests": {
+      "title": "Active Contests",
+      "unnamed": "Unnamed Contest",
+      "duration": "Duration",
+      "expired": "Completed Contests",
+      "noParticipants": "No participants",
+      "showAll": "Show all {{count}} participants",
+      "showLess": "Show less"
+    },
+    "team": {
+      "title": "My Team",
+      "unnamed": "Unnamed Team",
+      "showAll": "Show all {{count}} members",
+      "showLess": "Show less"
+    },
+    "timeline": {
+      "title": "My Progress",
+      "subtitle": "Cumulative points by category from registration through today (one bar per calendar day).",
+      "subtitleSampled": "Over a long period, at most 120 samples are shown (evenly spaced). Cumulative points by category.",
+      "noData": "No data available",
+      "points": "Points",
+      "trees": "Trees",
+      "co2": "CO₂ (kg)",
+      "forestDay": "Forest (per day)",
+      "forest": {
+        "kommunikation": "Communication",
+        "mensch": "People",
+        "natur": "Nature",
+        "ressourcen": "Resources",
+        "sonstige": "Other"
+      },
+      "totalCumulative": "Total points (current)",
+      "profilePointsWithoutTimelineHint": "This chart only includes points from completed tasks. Other points (e.g. on-site bonus) are not in this timeline — the bars can look empty even when your balance or forest categories show values.",
+      "scaleToProfile": "100% bar height = {{max}} points (profile: {{profile}})",
+      "xAxisLabel": "Timeline (oldest day left, newest day right)",
+      "yAxisLabel": "Cumulative points",
+      "maxPoints": "Max. Points",
+      "maxTrees": "Max. Trees",
+      "maxCo2": "Max. CO₂",
+      "maxForestDay": "Max. forest points (day)"
+    }
+  },
+  "rezeption": {
+    "title": "Reception",
+    "subtitle": "Management of teams, contests and rewards",
+    "actions": {
+      "manageTeams": {
+        "title": "Manage Teams",
+        "description": "View, edit all teams and manage registration QR codes"
+      },
+      "manageContests": {
+        "title": "Manage Contests",
+        "description": "View, edit all contests and manage registration QR codes"
+      },
+      "pointsBonus": {
+        "title": "Give Bonus Points",
+        "description": "Generate QR codes for bonus points"
+      },
+      "redeemRewards": {
+        "title": "Redeem Rewards",
+        "description": "Scan QR codes to verify and redeem rewards"
+      },
+      "verifyTasks": {
+        "title": "Verify Tasks",
+        "description": "Manually verify and approve tasks"
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Manage Teams",
+        "subtitle": "Manage all teams",
+        "existingTitle": "Existing Teams",
+        "existingSubtitle": "View and edit all teams",
+        "createNew": "Create New Team",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading teams...",
+        "loadError": "Error loading teams",
+        "createSuccess": "Team created successfully",
+        "noTeams": "No teams found",
+        "unnamed": "Unnamed Team",
+        "name": "Name",
+        "createdBy": "Created by",
+        "status": "Status",
+        "noSelection": "No selection",
+        "selectedCount": "{{count}} selected",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "bulkDeleteSuccess": "Teams deleted successfully",
+        "bulkDeleteError": "Error deleting teams",
+        "deleteConfirm": {
+          "title": "Delete Team",
+          "description": "Are you sure you want to delete the team \"{{name}}\"?"
+        },
+        "toggleConfirm": {
+          "title": "Change Team Status",
+          "description": "Are you sure you want to change the status of the team \"{{name}}\"?"
+        },
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Search by name...",
+          "includeInactive": "Show inactive"
+        },
+        "edit": {
+          "title": "Edit Team",
+          "name": "Team Name",
+          "nameUpdated": "Team name updated",
+          "nameUpdateError": "Error updating",
+          "addMembers": "Add Members",
+          "removeMembers": "Remove Members",
+          "showJoinQr": "Show Join QR Code",
+          "showRegistrationQr": "Show Registration QR Code",
+          "cancel": "Cancel",
+          "joinQrTitle": "Join QR Code",
+          "joinQrDescription": "Existing users can scan this QR code to join the team",
+          "registrationQrTitle": "Registration QR Code",
+          "registrationQrDescription": "New users can scan this QR code to register and automatically join the team",
+          "add": "Add",
+          "remove": "Remove"
+        },
+        "teams": "Teams",
+        "bulkActivateSuccess": "Selected teams activated.",
+        "bulkDeactivateSuccess": "Selected teams deactivated.",
+        "bulkStatusError": "Failed to update team status.",
+        "deleteSuccess": "Team deleted.",
+        "deleteError": "Failed to delete team.",
+        "toggleSuccess": "Team status updated.",
+        "toggleError": "Failed to update team status."
+      },
+      "membersAdded": "Members added successfully",
+      "membersRemoved": "Members removed successfully",
+      "addMembersError": "Error adding members",
+      "removeMembersError": "Error removing members",
+      "qrError": "Error generating QR code",
+      "registrationQrError": "Error generating registration QR code"
+    },
+    "contest": {
+      "manage": {
+        "title": "Manage Contests",
+        "subtitle": "Manage all contests",
+        "createNew": "Create New Contest",
+        "refresh": "Refresh",
+        "back": "Back",
+        "loading": "Loading contests...",
+        "loadError": "Error loading contests",
+        "createSuccess": "Contest created successfully",
+        "noContests": "No contests found",
+        "unnamed": "Unnamed Contest",
+        "createdBy": "Created by",
+        "status": "Status",
+        "endDate": "End Date",
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Search by name...",
+          "includeInactive": "Show inactive"
+        },
+        "edit": {
+          "title": "Edit Contest",
+          "name": "Contest Name",
+          "nameUpdated": "Contest name updated",
+          "nameUpdateError": "Error updating",
+          "addParticipants": "Add Participants",
+          "removeParticipants": "Remove Participants",
+          "showJoinQr": "Show Join QR Code",
+          "showRegistrationQr": "Show Registration QR Code",
+          "cancel": "Cancel",
+          "joinQrTitle": "Join QR Code",
+          "joinQrCodeLabel": "QR Code",
+          "joinQrDescription": "Existing users can scan this QR code to join the contest",
+          "registrationQrTitle": "Registration QR Code",
+          "registrationQrCodeLabel": "Registration QR Code",
+          "registrationQrDescription": "New users can scan this QR code to register and automatically join the contest",
+          "add": "Add",
+          "remove": "Remove"
+        },
+        "name": "Name",
+        "noSelection": "No selection",
+        "selectAll": "Select all",
+        "selectContest": "Select contest",
+        "selectedCount": "{{count}} selected",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "bulkDeleteSuccess": "Contests deleted successfully",
+        "bulkDeleteError": "Error deleting contests",
+        "deleteConfirm": {
+          "title": "Delete Contest",
+          "description": "Are you sure you want to delete the contest \"{{name}}\"?"
+        },
+        "toggleConfirm": {
+          "title": "Change Contest Status",
+          "description": "Are you sure you want to change the status of the contest \"{{name}}\"?"
+        },
+        "contests": "Contests",
+        "bulkActivateSuccess": "Selected contests activated.",
+        "bulkDeactivateSuccess": "Selected contests deactivated.",
+        "bulkStatusError": "Failed to update contest status.",
+        "deleteSuccess": "Contest deleted.",
+        "deleteError": "Failed to delete contest.",
+        "toggleSuccess": "Contest status updated.",
+        "toggleError": "Failed to update contest status."
+      },
+      "participantsAdded": "Participants added successfully",
+      "participantsRemoved": "Participants removed successfully",
+      "addParticipantsError": "Error adding participants",
+      "removeParticipantsError": "Error removing participants",
+      "qrError": "Error generating QR code",
+      "registrationQrError": "Error generating registration QR code",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "toggleSuccess": "Contest status updated successfully",
+      "toggleError": "Error updating contest status",
+      "deleteSuccess": "Contest deleted successfully",
+      "deleteError": "Error deleting contest",
+      "deleteConfirm": {
+        "title": "Delete Contest",
+        "description": "Are you sure you want to delete the contest \"{{name}}\"?"
+      },
+      "toggleConfirm": {
+        "title": "Change Contest Status",
+        "description": "Are you sure you want to change the status of the contest \"{{name}}\"?"
+      },
+      "registrationQrErrorTitle": "Error loading registration QR code"
+    },
+    "pointsBonus": {
+      "title": "Give Bonus Points"
+    },
+    "redeemRewards": {
+      "title": "Redeem Rewards"
+    },
+    "verifyTasks": {
+      "title": "Verify Tasks",
+      "subtitle": "This feature will be available soon",
+      "placeholder": "The function to verify tasks is not yet implemented."
+    }
+  },
+  "redaktion": {
+    "title": "Redaktion",
+    "subtitle": "Management of tasks, rewards, locations and surveys",
+    "actions": {
+      "manageTasks": {
+        "title": "Manage Tasks",
+        "description": "Browse, edit, activate or deactivate tasks"
+      },
+      "manageRewards": {
+        "title": "Manage Rewards",
+        "description": "Browse, edit and manage rewards"
+      },
+      "manageLocations": {
+        "title": "Manage Locations",
+        "description": "Browse, edit or remove locations"
+      },
+      "surveyAnalytics": {
+        "title": "Survey Analytics",
+        "description": "View aggregated survey responses with visual charts and statistics"
+      }
+    },
+    "surveyAnalytics": {
+      "title": "Survey Analytics"
+    },
+    "locationManage": {
+      "title": "Manage Locations",
+      "subtitle": "Browse existing locations, edit their details, or remove unused entries",
+      "loading": "Loading locations...",
+      "loadError": "Failed to load locations",
+      "existing": {
+        "title": "Existing locations",
+        "subtitle": "Each task and reward references one of these locations"
+      },
+      "showInactive": "Show inactive",
+      "filterByName": "Filter by name...",
+      "filterAll": "All status",
+      "filterActive": "Active",
+      "filterInactive": "Inactive",
+      "noLocations": "No locations found",
+      "untitled": "Untitled location",
+      "active": "Active",
+      "inactive": "Inactive",
+      "online": "Online"
+    },
+    "taskManage": {
+      "subtitle": "Browse, edit, activate or deactivate tasks",
+      "publicColumn": "Public",
+      "publicHint": "Completable without login (configured in Admin)"
+    },
+    "rewardManage": {
+      "subtitle": "Browse, edit and manage rewards"
+    },
+    "comingSoon": "This feature will be available soon.",
+    "useAdminPage": "Please use the administrator page temporarily."
+  }
+}

@@ -1,0 +1,224 @@
+.filter-dropdown {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1000;
+}
+
+.filter-dropdown-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--glass-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.filter-dropdown-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  min-height: 36px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--glass-text);
+  font-family: inherit;
+  box-shadow: var(--glass-shadow-inner);
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-dropdown-button::before {
+  display: none;
+}
+
+.filter-dropdown-button:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.12);
+  transform: none;
+  box-shadow: var(--glass-shadow-inner);
+}
+
+.filter-dropdown-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.filter-dropdown-button-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.filter-dropdown-icon {
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-dropdown-arrow {
+  font-size: 0.65rem;
+  color: var(--glass-text-muted);
+  transition: transform 0.2s ease;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.filter-dropdown-button-content > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  background: rgba(18, 45, 35, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  overflow: auto;
+  max-height: 60vh;
+  animation: slideDown 0.25s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  min-height: 42px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--glass-text);
+  font-family: inherit;
+  text-align: left;
+  position: relative;
+}
+
+.filter-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.filter-dropdown-item::before {
+  display: none;
+}
+
+.filter-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+
+.filter-dropdown-item.active {
+  background: rgba(142, 228, 192, 0.12);
+  color: var(--color-primary-light);
+  font-weight: 600;
+}
+
+.filter-dropdown-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.filter-dropdown-item > * {
+  position: relative;
+  z-index: 1;
+}
+
+.filter-dropdown-item > span:nth-child(2) {
+  white-space: nowrap;
+}
+
+.filter-dropdown-item-icon {
+  font-size: 1rem;
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-dropdown-check {
+  color: var(--color-accent);
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .filter-dropdown {
+    gap: 2px;
+  }
+
+  .filter-dropdown-label {
+    font-size: 0.58rem;
+  }
+
+  .filter-dropdown-button {
+    padding: 6px 7px;
+    min-height: 32px;
+    font-size: 0.72rem;
+  }
+
+  .filter-dropdown-menu {
+    top: calc(100% + 6px);
+    max-height: 60vh;
+  }
+
+  .filter-dropdown-item {
+    padding: 10px 12px;
+    min-height: 38px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-dropdown-button {
+    padding: 5px 6px;
+    min-height: 30px;
+    font-size: 0.68rem;
+  }
+
+  .filter-dropdown-item {
+    padding: 8px 10px;
+    min-height: 34px;
+    font-size: 0.76rem;
+  }
+}

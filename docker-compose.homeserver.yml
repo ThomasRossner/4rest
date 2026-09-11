@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: roots-postgres-homeserver
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-roots_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-roots_password}
+      POSTGRES_DB: ${POSTGRES_DB:-roots_of_impact}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - roots-network
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: roots-redis-homeserver
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - roots-network
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile.prod
+    container_name: roots-backend-homeserver
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=3072"
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-roots_user}:${POSTGRES_PASSWORD:-roots_password}@postgres:5432/${POSTGRES_DB:-roots_of_impact}
+      DATABASE_SSL: "false"
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+      BASE_URL: ${BASE_URL:-https://luise.bio}
+      HOTELKIT_API_URL: ${HOTELKIT_API_URL:-}
+      HOTELKIT_API_KEY: ${HOTELKIT_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      UPLOAD_DIR: /app/uploads
+      # Email Configuration
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      EMAIL_MOCK_MODE: ${EMAIL_MOCK_MODE:-false}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@4rest.com}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-4rest}
+      APP_URL: ${APP_URL:-http://localhost:3001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      # SMTP Configuration
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-${EMAIL_FROM:-noreply@4rest.com}}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - roots-network
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile.prod
+      args:
+        VITE_RELEASE_NAME: ${VITE_RELEASE_NAME:-Malta Demo}
+    container_name: roots-frontend-homeserver
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+    restart: unless-stopped
+    networks:
+      - roots-network
+    ports:
+      - "3001:3000"
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
+
+networks:
+  roots-network:
+    driver: bridge

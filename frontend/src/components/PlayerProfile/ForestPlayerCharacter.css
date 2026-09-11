@@ -1,0 +1,148 @@
+.forest-player-character {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: var(--spacing-md, 1rem);
+  padding: 0 var(--spacing-xs, 0.25rem);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.forest-player-character__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  border: none;
+  background: #fff;
+  border-radius: 14px;
+  padding: 0.65rem 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.15);
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.forest-player-character__figure:hover {
+  border-color: rgba(13, 148, 136, 0.35);
+}
+
+.forest-player-character__emoji {
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.forest-player-character__icon-image {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.forest-player-character__name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+  word-break: break-word;
+}
+
+.forest-player-character__more {
+  border: none;
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
+}
+
+.forest-player-character__more:hover {
+  filter: brightness(1.05);
+}
+
+.forest-player-character__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  text-align: center;
+  max-width: 320px;
+}
+
+/* Waldoberfläche: kompakte Zeile Icon + Name, bessere Lesbarkeit auf Himmel-Gradient */
+.forest-player-character--overlay {
+  align-items: flex-start;
+}
+
+.forest-player-character--overlay .forest-player-character__figure {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.65rem;
+  text-align: left;
+  min-width: 0;
+  padding: 0.5rem 0.85rem;
+  background: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(10px) saturate(1.12);
+  -webkit-backdrop-filter: blur(10px) saturate(1.12);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 16px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.forest-player-character--overlay .forest-player-character__emoji {
+  font-size: 1.85rem;
+  flex-shrink: 0;
+}
+
+.forest-player-character--overlay .forest-player-character__icon-image {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.forest-player-character--overlay .forest-player-character__name {
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+  color: #020617;
+  text-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.95),
+    0 0 18px rgba(255, 255, 255, 0.55);
+}
+
+.forest-player-character--overlay .forest-player-character__more {
+  align-self: flex-start;
+  margin-left: 0;
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+}
+
+.forest-player-character--overlay .forest-player-character__more:hover {
+  filter: none;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.forest-player-character--overlay .forest-player-character__hint {
+  text-align: left;
+  font-size: 0.78rem;
+  max-width: 280px;
+  color: #0f172a;
+  font-weight: 500;
+  text-shadow:
+    0 1px 3px rgba(255, 255, 255, 0.92),
+    0 0 18px rgba(255, 255, 255, 0.55);
+}

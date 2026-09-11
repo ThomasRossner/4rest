@@ -1,0 +1,259 @@
+.timeline-chart {
+  background: var(--color-card-surface);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.timeline-chart--compact {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.timeline-chart--compact .timeline-chart-subtitle {
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+}
+
+.timeline-chart--compact .timeline-chart-legend {
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.timeline-chart--compact .timeline-legend-item {
+  font-size: 0.72rem;
+}
+
+.timeline-chart--compact .timeline-chart-bars {
+  height: 160px;
+  padding: 0.35rem 0;
+}
+
+.timeline-chart--compact .timeline-chart-container {
+  padding-left: 1.4rem;
+}
+
+.timeline-chart--compact .timeline-chart-values {
+  font-size: 0.75rem;
+}
+
+.timeline-chart-subtitle {
+  margin: 0 0 var(--spacing-md);
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  line-height: 1.4;
+}
+
+.timeline-chart-mismatch-hint {
+  margin: 0 0 var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--color-text, #1f2937);
+  background: #f0fdf4;
+  border: 1px solid #a7f3d0;
+  border-radius: var(--border-radius, 8px);
+}
+
+.timeline-chart-legend {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.timeline-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9rem;
+}
+
+.timeline-legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.timeline-legend-forest-sub {
+  font-size: 0.8rem;
+  opacity: 0.95;
+}
+
+.timeline-chart-container {
+  position: relative;
+  padding-left: 1.8rem;
+}
+
+.timeline-chart-bars {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+  height: 300px;
+  padding: var(--spacing-md) 0;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.timeline-chart-bars--dense .timeline-bar-group {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.timeline-chart-bars--dense {
+  gap: 1px;
+}
+
+.timeline-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.timeline-bar-column {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.timeline-bar-label {
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+  margin-bottom: var(--spacing-xs);
+  text-align: center;
+  white-space: nowrap;
+  min-height: 1.1em;
+}
+
+.timeline-stacked-bar {
+  width: 100%;
+  min-height: 6px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  border-radius: 4px 4px 0 0;
+  overflow: hidden;
+  cursor: default;
+  transition: opacity 0.2s ease;
+}
+
+.timeline-stacked-bar:hover {
+  opacity: 0.92;
+}
+
+.timeline-stacked-bar--empty {
+  background: color-mix(in srgb, var(--color-border, #e5e7eb) 80%, transparent);
+}
+
+.timeline-stacked-seg {
+  min-height: 1px;
+  width: 100%;
+}
+
+.timeline-forest-kommunikation {
+  background-color: #6366f1;
+}
+
+.timeline-forest-mensch {
+  background-color: #db2777;
+}
+
+.timeline-forest-natur {
+  background-color: #16a34a;
+}
+
+.timeline-forest-ressourcen {
+  background-color: #0284c7;
+}
+
+.timeline-forest-sonstige {
+  background-color: #78716c;
+}
+
+.timeline-legend-forest-kommunikation {
+  background-color: #6366f1;
+}
+
+.timeline-legend-forest-mensch {
+  background-color: #db2777;
+}
+
+.timeline-legend-forest-natur {
+  background-color: #16a34a;
+}
+
+.timeline-legend-forest-ressourcen {
+  background-color: #0284c7;
+}
+
+.timeline-legend-forest-sonstige {
+  background-color: #78716c;
+}
+
+.timeline-chart-values {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.timeline-value-row {
+  width: 100%;
+}
+
+.timeline-value-row--muted {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  opacity: 0.88;
+}
+
+.timeline-chart-empty {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-light);
+  font-style: italic;
+}
+
+.timeline-chart-axis-label {
+  font-size: 0.78rem;
+  color: var(--color-text-light);
+}
+
+.timeline-chart-axis-label--x {
+  margin-top: var(--spacing-xs);
+  text-align: center;
+}
+
+.timeline-chart-axis-label--y {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-40%, -50%) rotate(-90deg);
+  transform-origin: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .timeline-chart-bars {
+    height: 220px;
+  }
+
+  .timeline-bar-label {
+    font-size: 0.62rem;
+  }
+}

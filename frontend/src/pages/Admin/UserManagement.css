@@ -1,0 +1,342 @@
+.user-management {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.user-management-filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--color-surface, #f9fafb);
+  border-radius: 8px;
+}
+
+.user-management-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 150px;
+}
+
+.user-management-filter-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text, #1f2937);
+}
+
+.user-management-filter-group select,
+.user-management-filter-group input {
+  padding: 0.5rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.user-management-table-wrapper {
+  overflow-x: auto;
+}
+
+/* User Management table: Checkbox column - same as tasks */
+.user-management-table-wrapper .admin-table th:first-child,
+.user-management-table-wrapper .admin-table td:first-child {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  padding: var(--spacing-xs);
+}
+
+/* User Management table: Name column (second column) should be wider */
+.user-management-table-wrapper .admin-table th:nth-child(2),
+.user-management-table-wrapper .admin-table td:nth-child(2) {
+  width: 20%;
+  min-width: 12rem;
+  /* Remove max-width constraint to allow more flexibility */
+}
+
+.user-management-table-wrapper table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.user-management-table-wrapper table tbody tr:hover {
+  background-color: var(--color-surface, #f9fafb);
+}
+
+.user-management-table-wrapper table tbody tr.selected {
+  background-color: var(--color-primary-light);
+}
+
+.status-active {
+  color: #15803d;
+  font-weight: 500;
+}
+
+.status-inactive {
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.user-management-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.user-management-pagination button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-management-pagination button:hover:not(:disabled) {
+  background: var(--color-surface, #f9fafb);
+}
+
+.user-management-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.user-details-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.user-details-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.user-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border, #d1d5db);
+}
+
+.user-details-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.user-details-body {
+  padding: 1.5rem;
+}
+
+.user-details-section {
+  margin-bottom: 2rem;
+}
+
+.user-details-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.user-details-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.user-details-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-light, #6b7280);
+}
+
+.user-details-field span,
+.user-details-field input,
+.user-details-field select {
+  font-size: 1rem;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 4px;
+}
+
+.user-details-field input[type="number"] {
+  width: 150px;
+}
+
+.user-details-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.user-details-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: var(--color-surface, #f9fafb);
+  border-radius: 4px;
+}
+
+.user-details-stat label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-light, #6b7280);
+}
+
+.user-details-stat span {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.user-details-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border, #d1d5db);
+}
+
+.admin-button-secondary {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 4px;
+  background: white;
+  color: var(--color-text, #1f2937);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-button-secondary:hover:not(:disabled) {
+  background: var(--color-surface, #f9fafb);
+}
+
+/* Removed .admin-button-danger - all buttons use unified design */
+
+.admin-button-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-light, #6b7280);
+}
+
+.admin-error {
+  padding: 1rem;
+  background: #fee2e2;
+  border: 1px solid #b91c1c;
+  border-radius: 4px;
+  color: #b91c1c;
+}
+
+.admin-table-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-light, #6b7280);
+}
+
+/* User Management table buttons: green when enabled, gray when disabled */
+.user-management-table-wrapper .admin-action-button {
+  background: var(--color-primary) !important;
+  color: white !important;
+}
+
+.user-management-table-wrapper .admin-action-button:disabled {
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-light) !important;
+}
+
+/* ============================================================
+   Glas-Design Angleichung (Atlas) — Lesbarkeit Benutzerverwaltung
+   ============================================================ */
+
+/* Details-Modal auf dunklem Glas */
+.user-details-content {
+  background: linear-gradient(160deg, rgba(26, 60, 48, 0.97) 0%, rgba(16, 42, 32, 0.98) 100%);
+  border: 1px solid var(--glass-border);
+  color: var(--glass-text);
+}
+
+.user-details-header,
+.user-details-actions {
+  border-color: var(--glass-border);
+}
+
+.user-details-header h2 {
+  color: var(--glass-text);
+}
+
+.user-details-stat {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.user-details-field span,
+.user-details-field input,
+.user-details-field select {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+/* Status-Texte auf Dunkel lesbar */
+.status-active {
+  color: var(--color-success);
+}
+
+.status-inactive {
+  color: var(--color-error);
+}
+
+/* Auswahl-Zeile dezenter Tint statt hellem Mint */
+.user-management-table-wrapper table tbody tr.selected {
+  background-color: rgba(126, 207, 176, 0.18);
+}
+
+/* Sekundär-/Pagination-Buttons lesbar */
+.admin-button-secondary,
+.user-management-pagination button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--glass-text);
+  border: 1px solid var(--glass-border);
+}
+
+.admin-button-secondary:hover:not(:disabled),
+.user-management-pagination button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Aktions-Buttons in der Tabelle: Forest-Glas statt Mint+Weiß */
+.user-management-table-wrapper .admin-action-button {
+  background: linear-gradient(145deg, rgba(31, 90, 76, 0.92) 0%, rgba(20, 62, 52, 0.95) 100%) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.user-management-table-wrapper .admin-action-button:disabled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--glass-border) !important;
+}

@@ -1,0 +1,2949 @@
+{
+  "language": {
+    "label": "Sprache",
+    "en": "Englisch",
+    "de": "Deutsch",
+    "switch": "Sprache ändern"
+  },
+  "theme": {
+    "label": "Design",
+    "classic": "Klassisch",
+    "atlas": "Atlas"
+  },
+  "common": {
+    "appName": "4rest",
+    "appNameRest": "rest",
+    "loading": "Laden...",
+    "points": "{{count}} Punkte",
+    "pointsShort": "{{count}} Pkt",
+    "actions": {
+      "back": "Zurück",
+      "close": "Schließen",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "delete": "Löschen",
+      "edit": "Bearbeiten",
+      "show": "Anzeigen",
+      "hide": "Ausblenden",
+      "refresh": "Aktualisieren",
+      "title": "Aktionen",
+      "done": "Fertig",
+      "confirm": "Bestätigen",
+      "ok": "OK"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "completed": "Abgeschlossen"
+    },
+    "online": "Online",
+    "physical": "Physisch",
+    "noData": "Keine Daten verfügbar",
+    "all": "Alle",
+    "ok": "OK"
+  },
+  "playerProfile": {
+    "intro": {
+      "title": "Schön, dass du hier bist!",
+      "body": "In dieser Welt steckt mehr, als man auf den ersten Blick sieht. Antworte auf ein paar kurze Fragen – und wir verraten dir, welches Wesen tief in dir schlummert.",
+      "start": "Los geht’s",
+      "skipLater": "Später entscheiden"
+    },
+    "skipHint": "Du kannst deinen Charakter jederzeit unter „Profil“ oder durch Klick auf deine Figur im Wald finden.",
+    "progress": "Frage {{current}} von {{total}}",
+    "progressDyad": "Frage {{current}} von {{total}} · Dyade {{dyad}}, Teil {{qInDyad}}",
+    "continue": "Weiter",
+    "finish": "Abschließen",
+    "scaleAria": "Antwort auf einer Skala von 0 bis 4",
+    "name": {
+      "title": "Wie dürfen wir dich nennen?",
+      "hint": "Optional – du kannst das Feld leer lassen.",
+      "label": "Anzeigename",
+      "placeholder": "z. B. Vorname oder Spitzname"
+    },
+    "error": {
+      "generic": "Die Eingabe konnte nicht gespeichert werden.",
+      "loadProfile": "Profil konnte nicht geladen werden."
+    },
+    "dyads": {
+      "1": {
+        "scenario": "Stell dir deine nächsten Wochen vor: Was gibt dir mehr Halt – klare Ziele und Meilensteine oder der offene Weg und die Momente unterwegs?",
+        "poleLow": "Eher zielorientiert",
+        "poleHigh": "Eher erlebnisorientiert"
+      },
+      "2": {
+        "scenario": "Wenn du einen freien Tag planst: Suchst du lieber feste Struktur und feste Zeiten – oder viel Freiraum für Spontanes?",
+        "poleLow": "Eher Struktur",
+        "poleHigh": "Eher Freiheit"
+      },
+      "3": {
+        "scenario": "In einer Gruppe: Übernimmst du gern die Richtung – oder fließt du lieber mit und stärkst das Miteinander?",
+        "poleLow": "Eher Führung / Kontrolle",
+        "poleHigh": "Eher Annehmen / Mitgehen"
+      },
+      "4": {
+        "scenario": "Bei Entscheidungen: Was wiegt für dich schwerer – dein eigenes Wohlbefinden oder das Wohl für alle Beteiligten?",
+        "poleLow": "Eher Eigeninteresse",
+        "poleHigh": "Eher Gemeinwohl"
+      }
+    },
+    "inline": {
+      "cancel": "Abbrechen"
+    },
+    "moreAbout": {
+      "title": "Mehr zu meinem Typ",
+      "shortCta": "Mehr zu meinem Typ",
+      "dyadHeading": "Dyade {{n}}",
+      "noScales": "Keine Auswertungsdaten vorhanden.",
+      "skippedBody": "Du hast die Fragen zunächst übersprungen. Dein Symbol ist die Schnecke (Undecided). Unter „Fragen erneut beantworten“ kannst du die Umfrage nachholen."
+    },
+    "forest": {
+      "figureAria": "Charakter und Anzeigename – Tippen für Details",
+      "undecidedHint": "Bitte schließe die Kurzumfrage ab (erscheint nach der Anmeldung)."
+    },
+    "profileSection": {
+      "title": "Dein Charakter",
+      "retake": "Fragen erneut beantworten"
+    }
+  },
+  "navigation": {
+    "home": "Roots",
+    "tasks": "Aufgaben",
+    "forest": "Wald",
+    "rewards": "Belohnungen",
+    "statistics": "Statistiken",
+    "rankings": "Rankings",
+    "groups": "Gruppen",
+    "admin": "Admin",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "points": "{{count}} Punkte",
+    "forestPoints": "Wald (Summe): {{count}} — Kommunikation {{k}}, Mensch {{m}}, Natur {{n}}, Ressourcen {{r}}",
+    "forestPointsShort": "Wald {{count}}",
+    "pointsBonus": "Punkte-Bonus",
+    "scanBonusQr": "Bonus-QR-Code scannen",
+    "contests": "Contests",
+    "mailbox": "Postfach"
+  },
+  "mailbox": {
+    "title": "Postfach",
+    "noMessages": "Keine Nachrichten",
+    "loading": "Nachrichten werden geladen…",
+    "back": "Zurück",
+    "confirmDelete": "Nachricht wirklich löschen?",
+    "rejectionReason": "Ablehnungsgrund",
+    "reviewPhoto": "Foto prüfen",
+    "deleting": "Wird gelöscht…",
+    "delete": "Löschen"
+  },
+  "login": {
+    "modes": {
+      "login": {
+        "title": "Melde dich an, um fortzufahren"
+      },
+      "register": {
+        "title": "Erstelle dein Konto"
+      },
+      "forgot-password": {
+        "title": "Setze dein Passwort zurück"
+      },
+      "reset-password": {
+        "title": "Wähle ein neues Passwort"
+      },
+      "passwordless-login": {
+        "title": "Melde dich mit einem Einmal-Code an"
+      }
+    },
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "loginCode": "Login-Code",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort bestätigen"
+    },
+    "placeholders": {
+      "name": "Dein Name",
+      "email": "du@example.com",
+      "password": "••••••••",
+      "loginCode": "000000"
+    },
+    "passwordlessHint": "Gib den 6-stelligen Code aus deiner E-Mail ein",
+    "guestTasksButton": "Aufgaben als Gast lösen",
+    "actions": {
+      "signIn": "Anmelden",
+      "register": "Konto erstellen",
+      "sendReset": "Link senden",
+      "resetPassword": "Passwort zurücksetzen",
+      "getCode": "Code anfordern",
+      "submitCode": "Anmelden",
+      "resendVerification": "Aktivierungsmail erneut senden"
+    },
+    "divider": "oder",
+    "privacyCheckbox": "Ich akzeptiere die <1>Datenschutzhinweise</1> und die Datenverarbeitung für die Nutzung der App.",
+    "links": {
+      "noAccount": "Noch kein Konto?",
+      "alreadyHaveAccount": "Du hast bereits ein Konto?",
+      "forgotPassword": "Passwort vergessen?",
+      "passwordless": "Mit E-Mail-Code anmelden",
+      "requestNewCode": "Neuen Code anfordern",
+      "backToPassword": "Zurück zum Passwort-Login",
+      "rememberPassword": "Passwort wieder eingefallen?",
+      "backToLogin": "Zurück zur Anmeldung",
+      "backToRegistration": "Zurück zur Registrierung"
+    },
+    "messages": {
+      "verificationSuccess": "E-Mail erfolgreich verifiziert! Du kannst dich jetzt anmelden.",
+      "verificationFailed": "E-Mail-Bestätigung fehlgeschlagen. Der Link ist möglicherweise abgelaufen.",
+      "codeSent": "Falls ein Konto existiert, wurde ein Login-Code gesendet.",
+      "accountCreated": "Konto erstellt! Bitte bestätige deine E-Mail.",
+      "passwordReset": "Passwort zurückgesetzt! Du kannst dich jetzt anmelden.",
+      "passwordSetup": "Passwort gespeichert! Du kannst dich jetzt anmelden.",
+      "passwordlessSetup": "Link zum Setzen eines Passworts wurde gesendet.",
+      "loginCodeRequired": "Bitte gib den Login-Code ein",
+      "loginCodeRequested": "Bitte gib deine E-Mail-Adresse ein",
+      "nameRequired": "Bitte gib deinen Namen ein",
+      "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen haben",
+      "passwordMismatch": "Die Passwörter stimmen nicht überein",
+      "missingResetToken": "Reset-Token fehlt",
+      "emailVerificationRequired": "E-Mail-Bestätigung erforderlich. Prüfe dein Postfach ({{email}}).",
+      "verificationResent": "Falls die Adresse existiert und noch nicht bestätigt ist, wurde eine neue Aktivierungsmail gesendet.",
+      "verificationResendFailed": "Aktivierungsmail konnte gerade nicht erneut gesendet werden.",
+      "validationError": "Validierungsfehler",
+      "registrationFailed": "Registrierung fehlgeschlagen",
+      "privacyRequired": "Bitte akzeptiere die Datenschutzhinweise, um fortzufahren.",
+      "passwordSetupRequired": "Dieses Konto verwendet Passwort-lose Anmeldung. Ein Link zum Setzen eines Passworts wurde an {{email}} gesendet.",
+      "requestFailed": "Aktion fehlgeschlagen. Bitte versuche es erneut.",
+      "oauthFailed": "Social Login fehlgeschlagen. Bitte erneut versuchen.",
+      "oauthTokenFailed": "Anmeldung erfolgreich, aber Token konnte nicht erstellt werden. Bitte erneut versuchen.",
+      "oauthNotConfigured": "Social Login ist nicht konfiguriert. Bitte E-Mail/Passwort nutzen.",
+      "defaultError": "Während der Anmeldung ist ein Fehler aufgetreten.",
+      "loginFailed": "Ungültige E-Mail oder ungültiges Passwort",
+      "fieldErrors": {
+        "emailNotFound": "Es gibt kein Konto mit dieser E-Mail-Adresse.",
+        "wrongPassword": "Das Passwort ist nicht korrekt."
+      },
+      "resetLinkSent": "Falls ein Konto existiert, wurde ein Reset-Link gesendet.",
+      "authenticating": "Anmeldung läuft…"
+    },
+    "social": {
+      "google": "Mit Google fortfahren",
+      "facebook": "Mit Facebook fortfahren",
+      "apple": "Mit Apple fortfahren",
+      "github": "Mit GitHub fortfahren"
+    }
+  },
+  "privacyNotice": {
+    "title": "Datenschutzhinweise",
+    "intro": "Mit diesen Hinweisen informieren wir dich über die Verarbeitung personenbezogener Daten bei der Nutzung der App 4rest im Rahmen der EU-Datenschutz-Grundverordnung (DSGVO).",
+    "purposesTitle": "Zwecke der Verarbeitung",
+    "purposesBody": "Wir verarbeiten deine Daten, um dir ein Nutzerkonto bereitzustellen, die App-Funktionen (z. B. Spielmechanik, Punkte, Aufgaben) zu ermöglichen und dich bei Bedarf per E-Mail zu kontaktieren (z. B. Verifizierung, Passwort-Reset).",
+    "dataTitle": "Datenkategorien",
+    "dataBody": "Zu den verarbeiteten Daten gehören insbesondere: E-Mail-Adresse, Passwort (als sicherer Hash gespeichert), von dir angegebener Name oder Anzeigename sowie Nutzungs- und Punktestanddaten, die in der App anfallen.",
+    "legalTitle": "Rechtsgrundlagen",
+    "legalBody": "Die Verarbeitung erfolgt zur Durchführung des Nutzungsvertrags (Art. 6 Abs. 1 lit. b DSGVO) und – soweit erforderlich – zur Wahrung berechtigter Interessen (Art. 6 Abs. 1 lit. f DSGVO), z. B. zur Absicherung des Betriebs. Sofern du Einwilligungen erteilst, ist Art. 6 Abs. 1 lit. a DSGVO maßgeblich.",
+    "rightsTitle": "Deine Rechte",
+    "rightsBody": "Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch gegen bestimmte Verarbeitungen. Außerdem hast du das Recht, eine Beschwerde bei einer Datenschutzaufsichtsbehörde einzureichen. Einwilligungen kannst du mit Wirkung für die Zukunft widerrufen.",
+    "contactTitle": "Kontakt",
+    "contactBody": "Für Fragen zum Datenschutz oder zur Ausübung deiner Rechte nutze bitte die Kontaktmöglichkeiten, die im Impressum oder in der App angegeben sind (z. B. Support-E-Mail-Adresse)."
+  },
+  "home": {
+    "title": "Willkommen bei 4rest",
+    "subtitle": "Lass deinen virtuellen Wald mit nachhaltigen Aktionen wachsen",
+    "impactTitle": "Dein Impact",
+    "impactSubtitle": "Verfolge deinen Fortschritt",
+    "stats": {
+      "totalPoints": "Gesamtpunkte",
+      "teamPoints": "Team / Eigene Punkte",
+      "treesPlanted": "Gepflanzte Bäume",
+      "tasksCompleted": "Abgeschlossene Aufgaben",
+      "co2Saved": "Eingespartes CO₂"
+    },
+    "contests": {
+      "title": "Contest",
+      "points": "Punkte",
+      "rank": "Rang",
+      "unnamed": "Unbenannter Contest"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "subtitle": "Setze deine Reise fort",
+      "tasks": {
+        "title": "Aufgaben erledigen",
+        "description": "Sammle Punkte durch nachhaltige Challenges"
+      },
+      "forest": {
+        "title": "Wald besuchen",
+        "description": "Sieh zu, wie deine Bäume wachsen"
+      },
+      "rewards": {
+        "title": "Belohnungen einlösen",
+        "description": "Tausche Punkte gegen Vorteile"
+      }
+    },
+    "atlas": {
+      "sectionTitle": "Heute im Wald",
+      "summaryOpen": "{{open}} von {{total}} Aufgaben offen",
+      "summaryNone": "Noch keine Aufgaben — dein Wald wartet auf dich",
+      "summaryAllDone": "Alle Aufgaben erledigt — besuch den Wald oder löse Belohnungen ein",
+      "ctaTasks": "Zu den Aufgaben",
+      "exploreForest": "Wald erkunden",
+      "openRewards": "Belohnungen"
+    },
+    "nextTasks": {
+      "title": "Nächste Aufgaben",
+      "allTasks": "Alle Aufgaben"
+    },
+    "progress": {
+      "title": "Mein Fortschritt",
+      "level": "Wald-Stufe {{level}} / {{max}}"
+    },
+    "invite": {
+      "title": "Lade einen Freund ein",
+      "description": "Erstelle ein Team oder einen Contest im Profil und teile den QR-Code — so können Freunde mitmachen.",
+      "cta": "Wettbewerbe",
+      "share": "App teilen",
+      "shareTitle": "4rest",
+      "shareText": "Mach mit bei 4rest!",
+      "linkCopied": "Link kopiert",
+      "linkCopiedMessage": "Einladungslink in die Zwischenablage kopiert",
+      "shareError": "Fehler",
+      "shareErrorMessage": "Einladungslink konnte nicht geteilt werden"
+    }
+  },
+  "tasks": {
+    "title": "Verfügbare Aufgaben",
+    "notFound": "Aufgabe nicht gefunden",
+    "locationButton": "Hier",
+    "mapButton": "Karte",
+    "onlineButton": "Online",
+    "showLocation": "Position anzeigen",
+    "showGlobalLocationMap": "Alle standortbasierten Aufgaben auf Karte anzeigen",
+    "showOnline": "Online-Aufgaben anzeigen",
+    "locationMapTitle": "Ihre Position",
+    "backToList": "Zurück zur Liste",
+    "hub": {
+      "backToHub": "Zurück zur Übersicht",
+      "all": "Alle",
+      "sections": {
+        "overview": "Übersicht",
+        "places": "Orte",
+        "collection": "Sammlung",
+        "online": "Online"
+      },
+      "allTasks": {
+        "title": "Alle Aufgaben",
+        "subtitle": "Filter, Sortierung und vollständige Liste"
+      },
+      "mapView": {
+        "title": "Kartenansicht"
+      },
+      "placeTaskCount": "{{count}} Aufgaben"
+    },
+    "categories": {
+      "hubTitle": "Thema wählen",
+      "hubSubtitle": "Tippe eine Kategorie, um die Aufgaben zu öffnen.",
+      "backToCategories": "Zurück zu den Kategorien",
+      "kommunikation": "Kommunikation & Netzwerke",
+      "kommunikationDescription": "Dialog, Teamgeist und Zusammenarbeit stärken.",
+      "mensch": "Mensch & soziales Umfeld",
+      "menschDescription": "Empathie, Unterstützung und soziale Wirkung fördern.",
+      "natur": "Natur & Umweltschutz",
+      "naturDescription": "Biodiversität schützen und Ökosysteme unterstützen.",
+      "ressourcen": "Ressourcen- und Materialeinsatz",
+      "ressourcenDescription": "Verbrauch reduzieren und Materialien bewusst nutzen.",
+      "sonstige": "Weitere Aufgaben",
+      "sonstigeDescription": "Zusätzliche Aktionen außerhalb der Kernkategorien.",
+      "taskCount": "{{count}} Aufgaben"
+    },
+    "filters": {
+      "type": {
+        "label": "Typ",
+        "all": "Alle Typen",
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
+        "article_quiz": "Artikel-Quiz",
+        "survey": "Umfrage",
+        "qr": "QR-Code",
+        "photo": "Foto",
+        "visit_location": "Standort besuchen"
+      },
+      "completion": {
+        "label": "Status",
+        "all": "Alle Aufgaben",
+        "not_completed": "Nicht abgeschlossen",
+        "completed": "Abgeschlossen",
+        "validating": "Validierung"
+      },
+      "time": {
+        "label": "Zeit",
+        "all": "Gesamte Zeit",
+        "recent": "Aktuell (7 Tage)"
+      }
+    },
+    "empty": {
+      "all": {
+        "title": "Keine Aufgaben verfügbar",
+        "description": "Schau später erneut vorbei."
+      },
+      "filtered": {
+        "title": "Keine Aufgaben für diese Filter",
+        "description": "Passe deine Filtereinstellungen an."
+      }
+    },
+    "loadError": "Aufgaben konnten nicht geladen werden. Bitte erneut versuchen.",
+    "buttons": {
+      "start": "Aufgabe starten",
+      "completed": "Abgeschlossen",
+      "locked": "Gesperrt",
+      "validating": "Warte auf Validierung"
+    },
+    "collection": {
+      "add": "Zur Sammlung hinzufügen",
+      "remove": "Aus Sammlung entfernen"
+    },
+    "detail": {
+      "noDescription": "Keine weitere Beschreibung.",
+      "videoSection": "Video",
+      "locationSection": "Ort auf der Karte",
+      "completedAt": "Abgeschlossen am {{date}}",
+      "quizLockedHint": "Dieses Quiz ist nach einer Falschantwort vorübergehend gesperrt.",
+      "quizLockedRemaining": "Erneut verfügbar in ca. {{minutes}} Minute(n)."
+    },
+    "tile": {
+      "noPreview": "Kein Kurztext"
+    },
+    "status": {
+      "available": "Verfügbare Aufgabe"
+    },
+    "badges": {
+      "completed": "Aufgabe erledigt",
+      "locked": "Vorbedingungen nicht erfüllt",
+      "validating": "Warte auf Validierung"
+    },
+    "prerequisites": {
+      "unlockMessage": "Vorbedingungs-Aufgaben erledigen, um freizuschalten",
+      "showPrerequisites": "Vorbedingungen anzeigen",
+      "clearFilter": "Filter zurücksetzen"
+    },
+    "toast": {
+      "completedTitle": "Aufgabe abgeschlossen",
+      "completedMessage": "Du hast einen neuen Baum gepflanzt und {{points}} Punkte gesammelt!",
+      "verificationPendingTitle": "Foto eingereicht",
+      "verificationPendingMessage": "Dein Foto wurde eingereicht und wartet auf Freigabe.",
+      "errorTitle": "Aufgabe konnte nicht abgeschlossen werden",
+      "errorMessage": "Bitte versuche es erneut."
+    },
+    "visit_location": {
+      "targetLocationNotSet": "Zielstandort der Aufgabe ist nicht festgelegt",
+      "geolocationNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
+      "positionError": "Fehler beim Abrufen der Position: {{message}}",
+      "locationError": "Standortfehler: {{message}}",
+      "locationTrackingError": "Standortverfolgungsfehler: {{message}}",
+      "targetLocation": "Zielstandort",
+      "yourLocation": "Ihr Standort",
+      "noTargetLocation": "Diese Aufgabe hat keinen konfigurierten Zielstandort.",
+      "atLocation": "✓ Sie sind am Standort!",
+      "distance": "Entfernung: {{distance}}m",
+      "startTracking": "Standortverfolgung starten",
+      "stopTracking": "Verfolgung beenden",
+      "yourLocationLabel": "Ihr Standort: {{lat}}, {{lng}}",
+      "locationReached": "Standort erreicht! Aufgabe erfolgreich abgeschlossen.",
+      "mapInitError": "Fehler beim Initialisieren der Karte: {{message}}",
+      "mapUnknownError": "Unbekannter Fehler",
+      "yourCurrentPosition": "Ihre aktuelle Position",
+      "startTask": "Aufgabe starten",
+      "locatingPosition": "Position wird ermittelt…",
+      "loadingMap": "Karte wird geladen…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} Aufgaben an diesem Ort"
+    }
+  },
+  "rewards": {
+    "title": "Belohnungsmarkt",
+    "locationButton": "Hier",
+    "showLocation": "Position anzeigen",
+    "locationMapTitle": "Ihre Position",
+    "map": {
+      "yourCurrentPosition": "Ihre aktuelle Position",
+      "geolocationNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
+      "positionError": "Fehler beim Abrufen der Position: {{message}}",
+      "mapInitError": "Fehler beim Initialisieren der Karte: {{message}}",
+      "mapUnknownError": "Unbekannter Fehler",
+      "locatingPosition": "Position wird ermittelt…",
+      "loadingMap": "Karte wird geladen…",
+      "details": "Details",
+      "multipleAtLocation": "{{count}} Belohnungen an diesem Ort"
+    },
+    "backToList": "Zurück zur Liste",
+    "hub": {
+      "backToHub": "Zurück zur Übersicht",
+      "all": "Alle",
+      "sections": {
+        "places": "Orte",
+        "online": "Online"
+      },
+      "placeRewardCount": "{{count}} Belohnungen"
+    },
+    "onlineButton": "Online",
+    "showOnline": "Online-Belohnungen anzeigen",
+    "balanceLabel": "Deine Punkte",
+    "prerequisites": {
+      "clearFilter": "Filter zurücksetzen"
+    },
+    "filters": {
+      "all": "Alle",
+      "discount": "🏷️ Rabatte",
+      "benefit": "✨ Vorteile",
+      "team_event": "🤝 Team-Events"
+    },
+    "empty": {
+      "title": "Keine Belohnungen verfügbar",
+      "description": "Bitte später erneut prüfen oder Filter ändern."
+    },
+    "receipt": {
+      "title": "Einlöserbeleg",
+      "voucherCode": "Gutscheincode",
+      "expires": "Gültig bis",
+      "reward": "Belohnung"
+    },
+    "card": {
+      "cost": "{{count}} Punkte",
+      "redeem": "Einlösen",
+      "insufficient": "Zu wenig Punkte",
+      "redeemPersonal": "{{count}} Punkte (eigenes Guthaben)",
+      "redeemPointsShort": "{{count}} Punkte",
+      "redeemTeam": "{{count}} Punkte (Team-Guthaben)",
+      "redeeming": "Wird eingelöst…",
+      "swipeRedeemPersonal": "Swipe einlösen (eigenes Guthaben, {{count}} Punkte)",
+      "swipeRedeemTeam": "Swipe einlösen (Team-Guthaben, {{count}} Punkte)",
+      "singleQrOpen": "Es kann nur ein QR-Code gleichzeitig geöffnet sein."
+    },
+    "messages": {
+      "redeemSuccess": "Belohnung erfolgreich eingelöst",
+      "redeemError": "Belohnung konnte nicht eingelöst werden",
+      "notEnoughPoints": "Nicht genug Punkte",
+      "notEnoughTeamPoints": "Nicht genug Team-Punkte",
+      "exceedsPersonalPoints": "Du überschreitest deinen eigenen Punktestand ({{points}} Punkte). Möchtest du trotzdem fortfahren?"
+    },
+    "confirm": {
+      "title": "Einlösung bestätigen",
+      "message": "Möchten Sie {{title}} wirklich für {{cost}} Punkte einlösen?",
+      "warning": "Dieser QR-Code ist temporär und verschwindet, wenn Sie diese Seite verlassen. Punkte werden nur abgezogen, nachdem ein Administrator den QR-Code gescannt und verifiziert hat.",
+      "yes": "Ja, einlösen",
+      "no": "Nein, abbrechen"
+    },
+    "qr": {
+      "title": "QR-Code für {{title}}",
+      "instruction": "Zeigen Sie diesen QR-Code einem Administrator zur Verifizierung",
+      "codeLabel": "Einlösecode",
+      "status": "Status: {{status}}",
+      "statuses": {
+        "pending": "Ausstehende Verifizierung",
+        "used": "Verifiziert und eingelöst",
+        "expired": "Abgelaufen"
+      },
+      "warning": "Schließen Sie diese Seite nicht, bis der QR-Code verifiziert wurde",
+      "confirmed": "Erfolgreich verifiziert!",
+      "confirmedMessage": "Ihre Belohnung wurde verifiziert und eingelöst. Punkte wurden abgezogen.",
+      "successModal": {
+        "title": "Belohnung erfolgreich eingelöst!",
+        "message": "Ihre {{title}} wurde verifiziert und eingelöst. Punkte wurden von Ihrem Konto abgezogen."
+      }
+    },
+    "voucher": {
+      "title": "Gutscheincode für {{title}}",
+      "instruction": "Zeigen Sie diesen Gutscheincode bei der Einlösung vor.",
+      "codeLabel": "Gutscheincode",
+      "warning": "Bewahren Sie diesen Code sicher auf, bis die Einlösung abgeschlossen ist."
+    },
+    "pointsBonus": {
+      "scanTitle": "Punkte-Bonus QR-Code scannen",
+      "noToken": "Kein QR-Token verfügbar",
+      "scanSubtitle": "Scannen Sie einen QR-Code, um Bonus-Punkte zu erhalten",
+      "scanInstruction": "Richten Sie die Kamera auf den QR-Code",
+      "scanning": "Scannen...",
+      "redeeming": "Einlösen...",
+      "redeemed": "Erfolgreich {{points}} Punkte eingelöst! Neuer Kontostand: {{balance}}",
+      "redeemError": "QR-Code konnte nicht eingelöst werden",
+      "cameraError": "Kamera-Zugriff fehlgeschlagen",
+      "cameraNotSupported": "Kamera-Zugriff wird in diesem Browser nicht unterstützt. Bitte verwenden Sie einen modernen Browser mit Kamera-Unterstützung.",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.",
+      "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff zum Scannen von QR-Codes",
+      "cameraPermissionDenied": "Kamera-Zugriff wurde verweigert. Bitte erlauben Sie den Kamera-Zugriff in den Einstellungen Ihres Browsers.",
+      "cameraNotFound": "Keine Kamera gefunden. Bitte stellen Sie sicher, dass eine Kamera angeschlossen ist.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet. Bitte schließen Sie andere Programme, die die Kamera nutzen.",
+      "toast": {
+        "title": "Punkte-Bonus erhalten!",
+        "message": "Du hast {{points}} Bonus-Punkte erhalten! Neuer Kontostand: {{balance}} Punkte",
+        "errorTitle": "Einlösung fehlgeschlagen"
+      }
+    },
+    "swipe": {
+      "title": "Belohnung einlösen",
+      "cost": "{{count}} Punkte",
+      "instruction": "Nach rechts wischen, um die Einlösung zu bestätigen",
+      "swipe": "Wischen zum Einlösen",
+      "swipeRight": "Nach rechts wischen →",
+      "releasing": "Loslassen zum Bestätigen",
+      "redeeming": "Wird eingelöst...",
+      "confirmed": "Bestätigt!",
+      "cancel": "Abbrechen",
+      "warning": "Dieser QR-Code ist temporär. Bitte lösen Sie ihn unmittelbar vor der Person ein."
+    },
+    "scanPointsBonus": "📷 Punkte-Bonus QR-Code scannen",
+    "scanner": {
+      "button": "Belohnung von Gast einlösen",
+      "title": "Belohnung von Gast einlösen",
+      "subtitle": "Scannen Sie den QR-Code der Belohnung",
+      "instruction": "Richten Sie die Kamera auf den QR-Code",
+      "scanning": "Scannen...",
+      "verifying": "Wird überprüft...",
+      "cameraError": "Kamera-Zugriff fehlgeschlagen",
+      "cameraNotSupported": "Kamera-Zugriff wird in diesem Browser nicht unterstützt. Bitte verwenden Sie einen modernen Browser mit Kamera-Unterstützung.",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS, wenn von einem anderen Gerät zugegriffen wird. Bitte verwenden Sie HTTPS oder greifen Sie von localhost zu.",
+      "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff zum Scannen von QR-Codes",
+      "invalidQr": "Ungültiger QR-Code",
+      "errorTitle": "Fehler",
+      "redeemSuccess": "Belohnung eingelöst",
+      "redeemMessage": "Belohnung \"{{reward}}\" wurde für {{guest}} eingelöst.",
+      "redeemError": "Belohnung konnte nicht eingelöst werden",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet."
+    },
+    "redemption": {
+      "title": "Belohnung gefunden",
+      "reward": "Belohnung",
+      "guest": "Gast",
+      "pointsCost": "{{count}} Punkte",
+      "unknownGuest": "Unbekannter Gast",
+      "redeem": "Belohnung eingelöst",
+      "redeeming": "Wird eingelöst..."
+    }
+  },
+  "photoValidation": {
+    "title": "Foto-Aufgaben verifizieren",
+    "loading": "Lade ausstehende Fotos...",
+    "error": "Fehler beim Laden der Foto-Aufgaben:",
+    "noPendingTasks": "Keine ausstehenden Foto-Aufgaben.",
+    "filterNoMatch": "Filter: {{id}} – Keine passende Aufgabe gefunden",
+    "user": "Benutzer",
+    "points": "Punkte",
+    "uploadedAt": "Hochgeladen am",
+    "approve": "Freigeben",
+    "approving": "Freigeben...",
+    "reject": "Ablehnen",
+    "rejecting": "Ablehnen...",
+    "confirmApprove": "Möchten Sie dieses Foto wirklich freigeben?",
+    "approvedTitle": "Foto freigegeben",
+    "approvedMessage": "Das Foto wurde freigegeben und die Punkte wurden vergeben.",
+    "approveErrorTitle": "Fehler",
+    "approveErrorMessage": "Fehler beim Freigeben des Fotos.",
+    "rejectedTitle": "Foto abgelehnt",
+    "rejectedMessage": "Das Foto wurde abgelehnt und der Benutzer wurde benachrichtigt.",
+    "rejectErrorTitle": "Fehler",
+    "rejectErrorMessage": "Fehler beim Ablehnen des Fotos.",
+    "rejectDialogTitle": "Foto ablehnen",
+    "rejectDialogMessage": "Möchten Sie dieses Foto wirklich ablehnen? Optional können Sie eine Begründung angeben.",
+    "rejectionReasonPlaceholder": "Begründung (optional)",
+    "confirmReject": "Ablehnen"
+  },
+  "admin": {
+    "title": "Administrator-Bereich",
+    "requiresPrivileges": "Sie benötigen Administratorrechte, um auf diese Seite zuzugreifen.",
+    "home": {
+      "title": "Administrator-Startseite",
+      "subtitle": "Erstellen Sie Erlebnisse für Gäste, Mitarbeiter und Partner."
+    },
+    "logout": "Abmelden",
+    "actions": {
+      "createTask": {
+        "title": "Aufgabe erstellen",
+        "description": "Verwenden Sie eine bestehende Aufgabe oder beginnen Sie von Grund auf."
+      },
+      "createReward": {
+        "title": "Belohnung erstellen",
+        "description": "Veröffentlichen Sie eine neue Belohnung für den Marktplatz."
+      },
+      "manageTasks": {
+        "title": "Aufgaben verwalten",
+        "description": "Durchsuchen, bearbeiten, aktivieren, deaktivieren oder löschen Sie bestehende Aufgaben."
+      },
+      "manageRewards": {
+        "title": "Belohnungen verwalten",
+        "description": "Überprüfen und pflegen Sie für Benutzer verfügbare Belohnungen."
+      },
+      "createLocation": {
+        "title": "Standort erstellen",
+        "description": "Definieren Sie einen Online- oder physischen Standort für Aufgaben und Belohnungen."
+      },
+      "manageLocations": {
+        "title": "Standorte verwalten",
+        "description": "Aktualisieren oder entfernen Sie verfügbare Standorte."
+      },
+      "redeemRewards": {
+        "title": "Belohnungen einlösen",
+        "description": "Scannen Sie QR-Codes, um Belohnungen zu verifizieren und einzulösen."
+      },
+      "forestDebugStats": {
+        "title": "Wald-Debug-Statistiken",
+        "description": "Zeigen Sie pro Benutzer Baum- und abgeschlossene Aufgabenanzahlen zur Fehlerbehebung an."
+      },
+      "onboardingManage": {
+        "title": "Onboarding verwalten",
+        "description": "Dyaden, Fragen pro Dyade, Texte und Hintergrundbilder für die Spielerprofilierung bearbeiten."
+      },
+      "pageBackgrounds": {
+        "title": "Seitenhintergründe",
+        "description": "Hintergrundbilder für Roots, Aufgaben, Wald, Belohnungen und Gruppen hochladen."
+      },
+      "surveyAnalytics": {
+        "title": "Umfrage-Analysen",
+        "description": "Zeigen Sie aggregierte Umfrageantworten mit visuellen Diagrammen und Statistiken an."
+      },
+      "debugTools": {
+        "title": "Debug-Tools",
+        "description": "Erweiterte Debugging-Tools zum Testen und zur Datenmanipulation."
+      },
+      "manageParameters": {
+        "title": "Parameter verwalten",
+        "description": "Auswahlwerte für Aufgaben und Belohnungen verwalten"
+      },
+      "manageUsers": {
+        "title": "Benutzer verwalten",
+        "description": "Benutzer anzeigen, bearbeiten und verwalten"
+      },
+      "manageTeams": {
+        "title": "Teams verwalten",
+        "description": "Alle Teams anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "manageContests": {
+        "title": "Wettbewerbe verwalten",
+        "description": "Alle Wettbewerbe anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "pointsBonus": {
+        "title": "Bonus-Codes generieren",
+        "description": "QR-Codes für Bonuspunkte generieren"
+      },
+      "photoValidation": {
+        "title": "Foto-Aufgaben verifizieren",
+        "description": "Foto-Aufgaben prüfen und freigeben oder ablehnen"
+      }
+    },
+    "debugMode": {
+      "enable": "Debug-Modus aktivieren",
+      "disable": "Debug-Modus deaktivieren"
+    },
+    "debugTools": {
+      "title": "Debug-Tools",
+      "subtitle": "Erweiterte Debugging-Tools zum Testen und zur Datenmanipulation. Mit Vorsicht verwenden.",
+      "createTasks": {
+        "title": "20 Test-Aufgaben erstellen",
+        "description": "Erstellen Sie 20 Test-Aufgaben (15, 20 oder 25 Punkte) für einen bestimmten Benutzer. Aufgaben sind nur für diesen Benutzer sichtbar.",
+        "userEmail": "Benutzer-E-Mail",
+        "button": "20 Aufgaben erstellen",
+        "creating": "Wird erstellt...",
+        "success": "Aufgaben erstellt",
+        "error": "Aufgaben konnten nicht erstellt werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich"
+      },
+      "completeTasks": {
+        "title": "20 Aufgaben abschließen",
+        "description": "Schließen Sie 20 nicht abgeschlossene Aufgaben für einen bestimmten Benutzer ab. Dies wird Punkte vergeben und Bäume pflanzen.",
+        "userEmail": "Benutzer-E-Mail",
+        "button": "20 Aufgaben abschließen",
+        "completing": "Wird abgeschlossen...",
+        "success": "Aufgaben abgeschlossen",
+        "error": "Aufgaben konnten nicht abgeschlossen werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich"
+      },
+      "deleteData": {
+        "title": "Aufgaben löschen & Punkte entfernen",
+        "description": "Löschen Sie abgeschlossene Aufgaben und entfernen Sie Punkte von einem bestimmten Benutzer. Die Wald-Validierung überprüft die Baumkonsistenz nach dem Löschen.",
+        "userEmail": "Benutzer-E-Mail",
+        "taskCount": "Anzahl der zu löschenden Aufgaben",
+        "pointsToRemove": "Zu entfernende Punkte",
+        "button": "Löschen & Punkte entfernen",
+        "deleting": "Wird gelöscht...",
+        "success": "Daten gelöscht",
+        "error": "Daten konnten nicht gelöscht werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich",
+        "invalidNumbers": "Aufgabenanzahl und Punkte müssen nicht-negative Zahlen sein"
+      },
+      "createSurvey": {
+        "title": "Umfrage mit zufälligen Teilnehmern erstellen",
+        "description": "Erstellen Sie eine Umfrage-Aufgabe und generieren Sie zufällige Antworten von einer bestimmten Anzahl von Teilnehmern.",
+        "surveyTitle": "Umfrage-Titel",
+        "surveyDescription": "Umfrage-Beschreibung",
+        "participantCount": "Anzahl der Teilnehmer",
+        "questions": "Umfrage-Fragen",
+        "addQuestion": "Frage hinzufügen",
+        "questionPlaceholder": "Fragetext eingeben",
+        "titlePlaceholder": "Umfrage-Titel eingeben",
+        "descriptionPlaceholder": "Umfrage-Beschreibung eingeben (optional)",
+        "button": "Umfrage mit Teilnehmern erstellen",
+        "creating": "Wird erstellt...",
+        "success": "Umfrage erstellt",
+        "error": "Umfrage konnte nicht erstellt werden",
+        "titleRequired": "Umfrage-Titel ist erforderlich",
+        "questionsRequired": "Mindestens eine Frage ist erforderlich",
+        "invalidParticipantCount": "Teilnehmeranzahl muss mindestens 1 sein"
+      },
+      "timeBasedActivity": {
+        "title": "Zeitbasierte Aktivität simulieren",
+        "description": "Erstellen Sie Aufgabenabschlüsse mit benutzerdefinierten Daten, die über einen Zeitraum verteilt sind. Nützlich zur Demonstration von Statistiken und Analysen über die Zeit.",
+        "userEmail": "Benutzer-E-Mail",
+        "taskCount": "Anzahl der Aufgaben",
+        "startDate": "Startdatum",
+        "endDate": "Enddatum",
+        "distribution": "Verteilung",
+        "distributionUniform": "Gleichmäßig (gleichmäßig verteilt)",
+        "distributionRandom": "Zufällig",
+        "button": "Aktivität simulieren",
+        "creating": "Wird erstellt...",
+        "success": "Aktivität simuliert",
+        "error": "Aktivität konnte nicht simuliert werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich",
+        "datesRequired": "Startdatum und Enddatum sind erforderlich",
+        "invalidCount": "Aufgabenanzahl muss mindestens 1 sein"
+      },
+      "rewardRedemption": {
+        "title": "Belohnungseinlösung simulieren",
+        "description": "Erstellen Sie eine Belohnungseinlösung für einen Benutzer. Punkte werden bei Bedarf automatisch hinzugefügt. Optional die Einlösung automatisch verifizieren.",
+        "userEmail": "Benutzer-E-Mail",
+        "rewardId": "Belohnungs-ID",
+        "optional": "Optional",
+        "rewardIdPlaceholder": "Leer lassen, um die erste verfügbare Belohnung zu verwenden",
+        "autoVerify": "Einlösung automatisch verifizieren (Punkte sofort abziehen)",
+        "button": "Einlösung simulieren",
+        "processing": "Wird verarbeitet...",
+        "success": "Einlösung simuliert",
+        "error": "Einlösung konnte nicht simuliert werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich"
+      },
+      "resetUserData": {
+        "title": "Benutzerdaten zurücksetzen",
+        "description": "Benutzerfortschrittsdaten löschen. Wählen Sie aus, welche Daten zurückgesetzt werden sollen. WARNUNG: Diese Aktion kann nicht rückgängig gemacht werden!",
+        "userEmail": "Benutzer-E-Mail",
+        "resetTasks": "Aufgaben zurücksetzen",
+        "resetTrees": "Bäume zurücksetzen",
+        "resetPoints": "Punkte zurücksetzen",
+        "resetRedemptions": "Einlösungen zurücksetzen",
+        "button": "Benutzerdaten zurücksetzen",
+        "confirm": "Zurücksetzen bestätigen",
+        "cancel": "Abbrechen",
+        "confirmMessage": "Sind Sie sicher, dass Sie die ausgewählten Daten für diesen Benutzer zurücksetzen möchten? Diese Aktion kann nicht rückgängig gemacht werden!",
+        "success": "Benutzerdaten zurückgesetzt",
+        "error": "Benutzerdaten konnten nicht zurückgesetzt werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich"
+      },
+      "generateStatistics": {
+        "title": "Statistikdaten generieren",
+        "description": "Generieren Sie realistische Statistikdaten über einen Zeitraum. Erstellt Benutzer, Aufgaben und Abschlüsse mit CO2-Einsparungswerten.",
+        "startDate": "Startdatum",
+        "endDate": "Enddatum",
+        "userCount": "Anzahl der Benutzer",
+        "tasksPerUserMin": "Min. Aufgaben pro Benutzer",
+        "tasksPerUserMax": "Max. Aufgaben pro Benutzer",
+        "co2PerTaskMin": "Min. CO2 pro Aufgabe",
+        "co2PerTaskMax": "Max. CO2 pro Aufgabe",
+        "button": "Statistikdaten generieren",
+        "generating": "Wird generiert...",
+        "success": "Statistikdaten generiert",
+        "error": "Statistikdaten konnten nicht generiert werden",
+        "datesRequired": "Startdatum und Enddatum sind erforderlich",
+        "invalidUserCount": "Benutzeranzahl muss mindestens 1 sein"
+      },
+      "simulateForestVisits": {
+        "title": "Waldbesuche simulieren",
+        "description": "Simulieren Sie mehrere Tage von Waldbesuchen, um das Baumwachstum zu testen. Jeder Besuch fügt allen Bäumen des Benutzers 1 Wachstumspunkt hinzu.",
+        "userEmail": "Benutzer-E-Mail",
+        "days": "Anzahl der Tage",
+        "daysPlaceholder": "Anzahl der Tage eingeben (1-365)",
+        "submit": "Besuche simulieren",
+        "simulating": "Wird simuliert...",
+        "success": "Waldbesuche simuliert",
+        "error": "Waldbesuche konnten nicht simuliert werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich",
+        "invalidDays": "Anzahl der Tage muss zwischen 1 und 365 liegen",
+        "noTrees": "Benutzer hat keine Bäume zum Wachsen"
+      },
+      "recalculateTreeSizes": {
+        "title": "Baumgrößen neu berechnen",
+        "description": "Baumgrößen basierend auf aktuellen Wachstumspunkten und Stadium neu berechnen. Behebt Bäume mit falschen Größen.",
+        "userEmail": "Benutzer-E-Mail",
+        "submit": "Größen neu berechnen",
+        "recalculating": "Wird neu berechnet...",
+        "success": "Baumgrößen neu berechnet",
+        "error": "Baumgrößen konnten nicht neu berechnet werden",
+        "emailRequired": "Benutzer-E-Mail ist erforderlich"
+      },
+      "treeSystemApp": {
+        "title": "Tree-System-Prototyp (App.jsx)",
+        "description": "Live-Ansicht des ursprünglichen 3D-Prototyps aus `components/3d/tree-system/App.jsx` zur schnellen Prüfung von Wachstum und Rendering."
+      },
+      "rateLimit": {
+        "title": "Rate Limit überschritten",
+        "message": "Bitte warten Sie einige Sekunden, bevor Sie eine weitere Anfrage stellen"
+      },
+      "logs": {
+        "title": "Debug-Operationsprotokolle",
+        "description": "Zeigen Sie die Audit-Trail aller von Administratoren durchgeführten Debug-Operationen an.",
+        "filterAll": "Alle Ebenen",
+        "filterInfo": "Info",
+        "filterWarn": "Warnung",
+        "filterError": "Fehler",
+        "filterOperation": "Nach Operation filtern...",
+        "refresh": "Aktualisieren",
+        "clear": "Protokolle löschen",
+        "cleared": "Protokolle gelöscht",
+        "clearedMessage": "Alle Debug-Protokolle wurden gelöscht",
+        "clearError": "Protokolle konnten nicht gelöscht werden",
+        "viewDetails": "Details anzeigen",
+        "empty": "Keine Protokolle verfügbar. Debug-Operationen werden hier angezeigt."
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Teams verwalten",
+        "subtitle": "Alle Teams anzeigen und verwalten",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Laden...",
+        "loadError": "Fehler beim Laden der Teams",
+        "showInactive": "Inaktive anzeigen",
+        "openFilters": "Filter",
+        "selectAll": "Alle auswählen",
+        "selectedCount": "{{count}} ausgewählt",
+        "noSelection": "Keine Auswahl",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "existing": {
+          "title": "Bestehende Teams",
+          "subtitle": "Verwalten Sie alle Teams"
+        },
+        "list": {
+          "title": "Alle Teams",
+          "name": "Name",
+          "creator": "Ersteller",
+          "members": "Mitglieder",
+          "points": "Punkte",
+          "createdAt": "Erstellt am",
+          "updatedAt": "Aktualisiert am",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "edit": "Bearbeiten",
+          "noTeams": "Keine Teams gefunden",
+          "untitled": "Unbenannt"
+        },
+        "edit": {
+          "title": "Team bearbeiten",
+          "name": "Team-Name",
+          "active": "Aktiv",
+          "save": "Speichern",
+          "cancel": "Abbrechen",
+          "saved": "Team gespeichert",
+          "error": "Fehler beim Speichern",
+          "members": "Mitglieder",
+          "loadingMembers": "Mitglieder werden geladen...",
+          "noMembers": "Keine Mitglieder vorhanden",
+          "memberName": "Name",
+          "memberEmail": "E-Mail",
+          "memberPoints": "Punkte",
+          "memberJoined": "Beigetreten am",
+          "add": "Hinzufügen",
+          "remove": "Entfernen",
+          "addMembers": "Mitglieder hinzufügen",
+          "removeMembers": "Mitglieder entfernen",
+          "addMembersTitle": "Mitglieder hinzufügen",
+          "removeMembersTitle": "Mitglieder entfernen",
+          "membersAdded": "Mitglieder hinzugefügt",
+          "membersRemoved": "Mitglieder entfernt",
+          "membersAddError": "Mitglieder konnten nicht hinzugefügt werden",
+          "membersRemoveError": "Mitglieder konnten nicht entfernt werden",
+          "nameUpdated": "Name aktualisiert",
+          "nameUpdateError": "Name konnte nicht aktualisiert werden",
+          "statusUpdateError": "Status konnte nicht aktualisiert werden",
+          "showJoinQr": "Beitritts-QR anzeigen",
+          "showRegistrationQr": "Registrierungs-QR anzeigen",
+          "joinQrTitle": "Beitritts-QR-Code",
+          "joinQrDescription": "QR-Code zum Beitritt in dieses Team",
+          "registrationQrTitle": "Registrierungs-QR-Code",
+          "registrationQrDescription": "QR-Code zur Registrierung für dieses Team",
+          "registrationUrl": "Registrierungs-URL",
+          "registrationQrError": "Registrierungs-QR konnte nicht geladen werden",
+          "qrError": "QR-Code konnte nicht geladen werden"
+        },
+        "qrCodes": {
+          "title": "QR-Codes",
+          "joinExisting": {
+            "title": "QR-Code für bestehende Benutzer",
+            "description": "Dieser QR-Code kann von bereits registrierten Benutzer gescannt werden, um dem Team beizutreten",
+            "download": "QR-Code herunterladen"
+          },
+          "registration": {
+            "title": "Registrierungs-QR-Code",
+            "description": "Dieser QR-Code kann von neuen Benutzer gescannt werden, um sich zu registrieren und automatisch dem Team beizutreten",
+            "enable": "Registrierung für neue Benutzer erlauben",
+            "enabled": "Registrierung aktiviert",
+            "disabled": "Registrierung deaktiviert",
+            "download": "Registrierungs-QR-Code herunterladen",
+            "generate": "QR-Code generieren",
+            "notAvailable": "Registrierung ist nicht aktiviert"
+          }
+        },
+        "createNew": "Neues Team erstellen",
+        "createSuccess": "Team erfolgreich erstellt",
+        "teamActivated": "Team aktiviert",
+        "teamDeactivated": "Team deaktiviert"
+      }
+    },
+    "contest": {
+      "manage": {
+        "title": "Wettbewerbe verwalten",
+        "subtitle": "Alle Wettbewerbe anzeigen und verwalten",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Laden...",
+        "loadError": "Fehler beim Laden der Wettbewerbe",
+        "showInactive": "Inaktive anzeigen",
+        "openFilters": "Filter",
+        "selectAll": "Alle auswählen",
+        "selectedCount": "{{count}} ausgewählt",
+        "noSelection": "Keine Auswahl",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "existing": {
+          "title": "Bestehende Wettbewerbe",
+          "subtitle": "Verwalten Sie alle Wettbewerbe"
+        },
+        "list": {
+          "title": "Alle Wettbewerbe",
+          "name": "Name",
+          "creator": "Ersteller",
+          "participants": "Teilnehmer",
+          "startDate": "Startdatum",
+          "endDate": "Enddatum",
+          "rewards": "Belohnungen",
+          "createdAt": "Erstellt am",
+          "updatedAt": "Aktualisiert am",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "edit": "Bearbeiten",
+          "noContests": "Keine Wettbewerbe gefunden",
+          "untitled": "Unbenannt"
+        },
+        "edit": {
+          "title": "Wettbewerb bearbeiten",
+          "name": "Wettbewerbs-Name",
+          "endDate": "Enddatum",
+          "active": "Aktiv",
+          "save": "Speichern",
+          "cancel": "Abbrechen",
+          "saved": "Wettbewerb gespeichert",
+          "error": "Fehler beim Speichern"
+        },
+        "qrCodes": {
+          "title": "QR-Codes",
+          "joinExisting": {
+            "title": "QR-Code für bestehende Benutzer",
+            "description": "Dieser QR-Code kann von bereits registrierten Benutzer gescannt werden, um dem Wettbewerb beizutreten",
+            "download": "QR-Code herunterladen"
+          },
+          "registration": {
+            "title": "Registrierungs-QR-Code",
+            "description": "Dieser QR-Code kann von neuen Benutzer gescannt werden, um sich zu registrieren und automatisch dem Wettbewerb beizutreten",
+            "enable": "Registrierung für neue Benutzer erlauben",
+            "enabled": "Registrierung aktiviert",
+            "disabled": "Registrierung deaktiviert",
+            "download": "Registrierungs-QR-Code herunterladen",
+            "generate": "QR-Code generieren",
+            "notAvailable": "Registrierung ist nicht aktiviert"
+          }
+        }
+      }
+    },
+    "task": {
+      "publish": {
+        "title": "Aufgabe veröffentlichen",
+        "subtitle": "Wählen Sie eine bestehende Aufgabe oder beginnen Sie je nach Aufgabentyp von Grund auf."
+      },
+      "edit": {
+        "title": "Aufgabe bearbeiten",
+        "subtitle": "Aktualisieren Sie die ausgewählte Aufgabe mit dem untenstehenden Formular."
+      },
+      "createFrom": "Erstellen aus",
+      "selectOption": "Option auswählen",
+      "existingTask": "Bestehende Aufgabe",
+      "startFromScratch": {
+        "video": "Video-Quiz",
+        "quiz": "Quiz",
+        "articleQuiz": "Artikel-Quiz",
+        "survey": "Umfrage",
+        "qr": "QR",
+        "photo": "Foto",
+        "visitLocation": "Standort besuchen"
+      },
+      "selectExisting": "Bestehende Aufgabe auswählen",
+      "selectTask": "Aufgabe auswählen",
+      "showQrCode": "QR-Code anzeigen",
+      "contentLanguage": "Inhaltssprache",
+      "contentLanguageDe": "Deutsche Inhalte",
+      "contentLanguageEn": "Englische Inhalte",
+      "basics": {
+        "title": "Aufgabengrundlagen",
+        "subtitle": "Geben Sie die wesentlichen Details für diese Aufgabe an."
+      },
+      "selectLocation": "Standort auswählen",
+      "noLocations": "Keine Standorte verfügbar.",
+      "loadingLocations": "Standorte werden geladen…",
+      "fields": {
+        "type": "Aufgabentyp",
+        "title": "Titel",
+        "teaser": "Teasertext (kurz)",
+        "description": "Beschreibung",
+        "points": "Punkte",
+        "location": "Standort",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "co2Savings": "CO₂-Einsparung (kg)",
+        "articleSource": "Artikelquelle",
+        "articleUrl": "Artikel-URL",
+        "articleContent": "Artikelinhalt",
+        "videoUrl": "Video-URL",
+        "videoSubtitleDe": "Untertitel-URL (Deutsch, VTT)",
+        "videoSubtitleEn": "Untertitel-URL (Englisch, VTT)",
+        "qrCodeValue": "QR-Code-Wert",
+        "targetLocation": "Zielstandort (GPS-Koordinaten)",
+        "address": "Adresse",
+        "latitude": "Breitengrad",
+        "longitude": "Längengrad",
+        "surveyType": "Umfragetyp",
+        "category": "Kategorie",
+        "difficulty": "Schwierigkeitsgrad",
+        "timeRequired": "Zeitaufwand",
+        "locationTool": "Ort/Werkzeug",
+        "teamsOptional": "Teams (optional)",
+        "contestsOptional": "Wettbewerbe (optional)",
+        "taskTeamsHint": "Wenn Teams ausgewählt werden, ist diese Aufgabe nur für Mitglieder dieser Teams sichtbar. Keine Auswahl = für alle sichtbar.",
+        "taskContestsHint": "Wenn Wettbewerbe ausgewählt werden, ist diese Aufgabe nur für Teilnehmer dieser Wettbewerbe sichtbar. Keine Auswahl = für alle sichtbar.",
+        "thumbnailOptional": "Thumbnail (optional)",
+        "thumbnailPreview": "Thumbnail-Vorschau",
+        "geocode": "Geocode",
+        "allowPublicCompletion": "Ohne Login abschließbar",
+        "allowPublicCompletionHint": "Deep-Link: /public/task/:taskId — Foto-Aufgaben brauchen für den Upload ein Konto.",
+        "qrCodeLabel": "QR-Code-Label",
+        "qrCodeNote": "Hinweis zum QR-Code",
+        "qrCodePlaceholder": "QR-Code-Inhalt eingeben",
+        "qrCodePreview": "QR-Code-Vorschau"
+      },
+      "articleSource": {
+        "url": "Externe Artikel-URL verwenden",
+        "content": "Artikelinhalt eingeben"
+      },
+      "videoSource": {
+        "url": "Externe Video-URL verwenden",
+        "upload": "Video-Datei hochladen"
+      },
+      "videoUrlPlaceholder": "https://example.com/video.mp4",
+      "videoSubtitlePlaceholderDe": "https://example.com/video.de.vtt",
+      "videoSubtitlePlaceholderEn": "https://example.com/video.en.vtt",
+      "selectVideoFile": "Wählen Sie eine Video-Datei zum Hochladen",
+      "chooseFile": "Datei auswählen",
+      "noFileSelected": "Keine Datei ausgewählt",
+      "articleUrlPlaceholder": "https://example.com/article",
+      "articleContentPlaceholder": "Geben Sie hier den Artikelinhalt ein...",
+      "targetLocation": {
+        "title": "Zielstandort",
+        "addressPlaceholder": "Adresse wird automatisch aus der Kartenauswahl ausgefüllt",
+        "latitudePlaceholder": "52.5200",
+        "longitudePlaceholder": "13.4050"
+      },
+      "audience": {
+        "title": "Zielgruppe & Zugriff",
+        "subtitle": "Beschränken Sie die Sichtbarkeit auf bestimmte Rollen, Benutzertypen oder Hotels.",
+        "allRoles": "Alle Rollen",
+        "allUserTypes": "Alle Benutzertypen",
+        "allHotels": "Alle Hotels"
+      },
+      "recurrence": {
+        "title": "Wiederholung",
+        "subtitle": "Legen Sie fest, wie oft diese Aufgabe automatisch neu erstellt werden soll.",
+        "typeLabel": "Wiederholungstyp",
+        "once": "Einmal - Aufgabe wird einmal erstellt und verschwindet, wenn sie abgeschlossen ist",
+        "daily": "Täglich - Aufgabe erscheint einmal täglich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Tag)",
+        "weekly": "Wöchentlich - Aufgabe erscheint einmal wöchentlich (wenn die vorherige abgeschlossen ist, wartet bis zur nächsten Woche)",
+        "monthly": "Monatlich - Aufgabe erscheint einmal monatlich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Monat)"
+      },
+      "publishHint": {
+        "editing": "Bestehende Aufgabe bearbeiten.",
+        "uploading": "Video-Datei wird hochgeladen…",
+        "ready": "Alle Pflichtfelder sind ausgefüllt.",
+        "completeRequired": "Vervollständigen Sie die erforderlichen Felder, um zu veröffentlichen."
+      },
+      "quiz": {
+        "title": "Quizfragen",
+        "empty": "Noch keine Fragen. Fügen Sie unten Ihre erste Frage hinzu.",
+        "questionText": "Fragetext",
+        "questionPlaceholder": "Geben Sie die Frageaufforderung ein",
+        "correct": "Richtig",
+        "question": "Frage {{number}}",
+        "remove": "Entfernen",
+        "addAnswer": "Antwort hinzufügen",
+        "addQuestion": "Frage hinzufügen",
+        "answerOption": "Antwortoption {{number}}",
+        "description": "Fügen Sie Multiple-Choice-Fragen für dieses Video hinzu. Jede Frage benötigt mindestens zwei Antworten und eine richtige Antwort."
+      },
+      "survey": {
+        "title": "Umfragefragen",
+        "description": "Fügen Sie Umfragefragen mit verschiedenen Typen hinzu. Jede Frage kann erforderlich oder optional sein.",
+        "empty": "Noch keine Fragen. Fügen Sie unten Ihre erste Frage hinzu.",
+        "addQuestion": "Frage hinzufügen",
+        "questionNumber": "Frage {{number}}",
+        "questionText": "Fragetext",
+        "questionPlaceholder": "Geben Sie den Fragetext ein",
+        "questionType": "Fragetyp",
+        "typeSingleChoice": "Einzelauswahl",
+        "typeMultipleChoice": "Mehrfachauswahl",
+        "typeText": "Texteingabe",
+        "typeRating": "Bewertungsskala",
+        "typeMixed": "Gemischt (alle Fragetypen erlaubt)",
+        "typeSingleChoiceOnly": "Nur Einzelauswahl",
+        "typeMultipleChoiceOnly": "Nur Mehrfachauswahl",
+        "typeTextOnly": "Nur Text",
+        "typeRatingOnly": "Nur Bewertung",
+        "options": "Optionen",
+        "optionPlaceholder": "Option {{number}}",
+        "addOption": "Option hinzufügen",
+        "minRating": "Mindestbewertung",
+        "maxRating": "Höchstbewertung",
+        "required": "Erforderlich",
+        "remove": "Entfernen"
+      },
+      "prerequisites": {
+        "type1": {
+          "label": "Vorbedingung (Typ 1)",
+          "noPrerequisite": "Keine Vorbedingung",
+          "description": "Wählen Sie eine spezifische Aufgabe aus, die erledigt sein muss, bevor diese Aufgabe verfügbar wird.",
+          "searchHint": "Tipp: Suchen Sie nach Aufgabentyp (z.B. QUIZ, VIDEO, VISIT_LOCATION), um Aufgaben zu filtern."
+        },
+        "type2": {
+          "label": "Vorbedingungen (Typ 2)",
+          "placeholder": "Aufgaben für Vorbedingungs-Set auswählen",
+          "buttonLabel": "Vorbedingungs-Aufgaben auswählen",
+          "minCountLabel": "Mindestanzahl erforderlich",
+          "description": "Mindestanzahl von Aufgaben (von {{count}} ausgewählten), die erledigt sein müssen.",
+          "searchHint": "Tipp: Suchen Sie nach Aufgabentyp (z.B. QUIZ, VIDEO, VISIT_LOCATION), um Aufgaben zu filtern."
+        },
+        "validation": {
+          "idsEmpty": "prerequisite_task_ids muss mindestens eine Aufgaben-ID enthalten.",
+          "countInvalid": "prerequisite_task_count muss eine ganze Zahl >= 1 sein.",
+          "countTooLarge": "prerequisite_task_count ({{count}}) darf nicht größer sein als die Anzahl der Aufgaben in prerequisite_task_ids ({{total}}).",
+          "countRequired": "prerequisite_task_count ist erforderlich, wenn prerequisite_task_ids gesetzt ist.",
+          "idsRequired": "prerequisite_task_count erfordert, dass prerequisite_task_ids gesetzt ist."
+        },
+        "modal": {
+          "title": "Vorbedingung auswählen",
+          "titleMulti": "Vorbedingungen auswählen",
+          "searchPlaceholder": "Aufgaben suchen...",
+          "noTasksFound": "Keine Aufgaben gefunden",
+          "selectTask": "Aufgabe auswählen",
+          "selectTasks": "Aufgaben auswählen",
+          "selectedCount": "{{count}} ausgewählt",
+          "clear": "Löschen",
+          "apply": "Anwenden",
+          "noSelection": "Keine Aufgabe ausgewählt",
+          "noSelectionMulti": "Keine Aufgaben ausgewählt"
+        }
+      },
+      "refresh": "Aufgaben aktualisieren",
+      "loading": "Aufgaben werden geladen…",
+      "loadError": "Aufgaben konnten nicht geladen werden.",
+      "locationsError": "Standorte konnten nicht geladen werden. Erstellen oder aktualisieren Sie Standorte, bevor Sie Aufgaben veröffentlichen.",
+      "cancelEditing": "Bearbeitung abbrechen",
+      "back": "Zurück zum Hauptmenü",
+      "createLocation": "Standort erstellen",
+      "publishing": "Wird veröffentlicht…",
+      "publishButton": "Aufgabe veröffentlichen",
+      "saving": "Wird gespeichert…",
+      "saveChanges": "Änderungen speichern",
+      "untitled": "Unbenannte Aufgabe",
+      "noTasksFound": "Keine Aufgaben gefunden.",
+      "metadataTitle": "Metadaten & Zugriff",
+      "metadataDescription": "Metadaten und zusätzliche Informationen zur Aufgabe",
+      "chooseThumbnail": "Miniaturbild wählen",
+      "thumbnailNote": "PNG oder JPG, max. 2 MB. Wird auf 48×48 px skaliert.",
+      "videoPreview": "Video-Vorschau",
+      "qrCodeTitle": "QR-Code",
+      "qrCodeDescription": "QR-Code-Inhalt für diese Aufgabe.",
+      "qrCodeLabel": "QR-Code-Inhalt",
+      "qrCodeError": "QR-Code-Fehler",
+      "qrCodeErrorMessage": "QR-Code konnte nicht verarbeitet werden."
+    },
+    "reward": {
+      "create": {
+        "title": "Belohnung veröffentlichen",
+        "subtitle": "Wählen Sie eine bestehende Belohnung oder beginnen Sie von Grund auf."
+      },
+      "edit": {
+        "title": "Belohnung bearbeiten",
+        "subtitle": "Aktualisieren Sie die ausgewählte Belohnung mit dem untenstehenden Formular."
+      },
+      "createFrom": "Erstellen aus",
+      "selectOption": "Option auswählen",
+      "existingReward": "Bestehende Belohnung",
+      "selectExisting": "Bestehende Belohnung auswählen",
+      "selectReward": "Belohnung auswählen",
+      "details": {
+        "title": "Belohnungsdetails",
+        "subtitle": "Definieren Sie den Belohnungsinhalt und optionale Integrationen."
+      },
+      "selectLocation": "Standort auswählen",
+      "noLocations": "Keine Standorte verfügbar.",
+      "loadingLocations": "Standorte werden geladen…",
+      "fields": {
+        "type": "Typ",
+        "pointsCost": "Punktekosten",
+        "voucherCode": "Gutscheincode",
+        "externalApiId": "Externe API-ID",
+        "art": "Art",
+        "kategorie": "Kategorie",
+        "teamsOptional": "Teams (optional)",
+        "contestsOptional": "Wettbewerbe (optional)",
+        "rewardTeamsHint": "Wenn Teams ausgewählt werden, ist diese Belohnung nur für Mitglieder dieser Teams sichtbar. Keine Auswahl = für alle sichtbar.",
+        "rewardContestsHint": "Wenn Wettbewerbe ausgewählt werden, ist diese Belohnung nur für Teilnehmer dieser Wettbewerbe sichtbar. Keine Auswahl = für alle sichtbar.",
+        "thumbnailOptional": "Thumbnail (optional)",
+        "thumbnailPreview": "Thumbnail-Vorschau"
+      },
+      "voucherCodePlaceholder": "Optionaler Code für gutscheinbasierte Belohnungen",
+      "externalApiPlaceholder": "Optionaler Bezeichner für externe Integrationen",
+      "audience": {
+        "title": "Zielgruppe & Zugriff",
+        "subtitle": "Beschränken Sie die Sichtbarkeit der Belohnung auf bestimmte Rollen, Benutzertypen oder Hotels.",
+        "allRoles": "Alle Rollen",
+        "allUserTypes": "Alle Benutzertypen",
+        "allHotels": "Alle Hotels"
+      },
+      "recurrence": {
+        "title": "Wiederholung",
+        "subtitle": "Legen Sie fest, wie oft diese Belohnung automatisch neu erstellt werden soll.",
+        "typeLabel": "Wiederholungstyp",
+        "once": "Einmal - Belohnung wird einmal erstellt und verschwindet, wenn sie abgeschlossen ist",
+        "daily": "Täglich - Belohnung erscheint einmal täglich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Tag)",
+        "weekly": "Wöchentlich - Belohnung erscheint einmal wöchentlich (wenn die vorherige abgeschlossen ist, wartet bis zur nächsten Woche)",
+        "monthly": "Monatlich - Belohnung erscheint einmal monatlich (wenn die vorherige abgeschlossen ist, wartet bis zum nächsten Monat)"
+      },
+      "publishHint": {
+        "editing": "Bestehende Belohnung bearbeiten.",
+        "ready": "Alle Pflichtfelder sind ausgefüllt.",
+        "completeRequired": "Vervollständigen Sie die erforderlichen Felder, um zu veröffentlichen."
+      },
+      "refresh": "Belohnungen aktualisieren",
+      "loading": "Belohnungsvorlagen werden geladen…",
+      "loadError": "Belohnungsvorlagen konnten nicht geladen werden.",
+      "cancelEditing": "Bearbeitung abbrechen",
+      "back": "Zurück zum Hauptmenü",
+      "publishing": "Wird veröffentlicht…",
+      "publishButton": "Belohnung veröffentlichen",
+      "saving": "Wird gespeichert…",
+      "saveChanges": "Belohnungsänderungen speichern",
+      "locationsError": "Standorte konnten nicht geladen werden. Erstellen oder aktualisieren Sie Standorte, bevor Sie Belohnungen veröffentlichen.",
+      "untitled": "Unbenannte Belohnung",
+      "chooseThumbnail": "Miniaturbild wählen",
+      "thumbnailNote": "PNG oder JPG, max. 2 MB. Wird auf 48×48 px skaliert.",
+      "selectExistingReward": "Bestehende Belohnung auswählen",
+      "defineContent": "Definieren Sie den Belohnungsinhalt und optionale Integrationen.",
+      "loadingTemplates": "Belohnungsvorlagen werden geladen…",
+      "failedLoadTemplates": "Belohnungsvorlagen konnten nicht geladen werden.",
+      "metadataTitle": "Metadaten & Zugriff",
+      "metadataDescription": "Metadaten und zusätzliche Informationen zur Belohnung",
+      "optionalPointsPlaceholder": "Optional: Punkte beim Einlösen"
+    },
+    "location": {
+      "create": {
+        "title": "Standort erstellen",
+        "subtitle": "Definieren Sie einen neuen Standort für Aufgaben und Belohnungen."
+      },
+      "edit": {
+        "title": "Standort bearbeiten",
+        "subtitle": "Aktualisieren Sie die Standortdetails unten."
+      },
+      "details": {
+        "title": "Standortdetails",
+        "subtitle": "Geben Sie die grundlegenden Informationen für diesen Standort an."
+      },
+      "onlineLocation": "Online-Standort",
+      "physicalLocation": "Physischer Standort",
+      "fields": {
+        "name": "Name",
+        "description": "Beschreibung",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "locationType": "Standorttyp",
+        "category": "Kategorie",
+        "categoryDescription": "Kategoriebeschreibung",
+        "image": "Bild"
+      },
+      "chooseImage": "Bild wählen",
+      "removeImage": "Entfernen",
+      "currentImage": "Aktuelles Bild",
+      "noImage": "Kein Bild ausgewählt",
+      "imageNote": "PNG, JPG oder WEBP, max. 5 MB. Wird in der Aufgabenliste und auf der Orte-Kachel angezeigt.",
+      "imagePreviewAlt": "Bildvorschau",
+      "categorySelect": "Kategorie auswählen (optional)",
+      "categoryDescriptionPlaceholder": "Optionale zusätzliche Beschreibung für die Kategorie",
+      "online": "Online",
+      "physical": "Physisch",
+      "enterAddress": "Vollständige Adresse eingeben",
+      "generateCoordinates": "Koordinaten aus Adresse erzeugen",
+      "latPlaceholder": "z. B. 52.520008",
+      "lngPlaceholder": "z. B. 13.404954",
+      "provideBasicInfo": "Grundlegende Informationen zu diesem Standort angeben.",
+      "categories": {
+        "online": "Online",
+        "hotel_reception": "Hotel-Rezeption",
+        "hotel_restaurant": "Hotel-Restaurant",
+        "external": "Extern",
+        "physical": "Physisch"
+      },
+      "createButton": "Standort erstellen",
+      "updateButton": "Standort aktualisieren",
+      "addressPlaceholder": "Geben Sie die vollständige Adresse ein",
+      "latitudePlaceholder": "z.B. 52.520008",
+      "longitudePlaceholder": "z.B. 13.404954",
+      "publishHint": {
+        "editing": "Bestehenden Standort bearbeiten.",
+        "ready": "Alle Pflichtfelder sind ausgefüllt.",
+        "completeRequired": "Vervollständigen Sie die erforderlichen Felder, um zu speichern."
+      },
+      "back": "Zurück"
+    },
+    "locationManage": {
+      "title": "Standorte verwalten",
+      "subtitle": "Überprüfen Sie bestehende Standorte, bearbeiten Sie deren Details oder entfernen Sie ungenutzte Einträge.",
+      "refresh": "Standorte aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Standorte werden geladen…",
+      "loadError": "Standorte konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "existing": {
+        "title": "Bestehende Standorte",
+        "subtitle": "Jede Aufgabe und Belohnung verweist auf einen dieser Standorte."
+      },
+      "showInactive": "Inaktive anzeigen",
+      "selectAll": "Alle Standorte auswählen",
+      "online": "Online zugänglich",
+      "newButton": "Neuer Standort",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "selectedCount": "{{count}} ausgewählt",
+      "noSelection": "Keine Standorte ausgewählt",
+      "table": {
+        "name": "Name",
+        "type": "Typ",
+        "details": "Details",
+        "status": "Status"
+      },
+      "physical": "Physisch",
+      "noLocations": "Keine Standorte gefunden."
+    },
+    "taskManage": {
+      "title": "Aufgaben verwalten",
+      "subtitle": "Durchsuchen Sie alle Aufgaben, ändern Sie die Verfügbarkeit oder bereinigen Sie ungenutzte Einträge.",
+      "reviewDescription": "Durchsuchen, bearbeiten, aktivieren, deaktivieren oder löschen Sie Aufgaben direkt.",
+      "refresh": "Aufgaben aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Aufgaben werden geladen…",
+      "loadError": "Aufgaben konnten nicht geladen werden.",
+      "existing": {
+        "title": "Bestehende Aufgaben"
+      },
+      "showInactive": "Inaktive anzeigen",
+      "openFilters": "Filter öffnen",
+      "selectAll": "Alle Aufgaben auswählen",
+      "newButton": "Neue Aufgabe",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "selectedCount": "{{count}} ausgewählt",
+      "noSelection": "Keine Aufgaben ausgewählt",
+      "noItems": "Keine Einträge gefunden.",
+      "noTasks": "Keine Aufgaben gefunden.",
+      "actionsColumn": "Aktionen",
+      "table": {
+        "task": "Aufgabe",
+        "location": "Standort",
+        "points": "Punkte",
+        "cost": "Kosten",
+        "status": "Status",
+        "noRewardsFound": "Keine Belohnungen gefunden.",
+        "selectReward": "Belohnung auswählen",
+        "actions": "Aktionen",
+        "possiblePoints": "Mögliche Punkte",
+        "reward": "Belohnung",
+        "title": "Titel"
+      }
+    },
+    "rewardManage": {
+      "title": "Belohnungen verwalten",
+      "subtitle": "Überprüfen Sie bestehende Belohnungen und passen Sie deren Details oder Verfügbarkeit an.",
+      "refresh": "Belohnungen aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Belohnungen werden geladen…",
+      "loadError": "Belohnungen konnten nicht geladen werden.",
+      "existing": {
+        "title": "Bestehende Belohnungen",
+        "subtitle": "Pflegen Sie aktive Belohnungen, bearbeiten Sie deren Details oder bereinigen Sie inaktive Einträge."
+      },
+      "showInactive": "Inaktive anzeigen",
+      "openFilters": "Filter öffnen",
+      "selectAll": "Alle Belohnungen auswählen",
+      "newButton": "Neue Belohnung",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "selectedCount": "{{count}} ausgewählt",
+      "noSelection": "Keine Belohnungen ausgewählt",
+      "noRewards": "Keine Belohnungen gefunden.",
+      "table": {
+        "title": "Titel",
+        "cost": "Kosten",
+        "status": "Status",
+        "location": "Ort"
+      }
+    },
+    "forestStats": {
+      "title": "Wald-Debug-Statistiken",
+      "subtitle": "Pro-Benutzer Baumanzahlen vs. abgeschlossene Aufgaben, basierend auf dem aktuellen Datenbankstatus. Nützlich zum Überprüfen des Wald-Validierungsskripts ohne psql.",
+      "refresh": "Wald-Statistiken aktualisieren",
+      "back": "Zurück zum Hauptmenü",
+      "loading": "Wald-Statistiken werden geladen…",
+      "noUsers": "Keine Benutzer gefunden.",
+      "table": {
+        "title": "Pro-Benutzer Bäume vs. abgeschlossene Aufgaben",
+        "subtitle": "Vergleichen Sie Punkte, gepflanzte Bäume und abgeschlossene Aufgaben für jeden Benutzer.",
+        "email": "E-Mail",
+        "points": "Punkte",
+        "trees": "Bäume",
+        "completedTasks": "Abgeschlossene Aufgaben",
+        "consistent": "Anzahlen konsistent?"
+      },
+      "validation": {
+        "title": "Wald-Validierung & Reparatur",
+        "subtitle": "Führen Sie das Validierungsskript aus, um Wald-Baumkoordinaten, Block-Layout und Konsistenz mit abgeschlossenen Aufgaben zu überprüfen und zu reparieren.",
+        "dryRun": "Trockenlauf (nur Vorschau)",
+        "dryRunHint": "Vorschau der Änderungen ohne Anwendung. Empfohlen für die erste Verwendung.",
+        "forceGeometry": "Geometrie-Neuplatzierung erzwingen",
+        "forceGeometryHint": "Platzieren Sie alle Bäume neu, auch wenn sie bereits in gültigen Positionen sind.",
+        "userFilter": "Benutzerfilter (optional)",
+        "userFilterPlaceholder": "E-Mail oder Benutzer-ID (leer lassen für alle Benutzer)",
+        "userFilterHint": "Validierung nur für einen bestimmten Benutzer ausführen. E-Mail oder Benutzer-ID eingeben.",
+        "run": "Validierung ausführen",
+        "error": "Validierungsfehler",
+        "startFailed": "Validierung konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
+        "failed": "Validierung fehlgeschlagen",
+        "confirmDryRun": {
+          "title": "Wald-Validierung ausführen (Trockenlauf)?",
+          "description": "Dies zeigt eine Vorschau der Änderungen ohne sie anzuwenden. Es werden keine Datenbankänderungen vorgenommen."
+        },
+        "confirmLive": {
+          "title": "Wald-Validierung ausführen (LIVE)?",
+          "description": "⚠️ WARNUNG: Dies wird die Datenbank ändern! Bäume können basierend auf abgeschlossenen Aufgaben und Geometrieregeln gelöscht, verschoben oder neu erstellt werden. Diese Aktion kann nicht rückgängig gemacht werden. Sind Sie sicher, dass Sie fortfahren möchten?"
+        },
+        "status": {
+          "pending": "Ausstehend…",
+          "running": "Läuft…",
+          "completed": "Abgeschlossen",
+          "failed": "Fehlgeschlagen"
+        },
+        "results": {
+          "title": "Validierungsergebnisse",
+          "usersProcessed": "Verarbeitete Benutzer",
+          "treesMoved": "Verschobene Bäume",
+          "treesDeleted": "Gelöschte Bäume",
+          "totalFixed": "Gesamt repariert",
+          "errors": "Fehler",
+          "showErrors": "Fehlerdetails anzeigen"
+        },
+        "closeResults": "Ergebnisse schließen"
+      }
+    },
+    "onboarding": {
+      "title": "Onboarding verwalten",
+      "subtitle": "Struktur, Texte und Hintergrundbilder für die Spielerprofilierung (Gäste).",
+      "structureTitle": "Struktur",
+      "structureHint": "Dyaden und Fragen pro Dyade anpassen, dann „Struktur anwenden“. Anschließend alle Fragen ausfüllen und speichern.",
+      "dyadCount": "Anzahl Dyaden",
+      "questionsPerDyad": "Fragen pro Dyade",
+      "applyStructure": "Struktur anwenden",
+      "introSlidesTitle": "Intro-Slides",
+      "introSlidesHint": "Beliebig viele Intro-Seiten mit eigenem Text und optionalem Hintergrundbild.",
+      "addIntroSlide": "Intro-Slide hinzufügen",
+      "introSlideHeading": "Intro-Slide {{index}}",
+      "introTitle": "Intro (Startbildschirm)",
+      "introTitleDe": "Titel (DE)",
+      "introTitleEn": "Titel (EN)",
+      "introBodyDe": "Text (DE)",
+      "introBodyEn": "Text (EN)",
+      "stepsTitle": "Fragen (Reihenfolge: Dyade 1 Frage 1, Dyade 1 Frage 2, …)",
+      "stepsHint": "Pro Frage Szenario, Polbeschriftungen und optional ein Hintergrundbild (JPEG/PNG/WebP/GIF).",
+      "typeTextsTitle": "Texte für Spielertyp-Beschreibung",
+      "typeTextsHint": "Diese Texte erscheinen bei „Mehr zu meinem Typ“. Pro Dyade sind die Ausprägungen 0 bis 4 editierbar (DE/EN).",
+      "typeTextDyadHeading": "Dyade {{dyad}}",
+      "typeTextScaleHeading": "Ausprägung {{scale}}",
+      "typeTextLabelDe": "Überschrift (DE)",
+      "typeTextLabelEn": "Überschrift (EN)",
+      "typeTextBodyDe": "Beschreibung (DE)",
+      "typeTextBodyEn": "Beschreibung (EN)",
+      "stepHeading": "Frage {{index}} · Dyade {{dyad}}, Teil {{q}}",
+      "backgroundImage": "Hintergrundbild",
+      "defaultDyadImagesLabel": "Vorhandene Default-Dyadenbilder",
+      "useDefaultDyadImage": "Default-Bild aus Dyade {{dyad}} übernehmen",
+      "defaultDyadImageAlt": "Default-Bild Dyade {{dyad}}",
+      "scenarioDe": "Szenario (DE)",
+      "scenarioEn": "Szenario (EN)",
+      "poleLowDe": "Pol links / niedrig (DE)",
+      "poleLowEn": "Pol links / niedrig (EN)",
+      "poleHighDe": "Pol rechts / hoch (DE)",
+      "poleHighEn": "Pol rechts / hoch (EN)",
+      "save": "Speichern",
+      "saving": "Speichern…",
+      "loadError": "Konfiguration konnte nicht geladen werden.",
+      "saveError": "Speichern fehlgeschlagen.",
+      "uploadError": "Upload fehlgeschlagen.",
+      "invalidStructure": "Ungültige Struktur (max. 32 Dyaden, 16 Fragen pro Dyade und höchstens 512 Fragen insgesamt).",
+      "characterIconsTitle": "Spielercharakter-Icons",
+      "characterIconsHint": "Eigene Bilder für Dyaden und Fallbacks hochladen. Werden im Profil und Wald statt Emoji angezeigt.",
+      "characterIconDyad": "Dyade {{dyad}}",
+      "characterIconPending": "Fallback: offen",
+      "characterIconSkipped": "Fallback: übersprungen",
+      "characterIconFallback": "Fallback: allgemein",
+      "uploadCharacterIcon": "Icon hochladen",
+      "clearCharacterIcon": "Icon entfernen",
+      "noImage": "Kein Bild"
+    },
+    "pageBackgrounds": {
+      "title": "Seitenhintergründe",
+      "subtitle": "Eigene Hintergrundbilder für die fünf Hauptseiten der Gäste-App verwalten. Ohne Upload wird das bereitgestellte Standardbild verwendet.",
+      "hint": "Die Bilder werden direkt als Seitenhintergrund verwendet. Querformat-Bilder wirken auf Desktop und Mobilgerät am stabilsten.",
+      "loadError": "Hintergründe konnten nicht geladen werden.",
+      "uploadError": "Bild konnte nicht hochgeladen werden.",
+      "resetError": "Standardbild konnte nicht wiederhergestellt werden.",
+      "uploadSuccess": "Hintergrund aktualisiert",
+      "resetSuccess": "Standardbild wiederhergestellt",
+      "upload": "Bild hochladen",
+      "uploading": "Wird hochgeladen...",
+      "reset": "Standard verwenden",
+      "resetting": "Wird zurückgesetzt...",
+      "custom": "Eigenes Bild",
+      "default": "Standardbild",
+      "defaultHint": "Aktuell wird das bereitgestellte Standardbild verwendet.",
+      "customHint": "Aktuell wird ein eigenes Bild verwendet.",
+      "fileTypes": "JPEG, PNG, WebP oder GIF",
+      "pages": {
+        "home": "Roots",
+        "tasks": "Aufgaben",
+        "forest": "Wald",
+        "rewards": "Belohnungen",
+        "groups": "Gruppen"
+      }
+    },
+    "surveyAnalytics": {
+      "title": "Umfrage-Analysen",
+      "selectTask": "Umfrage-Aufgabe auswählen",
+      "allSurveys": "Alle Umfragen",
+      "totalResponses": "{{count}} Antwort",
+      "totalResponses_plural": "{{count}} Antworten",
+      "noData": "Keine Umfragedaten",
+      "noDataDescription": "Keine Umfrageantworten gefunden. Antworten werden hier angezeigt, sobald Benutzer Umfrage-Aufgaben abschließen.",
+      "averageRating": "Durchschnittliche Bewertung: {{value}}",
+      "textResponses": "{{count}} Textantwort",
+      "textResponses_plural": "{{count}} Textantworten"
+    },
+    "common": {
+      "back": "Zurück",
+      "refresh": "Aktualisieren"
+    },
+    "parameterManage": {
+      "title": "Parameter verwalten",
+      "subtitle": "Auswahlwerte für Aufgaben und Belohnungen verwalten",
+      "loading": "Lade Parameter...",
+      "taskParameters": "Aufgaben-Parameter",
+      "rewardParameters": "Belohnungs-Parameter",
+      "parameterType": "Parameter-Typ",
+      "value": "Wert",
+      "displayOrder": "Reihenfolge",
+      "weight": "Gewicht",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "actions": "Aktionen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "newParameter": "Neuer Parameter",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "enterValue": "Wert eingeben",
+      "confirmDelete": "Möchten Sie diesen Parameter wirklich löschen?",
+      "created": "Parameter erfolgreich erstellt",
+      "updated": "Parameter erfolgreich aktualisiert",
+      "deleted": "Parameter erfolgreich gelöscht",
+      "error": "Fehler beim Laden der Parameter",
+      "createError": "Fehler beim Erstellen des Parameters",
+      "updateError": "Fehler beim Aktualisieren des Parameters",
+      "deleteError": "Fehler beim Löschen des Parameters",
+      "valueRequired": "Bitte geben Sie einen Wert ein",
+      "pointsCalculationFactor": "Punkteberechnungs-Faktor (Aufgaben)",
+      "pointsCalculationFactorDescription": "Der Faktor wird verwendet, um die Punkte für Aufgaben automatisch zu berechnen: (Schwierigkeitsgrad-Gewicht × Zeitaufwand-Gewicht) × Faktor",
+      "rewardCostCalculationFactor": "Kostenberechnungs-Faktor (Belohnungen)",
+      "rewardCostCalculationFactorDescription": "Der Faktor wird verwendet, um die Kosten für Belohnungen automatisch zu berechnen: Kosten-Gewicht × Faktor",
+      "factorUpdated": "Faktor erfolgreich aktualisiert",
+      "factorMustBePositive": "Faktor muss eine positive Zahl sein",
+      "fieldNames": {
+        "type": "Typ",
+        "category": "Kategorie",
+        "difficulty": "Schwierigkeit",
+        "time_required": "Zeitaufwand",
+        "location_tool": "Ort/Werkzeug",
+        "zielgruppe": "Zielgruppe",
+        "reward_art": "Art",
+        "kategorie": "Kategorie",
+        "kosten": "Kosten"
+      }
+    },
+    "userSelection": {
+      "title": "Benutzer auswählen",
+      "search": "Suchen…",
+      "sortBy": "Sortieren nach",
+      "sortName": "Name",
+      "sortEmail": "E-Mail",
+      "sortRole": "Rolle",
+      "sortPoints": "Punkte",
+      "loading": "Lade Benutzer…",
+      "error": "Fehler beim Laden der Benutzer",
+      "selectAll": "Alle auswählen",
+      "deselectAll": "Alle abwählen",
+      "selected": "{{count}} ausgewählt",
+      "noSelection": "Keine Auswahl",
+      "noUsers": "Keine Benutzer gefunden",
+      "points": "Punkte",
+      "add": "Hinzufügen"
+    },
+    "users": {
+      "title": "Benutzerverwaltung",
+      "subtitle": "Verwalten Sie Benutzer, Rollen, Punkte und Statistiken",
+      "loading": "Laden...",
+      "noUsers": "Keine Benutzer gefunden",
+      "existing": {
+        "title": "Bestehende Benutzer",
+        "subtitle": "Benutzer auswählen und Aktionen ausführen"
+      },
+      "deactivate": "Deaktivieren",
+      "activate": "Aktivieren",
+      "noSelection": "Keine Auswahl",
+      "filters": {
+        "role": "Rolle",
+        "status": "Status",
+        "search": "Suche",
+        "allRoles": "Alle Rollen",
+        "allStatuses": "Alle Status",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "searchPlaceholder": "Name oder E-Mail suchen"
+      },
+      "table": {
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "points": "Punkte",
+        "status": "Status",
+        "created": "Erstellt",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv"
+      },
+      "roles": {
+        "guest": "Gast",
+        "rezeption": "Rezeption",
+        "redaktion": "Redaktion",
+        "administrator": "Administrator"
+      },
+      "details": {
+        "title": "Benutzerdetails",
+        "basicInfo": "Grundinformationen",
+        "name": "Name",
+        "email": "E-Mail",
+        "role": "Rolle",
+        "userType": "Benutzertyp",
+        "points": "Punkte",
+        "status": "Status",
+        "createdAt": "Erstellt am",
+        "statistics": "Statistiken"
+      },
+      "stats": {
+        "tasksCompleted": "Aufgaben abgeschlossen",
+        "treesPlanted": "Bäume gepflanzt",
+        "totalPointsEarned": "Gesamtpunkte verdient",
+        "co2Saved": "CO2 gespart",
+        "rewardsRedeemed": "Belohnungen eingelöst",
+        "tasksLast7Days": "Aufgaben (letzte 7 Tage)",
+        "tasksLast30Days": "Aufgaben (letzte 30 Tage)"
+      },
+      "actions": {
+        "viewDetails": "Details anzeigen",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "resetPassword": "Passwort zurücksetzen",
+        "setPassword": "Passwort setzen",
+        "deleteUser": "Benutzer löschen",
+        "hardDeleteUser": "Benutzer dauerhaft löschen",
+        "cancelPassword": "Passwort-Eingabe abbrechen"
+      },
+      "messages": {
+        "roleUpdated": "Rolle erfolgreich aktualisiert",
+        "roleUpdateError": "Fehler beim Aktualisieren der Rolle",
+        "pointsUpdated": "Punkte erfolgreich aktualisiert",
+        "pointsUpdateError": "Fehler beim Aktualisieren der Punkte",
+        "activeToggled": "Status erfolgreich geändert",
+        "activeToggleError": "Fehler beim Ändern des Status",
+        "passwordResetEmailSent": "Passwort-Reset-E-Mail wurde erfolgreich gesendet",
+        "passwordResetError": "Fehler beim Zurücksetzen des Passworts",
+        "passwordSetSuccess": "Passwort wurde erfolgreich gesetzt",
+        "passwordSetError": "Fehler beim Setzen des Passworts",
+        "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen lang sein",
+        "passwordsDoNotMatch": "Die Passwörter stimmen nicht überein",
+        "userDeleted": "Benutzer erfolgreich gelöscht",
+        "userDeleteError": "Fehler beim Löschen des Benutzers",
+        "userCreated": "Nutzer erfolgreich erstellt.",
+        "userCreateError": "Nutzer konnte nicht erstellt werden."
+      },
+      "confirmRoleChange": "Möchten Sie die Rolle dieses Benutzers wirklich ändern?",
+      "confirmPointsChange": "Möchten Sie die Punkte dieses Benutzers wirklich ändern?",
+      "confirmToggleActive": "Möchten Sie den Status dieses Benutzers wirklich ändern?",
+      "confirmPasswordReset": "Möchten Sie das Passwort für diesen Benutzer wirklich zurücksetzen? Eine E-Mail mit einem Reset-Link wird an den Benutzer gesendet.",
+      "setPassword": {
+        "title": "Passwort setzen",
+        "newPassword": "Neues Passwort",
+        "newPasswordPlaceholder": "Passwort eingeben (mindestens 6 Zeichen)",
+        "confirmPassword": "Passwort bestätigen",
+        "confirmPasswordPlaceholder": "Passwort erneut eingeben",
+        "submit": "Passwort setzen"
+      },
+      "confirmSoftDelete": "Möchten Sie diesen Benutzer wirklich löschen?",
+      "confirmHardDelete": "Möchten Sie diesen Benutzer wirklich permanent löschen? Diese Aktion kann nicht rückgängig gemacht werden!",
+      "pagination": {
+        "previous": "Zurück",
+        "next": "Weiter",
+        "page": "Seite {{current}} von {{total}}"
+      },
+      "errors": {
+        "loadError": "Fehler beim Laden der Benutzer",
+        "userNotFound": "Benutzer nicht gefunden"
+      },
+      "newButton": "Neuen Nutzer anlegen",
+      "selectedCount": "{{count}} ausgewählt",
+      "confirmBulkDelete": "Ausgewählte Nutzer wirklich löschen?",
+      "newUser": {
+        "title": "Neuen Nutzer anlegen",
+        "name": "Name",
+        "namePlaceholder": "Name eingeben",
+        "email": "E-Mail",
+        "emailPlaceholder": "E-Mail eingeben",
+        "emailRequired": "E-Mail ist erforderlich",
+        "role": "Rolle",
+        "optional": "optional",
+        "create": "Nutzer erstellen",
+        "creating": "Erstelle Nutzer..."
+      }
+    },
+    "filters": {
+      "title": "Filter",
+      "mobileTitle": "Filter ({{count}})",
+      "close": "Filter schließen",
+      "location": "Standort",
+      "status": "Status",
+      "recurrence": "Wiederholung",
+      "type": "Typ",
+      "typeIcon": "Typ/Symbol",
+      "name": "Name",
+      "creator": "Ersteller",
+      "endDate": "Enddatum",
+      "filterBy": "Nach {{type}} filtern",
+      "allRecurrences": "Alle Wiederholungen",
+      "allLocations": "Alle Standorte",
+      "allStatuses": "Alle Status",
+      "allTypes": "Alle Typen",
+      "allCreators": "Alle Ersteller",
+      "clear": "Löschen",
+      "clearAll": "Alle löschen",
+      "applyFilters": "Filter anwenden",
+      "clearSelection": "Auswahl löschen",
+      "titleLabel": "Titel",
+      "titlePlaceholder": "Titel suchen...",
+      "namePlaceholder": "Name suchen...",
+      "points": "Punkte",
+      "cost": "Kosten",
+      "min": "Min",
+      "max": "Max",
+      "minPlaceholder": "Mindestwert",
+      "maxPlaceholder": "Höchstwert"
+    },
+    "table": {
+      "category": "Kategorie",
+      "difficulty": "Schwierigkeit",
+      "timeRequired": "Zeitaufwand",
+      "locationTool": "Ort/Werkzeug",
+      "actions": "Aktionen",
+      "points": "Punkte",
+      "location": "Standort",
+      "status": "Status",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "possiblePoints": "Mögliche Punkte",
+      "noTasksFound": "Keine Aufgaben gefunden.",
+      "task": "Aufgabe",
+      "reward": "Belohnung",
+      "cost": "Kosten",
+      "noRewardsFound": "Keine Belohnungen gefunden.",
+      "selectReward": "Belohnung auswählen",
+      "locationOnline": "Online",
+      "locationInactive": "Inaktiv"
+    },
+    "noSelection": "— Keine Auswahl —",
+    "teams": {
+      "loading": "Lade Teams…",
+      "noneAvailable": "Keine aktiven Teams verfügbar"
+    },
+    "contests": {
+      "loading": "Lade Wettbewerbe…",
+      "noneAvailable": "Keine aktiven Wettbewerbe verfügbar"
+    },
+    "fields": {
+      "required": "Pflichtfeld",
+      "readOnly": "Nur lesen",
+      "videoSource": "Video-Quelle",
+      "videoFile": "Video-Datei",
+      "photoRequirement": "Foto-Anforderung",
+      "allowedRoles": "Erlaubte Rollen",
+      "allowedUserTypes": "Erlaubte Benutzertypen",
+      "allowedHotels": "Erlaubte Hotels"
+    },
+    "confirm": {
+      "deleteTasks": "Aufgaben löschen",
+      "deleteTask": "Aufgabe löschen",
+      "deleteRewards": "Belohnungen löschen",
+      "deleteReward": "Belohnung löschen",
+      "deleteLocations": "Standorte löschen",
+      "deleteLocation": "Standort löschen",
+      "deleteSelectedTasks": {
+        "title": "Ausgewählte Aufgaben löschen",
+        "description": "Möchten Sie die ausgewählten Aufgaben wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteTaskSingle": {
+        "title": "Aufgabe löschen",
+        "description": "Möchten Sie diese Aufgabe wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteSelectedRewards": {
+        "title": "Ausgewählte Belohnungen löschen",
+        "description": "Möchten Sie die ausgewählten Belohnungen wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteRewardSingle": {
+        "title": "Belohnung löschen",
+        "description": "Möchten Sie diese Belohnung wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteSelectedLocations": {
+        "title": "Ausgewählte Standorte löschen",
+        "description": "Möchten Sie die ausgewählten Standorte wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteLocationSingle": {
+        "title": "Standort löschen",
+        "description": "Möchten Sie diesen Standort wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteLocationWithName": {
+        "title": "{{name}} löschen?",
+        "description": "Möchten Sie diesen Standort wirklich löschen? Aufgaben und Belohnungen, die ihn verwenden, müssen neu zugewiesen werden."
+      },
+      "deleteTeams": "Teams löschen",
+      "deleteTeam": "Team löschen",
+      "deleteContests": "Wettbewerbe löschen",
+      "deleteContest": "Wettbewerb löschen",
+      "deleteSelectedTeams": {
+        "title": "Ausgewählte Teams löschen",
+        "description": "Möchten Sie die ausgewählten Teams wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteTeamSingle": {
+        "title": "Team löschen",
+        "description": "Möchten Sie dieses Team wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteSelectedContests": {
+        "title": "Ausgewählte Wettbewerbe löschen",
+        "description": "Möchten Sie die ausgewählten Wettbewerbe wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      },
+      "deleteContestSingle": {
+        "title": "Wettbewerb löschen",
+        "description": "Möchten Sie diesen Wettbewerb wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+      }
+    },
+    "messages": {
+      "selectedTasksDeleted": "Ausgewählte Aufgaben gelöscht.",
+      "failedToDeleteTasks": "Ausgewählte Aufgaben konnten nicht gelöscht werden.",
+      "taskActivated": "Aufgabe aktiviert.",
+      "taskDeactivated": "Aufgabe deaktiviert.",
+      "failedToUpdateTask": "Aufgabe konnte nicht aktualisiert werden.",
+      "selectedRewardsDeleted": "Ausgewählte Belohnungen gelöscht.",
+      "failedToDeleteRewards": "Ausgewählte Belohnungen konnten nicht gelöscht werden.",
+      "rewardActivated": "Belohnung aktiviert.",
+      "rewardDeactivated": "Belohnung deaktiviert.",
+      "failedToUpdateReward": "Belohnung konnte nicht aktualisiert werden.",
+      "selectedLocationsDeleted": "Ausgewählte Standorte gelöscht.",
+      "failedToDeleteLocations": "Ausgewählte Standorte konnten nicht gelöscht werden.",
+      "locationActivated": "Standort aktiviert.",
+      "locationDeactivated": "Standort deaktiviert.",
+      "failedToUpdateLocation": "Standort konnte nicht aktualisiert werden.",
+      "selectedTasksActivated": "Ausgewählte Aufgaben aktiviert.",
+      "selectedTasksDeactivated": "Ausgewählte Aufgaben deaktiviert.",
+      "selectedRewardsActivated": "Ausgewählte Belohnungen aktiviert.",
+      "selectedRewardsDeactivated": "Ausgewählte Belohnungen deaktiviert.",
+      "selectedLocationsActivated": "Ausgewählte Standorte aktiviert.",
+      "selectedLocationsDeactivated": "Ausgewählte Standorte deaktiviert.",
+      "locationDeletedSuccessfully": "Standort erfolgreich gelöscht.",
+      "failedToDeleteTask": "Aufgabe konnte nicht gelöscht werden.",
+      "failedToDeleteReward": "Belohnung konnte nicht gelöscht werden.",
+      "failedToDeleteLocation": "Standort konnte nicht gelöscht werden.",
+      "selectedTeamsDeleted": "Ausgewählte Teams gelöscht.",
+      "failedToDeleteTeams": "Ausgewählte Teams konnten nicht gelöscht werden.",
+      "teamActivated": "Team aktiviert.",
+      "teamDeactivated": "Team deaktiviert.",
+      "failedToUpdateTeam": "Team konnte nicht aktualisiert werden.",
+      "failedToDeleteTeam": "Team konnte nicht gelöscht werden.",
+      "selectedTeamsActivated": "Ausgewählte Teams aktiviert.",
+      "selectedTeamsDeactivated": "Ausgewählte Teams deaktiviert.",
+      "selectedContestsDeleted": "Ausgewählte Wettbewerbe gelöscht.",
+      "failedToDeleteContests": "Ausgewählte Wettbewerbe konnten nicht gelöscht werden.",
+      "contestActivated": "Wettbewerb aktiviert.",
+      "contestDeactivated": "Wettbewerb deaktiviert.",
+      "failedToUpdateContest": "Wettbewerb konnte nicht aktualisiert werden.",
+      "failedToDeleteContest": "Wettbewerb konnte nicht gelöscht werden.",
+      "selectedContestsActivated": "Ausgewählte Wettbewerbe aktiviert.",
+      "selectedContestsDeactivated": "Ausgewählte Wettbewerbe deaktiviert.",
+      "failedToDeleteItems": "Elemente konnten nicht gelöscht werden.",
+      "failedToUpdateItems": "Elemente konnten nicht aktualisiert werden.",
+      "selectedItemsDeleted": "Ausgewählte Elemente gelöscht.",
+      "selectedItemsActivated": "Ausgewählte Elemente aktiviert.",
+      "selectedItemsDeactivated": "Ausgewählte Elemente deaktiviert.",
+      "selectedUsersDeleted": "Ausgewählte Nutzer gelöscht.",
+      "selectedUsersActivated": "Ausgewählte Nutzer aktiviert.",
+      "selectedUsersDeactivated": "Ausgewählte Nutzer deaktiviert.",
+      "taskDeleted": "Aufgabe gelöscht.",
+      "taskNotFound": "Aufgabe nicht gefunden.",
+      "locationDeleted": "Ort gelöscht.",
+      "rewardDeleted": "Belohnung gelöscht.",
+      "rewardNotFound": "Belohnung nicht gefunden."
+    },
+    "toasts": {
+      "taskCreatedTitle": "Aufgabe erstellt",
+      "taskCreatedMessage": "Deine neue Aufgabe ist jetzt für Nutzer sichtbar.",
+      "rewardCreatedTitle": "Belohnung erstellt",
+      "rewardCreatedMessage": "Deine neue Belohnung ist jetzt im Marktplatz sichtbar."
+    },
+    "qrScanner": {
+      "title": "Belohnungen einlösen",
+      "subtitle": "QR-Codes scannen, um Benutzerbelohnungen zu verifizieren und einzulösen",
+      "instruction": "Positionieren Sie den QR-Code im Rahmen",
+      "scanning": "Scannen...",
+      "cameraError": "Kamera konnte nicht aufgerufen werden",
+      "cameraHint": "Bitte erlauben Sie den Kamera-Zugriff und stellen Sie sicher, dass Sie ein Gerät mit Kamera verwenden",
+      "verificationSuccess": "QR-Code erfolgreich verifiziert",
+      "verificationError": "QR-Code konnte nicht verifiziert werden",
+      "backToMain": "Zurück zur Hauptseite",
+      "successModal": {
+        "title": "QR-Code verifiziert!",
+        "message": "Belohnung für {{userName}} erfolgreich verifiziert und eingelöst.",
+        "reward": "Belohnung: {{title}}"
+      },
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet.",
+      "cameraNotSupported": "Kamera wird nicht unterstützt.",
+      "cameraRequiresHttps": "Kamerazugriff erfordert HTTPS."
+    }
+  },
+  "forest": {
+    "title": "Virtueller Wald",
+    "subtitle": "Sieh zu, wie deine Bäume durch nachhaltige Aktionen wachsen",
+    "loading": "Wald wird geladen...",
+    "loadError": "Wald-Daten konnten nicht geladen werden. Bitte erneut versuchen."
+  },
+  "statistics": {
+    "title": "Statistiken & Impact",
+    "emptyTitle": "Keine Statistiken verfügbar",
+    "emptyDescription": "Sobald Aufgaben erledigt sind, erscheinen hier Daten.",
+    "noData": "Keine Daten verfügbar",
+    "cards": {
+      "co2Saved": "Eingespartes CO₂",
+      "co2PerTask": "~{{value}} kg pro Aufgabe",
+      "trees": "Gesamtbäume",
+      "activeUsers": "Aktive Nutzer",
+      "activeUsersSubtitle": "Letzte 30 Tage",
+      "tasksCompleted": "Abgeschlossene Aufgaben",
+      "avgPoints": "Ø Punkte/Nutzer"
+    },
+    "dailyProgress": "Tagesfortschritt (30 Tage)",
+    "teamLeaderboard": "Team-Rangliste",
+    "leaderboard": {
+      "tasks": "{{count}} Aufgaben",
+      "points": "{{count}} Pkt",
+      "co2": "{{value}} kg CO₂"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "noEmail": "Keine E-Mail hinterlegt",
+    "role": "Rolle: {{role}}",
+    "stats": {
+      "points": "Gesamtpunkte",
+      "teamPoints": "Team / Eigene Punkte",
+      "trees": "Deine Bäume"
+    },
+    "privacy": {
+      "show": "Privatsphäre-Einstellungen anzeigen",
+      "hide": "Privatsphäre-Einstellungen ausblenden"
+    },
+    "language": {
+      "label": "Sprache"
+    },
+    "sihot": {
+      "title": "SIHOT-Gastprofil",
+      "guestId": "Gast-ID: {{id}}",
+      "fields": {
+        "name": "Name",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "loyaltyLevel": "Loyalitätslevel",
+        "language": "Bevorzugte Sprache",
+        "preferences": "Präferenzen",
+        "notes": "Notizen"
+      },
+      "reservations": {
+        "title": "Letzte Reservierungen",
+        "room": "Zimmer {{room}}",
+        "confirmation": "Bestätigung: {{number}}",
+        "balance": "Saldo: {{amount}}"
+      },
+      "missing": "—"
+    },
+    "qrCode": {
+      "sectionTitle": "Persönlicher QR-Code",
+      "title": "Ihr persönlicher QR-Code",
+      "description": "Teilen Sie diesen QR-Code, um Teams oder Contests mit anderen zu erstellen",
+      "loading": "QR-Code wird geladen...",
+      "error": "QR-Code konnte nicht geladen werden"
+    },
+    "teams": {
+      "title": "Meine Teams",
+      "createButton": "Team anlegen",
+      "joinButton": "Team beitreten",
+      "empty": "Noch keine Teams. Erstelle eines oder trete einem bei!",
+      "create": {
+        "title": "Team anlegen",
+        "teamName": "Team-Name",
+        "teamNamePlaceholder": "Team-Name eingeben (optional)",
+        "hint": "Wenn kein Name angegeben wird, wird Ihr Name als Team-Name verwendet.",
+        "createButton": "Team erstellen",
+        "creating": "Team wird erstellt...",
+        "success": "Team erstellt",
+        "successMessage": "Team erfolgreich erstellt",
+        "error": "Team konnte nicht erstellt werden",
+        "errorTitle": "Fehler"
+      },
+      "join": {
+        "title": "Team beitreten",
+        "subtitle": "Scannen Sie einen Team-QR-Code, um beizutreten",
+        "joining": "Team wird beigetreten...",
+        "success": "Team beigetreten",
+        "successMessage": "Erfolgreich dem Team beigetreten",
+        "error": "Team konnte nicht beigetreten werden",
+        "errorTitle": "Fehler",
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
+      },
+      "scanner": {
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
+      },
+      "qrCode": {
+        "title": "Team QR-Code",
+        "description": "Freunde scannen diesen QR-Code oder öffnen den geteilten Link, um Deinem Team beizutreten — auch ohne bestehenden 4rest-Account.",
+        "loading": "QR-Code wird geladen...",
+        "error": "QR-Code konnte nicht geladen werden",
+        "errorMessage": "QR-Code konnte nicht geladen werden",
+        "retry": "Erneut laden",
+        "share": "Einladungslink teilen",
+        "shareText": "Tritt meinem Team bei 4rest bei!",
+        "linkCopied": "Link kopiert",
+        "linkCopiedMessage": "Einladungslink in die Zwischenablage kopiert",
+        "shareError": "Fehler",
+        "shareErrorMessage": "Einladungslink konnte nicht geteilt werden"
+      },
+      "dissolve": {
+        "button": "Team auflösen",
+        "dissolving": "Team wird aufgelöst...",
+        "confirm": "Möchten Sie dieses Team wirklich auflösen? Jedes Mitglied behält seine eigenen Punkte.",
+        "success": "Team aufgelöst",
+        "successMessage": "Team wurde aufgelöst. Jedes Mitglied behält seine eigenen Punkte.",
+        "error": "Team konnte nicht aufgelöst werden",
+        "errorMessage": "Team konnte nicht aufgelöst werden"
+      },
+      "leave": {
+        "button": "Aus Team austreten",
+        "leaving": "Austreten...",
+        "confirm": "Möchten Sie wirklich aus diesem Team austreten? Sie behalten Ihre eigenen Punkte.",
+        "success": "Aus Team ausgetreten",
+        "successMessage": "Sie sind aus dem Team ausgetreten. Sie behalten Ihre eigenen Punkte.",
+        "error": "Austritt fehlgeschlagen",
+        "errorMessage": "Austritt aus dem Team konnte nicht durchgeführt werden"
+      }
+    },
+    "contests": {
+      "title": "Meine Contests",
+      "createButton": "Contest anlegen",
+      "joinButton": "Contest beitreten",
+      "empty": "Noch keine Contests. Erstelle einen oder trete einem bei!",
+      "create": {
+        "title": "Contest anlegen",
+        "contestName": "Contest-Name",
+        "contestNamePlaceholder": "Contest-Name eingeben (optional)",
+        "nameHint": "Wenn kein Name angegeben wird, wird Ihr Name als Contest-Name verwendet.",
+        "formTitle": "Contest-Details",
+        "endDate": "Enddatum",
+        "rewardsTitle": "Belohnungen (Optional)",
+        "rewardFirst": "Punkte für 1. Platz",
+        "rewardSecond": "Punkte für 2. Platz",
+        "rewardThird": "Punkte für 3. Platz",
+        "createButton": "Contest erstellen",
+        "creating": "Contest wird erstellt...",
+        "success": "Contest erstellt",
+        "successMessage": "Contest erfolgreich erstellt",
+        "error": "Contest konnte nicht erstellt werden",
+        "errorTitle": "Fehler",
+        "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+        "invalidDateTime": "Ungültiges Datum oder ungültige Zeit",
+        "startAfterEnd": "Startdatum muss vor dem Enddatum liegen",
+        "invalidEndDate": "Enddatum muss in der Zukunft liegen",
+        "noUsers": "Keine Benutzer gefunden.",
+        "filterAllRoles": "Alle Rollen",
+        "onlyRezeption": "(nur Rezeption)",
+        "selectedParticipants": "{{count}} Teilnehmer ausgewählt",
+        "participantsTitle": "Teilnehmer hinzufügen",
+        "filter": "Filter:",
+        "noEmail": "Keine E-Mail"
+      },
+      "join": {
+        "title": "Contest beitreten",
+        "subtitle": "Scannen Sie einen Contest-QR-Code, um beizutreten",
+        "joining": "Contest wird beigetreten...",
+        "success": "Contest beigetreten",
+        "successMessage": "Erfolgreich dem Contest beigetreten",
+        "error": "Contest konnte nicht beigetreten werden",
+        "errorTitle": "Fehler",
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
+      },
+      "scanner": {
+        "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+        "cameraNotSupported": "Kamera wird nicht unterstützt",
+        "cameraError": "Kamera konnte nicht geöffnet werden"
+      },
+      "scan": {
+        "error": "QR-Code konnte nicht gescannt werden",
+        "errorTitle": "Fehler"
+      },
+      "qrCode": {
+        "title": "Contest QR-Code",
+        "description": "Freunde scannen diesen QR-Code oder öffnen den geteilten Link, um Deinem Contest beizutreten — auch ohne bestehenden 4rest-Account.",
+        "loading": "QR-Code wird geladen...",
+        "error": "QR-Code konnte nicht geladen werden",
+        "errorMessage": "QR-Code konnte nicht geladen werden",
+        "retry": "Erneut laden",
+        "share": "Einladungslink teilen",
+        "shareText": "Tritt meinem Contest bei 4rest bei!",
+        "linkCopied": "Link kopiert",
+        "linkCopiedMessage": "Einladungslink in die Zwischenablage kopiert",
+        "shareError": "Fehler",
+        "shareErrorMessage": "Einladungslink konnte nicht geteilt werden"
+      },
+      "dissolve": {
+        "button": "Contest auflösen",
+        "dissolving": "Contest wird aufgelöst...",
+        "confirm": "Möchten Sie diesen Contest wirklich auflösen?",
+        "success": "Contest aufgelöst",
+        "successMessage": "Contest wurde aufgelöst",
+        "error": "Contest konnte nicht aufgelöst werden",
+        "errorMessage": "Contest konnte nicht aufgelöst werden"
+      },
+      "leave": {
+        "button": "Contest verlassen",
+        "leaving": "Verlassen...",
+        "confirm": "Möchten Sie wirklich aus diesem Contest austreten?",
+        "success": "Contest verlassen",
+        "successMessage": "Sie haben den Contest verlassen",
+        "error": "Austritt fehlgeschlagen",
+        "errorMessage": "Austritt aus dem Contest konnte nicht durchgeführt werden"
+      },
+      "ranking": {
+        "title": "Contest-Ranking",
+        "timeRemaining": "Verbleibende Zeit",
+        "days": "Tage",
+        "hours": "Stunden",
+        "minutes": "Minuten",
+        "ended": "Contest ist beendet",
+        "rank": "Rang",
+        "name": "Name",
+        "points": "Punkte",
+        "you": "Du",
+        "notFound": "Contest nicht gefunden",
+        "notFoundDescription": "Der gesuchte Contest existiert nicht oder wurde gelöscht.",
+        "noParticipants": "Noch keine Teilnehmer",
+        "noParticipantsDescription": "Sei der Erste, der diesem Contest beitritt!",
+        "unnamed": "Unbenannter Contest"
+      }
+    }
+  },
+  "consent": {
+    "title": "Privatsphäre & Datenverwaltung",
+    "preferences": "Einwilligungen",
+    "dataProcessing": {
+      "label": "Datenverarbeitung (erforderlich)",
+      "description": "Erlaubt die Verarbeitung für Kernfunktionen",
+      "lockedHint": "Für die Nutzung der App erforderlich; kann hier nicht abgewählt werden."
+    },
+    "analytics": {
+      "label": "Analyse",
+      "description": "Erlaubt anonyme Nutzungsstatistiken"
+    },
+    "marketing": {
+      "label": "Marketing",
+      "description": "Erlaubt Benachrichtigungen und Angebote"
+    },
+    "save": "Einstellungen speichern",
+    "saved": "✓ Gespeichert",
+    "dataRights": "Deine Datenrechte",
+    "export": "Meine Daten exportieren",
+    "delete": "Mein Konto löschen",
+    "alerts": {
+      "saveError": "Einwilligungen konnten nicht gespeichert werden",
+      "exportError": "Daten konnten nicht exportiert werden",
+      "deleteConfirm": "Möchtest du wirklich alle Daten löschen? Dies kann nicht rückgängig gemacht werden.",
+      "deleteSuccess": "Deine Daten wurden gelöscht. Du wirst abgemeldet.",
+      "deleteError": "Daten konnten nicht gelöscht werden"
+    }
+  },
+  "publicGuest": {
+    "title": "Aufgaben ohne Anmeldung",
+    "empty": "Derzeit ist keine Aufgabe für Gäste ohne Anmeldung freigeschaltet.",
+    "loadError": "Die Aufgabenliste konnte nicht geladen werden. Bitte später erneut versuchen.",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "publicTask": {
+    "backToOverview": "Zurück zur Übersicht",
+    "toast": {
+      "title": "Aufgabe erledigt",
+      "body": "Super! Du hast dir {{points}} Punkte gesichert. Registriere dich oder melde dich an, damit wir sie deinem Konto gutschreiben."
+    },
+    "notFound": "Diese Aufgabe ist nicht öffentlich verfügbar oder existiert nicht.",
+    "invalidLink": "Ungültiger Link.",
+    "goToLogin": "Zur Anmeldung",
+    "unsupportedType": "Dieser Aufgabentyp ist hier noch nicht eingebunden.",
+    "photoRequiresLogin": "Foto-Aufgaben kannst du ohne Anmeldung nicht abschließen (Upload erfordert ein Konto). Bitte melde dich in der App an.",
+    "cta": {
+      "title": "Punkte sichern",
+      "body": "Lege jetzt ein Konto an oder melde dich an – deine ausstehenden Punkte werden dann übernommen.",
+      "register": "Registrieren",
+      "login": "Anmelden"
+    }
+  },
+  "tasksComponents": {
+    "loading": "Aufgabe wird geladen...",
+    "notFound": "Aufgabe nicht gefunden",
+    "points": "+{{points}}",
+    "video": {
+      "notSupported": "Dein Browser unterstützt dieses Video nicht.",
+      "quizTitle": "Quizfragen",
+      "questionProgress": "Frage {{current}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "complete": "Aufgabe abschließen",
+      "submitting": "Wird gesendet..."
+    },
+    "qr": {
+      "scanned": "Gelesen: {{value}}",
+      "completing": "Aufgabe wird abgeschlossen...",
+      "manualPrompt": "QR-Code manuell eingeben:",
+      "manualPlaceholder": "QR-Code eingeben",
+      "verify": "Prüfen & abschließen",
+      "invalid": "Ungültiger QR-Code",
+      "success": "Aufgabe erfolgreich abgeschlossen!",
+      "cameraLoading": "Kamera wird gestartet...",
+      "cameraErrorTitle": "Kamerafehler",
+      "cameraError": "Kamera konnte nicht gestartet werden.",
+      "cameraRequiresHttps": "Kamerazugriff erfordert HTTPS auf diesem Gerät.",
+      "cameraNotSupported": "Dieser Browser unterstützt keinen Kamerazugriff.",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Kamera wird bereits von einer anderen Anwendung verwendet.",
+      "cameraPlayError": "Kamerabild konnte nicht abgespielt werden."
+    },
+    "photo": {
+      "fileTooLarge": "Datei darf maximal 5 MB haben",
+      "invalidFile": "Bitte wähle eine Bilddatei",
+      "change": "Foto wechseln",
+      "upload": "Hochladen & abschließen",
+      "uploading": "Wird hochgeladen...",
+      "success": "Foto hochgeladen – Aufgabe erledigt!",
+      "verificationPending": "Foto hochgeladen – wartet auf Freigabe.",
+      "error": "Foto-Aufgabe konnte nicht abgeschlossen werden.",
+      "clickToSelect": "Klicke, um ein Foto auszuwählen",
+      "hint": "Max. 5 MB • JPG, PNG, WebP",
+      "uploadFailed": "Foto konnte nicht hochgeladen werden",
+      "uploadFailedMessage": "Beim Hochladen ist ein Fehler aufgetreten."
+    },
+    "quiz": {
+      "title": "Quizfragen",
+      "questionProgress": "Frage {{current}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "complete": "Aufgabe abschließen",
+      "submitting": "Wird übermittelt...",
+      "noQuestions": "Diese Quiz-Aufgabe hat keine konfigurierten Fragen.",
+      "checkAnswer": "Antwort prüfen",
+      "checking": "Wird geprüft…",
+      "correctTitle": "Richtig",
+      "correctBody": "Die Antwort ist korrekt.",
+      "wrongTitle": "Falsch oder gesperrt",
+      "wrongBody": "Die Antwort war leider falsch. Probiere es in {{minutes}} Minute(n) noch einmal.",
+      "lockedBody": "Diese Frage ist noch gesperrt. Bitte in {{minutes}} Minute(n) erneut versuchen.",
+      "lockCountdown": "Noch ca. {{minutes}} Minute(n), bis du die nächste Antwort versuchen kannst.",
+      "errorTitle": "Quiz"
+    },
+    "visit_location": {
+      "targetLocationNotSet": "Zielstandort der Aufgabe ist nicht festgelegt",
+      "geolocationNotSupported": "Geolokalisierung wird von Ihrem Browser nicht unterstützt",
+      "positionError": "Fehler beim Abrufen der Position: {{message}}",
+      "locationError": "Standortfehler: {{message}}",
+      "locationTrackingError": "Standortverfolgungsfehler: {{message}}",
+      "targetLocation": "Zielstandort",
+      "yourLocation": "Ihr Standort",
+      "noTargetLocation": "Diese Aufgabe hat keinen konfigurierten Zielstandort.",
+      "atLocation": "✓ Sie sind am Standort!",
+      "distance": "Entfernung: {{distance}}m",
+      "startTracking": "Standortverfolgung starten",
+      "stopTracking": "Verfolgung beenden",
+      "yourLocationLabel": "Ihr Standort: {{lat}}, {{lng}}",
+      "locationReached": "Standort erreicht! Aufgabe erfolgreich abgeschlossen.",
+      "mapInitError": "Fehler beim Initialisieren der Karte: {{message}}",
+      "mapUnknownError": "Unbekannter Fehler",
+      "yourCurrentPosition": "Ihre aktuelle Position",
+      "startTask": "Aufgabe starten",
+      "locatingPosition": "Position wird ermittelt…",
+      "loadingMap": "Karte wird geladen…",
+      "details": "Details"
+    },
+    "article_quiz": {
+      "readArticle": "Artikel lesen",
+      "readInstruction": "Bitte lesen Sie den Artikel unten, dann beantworten Sie die Quizfragen.",
+      "quizPrompt": "Nach dem Lesen des Artikels klicken Sie auf die Schaltfläche unten, um das Quiz zu starten.",
+      "startQuiz": "Quiz starten",
+      "quizTitle": "Quizfragen",
+      "questionProgress": "Frage {{current}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "complete": "Aufgabe abschließen",
+      "submitting": "Wird übermittelt...",
+      "noArticle": "Diese Artikel-Quiz-Aufgabe hat keinen konfigurierten Artikel.",
+      "noQuestions": "Diese Artikel-Quiz-Aufgabe hat keine konfigurierten Fragen."
+    },
+    "survey": {
+      "title": "Umfrage",
+      "instruction": "Bitte beantworten Sie alle erforderlichen Fragen.",
+      "required": "Pflicht",
+      "textPlaceholder": "Ihre Antwort …",
+      "submit": "Umfrage absenden",
+      "submitting": "Wird gesendet …",
+      "noQuestions": "Diese Umfrage hat keine konfigurierten Fragen.",
+      "requiredQuestions": "Bitte beantworten Sie alle Pflichtfragen vor dem Absenden."
+    }
+  },
+  "employee": {
+    "contests": {
+      "title": "Contest-Verwaltung",
+      "subtitle": "Verwalten Sie Contests für Gäste",
+      "createButton": "Neuen Contest anlegen",
+      "empty": "Noch keine Contests für Gäste"
+    },
+    "pointsBonus": {
+      "invalidAmount": "Bitte einen gültigen Betrag eingeben.",
+      "generateError": "QR-Code konnte nicht generiert werden.",
+      "qrGenerated": "QR-Code erfolgreich generiert."
+    }
+  },
+  "teams": {
+    "create": {
+      "title": "Team anlegen",
+      "teamName": "Team-Name",
+      "teamNamePlaceholder": "Team-Name eingeben (optional)",
+      "hint": "Wenn kein Name angegeben wird, wird Ihr Name als Team-Name verwendet.",
+      "createButton": "Team erstellen",
+      "creating": "Team wird erstellt...",
+      "success": "Team erstellt",
+      "successMessage": "Team erfolgreich erstellt",
+      "error": "Team konnte nicht erstellt werden",
+      "errorTitle": "Fehler"
+    },
+    "join": {
+      "title": "Team beitreten",
+      "subtitle": "Scannen Sie einen Team-QR-Code, um beizutreten",
+      "joining": "Team wird beigetreten...",
+      "success": "Team beigetreten",
+      "successMessage": "Erfolgreich dem Team beigetreten",
+      "error": "Team konnte nicht beigetreten werden",
+      "errorTitle": "Fehler",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+      "cameraNotSupported": "Kamera wird nicht unterstützt",
+      "cameraError": "Kamera konnte nicht geöffnet werden",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet."
+    },
+    "qrCode": {
+      "title": "Team QR-Code",
+      "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Team beitreten können",
+      "loading": "QR-Code wird geladen...",
+      "error": "QR-Code konnte nicht geladen werden",
+      "errorMessage": "QR-Code konnte nicht geladen werden",
+      "retry": "Erneut laden"
+    },
+    "dissolve": {
+      "button": "Team auflösen",
+      "dissolving": "Team wird aufgelöst...",
+      "confirm": "Möchten Sie dieses Team wirklich auflösen? Die Punkte werden gleichmäßig auf die Mitglieder verteilt.",
+      "success": "Team aufgelöst",
+      "successMessage": "Team wurde aufgelöst und Punkte verteilt",
+      "error": "Team konnte nicht aufgelöst werden",
+      "errorMessage": "Team konnte nicht aufgelöst werden"
+    },
+    "leave": {
+      "button": "Aus Team austreten",
+      "leaving": "Austreten...",
+      "confirm": "Möchten Sie wirklich aus diesem Team austreten? Ihre beigetragenen Punkte werden Ihnen zurückgegeben.",
+      "success": "Aus Team ausgetreten",
+      "successMessage": "Sie sind aus dem Team ausgetreten und Ihre beigetragenen Punkte wurden zurückgegeben",
+      "error": "Austritt fehlgeschlagen",
+      "errorMessage": "Austritt aus dem Team konnte nicht durchgeführt werden"
+    }
+  },
+  "contests": {
+    "create": {
+      "title": "Contest anlegen",
+      "contestName": "Contest-Name",
+      "contestNamePlaceholder": "Contest-Name eingeben (optional)",
+      "nameHint": "Wenn kein Name angegeben wird, wird Ihr Name als Contest-Name verwendet.",
+      "formTitle": "Contest-Details",
+      "startDate": "Startdatum",
+      "endDate": "Enddatum",
+      "rewardsTitle": "Belohnungen (Optional)",
+      "rewardFirst": "Punkte für 1. Platz",
+      "rewardSecond": "Punkte für 2. Platz",
+      "rewardThird": "Punkte für 3. Platz",
+      "createButton": "Contest erstellen",
+      "creating": "Contest wird erstellt...",
+      "success": "Contest erstellt",
+      "successMessage": "Contest erfolgreich erstellt",
+      "error": "Contest konnte nicht erstellt werden",
+      "errorTitle": "Fehler",
+      "missingFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+      "invalidDateTime": "Ungültiges Datum oder Uhrzeit",
+      "startAfterEnd": "Start muss vor dem Ende liegen",
+      "invalidEndDate": "Enddatum muss in der Zukunft liegen",
+      "loadingUsers": "Nutzer werden geladen...",
+      "errorLoadingUsers": "Nutzer konnten nicht geladen werden.",
+      "noUsers": "Keine Nutzer gefunden.",
+      "filterAllRoles": "Alle Rollen",
+      "allRoles": "Alle Rollen",
+      "filter": "Filter:",
+      "filterByRole": "Nach Rolle filtern",
+      "onlyRezeption": "(Nur Rezeption)",
+      "selectedParticipants": "{{count}} Teilnehmende ausgewählt",
+      "participantsTitle": "Teilnehmende hinzufügen",
+      "noEmail": "Keine E-Mail",
+      "roleAdministrator": "Administrator",
+      "roleGuest": "Gast",
+      "roleRedaktion": "Redaktion",
+      "roleRezeption": "Rezeption"
+    },
+    "join": {
+      "title": "Contest beitreten",
+      "subtitle": "Scannen Sie einen Contest-QR-Code, um beizutreten",
+      "joining": "Contest wird beigetreten...",
+      "success": "Contest beigetreten",
+      "successMessage": "Erfolgreich dem Contest beigetreten",
+      "error": "Contest konnte nicht beigetreten werden",
+      "errorTitle": "Fehler",
+      "cameraRequiresHttps": "Kamera-Zugriff erfordert HTTPS",
+      "cameraNotSupported": "Kamera wird nicht unterstützt",
+      "cameraError": "Kamera konnte nicht geöffnet werden",
+      "cameraPermissionDenied": "Kamerazugriff wurde verweigert. Bitte Berechtigung erteilen.",
+      "cameraNotFound": "Keine Kamera gefunden.",
+      "cameraInUse": "Die Kamera wird bereits von einer anderen Anwendung verwendet."
+    },
+    "qrCode": {
+      "title": "Contest QR-Code",
+      "description": "Teilen Sie diesen QR-Code, damit andere Ihrem Contest beitreten können",
+      "duration": "Laufzeit",
+      "loading": "QR-Code wird geladen...",
+      "error": "QR-Code konnte nicht geladen werden",
+      "errorMessage": "QR-Code konnte nicht geladen werden",
+      "retry": "Erneut laden"
+    },
+    "dissolve": {
+      "button": "Contest auflösen",
+      "dissolving": "Contest wird aufgelöst...",
+      "confirm": "Möchten Sie diesen Contest wirklich auflösen?",
+      "success": "Contest aufgelöst",
+      "successMessage": "Contest wurde aufgelöst",
+      "error": "Contest konnte nicht aufgelöst werden",
+      "errorMessage": "Contest konnte nicht aufgelöst werden"
+    },
+    "leave": {
+      "button": "Contest verlassen",
+      "leaving": "Verlassen...",
+      "confirm": "Möchten Sie wirklich aus diesem Contest austreten?",
+      "success": "Contest verlassen",
+      "successMessage": "Sie haben den Contest verlassen",
+      "error": "Austritt fehlgeschlagen",
+      "errorMessage": "Austritt aus dem Contest konnte nicht durchgeführt werden"
+    },
+    "ranking": {
+      "title": "Finale Rangliste",
+      "empty": "Keine Teilnehmer",
+      "rewardsAwarded": "Belohnungen wurden vergeben",
+      "timeRemaining": "Verbleibende Zeit",
+      "days": "Tage",
+      "hours": "Stunden",
+      "minutes": "Minuten",
+      "ended": "Contest ist beendet",
+      "rank": "Rang",
+      "name": "Name",
+      "points": "Punkte",
+      "you": "Du",
+      "notFound": "Contest nicht gefunden",
+      "notFoundDescription": "Der gesuchte Contest existiert nicht oder wurde gelöscht.",
+      "noParticipants": "Noch keine Teilnehmer",
+      "noParticipantsDescription": "Sei der Erste, der diesem Contest beitritt!",
+      "unnamed": "Unbenannter Contest"
+    }
+  },
+  "groups": {
+    "title": "Gruppen"
+  },
+  "rankings": {
+    "title": "Rankings",
+    "pageEmptyTitle": "Noch keine Rankings",
+    "pageEmptyDescription": "Sobald du an einem Contest oder Team teilnimmst oder Punkte im Verlauf hast, erscheinen sie hier.",
+    "points": "Punkte",
+    "contests": {
+      "title": "Aktive Contests",
+      "expired": "Abgeschlossene Contests",
+      "unnamed": "Unbenannter Contest",
+      "duration": "Laufzeit",
+      "noParticipants": "Keine Teilnehmer",
+      "remainingDays": "{{count}} Tage verbleibend",
+      "remainingDays_plural": "{{count}} Tage verbleibend",
+      "showAll": "Alle {{count}} Teilnehmer anzeigen",
+      "showLess": "Weniger anzeigen"
+    },
+    "team": {
+      "title": "Mein Team",
+      "unnamed": "Unbenanntes Team",
+      "showAll": "Alle {{count}} Mitglieder anzeigen",
+      "showLess": "Weniger anzeigen"
+    },
+    "timeline": {
+      "title": "Mein Fortschritt",
+      "subtitle": "Kumulierte Punkte nach Kategorie von der Registrierung bis heute (je Kalendertag ein Balken).",
+      "subtitleSampled": "Über einen langen Zeitraum werden höchstens 120 Stützstellen angezeigt (gleichmäßig verteilt). Kumulierte Punkte nach Kategorie.",
+      "noData": "Keine Daten verfügbar",
+      "points": "Punkte",
+      "trees": "Bäume",
+      "co2": "CO₂ (kg)",
+      "forestDay": "Wald (pro Tag)",
+      "forest": {
+        "kommunikation": "Kommunikation",
+        "mensch": "Mensch",
+        "natur": "Natur",
+        "ressourcen": "Ressourcen",
+        "sonstige": "Sonstige"
+      },
+      "totalCumulative": "Punkte gesamt (aktuell)",
+      "profilePointsWithoutTimelineHint": "Dieses Diagramm zeigt nur Punkte aus abgeschlossenen Aufgaben. Andere Punkte (z. B. Bonus vor Ort) stehen nicht in diesem Verlauf — deshalb kann die Anzeige leer wirken, obwohl dein Punktestand oder Wald-Kategorien im Profil gesetzt sind.",
+      "scaleToProfile": "100 % Balkenhöhe = {{max}} Punkte (Profil: {{profile}})",
+      "xAxisLabel": "Zeitleiste (aeltester Tag links, neuester Tag rechts)",
+      "yAxisLabel": "Kumulierte Punkte",
+      "maxPoints": "Max. Punkte",
+      "maxTrees": "Max. Bäume",
+      "maxCo2": "Max. CO₂",
+      "maxForestDay": "Max. Wald-Punkte (Tag)"
+    }
+  },
+  "rezeption": {
+    "title": "Rezeption",
+    "subtitle": "Verwaltung von Teams, Wettbewerben und Belohnungen",
+    "actions": {
+      "manageTeams": {
+        "title": "Teams verwalten",
+        "description": "Alle Teams anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "manageContests": {
+        "title": "Wettbewerbe verwalten",
+        "description": "Alle Wettbewerbe anzeigen, bearbeiten und Registrierungs-QR-Codes verwalten"
+      },
+      "pointsBonus": {
+        "title": "Bonuspunkte geben",
+        "description": "QR-Codes für Bonuspunkte generieren"
+      },
+      "redeemRewards": {
+        "title": "Belohnungen einlösen",
+        "description": "Scannen Sie QR-Codes, um Belohnungen zu verifizieren und einzulösen"
+      },
+      "verifyTasks": {
+        "title": "Aufgaben verifizieren",
+        "description": "Aufgaben manuell verifizieren und freigeben"
+      }
+    },
+    "team": {
+      "manage": {
+        "title": "Teams verwalten",
+        "subtitle": "Verwalten Sie alle Teams",
+        "existingTitle": "Bestehende Teams",
+        "existingSubtitle": "Alle Teams anzeigen und bearbeiten",
+        "createNew": "Neues Team erstellen",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Lade Teams...",
+        "loadError": "Fehler beim Laden der Teams",
+        "createSuccess": "Team erfolgreich erstellt",
+        "noTeams": "Keine Teams gefunden",
+        "unnamed": "Unbenanntes Team",
+        "name": "Name",
+        "createdBy": "Erstellt von",
+        "status": "Status",
+        "noSelection": "Keine Auswahl",
+        "selectedCount": "{{count}} ausgewählt",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "bulkDeleteSuccess": "Teams erfolgreich gelöscht",
+        "bulkDeleteError": "Fehler beim Löschen der Teams",
+        "deleteConfirm": {
+          "title": "Team löschen",
+          "description": "Möchten Sie das Team \"{{name}}\" wirklich löschen?"
+        },
+        "toggleConfirm": {
+          "title": "Team-Status ändern",
+          "description": "Möchten Sie den Status des Teams \"{{name}}\" wirklich ändern?"
+        },
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Nach Name suchen...",
+          "includeInactive": "Inaktive anzeigen"
+        },
+        "edit": {
+          "title": "Team bearbeiten",
+          "name": "Team-Name",
+          "nameUpdated": "Team-Name aktualisiert",
+          "nameUpdateError": "Fehler beim Aktualisieren",
+          "addMembers": "Mitglieder hinzufügen",
+          "removeMembers": "Mitglieder entfernen",
+          "showJoinQr": "Join-QR-Code anzeigen",
+          "showRegistrationQr": "Registrierungs-QR-Code anzeigen",
+          "cancel": "Abbrechen",
+          "joinQrTitle": "Join-QR-Code",
+          "joinQrDescription": "Bestehende Benutzer können diesen QR-Code scannen, um dem Team beizutreten",
+          "registrationQrTitle": "Registrierungs-QR-Code",
+          "registrationQrDescription": "Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch dem Team beizutreten",
+          "add": "Hinzufügen",
+          "remove": "Entfernen"
+        },
+        "teams": "Teams",
+        "bulkActivateSuccess": "Ausgewählte Teams aktiviert.",
+        "bulkDeactivateSuccess": "Ausgewählte Teams deaktiviert.",
+        "bulkStatusError": "Team-Status konnte nicht aktualisiert werden.",
+        "deleteSuccess": "Team gelöscht.",
+        "deleteError": "Team konnte nicht gelöscht werden.",
+        "toggleSuccess": "Team-Status aktualisiert.",
+        "toggleError": "Team-Status konnte nicht aktualisiert werden."
+      },
+      "membersAdded": "Mitglieder erfolgreich hinzugefügt",
+      "membersRemoved": "Mitglieder erfolgreich entfernt",
+      "addMembersError": "Fehler beim Hinzufügen der Mitglieder",
+      "removeMembersError": "Fehler beim Entfernen der Mitglieder",
+      "qrError": "Fehler beim Generieren des QR-Codes",
+      "registrationQrError": "Fehler beim Generieren des Registrierungs-QR-Codes"
+    },
+    "contest": {
+      "manage": {
+        "title": "Wettbewerbe verwalten",
+        "subtitle": "Verwalten Sie alle Wettbewerbe",
+        "createNew": "Neuen Wettbewerb erstellen",
+        "refresh": "Aktualisieren",
+        "back": "Zurück",
+        "loading": "Lade Wettbewerbe...",
+        "loadError": "Fehler beim Laden der Wettbewerbe",
+        "createSuccess": "Wettbewerb erfolgreich erstellt",
+        "noContests": "Keine Wettbewerbe gefunden",
+        "unnamed": "Unbenannter Wettbewerb",
+        "createdBy": "Erstellt von",
+        "status": "Status",
+        "endDate": "Ende",
+        "filters": {
+          "status": "Status",
+          "name": "Name",
+          "namePlaceholder": "Nach Name suchen...",
+          "includeInactive": "Inaktive anzeigen"
+        },
+        "edit": {
+          "title": "Wettbewerb bearbeiten",
+          "name": "Wettbewerbs-Name",
+          "nameUpdated": "Wettbewerbs-Name aktualisiert",
+          "nameUpdateError": "Fehler beim Aktualisieren",
+          "addParticipants": "Teilnehmer hinzufügen",
+          "removeParticipants": "Teilnehmer entfernen",
+          "showJoinQr": "Join-QR-Code anzeigen",
+          "showRegistrationQr": "Registrierungs-QR-Code anzeigen",
+          "cancel": "Abbrechen",
+          "joinQrTitle": "Join-QR-Code",
+          "joinQrCodeLabel": "QR-Code",
+          "joinQrDescription": "Bestehende Benutzer können diesen QR-Code scannen, um am Wettbewerb teilzunehmen",
+          "registrationQrTitle": "Registrierungs-QR-Code",
+          "registrationQrCodeLabel": "Registrierungs-QR-Code",
+          "registrationQrDescription": "Neue Benutzer können diesen QR-Code scannen, um sich zu registrieren und automatisch am Wettbewerb teilzunehmen",
+          "add": "Hinzufügen",
+          "remove": "Entfernen"
+        },
+        "name": "Name",
+        "noSelection": "Keine Auswahl",
+        "selectAll": "Alle auswählen",
+        "selectContest": "Wettbewerb auswählen",
+        "selectedCount": "{{count}} ausgewählt",
+        "activate": "Aktivieren",
+        "deactivate": "Deaktivieren",
+        "bulkDeleteSuccess": "Wettbewerbe erfolgreich gelöscht",
+        "bulkDeleteError": "Fehler beim Löschen der Wettbewerbe",
+        "deleteConfirm": {
+          "title": "Wettbewerb löschen",
+          "description": "Möchten Sie den Wettbewerb \"{{name}}\" wirklich löschen?"
+        },
+        "toggleConfirm": {
+          "title": "Wettbewerbs-Status ändern",
+          "description": "Möchten Sie den Status des Wettbewerbs \"{{name}}\" wirklich ändern?"
+        },
+        "contests": "Wettbewerbe",
+        "bulkActivateSuccess": "Ausgewählte Wettbewerbe aktiviert.",
+        "bulkDeactivateSuccess": "Ausgewählte Wettbewerbe deaktiviert.",
+        "bulkStatusError": "Wettbewerbsstatus konnte nicht aktualisiert werden.",
+        "deleteSuccess": "Wettbewerb gelöscht.",
+        "deleteError": "Wettbewerb konnte nicht gelöscht werden.",
+        "toggleSuccess": "Wettbewerbsstatus aktualisiert.",
+        "toggleError": "Wettbewerbsstatus konnte nicht aktualisiert werden."
+      },
+      "participantsAdded": "Teilnehmer erfolgreich hinzugefügt",
+      "participantsRemoved": "Teilnehmer erfolgreich entfernt",
+      "addParticipantsError": "Fehler beim Hinzufügen der Teilnehmer",
+      "removeParticipantsError": "Fehler beim Entfernen der Teilnehmer",
+      "qrError": "Fehler beim Generieren des QR-Codes",
+      "registrationQrError": "Fehler beim Generieren des Registrierungs-QR-Codes",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "toggleSuccess": "Wettbewerbs-Status erfolgreich geändert",
+      "toggleError": "Fehler beim Ändern des Wettbewerbs-Status",
+      "deleteSuccess": "Wettbewerb erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen des Wettbewerbs",
+      "deleteConfirm": {
+        "title": "Wettbewerb löschen",
+        "description": "Möchten Sie den Wettbewerb \"{{name}}\" wirklich löschen?"
+      },
+      "toggleConfirm": {
+        "title": "Wettbewerbs-Status ändern",
+        "description": "Möchten Sie den Status des Wettbewerbs \"{{name}}\" wirklich ändern?"
+      },
+      "registrationQrErrorTitle": "Fehler beim Laden des Registrierungs-QR-Codes"
+    },
+    "pointsBonus": {
+      "title": "Bonuspunkte geben"
+    },
+    "redeemRewards": {
+      "title": "Belohnungen einlösen"
+    },
+    "verifyTasks": {
+      "title": "Aufgaben verifizieren",
+      "subtitle": "Diese Funktion wird in Kürze verfügbar sein",
+      "placeholder": "Die Funktion zum Verifizieren von Aufgaben ist noch nicht implementiert."
+    }
+  },
+  "redaktion": {
+    "title": "Redaktion",
+    "subtitle": "Verwaltung von Aufgaben, Belohnungen, Standorten und Umfragen",
+    "actions": {
+      "manageTasks": {
+        "title": "Aufgaben verwalten",
+        "description": "Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren"
+      },
+      "manageRewards": {
+        "title": "Belohnungen verwalten",
+        "description": "Belohnungen durchsuchen, bearbeiten und verwalten"
+      },
+      "manageLocations": {
+        "title": "Standorte verwalten",
+        "description": "Standorte durchsuchen, bearbeiten oder entfernen"
+      },
+      "surveyAnalytics": {
+        "title": "Umfrage-Analysen",
+        "description": "Aggregierte Umfrageantworten mit visuellen Diagrammen und Statistiken anzeigen"
+      }
+    },
+    "surveyAnalytics": {
+      "title": "Umfrage-Analysen"
+    },
+    "locationManage": {
+      "title": "Standorte verwalten",
+      "subtitle": "Bestehende Standorte durchsuchen, bearbeiten oder entfernen",
+      "loading": "Lade Standorte...",
+      "loadError": "Fehler beim Laden der Standorte",
+      "existing": {
+        "title": "Bestehende Standorte",
+        "subtitle": "Jede Aufgabe und Belohnung verweist auf einen dieser Standorte"
+      },
+      "showInactive": "Inaktive anzeigen",
+      "filterByName": "Nach Name filtern...",
+      "filterAll": "Alle Status",
+      "filterActive": "Aktiv",
+      "filterInactive": "Inaktiv",
+      "noLocations": "Keine Standorte gefunden",
+      "untitled": "Unbenannter Standort",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "online": "Online"
+    },
+    "taskManage": {
+      "subtitle": "Aufgaben durchsuchen, bearbeiten, aktivieren oder deaktivieren",
+      "publicColumn": "Öffentlich",
+      "publicHint": "Ohne Login abschließbar (Einstellung im Admin)"
+    },
+    "rewardManage": {
+      "subtitle": "Belohnungen durchsuchen, bearbeiten und verwalten"
+    },
+    "comingSoon": "Diese Funktion wird in Kürze verfügbar sein.",
+    "useAdminPage": "Bitte verwenden Sie vorübergehend die Administrator-Seite."
+  }
+}

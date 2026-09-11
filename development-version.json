@@ -1,0 +1,9 @@
+{
+  "version": "1.1.0-dev.1",
+  "label": "Spielerprofilierung – vollständige UI",
+  "components": [
+    "Backend: Migration 064 (users.player_profile_*), PATCH /users/me/player-profile, GET /users/me erweitert",
+    "Frontend: Onboarding (Gate + Profil-Retake), Wald-Kachel Charakter, Modal „Mehr zu meinem Typ“ mit Spec-Textbausteinen DE/EN"
+  ],
+  "date": "2026-03-28"
+}

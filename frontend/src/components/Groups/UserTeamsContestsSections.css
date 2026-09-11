@@ -1,0 +1,51 @@
+.groups-section {
+  background: var(--glass-bg, var(--color-card-surface));
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-card, 16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-outer), var(--glass-shadow-inner);
+  backdrop-filter: blur(var(--glass-blur, 10px));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 10px));
+}
+
+.groups-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.groups-section h2 {
+  font-size: 1.4rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.groups-section-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* Farben/Hover liefert die zentrale .glass-btn (lesbarer Forest-Glas-Tint). */
+.groups-action-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.groups-empty-state {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
