@@ -2,16 +2,18 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useGLTF, Sky, useHelper } from "@react-three/drei"
 import { DirectionalLightHelper, CameraHelper, Color } from "three"
 import { useThree } from '@react-three/fiber';
+import { useControls } from 'leva';
 import * as THREE from "three"
 
 import ControllableTree from './ControllableTree';
 import PineTree from './PineTree';
+import Mapel from './Mapel';
 
 const INITIAL_TREE_BATCH = 40;
 const TREE_BATCH_STEP = 30;
 const TREE_BATCH_INTERVAL_MS = 34;
 
-export default function SceneController({
+export default function CombinedSceneController({
   globalPoints,
   maxPoints,
   treeGrowSteps,
@@ -27,7 +29,11 @@ export default function SceneController({
   const BASE_TREE_SIZE_FACTOR = 1;
   const MIN_AGE_SIZE_FACTOR = 0.75;
   const MAX_AGE_SIZE_FACTOR = 1.25;
-  const sunPosition = [0, 18, -35];
+  const { sunY, sunZ } = useControls('Sun position', {
+    sunY: { value: 18, min: -50, max: 50, step: 0.1 },
+    sunZ: { value: -35, min: -40, max: 40, step: 0.1 },
+  });
+  const sunPosition = [0, sunY, sunZ];
   const lightRef = useRef();
   const { scene } = useThree();
 
@@ -79,17 +85,19 @@ export default function SceneController({
     return x - Math.floor(x);
   }
 
+  // Use the anchor's position to generate a seed for consistent randomness
+  // immer gleich. Sinnvoll?
   const grassAssignments = useMemo(() => {
     if (!grassAnchors.length || !grassMeshes.length) return [];
 
     return grassAnchors.map((anchor) => {
+      
       const seed = hashVec3(anchor.position);
       const rnd = seededRandom(seed);
       return Math.floor(rnd * grassMeshes.length);
     });
   }, [grassAnchors, grassMeshes]);
 
-    // 🧠 GROUPING → WICHTIG FÜR INSTANCING
   const groupedGrass = useMemo(() => {
     const groups = Array.from({ length: grassMeshes.length }, () => []);
 
@@ -149,8 +157,7 @@ export default function SceneController({
   const newTreeSteps = useMemo(() => pointSpan / Math.max(maxTrees, 1), [pointSpan, maxTrees]);
   const normalizedPlantedTrees = Number(plantedTrees);
   const hasPlantedTreesOverride = Number.isFinite(normalizedPlantedTrees);
-  // Wenn plantedTrees gesetzt ist, wird die sichtbare Baumanzahl exakt daran ausgerichtet.
-  // Fallback bleibt die bisherige Punkteskalierung.
+
   const treeCount = useMemo(() => {
     if (maxTrees === 0) return 0;
     if (hasPlantedTreesOverride) {
@@ -161,16 +168,15 @@ export default function SceneController({
     return Math.min(maxTrees, Math.max(1, raw));
   }, [globalPoints, pointSpan, maxTrees, hasPlantedTreesOverride, normalizedPlantedTrees]);
 
-  // Dyade 1: 0 = zielorientiert, 4 = erlebnisorientiert
   const clampedDyad1 = Math.max(0, Math.min(4, Number(dyad1Scale)));
   const goalOrientation = 1 - clampedDyad1 / 4;
   const trunkHeightFactor = 1 + goalOrientation * 0.8;
-  // Dyade 2: 0 = Struktur (homogen), 4 = Freiheit (chaotischer)
+
   const clampedDyad2 = Math.max(0, Math.min(4, Number(dyad2Scale)));
   const freedomOrientation = clampedDyad2 / 4;
   const growthChaosStrength = (clampedDyad2 / 4) * 0.35;
   const branchCountFactor = 1 + freedomOrientation * 0.9;
-  // Dyade 3: beeinflusst die Zweiglänge (0 = kürzer, 4 = länger)
+
   const clampedDyad3 = Math.max(0, Math.min(4, Number(dyad3Scale)));
   const branchLengthFactor = 0.7 + (clampedDyad3 / 4) * 0.6;
 
@@ -197,7 +203,12 @@ export default function SceneController({
         Math.min((globalPoints - (index + 1) * newTreeSteps) / treeGrowSteps, 1)
       );
       const growth = Math.max(0, Math.min(1, baseGrowth + DAILY_GROWTH_BONUS + chaosOffset));
-      const componentType = seededRandom(seed) > 0.5 ? 'Controllable' : 'Pine';
+      const typeRoll = seededRandom(seed);
+      const componentType = typeRoll < 1 / 3
+        ? 'Controllable'
+        : typeRoll < 2 / 3
+          ? 'Pine'
+          : 'Mapel';
 
       return {
         treeAnchorIndex: index,
@@ -252,7 +263,7 @@ export default function SceneController({
       <directionalLight
         ref={lightRef}
         position={sunPosition}
-        intensity={1.15}
+        intensity={3}
         castShadow
         shadow-mapSize-width={512}
         shadow-mapSize-height={512}
@@ -264,7 +275,7 @@ export default function SceneController({
         shadow-camera-far={50}
         shadow-normalBias={0.1}
       />
-      <ambientLight intensity={1.6} />
+      <ambientLight intensity={1.2} />
 
       <mesh position={sunPosition}>
         <sphereGeometry args={[2.6, 32, 32]} />
@@ -273,7 +284,11 @@ export default function SceneController({
       <mesh geometry={groundMesh.geometry} material={groundMesh.material} position={[0, 0, 0]} castShadow receiveShadow />
 
       {trees.slice(0, visibleTreeCount).map((tree, i) => {
-        const TreeComp = tree.componentType === 'Controllable' ? ControllableTree : PineTree;
+        const TreeComp = tree.componentType === 'Controllable'
+          ? ControllableTree
+          : tree.componentType === 'Mapel'
+            ? Mapel
+            : PineTree;
         return (
           <TreeComp
             key={`tree-${i}-${tree.anchor.uuid ?? tree.anchor.id ?? i}`}
