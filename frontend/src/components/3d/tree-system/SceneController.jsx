@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useGLTF, Sky, useHelper } from "@react-three/drei"
 import { DirectionalLightHelper, CameraHelper, Color } from "three"
 import { useThree } from '@react-three/fiber';
-import { useControls } from 'leva';
 import * as THREE from "three"
 
 import ControllableTree from './ControllableTree';
@@ -29,11 +28,7 @@ export default function CombinedSceneController({
   const BASE_TREE_SIZE_FACTOR = 1;
   const MIN_AGE_SIZE_FACTOR = 0.75;
   const MAX_AGE_SIZE_FACTOR = 1.25;
-  const { sunY, sunZ } = useControls('Sun position', {
-    sunY: { value: 18, min: -50, max: 50, step: 0.1 },
-    sunZ: { value: -35, min: -40, max: 40, step: 0.1 },
-  });
-  const sunPosition = [0, sunY, sunZ];
+  const sunPosition = [0, 18, -35];
   const lightRef = useRef();
   const { scene } = useThree();
 
