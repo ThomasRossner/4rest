@@ -64,6 +64,18 @@
   overscroll-behavior: contain;
 }
 
+/* Gruppen: gleicher Document-Lock, Scroll nur hier — nicht am html/body */
+.layout-main.layout-main--groups {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-padding-top: var(--app-nav-top-total);
+  scroll-padding-bottom: var(--app-nav-bottom-total);
+}
+
 .layout.layout--forest {
   min-height: unset;
   height: 100dvh;

@@ -238,7 +238,7 @@ h3,
   max-width: 100vw;
 }
 
-/* iOS: Document nicht mitrubbern — Scroll nur in inneren Containern (Home/Tasks/Forest) */
+/* iOS: Document nicht mitrubbern — Scroll nur in inneren Containern (Home/Tasks/Forest/Gruppen) */
 html.app-shell-viewport,
 html.app-shell-viewport body {
   overflow: hidden;

@@ -20,8 +20,9 @@ function Layout() {
     !searchParams.get('place') &&
     searchParams.get('online') !== 'true' &&
     searchParams.get('map') !== 'true';
+  const isGroups = pathname === '/groups';
   const isViewportFit = isHome || isTasksRoute;
-  const isAppShell = isViewportFit || isForest;
+  const isAppShell = isViewportFit || isForest || isGroups;
 
   useEffect(() => {
     const { documentElement: html, body } = document;
@@ -44,7 +45,7 @@ function Layout() {
     >
       <Navigation />
       <main
-        className={`layout-main ${isViewportFit ? 'layout-main--viewport-shell' : ''} ${isHome ? 'layout-main--home' : ''} ${isTasksRoute ? 'layout-main--tasks-viewport' : ''} ${isTasksHub ? 'layout-main--tasks-hub' : ''} ${isForest ? 'layout-main--forest' : ''}`}
+        className={`layout-main ${isViewportFit ? 'layout-main--viewport-shell' : ''} ${isHome ? 'layout-main--home' : ''} ${isGroups ? 'layout-main--groups' : ''} ${isTasksRoute ? 'layout-main--tasks-viewport' : ''} ${isTasksHub ? 'layout-main--tasks-hub' : ''} ${isForest ? 'layout-main--forest' : ''}`}
       >
         <Outlet />
       </main>

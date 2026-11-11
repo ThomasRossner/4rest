@@ -20,6 +20,8 @@
 }
 
 .navigation.navigation-top {
+  /* Bündig an der Safe Area. max(6px, …) ließ auf jeder Ansicht einen Streifen der Seite über der Toolbar. */
+  top: env(safe-area-inset-top, 0px);
   overflow-y: visible;
 }
 
