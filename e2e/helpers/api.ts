@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = process.env.API_URL || 'http://localhost:5002/api';
 
 export function createApiClient(token?: string): AxiosInstance {
   const client = axios.create({
@@ -33,7 +33,8 @@ export async function registerViaApi(user: {
     password: user.password,
     name: user.name,
     role: user.role || 'guest',
-    user_type: user.userType || 'explorer',
+    userType: user.userType || 'explorer',
+    acceptPrivacy: true,
   });
   return response.data;
 }

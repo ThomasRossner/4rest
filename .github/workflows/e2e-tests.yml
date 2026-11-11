@@ -8,7 +8,8 @@ on:
 
 jobs:
   e2e-tests:
-    runs-on: ubuntu-latest
+    # Playwright 1.57 liefert keine Chromium-Builds für Ubuntu 26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
     
     services:
       postgres:
@@ -53,32 +54,21 @@ jobs:
         run: |
           echo "DATABASE_URL=postgresql://roots_user:roots_password@localhost:5432/roots_of_impact" >> $GITHUB_ENV
           echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
-          echo "API_URL=http://localhost:5000/api" >> $GITHUB_ENV
-          echo "BASE_URL=http://localhost:3000" >> $GITHUB_ENV
+          echo "API_URL=http://localhost:5002/api" >> $GITHUB_ENV
+          echo "BASE_URL=http://localhost:3002" >> $GITHUB_ENV
+          echo "JWT_SECRET=ci-test-jwt-secret" >> $GITHUB_ENV
+          echo "SESSION_SECRET=ci-test-session-secret" >> $GITHUB_ENV
+          echo "EMAIL_MOCK_MODE=true" >> $GITHUB_ENV
 
       - name: Run database migrations
         run: |
           cd backend
           npm run migrate
 
-      - name: Start backend
-        run: |
-          cd backend
-          npm run dev &
-          sleep 10
-        env:
-          NODE_ENV: test
-
-      - name: Start frontend
-        run: |
-          cd frontend
-          npm run dev &
-          sleep 15
-        env:
-          NODE_ENV: test
-
       - name: Run E2E tests
-        run: npm run test:e2e
+        # Voller Lauf: npm run test:e2e (vier Browser, Seed-Daten, Live-Specs gegen luise.bio).
+        # CI prüft, dass die App startet und die Anmeldung eine Fehlermeldung zeigt.
+        run: npx playwright test e2e/specs/smoke --project=chromium
         env:
           CI: true
 

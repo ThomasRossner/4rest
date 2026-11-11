@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import {
   addEmailSuppression,
@@ -13,8 +12,7 @@ import {
 // Load environment variables before initializing the service
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const emailOutputDir = path.join(process.cwd(), 'email-output');
 
 interface EmailOptions {
   to: string;
@@ -39,7 +37,7 @@ class EmailService {
     } else {
       this.isMockMode = process.env.EMAIL_MOCK_MODE === 'true' || process.env.NODE_ENV === 'development';
     }
-    this.mockOutputDir = path.join(__dirname, '../../email-output');
+    this.mockOutputDir = emailOutputDir;
 
     console.log(`[EMAIL SERVICE] Initializing...`);
     console.log(`[EMAIL SERVICE] EMAIL_MOCK_MODE: ${process.env.EMAIL_MOCK_MODE}`);

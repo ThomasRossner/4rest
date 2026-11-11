@@ -154,7 +154,6 @@ function LoginPage() {
       // Email verification token in URL
       handleEmailVerification(verifyToken);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, location.pathname, t]);
 
   /** Entwurf nach Klick auf „Datenschutzhinweise“ und Rückkehr über /login?mode=register wiederherstellen. */

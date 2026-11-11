@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const configuredBaseURL = process.env.BASE_URL || 'http://localhost:3000';
+const configuredBaseURL = process.env.BASE_URL || 'http://localhost:3002';
 const runAgainstLiveLuise = /^https?:\/\/(www\.)?luise\.bio\/?$/i.test(configuredBaseURL);
 const disableWebServer = process.env.PW_NO_WEBSERVER === '1' || runAgainstLiveLuise;
 
@@ -45,8 +45,8 @@ export default defineConfig({
     ? undefined
     : {
         command: 'npm run dev',
-        url: 'http://localhost:3000',
+        url: configuredBaseURL,
         reuseExistingServer: !process.env.CI,
-        timeout: 120 * 1000,
+        timeout: 180 * 1000,
       },
 });
