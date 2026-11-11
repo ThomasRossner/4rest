@@ -3844,7 +3844,7 @@ function AdminPage() {
       thumbnailFile: prev.thumbnailFile, // Behalte bestehende Datei
       thumbnailUrl: task.thumbnail_url ?? prev.thumbnailUrl ?? null, // Verwende task.thumbnail_url wenn vorhanden, sonst behalte bestehenden Wert
     }));
-    // existingTemplates absichtlich ausgeschlossen (siehe Kommentar oben)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- existingTemplates absichtlich ausgeschlossen (siehe Kommentar oben)
   }, [isEditingTask, editingTaskId]);
 
   useEffect(() => {

@@ -1,0 +1,52 @@
+declare class EmailTemplatesService {
+    private templatesDir;
+    constructor();
+    private loadTemplate;
+    private replaceVariables;
+    getWelcomeEmail(variables: {
+        name: string;
+        email: string;
+        role?: string;
+        appUrl?: string;
+    }): string;
+    getPasswordResetEmail(variables: {
+        name: string;
+        email: string;
+        resetUrl: string;
+        expiresIn?: string;
+    }): string;
+    getEmailVerificationEmail(variables: {
+        name: string;
+        email: string;
+        verificationUrl: string;
+        expiresIn?: string;
+    }): string;
+    getLoginCodeEmail(variables: {
+        name: string;
+        email: string;
+        code: string;
+        expiresIn?: string;
+    }): string;
+    getPasswordSetupEmail(variables: {
+        name: string;
+        email: string;
+        resetUrl: string;
+        expiresIn?: string;
+    }): string;
+    getAdminCreatedUserEmail(variables: {
+        name: string;
+        email: string;
+        resetUrl: string;
+        expiresIn?: string;
+    }): string;
+    getPhotoRejectionEmail(variables: {
+        name: string;
+        email: string;
+        taskTitle: string;
+        rejectionReason?: string;
+        appUrl?: string;
+    }): string;
+}
+export declare const emailTemplates: EmailTemplatesService;
+export {};
+//# sourceMappingURL=email-templates.service.d.ts.map
