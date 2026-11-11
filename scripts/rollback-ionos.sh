@@ -2,25 +2,18 @@
 # Rollback script for IONOS server
 # Restores from a deployment backup created by deploy-ionos.sh
 
-SSH_USER="root"
-SSH_HOST="87.106.86.203"
-SSH_KEY="$HOME/.ssh/id_ed25519"
-SSH_PASSPHRASE="Tan0808zen"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=ionos-ssh-add.sh
+source "$SCRIPT_DIR/ionos-ssh-add.sh"
 
-# First, add key to ssh-agent if not already added
-if ! ssh-add -l 2>/dev/null | grep -q "id_ed25519"; then
-    echo "Adding SSH key to agent..."
-    expect << 'EOF'
-spawn ssh-add /Users/thomas/.ssh/id_ed25519
-expect "Enter passphrase"
-send "Tan0808zen\r"
-expect eof
-EOF
-fi
+IONOS_HOST="${IONOS_HOST:-87.106.86.203}"
+IONOS_USER="${IONOS_USER:-root}"
+ionos_ssh_add_key || exit 1
 
 # Now connect and rollback
 echo "Connecting to IONOS server for rollback..."
-ssh -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" << 'REMOTE_SCRIPT'
+ssh -o StrictHostKeyChecking=accept-new "${IONOS_USER}@${IONOS_HOST}" \
+  "SERVER_GIT_SSH_PASSPHRASE=$(printf '%q' "$IONOS_SSH_PASSPHRASE") bash -s" << 'REMOTE_SCRIPT'
 # Find the deployment directory
 if [ -d "/root/4rest" ]; then
     DEPLOY_DIR="/root/4rest"
@@ -221,9 +214,10 @@ echo "==> Resetting Git repository..."
 echo "Loading SSH key for GitHub..."
 eval $(ssh-agent -s) > /dev/null
 expect << 'EXPECT_SCRIPT'
+set pass $env(SERVER_GIT_SSH_PASSPHRASE)
 spawn ssh-add /root/.ssh/id_ed25519
 expect "Enter passphrase"
-send "Tan0808zen\r"
+send -- "$pass\r"
 expect eof
 EXPECT_SCRIPT
 

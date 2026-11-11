@@ -4,18 +4,18 @@
 
 Wenn der Benutzer im Agenten "Feature-Entwicklung" das Wort "release" schreibt, führe automatisch folgende Schritte aus:
 
-1. **Git Commit und Push**: 
-   - Führe `scripts/release.sh` aus
-   - Das Script erstellt automatisch einen Commit mit allen Änderungen
-   - Pusht die Änderungen zum aktuellen Branch
+1. **Git Commit und Push**:
+ - Führe `scripts/release.sh` aus
+ - Das Script erstellt automatisch einen Commit mit allen Änderungen
+ - Pusht die Änderungen zum aktuellen Branch
 
 2. **Deployment auf IONOS**:
-   - Das Release-Script ruft automatisch `scripts/deploy-ionos.sh` auf
-   - Dieses führt das Deployment auf dem IONOS-Server durch
+ - Ein Push auf `main` rollt nicht mehr vom Mac aus. Nach grüner „CI/CD Pipeline“ startet der Workflow „Deploy luise.bio“
+ - Dafür müssen die GitHub-Secrets `IONOS_SSH_KEY` und `IONOS_SSH_PASSPHRASE` gesetzt sein
+ - `scripts/deploy-ionos.sh` bleibt der Ablauf auf dem Server und liest Schlüssel und Passphrase aus der Umgebung
 
-**Wichtig**: 
-- Wenn der Benutzer "release" schreibt, führe NICHT nur das Script aus, sondern erkläre kurz was passiert
-- Das Release-Script ist bereits so konfiguriert, dass es beide Schritte automatisch durchführt
+**Wichtig**:
+- Wenn der Benutzer "release" schreibt, führe das Script aus und erkläre kurz, dass das Deployment über GitHub Actions läuft, sobald die Commits auf `main` sind und die CI grün ist
 - Bei Fehlern soll der Prozess mit einer Fehlermeldung abbrechen
 
 ## Tickets (docs/tickets)

@@ -5,10 +5,12 @@
 set -euo pipefail
 
 # IONOS Server-Konfiguration
-SSH_USER="root"
-SSH_HOST="87.106.86.203"
-SSH_KEY="$HOME/.ssh/id_ed25519"
-SSH_PASSPHRASE="Tan0808zen"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=ionos-ssh-add.sh
+source "$SCRIPT_DIR/ionos-ssh-add.sh"
+SSH_USER="${IONOS_USER:-root}"
+SSH_HOST="${IONOS_HOST:-87.106.86.203}"
+SSH_KEY="${IONOS_SSH_KEY_PATH:-$HOME/.ssh/id_ed25519}"
 
 # Datenbank-Konfiguration (IONOS)
 IONOS_DB_USER="roots_user"
@@ -74,20 +76,10 @@ echo ""
 
 # SSH-Key zum Agent hinzufügen
 echo "==> Setting up SSH connection..."
-if ! ssh-add -l 2>/dev/null | grep -q "id_ed25519"; then
-    echo "   Adding SSH key to agent..."
-    if command -v expect >/dev/null 2>&1; then
-        expect << 'EOF' >/dev/null 2>&1
-spawn ssh-add /Users/thomas/.ssh/id_ed25519
-expect "Enter passphrase"
-send "Tan0808zen\r"
-expect eof
-EOF
-    else
-        echo "   ⚠️  expect nicht gefunden, versuche manuell..."
-        echo "   Bitte SSH-Key manuell hinzufügen: ssh-add ${SSH_KEY}"
-        echo "   Oder installiere expect: brew install expect"
-        # Versuche trotzdem fortzufahren, falls Key bereits im Agent ist
+if ! ionos_ssh_add_key; then
+    echo "   Bitte IONOS_SSH_PASSPHRASE setzen und den Schlüssel unter ${SSH_KEY} bereitlegen."
+    if ! ssh-add -l >/dev/null 2>&1; then
+        exit 1
     fi
 fi
 echo "   ✓ SSH key ready"

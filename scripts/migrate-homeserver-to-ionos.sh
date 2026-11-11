@@ -20,8 +20,10 @@ HOMESERVER_DIR="/roots-of-impact"
 # Ionos configuration
 IONOS_HOST="87.106.86.203"
 IONOS_USER="root"
-IONOS_SSH_KEY="$HOME/.ssh/id_ed25519"
-IONOS_SSH_PASSPHRASE="Tan0808zen"
+SCRIPT_DIR_EARLY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=ionos-ssh-add.sh
+source "$SCRIPT_DIR_EARLY/ionos-ssh-add.sh"
+IONOS_SSH_KEY="${IONOS_SSH_KEY_PATH:-$HOME/.ssh/id_ed25519}"
 IONOS_DIR="/root/4rest"
 
 # Local temporary directory
@@ -57,15 +59,8 @@ if [ ! -f "$IONOS_SSH_KEY" ]; then
 fi
 
 # Add SSH key to agent if not already added
-if ! ssh-add -l 2>/dev/null | grep -q "id_ed25519"; then
-    echo "Adding SSH key to agent..."
-    expect << EOF
-spawn ssh-add $IONOS_SSH_KEY
-expect "Enter passphrase"
-send "$IONOS_SSH_PASSPHRASE\r"
-expect eof
-EOF
-fi
+export IONOS_SSH_KEY_PATH="$IONOS_SSH_KEY"
+ionos_ssh_add_key
 
 echo -e "${GREEN}   Prerequisites OK${NC}"
 echo ""
