@@ -34,6 +34,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .tasks-page.tasks-page--detail .task-detail-view {
@@ -58,6 +59,7 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding-bottom: var(--spacing-lg);
 }
 
@@ -226,6 +228,7 @@
      scrollt er innerhalb der reservierten Fläche statt unter die Bottom-Nav zu ragen. */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   scrollbar-width: none;
   min-height: 0;
   max-height: 100%;

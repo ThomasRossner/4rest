@@ -21,18 +21,47 @@
   height: 100dvh;
 }
 
-.layout-main.layout-main--home {
+/* Feste Top/Bottom-Masken hinter schwebender Nav (wie ForestPage) — kein Wald in der Statusleiste beim Overscroll */
+.layout.layout--app-shell::before,
+.layout.layout--app-shell::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 998;
+  pointer-events: none;
+  background-color: #0a2218;
+  background-image: var(--app-body-background);
+  background-size: var(--app-body-background-size);
+  background-position: var(--app-body-background-position);
+}
+
+.layout.layout--app-shell::before {
+  top: 0;
+  height: var(--app-nav-top-total);
+}
+
+.layout.layout--app-shell::after {
+  bottom: 0;
+  height: var(--app-nav-bottom-total);
+}
+
+.layout-main.layout-main--viewport-shell {
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   padding: 0 var(--spacing-sm);
   padding-top: calc(env(safe-area-inset-top, 0px) + var(--app-content-top-gap) + var(--app-nav-top-offset));
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px + var(--app-nav-bottom-offset));
+}
+
+.layout-main.layout-main--home {
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .layout.layout--forest {
@@ -58,7 +87,7 @@
 }
 
 .layout-main.layout-main--forest,
-.layout-main.layout-main--home {
+.layout-main.layout-main--viewport-shell {
   background: transparent;
   border-radius: 0;
   box-shadow: none;
@@ -67,6 +96,7 @@
 /* Tasks: kein Main-Scroll, Scroll in Page-Containern */
 .layout-main.layout-main--tasks-viewport {
   overflow-y: hidden;
+  overscroll-behavior: none;
 }
 
 /* Tasks-Hub: Kachelblock vertikal mittig */

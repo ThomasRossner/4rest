@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import Navigation from '../Navigation/Navigation';
 import { useMainPageBackground } from '../../hooks/useMainPageBackground';
 import './Layout.css';
+
+const APP_SHELL_SCROLL_LOCK_CLASS = 'app-shell-viewport';
 
 function Layout() {
   const { pathname } = useLocation();
@@ -18,14 +21,30 @@ function Layout() {
     searchParams.get('online') !== 'true' &&
     searchParams.get('map') !== 'true';
   const isViewportFit = isHome || isTasksRoute;
+  const isAppShell = isViewportFit || isForest;
+
+  useEffect(() => {
+    const { documentElement: html, body } = document;
+    if (isAppShell) {
+      html.classList.add(APP_SHELL_SCROLL_LOCK_CLASS);
+      body.classList.add(APP_SHELL_SCROLL_LOCK_CLASS);
+    } else {
+      html.classList.remove(APP_SHELL_SCROLL_LOCK_CLASS);
+      body.classList.remove(APP_SHELL_SCROLL_LOCK_CLASS);
+    }
+    return () => {
+      html.classList.remove(APP_SHELL_SCROLL_LOCK_CLASS);
+      body.classList.remove(APP_SHELL_SCROLL_LOCK_CLASS);
+    };
+  }, [isAppShell]);
 
   return (
     <div
-      className={`layout ${isViewportFit ? 'layout--home' : ''} ${isForest ? 'layout--forest' : ''}`}
+      className={`layout ${isViewportFit ? 'layout--home' : ''} ${isAppShell ? 'layout--app-shell' : ''} ${isForest ? 'layout--forest' : ''}`}
     >
       <Navigation />
       <main
-        className={`layout-main ${isViewportFit ? 'layout-main--home' : ''} ${isTasksRoute ? 'layout-main--tasks-viewport' : ''} ${isTasksHub ? 'layout-main--tasks-hub' : ''} ${isForest ? 'layout-main--forest' : ''}`}
+        className={`layout-main ${isViewportFit ? 'layout-main--viewport-shell' : ''} ${isHome ? 'layout-main--home' : ''} ${isTasksRoute ? 'layout-main--tasks-viewport' : ''} ${isTasksHub ? 'layout-main--tasks-hub' : ''} ${isForest ? 'layout-main--forest' : ''}`}
       >
         <Outlet />
       </main>
