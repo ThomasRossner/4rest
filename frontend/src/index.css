@@ -11,6 +11,7 @@
    16px (Browser-Default) → 18px. */
 html {
   font-size: 112.5%;
+  background-color: #0a2218;
 }
 
 /* Struktur + Nature-Tech Glass (Mock target-ui-mock.png) */
@@ -156,13 +157,24 @@ html[data-theme='atlas'] {
   --shadow-warm-inset: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-html[data-theme='classic'] body,
-html[data-theme='atlas'] body {
+/* iOS: festes Vollflächen-Layer statt body background-attachment: fixed */
+html[data-theme='classic']::before,
+html[data-theme='atlas']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-color: #0a2218;
   background-image: var(--app-body-background);
   background-size: var(--app-body-background-size);
   background-position: var(--app-body-background-position);
-  background-attachment: fixed, fixed, fixed, fixed, fixed;
+}
+
+html[data-theme='classic'] body,
+html[data-theme='atlas'] body {
+  background-color: transparent;
+  background-image: none;
 }
 
 body {

@@ -9,13 +9,15 @@ function Layout() {
   useMainPageBackground(pathname);
   const isHome = pathname === '/' || pathname === '';
   const isForest = pathname === '/forest';
+  const isTasksRoute = pathname.startsWith('/tasks');
   const isTasksHub =
+    isTasksRoute &&
     pathname === '/tasks' &&
     !searchParams.get('view') &&
     !searchParams.get('place') &&
     searchParams.get('online') !== 'true' &&
     searchParams.get('map') !== 'true';
-  const isViewportFit = isHome || isTasksHub;
+  const isViewportFit = isHome || isTasksRoute;
 
   return (
     <div
@@ -23,7 +25,7 @@ function Layout() {
     >
       <Navigation />
       <main
-        className={`layout-main ${isViewportFit ? 'layout-main--home' : ''} ${isTasksHub ? 'layout-main--tasks-hub' : ''} ${isForest ? 'layout-main--forest' : ''}`}
+        className={`layout-main ${isViewportFit ? 'layout-main--home' : ''} ${isTasksRoute ? 'layout-main--tasks-viewport' : ''} ${isTasksHub ? 'layout-main--tasks-hub' : ''} ${isForest ? 'layout-main--forest' : ''}`}
       >
         <Outlet />
       </main>

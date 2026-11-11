@@ -64,9 +64,13 @@
   box-shadow: none;
 }
 
-/* Tasks-Hub: kein Page-Scroll, Inhalt unter Top-Nav halten */
-.layout-main.layout-main--tasks-hub {
+/* Tasks: kein Main-Scroll, Scroll in Page-Containern */
+.layout-main.layout-main--tasks-viewport {
   overflow-y: hidden;
+}
+
+/* Tasks-Hub: Kachelblock vertikal mittig */
+.layout-main.layout-main--tasks-hub {
   justify-content: center;
 }
 

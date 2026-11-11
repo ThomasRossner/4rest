@@ -12,15 +12,8 @@
   min-height: 0;
   padding-top: 0;
   padding-bottom: 0;
-  /* Synchron zu Layout.css: fester Abstand unter Top-Nav / über Bottom-Nav */
-  height: calc(
-    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
-      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
-  );
-  max-height: calc(
-    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
-      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
-  );
+  height: calc(100dvh - var(--app-nav-top-total) - var(--app-nav-bottom-total) - var(--app-content-top-gap));
+  max-height: calc(100dvh - var(--app-nav-top-total) - var(--app-nav-bottom-total) - var(--app-content-top-gap));
   overflow: hidden;
   padding-left: var(--spacing-xs);
   padding-right: var(--spacing-xs);
@@ -36,10 +29,8 @@
   padding-left: var(--spacing-xs);
   padding-right: var(--spacing-xs);
   box-sizing: border-box;
-  max-height: calc(
-    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - var(--app-nav-top-offset) -
-      var(--app-nav-bottom-offset) - 2 * var(--spacing-xs)
-  );
+  height: calc(100dvh - var(--app-nav-top-total) - var(--app-nav-bottom-total) - var(--app-content-top-gap));
+  max-height: calc(100dvh - var(--app-nav-top-total) - var(--app-nav-bottom-total) - var(--app-content-top-gap));
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
