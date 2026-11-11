@@ -1,0 +1,72 @@
+name: Deploy luise.bio
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      no_cache:
+        description: Voller Image-Rebuild (1) oder Docker-Layer-Cache (0)
+        type: choice
+        default: "1"
+        options:
+          - "1"
+          - "0"
+
+concurrency:
+  group: deploy-luise
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Check deploy secrets
+        env:
+          IONOS_SSH_KEY: ${{ secrets.IONOS_SSH_KEY }}
+          IONOS_SSH_PASSPHRASE: ${{ secrets.IONOS_SSH_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "$IONOS_SSH_KEY" ]; then
+            echo "::error::Secret IONOS_SSH_KEY fehlt. Inhalt von ~/.ssh/id_ed25519, inklusive der BEGIN/END-Zeilen."
+            missing=1
+          fi
+          if [ -z "$IONOS_SSH_PASSPHRASE" ]; then
+            echo "::error::Secret IONOS_SSH_PASSPHRASE fehlt."
+            missing=1
+          fi
+          exit "$missing"
+
+      - name: Deploy to IONOS
+        env:
+          IONOS_HOST: ${{ secrets.IONOS_HOST }}
+          IONOS_USER: ${{ secrets.IONOS_USER }}
+          IONOS_SSH_KEY: ${{ secrets.IONOS_SSH_KEY }}
+          IONOS_SSH_PASSPHRASE: ${{ secrets.IONOS_SSH_PASSPHRASE }}
+          SERVER_GIT_SSH_PASSPHRASE: ${{ secrets.SERVER_GIT_SSH_PASSPHRASE }}
+          DEPLOY_NO_CACHE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.no_cache || '1' }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          key_path="$HOME/.ssh/ionos_deploy"
+          printf '%s\n' "$IONOS_SSH_KEY" > "$key_path"
+          chmod 600 "$key_path"
+          export IONOS_SSH_KEY_PATH="$key_path"
+          export IONOS_HOST="${IONOS_HOST:-87.106.86.203}"
+          export IONOS_USER="${IONOS_USER:-root}"
+          bash scripts/deploy-ionos.sh

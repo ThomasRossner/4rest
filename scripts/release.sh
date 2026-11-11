@@ -1,6 +1,7 @@
 #!/bin/bash
-# Release script: Git commit, push und Deployment auf IONOS
-# Wird automatisch ausgeführt, wenn im Agenten "Feature-Entwicklung" das Wort "release" geschrieben wird
+# Release script: Git commit und push.
+# Das Deployment auf luise.bio startet danach in GitHub Actions, sobald main
+# und die CI/CD Pipeline grün sind (Workflow „Deploy luise.bio“).
 
 set -euo pipefail
 
@@ -54,15 +55,14 @@ git push origin "$CURRENT_BRANCH" || {
 }
 echo -e "${GREEN}✓ Git Push erfolgreich${NC}"
 
-# Deployment auf IONOS
 echo ""
-echo "==> Starte Deployment auf IONOS..."
-"$SCRIPT_DIR/deploy-ionos.sh" || {
-    echo -e "${RED}ERROR: Deployment fehlgeschlagen${NC}"
-    exit 1
-}
-
-echo ""
-echo -e "${GREEN}✅ Release-Prozess erfolgreich abgeschlossen!${NC}"
-echo "   - Git Commit & Push: ✓"
-echo "   - Deployment auf IONOS: ✓"
+if [ "$CURRENT_BRANCH" = "main" ]; then
+    echo -e "${GREEN}✅ Push auf main ist durch.${NC}"
+    echo "   Das Deployment auf luise.bio startet in GitHub Actions,"
+    echo "   sobald der Workflow „CI/CD Pipeline“ grün ist."
+    echo "   Manuell: Actions → Deploy luise.bio → Run workflow."
+else
+    echo -e "${GREEN}✅ Push auf ${CURRENT_BRANCH} ist durch.${NC}"
+    echo "   Ausgerollt wird nur main. Nach dem Merge und grüner CI"
+    echo "   startet „Deploy luise.bio“ das Deployment."
+fi
