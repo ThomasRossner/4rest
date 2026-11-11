@@ -357,7 +357,12 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
         // Use setTimeout to avoid circular dependency during initialization
+        const hydratedToken = state?.token ?? null;
         setTimeout(() => {
+          const current = useAuthStore.getState();
+          // Login oder Logout, der nach dem Lesen aus localStorage passierte, nicht überschreiben.
+          if ((current.token ?? null) !== hydratedToken) return;
+
           // Only set isAuthenticated to true if both token and user exist
           if (state?.user && state?.token) {
             const normalizedRole: UserRole = USER_ROLES.includes(state.user.role)

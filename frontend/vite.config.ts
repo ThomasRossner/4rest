@@ -18,6 +18,17 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    {
+      name: '4rest-version-json',
+      apply: 'build',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'version.json',
+          source: JSON.stringify({ buildId }),
+        });
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       // Custom registration in utils/serviceWorker.ts — avoid double registerSW.js + main.tsx
@@ -63,6 +74,12 @@ export default defineConfig({
           {
             // Same-origin API (luise.bio/api/...) — never cache auth-sensitive responses
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+            handler: 'NetworkOnly',
+          },
+          {
+            // Build-Token für den Client. Darf nie aus dem SW-Cache kommen,
+            // sonst sieht ein offener Tab nach dem Deploy keine neue Version.
+            urlPattern: ({ url }) => url.pathname === '/version.json',
             handler: 'NetworkOnly',
           },
           {

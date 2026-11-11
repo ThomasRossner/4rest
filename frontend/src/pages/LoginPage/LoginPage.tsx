@@ -203,7 +203,11 @@ function LoginPage() {
       setCodeSent(true);
     } catch (err: any) {
       const serverMsg = err?.response?.data?.error || err?.response?.data?.message;
-      setError(serverMsg || t('login.messages.requestFailed'));
+      setError(
+        err?.response
+          ? serverMsg || err?.message || t('login.messages.requestFailed')
+          : t('login.messages.requestFailed')
+      );
     } finally {
       setLoading(false);
     }
@@ -230,6 +234,8 @@ function LoginPage() {
             setFieldErrorEmail(t('login.messages.fieldErrors.emailNotFound'));
           } else if (code === 'WRONG_PASSWORD') {
             setFieldErrorPassword(t('login.messages.fieldErrors.wrongPassword'));
+          } else if (!loginError?.response) {
+            setError(t('login.messages.requestFailed'));
           } else {
             setError(serverMsg || loginError?.message || t('login.messages.loginFailed'));
           }
@@ -353,15 +359,13 @@ function LoginPage() {
         setSuccess(t('login.messages.passwordlessSetup'));
       } else {
         setShowResendVerificationAction(false);
-        setError(
-          serverMsg ||
-            err?.message ||
-            (mode === 'login'
-              ? t('login.messages.loginFailed')
-              : mode === 'register'
+        const fallback =
+          mode === 'login'
+            ? t('login.messages.loginFailed')
+            : mode === 'register'
               ? t('login.messages.registrationFailed')
-              : t('login.messages.requestFailed'))
-        );
+              : t('login.messages.requestFailed');
+        setError(err?.response ? serverMsg || err?.message || fallback : t('login.messages.requestFailed'));
       }
     } finally {
       setLoading(false);

@@ -6,9 +6,13 @@ import type { PageBackgroundConfig, PageBackgroundKey } from '../types/pageBackg
 
 const apiBaseUrl = resolveApiBaseUrl();
 
+const API_TIMEOUT_MS = 20_000;
+const UPLOAD_TIMEOUT_MS = 300_000;
+
 const apiClient = axios.create({
   baseURL: apiBaseUrl,
   withCredentials: true,
+  timeout: API_TIMEOUT_MS,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -20,9 +24,13 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  // Remove Content-Type header for FormData - axios will set it automatically with boundary
+  // Remove Content-Type header for FormData - axios will set it automatically with boundary.
+  // Uploads dürfen nicht am kurzen API-Timeout hängen bleiben.
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type'];
+    if (!config.timeout || config.timeout < UPLOAD_TIMEOUT_MS) {
+      config.timeout = UPLOAD_TIMEOUT_MS;
+    }
   }
   return config;
 });
@@ -32,7 +40,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ error?: string; message?: string }>) => {
     const status = error.response?.status;
-    if (status === 401) {
+    const requestUrl = error.config?.url ?? '';
+    const isCredentialAttempt =
+      requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/login-with-code') ||
+      requestUrl.includes('/auth/register');
+    if (status === 401 && !isCredentialAttempt) {
       const path = window.location.pathname;
       const isPublicRoute =
         path.startsWith('/login') ||
@@ -54,7 +67,7 @@ apiClient.interceptors.response.use(
         (typeof data.error === 'string' && data.error.trim()) ||
         (typeof data.message === 'string' && data.message.trim());
       if (serverMsg) {
-        return Promise.reject(new Error(serverMsg));
+        error.message = serverMsg;
       }
     }
     return Promise.reject(error);
@@ -154,10 +167,17 @@ export const api = {
       // Prefer /users/me if available
       const res = await apiClient.get('/users/me');
       return res.data;
-    } catch (_) {
-      // Fallback to /users/:id
+    } catch (error) {
+      // 401/Timeout nicht noch einmal gegen /users/:id schicken — das verdoppelt
+      // Logout-Redirects und lässt die Anmeldung bei einem toten Backend doppelt hängen.
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 401 || status === 403 || error.code === 'ECONNABORTED') {
+          throw error;
+        }
+      }
       const current = useAuthStore.getState().user;
-      if (!current) return null;
+      if (!current) throw error;
       const res = await apiClient.get(`/users/${current.id}`);
       return res.data;
     }

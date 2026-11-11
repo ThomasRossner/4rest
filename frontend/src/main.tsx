@@ -5,7 +5,8 @@ import App from './App';
 import { Toaster } from './components/Toaster/Toaster';
 import { ThemeProvider } from './theme/ThemeContext';
 import {
-  enforceFreshVersion,
+  ensureFreshClient,
+  installStaleClientRecovery,
   maybeClearClientCachesFromUrl,
   registerServiceWorker,
   syncOfflineQRCodes,
@@ -62,6 +63,8 @@ if (!root) {
   }
 }
 
+installStaleClientRecovery();
+
 void (async () => {
   const cleared = await maybeClearClientCachesFromUrl();
   if (cleared) {
@@ -69,8 +72,8 @@ void (async () => {
     return;
   }
 
-  // Neue Build-Version erkannt? -> Caches löschen + einmaliger Reload (Auth bleibt erhalten).
-  const reloading = await enforceFreshVersion();
+  // Neue Build-Version auf dem Server? -> Caches löschen + Reload (Auth bleibt erhalten).
+  const reloading = await ensureFreshClient({ force: true });
   if (reloading) return;
 
   registerServiceWorker();
