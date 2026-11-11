@@ -47,6 +47,6 @@ export function useCategoryTaskGridRowHeight(
       window.removeEventListener('resize', apply);
       window.clearTimeout(t);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Caller übergibt sinnvolle deps
+     
   }, deps);
 }

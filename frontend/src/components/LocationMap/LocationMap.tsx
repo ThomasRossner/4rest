@@ -172,7 +172,7 @@ export function LocationMap({
         geocoderRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Update map when latitude/longitude changes from outside (manual input)
