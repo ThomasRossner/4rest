@@ -1,70 +1,68 @@
 import React, { useEffect, useMemo, useRef, useLayoutEffect, useState } from 'react';
-import { useGLTF } from '@react-three/drei';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 
 import ControllableTree from './ControllableTree';
 
 const PINE_MODEL_URL = '/models/newPine_s.glb';
-const pineModelAvailabilityCache = new Map();
-let pineModelAvailabilityPromise = null;
+
+// undefined: noch nicht fertig, null: fehlt, sonst das geladene GLTF.
+let settledPineModel;
+let pineModelPromise = null;
+
+export function isPineModelSettled() {
+  return settledPineModel !== undefined;
+}
+
+function rememberPineModel(gltf) {
+  settledPineModel = gltf;
+  return gltf;
+}
+
+/** Ein Ladevorgang für alle Kiefern, parallel zum Wald-Request. */
+export function loadPineModel() {
+  if (!pineModelPromise) {
+    pineModelPromise = new Promise((resolve) => {
+      const loader = new GLTFLoader();
+      loader.load(
+        PINE_MODEL_URL,
+        (gltf) => resolve(rememberPineModel(gltf)),
+        undefined,
+        () => resolve(rememberPineModel(null))
+      );
+    });
+  }
+  return pineModelPromise;
+}
+
+loadPineModel();
 
 export default function PineTree(props) {
-  const isPineModelAvailable = usePineModelAvailable();
-
-  if (!isPineModelAvailable) {
-    return <ControllableTree {...props} />;
-  }
-
-  return <PineModelTree {...props} />;
-}
-
-function checkPineModelAvailability() {
-  if (pineModelAvailabilityCache.has(PINE_MODEL_URL)) {
-    return Promise.resolve(pineModelAvailabilityCache.get(PINE_MODEL_URL));
-  }
-
-  if (!pineModelAvailabilityPromise) {
-    pineModelAvailabilityPromise = fetch(PINE_MODEL_URL, { method: 'HEAD' })
-      .then((response) => response.ok)
-      .catch(() => false)
-      .then((isAvailable) => {
-        pineModelAvailabilityCache.set(PINE_MODEL_URL, isAvailable);
-        if (isAvailable) {
-          useGLTF.preload(PINE_MODEL_URL);
-        }
-        return isAvailable;
-      });
-  }
-
-  return pineModelAvailabilityPromise;
-}
-
-function usePineModelAvailable() {
-  const [availability, setAvailability] = useState(() =>
-    pineModelAvailabilityCache.has(PINE_MODEL_URL)
-      ? pineModelAvailabilityCache.get(PINE_MODEL_URL)
-      : null
-  );
+  const [model, setModel] = useState(settledPineModel);
 
   useEffect(() => {
-    if (availability !== null) return undefined;
+    if (model !== undefined) return undefined;
 
-    let isMounted = true;
-    checkPineModelAvailability().then((isAvailable) => {
-      if (isMounted) {
-        setAvailability(isAvailable);
-      }
+    let active = true;
+    loadPineModel().then((gltf) => {
+      if (active) setModel(gltf);
     });
 
     return () => {
-      isMounted = false;
+      active = false;
     };
-  }, [availability]);
+  }, [model]);
 
-  return availability === true;
+  // Solange das Modell fehlt, keine Buche als Platzhalter: die würde nach dem
+  // Nachladen durch die Kiefer ersetzt und der Wald erschiene doppelt.
+  if (model === undefined) return null;
+  if (model === null) return <ControllableTree {...props} />;
+
+  return <PineModelTree gltf={model} {...props} />;
 }
 
 function PineModelTree({
+  gltf: tree,
   position,
   rotation,
   growth: trunkGrowth,
@@ -74,7 +72,6 @@ function PineModelTree({
   branchLengthFactor = 1,
   maxTreeGrowSteps = 30,
 }) {
-  const tree = useGLTF(PINE_MODEL_URL);
   const safeTreeGrowSteps = Math.max(1, Number(maxTreeGrowSteps) || 30);
 
   const trunkAnchorScale = useMemo(

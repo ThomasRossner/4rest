@@ -12,6 +12,7 @@ import { resolveTreeMorphology } from '../../utils/forestCategoryMorphology';
 import ForestCategoryProgressGrid from '../../components/Forest/ForestCategoryProgressGrid';
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
+import { isPineModelSettled, loadPineModel } from '../../components/3d/tree-system/PineTree';
 import './ForestPage.css';
 
 const PANEL_RESHOW_MS = 5000;
@@ -22,6 +23,7 @@ function ForestPage() {
   const user = useAuthStore((s) => s.user);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [progressPanelVisible, setProgressPanelVisible] = useState(true);
+  const [pineReady, setPineReady] = useState(isPineModelSettled);
   const panelReshowTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const userId = useAuthStore((s) => s.user?.id);
 
@@ -70,6 +72,17 @@ function ForestPage() {
       setProgressPanelVisible(true);
     }, PANEL_RESHOW_MS);
   }, []);
+
+  useEffect(() => {
+    if (pineReady) return undefined;
+    let active = true;
+    loadPineModel().then(() => {
+      if (active) setPineReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [pineReady]);
 
   useEffect(() => {
     setProgressPanelVisible(true);
@@ -123,7 +136,7 @@ function ForestPage() {
   }, [userId, queryClient]);
 
   const showForestLoadError = forestError && !forestData;
-  const sceneLoading = forestLoading && !forestData;
+  const sceneLoading = !pineReady || (forestLoading && !forestData);
 
   return (
     <div className="forest-page forest-page--immersive">
