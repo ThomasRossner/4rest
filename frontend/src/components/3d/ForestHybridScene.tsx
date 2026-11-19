@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { OrbitControls, useGLTF } from '@react-three/drei';
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { peek, suspend } from 'suspend-react';
+import { GLTFLoader, type OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import HybridSceneController from './tree-system/HybridSceneController';
 import { ForestCameraRig } from '../../hooks/useForestCamera';
@@ -16,11 +17,53 @@ export const FOREST_HYBRID_DEFAULT_CAMERA = {
   target: [0, 3.4, 0] as const,
 };
 
-useGLTF.preload('/models/grassGround.glb');
-useGLTF.preload('/models/grass.glb');
-useGLTF.preload('/models/beechTrunk.glb');
-useGLTF.preload('/models/beechTwig.glb');
-useGLTF.preload('/models/beechLeaf.glb');
+const FOREST_MODEL_URLS = [
+  '/models/grassGround.glb',
+  '/models/grass.glb',
+  '/models/beechTrunk.glb',
+  '/models/beechTwig.glb',
+  '/models/beechLeaf.glb',
+] as const;
+
+for (const url of FOREST_MODEL_URLS) {
+  useGLTF.preload(url);
+}
+
+function modelWasNotPreloaded(): Promise<never> {
+  return Promise.reject(new Error('forest model was not preloaded'));
+}
+
+function isPromise(value: unknown): value is Promise<unknown> {
+  return typeof (value as { then?: unknown } | null)?.then === 'function';
+}
+
+/** true, sobald useGLTF die Modelle synchron aus dem Cache lesen kann. */
+export function areForestModelsReady(): boolean {
+  return FOREST_MODEL_URLS.every((url) => peek([GLTFLoader, url]) != null);
+}
+
+function whenModelCached(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const read = () => {
+      try {
+        suspend(modelWasNotPreloaded, [GLTFLoader, url]);
+        resolve();
+      } catch (thrown) {
+        if (isPromise(thrown)) {
+          thrown.then(read, reject);
+          return;
+        }
+        reject(thrown);
+      }
+    };
+    read();
+  });
+}
+
+/** Wartet auf die Preloads, damit der Canvas nicht beim ersten Frame suspendet. */
+export function whenForestModelsReady(): Promise<void> {
+  return Promise.all(FOREST_MODEL_URLS.map((url) => whenModelCached(url))).then(() => undefined);
+}
 
 type ForestHybridSceneProps = {
   trees: HybridTree[];

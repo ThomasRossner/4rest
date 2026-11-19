@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from 'react-query';
@@ -6,6 +6,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { api } from '../../services/api';
 import ForestHybridScene, {
   FOREST_HYBRID_DEFAULT_CAMERA,
+  areForestModelsReady,
+  whenForestModelsReady,
 } from '../../components/3d/ForestHybridScene';
 import { mapForestApiToHybridForest } from '../../utils/forestTreeMapper';
 import { resolveTreeMorphology } from '../../utils/forestCategoryMorphology';
@@ -24,6 +26,7 @@ function ForestPage() {
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [progressPanelVisible, setProgressPanelVisible] = useState(true);
   const [pineReady, setPineReady] = useState(isPineModelSettled);
+  const [sceneModelsReady, setSceneModelsReady] = useState(areForestModelsReady);
   const panelReshowTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const userId = useAuthStore((s) => s.user?.id);
 
@@ -74,15 +77,22 @@ function ForestPage() {
   }, []);
 
   useEffect(() => {
-    if (pineReady) return undefined;
+    if (pineReady && sceneModelsReady) return undefined;
     let active = true;
-    loadPineModel().then(() => {
-      if (active) setPineReady(true);
+    Promise.all([
+      loadPineModel(),
+      whenForestModelsReady().catch((error: unknown) => {
+        console.debug('Forest models:', error);
+      }),
+    ]).then(() => {
+      if (!active) return;
+      setPineReady(true);
+      setSceneModelsReady(true);
     });
     return () => {
       active = false;
     };
-  }, [pineReady]);
+  }, [pineReady, sceneModelsReady]);
 
   useEffect(() => {
     setProgressPanelVisible(true);
@@ -136,7 +146,7 @@ function ForestPage() {
   }, [userId, queryClient]);
 
   const showForestLoadError = forestError && !forestData;
-  const sceneLoading = !pineReady || (forestLoading && !forestData);
+  const sceneLoading = !pineReady || !sceneModelsReady || (forestLoading && !forestData);
 
   return (
     <div className="forest-page forest-page--immersive">
@@ -176,8 +186,8 @@ function ForestPage() {
           {sceneLoading && !showForestLoadError && (
             <div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>
           )}
-          <Suspense fallback={<div className="forest-loading forest-loading--overlay">{t('forest.loading')}</div>}>
-            {!sceneLoading && forestData && (
+          {/* Keine Suspense um den Canvas: ein Suspend reißt den WebGL-Kontext ab und erzeugt ihn sofort neu. */}
+          {!sceneLoading && forestData && (
             <Canvas
               gl={{
                 antialias: false,
@@ -209,8 +219,7 @@ function ForestPage() {
                 onNavigationActivity={handleNavigationStart}
               />
             </Canvas>
-            )}
-          </Suspense>
+          )}
         </div>
       </div>
 
