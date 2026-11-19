@@ -15,6 +15,7 @@ import ForestCategoryProgressGrid from '../../components/Forest/ForestCategoryPr
 import ForestPlayerCharacter from '../../components/PlayerProfile/ForestPlayerCharacter';
 import PlayerProfileTypeModal from '../../components/PlayerProfile/PlayerProfileTypeModal';
 import { isPineModelSettled, loadPineModel } from '../../components/3d/tree-system/PineTree';
+import { isAppleMobileWeb } from '../../components/3d/limitGltfTextures';
 import './ForestPage.css';
 
 const PANEL_RESHOW_MS = 5000;
@@ -79,12 +80,14 @@ function ForestPage() {
   useEffect(() => {
     if (pineReady && sceneModelsReady) return undefined;
     let active = true;
-    Promise.all([
-      loadPineModel(),
-      whenForestModelsReady().catch((error: unknown) => {
-        console.debug('Forest models:', error);
-      }),
-    ]).then(() => {
+    const modelsReady = whenForestModelsReady().catch((error: unknown) => {
+      console.debug('Forest models:', error);
+    });
+    // iPhone: Kiefer erst nach den anderen GLBs, sonst dekodieren die 4K-Bilder parallel.
+    const sceneReady = isAppleMobileWeb()
+      ? modelsReady.then(() => loadPineModel())
+      : Promise.all([loadPineModel(), modelsReady]);
+    sceneReady.then(() => {
       if (!active) return;
       setPineReady(true);
       setSceneModelsReady(true);

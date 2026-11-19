@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 
 import ControllableTree from './ControllableTree';
+import { APPLE_MOBILE_TEXTURE_MAX, isAppleMobileWeb, limitGltfTextureSize } from '../limitGltfTextures';
 
 const PINE_MODEL_URL = '/models/newPine_s.glb';
 
@@ -26,7 +27,10 @@ export function loadPineModel() {
       const loader = new GLTFLoader();
       loader.load(
         PINE_MODEL_URL,
-        (gltf) => resolve(rememberPineModel(gltf)),
+        (gltf) => {
+          if (isAppleMobileWeb()) limitGltfTextureSize(gltf, APPLE_MOBILE_TEXTURE_MAX);
+          resolve(rememberPineModel(gltf));
+        },
         undefined,
         () => resolve(rememberPineModel(null))
       );
@@ -35,7 +39,9 @@ export function loadPineModel() {
   return pineModelPromise;
 }
 
-loadPineModel();
+if (!isAppleMobileWeb()) {
+  loadPineModel();
+}
 
 export default function PineTree(props) {
   const [model, setModel] = useState(settledPineModel);

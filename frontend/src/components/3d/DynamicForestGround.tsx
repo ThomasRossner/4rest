@@ -6,6 +6,7 @@ import {
   mapForestGroundLayoutLocalToWorld,
   type ForestArea,
 } from './forestTypes';
+import { isAppleMobileWeb } from './limitGltfTextures';
 
 type GrassAnchorRef = {
   position: THREE.Vector3;
@@ -169,5 +170,7 @@ export default function DynamicForestGround({
   );
 }
 
-useGLTF.preload('/models/grassGround.glb');
-useGLTF.preload('/models/grass.glb');
+if (!isAppleMobileWeb()) {
+  useGLTF.preload('/models/grassGround.glb');
+  useGLTF.preload('/models/grass.glb');
+}

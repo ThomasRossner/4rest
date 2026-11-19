@@ -4,6 +4,7 @@ import { peek, suspend } from 'suspend-react';
 import { GLTFLoader, type OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 import HybridSceneController from './tree-system/HybridSceneController';
+import { isAppleMobileWeb, limitGltfTextureSize, APPLE_MOBILE_TEXTURE_MAX } from './limitGltfTextures';
 import { ForestCameraRig } from '../../hooks/useForestCamera';
 import type { ForestCameraFraming } from '../../utils/forestCameraFraming';
 import type { TreeMorphologyParams } from '../../utils/forestCategoryMorphology';
@@ -25,8 +26,12 @@ const FOREST_MODEL_URLS = [
   '/models/beechLeaf.glb',
 ] as const;
 
-for (const url of FOREST_MODEL_URLS) {
-  useGLTF.preload(url);
+// Auf dem iPhone nicht alle GLBs parallel dekodieren: die 4K-Bilder zusammen
+// liegen bei etwa 750 MB und der Tab wird beendet, bevor der Canvas sie zeigt.
+if (!isAppleMobileWeb()) {
+  for (const url of FOREST_MODEL_URLS) {
+    useGLTF.preload(url);
+  }
 }
 
 function modelWasNotPreloaded(): Promise<never> {
@@ -42,12 +47,12 @@ export function areForestModelsReady(): boolean {
   return FOREST_MODEL_URLS.every((url) => peek([GLTFLoader, url]) != null);
 }
 
-function whenModelCached(url: string): Promise<void> {
+function whenModelCached(url: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const read = () => {
       try {
-        suspend(modelWasNotPreloaded, [GLTFLoader, url]);
-        resolve();
+        const cached = suspend(modelWasNotPreloaded, [GLTFLoader, url]);
+        resolve(Array.isArray(cached) ? cached[0] : cached);
       } catch (thrown) {
         if (isPromise(thrown)) {
           thrown.then(read, reject);
@@ -60,9 +65,28 @@ function whenModelCached(url: string): Promise<void> {
   });
 }
 
-/** Wartet auf die Preloads, damit der Canvas nicht beim ersten Frame suspendet. */
+function settleCachedModel(url: string): Promise<void> {
+  return whenModelCached(url).then((gltf) => {
+    if (isAppleMobileWeb()) limitGltfTextureSize(gltf, APPLE_MOBILE_TEXTURE_MAX);
+  });
+}
+
+/**
+ * Wartet auf die Preloads, damit der Canvas nicht beim ersten Frame suspendet.
+ * Auf iPhone/iPad nacheinander, und die Texturen werden vor dem Upload verkleinert.
+ */
 export function whenForestModelsReady(): Promise<void> {
-  return Promise.all(FOREST_MODEL_URLS.map((url) => whenModelCached(url))).then(() => undefined);
+  if (!isAppleMobileWeb()) {
+    return Promise.all(FOREST_MODEL_URLS.map((url) => settleCachedModel(url))).then(() => undefined);
+  }
+  return FOREST_MODEL_URLS.reduce<Promise<void>>(
+    (chain, url) =>
+      chain.then(() => {
+        useGLTF.preload(url);
+        return settleCachedModel(url);
+      }),
+    Promise.resolve()
+  );
 }
 
 type ForestHybridSceneProps = {
